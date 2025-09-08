@@ -1,0 +1,482 @@
+@page "/questionnaire-management"
+@using BlazorRadzenTest.Client.Models
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Questionnaire Management</PageTitle>
+
+<div class="container-fluid">
+    <RadzenCard Class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
+                    <RadzenIcon Icon="quiz" Class="me-2" />
+                    Questionnaire Management
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                    Manage your questionnaire templates and view responses
+                </RadzenText>
+            </div>
+            <div class="d-flex gap-2">
+                <RadzenButton Text="Import Template" 
+                             ButtonStyle="ButtonStyle.Secondary" 
+                             Icon="upload" />
+                <RadzenButton Text="Create New" 
+                             ButtonStyle="ButtonStyle.Primary" 
+                             Icon="add"
+                             Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
+            </div>
+        </div>
+
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="Templates">
+                    <div class="p-3">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div class="d-flex gap-2">
+                                <RadzenDropDown @bind-Value="@categoryFilter" 
+                                               Data="@categories" 
+                                               Placeholder="Filter by Category"
+                                               AllowClear="true"
+                                               Change="@FilterTemplates" />
+                                <RadzenTextBox @bind-Value="@searchText" 
+                                              Placeholder="Search templates..."
+                                              oninput="@FilterTemplates" />
+                            </div>
+                            <RadzenToggleButton @bind-Value="@showInactiveTemplates" 
+                                               Text="Show Inactive" 
+                                               Change="@FilterTemplates" />
+                        </div>
+
+                        <RadzenDataGrid Data="@filteredTemplates" 
+                                       AllowFiltering="true" 
+                                       AllowColumnResize="true"
+                                       AllowAlternatingRows="true" 
+                                       AllowSorting="true" 
+                                       PageSize="10" 
+                                       AllowPaging="true">
+                            <Columns>
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.Name)" Title="Template Name" Width="300px">
+                                    <Template Context="template">
+                                        <div>
+                                            <RadzenLink Text="@template.Name" 
+                                                       Path="@($"/questionnaire-builder/{template.Id}")" 
+                                                       Style="font-weight: bold" />
+                                            <br />
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@template.Description</RadzenText>
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.Category)" Title="Category" Width="150px" />
+                                
+                                <RadzenDataGridColumn Property="SectionCount" Title="Sections" Width="100px" TextAlign="TextAlign.Center">
+                                    <Template Context="template">
+                                        <RadzenBadge Text="@template.Sections.Count.ToString()" BadgeStyle="BadgeStyle.Info" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Property="QuestionCount" Title="Questions" Width="100px" TextAlign="TextAlign.Center">
+                                    <Template Context="template">
+                                        <RadzenBadge Text="@template.Sections.SelectMany(s => s.Questions).Count().ToString()" BadgeStyle="BadgeStyle.Secondary" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.IsActive)" Title="Status" Width="120px">
+                                    <Template Context="template">
+                                        <RadzenBadge BadgeStyle="@(template.IsActive ? BadgeStyle.Success : BadgeStyle.Light)" 
+                                                   Text="@(template.IsActive ? "Active" : "Inactive")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CreatedDate)" Title="Created" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+                                
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.LastModified)" Title="Modified" Width="120px">
+                                    <Template Context="template">
+                                        @if (template.LastModified.HasValue)
+                                        {
+                                            <span>@template.LastModified.Value.ToString("dd/MM/yyyy")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Never</span>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="200px" TextAlign="TextAlign.Center">
+                                    <Template Context="template">
+                                        <div class="d-flex gap-1">
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                         Icon="preview" 
+                                                         Size="ButtonSize.Small"
+                                                         Tooltip="Preview"
+                                                         Click="@(() => PreviewTemplate(template))" />
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                         Icon="edit" 
+                                                         Size="ButtonSize.Small"
+                                                         Tooltip="Edit"
+                                                         Click="@(() => EditTemplate(template))" />
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                         Icon="content_copy" 
+                                                         Size="ButtonSize.Small"
+                                                         Tooltip="Clone"
+                                                         Click="@(() => CloneTemplate(template))" />
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                         Icon="assignment" 
+                                                         Size="ButtonSize.Small"
+                                                         Tooltip="Assign"
+                                                         Click="@(() => AssignTemplate(template))" />
+                                            <RadzenButton ButtonStyle="@(template.IsActive ? ButtonStyle.Warning : ButtonStyle.Success)" 
+                                                         Icon="@(template.IsActive ? "pause_circle" : "play_circle")" 
+                                                         Size="ButtonSize.Small"
+                                                         Tooltip="@(template.IsActive ? "Deactivate" : "Activate")"
+                                                         Click="@(() => ToggleTemplateStatus(template))" />
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </div>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Responses">
+                    <div class="p-3">
+                        <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Response Analytics</RadzenText>
+                        
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenCard Class="text-center p-3">
+                                    <RadzenIcon Icon="assignment_turned_in" Style="font-size: 2.5rem; color: var(--rz-success);" />
+                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@GetTotalResponses()</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Total Responses</RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenCard Class="text-center p-3">
+                                    <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; color: var(--rz-warning);" />
+                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@GetPendingResponses()</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Pending Responses</RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenCard Class="text-center p-3">
+                                    <RadzenIcon Icon="trending_up" Style="font-size: 2.5rem; color: var(--rz-info);" />
+                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@GetCompletionRate()%</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Completion Rate</RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow Gap="1rem" Class="mt-4">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCard Class="p-3">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Response Trends</RadzenText>
+                                    <RadzenChart>
+                                        <RadzenLineSeries Data="@GetResponseTrends()" 
+                                                         CategoryProperty="Date" 
+                                                         ValueProperty="Count"
+                                                         Title="Daily Responses" />
+                                    </RadzenChart>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCard Class="p-3">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Popular Templates</RadzenText>
+                                    <RadzenChart>
+                                        <RadzenColumnSeries Data="@GetPopularTemplates()" 
+                                                           CategoryProperty="Template" 
+                                                           ValueProperty="ResponseCount"
+                                                           Title="Response Count" />
+                                    </RadzenChart>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenCard Class="p-3 mt-4">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Recent Responses</RadzenText>
+                            <RadzenDataGrid Data="@GetRecentResponses()" 
+                                           PageSize="5" 
+                                           AllowPaging="true">
+                                <Columns>
+                                    <RadzenDataGridColumn Property="EmployeeName" Title="Employee" />
+                                    <RadzenDataGridColumn Property="TemplateName" Title="Questionnaire" />
+                                    <RadzenDataGridColumn Property="CompletedDate" Title="Completed" FormatString="{0:dd/MM/yyyy HH:mm}" />
+                                    <RadzenDataGridColumn Property="Status" Title="Status">
+                                        <Template Context="response">
+                                            <RadzenBadge BadgeStyle="@GetResponseStatusBadge(response.Status)" Text="@response.Status.ToString()" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                    <RadzenDataGridColumn Filterable="false" Sortable="false" Width="100px">
+                                        <Template Context="response">
+                                            <RadzenButton Text="View" 
+                                                         ButtonStyle="ButtonStyle.Light" 
+                                                         Size="ButtonSize.Small"
+                                                         Click="@(() => ViewResponse(response))" />
+                                        </Template>
+                                    </RadzenDataGridColumn>
+                                </Columns>
+                            </RadzenDataGrid>
+                        </RadzenCard>
+                    </div>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Settings">
+                    <div class="p-3">
+                        <RadzenText TextStyle="TextStyle.H5" Class="mb-3">System Settings</RadzenText>
+                        
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCard Class="p-3">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Email Notifications</RadzenText>
+                                    <div class="settings-group">
+                                        <RadzenCheckBox @bind-Value="@settings.SendAssignmentEmails" Name="assignmentEmails" />
+                                        <RadzenLabel Text="Send assignment notifications" Component="assignmentEmails" Class="ms-2" />
+                                    </div>
+                                    <div class="settings-group mt-2">
+                                        <RadzenCheckBox @bind-Value="@settings.SendReminderEmails" Name="reminderEmails" />
+                                        <RadzenLabel Text="Send reminder emails" Component="reminderEmails" Class="ms-2" />
+                                    </div>
+                                    <div class="settings-group mt-2">
+                                        <RadzenCheckBox @bind-Value="@settings.SendCompletionEmails" Name="completionEmails" />
+                                        <RadzenLabel Text="Send completion confirmations" Component="completionEmails" Class="ms-2" />
+                                    </div>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCard Class="p-3">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Default Settings</RadzenText>
+                                    <div class="mb-3">
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Default Due Days</RadzenText>
+                                        <RadzenNumeric @bind-Value="@settings.DefaultDueDays" Min="1" Max="365" Class="w-100" />
+                                    </div>
+                                    <div class="mb-3">
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Reminder Days Before Due</RadzenText>
+                                        <RadzenNumeric @bind-Value="@settings.ReminderDaysBeforeDue" Min="1" Max="30" Class="w-100" />
+                                    </div>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <div class="mt-4">
+                            <RadzenButton Text="Save Settings" 
+                                         ButtonStyle="ButtonStyle.Primary" 
+                                         Icon="save"
+                                         Click="@SaveSettings" />
+                        </div>
+                    </div>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    </RadzenCard>
+</div>
+
+@code {
+    [Inject] protected DialogService DialogService { get; set; } = default!;
+    [Inject] protected NotificationService NotificationService { get; set; } = default!;
+    [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
+
+    private List<QuestionnaireTemplate> templates = new();
+    private List<QuestionnaireTemplate> filteredTemplates = new();
+    
+    private string searchText = "";
+    private string categoryFilter = "";
+    private bool showInactiveTemplates = false;
+
+    private readonly List<string> categories = new()
+    {
+        "Performance Review", "Employee Feedback", "Training Assessment", 
+        "Customer Satisfaction", "Team Evaluation", "Goal Setting", "Other"
+    };
+
+    private SystemSettings settings = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTemplates();
+        LoadSettings();
+        FilterTemplates();
+    }
+
+    private async Task LoadTemplates()
+    {
+        // In real app, load from database
+        templates = new List<QuestionnaireTemplate>
+        {
+            new QuestionnaireTemplate
+            {
+                Id = Guid.NewGuid(),
+                Name = "Annual Performance Review",
+                Description = "Comprehensive yearly performance evaluation",
+                Category = "Performance Review",
+                IsActive = true,
+                CreatedDate = DateTime.Now.AddDays(-30),
+                LastModified = DateTime.Now.AddDays(-5),
+                Sections = new List<QuestionSection>
+                {
+                    new QuestionSection { Questions = new List<QuestionItem> { new QuestionItem(), new QuestionItem() } }
+                }
+            },
+            new QuestionnaireTemplate
+            {
+                Id = Guid.NewGuid(),
+                Name = "Team Feedback Survey",
+                Description = "Quarterly team dynamics assessment",
+                Category = "Team Evaluation",
+                IsActive = true,
+                CreatedDate = DateTime.Now.AddDays(-15),
+                Sections = new List<QuestionSection>
+                {
+                    new QuestionSection { Questions = new List<QuestionItem> { new QuestionItem() } }
+                }
+            }
+        };
+    }
+
+    private void LoadSettings()
+    {
+        settings = new SystemSettings
+        {
+            SendAssignmentEmails = true,
+            SendReminderEmails = true,
+            SendCompletionEmails = false,
+            DefaultDueDays = 14,
+            ReminderDaysBeforeDue = 3
+        };
+    }
+
+    private void FilterTemplates()
+    {
+        filteredTemplates = templates.Where(t =>
+            (showInactiveTemplates || t.IsActive) &&
+            (string.IsNullOrWhiteSpace(categoryFilter) || t.Category == categoryFilter) &&
+            (string.IsNullOrWhiteSpace(searchText) || 
+             t.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             t.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        ).ToList();
+        
+        StateHasChanged();
+    }
+
+    private async Task PreviewTemplate(QuestionnaireTemplate template)
+    {
+        NavigationManager.NavigateTo($"/questionnaire/{template.Id}");
+    }
+
+    private void EditTemplate(QuestionnaireTemplate template)
+    {
+        NavigationManager.NavigateTo($"/questionnaire-builder/{template.Id}");
+    }
+
+    private async Task CloneTemplate(QuestionnaireTemplate template)
+    {
+        NotificationService.Notify(NotificationSeverity.Success, "Cloned", $"Template '{template.Name}' has been cloned");
+    }
+
+    private async Task AssignTemplate(QuestionnaireTemplate template)
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Assign", $"Assignment dialog for '{template.Name}' would open here");
+    }
+
+    private async Task ToggleTemplateStatus(QuestionnaireTemplate template)
+    {
+        template.IsActive = !template.IsActive;
+        template.LastModified = DateTime.Now;
+        var status = template.IsActive ? "activated" : "deactivated";
+        NotificationService.Notify(NotificationSeverity.Success, "Status Updated", $"Template '{template.Name}' has been {status}");
+        FilterTemplates();
+    }
+
+    private async Task SaveSettings()
+    {
+        // Save to database
+        NotificationService.Notify(NotificationSeverity.Success, "Saved", "Settings have been saved successfully");
+    }
+
+    // Analytics methods
+    private int GetTotalResponses() => 156;
+    private int GetPendingResponses() => 23;
+    private int GetCompletionRate() => 87;
+
+    private List<ResponseTrend> GetResponseTrends()
+    {
+        return new List<ResponseTrend>
+        {
+            new() { Date = DateTime.Now.AddDays(-6).ToString("MM/dd"), Count = 12 },
+            new() { Date = DateTime.Now.AddDays(-5).ToString("MM/dd"), Count = 19 },
+            new() { Date = DateTime.Now.AddDays(-4).ToString("MM/dd"), Count = 15 },
+            new() { Date = DateTime.Now.AddDays(-3).ToString("MM/dd"), Count = 22 },
+            new() { Date = DateTime.Now.AddDays(-2).ToString("MM/dd"), Count = 18 },
+            new() { Date = DateTime.Now.AddDays(-1).ToString("MM/dd"), Count = 25 },
+            new() { Date = DateTime.Now.ToString("MM/dd"), Count = 8 }
+        };
+    }
+
+    private List<TemplatePopularity> GetPopularTemplates()
+    {
+        return new List<TemplatePopularity>
+        {
+            new() { Template = "Performance Review", ResponseCount = 45 },
+            new() { Template = "Team Feedback", ResponseCount = 32 },
+            new() { Template = "Training Assessment", ResponseCount = 28 },
+            new() { Template = "Goal Setting", ResponseCount = 21 }
+        };
+    }
+
+    private List<RecentResponseInfo> GetRecentResponses()
+    {
+        return new List<RecentResponseInfo>
+        {
+            new() { EmployeeName = "John Doe", TemplateName = "Performance Review", CompletedDate = DateTime.Now.AddHours(-2), Status = ResponseStatus.Completed },
+            new() { EmployeeName = "Jane Smith", TemplateName = "Team Feedback", CompletedDate = DateTime.Now.AddHours(-4), Status = ResponseStatus.Completed },
+            new() { EmployeeName = "Bob Johnson", TemplateName = "Training Assessment", CompletedDate = DateTime.Now.AddHours(-6), Status = ResponseStatus.InProgress }
+        };
+    }
+
+    private BadgeStyle GetResponseStatusBadge(ResponseStatus status)
+    {
+        return status switch
+        {
+            ResponseStatus.NotStarted => BadgeStyle.Light,
+            ResponseStatus.InProgress => BadgeStyle.Warning,
+            ResponseStatus.Completed => BadgeStyle.Info,
+            ResponseStatus.Submitted => BadgeStyle.Success,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private async Task ViewResponse(RecentResponseInfo response)
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "View Response", $"Viewing response from {response.EmployeeName}");
+    }
+
+    // Helper classes
+    public class SystemSettings
+    {
+        public bool SendAssignmentEmails { get; set; }
+        public bool SendReminderEmails { get; set; }
+        public bool SendCompletionEmails { get; set; }
+        public int DefaultDueDays { get; set; }
+        public int ReminderDaysBeforeDue { get; set; }
+    }
+
+    public class ResponseTrend
+    {
+        public string Date { get; set; } = "";
+        public int Count { get; set; }
+    }
+
+    public class TemplatePopularity
+    {
+        public string Template { get; set; } = "";
+        public int ResponseCount { get; set; }
+    }
+
+    public class RecentResponseInfo
+    {
+        public string EmployeeName { get; set; } = "";
+        public string TemplateName { get; set; } = "";
+        public DateTime CompletedDate { get; set; }
+        public ResponseStatus Status { get; set; }
+    }
+}

@@ -1,0 +1,646 @@
+@page "/questionnaire-builder"
+@page "/questionnaire-builder/{TemplateId:guid?}"
+@using BlazorRadzenTest.Client.Models
+@using BlazorRadzenTest.Client.Components
+@using Radzen
+@using Radzen.Blazor
+
+<PageTitle>Questionnaire Builder</PageTitle>
+
+<div class="container-fluid">
+    <RadzenCard Class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
+                    <RadzenIcon Icon="quiz" Class="me-2" />
+                    @(IsEditMode ? "Edit Questionnaire" : "Create New Questionnaire")
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                    Design dynamic questionnaires with drag-and-drop components
+                </RadzenText>
+            </div>
+            <div class="d-flex gap-2">
+                <RadzenButton Text="Preview" 
+                             ButtonStyle="ButtonStyle.Info" 
+                             Icon="preview"
+                             Click="@PreviewQuestionnaire" />
+                <RadzenButton Text="Save Draft" 
+                             ButtonStyle="ButtonStyle.Secondary" 
+                             Icon="save"
+                             Click="@SaveQuestionnaire" />
+                <RadzenButton Text="Save & Publish" 
+                             ButtonStyle="ButtonStyle.Success" 
+                             Icon="publish"
+                             Click="@PublishQuestionnaire" />
+            </div>
+        </div>
+
+        <RadzenTabs TabPosition="TabPosition.Left" Change="@OnTabChanged">
+            <Tabs>
+                <RadzenTabsItem Text="Basic Info">
+                    <div class="p-3">
+                        <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Template Information</RadzenText>
+                        
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Template Name *</RadzenText>
+                                    <RadzenTextBox @bind-Value="@template.Name" 
+                                                  Placeholder="Enter template name" 
+                                                  Class="w-100" />
+                                </div>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Category</RadzenText>
+                                    <RadzenDropDown @bind-Value="@template.Category" 
+                                                   Data="@categories" 
+                                                   Placeholder="Select category"
+                                                   AllowClear="true"
+                                                   Class="w-100" />
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <div class="mb-3">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Description</RadzenText>
+                            <RadzenTextArea @bind-Value="@template.Description" 
+                                          Placeholder="Describe the purpose and scope of this questionnaire..."
+                                          Rows="4"
+                                          Class="w-100" />
+                        </div>
+
+                        <RadzenCard Class="mt-4 p-3 bg-light">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">Settings</RadzenText>
+                            <RadzenRow>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenCheckBox @bind-Value="@template.Settings.AllowSaveProgress" Name="allowSave" />
+                                    <RadzenLabel Text="Allow Save Progress" Component="allowSave" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenCheckBox @bind-Value="@template.Settings.ShowProgressBar" Name="showProgress" />
+                                    <RadzenLabel Text="Show Progress Bar" Component="showProgress" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenCheckBox @bind-Value="@template.Settings.RequireAllSections" Name="requireAll" />
+                                    <RadzenLabel Text="Require All Sections" Component="requireAll" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenCheckBox @bind-Value="@template.Settings.AllowReviewBeforeSubmit" Name="allowReview" />
+                                    <RadzenLabel Text="Allow Review Before Submit" Component="allowReview" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </RadzenCard>
+                    </div>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Questions">
+                    <div class="p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <RadzenText TextStyle="TextStyle.H5">Questions & Sections</RadzenText>
+                            <div class="d-flex gap-2">
+                                <RadzenButton Text="Add Section" 
+                                             ButtonStyle="ButtonStyle.Primary" 
+                                             Icon="add"
+                                             Size="ButtonSize.Medium"
+                                             Click="@AddSection" />
+                            </div>
+                        </div>
+
+                        @if (template.Sections.Count == 0)
+                        {
+                            <RadzenCard Class="text-center p-4 border-dashed">
+                                <RadzenIcon Icon="quiz" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2">
+                                    No sections created yet. Click "Add Section" to get started.
+                                </RadzenText>
+                            </RadzenCard>
+                        }
+                        else
+                        {
+                            <div class="sections-container">
+                                @for (int sectionIndex = 0; sectionIndex < template.Sections.Count; sectionIndex++)
+                                {
+                                    var section = template.Sections[sectionIndex];
+                                    var currentSectionIndex = sectionIndex;
+                                    
+                                    <RadzenCard Class="section-card mb-4 border-start border-primary border-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div class="flex-grow-1">
+                                                <RadzenTextBox Value="@GetSectionTitle(section)" 
+                                                             ValueChanged="@(value => SetSectionTitle(section, value))"
+                                                             Placeholder="Section title..."
+                                                             Class="fw-bold mb-2 section-title-input" />
+                                                <RadzenTextBox Value="@GetSectionDescription(section)" 
+                                                             ValueChanged="@(value => SetSectionDescription(section, value))"
+                                                             Placeholder="Section description (optional)..."
+                                                             Class="text-muted section-desc-input" />
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                             Icon="keyboard_arrow_up" 
+                                                             Size="ButtonSize.Small"
+                                                             Click="@(() => MoveSectionUp(currentSectionIndex))"
+                                                             Disabled="@(currentSectionIndex == 0)" />
+                                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                             Icon="keyboard_arrow_down" 
+                                                             Size="ButtonSize.Small"
+                                                             Click="@(() => MoveSectionDown(currentSectionIndex))"
+                                                             Disabled="@(currentSectionIndex == template.Sections.Count - 1)" />
+                                                <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                                             Icon="delete" 
+                                                             Size="ButtonSize.Small"
+                                                             Click="@(() => RemoveSection(currentSectionIndex))" />
+                                            </div>
+                                        </div>
+
+                                        <div class="questions-area">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">Questions</RadzenText>
+                                                <RadzenButton Text="Add Question" 
+                                                             ButtonStyle="ButtonStyle.Light" 
+                                                             Size="ButtonSize.Small"
+                                                             Click="@(() => ShowAddQuestionDialog(currentSectionIndex))" />
+                                            </div>
+
+                                            @* Question Type Selection *@
+                                            @if (showQuestionTypeSelection && selectedSectionIndex == currentSectionIndex)
+                                            {
+                                                <div class="question-type-selection mb-3">
+                                                    <RadzenCard Class="p-3 bg-light">
+                                                        <div class="mb-2">
+                                                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">
+                                                                Select Question Type
+                                                            </RadzenText>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <RadzenButton Text="Rating Question" 
+                                                                             Icon="star_rate"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.RatingQuestion))" />
+                                                                <RadzenButton Text="Text Question" 
+                                                                             Icon="text_fields"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.TextQuestion))" />
+                                                                <RadzenButton Text="Goal Question" 
+                                                                             Icon="flag"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.GoalQuestion))" />
+                                                                <RadzenButton Text="Single Choice" 
+                                                                             Icon="radio_button_checked"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.SingleChoice))" />
+                                                                <RadzenButton Text="Multiple Choice" 
+                                                                             Icon="check_box"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.MultipleChoice))" />
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <RadzenButton Text="Date Question" 
+                                                                             Icon="calendar_today"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.DateQuestion))" />
+                                                                <RadzenButton Text="Number Question" 
+                                                                             Icon="123"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.NumberQuestion))" />
+                                                                <RadzenButton Text="Yes/No Question" 
+                                                                             Icon="toggle_on"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.YesNoQuestion))" />
+                                                                <RadzenButton Text="File Upload" 
+                                                                             Icon="upload_file"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.FileUpload))" />
+                                                                <RadzenButton Text="Custom HTML" 
+                                                                             Icon="code"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Small"
+                                                                             Class="w-100 mb-2"
+                                                                             Click="@(() => AddQuestionOfType(QuestionType.CustomHTML))" />
+                                                            </div>
+                                                        </div>
+                                                        <div class="text-end mt-2">
+                                                            <RadzenButton Text="Cancel" 
+                                                                         ButtonStyle="ButtonStyle.Light" 
+                                                                         Size="ButtonSize.Small"
+                                                                         Click="@CancelQuestionTypeSelection" />
+                                                        </div>
+                                                    </RadzenCard>
+                                                </div>
+                                            }
+
+                                            @if (section.Questions.Count == 0)
+                                            {
+                                                <div class="text-center p-3 bg-light border rounded">
+                                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                                        No questions in this section. Use the "Add Question" button above.
+                                                    </RadzenText>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                @for (int questionIndex = 0; questionIndex < section.Questions.Count; questionIndex++)
+                                                {
+                                                    var question = section.Questions[questionIndex];
+                                                    var currentQuestionIndex = questionIndex;
+
+                                                    <RadzenCard Class="question-card mb-2 p-3 bg-light">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <div class="flex-grow-1">
+                                                                <div class="d-flex align-items-center mb-2">
+                                                                    <RadzenIcon Icon="@GetQuestionTypeIcon(question.Type)" Class="me-2" />
+                                                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted me-3">
+                                                                        @question.Type.ToString()
+                                                                    </RadzenText>
+                                                                    <RadzenCheckBox @bind-Value="@question.IsRequired" Name="@($"req_{section.Id}_{question.Id}")" />
+                                                                    <RadzenLabel Text="Required" Component="@($"req_{section.Id}_{question.Id}")" Class="ms-1" />
+                                                                </div>
+                                                                <RadzenTextBox Value="@GetQuestionTitle(question)" 
+                                                                             ValueChanged="@(value => SetQuestionTitle(question, value))"
+                                                                             Placeholder="Question title..."
+                                                                             Class="w-100 mb-2" />
+                                                                <RadzenTextBox Value="@GetQuestionDescription(question)" 
+                                                                             ValueChanged="@(value => SetQuestionDescription(question, value))"
+                                                                             Placeholder="Question description (optional)..."
+                                                                             Class="w-100 text-muted" />
+                                                            </div>
+                                                            <div class="d-flex gap-1 ms-3">
+                                                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                                             Icon="edit" 
+                                                                             Size="ButtonSize.ExtraSmall"
+                                                                             Click="@(() => EditQuestion(currentSectionIndex, currentQuestionIndex))" />
+                                                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                                             Icon="keyboard_arrow_up" 
+                                                                             Size="ButtonSize.ExtraSmall"
+                                                                             Click="@(() => MoveQuestionUp(currentSectionIndex, currentQuestionIndex))"
+                                                                             Disabled="@(currentQuestionIndex == 0)" />
+                                                                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                                                                             Icon="keyboard_arrow_down" 
+                                                                             Size="ButtonSize.ExtraSmall"
+                                                                             Click="@(() => MoveQuestionDown(currentSectionIndex, currentQuestionIndex))"
+                                                                             Disabled="@(currentQuestionIndex == section.Questions.Count - 1)" />
+                                                                <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                                                             Icon="delete" 
+                                                                             Size="ButtonSize.ExtraSmall"
+                                                                             Click="@(() => RemoveQuestion(currentSectionIndex, currentQuestionIndex))" />
+                                                            </div>
+                                                        </div>
+                                                    </RadzenCard>
+                                                }
+                                            }
+                                        </div>
+                                    </RadzenCard>
+                                }
+                            </div>
+                        }
+                    </div>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Preview">
+                    <div class="p-3">
+                        <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Questionnaire Preview</RadzenText>
+                        <div class="preview-container border rounded p-3 bg-light">
+                            @if (template.Sections.Any())
+                            {
+                                // Show a basic preview of the questionnaire
+                                <div class="questionnaire-preview">
+                                    <RadzenText TextStyle="TextStyle.H4" Class="mb-3">@template.Name</RadzenText>
+                                    @if (!string.IsNullOrWhiteSpace(template.Description))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@template.Description</RadzenText>
+                                    }
+                                    
+                                    @foreach (var section in template.Sections.OrderBy(s => s.Order))
+                                    {
+                                        <RadzenCard Class="mb-3 p-3">
+                                            <RadzenText TextStyle="TextStyle.H6" Class="mb-2">@GetSectionTitle(section)</RadzenText>
+                                            @if (!string.IsNullOrWhiteSpace(GetSectionDescription(section)))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@GetSectionDescription(section)</RadzenText>
+                                            }
+                                            
+                                            @foreach (var question in section.Questions.OrderBy(q => q.Order))
+                                            {
+                                                <div class="mb-3 p-2 border rounded bg-white">
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <RadzenIcon Icon="@GetQuestionTypeIcon(question.Type)" Class="me-2" />
+                                                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
+                                                            @question.Title
+                                                            @if (question.IsRequired)
+                                                            {
+                                                                <span class="text-danger">*</span>
+                                                            }
+                                                        </RadzenText>
+                                                    </div>
+                                                    @if (!string.IsNullOrWhiteSpace(question.Description))
+                                                    {
+                                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@question.Description</RadzenText>
+                                                    }
+                                                    <div class="preview-input">
+                                                        @GetQuestionPreview(question)
+                                                    </div>
+                                                </div>
+                                            }
+                                        </RadzenCard>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="text-center p-4">
+                                    <RadzenIcon Icon="preview" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2">
+                                        Add sections and questions to see the preview
+                                    </RadzenText>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    </RadzenCard>
+</div>
+
+@code {
+    [Parameter] public Guid? TemplateId { get; set; }
+    [Inject] protected DialogService DialogService { get; set; } = default!;
+    [Inject] protected NotificationService NotificationService { get; set; } = default!;
+    [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
+
+    private QuestionnaireTemplate template = new();
+    private bool IsEditMode => TemplateId.HasValue;
+    
+    // Question type selection state
+    private bool showQuestionTypeSelection = false;
+    private int selectedSectionIndex = -1;
+    private QuestionType? selectedQuestionType = null;
+    
+    private readonly List<string> categories = new()
+    {
+        "Performance Review",
+        "Employee Feedback",
+        "Training Assessment",
+        "Customer Satisfaction",
+        "Team Evaluation",
+        "Goal Setting",
+        "Skills Assessment",
+        "Exit Interview",
+        "Onboarding",
+        "Other"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsEditMode && TemplateId.HasValue)
+        {
+            // In a real application, load from database
+            await LoadTemplate(TemplateId.Value);
+        }
+    }
+
+    private async Task LoadTemplate(Guid templateId)
+    {
+        // Placeholder for loading template from database
+        // template = await TemplateService.GetByIdAsync(templateId);
+    }
+
+    private void OnTabChanged(int index)
+    {
+        // Handle tab change if needed
+    }
+
+    private void AddSection()
+    {
+        var newSection = new QuestionSection
+        {
+            Title = $"Section {template.Sections.Count + 1}",
+            Order = template.Sections.Count,
+            IsRequired = true
+        };
+        template.Sections.Add(newSection);
+    }
+
+    private void RemoveSection(int index)
+    {
+        if (index >= 0 && index < template.Sections.Count)
+        {
+            template.Sections.RemoveAt(index);
+            // Reorder remaining sections
+            for (int i = 0; i < template.Sections.Count; i++)
+            {
+                template.Sections[i].Order = i;
+            }
+        }
+    }
+
+    private void MoveSectionUp(int index)
+    {
+        if (index > 0)
+        {
+            (template.Sections[index], template.Sections[index - 1]) = (template.Sections[index - 1], template.Sections[index]);
+            template.Sections[index].Order = index;
+            template.Sections[index - 1].Order = index - 1;
+        }
+    }
+
+    private void MoveSectionDown(int index)
+    {
+        if (index < template.Sections.Count - 1)
+        {
+            (template.Sections[index], template.Sections[index + 1]) = (template.Sections[index + 1], template.Sections[index]);
+            template.Sections[index].Order = index;
+            template.Sections[index + 1].Order = index + 1;
+        }
+    }
+
+    private void ShowAddQuestionDialog(int sectionIndex)
+    {
+        // Show inline question type selection
+        showQuestionTypeSelection = true;
+        selectedSectionIndex = sectionIndex;
+        selectedQuestionType = null;
+    }
+
+    private void EditQuestion(int sectionIndex, int questionIndex)
+    {
+        // Open question editor dialog
+        var question = template.Sections[sectionIndex].Questions[questionIndex];
+        // TODO: Implement question editor dialog
+    }
+
+    private void RemoveQuestion(int sectionIndex, int questionIndex)
+    {
+        var section = template.Sections[sectionIndex];
+        if (questionIndex >= 0 && questionIndex < section.Questions.Count)
+        {
+            section.Questions.RemoveAt(questionIndex);
+            // Reorder remaining questions
+            for (int i = 0; i < section.Questions.Count; i++)
+            {
+                section.Questions[i].Order = i;
+            }
+        }
+    }
+
+    private void MoveQuestionUp(int sectionIndex, int questionIndex)
+    {
+        var questions = template.Sections[sectionIndex].Questions;
+        if (questionIndex > 0)
+        {
+            (questions[questionIndex], questions[questionIndex - 1]) = (questions[questionIndex - 1], questions[questionIndex]);
+            questions[questionIndex].Order = questionIndex;
+            questions[questionIndex - 1].Order = questionIndex - 1;
+        }
+    }
+
+    private void MoveQuestionDown(int sectionIndex, int questionIndex)
+    {
+        var questions = template.Sections[sectionIndex].Questions;
+        if (questionIndex < questions.Count - 1)
+        {
+            (questions[questionIndex], questions[questionIndex + 1]) = (questions[questionIndex + 1], questions[questionIndex]);
+            questions[questionIndex].Order = questionIndex;
+            questions[questionIndex + 1].Order = questionIndex + 1;
+        }
+    }
+
+    private string GetQuestionTypeIcon(QuestionType type)
+    {
+        return type switch
+        {
+            QuestionType.RatingQuestion => "star_rate",
+            QuestionType.TextQuestion => "text_fields",
+            QuestionType.GoalQuestion => "flag",
+            QuestionType.SingleChoice => "radio_button_checked",
+            QuestionType.MultipleChoice => "check_box",
+            QuestionType.DateQuestion => "calendar_today",
+            QuestionType.NumberQuestion => "123",
+            QuestionType.FileUpload => "upload_file",
+            QuestionType.YesNoQuestion => "toggle_on",
+            QuestionType.CustomHTML => "code",
+            _ => "help"
+        };
+    }
+
+    private RenderFragment GetQuestionPreview(QuestionItem question)
+    {
+        return question.Type switch
+        {
+            QuestionType.TextQuestion => @<RadzenTextArea Placeholder="Text answer..." Disabled="true" Class="w-100" />,
+            QuestionType.RatingQuestion => @<RadzenRating Value="0" Disabled="true" Stars="4" />,
+            QuestionType.YesNoQuestion => @<RadzenToggleButton Text="Yes/No" Disabled="true" />,
+            QuestionType.DateQuestion => @<RadzenDatePicker TValue="DateTime?" Placeholder="Select date..." Disabled="true" />,
+            QuestionType.NumberQuestion => @<RadzenNumeric TValue="int" Placeholder="Enter number..." Disabled="true" />,
+            _ => @<RadzenTextBox Placeholder="Preview not available" Disabled="true" Class="w-100" />
+        };
+    }
+
+    private async Task PreviewQuestionnaire()
+    {
+        // Open questionnaire in preview mode
+        NotificationService.Notify(NotificationSeverity.Info, "Preview", "Preview functionality would open here");
+    }
+
+    private async Task SaveQuestionnaire()
+    {
+        if (string.IsNullOrWhiteSpace(template.Name))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Validation Error", "Please enter a template name");
+            return;
+        }
+
+        template.LastModified = DateTime.Now;
+        // TODO: Save to database
+        NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template saved successfully");
+    }
+
+    private async Task PublishQuestionnaire()
+    {
+        await SaveQuestionnaire();
+        template.IsActive = true;
+        // TODO: Additional publish logic
+        NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template published successfully");
+    }
+
+    // Helper methods to avoid section/question directive conflicts
+    private string GetSectionTitle(QuestionSection section) => section.Title;
+    private void SetSectionTitle(QuestionSection section, string value) => section.Title = value ?? "";
+    
+    private string GetSectionDescription(QuestionSection section) => section.Description;
+    private void SetSectionDescription(QuestionSection section, string value) => section.Description = value ?? "";
+    
+    private string GetQuestionTitle(QuestionItem question) => question.Title;
+    private void SetQuestionTitle(QuestionItem question, string value) => question.Title = value ?? "";
+    
+    private string GetQuestionDescription(QuestionItem question) => question.Description;
+    private void SetQuestionDescription(QuestionItem question, string value) => question.Description = value ?? "";
+
+    private void AddQuestionOfType(QuestionType questionType)
+    {
+        if (selectedSectionIndex >= 0 && selectedSectionIndex < template.Sections.Count)
+        {
+            var section = template.Sections[selectedSectionIndex];
+            var newQuestion = new QuestionItem
+            {
+                Id = Guid.NewGuid(),
+                Title = GetDefaultQuestionTitle(questionType),
+                Type = questionType,
+                Order = section.Questions.Count,
+                IsRequired = true
+            };
+            
+            section.Questions.Add(newQuestion);
+        }
+        
+        // Reset selection state
+        showQuestionTypeSelection = false;
+        selectedSectionIndex = -1;
+        selectedQuestionType = null;
+    }
+    
+    private void CancelQuestionTypeSelection()
+    {
+        showQuestionTypeSelection = false;
+        selectedSectionIndex = -1;
+        selectedQuestionType = null;
+    }
+
+    private string GetDefaultQuestionTitle(QuestionType type)
+    {
+        return type switch
+        {
+            QuestionType.RatingQuestion => "Rate your performance on this competency",
+            QuestionType.TextQuestion => "Please provide your thoughts",
+            QuestionType.GoalQuestion => "Set your goal for this area",
+            QuestionType.SingleChoice => "Select the best option",
+            QuestionType.MultipleChoice => "Select all that apply",
+            QuestionType.DateQuestion => "Select a date",
+            QuestionType.NumberQuestion => "Enter a number",
+            QuestionType.YesNoQuestion => "Do you agree?",
+            QuestionType.FileUpload => "Upload your document",
+            QuestionType.CustomHTML => "Custom content",
+            _ => "New Question"
+        };
+    }
+}

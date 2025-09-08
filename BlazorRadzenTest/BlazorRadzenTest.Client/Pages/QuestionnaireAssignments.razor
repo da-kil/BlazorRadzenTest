@@ -1,0 +1,438 @@
+@page "/questionnaire-assignments"
+@using BlazorRadzenTest.Client.Models
+@using Radzen
+@using Radzen.Blazor
+@using System.Linq
+
+<PageTitle>Questionnaire Assignments</PageTitle>
+
+<div class="container-fluid">
+    <RadzenCard Class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
+                    <RadzenIcon Icon="assignment" Class="me-2" />
+                    Questionnaire Assignments
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                    Assign questionnaires to employees and track completion
+                </RadzenText>
+            </div>
+            <RadzenButton Text="New Assignment" 
+                         ButtonStyle="ButtonStyle.Primary" 
+                         Icon="add"
+                         Click="@ShowAssignmentDialog" />
+        </div>
+
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="All Assignments">
+                    <div class="p-3">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div class="d-flex gap-2">
+                                <RadzenDropDown @bind-Value="@statusFilter" 
+                                               Data="@statusOptions" 
+                                               TextProperty="Text" 
+                                               ValueProperty="Value"
+                                               Placeholder="Filter by Status"
+                                               AllowClear="true"
+                                               Change="@FilterAssignments"
+                                               Class="me-2" />
+                                <RadzenTextBox @bind-Value="@searchText" 
+                                              Placeholder="Search employees..."
+                                              oninput="@FilterAssignments" />
+                            </div>
+                            <div class="d-flex gap-2">
+                                <RadzenButton Text="Bulk Assign" 
+                                             ButtonStyle="ButtonStyle.Secondary" 
+                                             Icon="group_add"
+                                             Click="@ShowBulkAssignDialog" />
+                                <RadzenButton Text="Send Reminders" 
+                                             ButtonStyle="ButtonStyle.Warning" 
+                                             Icon="notifications"
+                                             Click="@SendReminders" />
+                            </div>
+                        </div>
+
+                        <RadzenDataGrid @ref="assignmentsGrid" 
+                                       Data="@filteredAssignments" 
+                                       AllowFiltering="true" 
+                                       AllowColumnResize="true"
+                                       AllowAlternatingRows="true" 
+                                       FilterMode="FilterMode.Advanced" 
+                                       AllowSorting="true" 
+                                       PageSize="20" 
+                                       AllowPaging="true" 
+                                       PagerHorizontalAlign="HorizontalAlign.Left" 
+                                       ShowPagingSummary="true"
+                                       SelectionMode="DataGridSelectionMode.Multiple" 
+                                       Value="@selectedAssignments"
+                                       ValueChanged="@(EventCallback.Factory.Create<IList<QuestionnaireAssignment>>(this, OnSelectionChanged))">
+                            
+                            <Columns>
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.EmployeeName)" Title="Employee" Frozen="true" Width="200px">
+                                    <Template Context="assignment">
+                                        <div>
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@assignment.EmployeeName</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@assignment.EmployeeEmail</RadzenText>
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Property="TemplateName" Title="Questionnaire" Width="250px">
+                                    <Template Context="assignment">
+                                        <div>
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@GetTemplateName(assignment.TemplateId)</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@GetTemplateCategory(assignment.TemplateId)</RadzenText>
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.Status)" Title="Status" Width="130px">
+                                    <Template Context="assignment">
+                                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(assignment.Status)" 
+                                                   Text="@assignment.Status.ToString()" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedDate)" Title="Assigned" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+                                
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.DueDate)" Title="Due Date" Width="120px">
+                                    <Template Context="assignment">
+                                        @if (assignment.DueDate.HasValue)
+                                        {
+                                            var isOverdue = assignment.DueDate < DateTime.Now && assignment.Status != AssignmentStatus.Completed;
+                                            <RadzenText TextStyle="TextStyle.Body2" 
+                                                       Class="@(isOverdue ? "text-danger fw-bold" : "")">
+                                                @assignment.DueDate.Value.ToString("dd/MM/yyyy")
+                                                @if (isOverdue) { <RadzenIcon Icon="warning" Class="ms-1" /> }
+                                            </RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No due date</span>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.CompletedDate)" Title="Completed" Width="120px">
+                                    <Template Context="assignment">
+                                        @if (assignment.CompletedDate.HasValue)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2">@assignment.CompletedDate.Value.ToString("dd/MM/yyyy")</RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedBy)" Title="Assigned By" Width="150px" />
+                                
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="120px" TextAlign="TextAlign.Center">
+                                    <Template Context="assignment">
+                                        <RadzenDropDown Data="@GetActionOptions(assignment)" 
+                                                       TextProperty="Text" 
+                                                       ValueProperty="Value"
+                                                       TValue="string"
+                                                       Placeholder="Actions"
+                                                       Change="@(args => ExecuteAction(assignment, args))"
+                                                       Style="width: 100px" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </div>
+                </RadzenTabsItem>
+                
+                <RadzenTabsItem Text="Dashboard">
+                    <div class="p-3">
+                        <RadzenText TextStyle="TextStyle.H5" Class="mb-4">Assignment Dashboard</RadzenText>
+                        
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenCard Class="text-center p-3 h-100">
+                                    <RadzenIcon Icon="assignment" Style="font-size: 2.5rem; color: var(--rz-primary);" />
+                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@assignments.Count</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Total Assignments</RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenCard Class="text-center p-3 h-100">
+                                    <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; color: var(--rz-warning);" />
+                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@assignments.Count(a => a.Status == AssignmentStatus.InProgress)</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">In Progress</RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenCard Class="text-center p-3 h-100">
+                                    <RadzenIcon Icon="check_circle" Style="font-size: 2.5rem; color: var(--rz-success);" />
+                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@assignments.Count(a => a.Status == AssignmentStatus.Completed)</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Completed</RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="3">
+                                <RadzenCard Class="text-center p-3 h-100">
+                                    <RadzenIcon Icon="warning" Style="font-size: 2.5rem; color: var(--rz-danger);" />
+                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@assignments.Count(a => a.Status == AssignmentStatus.Overdue)</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Overdue</RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow Gap="1rem" Class="mt-4">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCard Class="p-3">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Completion Rate by Questionnaire</RadzenText>
+                                    <RadzenChart>
+                                        <RadzenDonutSeries Data="@GetCompletionData()" 
+                                                          CategoryProperty="Template" 
+                                                          ValueProperty="CompletionRate"
+                                                          Title="Completion Rate" />
+                                    </RadzenChart>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCard Class="p-3">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Recent Activity</RadzenText>
+                                    <div class="activity-list">
+                                        @foreach (var activity in GetRecentActivity().Take(5))
+                                        {
+                                            <div class="d-flex align-items-center mb-2 p-2 border-bottom">
+                                                <RadzenIcon Icon="@activity.Icon" Class="me-2" />
+                                                <div class="flex-grow-1">
+                                                    <RadzenText TextStyle="TextStyle.Body2">@activity.Description</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@activity.Time.ToString("dd/MM/yyyy HH:mm")</RadzenText>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </div>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
+    </RadzenCard>
+</div>
+
+@code {
+    [Inject] protected DialogService DialogService { get; set; } = default!;
+    [Inject] protected NotificationService NotificationService { get; set; } = default!;
+
+    private RadzenDataGrid<QuestionnaireAssignment> assignmentsGrid = default!;
+    private List<QuestionnaireAssignment> assignments = new();
+    private List<QuestionnaireAssignment> filteredAssignments = new();
+    private List<QuestionnaireAssignment> selectedAssignments = new();
+    
+    private string searchText = "";
+    private AssignmentStatus? statusFilter;
+    
+    private readonly List<StatusOption> statusOptions = new()
+    {
+        new("All", null),
+        new("Assigned", AssignmentStatus.Assigned),
+        new("In Progress", AssignmentStatus.InProgress),
+        new("Completed", AssignmentStatus.Completed),
+        new("Overdue", AssignmentStatus.Overdue),
+        new("Cancelled", AssignmentStatus.Cancelled)
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAssignments();
+        FilterAssignments();
+    }
+
+    private async Task LoadAssignments()
+    {
+        // In a real application, load from database
+        assignments = new List<QuestionnaireAssignment>
+        {
+            new() { EmployeeName = "John Doe", EmployeeEmail = "john.doe@company.com", TemplateId = Guid.NewGuid(), AssignedDate = DateTime.Now.AddDays(-5), Status = AssignmentStatus.InProgress },
+            new() { EmployeeName = "Jane Smith", EmployeeEmail = "jane.smith@company.com", TemplateId = Guid.NewGuid(), AssignedDate = DateTime.Now.AddDays(-10), Status = AssignmentStatus.Completed, CompletedDate = DateTime.Now.AddDays(-2) },
+            new() { EmployeeName = "Bob Johnson", EmployeeEmail = "bob.johnson@company.com", TemplateId = Guid.NewGuid(), AssignedDate = DateTime.Now.AddDays(-15), DueDate = DateTime.Now.AddDays(-5), Status = AssignmentStatus.Overdue },
+        };
+    }
+
+    private void FilterAssignments()
+    {
+        filteredAssignments = assignments.Where(a =>
+            (statusFilter == null || a.Status == statusFilter) &&
+            (string.IsNullOrWhiteSpace(searchText) || 
+             a.EmployeeName.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             a.EmployeeEmail.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        ).ToList();
+        
+        StateHasChanged();
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => BadgeStyle.Secondary,
+            AssignmentStatus.InProgress => BadgeStyle.Info,
+            AssignmentStatus.Completed => BadgeStyle.Success,
+            AssignmentStatus.Overdue => BadgeStyle.Danger,
+            AssignmentStatus.Cancelled => BadgeStyle.Light,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private string GetTemplateName(Guid templateId)
+    {
+        // In real app, look up from templates
+        return "Employee Performance Review";
+    }
+
+    private string GetTemplateCategory(Guid templateId)
+    {
+        return "Performance Review";
+    }
+
+    private List<ActionOption> GetActionOptions(QuestionnaireAssignment assignment)
+    {
+        var options = new List<ActionOption>
+        {
+            new("View", "view"),
+            new("Edit", "edit"),
+        };
+
+        if (assignment.Status == AssignmentStatus.Assigned)
+        {
+            options.Add(new("Send Reminder", "remind"));
+        }
+
+        if (assignment.Status != AssignmentStatus.Completed)
+        {
+            options.Add(new("Cancel", "cancel"));
+        }
+
+        return options;
+    }
+
+    private void OnSelectionChanged(IList<QuestionnaireAssignment> selection)
+    {
+        selectedAssignments = selection.ToList();
+    }
+
+    private async Task ExecuteAction(QuestionnaireAssignment assignment, object value)
+    {
+        var action = value?.ToString();
+        switch (action)
+        {
+            case "view":
+                await ViewAssignment(assignment);
+                break;
+            case "edit":
+                await EditAssignment(assignment);
+                break;
+            case "remind":
+                await SendReminder(assignment);
+                break;
+            case "cancel":
+                await CancelAssignment(assignment);
+                break;
+        }
+    }
+
+    private async Task ShowAssignmentDialog()
+    {
+        // TODO: Show assignment creation dialog
+        NotificationService.Notify(NotificationSeverity.Info, "Assignment", "Assignment dialog would open here");
+    }
+
+    private async Task ShowBulkAssignDialog()
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Bulk Assign", "Bulk assignment dialog would open here");
+    }
+
+    private async Task ViewAssignment(QuestionnaireAssignment assignment)
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "View", $"Viewing assignment for {assignment.EmployeeName}");
+    }
+
+    private async Task EditAssignment(QuestionnaireAssignment assignment)
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Edit", $"Editing assignment for {assignment.EmployeeName}");
+    }
+
+    private async Task SendReminder(QuestionnaireAssignment assignment)
+    {
+        NotificationService.Notify(NotificationSeverity.Success, "Reminder Sent", $"Reminder sent to {assignment.EmployeeName}");
+    }
+
+    private async Task SendReminders()
+    {
+        var pendingCount = assignments.Count(a => a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress);
+        NotificationService.Notify(NotificationSeverity.Success, "Reminders Sent", $"Reminders sent to {pendingCount} employees");
+    }
+
+    private async Task CancelAssignment(QuestionnaireAssignment assignment)
+    {
+        assignment.Status = AssignmentStatus.Cancelled;
+        NotificationService.Notify(NotificationSeverity.Info, "Cancelled", $"Assignment cancelled for {assignment.EmployeeName}");
+        FilterAssignments();
+    }
+
+    private List<CompletionData> GetCompletionData()
+    {
+        // Group by template and calculate completion rates
+        return new List<CompletionData>
+        {
+            new() { Template = "Performance Review", CompletionRate = 75 },
+            new() { Template = "Training Assessment", CompletionRate = 90 },
+            new() { Template = "Team Evaluation", CompletionRate = 60 }
+        };
+    }
+
+    private List<ActivityItem> GetRecentActivity()
+    {
+        return new List<ActivityItem>
+        {
+            new() { Icon = "check_circle", Description = "Jane Smith completed Performance Review", Time = DateTime.Now.AddHours(-2) },
+            new() { Icon = "assignment", Description = "New assignment created for Bob Johnson", Time = DateTime.Now.AddHours(-4) },
+            new() { Icon = "schedule", Description = "Reminder sent to John Doe", Time = DateTime.Now.AddHours(-6) },
+            new() { Icon = "warning", Description = "Assignment overdue for Mike Wilson", Time = DateTime.Now.AddDays(-1) },
+        };
+    }
+
+    // Helper classes
+    public class StatusOption
+    {
+        public StatusOption(string text, AssignmentStatus? value)
+        {
+            Text = text;
+            Value = value;
+        }
+        public string Text { get; set; }
+        public AssignmentStatus? Value { get; set; }
+    }
+
+    public class ActionOption
+    {
+        public ActionOption(string text, string value)
+        {
+            Text = text;
+            Value = value;
+        }
+        public string Text { get; set; }
+        public string Value { get; set; }
+    }
+
+    public class CompletionData
+    {
+        public string Template { get; set; } = "";
+        public int CompletionRate { get; set; }
+    }
+
+    public class ActivityItem
+    {
+        public string Icon { get; set; } = "";
+        public string Description { get; set; } = "";
+        public DateTime Time { get; set; }
+    }
+}
