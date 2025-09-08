@@ -2,6 +2,7 @@
 @using BlazorRadzenTest.Client.Models
 @using Radzen
 @using Radzen.Blazor
+@using BlazorRadzenTest.Client.Services
 
 <PageTitle>Questionnaire Management</PageTitle>
 
@@ -275,6 +276,7 @@
     [Inject] protected DialogService DialogService { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] protected IQuestionnaireApiService ApiService { get; set; } = default!;
 
     private List<QuestionnaireTemplate> templates = new();
     private List<QuestionnaireTemplate> filteredTemplates = new();
@@ -294,43 +296,22 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadTemplates();
+        await LoadAnalytics();
         LoadSettings();
         FilterTemplates();
     }
 
     private async Task LoadTemplates()
     {
-        // In real app, load from database
-        templates = new List<QuestionnaireTemplate>
+        try
         {
-            new QuestionnaireTemplate
-            {
-                Id = Guid.NewGuid(),
-                Name = "Annual Performance Review",
-                Description = "Comprehensive yearly performance evaluation",
-                Category = "Performance Review",
-                IsActive = true,
-                CreatedDate = DateTime.Now.AddDays(-30),
-                LastModified = DateTime.Now.AddDays(-5),
-                Sections = new List<QuestionSection>
-                {
-                    new QuestionSection { Questions = new List<QuestionItem> { new QuestionItem(), new QuestionItem() } }
-                }
-            },
-            new QuestionnaireTemplate
-            {
-                Id = Guid.NewGuid(),
-                Name = "Team Feedback Survey",
-                Description = "Quarterly team dynamics assessment",
-                Category = "Team Evaluation",
-                IsActive = true,
-                CreatedDate = DateTime.Now.AddDays(-15),
-                Sections = new List<QuestionSection>
-                {
-                    new QuestionSection { Questions = new List<QuestionItem> { new QuestionItem() } }
-                }
-            }
-        };
+            templates = await ApiService.GetAllTemplatesAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load templates: {ex.Message}");
+            templates = new List<QuestionnaireTemplate>();
+        }
     }
 
     private void LoadSettings()
@@ -380,11 +361,31 @@
 
     private async Task ToggleTemplateStatus(QuestionnaireTemplate template)
     {
-        template.IsActive = !template.IsActive;
-        template.LastModified = DateTime.Now;
-        var status = template.IsActive ? "activated" : "deactivated";
-        NotificationService.Notify(NotificationSeverity.Success, "Status Updated", $"Template '{template.Name}' has been {status}");
-        FilterTemplates();
+        try
+        {
+            template.IsActive = !template.IsActive;
+            template.LastModified = DateTime.Now;
+            
+            var updatedTemplate = await ApiService.UpdateTemplateAsync(template);
+            if (updatedTemplate != null)
+            {
+                var status = template.IsActive ? "activated" : "deactivated";
+                NotificationService.Notify(NotificationSeverity.Success, "Status Updated", $"Template '{template.Name}' has been {status}");
+                FilterTemplates();
+            }
+            else
+            {
+                // Revert the change if API call failed
+                template.IsActive = !template.IsActive;
+                NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update template status");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Revert the change if API call failed
+            template.IsActive = !template.IsActive;
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update template: {ex.Message}");
+        }
     }
 
     private async Task SaveSettings()
@@ -394,9 +395,31 @@
     }
 
     // Analytics methods
-    private int GetTotalResponses() => 156;
-    private int GetPendingResponses() => 23;
-    private int GetCompletionRate() => 87;
+    private Dictionary<string, object> analyticsData = new();
+    
+    private async Task LoadAnalytics()
+    {
+        try
+        {
+            analyticsData = await ApiService.GetOverallAnalyticsAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to load analytics: {ex.Message}");
+            analyticsData = new Dictionary<string, object>();
+        }
+    }
+    
+    private int GetTotalResponses() => 
+        analyticsData.TryGetValue("TotalResponses", out var value) && value is int responses ? responses : 0;
+        
+    private int GetPendingResponses() => 
+        analyticsData.TryGetValue("TotalAssignments", out var total) && 
+        analyticsData.TryGetValue("CompletedResponses", out var completed) && 
+        total is int totalInt && completed is int completedInt ? totalInt - completedInt : 0;
+        
+    private int GetCompletionRate() => 
+        analyticsData.TryGetValue("OverallCompletionRate", out var value) && value is double rate ? (int)Math.Round(rate) : 0;
 
     private List<ResponseTrend> GetResponseTrends()
     {

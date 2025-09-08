@@ -5,7 +5,10 @@
       "Bash(dotnet run:*)",
       "Bash(dotnet build:*)",
       "Bash(dir:*)",
-      "Bash(del \"C:\\projects\\BlazorRadzenTest\\BlazorRadzenTest\\BlazorRadzenTest.Client\\Components\\QuestionTypeDialog.razor\")"
+      "Bash(del \"C:\\projects\\BlazorRadzenTest\\BlazorRadzenTest\\BlazorRadzenTest.Client\\Components\\QuestionTypeDialog.razor\")",
+      "Bash(curl:*)",
+      "Bash(python -m http.server:*)",
+      "Bash(npx http-server:*)"
     ],
     "deny": [],
     "ask": []

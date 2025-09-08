@@ -2,6 +2,7 @@
 @page "/questionnaire-builder/{TemplateId:guid?}"
 @using BlazorRadzenTest.Client.Models
 @using BlazorRadzenTest.Client.Components
+@using BlazorRadzenTest.Client.Services
 @using Radzen
 @using Radzen.Blazor
 
@@ -387,6 +388,7 @@
     [Inject] protected DialogService DialogService { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] protected IQuestionnaireApiService ApiService { get; set; } = default!;
 
     private QuestionnaireTemplate template = new();
     private bool IsEditMode => TemplateId.HasValue;
@@ -570,9 +572,33 @@
             return;
         }
 
-        template.LastModified = DateTime.Now;
-        // TODO: Save to database
-        NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template saved successfully");
+        try
+        {
+            template.LastModified = DateTime.Now;
+            
+            if (IsEditMode)
+            {
+                var updated = await ApiService.UpdateTemplateAsync(template);
+                if (updated != null)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template updated successfully");
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update template");
+                }
+            }
+            else
+            {
+                var created = await ApiService.CreateTemplateAsync(template);
+                template.Id = created.Id; // Update with the server-generated ID
+                NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save template: {ex.Message}");
+        }
     }
 
     private async Task PublishQuestionnaire()
