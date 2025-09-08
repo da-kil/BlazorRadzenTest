@@ -1,0 +1,36 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Class="mb-3">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">@Title</RadzenText>
+    
+    @foreach (var question in Questions)
+    {
+        <div class="mb-4">
+            <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">@question</RadzenText>
+            <RadzenTextArea Value="@GetAnswer(question)" 
+                          ValueChanged="@(value => UpdateAnswer(question, value))"
+                          Rows="4" 
+                          Placeholder="Enter your answer here..." 
+                          Class="w-100" />
+        </div>
+    }
+</RadzenCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public List<string> Questions { get; set; } = new();
+    [Parameter] public Dictionary<string, string> Answers { get; set; } = new();
+    [Parameter] public EventCallback<Dictionary<string, string>> AnswersChanged { get; set; }
+
+    private string GetAnswer(string question)
+    {
+        return Answers.TryGetValue(question, out var answer) ? answer : string.Empty;
+    }
+
+    private async Task UpdateAnswer(string question, string value)
+    {
+        Answers[question] = value ?? string.Empty;
+        await AnswersChanged.InvokeAsync(Answers);
+    }
+}

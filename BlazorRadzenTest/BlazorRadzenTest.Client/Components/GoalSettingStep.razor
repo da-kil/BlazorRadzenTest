@@ -1,0 +1,277 @@
+@using BlazorRadzenTest.Client.Models
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Class="goal-setting-step">
+    <RadzenText TextStyle="TextStyle.H4" Class="text-primary mb-3">
+        <RadzenIcon Icon="flag" Class="me-2" />
+        2024 Goal Setting
+    </RadzenText>
+    
+    <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">
+        In this section, you and your supervisor will jointly define goals for 2024. 
+        Please use the table below to set clear and achievable goals whose success is measurable 
+        and plan the necessary steps for goal achievement.
+    </RadzenText>
+
+    <div class="mb-4 d-flex justify-content-between align-items-center">
+        <RadzenButton Text="Add Goal" 
+                     ButtonStyle="ButtonStyle.Primary" 
+                     Icon="add" 
+                     Size="ButtonSize.Medium"
+                     Click="@AddGoal" />
+        
+        @if (Goals.Count > 0)
+        {
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                Total Weighting: @totalWeighting.ToString("F1")% 
+                @if (totalWeighting != 100)
+                {
+                    <span class="text-warning">(Target: 100%)</span>
+                }
+                else
+                {
+                    <span class="text-success">✓</span>
+                }
+            </RadzenText>
+        }
+    </div>
+
+    @if (Goals.Count == 0)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+            <RadzenText TextStyle="TextStyle.Body2">
+                Click "Add Goal" to start defining your 2024 objectives. Goals should be SMART (Specific, Measurable, Achievable, Relevant, Time-bound).
+            </RadzenText>
+        </RadzenAlert>
+    }
+
+    @for (int i = 0; i < Goals.Count; i++)
+    {
+        var goalIndex = i;
+        var goal = Goals[goalIndex];
+
+        <RadzenCard Class="@($"goal-card mb-4 p-3 border {GetGoalCardClass(goal)}")">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                    <RadzenIcon Icon="@GetGoalIcon(goal)" Class="me-2" />
+                    Goal @(goalIndex + 1)
+                </RadzenText>
+                <div class="d-flex align-items-center">
+                    <RadzenBadge BadgeStyle="@GetWeightingBadgeStyle(goal.WeightingPercentage)" 
+                               Text="@($"{goal.WeightingPercentage:F0}%")" 
+                               Class="me-2" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                 Icon="delete" 
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => RemoveGoal(goalIndex))" />
+                </div>
+            </div>
+
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <div class="mb-3">
+                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
+                            <RadzenIcon Icon="schedule" Class="me-1" />
+                            Time Frame - Start Date
+                        </RadzenText>
+                        <RadzenDatePicker @bind-Value="@goal.StartDate"
+                                        @bind-Value:after="UpdateGoals"
+                                        ShowTime="false"
+                                        DateFormat="dd/MM/yyyy"
+                                        Class="w-100" />
+                    </div>
+                </RadzenColumn>
+                
+                <RadzenColumn Size="12" SizeMD="6">
+                    <div class="mb-3">
+                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
+                            <RadzenIcon Icon="event" Class="me-1" />
+                            Time Frame - End Date
+                        </RadzenText>
+                        <RadzenDatePicker @bind-Value="@goal.EndDate"
+                                        @bind-Value:after="UpdateGoals"
+                                        ShowTime="false"
+                                        DateFormat="dd/MM/yyyy"
+                                        Class="w-100" />
+                    </div>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
+                    <RadzenIcon Icon="description" Class="me-1" />
+                    Goal Description
+                </RadzenText>
+                <RadzenTextArea @bind-Value="@goal.Description"
+                              @bind-Value:after="UpdateGoals"
+                              Placeholder="Describe your goal in detail. What specifically do you want to achieve?"
+                              Rows="3"
+                              Class="w-100" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
+                    <RadzenIcon Icon="analytics" Class="me-1" />
+                    Measurement Criteria
+                </RadzenText>
+                <RadzenTextArea @bind-Value="@goal.MeasurementCriteria"
+                              @bind-Value:after="UpdateGoals"
+                              Placeholder="How will success be measured? Define specific, quantifiable metrics..."
+                              Rows="2"
+                              Class="w-100" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
+                    <RadzenIcon Icon="percent" Class="me-1" />
+                    Weighting (%)
+                </RadzenText>
+                <RadzenNumeric @bind-Value="@goal.WeightingPercentage"
+                             @bind-Value:after="UpdateGoals"
+                             Min="0"
+                             Max="100"
+                             Step="5"
+                             Format="0.0"
+                             Class="w-100" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    How important is this goal relative to your other objectives?
+                </RadzenText>
+            </div>
+
+            @if (goal.StartDate.HasValue && goal.EndDate.HasValue)
+            {
+                var duration = (goal.EndDate.Value - goal.StartDate.Value).Days;
+                <div class="goal-duration-info p-2 bg-light rounded">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                        <RadzenIcon Icon="timer" Class="me-1" />
+                        Duration: @duration days (@(duration / 30.0).ToString("F1") months)
+                    </RadzenText>
+                </div>
+            }
+        </RadzenCard>
+    }
+
+    @if (Goals.Count > 0)
+    {
+        <RadzenCard Class="summary-section p-3 bg-light">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                <RadzenIcon Icon="summarize" Class="me-2" />
+                Goal Summary
+            </RadzenText>
+            <RadzenRow>
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Total Goals:</strong> @Goals.Count
+                    </RadzenText>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Total Weighting:</strong> @totalWeighting.ToString("F1")%
+                    </RadzenText>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Completed Goals:</strong> @completedGoals/@Goals.Count
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
+
+            @if (Math.Abs(totalWeighting - 100) > 0.1m)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Class="mt-3" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Weighting Notice:</strong> Total weighting should equal 100%. 
+                        Current total: @totalWeighting.ToString("F1")%
+                    </RadzenText>
+                </RadzenAlert>
+            }
+        </RadzenCard>
+    }
+</RadzenCard>
+
+@code {
+    [Parameter] public List<AnnualGoal> Goals { get; set; } = new();
+    [Parameter] public EventCallback<List<AnnualGoal>> GoalsChanged { get; set; }
+    
+    [Parameter] public bool CanProceed { get; set; } = false;
+    [Parameter] public EventCallback<bool> CanProceedChanged { get; set; }
+
+    private decimal totalWeighting => Goals.Sum(g => g.WeightingPercentage);
+    private int completedGoals => Goals.Count(g => IsGoalComplete(g));
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Goals.Count == 0)
+        {
+            await AddGoal();
+        }
+        await UpdateValidation();
+    }
+
+    private async Task AddGoal()
+    {
+        Goals.Add(new AnnualGoal 
+        { 
+            StartDate = DateTime.Now.Date,
+            EndDate = DateTime.Now.Date.AddMonths(3),
+            WeightingPercentage = Math.Max(0, 100 - totalWeighting)
+        });
+        await UpdateGoals();
+    }
+
+    private async Task RemoveGoal(int index)
+    {
+        if (index >= 0 && index < Goals.Count)
+        {
+            Goals.RemoveAt(index);
+            await UpdateGoals();
+        }
+    }
+
+    private async Task UpdateGoals()
+    {
+        await GoalsChanged.InvokeAsync(Goals);
+        await UpdateValidation();
+    }
+
+    private async Task UpdateValidation()
+    {
+        bool canProceed = Goals.Count > 0 && 
+                         Goals.All(g => IsGoalComplete(g)) &&
+                         Math.Abs(totalWeighting - 100) <= 5; // Allow 5% tolerance
+        await CanProceedChanged.InvokeAsync(canProceed);
+    }
+
+    private bool IsGoalComplete(AnnualGoal goal)
+    {
+        return !string.IsNullOrWhiteSpace(goal.Description) &&
+               !string.IsNullOrWhiteSpace(goal.MeasurementCriteria) &&
+               goal.StartDate.HasValue &&
+               goal.EndDate.HasValue &&
+               goal.WeightingPercentage > 0;
+    }
+
+    private string GetGoalCardClass(AnnualGoal goal)
+    {
+        return IsGoalComplete(goal) ? "border-success" : "border-warning";
+    }
+
+    private string GetGoalIcon(AnnualGoal goal)
+    {
+        return IsGoalComplete(goal) ? "check_circle" : "radio_button_unchecked";
+    }
+
+    private BadgeStyle GetWeightingBadgeStyle(decimal weighting)
+    {
+        return weighting switch
+        {
+            >= 30 => BadgeStyle.Danger,
+            >= 20 => BadgeStyle.Warning,
+            >= 10 => BadgeStyle.Info,
+            > 0 => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
+        };
+    }
+
+}

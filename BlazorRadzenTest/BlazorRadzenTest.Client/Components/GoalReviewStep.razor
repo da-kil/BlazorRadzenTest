@@ -1,0 +1,202 @@
+@using BlazorRadzenTest.Client.Models
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Class="goal-review-step">
+    <RadzenText TextStyle="TextStyle.H4" Class="text-primary mb-3">
+        <RadzenIcon Icon="track_changes" Class="me-2" />
+        2023 Goal Achievement Review
+    </RadzenText>
+    
+    <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">
+        In this section, you evaluate how successfully you achieved the goals set for 2023. 
+        Indicate the percentage achieved for each goal and provide your reasoning.
+    </RadzenText>
+
+    <div class="mb-4">
+        <RadzenButton Text="Add Goal" 
+                     ButtonStyle="ButtonStyle.Primary" 
+                     Icon="add" 
+                     Size="ButtonSize.Medium"
+                     Click="@AddGoal" />
+    </div>
+
+    @if (GoalAchievements.Count == 0)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+            <RadzenText TextStyle="TextStyle.Body2">
+                Click "Add Goal" to start evaluating your 2023 goal achievements.
+            </RadzenText>
+        </RadzenAlert>
+    }
+
+    @for (int i = 0; i < GoalAchievements.Count; i++)
+    {
+        var goalIndex = i;
+        var goal = GoalAchievements[goalIndex];
+
+        <RadzenCard Class="goal-card mb-3 p-3 border">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                    Goal @(goalIndex + 1)
+                </RadzenText>
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                             Icon="delete" 
+                             Size="ButtonSize.Small"
+                             Click="@(() => RemoveGoal(goalIndex))" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Goal Description</RadzenText>
+                <RadzenTextArea @bind-Value="@goal.Description"
+                              @bind-Value:after="UpdateGoalAchievements"
+                              Placeholder="Describe the goal that was set for 2023..."
+                              Rows="3"
+                              Class="w-100" />
+            </div>
+
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Percentage</RadzenText>
+                    <div class="d-flex align-items-center">
+                        <RadzenNumeric @bind-Value="@goal.AchievementPercentage"
+                                     @bind-Value:after="UpdateGoalAchievements"
+                                     Min="0" 
+                                     Max="100" 
+                                     Step="5"
+                                     Format="0"
+                                     Class="flex-grow-1 me-2" />
+                        <RadzenText TextStyle="TextStyle.Body1">%</RadzenText>
+                    </div>
+                    <RadzenProgressBar Value="@goal.AchievementPercentage" 
+                                     Max="100" 
+                                     Class="mt-2"
+                                     ProgressBarStyle="@GetProgressStyle(goal.AchievementPercentage)" />
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Status</RadzenText>
+                    <div class="status-indicator p-2 rounded" style="@GetStatusStyle(goal.AchievementPercentage)">
+                        <RadzenIcon Icon="@GetStatusIcon(goal.AchievementPercentage)" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
+                            @GetStatusText(goal.AchievementPercentage)
+                        </RadzenText>
+                    </div>
+                </RadzenColumn>
+            </RadzenRow>
+
+            <div class="mt-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Your Reasoning/Justification</RadzenText>
+                <RadzenTextArea @bind-Value="@goal.EmployeeJustification"
+                              @bind-Value:after="UpdateGoalAchievements"
+                              Placeholder="Explain why you achieved this percentage. What factors contributed to your success or challenges?"
+                              Rows="4"
+                              Class="w-100" />
+            </div>
+        </RadzenCard>
+    }
+
+    @if (GoalAchievements.Count > 0)
+    {
+        <div class="summary-section mt-4 p-3 bg-light rounded">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">Summary</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                Average Achievement: <strong>@(GoalAchievements.Count > 0 ? GoalAchievements.Average(g => g.AchievementPercentage).ToString("F1") : "0")%</strong>
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                Goals Completed: @GoalAchievements.Count(g => !string.IsNullOrWhiteSpace(g.Description) && !string.IsNullOrWhiteSpace(g.EmployeeJustification)) / @GoalAchievements.Count
+            </RadzenText>
+        </div>
+    }
+</RadzenCard>
+
+@code {
+    [Parameter] public List<GoalAchievement> GoalAchievements { get; set; } = new();
+    [Parameter] public EventCallback<List<GoalAchievement>> GoalAchievementsChanged { get; set; }
+    
+    [Parameter] public bool CanProceed { get; set; } = false;
+    [Parameter] public EventCallback<bool> CanProceedChanged { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (GoalAchievements.Count == 0)
+        {
+            await AddGoal();
+        }
+        await UpdateValidation();
+    }
+
+    private async Task AddGoal()
+    {
+        GoalAchievements.Add(new GoalAchievement());
+        await UpdateGoalAchievements();
+    }
+
+    private async Task RemoveGoal(int index)
+    {
+        if (index >= 0 && index < GoalAchievements.Count)
+        {
+            GoalAchievements.RemoveAt(index);
+            await UpdateGoalAchievements();
+        }
+    }
+
+    private async Task UpdateGoalAchievements()
+    {
+        await GoalAchievementsChanged.InvokeAsync(GoalAchievements);
+        await UpdateValidation();
+    }
+
+    private async Task UpdateValidation()
+    {
+        bool canProceed = GoalAchievements.Count > 0 && 
+                         GoalAchievements.All(g => !string.IsNullOrWhiteSpace(g.Description) && 
+                                                  !string.IsNullOrWhiteSpace(g.EmployeeJustification));
+        await CanProceedChanged.InvokeAsync(canProceed);
+    }
+
+    private ProgressBarStyle GetProgressStyle(int percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => ProgressBarStyle.Success,
+            >= 70 => ProgressBarStyle.Info,
+            >= 50 => ProgressBarStyle.Warning,
+            _ => ProgressBarStyle.Danger
+        };
+    }
+
+    private string GetStatusStyle(int percentage)
+    {
+        var color = percentage switch
+        {
+            >= 90 => "background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;",
+            >= 70 => "background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460;",
+            >= 50 => "background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;",
+            _ => "background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;"
+        };
+        return color;
+    }
+
+    private string GetStatusIcon(int percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => "check_circle",
+            >= 70 => "task_alt",
+            >= 50 => "warning",
+            _ => "error"
+        };
+    }
+
+    private string GetStatusText(int percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => "Excellent Achievement",
+            >= 70 => "Good Achievement",
+            >= 50 => "Partial Achievement",
+            _ => "Below Expectations"
+        };
+    }
+
+}

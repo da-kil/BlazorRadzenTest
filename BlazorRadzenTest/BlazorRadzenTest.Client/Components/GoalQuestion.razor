@@ -1,0 +1,95 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Class="mb-3">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Goal Setting</RadzenText>
+    
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Time Frame - From</RadzenText>
+            <RadzenDatePicker @bind-Value="@TimeFrameFrom" 
+                            @bind-Value:after="OnTimeFrameFromChanged"
+                            ShowTime="false" 
+                            DateFormat="dd/MM/yyyy" 
+                            Class="w-100" />
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Time Frame - To</RadzenText>
+            <RadzenDatePicker @bind-Value="@TimeFrameTo" 
+                            @bind-Value:after="OnTimeFrameToChanged"
+                            ShowTime="false" 
+                            DateFormat="dd/MM/yyyy" 
+                            Class="w-100" />
+        </RadzenColumn>
+    </RadzenRow>
+    
+    <div class="mt-3">
+        <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Goal Description</RadzenText>
+        <RadzenTextArea @bind-Value="@GoalDescription" 
+                      @bind-Value:after="OnGoalDescriptionChanged"
+                      Rows="4" 
+                      Placeholder="Describe your goal in detail..." 
+                      Class="w-100" />
+    </div>
+    
+    <div class="mt-3">
+        <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Measurement Variable</RadzenText>
+        <RadzenTextBox @bind-Value="@MeasurementVariable" 
+                     @bind-Value:after="OnMeasurementVariableChanged"
+                     Placeholder="How will success be measured?" 
+                     Class="w-100" />
+    </div>
+    
+    <div class="mt-3">
+        <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Weighting (%)</RadzenText>
+        <RadzenNumeric @bind-Value="@Weighting" 
+                     @bind-Value:after="OnWeightingChanged"
+                     Min="0" 
+                     Max="100" 
+                     Step="5"
+                     Format="0"
+                     Class="w-100" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public DateTime? TimeFrameFrom { get; set; }
+    [Parameter] public EventCallback<DateTime?> TimeFrameFromChanged { get; set; }
+    
+    [Parameter] public DateTime? TimeFrameTo { get; set; }
+    [Parameter] public EventCallback<DateTime?> TimeFrameToChanged { get; set; }
+    
+    [Parameter] public string GoalDescription { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> GoalDescriptionChanged { get; set; }
+    
+    [Parameter] public string MeasurementVariable { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> MeasurementVariableChanged { get; set; }
+    
+    [Parameter] public decimal Weighting { get; set; }
+    [Parameter] public EventCallback<decimal> WeightingChanged { get; set; }
+
+    private async Task OnTimeFrameFromChanged()
+    {
+        await TimeFrameFromChanged.InvokeAsync(TimeFrameFrom);
+    }
+
+    private async Task OnTimeFrameToChanged()
+    {
+        await TimeFrameToChanged.InvokeAsync(TimeFrameTo);
+    }
+
+    private async Task OnGoalDescriptionChanged()
+    {
+        await GoalDescriptionChanged.InvokeAsync(GoalDescription);
+    }
+
+    private async Task OnMeasurementVariableChanged()
+    {
+        await MeasurementVariableChanged.InvokeAsync(MeasurementVariable);
+    }
+
+    private async Task OnWeightingChanged()
+    {
+        await WeightingChanged.InvokeAsync(Weighting);
+    }
+}
