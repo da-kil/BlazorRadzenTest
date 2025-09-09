@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorRadzenTest.Client", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "03_Infrastructure", "03_Infrastructure", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi", "WebApi\WebApi.csproj", "{44B0D956-F556-457C-8289-EA11D7579AC9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApi", "03_Infrastructure\WebApi\WebApi.csproj", "{44B0D956-F556-457C-8289-EA11D7579AC9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorRadzenTest.AppHost", "BlazorRadzenTest.AppHost\BlazorRadzenTest.AppHost.csproj", "{40635F8C-935E-4194-AC75-AB059123AA99}"
 EndProject
