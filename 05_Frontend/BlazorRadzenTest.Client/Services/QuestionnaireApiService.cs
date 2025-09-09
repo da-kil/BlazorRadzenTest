@@ -7,11 +7,10 @@ namespace BlazorRadzenTest.Client.Services;
 public class QuestionnaireApiService : IQuestionnaireApiService
 {
     private readonly HttpClient _httpClient;
-    private readonly string _baseUrl = "https://localhost:7062/api"; // WebAPI URL
 
-    public QuestionnaireApiService(HttpClient httpClient)
+    public QuestionnaireApiService(IHttpClientFactory Factory)
     {
-        _httpClient = httpClient;
+        _httpClient = Factory.CreateClient("ApiClient");
     }
 
     // Template management
@@ -19,7 +18,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireTemplate>>($"{_baseUrl}/questionnaireTemplates");
+            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireTemplate>>("api/QuestionnaireTemplates");
             return response ?? new List<QuestionnaireTemplate>();
         }
         catch (Exception ex)
@@ -33,7 +32,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            return await _httpClient.GetFromJsonAsync<QuestionnaireTemplate>($"{_baseUrl}/questionnaireTemplates/{id}");
+            return await _httpClient.GetFromJsonAsync<QuestionnaireTemplate>($"api/QuestionnaireTemplates/{id}");
         }
         catch (Exception ex)
         {
@@ -55,7 +54,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
                 Settings = template.Settings
             };
 
-            var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/questionnaireTemplates", createRequest);
+            var response = await _httpClient.PostAsJsonAsync("api/questionnaireTemplates", createRequest);
             response.EnsureSuccessStatusCode();
             
             var result = await response.Content.ReadFromJsonAsync<QuestionnaireTemplate>();
@@ -82,7 +81,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
                 Settings = template.Settings
             };
 
-            var response = await _httpClient.PutAsJsonAsync($"{_baseUrl}/questionnaireTemplates/{template.Id}", updateRequest);
+            var response = await _httpClient.PutAsJsonAsync("api/questionnaireTemplates/{template.Id}", updateRequest);
             response.EnsureSuccessStatusCode();
             
             return await response.Content.ReadFromJsonAsync<QuestionnaireTemplate>();
@@ -98,7 +97,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.DeleteAsync($"{_baseUrl}/questionnaireTemplates/{id}");
+            var response = await _httpClient.DeleteAsync("api/questionnaireTemplates/{id}");
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -112,7 +111,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireTemplate>>($"{_baseUrl}/questionnaireTemplates/category/{category}");
+            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireTemplate>>("api/questionnaireTemplates/category/{category}");
             return response ?? new List<QuestionnaireTemplate>();
         }
         catch (Exception ex)
@@ -127,7 +126,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireAssignment>>($"{_baseUrl}/assignments");
+            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireAssignment>>("api/assignments");
             return response ?? new List<QuestionnaireAssignment>();
         }
         catch (Exception ex)
@@ -141,7 +140,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            return await _httpClient.GetFromJsonAsync<QuestionnaireAssignment>($"{_baseUrl}/assignments/{id}");
+            return await _httpClient.GetFromJsonAsync<QuestionnaireAssignment>("api/assignments/{id}");
         }
         catch (Exception ex)
         {
@@ -154,7 +153,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireAssignment>>($"{_baseUrl}/assignments/employee/{employeeId}");
+            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireAssignment>>("api/assignments/employee/{employeeId}");
             return response ?? new List<QuestionnaireAssignment>();
         }
         catch (Exception ex)
@@ -182,7 +181,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
                 AssignedBy = assignedBy
             };
 
-            var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/assignments", createRequest);
+            var response = await _httpClient.PostAsJsonAsync("api/assignments", createRequest);
             response.EnsureSuccessStatusCode();
             
             var result = await response.Content.ReadFromJsonAsync<List<QuestionnaireAssignment>>();
@@ -199,7 +198,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.PatchAsJsonAsync($"{_baseUrl}/assignments/{id}/status", status);
+            var response = await _httpClient.PatchAsJsonAsync("api/assignments/{id}/status", status);
             response.EnsureSuccessStatusCode();
             
             return await response.Content.ReadFromJsonAsync<QuestionnaireAssignment>();
@@ -215,7 +214,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.DeleteAsync($"{_baseUrl}/assignments/{id}");
+            var response = await _httpClient.DeleteAsync("api/assignments/{id}");
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -230,7 +229,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireResponse>>($"{_baseUrl}/responses");
+            var response = await _httpClient.GetFromJsonAsync<List<QuestionnaireResponse>>("api/responses");
             return response ?? new List<QuestionnaireResponse>();
         }
         catch (Exception ex)
@@ -244,7 +243,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            return await _httpClient.GetFromJsonAsync<QuestionnaireResponse>($"{_baseUrl}/responses/{id}");
+            return await _httpClient.GetFromJsonAsync<QuestionnaireResponse>("api/responses/{id}");
         }
         catch (Exception ex)
         {
@@ -257,7 +256,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            return await _httpClient.GetFromJsonAsync<QuestionnaireResponse>($"{_baseUrl}/responses/assignment/{assignmentId}");
+            return await _httpClient.GetFromJsonAsync<QuestionnaireResponse>("api/responses/assignment/{assignmentId}");
         }
         catch (Exception ex)
         {
@@ -270,7 +269,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.PostAsJsonAsync($"{_baseUrl}/responses/assignment/{assignmentId}", sectionResponses);
+            var response = await _httpClient.PostAsJsonAsync("api/responses/assignment/{assignmentId}", sectionResponses);
             response.EnsureSuccessStatusCode();
             
             var result = await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
@@ -287,7 +286,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.PostAsync($"{_baseUrl}/responses/assignment/{assignmentId}/submit", null);
+            var response = await _httpClient.PostAsync("api/responses/assignment/{assignmentId}/submit", null);
             response.EnsureSuccessStatusCode();
             
             return await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
@@ -304,7 +303,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<Dictionary<string, object>>($"{_baseUrl}/analytics/template/{templateId}");
+            var response = await _httpClient.GetFromJsonAsync<Dictionary<string, object>>("api/analytics/template/{templateId}");
             return response ?? new Dictionary<string, object>();
         }
         catch (Exception ex)
@@ -318,7 +317,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
     {
         try
         {
-            var response = await _httpClient.GetFromJsonAsync<Dictionary<string, object>>($"{_baseUrl}/analytics/overview");
+            var response = await _httpClient.GetFromJsonAsync<Dictionary<string, object>>("api/analytics/overview");
             return response ?? new Dictionary<string, object>();
         }
         catch (Exception ex)

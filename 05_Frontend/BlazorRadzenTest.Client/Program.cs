@@ -12,9 +12,10 @@ namespace BlazorRadzenTest.Client
 
             builder.Services.AddRadzenComponents();
             
-            // Add HTTP client and API service
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
-            builder.Services.AddScoped<IQuestionnaireApiService, QuestionnaireApiService>();
+            builder.Services.AddHttpClient("ApiClient", httpClient =>
+            {
+                httpClient.BaseAddress = new Uri(builder.HostEnvironment.BaseAddress);
+            });
 
             await builder.Build().RunAsync();
         }

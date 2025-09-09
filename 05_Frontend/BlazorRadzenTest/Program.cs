@@ -10,8 +10,17 @@ namespace BlazorRadzenTest
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            builder.AddServiceDefaults();
 
             builder.Services.AddRadzenComponents();
+
+            builder.Services.AddHttpClient("ApiClient", httpClient =>
+            {
+                // remove static Uri
+                httpClient.BaseAddress = new Uri("https://localhost:7062/api");
+            });
+
+            builder.Services.AddScoped<IQuestionnaireApiService, QuestionnaireApiService>();
 
             // Add services to the container.
             builder.Services.AddRazorComponents()
@@ -19,6 +28,8 @@ namespace BlazorRadzenTest
                 .AddInteractiveWebAssemblyComponents();
 
             var app = builder.Build();
+
+            app.MapDefaultEndpoints();
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
