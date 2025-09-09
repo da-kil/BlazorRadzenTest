@@ -1,0 +1,102 @@
+@using BlazorRadzenTest.Client.Models
+@using Radzen
+@using Radzen.Blazor
+
+<div class="text-question-editor">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Configure Text Question</RadzenText>
+    
+    <RadzenCard Class="mb-4 p-3 border">
+        <div class="mb-3">
+            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Section Title *</RadzenText>
+            <RadzenTextBox @bind-Value="@SectionTitle"
+                          Placeholder="Enter section title (e.g., Career Ambitions)..."
+                          Class="w-100" />
+        </div>
+
+        <div class="mb-3">
+            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Section Description *</RadzenText>
+            <RadzenTextArea @bind-Value="@SectionDescription"
+                           Placeholder="Describe what this question asks about (e.g., Where do you see yourself long-term in your professional career?)..."
+                           Rows="3"
+                           Class="w-100" />
+        </div>
+
+        <div class="mb-3">
+            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Preview</RadzenText>
+            <RadzenCard Class="p-3 border-start border-primary border-3 bg-light">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold text-primary mb-2">
+                    <RadzenIcon Icon="timeline" Class="me-2" />
+                    @(string.IsNullOrWhiteSpace(SectionTitle) ? "Section Title" : SectionTitle)
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                    @(string.IsNullOrWhiteSpace(SectionDescription) ? "Section description will appear here..." : SectionDescription)
+                </RadzenText>
+                <RadzenTextArea Placeholder="User will enter their response here..." 
+                               Disabled="true" 
+                               Rows="4" 
+                               Class="w-100" />
+            </RadzenCard>
+        </div>
+    </RadzenCard>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <RadzenButton Text="Cancel" 
+                     ButtonStyle="ButtonStyle.Light" 
+                     Click="@Cancel" />
+        <RadzenButton Text="Save" 
+                     ButtonStyle="ButtonStyle.Success" 
+                     Icon="save"
+                     Click="@Save"
+                     Disabled="@(!CanSave())" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionItem Question { get; set; } = default!;
+    [Parameter] public string SectionTitle { get; set; } = "";
+    [Parameter] public string SectionDescription { get; set; } = "";
+    
+    [Inject] protected DialogService DialogService { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        // Load existing configuration if available
+        if (Question.Configuration.ContainsKey("SectionTitle"))
+        {
+            SectionTitle = Question.Configuration["SectionTitle"].ToString() ?? "";
+        }
+        if (Question.Configuration.ContainsKey("SectionDescription"))
+        {
+            SectionDescription = Question.Configuration["SectionDescription"].ToString() ?? "";
+        }
+    }
+
+    private bool CanSave()
+    {
+        return !string.IsNullOrWhiteSpace(SectionTitle) && !string.IsNullOrWhiteSpace(SectionDescription);
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private void Save()
+    {
+        if (CanSave())
+        {
+            var result = new TextQuestionConfiguration
+            {
+                SectionTitle = SectionTitle,
+                SectionDescription = SectionDescription
+            };
+            DialogService.Close(result);
+        }
+    }
+
+    public class TextQuestionConfiguration
+    {
+        public string SectionTitle { get; set; } = "";
+        public string SectionDescription { get; set; } = "";
+    }
+}

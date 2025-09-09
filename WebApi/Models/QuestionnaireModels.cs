@@ -37,16 +37,9 @@ public class QuestionItem
 
 public enum QuestionType
 {
-    RatingQuestion,      // 1-4 scale with comments
-    TextQuestion,        // Text area questions
-    GoalQuestion,        // Goal setting with timeframe/weighting
-    SingleChoice,        // Radio buttons
-    MultipleChoice,      // Checkboxes
-    DateQuestion,        // Date picker
-    NumberQuestion,      // Numeric input
-    FileUpload,          // File upload
-    YesNoQuestion,       // Yes/No toggle
-    CustomHTML          // Custom HTML content
+    SelfAssessment,      // 1-4 scale with comments like SelfAssessmentStep.razor
+    GoalAchievement,     // Goal achievement evaluation like GoalReviewStep.razor  
+    TextQuestion         // Text area questions like CareerPlanningStep.razor
 }
 
 public class QuestionnaireSettings

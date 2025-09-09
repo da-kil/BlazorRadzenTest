@@ -174,70 +174,26 @@
                                                                 Select Question Type
                                                             </RadzenText>
                                                         </div>
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <RadzenButton Text="Rating Question" 
-                                                                             Icon="star_rate"
+                                                        <div class="row justify-content-center">
+                                                            <div class="col-md-8">
+                                                                <RadzenButton Text="Self-Assessment" 
+                                                                             Icon="self_improvement"
                                                                              ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.RatingQuestion))" />
+                                                                             Size="ButtonSize.Medium"
+                                                                             Class="w-100 mb-3"
+                                                                             Click="@(async () => await AddQuestionOfType(QuestionType.SelfAssessment))" />
+                                                                <RadzenButton Text="Goal Achievement" 
+                                                                             Icon="track_changes"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Medium"
+                                                                             Class="w-100 mb-3"
+                                                                             Click="@(async () => await AddQuestionOfType(QuestionType.GoalAchievement))" />
                                                                 <RadzenButton Text="Text Question" 
-                                                                             Icon="text_fields"
+                                                                             Icon="psychology"
                                                                              ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.TextQuestion))" />
-                                                                <RadzenButton Text="Goal Question" 
-                                                                             Icon="flag"
-                                                                             ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.GoalQuestion))" />
-                                                                <RadzenButton Text="Single Choice" 
-                                                                             Icon="radio_button_checked"
-                                                                             ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.SingleChoice))" />
-                                                                <RadzenButton Text="Multiple Choice" 
-                                                                             Icon="check_box"
-                                                                             ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.MultipleChoice))" />
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <RadzenButton Text="Date Question" 
-                                                                             Icon="calendar_today"
-                                                                             ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.DateQuestion))" />
-                                                                <RadzenButton Text="Number Question" 
-                                                                             Icon="123"
-                                                                             ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.NumberQuestion))" />
-                                                                <RadzenButton Text="Yes/No Question" 
-                                                                             Icon="toggle_on"
-                                                                             ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.YesNoQuestion))" />
-                                                                <RadzenButton Text="File Upload" 
-                                                                             Icon="upload_file"
-                                                                             ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.FileUpload))" />
-                                                                <RadzenButton Text="Custom HTML" 
-                                                                             Icon="code"
-                                                                             ButtonStyle="ButtonStyle.Secondary" 
-                                                                             Size="ButtonSize.Small"
-                                                                             Class="w-100 mb-2"
-                                                                             Click="@(() => AddQuestionOfType(QuestionType.CustomHTML))" />
+                                                                             Size="ButtonSize.Medium"
+                                                                             Class="w-100 mb-3"
+                                                                             Click="@(async () => await AddQuestionOfType(QuestionType.TextQuestion))" />
                                                             </div>
                                                         </div>
                                                         <div class="text-end mt-2">
@@ -484,11 +440,113 @@
         selectedQuestionType = null;
     }
 
-    private void EditQuestion(int sectionIndex, int questionIndex)
+    private async Task EditQuestion(int sectionIndex, int questionIndex)
     {
         // Open question editor dialog
         var question = template.Sections[sectionIndex].Questions[questionIndex];
-        // TODO: Implement question editor dialog
+        
+        if (question.Type == QuestionType.SelfAssessment)
+        {
+            await EditSelfAssessmentQuestion(question);
+        }
+        else if (question.Type == QuestionType.GoalAchievement)
+        {
+            await EditGoalAchievementQuestion(question);
+        }
+        else if (question.Type == QuestionType.TextQuestion)
+        {
+            await EditTextQuestion(question);
+        }
+    }
+
+    private async Task EditSelfAssessmentQuestion(QuestionItem question)
+    {
+        // Get existing competencies from configuration or create default ones
+        var competencies = GetCompetenciesFromConfiguration(question);
+        
+        var parameters = new Dictionary<string, object>();
+        parameters.Add("Question", question);
+        parameters.Add("Competencies", competencies);
+        
+        var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>("Edit Self-Assessment Question",
+            parameters,
+            new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
+            
+        if (result != null)
+        {
+            // Save the competencies back to the configuration
+            SaveCompetenciesToConfiguration(question, (List<CompetencyDefinition>)result);
+        }
+    }
+    
+    private async Task EditGoalAchievementQuestion(QuestionItem question)
+    {
+        // TODO: Implement Goal Achievement question editor
+        NotificationService.Notify(NotificationSeverity.Info, "Editor", "Goal Achievement question editor not yet implemented");
+    }
+    
+    private async Task EditTextQuestion(QuestionItem question)
+    {
+        var parameters = new Dictionary<string, object>();
+        parameters.Add("Question", question);
+        parameters.Add("SectionTitle", GetTextQuestionSectionTitle(question));
+        parameters.Add("SectionDescription", GetTextQuestionSectionDescription(question));
+        
+        var result = await DialogService.OpenAsync<TextQuestionEditor>("Edit Text Question",
+            parameters,
+            new DialogOptions() { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
+            
+        if (result != null)
+        {
+            // Save the text question configuration
+            var config = (TextQuestionEditor.TextQuestionConfiguration)result;
+            SaveTextQuestionConfiguration(question, config);
+        }
+    }
+    
+    private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("Competencies") && question.Configuration["Competencies"] is List<CompetencyDefinition> competencies)
+        {
+            return competencies;
+        }
+        
+        // Return default competencies if none exist
+        return new List<CompetencyDefinition>
+        {
+            new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities."),
+            new("work_quality", "Work Quality", "Assessment of accuracy, efficiency, and completeness of the work performed."),
+            new("reliability", "Reliability", "Reflection on punctuality, meeting deadlines, and reliability in fulfilling tasks and commitments.")
+        };
+    }
+    
+    private void SaveCompetenciesToConfiguration(QuestionItem question, List<CompetencyDefinition> competencies)
+    {
+        question.Configuration["Competencies"] = competencies;
+    }
+
+    private string GetTextQuestionSectionTitle(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("SectionTitle"))
+        {
+            return question.Configuration["SectionTitle"].ToString() ?? "Career Ambitions";
+        }
+        return "Career Ambitions";
+    }
+
+    private string GetTextQuestionSectionDescription(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("SectionDescription"))
+        {
+            return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
+        }
+        return "Where do you see yourself long-term in your professional career?";
+    }
+
+    private void SaveTextQuestionConfiguration(QuestionItem question, TextQuestionEditor.TextQuestionConfiguration config)
+    {
+        question.Configuration["SectionTitle"] = config.SectionTitle;
+        question.Configuration["SectionDescription"] = config.SectionDescription;
     }
 
     private void RemoveQuestion(int sectionIndex, int questionIndex)
@@ -531,16 +589,9 @@
     {
         return type switch
         {
-            QuestionType.RatingQuestion => "star_rate",
-            QuestionType.TextQuestion => "text_fields",
-            QuestionType.GoalQuestion => "flag",
-            QuestionType.SingleChoice => "radio_button_checked",
-            QuestionType.MultipleChoice => "check_box",
-            QuestionType.DateQuestion => "calendar_today",
-            QuestionType.NumberQuestion => "123",
-            QuestionType.FileUpload => "upload_file",
-            QuestionType.YesNoQuestion => "toggle_on",
-            QuestionType.CustomHTML => "code",
+            QuestionType.SelfAssessment => "self_improvement",
+            QuestionType.GoalAchievement => "track_changes",
+            QuestionType.TextQuestion => "psychology",
             _ => "help"
         };
     }
@@ -549,11 +600,69 @@
     {
         return question.Type switch
         {
-            QuestionType.TextQuestion => @<RadzenTextArea Placeholder="Text answer..." Disabled="true" Class="w-100" />,
-            QuestionType.RatingQuestion => @<RadzenRating Value="0" Disabled="true" Stars="4" />,
-            QuestionType.YesNoQuestion => @<RadzenToggleButton Text="Yes/No" Disabled="true" />,
-            QuestionType.DateQuestion => @<RadzenDatePicker TValue="DateTime?" Placeholder="Select date..." Disabled="true" />,
-            QuestionType.NumberQuestion => @<RadzenNumeric TValue="int" Placeholder="Enter number..." Disabled="true" />,
+            QuestionType.SelfAssessment => @<div class="self-assessment-preview">
+                @{
+                    var competencies = GetCompetenciesFromConfiguration(question);
+                }
+                @if (competencies.Count > 0)
+                {
+                    @foreach (var competency in competencies.Take(2)) // Show first 2 competencies as preview
+                    {
+                        <div class="competency-preview mb-3 p-3 border rounded">
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">@competency.Title</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@competency.Description</RadzenText>
+                            <div class="d-flex align-items-center mb-2">
+                                <RadzenRating Value="0" Disabled="true" Stars="4" Class="me-2" />
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Rate satisfaction</RadzenText>
+                            </div>
+                            <RadzenTextArea Placeholder="Optional comments..." Disabled="true" Rows="2" Class="w-100" />
+                        </div>
+                    }
+                    @if (competencies.Count > 2)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">... and @(competencies.Count - 2) more competencies</RadzenText>
+                    }
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Click Edit to configure competencies</RadzenText>
+                }
+            </div>,
+            QuestionType.GoalAchievement => @<div class="goal-achievement-preview">
+                <div class="goal-preview mb-3 p-3 border rounded">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">Goal 1</RadzenText>
+                    <RadzenTextArea Placeholder="Describe the goal that was set for 2023..." Disabled="true" Rows="2" Class="w-100 mb-2" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Achievement Percentage</RadzenText>
+                            <div class="d-flex align-items-center">
+                                <RadzenNumeric TValue="int" Value="0" Disabled="true" Class="flex-grow-1 me-2" />
+                                <RadzenText TextStyle="TextStyle.Body2">%</RadzenText>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Status</RadzenText>
+                            <div class="p-2 rounded bg-light">
+                                <RadzenText TextStyle="TextStyle.Caption">Not Achieved</RadzenText>
+                            </div>
+                        </div>
+                    </div>
+                    <RadzenTextArea Placeholder="Your reasoning/justification..." Disabled="true" Rows="2" Class="w-100 mt-2" />
+                </div>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Multiple goals can be added dynamically...</RadzenText>
+            </div>,
+            QuestionType.TextQuestion => @<div class="text-question-preview">
+                <RadzenCard Class="mb-3 p-3 border-start border-primary border-3">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary mb-2">
+                        <RadzenIcon Icon="timeline" Class="me-2" />
+                        @GetTextQuestionSectionTitle(question)
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
+                        @GetTextQuestionSectionDescription(question)
+                    </RadzenText>
+                    <RadzenTextArea Placeholder="User will enter their response here..." Disabled="true" Rows="4" Class="w-100" />
+                </RadzenCard>
+            </div>,
             _ => @<RadzenTextBox Placeholder="Preview not available" Disabled="true" Class="w-100" />
         };
     }
@@ -622,7 +731,7 @@
     private string GetQuestionDescription(QuestionItem question) => question.Description;
     private void SetQuestionDescription(QuestionItem question, string value) => question.Description = value ?? "";
 
-    private void AddQuestionOfType(QuestionType questionType)
+    private async Task AddQuestionOfType(QuestionType questionType)
     {
         if (selectedSectionIndex >= 0 && selectedSectionIndex < template.Sections.Count)
         {
@@ -635,8 +744,66 @@
                 Order = section.Questions.Count,
                 IsRequired = true
             };
-            
-            section.Questions.Add(newQuestion);
+
+            // For Self-Assessment questions, show competency editor before adding
+            if (questionType == QuestionType.SelfAssessment)
+            {
+                var competencies = GetCompetenciesFromConfiguration(newQuestion);
+                var parameters = new Dictionary<string, object>();
+                parameters.Add("Question", newQuestion);
+                parameters.Add("Competencies", competencies);
+                
+                var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>("Configure Self-Assessment Competencies",
+                    parameters,
+                    new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
+                    
+                if (result != null)
+                {
+                    // Save the competencies to the configuration
+                    SaveCompetenciesToConfiguration(newQuestion, (List<CompetencyDefinition>)result);
+                    section.Questions.Add(newQuestion);
+                }
+                else
+                {
+                    // User cancelled, don't add the question
+                    showQuestionTypeSelection = false;
+                    selectedSectionIndex = -1;
+                    selectedQuestionType = null;
+                    return;
+                }
+            }
+            else if (questionType == QuestionType.TextQuestion)
+            {
+                var parameters = new Dictionary<string, object>();
+                parameters.Add("Question", newQuestion);
+                parameters.Add("SectionTitle", GetTextQuestionSectionTitle(newQuestion));
+                parameters.Add("SectionDescription", GetTextQuestionSectionDescription(newQuestion));
+                
+                var result = await DialogService.OpenAsync<TextQuestionEditor>("Configure Text Question",
+                    parameters,
+                    new DialogOptions() { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
+                    
+                if (result != null)
+                {
+                    // Save the text question configuration
+                    var config = (TextQuestionEditor.TextQuestionConfiguration)result;
+                    SaveTextQuestionConfiguration(newQuestion, config);
+                    section.Questions.Add(newQuestion);
+                }
+                else
+                {
+                    // User cancelled, don't add the question
+                    showQuestionTypeSelection = false;
+                    selectedSectionIndex = -1;
+                    selectedQuestionType = null;
+                    return;
+                }
+            }
+            else
+            {
+                // For other question types, add directly
+                section.Questions.Add(newQuestion);
+            }
         }
         
         // Reset selection state
@@ -656,16 +823,9 @@
     {
         return type switch
         {
-            QuestionType.RatingQuestion => "Rate your performance on this competency",
-            QuestionType.TextQuestion => "Please provide your thoughts",
-            QuestionType.GoalQuestion => "Set your goal for this area",
-            QuestionType.SingleChoice => "Select the best option",
-            QuestionType.MultipleChoice => "Select all that apply",
-            QuestionType.DateQuestion => "Select a date",
-            QuestionType.NumberQuestion => "Enter a number",
-            QuestionType.YesNoQuestion => "Do you agree?",
-            QuestionType.FileUpload => "Upload your document",
-            QuestionType.CustomHTML => "Custom content",
+            QuestionType.SelfAssessment => "Self-Assessment of Competencies",
+            QuestionType.GoalAchievement => "Goal Achievement Review",
+            QuestionType.TextQuestion => "Career Development & Planning",
             _ => "New Question"
         };
     }

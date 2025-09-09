@@ -1,0 +1,112 @@
+@using BlazorRadzenTest.Client.Models
+@using Radzen
+@using Radzen.Blazor
+
+<div class="self-assessment-editor">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Configure Self-Assessment Competencies</RadzenText>
+    
+    <div class="mb-4">
+        <RadzenButton Text="Add Competency" 
+                     ButtonStyle="ButtonStyle.Primary" 
+                     Icon="add" 
+                     Size="ButtonSize.Medium"
+                     Click="@AddCompetency" />
+    </div>
+
+    @if (Competencies.Count == 0)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+            <RadzenText TextStyle="TextStyle.Body2">
+                Click "Add Competency" to start adding competencies for this self-assessment.
+            </RadzenText>
+        </RadzenAlert>
+    }
+
+    @for (int i = 0; i < Competencies.Count; i++)
+    {
+        var competencyIndex = i;
+        var competency = Competencies[competencyIndex];
+
+        <RadzenCard Class="competency-editor mb-3 p-3 border">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                    Competency @(competencyIndex + 1)
+                </RadzenText>
+                <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                             Icon="delete" 
+                             Size="ButtonSize.Small"
+                             Click="@(() => RemoveCompetency(competencyIndex))" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Title *</RadzenText>
+                <RadzenTextBox @bind-Value="@competency.Title"
+                              Placeholder="Enter competency title..."
+                              Class="w-100" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Description *</RadzenText>
+                <RadzenTextArea @bind-Value="@competency.Description"
+                               Placeholder="Describe what this competency evaluates..."
+                               Rows="3"
+                               Class="w-100" />
+            </div>
+        </RadzenCard>
+    }
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <RadzenButton Text="Cancel" 
+                     ButtonStyle="ButtonStyle.Light" 
+                     Click="@Cancel" />
+        <RadzenButton Text="Save" 
+                     ButtonStyle="ButtonStyle.Success" 
+                     Icon="save"
+                     Click="@Save"
+                     Disabled="@(!CanSave())" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionItem Question { get; set; } = default!;
+    [Parameter] public List<CompetencyDefinition> Competencies { get; set; } = new();
+    
+    [Inject] protected DialogService DialogService { get; set; } = default!;
+
+    private void AddCompetency()
+    {
+        Competencies.Add(new CompetencyDefinition(
+            $"competency_{Competencies.Count + 1}", 
+            "", 
+            ""
+        ));
+    }
+
+    private void RemoveCompetency(int index)
+    {
+        if (index >= 0 && index < Competencies.Count)
+        {
+            Competencies.RemoveAt(index);
+        }
+    }
+
+    private bool CanSave()
+    {
+        return Competencies.Count > 0 && 
+               Competencies.All(c => !string.IsNullOrWhiteSpace(c.Title) && !string.IsNullOrWhiteSpace(c.Description));
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private void Save()
+    {
+        if (CanSave())
+        {
+            DialogService.Close(Competencies);
+        }
+    }
+
+}

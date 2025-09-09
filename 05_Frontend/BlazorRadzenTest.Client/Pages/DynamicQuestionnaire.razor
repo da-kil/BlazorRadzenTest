@@ -180,7 +180,7 @@
                         {
                             Id = Guid.NewGuid(),
                             Title = "How would you rate your overall performance this year?",
-                            Type = QuestionType.RatingQuestion,
+                            Type = QuestionType.SelfAssessment,
                             Order = 0,
                             IsRequired = true
                         },
@@ -206,7 +206,7 @@
                         {
                             Id = Guid.NewGuid(),
                             Title = "Set your primary goal for next year",
-                            Type = QuestionType.GoalQuestion,
+                            Type = QuestionType.GoalAchievement,
                             Order = 0,
                             IsRequired = true
                         }
@@ -255,79 +255,184 @@
         
         return question.Type switch
         {
-            QuestionType.RatingQuestion => RenderRatingQuestion(question, questionResponse),
+            QuestionType.SelfAssessment => RenderRatingQuestion(question, questionResponse),
             QuestionType.TextQuestion => RenderTextQuestion(question, questionResponse),
-            QuestionType.GoalQuestion => RenderGoalQuestion(question, questionResponse),
-            QuestionType.YesNoQuestion => RenderYesNoQuestion(question, questionResponse),
-            QuestionType.DateQuestion => RenderDateQuestion(question, questionResponse),
-            QuestionType.NumberQuestion => RenderNumberQuestion(question, questionResponse),
+            QuestionType.GoalAchievement => RenderGoalQuestion(question, questionResponse),
             _ => @<div class="alert alert-warning">Question type @question.Type not implemented</div>
         };
     }
 
     private RenderFragment RenderRatingQuestion(QuestionItem question, QuestionResponse response)
     {
-        return @<div class="rating-question">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
-                @question.Title
-                @if (question.IsRequired) { <span class="text-danger">*</span> }
-            </RadzenText>
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
-            }
-            <div class="d-flex align-items-center mb-3">
-                <RadzenRating Value="@(response.NumericValue ?? 0)" 
-                            ValueChanged="@(value => UpdateQuestionResponse(question.Id, value))"
-                            Stars="4" 
-                            Class="me-3" />
-                <RadzenText TextStyle="TextStyle.Caption">
-                    @(response.NumericValue ?? 0)/4
+        return @<div class="self-assessment-question">
+            <RadzenCard Class="self-assessment-step">
+                <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
+                    <RadzenIcon Icon="self_improvement" Class="me-2" />
+                    @question.Title
+                    @if (question.IsRequired) { <span class="text-danger">*</span> }
                 </RadzenText>
-            </div>
-            <RadzenTextArea Value="@(response.TextValue ?? "")" 
-                          ValueChanged="@(value => UpdateQuestionResponseText(question.Id, value))"
-                          Placeholder="Optional comments..."
-                          Rows="2"
-                          Class="w-100" />
+                
+                @if (!string.IsNullOrWhiteSpace(question.Description))
+                {
+                    <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@question.Description</RadzenText>
+                }
+
+                <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Rating Scale:</strong> 1 (Not satisfied) - 2 (Somewhat satisfied) - 3 (Satisfied) - 4 (Very satisfied)
+                    </RadzenText>
+                </RadzenAlert>
+
+                <div class="competencies-container">
+                    @{
+                        var competencies = GetCompetenciesForQuestion(question);
+                    }
+                    @foreach (var competency in competencies)
+                    {
+                        <RadzenCard Class="competency-card mb-3 p-3 border">
+                            <RadzenRow>
+                                <RadzenColumn Size="12" SizeMD="8">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                                        @competency.Title
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                                        @competency.Description
+                                    </RadzenText>
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="4" Class="text-end">
+                                    <div class="rating-section">
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
+                                        <RadzenRating Value="@GetCompetencyRating(question.Id, competency.Key)" 
+                                                    ValueChanged="@((int value) => SetCompetencyRating(question.Id, competency.Key, value))"
+                                                    Stars="4" 
+                                                    Class="mb-2" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
+                                            @GetRatingText(GetCompetencyRating(question.Id, competency.Key))
+                                        </RadzenText>
+                                    </div>
+                                </RadzenColumn>
+                            </RadzenRow>
+                            <RadzenTextArea Value="@GetCompetencyComment(question.Id, competency.Key)"
+                                          ValueChanged="@((string value) => SetCompetencyComment(question.Id, competency.Key, value))"
+                                          Placeholder="Optional: Add your comments here..."
+                                          Rows="2"
+                                          Class="w-100 mt-2" />
+                        </RadzenCard>
+                    }
+                </div>
+            </RadzenCard>
         </div>;
     }
 
     private RenderFragment RenderTextQuestion(QuestionItem question, QuestionResponse response)
     {
+        var sectionTitle = GetTextQuestionSectionTitle(question);
+        var sectionDescription = GetTextQuestionSectionDescription(question);
+        
         return @<div class="text-question">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
-                @question.Title
-                @if (question.IsRequired) { <span class="text-danger">*</span> }
-            </RadzenText>
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
-            }
-            <RadzenTextArea Value="@(response.TextValue ?? "")" 
-                          ValueChanged="@(value => UpdateQuestionResponseText(question.Id, value))"
-                          Placeholder="Enter your answer..."
-                          Rows="4"
-                          Class="w-100" />
+            <RadzenCard Class="career-planning-step">
+                <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
+                    <RadzenIcon Icon="psychology" Class="me-2" />
+                    @question.Title
+                    @if (question.IsRequired) { <span class="text-danger">*</span> }
+                </RadzenText>
+                
+                @if (!string.IsNullOrWhiteSpace(question.Description))
+                {
+                    <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@question.Description</RadzenText>
+                }
+
+                <div class="planning-sections">
+                    <RadzenCard Class="planning-card mb-4 p-3 border-start border-primary border-3">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold text-primary mb-3">
+                            <RadzenIcon Icon="timeline" Class="me-2" />
+                            @sectionTitle
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                            @sectionDescription
+                        </RadzenText>
+                        <RadzenTextArea Value="@(response.TextValue ?? "")"
+                                      ValueChanged="@(value => UpdateQuestionResponseText(question.Id, value))"
+                                      Placeholder="Describe your thoughts, plans, and goals..."
+                                      Rows="4"
+                                      Class="w-100" />
+                    </RadzenCard>
+                </div>
+            </RadzenCard>
         </div>;
     }
 
     private RenderFragment RenderGoalQuestion(QuestionItem question, QuestionResponse response)
     {
-        return @<div class="goal-question">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
-                @question.Title
-                @if (question.IsRequired) { <span class="text-danger">*</span> }
-            </RadzenText>
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
-            }
-            <GoalQuestion TimeFrameFrom="@GetGoalStartDate(question.Id)" TimeFrameFromChanged="@(value => SetGoalStartDate(question.Id, value))"
-                         TimeFrameTo="@GetGoalEndDate(question.Id)" TimeFrameToChanged="@(value => SetGoalEndDate(question.Id, value))"
-                         GoalDescription="@GetGoalDescription(question.Id)" GoalDescriptionChanged="@(value => SetGoalDescription(question.Id, value))"
-                         MeasurementVariable="@GetGoalMeasurement(question.Id)" MeasurementVariableChanged="@(value => SetGoalMeasurement(question.Id, value))"
-                         Weighting="@GetGoalWeighting(question.Id)" WeightingChanged="@(value => SetGoalWeighting(question.Id, value))" />
+        return @<div class="goal-achievement-question">
+            <RadzenCard Class="goal-review-step">
+                <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
+                    <RadzenIcon Icon="track_changes" Class="me-2" />
+                    @question.Title
+                    @if (question.IsRequired) { <span class="text-danger">*</span> }
+                </RadzenText>
+                
+                @if (!string.IsNullOrWhiteSpace(question.Description))
+                {
+                    <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@question.Description</RadzenText>
+                }
+
+                <RadzenCard Class="goal-card mb-3 p-3 border">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                            Goal 1
+                        </RadzenText>
+                    </div>
+
+                    <div class="mb-3">
+                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Goal Description</RadzenText>
+                        <RadzenTextArea Value="@GetGoalDescription(question.Id)"
+                                      ValueChanged="@(value => SetGoalDescription(question.Id, value))"
+                                      Placeholder="Describe the goal that was set for 2023..."
+                                      Rows="3"
+                                      Class="w-100" />
+                    </div>
+
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Percentage</RadzenText>
+                            <div class="d-flex align-items-center">
+                                <RadzenNumeric TValue="int"
+                                             Value="@GetGoalAchievementPercentage(question.Id)"
+                                             ValueChanged="@((int value) => SetGoalAchievementPercentage(question.Id, value))"
+                                             Min="0" 
+                                             Max="100" 
+                                             Step="5"
+                                             Format="0"
+                                             Class="flex-grow-1 me-2" />
+                                <RadzenText TextStyle="TextStyle.Body1">%</RadzenText>
+                            </div>
+                            <RadzenProgressBar Value="@GetGoalAchievementPercentage(question.Id)" 
+                                             Max="100" 
+                                             Class="mt-2"
+                                             ProgressBarStyle="@GetProgressStyle(GetGoalAchievementPercentage(question.Id))" />
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Status</RadzenText>
+                            <div class="status-indicator p-2 rounded" style="@GetStatusStyle(GetGoalAchievementPercentage(question.Id))">
+                                <RadzenIcon Icon="@GetStatusIcon(GetGoalAchievementPercentage(question.Id))" Class="me-2" />
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
+                                    @GetStatusText(GetGoalAchievementPercentage(question.Id))
+                                </RadzenText>
+                            </div>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <div class="mt-3">
+                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Your Reasoning/Justification</RadzenText>
+                        <RadzenTextArea Value="@GetGoalJustification(question.Id)"
+                                      ValueChanged="@(value => SetGoalJustification(question.Id, value))"
+                                      Placeholder="Explain why you achieved this percentage. What factors contributed to your success or challenges?"
+                                      Rows="4"
+                                      Class="w-100" />
+                    </div>
+                </RadzenCard>
+            </RadzenCard>
         </div>;
     }
 
@@ -433,6 +538,75 @@
         return response.ComplexValue?.TryGetValue("Description", out var value) == true ? value.ToString() ?? "" : "";
     }
 
+    private int GetGoalAchievementPercentage(Guid questionId)
+    {
+        var response = GetQuestionResponse(questionId);
+        return response.ComplexValue?.TryGetValue("AchievementPercentage", out var value) == true ? Convert.ToInt32(value) : 0;
+    }
+
+    private string GetGoalJustification(Guid questionId)
+    {
+        var response = GetQuestionResponse(questionId);
+        return response.ComplexValue?.TryGetValue("Justification", out var value) == true ? value.ToString() ?? "" : "";
+    }
+
+    private string GetRatingText(int rating)
+    {
+        return rating switch
+        {
+            1 => "Not satisfied",
+            2 => "Somewhat satisfied", 
+            3 => "Satisfied",
+            4 => "Very satisfied",
+            _ => "Not rated"
+        };
+    }
+
+    private ProgressBarStyle GetProgressStyle(int percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => ProgressBarStyle.Success,
+            >= 70 => ProgressBarStyle.Info,
+            >= 50 => ProgressBarStyle.Warning,
+            _ => ProgressBarStyle.Danger
+        };
+    }
+
+    private string GetStatusStyle(int percentage)
+    {
+        var color = percentage switch
+        {
+            >= 90 => "background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;",
+            >= 70 => "background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460;",
+            >= 50 => "background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;",
+            _ => "background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;"
+        };
+        return color;
+    }
+
+    private string GetStatusIcon(int percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => "check_circle",
+            >= 70 => "task_alt",
+            >= 50 => "warning",
+            _ => "error"
+        };
+    }
+
+    private string GetStatusText(int percentage)
+    {
+        return percentage switch
+        {
+            >= 90 => "Excellent Achievement",
+            >= 70 => "Good Achievement", 
+            >= 50 => "Partial Achievement",
+            _ => "Below Expectations"
+        };
+    }
+
     private string GetGoalMeasurement(Guid questionId)
     {
         var response = GetQuestionResponse(questionId);
@@ -489,6 +663,24 @@
         var response = GetQuestionResponse(questionId);
         if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
         response.ComplexValue["Description"] = value ?? "";
+        response.LastModified = DateTime.Now;
+        UpdateProgress();
+    }
+
+    private void SetGoalAchievementPercentage(Guid questionId, int value)
+    {
+        var response = GetQuestionResponse(questionId);
+        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
+        response.ComplexValue["AchievementPercentage"] = value;
+        response.LastModified = DateTime.Now;
+        UpdateProgress();
+    }
+
+    private void SetGoalJustification(Guid questionId, string value)
+    {
+        var response = GetQuestionResponse(questionId);
+        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
+        response.ComplexValue["Justification"] = value ?? "";
         response.LastModified = DateTime.Now;
         UpdateProgress();
     }
@@ -592,14 +784,20 @@
     {
         return question.Type switch
         {
-            QuestionType.RatingQuestion => questionResponse.NumericValue > 0,
+            QuestionType.SelfAssessment => IsSelfAssessmentCompleted(question, questionResponse),
             QuestionType.TextQuestion => !string.IsNullOrWhiteSpace(questionResponse.TextValue),
-            QuestionType.GoalQuestion => !string.IsNullOrWhiteSpace(GetGoalDescription(question.Id)),
-            QuestionType.YesNoQuestion => !string.IsNullOrWhiteSpace(questionResponse.TextValue),
-            QuestionType.DateQuestion => questionResponse.DateValue.HasValue,
-            QuestionType.NumberQuestion => questionResponse.NumericValue.HasValue,
+            QuestionType.GoalAchievement => !string.IsNullOrWhiteSpace(GetGoalDescription(question.Id)),
             _ => true
         };
+    }
+
+    private bool IsSelfAssessmentCompleted(QuestionItem question, QuestionResponse questionResponse)
+    {
+        var competencies = GetCompetenciesForQuestion(question);
+        if (competencies.Count == 0) return true;
+        
+        // Check that at least one competency has been rated
+        return competencies.Any(c => GetCompetencyRating(question.Id, c.Key) > 0);
     }
 
     private bool IsSectionCompleted(Guid sectionId)
@@ -667,5 +865,78 @@
         
         // Navigate to completion page or questionnaire list
         NavigationManager.NavigateTo("/questionnaire-completed");
+    }
+
+    // Competency-specific helper methods
+    private List<CompetencyDefinition> GetCompetenciesForQuestion(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("Competencies") && 
+            question.Configuration["Competencies"] is List<CompetencyDefinition> competencies)
+        {
+            return competencies;
+        }
+        
+        // Return default competencies if none configured
+        return new List<CompetencyDefinition>
+        {
+            new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities.")
+        };
+    }
+
+    private int GetCompetencyRating(Guid questionId, string competencyKey)
+    {
+        var response = GetQuestionResponse(questionId);
+        if (response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
+        {
+            return Convert.ToInt32(value);
+        }
+        return 0;
+    }
+
+    private string GetCompetencyComment(Guid questionId, string competencyKey)
+    {
+        var response = GetQuestionResponse(questionId);
+        if (response.ComplexValue?.TryGetValue($"comment_{competencyKey}", out var value) == true)
+        {
+            return value.ToString() ?? "";
+        }
+        return "";
+    }
+
+    private void SetCompetencyRating(Guid questionId, string competencyKey, int value)
+    {
+        var response = GetQuestionResponse(questionId);
+        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
+        response.ComplexValue[$"rating_{competencyKey}"] = value;
+        response.LastModified = DateTime.Now;
+        UpdateProgress();
+    }
+
+    private void SetCompetencyComment(Guid questionId, string competencyKey, string value)
+    {
+        var response = GetQuestionResponse(questionId);
+        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
+        response.ComplexValue[$"comment_{competencyKey}"] = value ?? "";
+        response.LastModified = DateTime.Now;
+        UpdateProgress();
+    }
+
+    // Text Question helper methods
+    private string GetTextQuestionSectionTitle(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("SectionTitle"))
+        {
+            return question.Configuration["SectionTitle"].ToString() ?? "Career Ambitions";
+        }
+        return "Career Ambitions";
+    }
+
+    private string GetTextQuestionSectionDescription(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("SectionDescription"))
+        {
+            return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
+        }
+        return "Where do you see yourself long-term in your professional career?";
     }
 }

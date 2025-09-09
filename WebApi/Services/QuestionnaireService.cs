@@ -40,7 +40,7 @@ public class QuestionnaireService : IQuestionnaireService
                         {
                             Id = Guid.NewGuid(),
                             Title = "How would you rate your overall performance this year?",
-                            Type = QuestionType.RatingQuestion,
+                            Type = QuestionType.SelfAssessment,
                             Order = 0,
                             IsRequired = true
                         },
@@ -67,7 +67,7 @@ public class QuestionnaireService : IQuestionnaireService
                         {
                             Id = Guid.NewGuid(),
                             Title = "Set your primary professional goal for next year",
-                            Type = QuestionType.GoalQuestion,
+                            Type = QuestionType.GoalAchievement,
                             Order = 0,
                             IsRequired = true
                         }
