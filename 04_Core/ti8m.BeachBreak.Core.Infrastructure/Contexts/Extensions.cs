@@ -1,0 +1,30 @@
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts.Middleware;
+
+namespace ti8m.BeachBreak.Core.Infrastructure.Contexts;
+
+public static class Extensions
+{
+    public static IHostApplicationBuilder AddDefaultContexts(this IHostApplicationBuilder builder, bool addDefaultSerilogEnrichers = true)
+    {
+        builder.AddContextsAndMiddlewares();
+
+        return builder;
+    }
+
+    private static IHostApplicationBuilder AddContextsAndMiddlewares(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddScoped<UserContext>();
+        builder.Services.AddTransient<UserContextMiddleware>();
+
+        return builder;
+    }
+
+    public static IApplicationBuilder UseDefaultContextMiddlewares(this IApplicationBuilder builder)
+    {
+        return builder
+            .UseUserContextMiddleware();
+    }
+}

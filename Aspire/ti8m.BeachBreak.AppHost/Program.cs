@@ -7,4 +7,6 @@ builder.AddProject<Projects.ti8m_BeachBreak>("ti8mBeachBreak")
     .WithReference(commandApi)
     .WaitFor(commandApi);
 
+builder.AddProject<Projects.ti8m_BeachBreak_QueryApi>("ti8m-beachbreak-queryapi");
+
 builder.Build().Run();

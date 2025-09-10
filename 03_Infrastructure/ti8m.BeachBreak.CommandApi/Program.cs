@@ -1,4 +1,8 @@
+using Asp.Versioning;
+using Microsoft.OpenApi.Models;
+using ti8m.BeachBreak.Application.Command;
 using ti8m.BeachBreak.CommandApi.Services;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi
 {
@@ -8,6 +12,17 @@ namespace ti8m.BeachBreak.CommandApi
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.AddServiceDefaults();
+            builder.AddDefaultContexts();
+
+            builder.Services.AddProblemDetails(options =>
+            {
+                options.CustomizeProblemDetails = (context) =>
+                {
+                    context.ProblemDetails.Instance = $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
+                    context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
+                    context.ProblemDetails.Extensions.TryAdd("correlationId", context.HttpContext.Request.Headers["X-Correlation-Id"]);
+                };
+            });
 
             builder.Services.AddCors(
                 options => options.AddDefaultPolicy(
@@ -16,12 +31,44 @@ namespace ti8m.BeachBreak.CommandApi
                         .AllowAnyMethod()
                         .AllowAnyHeader()));
 
-            // Add services to the container.
+            builder.Services.AddApiVersioning(options =>
+            {
+                options.ReportApiVersions = true;
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            });
+
             builder.Services.AddControllers();
-            
-            // Add custom services
-            builder.Services.AddSingleton<IQuestionnaireService, QuestionnaireService>();
-            
+
+            builder.Services.AddSwaggerGen(option =>
+            {
+                option.SwaggerDoc("v1", new OpenApiInfo { Title = "Azure Entra Editor", Version = "v1" });
+                option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Please enter a valid token",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = "Bearer"
+                });
+                option.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type=ReferenceType.SecurityScheme,
+                                Id="Bearer"
+                            }
+                        },
+                        new string[]{}
+                    }
+                });
+            });
+
             // Configure CORS for frontend connection
             builder.Services.AddCors(options =>
             {
@@ -36,7 +83,42 @@ namespace ti8m.BeachBreak.CommandApi
 
             // Add Swagger for API documentation
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddSwaggerGen(option =>
+            {
+                option.SwaggerDoc("v1", new OpenApiInfo { Title = "Azure Entra Editor", Version = "v1" });
+                option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Please enter a valid token",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = "Bearer"
+                });
+                option.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type=ReferenceType.SecurityScheme,
+                            Id="Bearer"
+                        }
+                    },
+                    new string[]{}
+                }
+            });
+            });
+
+            builder.Host.UseDefaultServiceProvider(options =>
+            {
+                options.ValidateScopes = true;
+                options.ValidateOnBuild = true;
+            });
+
+            builder.Services.AddScoped<UserContext>();
+            builder.Services.AddApplication(builder.Configuration);
 
             var app = builder.Build();
 
@@ -49,8 +131,8 @@ namespace ti8m.BeachBreak.CommandApi
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
             app.UseCors();
+            app.UseHttpsRedirection();
             app.UseAuthorization();
             app.MapControllers();
 
