@@ -1,6 +1,6 @@
-using WebApi.Models;
+using ti8m.BeachBreak.CommandApi.Models;
 
-namespace WebApi.Services;
+namespace ti8m.BeachBreak.CommandApi.Services;
 
 public class QuestionnaireService : IQuestionnaireService
 {

@@ -1,10 +1,10 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var webapi = builder.AddProject<Projects.WebApi>("webapi");
+var commandApi = builder.AddProject<Projects.ti8m_BeachBreak_CommandApi>("CommandApi");
 
-builder.AddProject<Projects.ti8m_BeachBreak>("ti8m-beachbreak")
+builder.AddProject<Projects.ti8m_BeachBreak>("ti8mBeachBreak")
     .WithExternalHttpEndpoints()
-    .WithReference(webapi)
-    .WaitFor(webapi);
+    .WithReference(commandApi)
+    .WaitFor(commandApi);
 
 builder.Build().Run();

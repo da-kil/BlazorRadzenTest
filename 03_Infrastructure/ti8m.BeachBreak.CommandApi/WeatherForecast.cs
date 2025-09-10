@@ -1,4 +1,4 @@
-namespace WebApi
+namespace ti8m.BeachBreak.CommandApi
 {
     public class WeatherForecast
     {

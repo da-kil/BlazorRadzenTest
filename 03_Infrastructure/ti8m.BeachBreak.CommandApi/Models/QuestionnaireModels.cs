@@ -1,4 +1,4 @@
-namespace WebApi.Models;
+namespace ti8m.BeachBreak.CommandApi.Models;
 
 public class QuestionnaireTemplate
 {

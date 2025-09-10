@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using WebApi.Services;
+using ti8m.BeachBreak.CommandApi.Services;
 
-namespace WebApi.Controllers;
+namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]

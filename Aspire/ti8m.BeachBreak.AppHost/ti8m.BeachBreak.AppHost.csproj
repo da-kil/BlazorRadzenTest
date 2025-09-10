@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\03_Infrastructure\WebApi\WebApi.csproj" />
+    <ProjectReference Include="..\..\03_Infrastructure\ti8m.BeachBreak.CommandApi\ti8m.BeachBreak.CommandApi.csproj" />
     <ProjectReference Include="..\..\05_Frontend\BlazorRadzenTest\ti8m.BeachBreak.csproj" />
   </ItemGroup>
 

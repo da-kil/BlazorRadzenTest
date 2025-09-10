@@ -1,6 +1,6 @@
-using WebApi.Services;
+using ti8m.BeachBreak.CommandApi.Services;
 
-namespace WebApi
+namespace ti8m.BeachBreak.CommandApi
 {
     public class Program
     {

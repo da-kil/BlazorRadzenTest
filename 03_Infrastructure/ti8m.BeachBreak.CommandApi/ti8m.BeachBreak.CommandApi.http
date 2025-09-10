@@ -1,0 +1,6 @@
+@Wti8m.BeachBreak.CommandApi_HostAddress = http://localhost:5125
+
+GET {{ti8m.BeachBreak.CommandApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
