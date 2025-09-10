@@ -1,8 +1,8 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using BlazorRadzenTest.Client.Models;
+using ti8m.BeachBreak.Client.Models;
 
-namespace BlazorRadzenTest.Client.Services;
+namespace ti8m.BeachBreak.Client.Services;
 
 public class QuestionnaireApiService : IQuestionnaireApiService
 {
@@ -47,11 +47,11 @@ public class QuestionnaireApiService : IQuestionnaireApiService
         {
             var createRequest = new
             {
-                Name = template.Name,
-                Description = template.Description,
-                Category = template.Category,
-                Sections = template.Sections,
-                Settings = template.Settings
+                template.Name,
+                template.Description,
+                template.Category,
+                template.Sections,
+                template.Settings
             };
 
             var response = await _httpClient.PostAsJsonAsync("api/questionnaireTemplates", createRequest);
@@ -73,12 +73,12 @@ public class QuestionnaireApiService : IQuestionnaireApiService
         {
             var updateRequest = new
             {
-                Id = template.Id,
-                Name = template.Name,
-                Description = template.Description,
-                Category = template.Category,
-                Sections = template.Sections,
-                Settings = template.Settings
+                template.Id,
+                template.Name,
+                template.Description,
+                template.Category,
+                template.Sections,
+                template.Settings
             };
 
             var response = await _httpClient.PutAsJsonAsync("api/questionnaireTemplates/{template.Id}", updateRequest);

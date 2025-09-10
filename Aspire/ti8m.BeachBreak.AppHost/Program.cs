@@ -2,7 +2,7 @@ var builder = DistributedApplication.CreateBuilder(args);
 
 var webapi = builder.AddProject<Projects.WebApi>("webapi");
 
-builder.AddProject<Projects.BlazorRadzenTest>("blazorradzentest")
+builder.AddProject<Projects.ti8m_BeachBreak>("ti8m-beachbreak")
     .WithExternalHttpEndpoints()
     .WithReference(webapi)
     .WaitFor(webapi);

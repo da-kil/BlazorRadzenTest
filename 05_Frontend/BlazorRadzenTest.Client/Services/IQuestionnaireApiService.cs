@@ -1,6 +1,6 @@
-using BlazorRadzenTest.Client.Models;
+using ti8m.BeachBreak.Client.Models;
 
-namespace BlazorRadzenTest.Client.Services;
+namespace ti8m.BeachBreak.Client.Services;
 
 public interface IQuestionnaireApiService
 {

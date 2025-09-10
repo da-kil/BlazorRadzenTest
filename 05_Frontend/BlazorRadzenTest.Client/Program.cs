@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
-using BlazorRadzenTest.Client.Services;
+using ti8m.BeachBreak.Client.Services;
 
-namespace BlazorRadzenTest.Client
+namespace ti8m.BeachBreak.Client
 {
     internal class Program
     {

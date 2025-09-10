@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\BlazorRadzenTest.ServiceDefaults\BlazorRadzenTest.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\BlazorRadzenTest.Client\BlazorRadzenTest.Client.csproj" />
+    <ProjectReference Include="..\..\Aspire\ti8m.BeachBreak.ServiceDefaults\ti8m.BeachBreak.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\BlazorRadzenTest.Client\ti8m.BeachBreak.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.8" />
     <PackageReference Include="Radzen.Blazor" Version="7.3.3" />
   </ItemGroup>

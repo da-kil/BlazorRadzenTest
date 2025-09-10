@@ -16,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\05_Frontend\BlazorRadzenTest\BlazorRadzenTest.csproj" />
-    <ProjectReference Include="..\WebApi\WebApi.csproj" />
+    <ProjectReference Include="..\..\03_Infrastructure\WebApi\WebApi.csproj" />
+    <ProjectReference Include="..\..\05_Frontend\BlazorRadzenTest\ti8m.BeachBreak.csproj" />
   </ItemGroup>
 
 </Project>

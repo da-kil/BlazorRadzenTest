@@ -1,9 +1,9 @@
-using BlazorRadzenTest.Client.Pages;
-using BlazorRadzenTest.Client.Services;
-using BlazorRadzenTest.Components;
 using Radzen;
+using ti8m.BeachBreak.Client.Services;
+using ti8m.BeachBreak.Components;
+using Microsoft.Extensions.Hosting;
 
-namespace BlazorRadzenTest
+namespace ti8m.BeachBreak
 {
     public class Program
     {

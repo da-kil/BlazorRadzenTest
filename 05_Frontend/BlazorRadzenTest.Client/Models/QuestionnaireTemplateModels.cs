@@ -1,4 +1,4 @@
-namespace BlazorRadzenTest.Client.Models;
+namespace ti8m.BeachBreak.Client.Models;
 
 public class QuestionnaireTemplate
 {
