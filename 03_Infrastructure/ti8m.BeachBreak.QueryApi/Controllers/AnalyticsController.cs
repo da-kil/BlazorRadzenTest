@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using ti8m.BeachBreak.CommandApi.Services;
+using ti8m.BeachBreak.Application.Query.Queries;
+using ti8m.BeachBreak.Application.Query.Queries.AnalyticsQueries;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -7,15 +8,15 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 [Route("api/[controller]")]
 public class AnalyticsController : ControllerBase
 {
-    private readonly IQuestionnaireService _questionnaireService;
-    private readonly ILogger<AnalyticsController> _logger;
+    private readonly IQueryDispatcher queryDispatcher;
+    private readonly ILogger<AnalyticsController> logger;
 
     public AnalyticsController(
-        IQuestionnaireService questionnaireService,
+        IQueryDispatcher queryDispatcher,
         ILogger<AnalyticsController> logger)
     {
-        _questionnaireService = questionnaireService;
-        _logger = logger;
+        this.queryDispatcher = queryDispatcher;
+        this.logger = logger;
     }
 
     [HttpGet("overview")]
@@ -23,12 +24,12 @@ public class AnalyticsController : ControllerBase
     {
         try
         {
-            var analytics = await _questionnaireService.GetOverallAnalyticsAsync();
-            return Ok(analytics);
+            var result = await queryDispatcher.QueryAsync(new OverallAnalyticsListQuery());
+            return Ok(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving overall analytics");
+            logger.LogError(ex, "Error retrieving overall analytics");
             return StatusCode(500, "An error occurred while retrieving analytics");
         }
     }
@@ -38,12 +39,12 @@ public class AnalyticsController : ControllerBase
     {
         try
         {
-            var analytics = await _questionnaireService.GetTemplateAnalyticsAsync(templateId);
-            return Ok(analytics);
+            var result = await queryDispatcher.QueryAsync(new TemplateAnalyticsListQuery(templateId));
+            return Ok(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving analytics for template {TemplateId}", templateId);
+            logger.LogError(ex, "Error retrieving analytics for template {TemplateId}", templateId);
             return StatusCode(500, "An error occurred while retrieving template analytics");
         }
     }

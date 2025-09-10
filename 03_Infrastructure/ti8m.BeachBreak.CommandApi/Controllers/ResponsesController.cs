@@ -19,57 +19,6 @@ public class ResponsesController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<QuestionnaireResponse>>> GetAllResponses()
-    {
-        try
-        {
-            var responses = await _questionnaireService.GetAllResponsesAsync();
-            return Ok(responses);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving responses");
-            return StatusCode(500, "An error occurred while retrieving responses");
-        }
-    }
-
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<QuestionnaireResponse>> GetResponse(Guid id)
-    {
-        try
-        {
-            var response = await _questionnaireService.GetResponseByIdAsync(id);
-            if (response == null)
-                return NotFound($"Response with ID {id} not found");
-
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving response {ResponseId}", id);
-            return StatusCode(500, "An error occurred while retrieving the response");
-        }
-    }
-
-    [HttpGet("assignment/{assignmentId:guid}")]
-    public async Task<ActionResult<QuestionnaireResponse>> GetResponseByAssignment(Guid assignmentId)
-    {
-        try
-        {
-            var response = await _questionnaireService.GetResponseByAssignmentIdAsync(assignmentId);
-            if (response == null)
-                return NotFound($"Response for assignment {assignmentId} not found");
-
-            return Ok(response);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving response for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while retrieving the response");
-        }
-    }
-
     [HttpPost("assignment/{assignmentId:guid}")]
     public async Task<ActionResult<QuestionnaireResponse>> SaveResponse(
         Guid assignmentId, 

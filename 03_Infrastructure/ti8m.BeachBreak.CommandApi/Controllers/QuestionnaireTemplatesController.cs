@@ -19,54 +19,6 @@ public class QuestionnaireTemplatesController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<QuestionnaireTemplate>>> GetAllTemplates()
-    {
-        try
-        {
-            var templates = await _questionnaireService.GetAllTemplatesAsync();
-            return Ok(templates);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving questionnaire templates");
-            return StatusCode(500, "An error occurred while retrieving templates");
-        }
-    }
-
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<QuestionnaireTemplate>> GetTemplate(Guid id)
-    {
-        try
-        {
-            var template = await _questionnaireService.GetTemplateByIdAsync(id);
-            if (template == null)
-                return NotFound($"Template with ID {id} not found");
-
-            return Ok(template);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while retrieving the template");
-        }
-    }
-
-    [HttpGet("category/{category}")]
-    public async Task<ActionResult<List<QuestionnaireTemplate>>> GetTemplatesByCategory(string category)
-    {
-        try
-        {
-            var templates = await _questionnaireService.GetTemplatesByCategoryAsync(category);
-            return Ok(templates);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving templates by category {Category}", category);
-            return StatusCode(500, "An error occurred while retrieving templates");
-        }
-    }
-
     [HttpPost]
     public async Task<ActionResult<QuestionnaireTemplate>> CreateTemplate(CreateQuestionnaireTemplateRequest request)
     {
@@ -79,7 +31,7 @@ public class QuestionnaireTemplatesController : ControllerBase
                 return BadRequest("Template name is required");
 
             var template = await _questionnaireService.CreateTemplateAsync(request);
-            return CreatedAtAction(nameof(GetTemplate), new { id = template.Id }, template);
+            return CreatedAtAction("GetTemplate", new { id = template.Id }, template);
         }
         catch (Exception ex)
         {
@@ -127,25 +79,6 @@ public class QuestionnaireTemplatesController : ControllerBase
         {
             _logger.LogError(ex, "Error deleting template {TemplateId}", id);
             return StatusCode(500, "An error occurred while deleting the template");
-        }
-    }
-
-    [HttpGet("{id:guid}/analytics")]
-    public async Task<ActionResult<Dictionary<string, object>>> GetTemplateAnalytics(Guid id)
-    {
-        try
-        {
-            var template = await _questionnaireService.GetTemplateByIdAsync(id);
-            if (template == null)
-                return NotFound($"Template with ID {id} not found");
-
-            var analytics = await _questionnaireService.GetTemplateAnalyticsAsync(id);
-            return Ok(analytics);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving analytics for template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while retrieving analytics");
         }
     }
 }

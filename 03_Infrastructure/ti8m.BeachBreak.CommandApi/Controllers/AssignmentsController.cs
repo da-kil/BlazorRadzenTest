@@ -19,54 +19,6 @@ public class AssignmentsController : ControllerBase
         _logger = logger;
     }
 
-    [HttpGet]
-    public async Task<ActionResult<List<QuestionnaireAssignment>>> GetAllAssignments()
-    {
-        try
-        {
-            var assignments = await _questionnaireService.GetAllAssignmentsAsync();
-            return Ok(assignments);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving assignments");
-            return StatusCode(500, "An error occurred while retrieving assignments");
-        }
-    }
-
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<QuestionnaireAssignment>> GetAssignment(Guid id)
-    {
-        try
-        {
-            var assignment = await _questionnaireService.GetAssignmentByIdAsync(id);
-            if (assignment == null)
-                return NotFound($"Assignment with ID {id} not found");
-
-            return Ok(assignment);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving assignment {AssignmentId}", id);
-            return StatusCode(500, "An error occurred while retrieving the assignment");
-        }
-    }
-
-    [HttpGet("employee/{employeeId}")]
-    public async Task<ActionResult<List<QuestionnaireAssignment>>> GetAssignmentsByEmployee(string employeeId)
-    {
-        try
-        {
-            var assignments = await _questionnaireService.GetAssignmentsByEmployeeAsync(employeeId);
-            return Ok(assignments);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving assignments for employee {EmployeeId}", employeeId);
-            return StatusCode(500, "An error occurred while retrieving assignments");
-        }
-    }
-
     [HttpPost]
     public async Task<ActionResult<List<QuestionnaireAssignment>>> CreateAssignments(CreateAssignmentRequest request)
     {
@@ -82,7 +34,7 @@ public class AssignmentsController : ControllerBase
             if (!assignments.Any())
                 return BadRequest("Template not found or inactive");
 
-            return CreatedAtAction(nameof(GetAllAssignments), assignments);
+            return CreatedAtAction("GetAllAssignments", assignments);
         }
         catch (Exception ex)
         {
