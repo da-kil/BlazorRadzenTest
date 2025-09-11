@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
+using ti8m.BeachBreak.QueryApi.Controllers;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class ResponsesController : ControllerBase
+[Route("q/api/v{version:apiVersion}/responses")]
+public class ResponsesController : BaseController
 {
     //private readonly IQuestionnaireService _questionnaireService;
     //private readonly ILogger<ResponsesController> _logger;

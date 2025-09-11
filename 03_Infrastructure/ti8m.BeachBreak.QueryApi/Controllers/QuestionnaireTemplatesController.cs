@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+using ti8m.BeachBreak.QueryApi.Controllers;
 using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class QuestionnaireTemplatesController : ControllerBase
+[Route("q/api/v{version:apiVersion}/questionnaire-templates")]
+public class QuestionnaireTemplatesController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;
     private readonly ILogger<QuestionnaireTemplatesController> logger;
@@ -21,12 +22,55 @@ public class QuestionnaireTemplatesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<QuestionnaireTemplateDto>>> GetAllTemplates()
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllTemplates()
     {
         try
         {
             var result = await queryDispatcher.QueryAsync(new QuestionnaireTemplateListQuery());
-            return Ok(result);
+            return CreateResponse(result, templates =>
+            {
+                return templates.Select(template => new QuestionnaireTemplateDto
+                {
+
+                    Id = template.Id,
+                    Name = template.Name,
+                    Description = template.Description,
+                    Category = template.Category,
+                    CreatedDate = template.CreatedDate,
+                    LastModified = template.LastModified,
+                    IsActive = template.IsActive,
+                    Sections = template.Sections.Select(section => new QuestionSectionDto
+                    {
+                        Id = section.Id,
+                        Title = section.Title,
+                        Description = section.Description,
+                        Order = section.Order,
+                        IsRequired = section.IsRequired,
+                        Questions = section.Questions.Select(question => new QuestionItemDto
+                        {
+                            Id = question.Id,
+                            Title = question.Title,
+                            Description = question.Description,
+                            Type = MapQuestionTypeToDto[question.Type],
+                            Order = question.Order,
+                            IsRequired = question.IsRequired,
+                            Configuration = question.Configuration,
+                            Options = question.Options
+                        }).ToList()
+                    }).ToList(),
+                    Settings = new QuestionnaireSettingsDto
+                    {
+                        AllowSaveProgress = template.Settings.AllowSaveProgress,
+                        ShowProgressBar = template.Settings.ShowProgressBar,
+                        RequireAllSections = template.Settings.RequireAllSections,
+                        SuccessMessage = template.Settings.SuccessMessage,
+                        IncompleteMessage = template.Settings.IncompleteMessage,
+                        TimeLimit = template.Settings.TimeLimit,
+                        AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
+                    }
+                });
+            });
         }
         catch (Exception ex)
         {
@@ -36,7 +80,8 @@ public class QuestionnaireTemplatesController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<QuestionnaireTemplateDto>> GetTemplate(Guid id)
+    [ProducesResponseType(typeof(QuestionnaireTemplateDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTemplate(Guid id)
     {
         try
         {
@@ -44,7 +89,45 @@ public class QuestionnaireTemplatesController : ControllerBase
             if (result == null)
                 return NotFound($"Template with ID {id} not found");
 
-            return Ok(result);
+            return CreateResponse(result, template => new QuestionnaireTemplateDto
+            {
+                Id = template.Id,
+                Name = template.Name,
+                Description = template.Description,
+                Category = template.Category,
+                CreatedDate = template.CreatedDate,
+                LastModified = template.LastModified,
+                IsActive = template.IsActive,
+                Sections = template.Sections.Select(section => new QuestionSectionDto
+                {
+                    Id = section.Id,
+                    Title = section.Title,
+                    Description = section.Description,
+                    Order = section.Order,
+                    IsRequired = section.IsRequired,
+                    Questions = section.Questions.Select(question => new QuestionItemDto
+                    {
+                        Id = question.Id,
+                        Title = question.Title,
+                        Description = question.Description,
+                        Type = MapQuestionTypeToDto[question.Type],
+                        Order = question.Order,
+                        IsRequired = question.IsRequired,
+                        Configuration = question.Configuration,
+                        Options = question.Options
+                    }).ToList()
+                }).ToList(),
+                Settings = new QuestionnaireSettingsDto
+                {
+                    AllowSaveProgress = template.Settings.AllowSaveProgress,
+                    ShowProgressBar = template.Settings.ShowProgressBar,
+                    RequireAllSections = template.Settings.RequireAllSections,
+                    SuccessMessage = template.Settings.SuccessMessage,
+                    IncompleteMessage = template.Settings.IncompleteMessage,
+                    TimeLimit = template.Settings.TimeLimit,
+                    AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
+                }
+            });
         }
         catch (Exception ex)
         {
@@ -86,4 +169,12 @@ public class QuestionnaireTemplatesController : ControllerBase
     //        return StatusCode(500, "An error occurred while retrieving analytics");
     //    }
     //}
+
+    private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType, QueryApi.Dto.QuestionType> MapQuestionTypeToDto =>
+        new Dictionary<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType, QueryApi.Dto.QuestionType>
+        {
+            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.TextQuestion, QueryApi.Dto.QuestionType.TextQuestion },
+            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.GoalAchievement, QueryApi.Dto.QuestionType.GoalAchievement },
+            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.SelfAssessment, QueryApi.Dto.QuestionType.SelfAssessment }
+        };
 }

@@ -5,18 +5,18 @@ using ti8m.BeachBreak.CommandApi.Services;
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("c/api/v{version:apiVersion}/responses")]
 public class ResponsesController : ControllerBase
 {
     private readonly IQuestionnaireService _questionnaireService;
-    private readonly ILogger<ResponsesController> _logger;
+    private readonly ILogger<ResponsesController> logger;
 
     public ResponsesController(
         IQuestionnaireService questionnaireService,
         ILogger<ResponsesController> logger)
     {
         _questionnaireService = questionnaireService;
-        _logger = logger;
+        this.logger = logger;
     }
 
     [HttpPost("assignment/{assignmentId:guid}")]
@@ -34,12 +34,12 @@ public class ResponsesController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            _logger.LogError(ex, "Invalid assignment ID {AssignmentId}", assignmentId);
+            logger.LogError(ex, "Invalid assignment ID {AssignmentId}", assignmentId);
             return BadRequest(ex.Message);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving response for assignment {AssignmentId}", assignmentId);
+            logger.LogError(ex, "Error saving response for assignment {AssignmentId}", assignmentId);
             return StatusCode(500, "An error occurred while saving the response");
         }
     }
@@ -57,7 +57,7 @@ public class ResponsesController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error submitting response for assignment {AssignmentId}", assignmentId);
+            logger.LogError(ex, "Error submitting response for assignment {AssignmentId}", assignmentId);
             return StatusCode(500, "An error occurred while submitting the response");
         }
     }

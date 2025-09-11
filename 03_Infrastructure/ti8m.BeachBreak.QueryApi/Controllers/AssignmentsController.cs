@@ -1,13 +1,14 @@
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+using ti8m.BeachBreak.QueryApi.Controllers;
 using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class AssignmentsController : ControllerBase
+[Route("q/api/v{version:apiVersion}/assignments")]
+public class AssignmentsController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;
     private readonly ILogger<AssignmentsController> logger;
@@ -21,12 +22,29 @@ public class AssignmentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<QuestionnaireAssignmentDto>>> GetAllAssignments()
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllAssignments()
     {
         try
         {
             var result = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentListQuery());
-            return Ok(result);
+            return CreateResponse(result, templates =>
+            {
+                return templates.Select(template => new QuestionnaireAssignmentDto
+                {
+                    AssignedBy = template.AssignedBy,
+                    AssignedDate = template.AssignedDate,
+                    CompletedDate = template.CompletedDate,
+                    DueDate = template.DueDate,
+                    EmployeeEmail = template.EmployeeEmail,
+                    EmployeeId = template.EmployeeId,
+                    EmployeeName = template.EmployeeName,
+                    Id = template.Id,
+                    Notes = template.Notes,
+                    Status = MapAssignmentStatusToDto[template.Status],
+                    TemplateId = template.TemplateId
+                });
+            });
         }
         catch (Exception ex)
         {
@@ -36,7 +54,8 @@ public class AssignmentsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<QuestionnaireAssignmentDto>> GetAssignment(Guid id)
+    [ProducesResponseType(typeof(QuestionnaireAssignmentDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAssignment(Guid id)
     {
         try
         {
@@ -44,7 +63,20 @@ public class AssignmentsController : ControllerBase
             if (result == null)
                 return NotFound($"Assignment with ID {id} not found");
 
-            return Ok(result);
+            return CreateResponse(result, template => new QuestionnaireAssignmentDto
+            {
+                AssignedBy = template.AssignedBy,
+                AssignedDate = template.AssignedDate,
+                CompletedDate = template.CompletedDate,
+                DueDate = template.DueDate,
+                EmployeeEmail = template.EmployeeEmail,
+                EmployeeId = template.EmployeeId,
+                EmployeeName = template.EmployeeName,
+                Id = template.Id,
+                Notes = template.Notes,
+                Status = MapAssignmentStatusToDto[template.Status],
+                TemplateId = template.TemplateId
+            });
         }
         catch (Exception ex)
         {
@@ -54,12 +86,29 @@ public class AssignmentsController : ControllerBase
     }
 
     [HttpGet("employee/{employeeId}")]
-    public async Task<ActionResult<List<QuestionnaireAssignmentDto>>> GetAssignmentsByEmployee(Guid employeeId)
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAssignmentsByEmployee(Guid employeeId)
     {
         try
         {
             var result = await queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
-            return Ok(result);
+            return CreateResponse(result, templates =>
+            {
+                return templates.Select(template => new QuestionnaireAssignmentDto
+                {
+                    AssignedBy = template.AssignedBy,
+                    AssignedDate = template.AssignedDate,
+                    CompletedDate = template.CompletedDate,
+                    DueDate = template.DueDate,
+                    EmployeeEmail = template.EmployeeEmail,
+                    EmployeeId = template.EmployeeId,
+                    EmployeeName = template.EmployeeName,
+                    Id = template.Id,
+                    Notes = template.Notes,
+                    Status = MapAssignmentStatusToDto[template.Status],
+                    TemplateId = template.TemplateId
+                });
+            });
         }
         catch (Exception ex)
         {
@@ -67,4 +116,14 @@ public class AssignmentsController : ControllerBase
             return StatusCode(500, "An error occurred while retrieving assignments");
         }
     }
+
+    private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus> MapAssignmentStatusToDto =>
+    new Dictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus>
+    {
+        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Assigned, QueryApi.Dto.AssignmentStatus.Assigned },
+        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue, QueryApi.Dto.AssignmentStatus.Overdue },
+        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled, QueryApi.Dto.AssignmentStatus.Cancelled },
+        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress, QueryApi.Dto.AssignmentStatus.InProgress },
+        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed, QueryApi.Dto.AssignmentStatus.Completed },
+    };
 }

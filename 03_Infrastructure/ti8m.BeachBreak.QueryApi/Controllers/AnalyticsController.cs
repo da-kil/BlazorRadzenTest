@@ -1,12 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.AnalyticsQueries;
+using ti8m.BeachBreak.QueryApi.Controllers;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
-public class AnalyticsController : ControllerBase
+[Route("q/api/v{version:apiVersion}/analytics")]
+public class AnalyticsController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;
     private readonly ILogger<AnalyticsController> logger;
@@ -20,12 +21,16 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("overview")]
-    public async Task<ActionResult<Dictionary<string, object>>> GetOverallAnalytics()
+    [ProducesResponseType(typeof(Dictionary<string, object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetOverallAnalytics()
     {
         try
         {
             var result = await queryDispatcher.QueryAsync(new OverallAnalyticsListQuery());
-            return Ok(result);
+            return CreateResponse(result, templates => 
+            {
+                return result;
+            });
         }
         catch (Exception ex)
         {
@@ -35,12 +40,16 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("template/{templateId:guid}")]
-    public async Task<ActionResult<Dictionary<string, object>>> GetTemplateAnalytics(Guid templateId)
+    [ProducesResponseType(typeof(Dictionary<string, object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTemplateAnalytics(Guid templateId)
     {
         try
         {
             var result = await queryDispatcher.QueryAsync(new TemplateAnalyticsListQuery(templateId));
-            return Ok(result);
+            return CreateResponse(result, templates =>
+            {
+                return result;
+            });
         }
         catch (Exception ex)
         {
