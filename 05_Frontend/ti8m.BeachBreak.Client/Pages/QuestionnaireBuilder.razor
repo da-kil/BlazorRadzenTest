@@ -176,36 +176,24 @@
                                                         </div>
                                                         <div class="row justify-content-center">
                                                             <div class="col-md-8">
-                                                                <div class="d-flex align-items-center mb-3">
-                                                                    <RadzenButton Icon="self_improvement"
-                                                                                 ButtonStyle="ButtonStyle.Secondary" 
-                                                                                 Size="ButtonSize.Medium"
-                                                                                 Class="me-2"
-                                                                                 Click="@(async () => await AddQuestionOfType(QuestionType.SelfAssessment))" />
-                                                                    <RadzenTextBox @bind-Value="@questionTypeLabels[QuestionType.SelfAssessment]"
-                                                                                  Class="flex-grow-1"
-                                                                                  Placeholder="Question type name" />
-                                                                </div>
-                                                                <div class="d-flex align-items-center mb-3">
-                                                                    <RadzenButton Icon="track_changes"
-                                                                                 ButtonStyle="ButtonStyle.Secondary" 
-                                                                                 Size="ButtonSize.Medium"
-                                                                                 Class="me-2"
-                                                                                 Click="@(async () => await AddQuestionOfType(QuestionType.GoalAchievement))" />
-                                                                    <RadzenTextBox @bind-Value="@questionTypeLabels[QuestionType.GoalAchievement]"
-                                                                                  Class="flex-grow-1"
-                                                                                  Placeholder="Question type name" />
-                                                                </div>
-                                                                <div class="d-flex align-items-center mb-3">
-                                                                    <RadzenButton Icon="psychology"
-                                                                                 ButtonStyle="ButtonStyle.Secondary" 
-                                                                                 Size="ButtonSize.Medium"
-                                                                                 Class="me-2"
-                                                                                 Click="@(async () => await AddQuestionOfType(QuestionType.TextQuestion))" />
-                                                                    <RadzenTextBox @bind-Value="@questionTypeLabels[QuestionType.TextQuestion]"
-                                                                                  Class="flex-grow-1"
-                                                                                  Placeholder="Question type name" />
-                                                                </div>
+                                                                <RadzenButton Text="@questionTypeLabels[QuestionType.SelfAssessment]" 
+                                                                             Icon="self_improvement"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Medium"
+                                                                             Class="w-100 mb-3"
+                                                                             Click="@(async () => await AddQuestionOfType(QuestionType.SelfAssessment))" />
+                                                                <RadzenButton Text="@questionTypeLabels[QuestionType.GoalAchievement]" 
+                                                                             Icon="track_changes"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Medium"
+                                                                             Class="w-100 mb-3"
+                                                                             Click="@(async () => await AddQuestionOfType(QuestionType.GoalAchievement))" />
+                                                                <RadzenButton Text="@questionTypeLabels[QuestionType.TextQuestion]" 
+                                                                             Icon="psychology"
+                                                                             ButtonStyle="ButtonStyle.Secondary" 
+                                                                             Size="ButtonSize.Medium"
+                                                                             Class="w-100 mb-3"
+                                                                             Click="@(async () => await AddQuestionOfType(QuestionType.TextQuestion))" />
                                                             </div>
                                                         </div>
                                                         <div class="text-end mt-2">
@@ -239,7 +227,7 @@
                                                                 <div class="d-flex align-items-center mb-2">
                                                                     <RadzenIcon Icon="@GetQuestionTypeIcon(question.Type)" Class="me-2" />
                                                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted me-3">
-                                                                        @question.Type.ToString()
+                                                                        @GetQuestionTypeLabel(question)
                                                                     </RadzenText>
                                                                     <RadzenCheckBox @bind-Value="@question.IsRequired" Name="@($"req_{section.Id}_{question.Id}")" />
                                                                     <RadzenLabel Text="Required" Component="@($"req_{section.Id}_{question.Id}")" Class="ms-1" />
@@ -314,7 +302,7 @@
                                                     <div class="d-flex align-items-center mb-2">
                                                         <RadzenIcon Icon="@GetQuestionTypeIcon(question.Type)" Class="me-2" />
                                                         <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
-                                                            @question.Title
+                                                            @GetQuestionTypeLabel(question)
                                                             @if (question.IsRequired)
                                                             {
                                                                 <span class="text-danger">*</span>
@@ -488,7 +476,7 @@
         parameters.Add("Question", question);
         parameters.Add("Competencies", competencies);
         
-        var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>("Edit Self-Assessment Question",
+        var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>($"Edit {questionTypeLabels[QuestionType.SelfAssessment]} Question",
             parameters,
             new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
             
@@ -512,7 +500,7 @@
         parameters.Add("SectionTitle", GetTextQuestionSectionTitle(question));
         parameters.Add("SectionDescription", GetTextQuestionSectionDescription(question));
         
-        var result = await DialogService.OpenAsync<TextQuestionEditor>("Edit Text Question",
+        var result = await DialogService.OpenAsync<TextQuestionEditor>($"Edit {questionTypeLabels[QuestionType.TextQuestion]} Question",
             parameters,
             new DialogOptions() { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
             
@@ -768,7 +756,7 @@
                 parameters.Add("Question", newQuestion);
                 parameters.Add("Competencies", competencies);
                 
-                var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>("Configure Self-Assessment Competencies",
+                var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>($"Configure {questionTypeLabels[QuestionType.SelfAssessment]} Competencies",
                     parameters,
                     new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
                     
@@ -794,7 +782,7 @@
                 parameters.Add("SectionTitle", GetTextQuestionSectionTitle(newQuestion));
                 parameters.Add("SectionDescription", GetTextQuestionSectionDescription(newQuestion));
                 
-                var result = await DialogService.OpenAsync<TextQuestionEditor>("Configure Text Question",
+                var result = await DialogService.OpenAsync<TextQuestionEditor>($"Configure {questionTypeLabels[QuestionType.TextQuestion]}",
                     parameters,
                     new DialogOptions() { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
                     
@@ -838,10 +826,26 @@
     {
         return type switch
         {
-            QuestionType.SelfAssessment => "Self-Assessment of Competencies",
-            QuestionType.GoalAchievement => "Goal Achievement Review",
+            QuestionType.SelfAssessment => $"{questionTypeLabels[QuestionType.SelfAssessment]} of Competencies",
+            QuestionType.GoalAchievement => $"{questionTypeLabels[QuestionType.GoalAchievement]} Review",
             QuestionType.TextQuestion => "Career Development & Planning",
             _ => "New Question"
         };
+    }
+    
+    private string GetQuestionTypeLabel(QuestionItem question)
+    {
+        // Check if question has a custom type label stored in configuration
+        if (question.Configuration.ContainsKey("QuestionTitle"))
+        {
+            var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
+            if (!string.IsNullOrWhiteSpace(customTitle))
+            {
+                return customTitle;
+            }
+        }
+        
+        // Fall back to global labels
+        return questionTypeLabels[question.Type];
     }
 }

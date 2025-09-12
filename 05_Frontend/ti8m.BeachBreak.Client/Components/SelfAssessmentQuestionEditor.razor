@@ -3,7 +3,12 @@
 @using ti8m.BeachBreak.Client.Models
 
 <div class="self-assessment-editor">
-    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Configure Self-Assessment Competencies</RadzenText>
+    <div class="mb-3">
+        <RadzenTextBox @bind-Value="@QuestionTitle"
+                      Placeholder="Enter question title..."
+                      Class="w-100"
+                      Style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;" />
+    </div>
     
     <div class="mb-4">
         <RadzenButton Text="Add Competency" 
@@ -72,6 +77,17 @@
     [Parameter] public List<CompetencyDefinition> Competencies { get; set; } = new();
     
     [Inject] protected DialogService DialogService { get; set; } = default!;
+    
+    private string QuestionTitle { get; set; } = "Configure Self-Assessment Competencies";
+    
+    protected override void OnInitialized()
+    {
+        // Initialize with existing title or default
+        if (Question.Configuration.ContainsKey("QuestionTitle"))
+        {
+            QuestionTitle = Question.Configuration["QuestionTitle"].ToString() ?? "Configure Self-Assessment Competencies";
+        }
+    }
 
     private void AddCompetency()
     {
@@ -105,6 +121,8 @@
     {
         if (CanSave())
         {
+            // Save the title to question configuration
+            Question.Configuration["QuestionTitle"] = QuestionTitle;
             DialogService.Close(Competencies);
         }
     }
