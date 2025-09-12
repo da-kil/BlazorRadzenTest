@@ -9,9 +9,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Aspire\ti8m.BeachBreak.ServiceDefaults\ti8m.BeachBreak.ServiceDefaults.csproj" />
     <ProjectReference Include="..\ti8m.BeachBreak.Client\ti8m.BeachBreak.Client.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.9" />
     <PackageReference Include="Microsoft.Extensions.ServiceDiscovery.Yarp" Version="9.4.2" />
-    <PackageReference Include="Radzen.Blazor" Version="7.3.3" />
+    <PackageReference Include="Radzen.Blazor" Version="7.3.4" />
   </ItemGroup>
 
 </Project>

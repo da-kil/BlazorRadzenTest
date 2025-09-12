@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
-using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+using Npgsql;
+using System.Data;
+using System.Text.Json;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 
@@ -7,88 +9,101 @@ public class QuestionnaireTemplateQueryHandler :
     IQueryHandler<QuestionnaireTemplateListQuery, Result<IEnumerable<QuestionnaireTemplate>>>,
     IQueryHandler<QuestionnaireTemplateQuery, Result<QuestionnaireTemplate>>
 {
-    private readonly ILogger<QuestionnaireAssignmentQueryHandler> logger;
+    private readonly NpgsqlDataSource dataSource;
+    private readonly ILogger<QuestionnaireTemplateQueryHandler> logger;
 
-    public QuestionnaireTemplateQueryHandler(ILogger<QuestionnaireAssignmentQueryHandler> logger)
+    public QuestionnaireTemplateQueryHandler(NpgsqlDataSource dataSource, ILogger<QuestionnaireTemplateQueryHandler> logger)
     {
+        this.dataSource = dataSource;
         this.logger = logger;
     }
 
     public async Task<Result<IEnumerable<QuestionnaireTemplate>>> HandleAsync(QuestionnaireTemplateListQuery query, CancellationToken cancellationToken = default)
     {
-        var sampleTemplate = new QuestionnaireTemplate
+        try
         {
-            Id = Guid.NewGuid(),
-            Name = "Annual Performance Review 2024",
-            Description = "Comprehensive annual performance review questionnaire",
-            Category = "Performance Review",
-            CreatedDate = DateTime.Now.AddDays(-30),
-            LastModified = DateTime.Now.AddDays(-5),
-            IsActive = true,
-            Sections = new List<QuestionSection>
-            {
-                new QuestionSection
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Self-Assessment",
-                    Description = "Rate your performance in key competencies",
-                    Order = 0,
-                    IsRequired = true,
-                    Questions = new List<QuestionItem>
-                    {
-                        new QuestionItem
-                        {
-                            Id = Guid.NewGuid(),
-                            Title = "How would you rate your overall performance this year?",
-                            Type = QuestionType.SelfAssessment,
-                            Order = 0,
-                            IsRequired = true
-                        },
-                        new QuestionItem
-                        {
-                            Id = Guid.NewGuid(),
-                            Title = "What are your key accomplishments this year?",
-                            Type = QuestionType.TextQuestion,
-                            Order = 1,
-                            IsRequired = true
-                        }
-                    }
-                },
-                new QuestionSection
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Goal Setting",
-                    Description = "Set your goals for the upcoming year",
-                    Order = 1,
-                    IsRequired = true,
-                    Questions = new List<QuestionItem>
-                    {
-                        new QuestionItem
-                        {
-                            Id = Guid.NewGuid(),
-                            Title = "Set your primary professional goal for next year",
-                            Type = QuestionType.GoalAchievement,
-                            Order = 0,
-                            IsRequired = true
-                        }
-                    }
-                }
-            },
-            Settings = new QuestionnaireSettings
-            {
-                AllowSaveProgress = true,
-                ShowProgressBar = true,
-                RequireAllSections = true,
-                SuccessMessage = "Thank you for completing your annual review!",
-                AllowReviewBeforeSubmit = true
-            }
-        };
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+            
+            cmd.CommandText = """
+                SELECT id, name, description, category, sections, settings, created_at, updated_at
+                FROM questionnaire_templates 
+                ORDER BY created_at DESC
+                """;
 
-        return await Task.FromResult(Result<IEnumerable<QuestionnaireTemplate>>.Success(new List<QuestionnaireTemplate> { sampleTemplate }));
+            var templates = new List<QuestionnaireTemplate>();
+            
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var template = new QuestionnaireTemplate
+                {
+                    Id = reader.GetGuid("id"),
+                    Name = reader.GetString("name"),
+                    Description = reader.IsDBNull("description") ? string.Empty : reader.GetString("description"),
+                    Category = reader.IsDBNull("category") ? string.Empty : reader.GetString("category"),
+                    CreatedDate = reader.GetDateTime("created_at"),
+                    LastModified = reader.GetDateTime("updated_at"),
+                    IsActive = true,
+                    Sections = JsonSerializer.Deserialize<List<QuestionSection>>(reader.GetString("sections")) ?? new(),
+                    Settings = JsonSerializer.Deserialize<QuestionnaireSettings>(reader.GetString("settings")) ?? new()
+                };
+                
+                templates.Add(template);
+            }
+
+            logger.LogInformation("Retrieved {Count} questionnaire templates", templates.Count);
+            return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to retrieve questionnaire templates");
+            return Result<IEnumerable<QuestionnaireTemplate>>.Fail($"Failed to retrieve questionnaire templates: {ex.Message}", 500);
+        }
     }
 
     public async Task<Result<QuestionnaireTemplate>> HandleAsync(QuestionnaireTemplateQuery query, CancellationToken cancellationToken = default)
     {
-        return await Task.FromResult(Result<QuestionnaireTemplate>.Success(new QuestionnaireTemplate())); // Placeholder for actual implementation
+        try
+        {
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+            
+            cmd.CommandText = """
+                SELECT id, name, description, category, sections, settings, created_at, updated_at
+                FROM questionnaire_templates 
+                WHERE id = @id
+                """;
+            
+            cmd.Parameters.AddWithValue("@id", query.Id);
+            
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                var template = new QuestionnaireTemplate
+                {
+                    Id = reader.GetGuid("id"),
+                    Name = reader.GetString("name"),
+                    Description = reader.IsDBNull("description") ? string.Empty : reader.GetString("description"),
+                    Category = reader.IsDBNull("category") ? string.Empty : reader.GetString("category"),
+                    CreatedDate = reader.GetDateTime("created_at"),
+                    LastModified = reader.GetDateTime("updated_at"),
+                    IsActive = true,
+                    Sections = JsonSerializer.Deserialize<List<QuestionSection>>(reader.GetString("sections")) ?? new(),
+                    Settings = JsonSerializer.Deserialize<QuestionnaireSettings>(reader.GetString("settings")) ?? new()
+                };
+                
+                logger.LogInformation("Retrieved questionnaire template with ID {Id}", query.Id);
+                return Result<QuestionnaireTemplate>.Success(template);
+            }
+            
+            logger.LogWarning("Questionnaire template with ID {Id} not found", query.Id);
+            return Result<QuestionnaireTemplate>.Fail($"Questionnaire template with ID {query.Id} not found", 404);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to retrieve questionnaire template with ID {Id}", query.Id);
+            return Result<QuestionnaireTemplate>.Fail($"Failed to retrieve questionnaire template: {ex.Message}", 500);
+        }
     }
 }

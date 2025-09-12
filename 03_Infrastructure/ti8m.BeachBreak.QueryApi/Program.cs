@@ -2,12 +2,13 @@ using Asp.Versioning;
 using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.Application.Query;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Core.Infrastructure.Database;
 
 namespace ti8m.BeachBreak.QueryApi;
 
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.AddServiceDefaults();
@@ -58,10 +59,16 @@ public class Program
             });
         });
 
+        builder.AddNpgsqlDataSource(connectionName: "beachbreakdb");
+        builder.MigrateDatabase();
+
         builder.Services.AddScoped<UserContext>();
         builder.Services.AddApplication(builder.Configuration);
 
         var app = builder.Build();
+
+        // Initialize database
+        await app.Services.InitializeDatabaseAsync();
 
         app.MapDefaultEndpoints();
 
