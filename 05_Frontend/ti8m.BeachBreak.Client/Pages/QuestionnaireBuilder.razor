@@ -75,6 +75,7 @@
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
     [Inject] protected IQuestionnaireApiService ApiService { get; set; } = default!;
+    [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
 
     private QuestionnaireTemplate template = new();
     private bool IsEditMode => TemplateId.HasValue;
@@ -92,22 +93,13 @@
         { QuestionType.TextQuestion, "Text Question" }
     };
     
-    private readonly List<string> categories = new()
-    {
-        "Performance Review",
-        "Employee Feedback",
-        "Training Assessment",
-        "Customer Satisfaction",
-        "Team Evaluation",
-        "Goal Setting",
-        "Skills Assessment",
-        "Exit Interview",
-        "Onboarding",
-        "Other"
-    };
+    private List<string> categories = new();
 
     protected override async Task OnInitializedAsync()
     {
+        // Load categories first
+        await LoadCategories();
+
         if (IsEditMode && TemplateId.HasValue)
         {
             await LoadTemplate(TemplateId.Value);
@@ -121,6 +113,27 @@
                 Description = "",
                 Category = "",
                 Settings = new QuestionnaireSettings()
+            };
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            categories = await CategoryService.GetCategoryNamesAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load categories: {ex.Message}");
+            // Fallback to default categories if API fails
+            categories = new List<string>
+            {
+                "Performance Review",
+                "Employee Feedback",
+                "Training Assessment",
+                "Goal Setting",
+                "Other"
             };
         }
     }

@@ -1,0 +1,89 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<div class="p-3">
+    <EditForm Model="@Category" OnValidSubmit="@OnValidSubmit">
+        <DataAnnotationsValidator />
+
+        <div class="mb-3">
+            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Category Name *</RadzenText>
+            <RadzenTextBox @bind-Value="@Category.Name"
+                          Placeholder="Enter category name"
+                          Class="w-100"
+                          MaxLength="100" />
+            <ValidationMessage For="@(() => Category.Name)" />
+        </div>
+
+        <div class="mb-3">
+            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Description</RadzenText>
+            <RadzenTextArea @bind-Value="@Category.Description"
+                           Placeholder="Enter category description"
+                           Rows="3"
+                           Class="w-100"
+                           MaxLength="500" />
+            <ValidationMessage For="@(() => Category.Description)" />
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Sort Order</RadzenText>
+                <RadzenNumeric @bind-Value="@Category.SortOrder"
+                              TValue="int"
+                              Min="0"
+                              Max="999"
+                              Class="w-100" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    Lower numbers appear first
+                </RadzenText>
+            </div>
+            <div class="col-md-6">
+                <div class="mt-4">
+                    <RadzenCheckBox @bind-Value="@Category.IsActive" Name="isActive" />
+                    <RadzenLabel Text="Active" Component="isActive" Class="ms-2" />
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end gap-2 mt-4">
+            <RadzenButton Text="Cancel"
+                         ButtonStyle="ButtonStyle.Light"
+                         Click="@(() => DialogService.Close())" />
+            <RadzenButton Text="@(IsEditMode ? "Update" : "Create")"
+                         ButtonType="ButtonType.Submit"
+                         ButtonStyle="ButtonStyle.Primary"
+                         IsBusy="@isSaving" />
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Category Category { get; set; } = null!;
+    [Parameter, EditorRequired] public bool IsEditMode { get; set; }
+    [Inject] protected DialogService DialogService { get; set; } = default!;
+
+    private bool isSaving = false;
+
+    private async Task OnValidSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(Category.Name))
+        {
+            return;
+        }
+
+        isSaving = true;
+
+        try
+        {
+            Category.Name = Category.Name.Trim();
+            Category.Description = Category.Description?.Trim() ?? string.Empty;
+            Category.LastModified = DateTime.Now;
+
+            DialogService.Close(Category);
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+}

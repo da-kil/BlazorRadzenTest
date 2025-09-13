@@ -1,0 +1,224 @@
+@page "/admin/categories"
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components
+
+<PageTitle>Category Administration</PageTitle>
+
+<div class="container-fluid">
+    <RadzenCard Class="p-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
+                    <RadzenIcon Icon="category" Class="me-2" />
+                    Category Administration
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                    Manage questionnaire categories
+                </RadzenText>
+            </div>
+            <div class="d-flex gap-2">
+                <RadzenButton Text="Add New Category"
+                             ButtonStyle="ButtonStyle.Primary"
+                             Icon="add"
+                             Click="@ShowAddCategoryDialog" />
+            </div>
+        </div>
+
+        <div class="mb-3 d-flex justify-content-between">
+            <RadzenTextBox @bind-Value="@searchText"
+                          Placeholder="Search categories..."
+                          oninput="@FilterCategories" />
+            <RadzenToggleButton @bind-Value="@showInactiveCategories"
+                               Text="Show Inactive"
+                               Change="@LoadCategories" />
+        </div>
+
+        <RadzenDataGrid @ref="categoriesGrid" Data="@filteredCategories" TItem="Category"
+                       AllowFiltering="true" AllowColumnResize="true" AllowSorting="true">
+            <Columns>
+                <RadzenDataGridColumn TItem="Category" Property="Name" Title="Name" Width="200px">
+                    <Template Context="category">
+                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">@category.Name</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Category" Property="Description" Title="Description">
+                    <Template Context="category">
+                        <RadzenText TextStyle="TextStyle.Body2">@category.Description</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Category" Property="SortOrder" Title="Sort Order" Width="100px">
+                    <Template Context="category">
+                        <RadzenBadge Text="@category.SortOrder.ToString()" Variant="Variant.Outlined" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Category" Property="IsActive" Title="Status" Width="100px">
+                    <Template Context="category">
+                        @if (category.IsActive)
+                        {
+                            <RadzenBadge Text="Active" BadgeStyle="BadgeStyle.Success" />
+                        }
+                        else
+                        {
+                            <RadzenBadge Text="Inactive" BadgeStyle="BadgeStyle.Secondary" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Category" Property="CreatedDate" Title="Created" Width="150px">
+                    <Template Context="category">
+                        <RadzenText TextStyle="TextStyle.Caption">@category.CreatedDate.ToString("MMM dd, yyyy")</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Category" Filterable="false" Sortable="false" Width="150px" Title="Actions">
+                    <Template Context="category">
+                        <div class="d-flex gap-1">
+                            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                         Icon="edit"
+                                         Size="ButtonSize.ExtraSmall"
+                                         Click="@(() => ShowEditCategoryDialog(category))"
+                                         Tooltip="Edit Category" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                         Icon="delete"
+                                         Size="ButtonSize.ExtraSmall"
+                                         Click="@(() => DeleteCategory(category))"
+                                         Tooltip="Delete Category" />
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+</div>
+
+@code {
+    [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
+    [Inject] protected DialogService DialogService { get; set; } = default!;
+    [Inject] protected NotificationService NotificationService { get; set; } = default!;
+
+    private List<Category> categories = new();
+    private List<Category> filteredCategories = new();
+    private RadzenDataGrid<Category>? categoriesGrid;
+    private string searchText = "";
+    private bool showInactiveCategories = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            categories = await CategoryService.GetAllCategoriesAsync(showInactiveCategories);
+            FilterCategories();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load categories: {ex.Message}");
+        }
+    }
+
+    private void FilterCategories()
+    {
+        filteredCategories = categories
+            .Where(c => string.IsNullOrEmpty(searchText) ||
+                       c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                       c.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(c => c.SortOrder)
+            .ThenBy(c => c.Name)
+            .ToList();
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ShowAddCategoryDialog()
+    {
+        var newCategory = new Category();
+
+        var result = await DialogService.OpenAsync<CategoryDialog>("Add New Category",
+            new Dictionary<string, object> { { "Category", newCategory }, { "IsEditMode", false } },
+            new DialogOptions() { Width = "600px", Height = "400px", Resizable = true, Draggable = true });
+
+        if (result is Category savedCategory)
+        {
+            try
+            {
+                await CategoryService.CreateCategoryAsync(savedCategory);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Category created successfully");
+                await LoadCategories();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to create category: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task ShowEditCategoryDialog(Category category)
+    {
+        var editCategory = new Category
+        {
+            Id = category.Id,
+            Name = category.Name,
+            Description = category.Description,
+            IsActive = category.IsActive,
+            SortOrder = category.SortOrder,
+            CreatedDate = category.CreatedDate,
+            LastModified = category.LastModified
+        };
+
+        var result = await DialogService.OpenAsync<CategoryDialog>("Edit Category",
+            new Dictionary<string, object> { { "Category", editCategory }, { "IsEditMode", true } },
+            new DialogOptions() { Width = "600px", Height = "400px", Resizable = true, Draggable = true });
+
+        if (result is Category savedCategory)
+        {
+            try
+            {
+                await CategoryService.UpdateCategoryAsync(savedCategory);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Category updated successfully");
+                await LoadCategories();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update category: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task DeleteCategory(Category category)
+    {
+        var result = await DialogService.Confirm($"Are you sure you want to delete the category '{category.Name}'?",
+            "Delete Category", new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+
+        if (result == true)
+        {
+            try
+            {
+                var success = await CategoryService.DeleteCategoryAsync(category.Id);
+                if (success)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Success", "Category deleted successfully");
+                    await LoadCategories();
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to delete category");
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to delete category: {ex.Message}");
+            }
+        }
+    }
+}
