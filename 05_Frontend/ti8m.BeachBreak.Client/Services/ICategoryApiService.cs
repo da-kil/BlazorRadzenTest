@@ -10,4 +10,5 @@ public interface ICategoryApiService
     Task<Category?> UpdateCategoryAsync(Category category);
     Task<bool> DeleteCategoryAsync(Guid id);
     Task<List<string>> GetCategoryNamesAsync();
+    Task<List<string>> GetCategoryNamesAsync(string language = "en");
 }

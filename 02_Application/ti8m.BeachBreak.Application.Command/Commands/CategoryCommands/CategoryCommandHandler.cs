@@ -25,13 +25,15 @@ public class CategoryCommandHandler :
             await using var cmd = connection.CreateCommand();
 
             cmd.CommandText = """
-                INSERT INTO categories (id, name, description, is_active, created_date, last_modified, sort_order)
-                VALUES (@id, @name, @description, @is_active, @created_date, @last_modified, @sort_order)
+                INSERT INTO categories (id, name_en, name_de, description_en, description_de, is_active, created_date, last_modified, sort_order)
+                VALUES (@id, @name_en, @name_de, @description_en, @description_de, @is_active, @created_date, @last_modified, @sort_order)
                 """;
 
             cmd.Parameters.AddWithValue("@id", id);
-            cmd.Parameters.AddWithValue("@name", command.Category.Name);
-            cmd.Parameters.AddWithValue("@description", command.Category.Description);
+            cmd.Parameters.AddWithValue("@name_en", command.Category.NameEn);
+            cmd.Parameters.AddWithValue("@name_de", command.Category.NameDe);
+            cmd.Parameters.AddWithValue("@description_en", command.Category.DescriptionEn);
+            cmd.Parameters.AddWithValue("@description_de", command.Category.DescriptionDe);
             cmd.Parameters.AddWithValue("@is_active", command.Category.IsActive);
             cmd.Parameters.AddWithValue("@created_date", DateTime.UtcNow);
             cmd.Parameters.AddWithValue("@last_modified", (object?)command.Category.LastModified ?? DBNull.Value);
@@ -55,8 +57,10 @@ public class CategoryCommandHandler :
 
             cmd.CommandText = """
                 UPDATE categories
-                SET name = @name,
-                    description = @description,
+                SET name_en = @name_en,
+                    name_de = @name_de,
+                    description_en = @description_en,
+                    description_de = @description_de,
                     is_active = @is_active,
                     last_modified = @last_modified,
                     sort_order = @sort_order
@@ -64,8 +68,10 @@ public class CategoryCommandHandler :
                 """;
 
             cmd.Parameters.AddWithValue("@id", command.Category.Id);
-            cmd.Parameters.AddWithValue("@name", command.Category.Name);
-            cmd.Parameters.AddWithValue("@description", command.Category.Description);
+            cmd.Parameters.AddWithValue("@name_en", command.Category.NameEn);
+            cmd.Parameters.AddWithValue("@name_de", command.Category.NameDe);
+            cmd.Parameters.AddWithValue("@description_en", command.Category.DescriptionEn);
+            cmd.Parameters.AddWithValue("@description_de", command.Category.DescriptionDe);
             cmd.Parameters.AddWithValue("@is_active", command.Category.IsActive);
             cmd.Parameters.AddWithValue("@last_modified", DateTime.UtcNow);
             cmd.Parameters.AddWithValue("@sort_order", command.Category.SortOrder);

@@ -26,10 +26,10 @@ public class CategoryQueryHandler :
             var whereClause = query.IncludeInactive ? "" : "WHERE is_active = true";
 
             cmd.CommandText = $"""
-                SELECT id, name, description, is_active, created_date, last_modified, sort_order
+                SELECT id, name_en, name_de, description_en, description_de, is_active, created_date, last_modified, sort_order
                 FROM categories
                 {whereClause}
-                ORDER BY sort_order ASC, name ASC
+                ORDER BY sort_order ASC, name_en ASC
                 """;
 
             var categories = new List<Category>();
@@ -40,12 +40,14 @@ public class CategoryQueryHandler :
                 var category = new Category
                 {
                     Id = reader.GetGuid(0),
-                    Name = reader.GetString(1),
-                    Description = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                    IsActive = reader.GetBoolean(3),
-                    CreatedDate = reader.GetDateTime(4),
-                    LastModified = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
-                    SortOrder = reader.GetInt32(6)
+                    NameEn = reader.GetString(1),
+                    NameDe = reader.GetString(2),
+                    DescriptionEn = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                    DescriptionDe = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                    IsActive = reader.GetBoolean(5),
+                    CreatedDate = reader.GetDateTime(6),
+                    LastModified = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
+                    SortOrder = reader.GetInt32(8)
                 };
 
                 categories.Add(category);
@@ -69,7 +71,7 @@ public class CategoryQueryHandler :
             await using var cmd = connection.CreateCommand();
 
             cmd.CommandText = """
-                SELECT id, name, description, is_active, created_date, last_modified, sort_order
+                SELECT id, name_en, name_de, description_en, description_de, is_active, created_date, last_modified, sort_order
                 FROM categories
                 WHERE id = @id
                 """;
@@ -82,12 +84,14 @@ public class CategoryQueryHandler :
                 var category = new Category
                 {
                     Id = reader.GetGuid(0),
-                    Name = reader.GetString(1),
-                    Description = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
-                    IsActive = reader.GetBoolean(3),
-                    CreatedDate = reader.GetDateTime(4),
-                    LastModified = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
-                    SortOrder = reader.GetInt32(6)
+                    NameEn = reader.GetString(1),
+                    NameDe = reader.GetString(2),
+                    DescriptionEn = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
+                    DescriptionDe = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
+                    IsActive = reader.GetBoolean(5),
+                    CreatedDate = reader.GetDateTime(6),
+                    LastModified = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
+                    SortOrder = reader.GetInt32(8)
                 };
 
                 logger.LogInformation("Retrieved category with ID {Id}", query.CategoryId);

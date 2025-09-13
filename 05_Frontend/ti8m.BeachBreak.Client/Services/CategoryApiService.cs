@@ -48,8 +48,10 @@ public class CategoryApiService : ICategoryApiService
         {
             var createRequest = new
             {
-                Name = category.Name,
-                Description = category.Description,
+                NameEn = category.NameEn,
+                NameDe = category.NameDe,
+                DescriptionEn = category.DescriptionEn,
+                DescriptionDe = category.DescriptionDe,
                 IsActive = category.IsActive,
                 SortOrder = category.SortOrder
             };
@@ -78,8 +80,10 @@ public class CategoryApiService : ICategoryApiService
         {
             var updateRequest = new
             {
-                Name = category.Name,
-                Description = category.Description,
+                NameEn = category.NameEn,
+                NameDe = category.NameDe,
+                DescriptionEn = category.DescriptionEn,
+                DescriptionDe = category.DescriptionDe,
                 IsActive = category.IsActive,
                 SortOrder = category.SortOrder
             };
@@ -117,14 +121,19 @@ public class CategoryApiService : ICategoryApiService
 
     public async Task<List<string>> GetCategoryNamesAsync()
     {
+        return await GetCategoryNamesAsync("en");
+    }
+
+    public async Task<List<string>> GetCategoryNamesAsync(string language = "en")
+    {
         try
         {
             var categories = await GetAllCategoriesAsync();
             return categories
                 .Where(c => c.IsActive)
                 .OrderBy(c => c.SortOrder)
-                .ThenBy(c => c.Name)
-                .Select(c => c.Name)
+                .ThenBy(c => c.NameEn)
+                .Select(c => language.ToLower() == "de" ? c.NameDe : c.NameEn)
                 .ToList();
         }
         catch (Exception ex)

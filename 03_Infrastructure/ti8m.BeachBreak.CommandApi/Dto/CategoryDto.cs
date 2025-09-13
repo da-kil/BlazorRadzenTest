@@ -8,10 +8,17 @@ public class CategoryDto
 
     [Required]
     [StringLength(100)]
-    public string Name { get; set; } = string.Empty;
+    public string NameEn { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(100)]
+    public string NameDe { get; set; } = string.Empty;
 
     [StringLength(500)]
-    public string Description { get; set; } = string.Empty;
+    public string DescriptionEn { get; set; } = string.Empty;
+
+    [StringLength(500)]
+    public string DescriptionDe { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
 

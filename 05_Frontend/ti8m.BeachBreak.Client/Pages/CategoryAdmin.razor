@@ -30,7 +30,7 @@
         <div class="mb-3 d-flex justify-content-between">
             <RadzenTextBox @bind-Value="@searchText"
                           Placeholder="Search categories..."
-                          oninput="@FilterCategories" />
+                          @oninput="@OnSearchTextChanged" />
             <RadzenToggleButton @bind-Value="@showInactiveCategories"
                                Text="Show Inactive"
                                Change="@LoadCategories" />
@@ -39,15 +39,27 @@
         <RadzenDataGrid @ref="categoriesGrid" Data="@filteredCategories" TItem="Category"
                        AllowFiltering="true" AllowColumnResize="true" AllowSorting="true">
             <Columns>
-                <RadzenDataGridColumn TItem="Category" Property="Name" Title="Name" Width="200px">
+                <RadzenDataGridColumn TItem="Category" Property="NameEn" Title="Name (EN/DE)" Width="300px">
                     <Template Context="category">
-                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">@category.Name</RadzenText>
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">🇬🇧 @category.NameEn</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">🇩🇪 @category.NameDe</RadzenText>
+                        </div>
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Category" Property="Description" Title="Description">
+                <RadzenDataGridColumn TItem="Category" Property="DescriptionEn" Title="Description (EN/DE)">
                     <Template Context="category">
-                        <RadzenText TextStyle="TextStyle.Body2">@category.Description</RadzenText>
+                        <div>
+                            @if (!string.IsNullOrWhiteSpace(category.DescriptionEn))
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2">🇬🇧 @category.DescriptionEn</RadzenText>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(category.DescriptionDe))
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">🇩🇪 @category.DescriptionDe</RadzenText>
+                            }
+                        </div>
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -127,14 +139,22 @@
         }
     }
 
+    private void OnSearchTextChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        FilterCategories();
+    }
+
     private void FilterCategories()
     {
         filteredCategories = categories
             .Where(c => string.IsNullOrEmpty(searchText) ||
-                       c.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                       c.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                       c.NameEn.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                       c.NameDe.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                       c.DescriptionEn.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                       c.DescriptionDe.Contains(searchText, StringComparison.OrdinalIgnoreCase))
             .OrderBy(c => c.SortOrder)
-            .ThenBy(c => c.Name)
+            .ThenBy(c => c.NameEn)
             .ToList();
 
         InvokeAsync(StateHasChanged);
@@ -168,8 +188,10 @@
         var editCategory = new Category
         {
             Id = category.Id,
-            Name = category.Name,
-            Description = category.Description,
+            NameEn = category.NameEn,
+            NameDe = category.NameDe,
+            DescriptionEn = category.DescriptionEn,
+            DescriptionDe = category.DescriptionDe,
             IsActive = category.IsActive,
             SortOrder = category.SortOrder,
             CreatedDate = category.CreatedDate,
@@ -197,7 +219,7 @@
 
     private async Task DeleteCategory(Category category)
     {
-        var result = await DialogService.Confirm($"Are you sure you want to delete the category '{category.Name}'?",
+        var result = await DialogService.Confirm($"Are you sure you want to delete the category '{category.NameEn}'?",
             "Delete Category", new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
 
         if (result == true)

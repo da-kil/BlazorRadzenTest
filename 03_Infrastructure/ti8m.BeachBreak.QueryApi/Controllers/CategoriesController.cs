@@ -32,8 +32,10 @@ public class CategoriesController : BaseController
                 return categories.Select(category => new CategoryDto
                 {
                     Id = category.Id,
-                    Name = category.Name,
-                    Description = category.Description,
+                    NameEn = category.NameEn,
+                    NameDe = category.NameDe,
+                    DescriptionEn = category.DescriptionEn,
+                    DescriptionDe = category.DescriptionDe,
                     IsActive = category.IsActive,
                     CreatedDate = category.CreatedDate,
                     LastModified = category.LastModified,
@@ -62,8 +64,10 @@ public class CategoriesController : BaseController
             return CreateResponse(result, category => new CategoryDto
             {
                 Id = category.Id,
-                Name = category.Name,
-                Description = category.Description,
+                NameEn = category.NameEn,
+                NameDe = category.NameDe,
+                DescriptionEn = category.DescriptionEn,
+                DescriptionDe = category.DescriptionDe,
                 IsActive = category.IsActive,
                 CreatedDate = category.CreatedDate,
                 LastModified = category.LastModified,

@@ -6,24 +6,54 @@
     <EditForm Model="@Category" OnValidSubmit="@OnValidSubmit">
         <DataAnnotationsValidator />
 
-        <div class="mb-3">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Category Name *</RadzenText>
-            <RadzenTextBox @bind-Value="@Category.Name"
-                          Placeholder="Enter category name"
-                          Class="w-100"
-                          MaxLength="100" />
-            <ValidationMessage For="@(() => Category.Name)" />
-        </div>
+        <RadzenTabs>
+            <Tabs>
+                <RadzenTabsItem Text="🇬🇧 English">
+                    <div class="p-3">
+                        <div class="mb-3">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Category Name (English) *</RadzenText>
+                            <RadzenTextBox @bind-Value="@Category.NameEn"
+                                          Placeholder="Enter category name in English"
+                                          Class="w-100"
+                                          MaxLength="100" />
+                            <ValidationMessage For="@(() => Category.NameEn)" />
+                        </div>
 
-        <div class="mb-3">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Description</RadzenText>
-            <RadzenTextArea @bind-Value="@Category.Description"
-                           Placeholder="Enter category description"
-                           Rows="3"
-                           Class="w-100"
-                           MaxLength="500" />
-            <ValidationMessage For="@(() => Category.Description)" />
-        </div>
+                        <div class="mb-3">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Description (English)</RadzenText>
+                            <RadzenTextArea @bind-Value="@Category.DescriptionEn"
+                                           Placeholder="Enter category description in English"
+                                           Rows="3"
+                                           Class="w-100"
+                                           MaxLength="500" />
+                            <ValidationMessage For="@(() => Category.DescriptionEn)" />
+                        </div>
+                    </div>
+                </RadzenTabsItem>
+                <RadzenTabsItem Text="🇩🇪 Deutsch">
+                    <div class="p-3">
+                        <div class="mb-3">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Category Name (German) *</RadzenText>
+                            <RadzenTextBox @bind-Value="@Category.NameDe"
+                                          Placeholder="Enter category name in German"
+                                          Class="w-100"
+                                          MaxLength="100" />
+                            <ValidationMessage For="@(() => Category.NameDe)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Description (German)</RadzenText>
+                            <RadzenTextArea @bind-Value="@Category.DescriptionDe"
+                                           Placeholder="Enter category description in German"
+                                           Rows="3"
+                                           Class="w-100"
+                                           MaxLength="500" />
+                            <ValidationMessage For="@(() => Category.DescriptionDe)" />
+                        </div>
+                    </div>
+                </RadzenTabsItem>
+            </Tabs>
+        </RadzenTabs>
 
         <div class="row mb-3">
             <div class="col-md-6">
@@ -66,7 +96,7 @@
 
     private async Task OnValidSubmit()
     {
-        if (string.IsNullOrWhiteSpace(Category.Name))
+        if (string.IsNullOrWhiteSpace(Category.NameEn) || string.IsNullOrWhiteSpace(Category.NameDe))
         {
             return;
         }
@@ -75,8 +105,10 @@
 
         try
         {
-            Category.Name = Category.Name.Trim();
-            Category.Description = Category.Description?.Trim() ?? string.Empty;
+            Category.NameEn = Category.NameEn.Trim();
+            Category.NameDe = Category.NameDe.Trim();
+            Category.DescriptionEn = Category.DescriptionEn?.Trim() ?? string.Empty;
+            Category.DescriptionDe = Category.DescriptionDe?.Trim() ?? string.Empty;
             Category.LastModified = DateTime.Now;
 
             DialogService.Close(Category);

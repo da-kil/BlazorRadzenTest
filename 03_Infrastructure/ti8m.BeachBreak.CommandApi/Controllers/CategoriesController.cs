@@ -28,13 +28,18 @@ public class CategoriesController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (string.IsNullOrWhiteSpace(categoryDto.Name))
-                return BadRequest("Category name is required");
+            if (string.IsNullOrWhiteSpace(categoryDto.NameEn))
+                return BadRequest("Category English name is required");
+
+            if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
+                return BadRequest("Category German name is required");
 
             var category = new Category
             {
-                Name = categoryDto.Name.Trim(),
-                Description = categoryDto.Description?.Trim() ?? string.Empty,
+                NameEn = categoryDto.NameEn.Trim(),
+                NameDe = categoryDto.NameDe.Trim(),
+                DescriptionEn = categoryDto.DescriptionEn?.Trim() ?? string.Empty,
+                DescriptionDe = categoryDto.DescriptionDe?.Trim() ?? string.Empty,
                 IsActive = categoryDto.IsActive,
                 SortOrder = categoryDto.SortOrder
             };
@@ -58,14 +63,19 @@ public class CategoriesController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (string.IsNullOrWhiteSpace(categoryDto.Name))
-                return BadRequest("Category name is required");
+            if (string.IsNullOrWhiteSpace(categoryDto.NameEn))
+                return BadRequest("Category English name is required");
+
+            if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
+                return BadRequest("Category German name is required");
 
             var category = new Category
             {
                 Id = id,
-                Name = categoryDto.Name.Trim(),
-                Description = categoryDto.Description?.Trim() ?? string.Empty,
+                NameEn = categoryDto.NameEn.Trim(),
+                NameDe = categoryDto.NameDe.Trim(),
+                DescriptionEn = categoryDto.DescriptionEn?.Trim() ?? string.Empty,
+                DescriptionDe = categoryDto.DescriptionDe?.Trim() ?? string.Empty,
                 IsActive = categoryDto.IsActive,
                 SortOrder = categoryDto.SortOrder,
                 LastModified = DateTime.UtcNow
