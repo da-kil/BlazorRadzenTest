@@ -1,0 +1,103 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+
+<div class="p-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <RadzenText TextStyle="TextStyle.H5">Questions & Sections</RadzenText>
+        <div class="d-flex gap-2">
+            <RadzenButton Text="Add Section"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Icon="add"
+                         Size="ButtonSize.Medium"
+                         Click="@OnAddSection" />
+        </div>
+    </div>
+
+    @if (Template.Sections.Count == 0)
+    {
+        <RadzenCard Class="text-center p-4 border-dashed">
+            <RadzenIcon Icon="quiz" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2">
+                No sections created yet. Click "Add Section" to get started.
+            </RadzenText>
+        </RadzenCard>
+    }
+    else
+    {
+        <div class="sections-container">
+            @for (int sectionIndex = 0; sectionIndex < Template.Sections.Count; sectionIndex++)
+            {
+                var templateSection = Template.Sections[sectionIndex];
+                var currentSectionIndex = sectionIndex;
+
+                <SectionCard Section="@templateSection"
+                           CanMoveUp="@(currentSectionIndex > 0)"
+                           CanMoveDown="@(currentSectionIndex < Template.Sections.Count - 1)"
+                           ShowQuestionTypeSelection="@(ShowQuestionTypeSelection && SelectedSectionIndex == currentSectionIndex)"
+                           QuestionTypeLabels="@QuestionTypeLabels"
+                           OnMoveUp="@(() => OnMoveSectionUpInternal(currentSectionIndex))"
+                           OnMoveDown="@(() => OnMoveSectionDownInternal(currentSectionIndex))"
+                           OnDelete="@(() => OnRemoveSectionInternal(currentSectionIndex))"
+                           OnAddQuestion="@(() => OnShowAddQuestionDialogInternal(currentSectionIndex))"
+                           OnCancelQuestionSelection="@OnCancelQuestionTypeSelection"
+                           OnAddQuestionType="@((type) => OnAddQuestionOfTypeInternal(type))"
+                           OnEditQuestion="@((questionIndex) => OnEditQuestionInternal(currentSectionIndex, questionIndex))"
+                           OnMoveQuestionUp="@((questionIndex) => OnMoveQuestionUpInternal(currentSectionIndex, questionIndex))"
+                           OnMoveQuestionDown="@((questionIndex) => OnMoveQuestionDownInternal(currentSectionIndex, questionIndex))"
+                           OnDeleteQuestion="@((questionIndex) => OnRemoveQuestionInternal(currentSectionIndex, questionIndex))"
+                           OnTitleChanged="@((value) => OnSectionTitleChanged(currentSectionIndex, value))"
+                           OnDescriptionChanged="@((value) => OnSectionDescriptionChanged(currentSectionIndex, value))" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
+    [Parameter, EditorRequired] public bool ShowQuestionTypeSelection { get; set; }
+    [Parameter, EditorRequired] public int SelectedSectionIndex { get; set; }
+    [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
+
+    [Parameter] public EventCallback OnAddSection { get; set; }
+    [Parameter] public EventCallback<int> OnMoveSectionUp { get; set; }
+    [Parameter] public EventCallback<int> OnMoveSectionDown { get; set; }
+    [Parameter] public EventCallback<int> OnRemoveSection { get; set; }
+    [Parameter] public EventCallback<int> OnShowAddQuestionDialog { get; set; }
+    [Parameter] public EventCallback OnCancelQuestionTypeSelection { get; set; }
+    [Parameter] public EventCallback<QuestionType> OnAddQuestionOfType { get; set; }
+    [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnEditQuestion { get; set; }
+    [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnMoveQuestionUp { get; set; }
+    [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnMoveQuestionDown { get; set; }
+    [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnRemoveQuestion { get; set; }
+
+    private async Task OnMoveSectionUpInternal(int sectionIndex) => await OnMoveSectionUp.InvokeAsync(sectionIndex);
+    private async Task OnMoveSectionDownInternal(int sectionIndex) => await OnMoveSectionDown.InvokeAsync(sectionIndex);
+    private async Task OnRemoveSectionInternal(int sectionIndex) => await OnRemoveSection.InvokeAsync(sectionIndex);
+    private async Task OnShowAddQuestionDialogInternal(int sectionIndex) => await OnShowAddQuestionDialog.InvokeAsync(sectionIndex);
+    private async Task OnAddQuestionOfTypeInternal(QuestionType type) => await OnAddQuestionOfType.InvokeAsync(type);
+
+    private async Task OnEditQuestionInternal(int sectionIndex, int questionIndex) =>
+        await OnEditQuestion.InvokeAsync((sectionIndex, questionIndex));
+
+    private async Task OnMoveQuestionUpInternal(int sectionIndex, int questionIndex) =>
+        await OnMoveQuestionUp.InvokeAsync((sectionIndex, questionIndex));
+
+    private async Task OnMoveQuestionDownInternal(int sectionIndex, int questionIndex) =>
+        await OnMoveQuestionDown.InvokeAsync((sectionIndex, questionIndex));
+
+    private async Task OnRemoveQuestionInternal(int sectionIndex, int questionIndex) =>
+        await OnRemoveQuestion.InvokeAsync((sectionIndex, questionIndex));
+
+    private async Task OnSectionTitleChanged(int sectionIndex, string value)
+    {
+        // Section title is already updated in SectionCard component
+        StateHasChanged();
+    }
+
+    private async Task OnSectionDescriptionChanged(int sectionIndex, string value)
+    {
+        // Section description is already updated in SectionCard component
+        StateHasChanged();
+    }
+}

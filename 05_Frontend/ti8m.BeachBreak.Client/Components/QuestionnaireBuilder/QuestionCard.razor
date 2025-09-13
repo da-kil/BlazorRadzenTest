@@ -1,0 +1,100 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<RadzenCard Class="question-card mb-2 p-3 bg-light">
+    <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+            <div class="d-flex align-items-center mb-2">
+                <RadzenIcon Icon="@GetQuestionTypeIcon(Question.Type)" Class="me-2" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted me-3">
+                    @GetQuestionTypeLabel(Question)
+                </RadzenText>
+                <RadzenCheckBox @bind-Value="@Question.IsRequired" Name="@($"req_{Question.Id}")" />
+                <RadzenLabel Text="Required" Component="@($"req_{Question.Id}")" Class="ms-1" />
+            </div>
+            <RadzenTextBox Value="@Question.Title"
+                         ValueChanged="@(value => OnQuestionTitleChanged(value))"
+                         Placeholder="Question title..."
+                         Class="w-100 mb-2" />
+            <RadzenTextBox Value="@Question.Description"
+                         ValueChanged="@(value => OnQuestionDescriptionChanged(value))"
+                         Placeholder="Question description (optional)..."
+                         Class="w-100 text-muted" />
+        </div>
+        <div class="d-flex gap-1 ms-3">
+            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                         Icon="edit"
+                         Size="ButtonSize.ExtraSmall"
+                         Click="@(() => OnEditClick())" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                         Icon="keyboard_arrow_up"
+                         Size="ButtonSize.ExtraSmall"
+                         Click="@(() => OnMoveUpClick())"
+                         Disabled="@(!CanMoveUp)" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                         Icon="keyboard_arrow_down"
+                         Size="ButtonSize.ExtraSmall"
+                         Click="@(() => OnMoveDownClick())"
+                         Disabled="@(!CanMoveDown)" />
+            <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                         Icon="delete"
+                         Size="ButtonSize.ExtraSmall"
+                         Click="@(() => OnDeleteClick())" />
+        </div>
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = null!;
+    [Parameter, EditorRequired] public bool CanMoveUp { get; set; }
+    [Parameter, EditorRequired] public bool CanMoveDown { get; set; }
+    [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
+
+    [Parameter] public EventCallback OnEdit { get; set; }
+    [Parameter] public EventCallback OnMoveUp { get; set; }
+    [Parameter] public EventCallback OnMoveDown { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback<string> OnTitleChanged { get; set; }
+    [Parameter] public EventCallback<string> OnDescriptionChanged { get; set; }
+
+    private async Task OnEditClick() => await OnEdit.InvokeAsync();
+    private async Task OnMoveUpClick() => await OnMoveUp.InvokeAsync();
+    private async Task OnMoveDownClick() => await OnMoveDown.InvokeAsync();
+    private async Task OnDeleteClick() => await OnDelete.InvokeAsync();
+
+    private async Task OnQuestionTitleChanged(string value)
+    {
+        Question.Title = value ?? "";
+        await OnTitleChanged.InvokeAsync(value);
+    }
+
+    private async Task OnQuestionDescriptionChanged(string value)
+    {
+        Question.Description = value ?? "";
+        await OnDescriptionChanged.InvokeAsync(value);
+    }
+
+    private string GetQuestionTypeIcon(QuestionType type) => type switch
+    {
+        QuestionType.SelfAssessment => "self_improvement",
+        QuestionType.GoalAchievement => "track_changes",
+        QuestionType.TextQuestion => "psychology",
+        _ => "help"
+    };
+
+    private string GetQuestionTypeLabel(QuestionItem question)
+    {
+        // Check if question has a custom type label stored in configuration
+        if (question.Configuration.ContainsKey("QuestionTitle"))
+        {
+            var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
+            if (!string.IsNullOrWhiteSpace(customTitle))
+            {
+                return customTitle;
+            }
+        }
+
+        // Fall back to global labels
+        return QuestionTypeLabels.TryGetValue(question.Type, out var label) ? label : question.Type.ToString();
+    }
+}

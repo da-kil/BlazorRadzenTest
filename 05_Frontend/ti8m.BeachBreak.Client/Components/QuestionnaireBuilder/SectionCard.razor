@@ -1,0 +1,171 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+
+<RadzenCard Class="section-card mb-4 border-start border-primary border-3">
+    <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="flex-grow-1">
+            <RadzenTextBox Value="@Section.Title"
+                         ValueChanged="@(value => OnSectionTitleChanged(value))"
+                         Placeholder="Section title..."
+                         Class="fw-bold mb-2 section-title-input" />
+            <RadzenTextBox Value="@Section.Description"
+                         ValueChanged="@(value => OnSectionDescriptionChanged(value))"
+                         Placeholder="Section description (optional)..."
+                         Class="text-muted section-desc-input" />
+        </div>
+        <div class="d-flex gap-2">
+            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                         Icon="keyboard_arrow_up"
+                         Size="ButtonSize.Small"
+                         Click="@(() => OnMoveUpClick())"
+                         Disabled="@(!CanMoveUp)" />
+            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                         Icon="keyboard_arrow_down"
+                         Size="ButtonSize.Small"
+                         Click="@(() => OnMoveDownClick())"
+                         Disabled="@(!CanMoveDown)" />
+            <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                         Icon="delete"
+                         Size="ButtonSize.Small"
+                         Click="@(() => OnDeleteClick())" />
+        </div>
+    </div>
+
+    <div class="questions-area">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">Questions</RadzenText>
+            <RadzenButton Text="Add Question"
+                         ButtonStyle="ButtonStyle.Light"
+                         Size="ButtonSize.Small"
+                         Click="@(() => OnAddQuestionClick())" />
+        </div>
+
+        @* Question Type Selection *@
+        @if (ShowQuestionTypeSelection)
+        {
+            <div class="question-type-selection mb-3">
+                <RadzenCard Class="p-3 bg-light">
+                    <div class="mb-2">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">
+                            Select Question Type
+                        </RadzenText>
+                    </div>
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <RadzenButton Text="@QuestionTypeLabels[QuestionType.SelfAssessment]"
+                                         Icon="self_improvement"
+                                         ButtonStyle="ButtonStyle.Secondary"
+                                         Size="ButtonSize.Medium"
+                                         Class="w-100 mb-3"
+                                         Click="@(async () => await OnAddQuestionOfType(QuestionType.SelfAssessment))" />
+                            <RadzenButton Text="@QuestionTypeLabels[QuestionType.GoalAchievement]"
+                                         Icon="track_changes"
+                                         ButtonStyle="ButtonStyle.Secondary"
+                                         Size="ButtonSize.Medium"
+                                         Class="w-100 mb-3"
+                                         Click="@(async () => await OnAddQuestionOfType(QuestionType.GoalAchievement))" />
+                            <RadzenButton Text="@QuestionTypeLabels[QuestionType.TextQuestion]"
+                                         Icon="psychology"
+                                         ButtonStyle="ButtonStyle.Secondary"
+                                         Size="ButtonSize.Medium"
+                                         Class="w-100 mb-3"
+                                         Click="@(async () => await OnAddQuestionOfType(QuestionType.TextQuestion))" />
+                        </div>
+                    </div>
+                    <div class="text-end mt-2">
+                        <RadzenButton Text="Cancel"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => OnCancelQuestionTypeSelection())" />
+                    </div>
+                </RadzenCard>
+            </div>
+        }
+
+        @if (Section.Questions.Count == 0)
+        {
+            <div class="text-center p-3 bg-light border rounded">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    No questions in this section. Use the "Add Question" button above.
+                </RadzenText>
+            </div>
+        }
+        else
+        {
+            @for (int questionIndex = 0; questionIndex < Section.Questions.Count; questionIndex++)
+            {
+                var question = Section.Questions[questionIndex];
+                var currentQuestionIndex = questionIndex;
+
+                <QuestionCard Question="@question"
+                            CanMoveUp="@(currentQuestionIndex > 0)"
+                            CanMoveDown="@(currentQuestionIndex < Section.Questions.Count - 1)"
+                            QuestionTypeLabels="@QuestionTypeLabels"
+                            OnEdit="@(() => OnEditQuestionInternal(currentQuestionIndex))"
+                            OnMoveUp="@(() => OnMoveQuestionUpInternal(currentQuestionIndex))"
+                            OnMoveDown="@(() => OnMoveQuestionDownInternal(currentQuestionIndex))"
+                            OnDelete="@(() => OnDeleteQuestionInternal(currentQuestionIndex))"
+                            OnTitleChanged="@((value) => OnQuestionTitleChanged(currentQuestionIndex, value))"
+                            OnDescriptionChanged="@((value) => OnQuestionDescriptionChanged(currentQuestionIndex, value))" />
+            }
+        }
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter, EditorRequired] public QuestionSection Section { get; set; } = null!;
+    [Parameter, EditorRequired] public bool CanMoveUp { get; set; }
+    [Parameter, EditorRequired] public bool CanMoveDown { get; set; }
+    [Parameter, EditorRequired] public bool ShowQuestionTypeSelection { get; set; }
+    [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
+
+    [Parameter] public EventCallback OnMoveUp { get; set; }
+    [Parameter] public EventCallback OnMoveDown { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback OnAddQuestion { get; set; }
+    [Parameter] public EventCallback OnCancelQuestionSelection { get; set; }
+    [Parameter] public EventCallback<QuestionType> OnAddQuestionType { get; set; }
+    [Parameter] public EventCallback<int> OnEditQuestion { get; set; }
+    [Parameter] public EventCallback<int> OnMoveQuestionUp { get; set; }
+    [Parameter] public EventCallback<int> OnMoveQuestionDown { get; set; }
+    [Parameter] public EventCallback<int> OnDeleteQuestion { get; set; }
+    [Parameter] public EventCallback<string> OnTitleChanged { get; set; }
+    [Parameter] public EventCallback<string> OnDescriptionChanged { get; set; }
+
+    private async Task OnMoveUpClick() => await OnMoveUp.InvokeAsync();
+    private async Task OnMoveDownClick() => await OnMoveDown.InvokeAsync();
+    private async Task OnDeleteClick() => await OnDelete.InvokeAsync();
+    private async Task OnAddQuestionClick() => await OnAddQuestion.InvokeAsync();
+    private async Task OnCancelQuestionTypeSelection() => await OnCancelQuestionSelection.InvokeAsync();
+    private async Task OnAddQuestionOfType(QuestionType type) => await OnAddQuestionType.InvokeAsync(type);
+
+    private async Task OnSectionTitleChanged(string value)
+    {
+        Section.Title = value ?? "";
+        await OnTitleChanged.InvokeAsync(value);
+    }
+
+    private async Task OnSectionDescriptionChanged(string value)
+    {
+        Section.Description = value ?? "";
+        await OnDescriptionChanged.InvokeAsync(value);
+    }
+
+    private async Task OnEditQuestionInternal(int questionIndex) => await OnEditQuestion.InvokeAsync(questionIndex);
+    private async Task OnMoveQuestionUpInternal(int questionIndex) => await OnMoveQuestionUp.InvokeAsync(questionIndex);
+    private async Task OnMoveQuestionDownInternal(int questionIndex) => await OnMoveQuestionDown.InvokeAsync(questionIndex);
+    private async Task OnDeleteQuestionInternal(int questionIndex) => await OnDeleteQuestion.InvokeAsync(questionIndex);
+
+    private async Task OnQuestionTitleChanged(int questionIndex, string value)
+    {
+        // The question title is already updated in QuestionCard component
+        StateHasChanged();
+    }
+
+    private async Task OnQuestionDescriptionChanged(int questionIndex, string value)
+    {
+        // The question description is already updated in QuestionCard component
+        StateHasChanged();
+    }
+}

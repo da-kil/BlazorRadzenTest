@@ -1,0 +1,205 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<div class="p-3">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Questionnaire Preview</RadzenText>
+    <div class="preview-container border rounded p-3 bg-light">
+        @if (Template.Sections.Any())
+        {
+            <div class="questionnaire-preview">
+                <RadzenText TextStyle="TextStyle.H4" Class="mb-3">@Template.Name</RadzenText>
+                @if (!string.IsNullOrWhiteSpace(Template.Description))
+                {
+                    <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Template.Description</RadzenText>
+                }
+
+                @foreach (var templateSection in Template.Sections.OrderBy(s => s.Order))
+                {
+                    <RadzenCard Class="mb-3 p-3">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-2">@templateSection.Title</RadzenText>
+                        @if (!string.IsNullOrWhiteSpace(templateSection.Description))
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@templateSection.Description</RadzenText>
+                        }
+
+                        @foreach (var question in templateSection.Questions.OrderBy(q => q.Order))
+                        {
+                            <div class="mb-3 p-2 border rounded bg-white">
+                                <div class="d-flex align-items-center mb-2">
+                                    <RadzenIcon Icon="@GetQuestionTypeIcon(question.Type)" Class="me-2" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
+                                        @GetQuestionTypeLabel(question)
+                                        @if (question.IsRequired)
+                                        {
+                                            <span class="text-danger">*</span>
+                                        }
+                                    </RadzenText>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(question.Description))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@question.Description</RadzenText>
+                                }
+                                <div class="preview-input">
+                                    @GetQuestionPreview(question)
+                                </div>
+                            </div>
+                        }
+                    </RadzenCard>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center p-4">
+                <RadzenIcon Icon="preview" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2">
+                    Add sections and questions to see the preview
+                </RadzenText>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
+    [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
+
+    private string GetQuestionTypeIcon(QuestionType type) => type switch
+    {
+        QuestionType.SelfAssessment => "self_improvement",
+        QuestionType.GoalAchievement => "track_changes",
+        QuestionType.TextQuestion => "psychology",
+        _ => "help"
+    };
+
+    private string GetQuestionTypeLabel(QuestionItem question)
+    {
+        // Check if question has a custom type label stored in configuration
+        if (question.Configuration.ContainsKey("QuestionTitle"))
+        {
+            var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
+            if (!string.IsNullOrWhiteSpace(customTitle))
+            {
+                return customTitle;
+            }
+        }
+
+        // Fall back to global labels
+        return QuestionTypeLabels.TryGetValue(question.Type, out var label) ? label : question.Type.ToString();
+    }
+
+    private RenderFragment GetQuestionPreview(QuestionItem question)
+    {
+        return question.Type switch
+        {
+            QuestionType.SelfAssessment => GetSelfAssessmentPreview(question),
+            QuestionType.GoalAchievement => GetGoalAchievementPreview(),
+            QuestionType.TextQuestion => GetTextQuestionPreview(question),
+            _ => @<RadzenTextBox Placeholder="Preview not available" Disabled="true" Class="w-100" />
+        };
+    }
+
+    private RenderFragment GetSelfAssessmentPreview(QuestionItem question)
+    {
+        return @<div class="self-assessment-preview">
+            @{
+                var competencies = GetCompetenciesFromConfiguration(question);
+            }
+            @if (competencies.Count > 0)
+            {
+                @foreach (var competency in competencies.Take(2)) // Show first 2 competencies as preview
+                {
+                    <div class="competency-preview mb-3 p-3 border rounded">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">@competency.Title</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@competency.Description</RadzenText>
+                        <div class="d-flex align-items-center mb-2">
+                            <RadzenRating Value="0" Disabled="true" Stars="4" Class="me-2" />
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Rate satisfaction</RadzenText>
+                        </div>
+                        <RadzenTextArea Placeholder="Optional comments..." Disabled="true" Rows="2" Class="w-100" />
+                    </div>
+                }
+                @if (competencies.Count > 2)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">... and @(competencies.Count - 2) more competencies</RadzenText>
+                }
+            }
+            else
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Click Edit to configure competencies</RadzenText>
+            }
+        </div>;
+    }
+
+    private RenderFragment GetGoalAchievementPreview()
+    {
+        return @<div class="goal-achievement-preview">
+            <div class="goal-preview mb-3 p-3 border rounded">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">Goal 1</RadzenText>
+                <RadzenTextArea Placeholder="Describe the goal that was set for 2023..." Disabled="true" Rows="2" Class="w-100 mb-2" />
+                <div class="row">
+                    <div class="col-md-6">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Achievement Percentage</RadzenText>
+                        <div class="d-flex align-items-center">
+                            <RadzenNumeric TValue="int" Value="0" Disabled="true" Class="flex-grow-1 me-2" />
+                            <RadzenText TextStyle="TextStyle.Body2">%</RadzenText>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Status</RadzenText>
+                        <div class="p-2 rounded bg-light">
+                            <RadzenText TextStyle="TextStyle.Caption">Not Achieved</RadzenText>
+                        </div>
+                    </div>
+                </div>
+                <RadzenTextArea Placeholder="Your reasoning/justification..." Disabled="true" Rows="2" Class="w-100 mt-2" />
+            </div>
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Multiple goals can be added dynamically...</RadzenText>
+        </div>;
+    }
+
+    private RenderFragment GetTextQuestionPreview(QuestionItem question)
+    {
+        return @<div class="text-question-preview">
+            <RadzenCard Class="mb-3 p-3 border-start border-primary border-3">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary mb-2">
+                    <RadzenIcon Icon="timeline" Class="me-2" />
+                    @GetTextQuestionSectionTitle(question)
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
+                    @GetTextQuestionSectionDescription(question)
+                </RadzenText>
+                <RadzenTextArea Placeholder="User will enter their response here..." Disabled="true" Rows="4" Class="w-100" />
+            </RadzenCard>
+        </div>;
+    }
+
+    private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("Competencies") && question.Configuration["Competencies"] is List<CompetencyDefinition> competencies)
+        {
+            return competencies;
+        }
+
+        // Return empty list if none exist
+        return new List<CompetencyDefinition>();
+    }
+
+    private string GetTextQuestionSectionTitle(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("SectionTitle"))
+        {
+            return question.Configuration["SectionTitle"].ToString() ?? "Career Ambitions";
+        }
+        return "Career Ambitions";
+    }
+
+    private string GetTextQuestionSectionDescription(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("SectionDescription"))
+        {
+            return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
+        }
+        return "Where do you see yourself long-term in your professional career?";
+    }
+}

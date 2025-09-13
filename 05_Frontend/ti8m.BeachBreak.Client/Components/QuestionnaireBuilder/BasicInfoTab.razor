@@ -1,0 +1,62 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<div class="p-3">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Template Information</RadzenText>
+
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Template Name *</RadzenText>
+                <RadzenTextBox @bind-Value="@Template.Name"
+                              Placeholder="Enter template name"
+                              Class="w-100" />
+            </div>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Category</RadzenText>
+                <RadzenDropDown @bind-Value="@Template.Category"
+                               Data="@Categories"
+                               Placeholder="Select category"
+                               AllowClear="true"
+                               Class="w-100" />
+            </div>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <div class="mb-3">
+        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Description</RadzenText>
+        <RadzenTextArea @bind-Value="@Template.Description"
+                      Placeholder="Describe the purpose and scope of this questionnaire..."
+                      Rows="4"
+                      Class="w-100" />
+    </div>
+
+    <RadzenCard Class="mt-4 p-3 bg-light">
+        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">Settings</RadzenText>
+        <RadzenRow>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCheckBox @bind-Value="@Template.Settings.AllowSaveProgress" Name="allowSave" />
+                <RadzenLabel Text="Allow Save Progress" Component="allowSave" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCheckBox @bind-Value="@Template.Settings.ShowProgressBar" Name="showProgress" />
+                <RadzenLabel Text="Show Progress Bar" Component="showProgress" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCheckBox @bind-Value="@Template.Settings.RequireAllSections" Name="requireAll" />
+                <RadzenLabel Text="Require All Sections" Component="requireAll" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCheckBox @bind-Value="@Template.Settings.AllowReviewBeforeSubmit" Name="allowReview" />
+                <RadzenLabel Text="Allow Review Before Submit" Component="allowReview" />
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<string> Categories { get; set; } = null!;
+}
