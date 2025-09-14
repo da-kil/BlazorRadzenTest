@@ -10,636 +10,733 @@
 <PageTitle>Questionnaire Builder</PageTitle>
 
 <div class="container-fluid">
-    <RadzenCard Class="p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
-                    <RadzenIcon Icon="quiz" Class="me-2" />
-                    @(IsEditMode ? "Edit Questionnaire" : "Create New Questionnaire")
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                    Design dynamic questionnaires with drag-and-drop components
-                </RadzenText>
-            </div>
-            <div class="d-flex gap-2">
-                <RadzenButton Text="Preview" 
-                             ButtonStyle="ButtonStyle.Info" 
-                             Icon="preview"
-                             Click="@PreviewQuestionnaire" />
-                <RadzenButton Text="Save Draft" 
-                             ButtonStyle="ButtonStyle.Secondary" 
-                             Icon="save"
-                             Click="@SaveQuestionnaire" />
-                <RadzenButton Text="Save & Publish" 
-                             ButtonStyle="ButtonStyle.Success" 
-                             Icon="publish"
-                             Click="@PublishQuestionnaire" />
-            </div>
-        </div>
+	<RadzenCard Class="p-4">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<div>
+				<RadzenText TextStyle="TextStyle.H3" Class="text-primary">
+					<RadzenIcon Icon="quiz" Class="me-2" />
+					@(IsEditMode ? "Edit Questionnaire" : "Create New Questionnaire")
+				</RadzenText>
+				<RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+					Design dynamic questionnaires with drag-and-drop components
+				</RadzenText>
+			</div>
+			<div class="d-flex gap-2">
+				<RadzenButton Text="Preview"
+							  ButtonStyle="ButtonStyle.Info"
+							  Icon="preview"
+							  Click="@PreviewQuestionnaire" />
+				<RadzenButton Text="Save Draft"
+							  ButtonStyle="ButtonStyle.Secondary"
+							  Icon="save"
+							  Click="@SaveQuestionnaire" />
+				<RadzenButton Text="Save & Publish"
+							  ButtonStyle="ButtonStyle.Success"
+							  Icon="publish"
+							  Click="@PublishQuestionnaire" />
+			</div>
+		</div>
 
-        <RadzenTabs TabPosition="TabPosition.Left" Change="@OnTabChanged">
-            <Tabs>
-                <RadzenTabsItem Text="Basic Info">
-                    <BasicInfoTab Template="@template" Categories="@categories" />
-                </RadzenTabsItem>
+		<RadzenTabs TabPosition="TabPosition.Left" Change="@OnTabChanged">
+			<Tabs>
+				<RadzenTabsItem Text="Basic Info">
+					<BasicInfoTab Template="@template" Categories="@categories" />
+				</RadzenTabsItem>
 
-                <RadzenTabsItem Text="Questions">
-                    <QuestionsTab Template="@template"
-                                ShowQuestionTypeSelection="@showQuestionTypeSelection"
-                                SelectedSectionIndex="@selectedSectionIndex"
-                                QuestionTypeLabels="@questionTypeLabels"
-                                OnAddSection="@AddSection"
-                                OnMoveSectionUp="@MoveSectionUp"
-                                OnMoveSectionDown="@MoveSectionDown"
-                                OnRemoveSection="@RemoveSection"
-                                OnShowAddQuestionDialog="@ShowAddQuestionDialog"
-                                OnCancelQuestionTypeSelection="@CancelQuestionTypeSelection"
-                                OnAddQuestionOfType="@AddQuestionOfType"
-                                OnEditQuestion="@EditQuestion"
-                                OnMoveQuestionUp="@MoveQuestionUp"
-                                OnMoveQuestionDown="@MoveQuestionDown"
-                                OnRemoveQuestion="@RemoveQuestion" />
-                </RadzenTabsItem>
+				<RadzenTabsItem Text="Questions">
+					<QuestionsTab Template="@template"
+								  ShowQuestionTypeSelection="@showQuestionTypeSelection"
+								  SelectedSectionIndex="@selectedSectionIndex"
+								  QuestionTypeLabels="@questionTypeLabels"
+								  OnAddSection="@AddSection"
+								  OnMoveSectionUp="@MoveSectionUp"
+								  OnMoveSectionDown="@MoveSectionDown"
+								  OnRemoveSection="@RemoveSection"
+								  OnShowAddQuestionDialog="@ShowAddQuestionDialog"
+								  OnCancelQuestionTypeSelection="@CancelQuestionTypeSelection"
+								  OnAddQuestionOfType="@AddQuestionOfType"
+								  OnEditQuestion="@EditQuestion"
+								  OnMoveQuestionUp="@MoveQuestionUp"
+								  OnMoveQuestionDown="@MoveQuestionDown"
+								  OnRemoveQuestion="@RemoveQuestion" />
+				</RadzenTabsItem>
 
-                <RadzenTabsItem Text="Preview">
-                    <PreviewTab Template="@template" QuestionTypeLabels="@questionTypeLabels" />
-                </RadzenTabsItem>
-            </Tabs>
-        </RadzenTabs>
-    </RadzenCard>
+				<RadzenTabsItem Text="Preview">
+					<PreviewTab Template="@template" QuestionTypeLabels="@questionTypeLabels" />
+				</RadzenTabsItem>
+			</Tabs>
+		</RadzenTabs>
+	</RadzenCard>
 </div>
 
 @code {
-    [Parameter] public Guid? TemplateId { get; set; }
-    [Inject] protected DialogService DialogService { get; set; } = default!;
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
-    [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
-    [Inject] protected IQuestionnaireApiService ApiService { get; set; } = default!;
-    [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
+	[Parameter] public Guid? TemplateId { get; set; }
+	[Inject] protected DialogService DialogService { get; set; } = default!;
+	[Inject] protected NotificationService NotificationService { get; set; } = default!;
+	[Inject] protected NavigationManager NavigationManager { get; set; } = default!;
+	[Inject] protected IQuestionnaireApiService ApiService { get; set; } = default!;
+	[Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
 
-    private QuestionnaireTemplate template = new();
-    private bool IsEditMode => TemplateId.HasValue;
-    
-    // Question type selection state
-    private bool showQuestionTypeSelection = false;
-    private int selectedSectionIndex = -1;
-    private QuestionType? selectedQuestionType = null;
-    
-    // Editable question type labels
-    private Dictionary<QuestionType, string> questionTypeLabels = new()
-    {
-        { QuestionType.SelfAssessment, "Self-Assessment" },
-        { QuestionType.GoalAchievement, "Goal Achievement" },
-        { QuestionType.TextQuestion, "Text Question" }
-    };
-    
-    private List<string> categories = new();
+	private QuestionnaireTemplate template = new();
+	private bool IsEditMode => TemplateId.HasValue;
 
-    protected override async Task OnInitializedAsync()
-    {
-        // Load categories first
-        await LoadCategories();
+	// Question type selection state
+	private bool showQuestionTypeSelection = false;
+	private int selectedSectionIndex = -1;
+	private QuestionType? selectedQuestionType = null;
 
-        if (IsEditMode && TemplateId.HasValue)
-        {
-            await LoadTemplate(TemplateId.Value);
-        }
-        else
-        {
-            // Initialize empty template with default values
-            template = new QuestionnaireTemplate
-            {
-                Name = "",
-                Description = "",
-                Category = "",
-                Settings = new QuestionnaireSettings()
-            };
-        }
-    }
+	// Editable question type labels
+	private Dictionary<QuestionType, string> questionTypeLabels = new()
+	{
+		{ QuestionType.SelfAssessment, "Self-Assessment" },
+		{ QuestionType.GoalAchievement, "Goal Achievement" },
+		{ QuestionType.TextQuestion, "Text Question" }
+	};
 
-    private async Task LoadCategories()
-    {
-        try
-        {
-            categories = await CategoryService.GetCategoryNamesAsync();
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load categories: {ex.Message}");
-            // Fallback to default categories if API fails
-            categories = new List<string>
-            {
-                "Performance Review",
-                "Employee Feedback",
-                "Training Assessment",
-                "Goal Setting",
-                "Other"
-            };
-        }
-    }
+	private List<string> categories = new();
 
-    private async Task LoadTemplate(Guid templateId)
-    {
-        try
-        {
-            var loadedTemplate = await ApiService.GetTemplateByIdAsync(templateId);
-            if (loadedTemplate != null)
-            {
-                template = loadedTemplate;
-            }
-            else
-            {
-                NotificationService.Notify(NotificationSeverity.Warning, "Not Found", "Template not found. Creating new template.");
-                template = new QuestionnaireTemplate();
-                // Clear the TemplateId parameter to switch to create mode
-                TemplateId = null;
-            }
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load template: {ex.Message}");
-            template = new QuestionnaireTemplate();
-            TemplateId = null;
-        }
-    }
+	protected override async Task OnInitializedAsync()
+	{
+		// Load categories first
+		await LoadCategories();
 
-    private void OnTabChanged(int index)
-    {
-        // Handle tab change if needed
-    }
+		if (IsEditMode && TemplateId.HasValue)
+		{
+			await LoadTemplate(TemplateId.Value);
+		}
+		else
+		{
+			// Initialize empty template with default values
+			template = new QuestionnaireTemplate
+			{
+				Name = "",
+				Description = "",
+				Category = "",
+				Settings = new QuestionnaireSettings()
+			};
+		}
+	}
 
-    private void AddSection()
-    {
-        var newSection = new QuestionSection
-        {
-            Title = $"Section {template.Sections.Count + 1}",
-            Order = template.Sections.Count,
-            IsRequired = true
-        };
-        template.Sections.Add(newSection);
-    }
+	private async Task LoadCategories()
+	{
+		try
+		{
+			categories = await CategoryService.GetCategoryNamesAsync();
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load categories: {ex.Message}");
+			// Fallback to default categories if API fails
+			categories = new List<string>
+			{
+				"Performance Review",
+				"Employee Feedback",
+				"Training Assessment",
+				"Goal Setting",
+				"Other"
+			};
+		}
+	}
 
-    private void RemoveSection(int index)
-    {
-        if (index >= 0 && index < template.Sections.Count)
-        {
-            template.Sections.RemoveAt(index);
-            // Reorder remaining sections
-            for (int i = 0; i < template.Sections.Count; i++)
-            {
-                template.Sections[i].Order = i;
-            }
-        }
-    }
+	private async Task LoadTemplate(Guid templateId)
+	{
+		try
+		{
+			var loadedTemplate = await ApiService.GetTemplateByIdAsync(templateId);
+			if (loadedTemplate != null)
+			{
+				template = loadedTemplate;
+			}
+			else
+			{
+				NotificationService.Notify(NotificationSeverity.Warning, "Not Found", "Template not found. Creating new template.");
+				template = new QuestionnaireTemplate();
+				// Clear the TemplateId parameter to switch to create mode
+				TemplateId = null;
+			}
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load template: {ex.Message}");
+			template = new QuestionnaireTemplate();
+			TemplateId = null;
+		}
+	}
 
-    private void MoveSectionUp(int index)
-    {
-        if (index > 0)
-        {
-            (template.Sections[index], template.Sections[index - 1]) = (template.Sections[index - 1], template.Sections[index]);
-            template.Sections[index].Order = index;
-            template.Sections[index - 1].Order = index - 1;
-        }
-    }
+	private void OnTabChanged(int index)
+	{
+		// Handle tab change if needed
+	}
 
-    private void MoveSectionDown(int index)
-    {
-        if (index < template.Sections.Count - 1)
-        {
-            (template.Sections[index], template.Sections[index + 1]) = (template.Sections[index + 1], template.Sections[index]);
-            template.Sections[index].Order = index;
-            template.Sections[index + 1].Order = index + 1;
-        }
-    }
+	private void AddSection()
+	{
+		var newSection = new QuestionSection
+		{
+			Title = $"Section {template.Sections.Count + 1}",
+			Order = template.Sections.Count,
+			IsRequired = true
+		};
+		template.Sections.Add(newSection);
+	}
 
-    private void ShowAddQuestionDialog(int sectionIndex)
-    {
-        // Show inline question type selection
-        showQuestionTypeSelection = true;
-        selectedSectionIndex = sectionIndex;
-        selectedQuestionType = null;
-    }
+	private void RemoveSection(int index)
+	{
+		if (index >= 0 && index < template.Sections.Count)
+		{
+			template.Sections.RemoveAt(index);
+			// Reorder remaining sections
+			for (int i = 0; i < template.Sections.Count; i++)
+			{
+				template.Sections[i].Order = i;
+			}
+		}
+	}
 
-    private async Task EditQuestion(int sectionIndex, int questionIndex)
-    {
-        // Open question editor dialog
-        var question = template.Sections[sectionIndex].Questions[questionIndex];
-        
-        if (question.Type == QuestionType.SelfAssessment)
-        {
-            await EditSelfAssessmentQuestion(question);
-        }
-        else if (question.Type == QuestionType.GoalAchievement)
-        {
-            await EditGoalAchievementQuestion(question);
-        }
-        else if (question.Type == QuestionType.TextQuestion)
-        {
-            await EditTextQuestion(question);
-        }
-    }
+	private void MoveSectionUp(int index)
+	{
+		if (index > 0)
+		{
+			(template.Sections[index], template.Sections[index - 1]) = (template.Sections[index - 1], template.Sections[index]);
+			template.Sections[index].Order = index;
+			template.Sections[index - 1].Order = index - 1;
+		}
+	}
 
-    private async Task EditSelfAssessmentQuestion(QuestionItem question)
-    {
-        // Get existing competencies from configuration or create default ones
-        var competencies = GetCompetenciesFromConfiguration(question);
-        
-        var parameters = new Dictionary<string, object>();
-        parameters.Add("Question", question);
-        parameters.Add("Competencies", competencies);
-        
-        var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>($"Edit {questionTypeLabels[QuestionType.SelfAssessment]} Question",
-            parameters,
-            new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-            
-        if (result != null)
-        {
-            // Save the competencies back to the configuration
-            SaveCompetenciesToConfiguration(question, (List<CompetencyDefinition>)result);
-        }
-    }
-    
-    private async Task EditGoalAchievementQuestion(QuestionItem question)
-    {
-        // TODO: Implement Goal Achievement question editor
-        NotificationService.Notify(NotificationSeverity.Info, "Editor", "Goal Achievement question editor not yet implemented");
-    }
-    
-    private async Task EditTextQuestion(QuestionItem question)
-    {
-        var parameters = new Dictionary<string, object>();
-        parameters.Add("Question", question);
-        parameters.Add("SectionTitle", GetTextQuestionSectionTitle(question));
-        parameters.Add("SectionDescription", GetTextQuestionSectionDescription(question));
-        
-        var result = await DialogService.OpenAsync<TextQuestionEditor>($"Edit {questionTypeLabels[QuestionType.TextQuestion]} Question",
-            parameters,
-            new DialogOptions() { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
-            
-        if (result != null)
-        {
-            // Save the text question configuration
-            var config = (TextQuestionEditor.TextQuestionConfiguration)result;
-            SaveTextQuestionConfiguration(question, config);
-        }
-    }
-    
-    private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("Competencies") && question.Configuration["Competencies"] is List<CompetencyDefinition> competencies)
-        {
-            return competencies;
-        }
-        
-        // Return default competencies if none exist
-        return new List<CompetencyDefinition>();
-    }
-    
-    private void SaveCompetenciesToConfiguration(QuestionItem question, List<CompetencyDefinition> competencies)
-    {
-        question.Configuration["Competencies"] = competencies;
-    }
+	private void MoveSectionDown(int index)
+	{
+		if (index < template.Sections.Count - 1)
+		{
+			(template.Sections[index], template.Sections[index + 1]) = (template.Sections[index + 1], template.Sections[index]);
+			template.Sections[index].Order = index;
+			template.Sections[index + 1].Order = index + 1;
+		}
+	}
 
-    private string GetTextQuestionSectionTitle(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("SectionTitle"))
-        {
-            return question.Configuration["SectionTitle"].ToString() ?? "Career Ambitions";
-        }
-        return "Career Ambitions";
-    }
+	private void ShowAddQuestionDialog(int sectionIndex)
+	{
+		// Show inline question type selection
+		showQuestionTypeSelection = true;
+		selectedSectionIndex = sectionIndex;
+		selectedQuestionType = null;
+	}
 
-    private string GetTextQuestionSectionDescription(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("SectionDescription"))
-        {
-            return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
-        }
-        return "Where do you see yourself long-term in your professional career?";
-    }
+	private async Task EditQuestion(int sectionIndex, int questionIndex)
+	{
+		// Open question editor dialog
+		var question = template.Sections[sectionIndex].Questions[questionIndex];
 
-    private void SaveTextQuestionConfiguration(QuestionItem question, TextQuestionEditor.TextQuestionConfiguration config)
-    {
-        question.Configuration["SectionTitle"] = config.SectionTitle;
-        question.Configuration["SectionDescription"] = config.SectionDescription;
-    }
+		if (question.Type == QuestionType.SelfAssessment)
+		{
+			await EditSelfAssessmentQuestion(question);
+		}
+		else if (question.Type == QuestionType.GoalAchievement)
+		{
+			await EditGoalAchievementQuestion(question);
+		}
+		else if (question.Type == QuestionType.TextQuestion)
+		{
+			await EditTextQuestion(question);
+		}
+	}
 
-    private void RemoveQuestion(int sectionIndex, int questionIndex)
-    {
-        var section = template.Sections[sectionIndex];
-        if (questionIndex >= 0 && questionIndex < section.Questions.Count)
-        {
-            section.Questions.RemoveAt(questionIndex);
-            // Reorder remaining questions
-            for (int i = 0; i < section.Questions.Count; i++)
-            {
-                section.Questions[i].Order = i;
-            }
-        }
-    }
+	private async Task EditSelfAssessmentQuestion(QuestionItem question)
+	{
+		// Get existing competencies from configuration or create default ones
+		var competencies = GetCompetenciesFromConfiguration(question);
 
-    private void MoveQuestionUp(int sectionIndex, int questionIndex)
-    {
-        var questions = template.Sections[sectionIndex].Questions;
-        if (questionIndex > 0)
-        {
-            (questions[questionIndex], questions[questionIndex - 1]) = (questions[questionIndex - 1], questions[questionIndex]);
-            questions[questionIndex].Order = questionIndex;
-            questions[questionIndex - 1].Order = questionIndex - 1;
-        }
-    }
+		var parameters = new Dictionary<string, object>();
+		parameters.Add("Question", question);
+		parameters.Add("Competencies", competencies);
 
-    private void MoveQuestionDown(int sectionIndex, int questionIndex)
-    {
-        var questions = template.Sections[sectionIndex].Questions;
-        if (questionIndex < questions.Count - 1)
-        {
-            (questions[questionIndex], questions[questionIndex + 1]) = (questions[questionIndex + 1], questions[questionIndex]);
-            questions[questionIndex].Order = questionIndex;
-            questions[questionIndex + 1].Order = questionIndex + 1;
-        }
-    }
+		var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>($"Edit {questionTypeLabels[QuestionType.SelfAssessment]} Question",
+			parameters,
+			new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
 
-    private string GetQuestionTypeIcon(QuestionType type)
-    {
-        return type switch
-        {
-            QuestionType.SelfAssessment => "self_improvement",
-            QuestionType.GoalAchievement => "track_changes",
-            QuestionType.TextQuestion => "psychology",
-            _ => "help"
-        };
-    }
+		if (result != null)
+		{
+			// Save the competencies back to the configuration
+			SaveCompetenciesToConfiguration(question, (List<CompetencyDefinition>)result);
+		}
+	}
 
-    private RenderFragment GetQuestionPreview(QuestionItem question)
-    {
-        return question.Type switch
-        {
-            QuestionType.SelfAssessment => @<div class="self-assessment-preview">
-                @{
-                    var competencies = GetCompetenciesFromConfiguration(question);
-                }
-                @if (competencies.Count > 0)
-                {
-                    @foreach (var competency in competencies.Take(2)) // Show first 2 competencies as preview
-                    {
-                        <div class="competency-preview mb-3 p-3 border rounded">
-                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">@competency.Title</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@competency.Description</RadzenText>
-                            <div class="d-flex align-items-center mb-2">
-                                <RadzenRating Value="0" Disabled="true" Stars="4" Class="me-2" />
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Rate satisfaction</RadzenText>
-                            </div>
-                            <RadzenTextArea Placeholder="Optional comments..." Disabled="true" Rows="2" Class="w-100" />
-                        </div>
-                    }
-                    @if (competencies.Count > 2)
-                    {
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">... and @(competencies.Count - 2) more competencies</RadzenText>
-                    }
-                }
-                else
-                {
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Click Edit to configure competencies</RadzenText>
-                }
-            </div>,
-            QuestionType.GoalAchievement => @<div class="goal-achievement-preview">
-                <div class="goal-preview mb-3 p-3 border rounded">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">Goal 1</RadzenText>
-                    <RadzenTextArea Placeholder="Describe the goal that was set for 2023..." Disabled="true" Rows="2" Class="w-100 mb-2" />
-                    <div class="row">
-                        <div class="col-md-6">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Achievement Percentage</RadzenText>
-                            <div class="d-flex align-items-center">
-                                <RadzenNumeric TValue="int" Value="0" Disabled="true" Class="flex-grow-1 me-2" />
-                                <RadzenText TextStyle="TextStyle.Body2">%</RadzenText>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Status</RadzenText>
-                            <div class="p-2 rounded bg-light">
-                                <RadzenText TextStyle="TextStyle.Caption">Not Achieved</RadzenText>
-                            </div>
-                        </div>
-                    </div>
-                    <RadzenTextArea Placeholder="Your reasoning/justification..." Disabled="true" Rows="2" Class="w-100 mt-2" />
-                </div>
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Multiple goals can be added dynamically...</RadzenText>
-            </div>,
-            QuestionType.TextQuestion => @<div class="text-question-preview">
-                <RadzenCard Class="mb-3 p-3 border-start border-primary border-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary mb-2">
-                        <RadzenIcon Icon="timeline" Class="me-2" />
-                        @GetTextQuestionSectionTitle(question)
-                    </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
-                        @GetTextQuestionSectionDescription(question)
-                    </RadzenText>
-                    <RadzenTextArea Placeholder="User will enter their response here..." Disabled="true" Rows="4" Class="w-100" />
-                </RadzenCard>
-            </div>,
-            _ => @<RadzenTextBox Placeholder="Preview not available" Disabled="true" Class="w-100" />
-        };
-    }
+	private async Task EditGoalAchievementQuestion(QuestionItem question)
+	{
+		// Get existing goal categories from configuration or create default ones
+		var goalCategories = GetGoalCategoriesFromConfiguration(question);
 
-    private async Task PreviewQuestionnaire()
-    {
-        // Open questionnaire in preview mode
-        NotificationService.Notify(NotificationSeverity.Info, "Preview", "Preview functionality would open here");
-    }
+		var parameters = new Dictionary<string, object>();
+		parameters.Add("Question", question);
+		parameters.Add("GoalCategories", goalCategories);
 
-    private async Task SaveQuestionnaire()
-    {
-        if (string.IsNullOrWhiteSpace(template.Name))
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Validation Error", "Please enter a template name");
-            return;
-        }
+		var result = await DialogService.OpenAsync<GoalAchievementQuestionEditor>($"Edit {questionTypeLabels[QuestionType.GoalAchievement]} Question",
+			parameters,
+			new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
 
-        try
-        {
-            template.LastModified = DateTime.Now;
-            
-            if (IsEditMode)
-            {
-                var updated = await ApiService.UpdateTemplateAsync(template);
-                if (updated != null)
-                {
-                    NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template updated successfully");
-                }
-                else
-                {
-                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update template");
-                }
-            }
-            else
-            {
-                var created = await ApiService.CreateTemplateAsync(template);
-                template.Id = created.Id; // Update with the server-generated ID
-                NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
-            }
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save template: {ex.Message}");
-        }
-    }
+		if (result != null)
+		{
+			// Save the goal categories back to the configuration
+			SaveGoalCategoriesToConfiguration(question, (List<GoalAchievementQuestionEditor.GoalCategory>)result);
+		}
+	}
 
-    private async Task PublishQuestionnaire()
-    {
-        await SaveQuestionnaire();
-        template.IsActive = true;
-        // TODO: Additional publish logic
-        NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template published successfully");
-    }
+	private async Task EditTextQuestion(QuestionItem question)
+	{
+		// Get existing text sections from configuration or create default ones
+		var textSections = GetTextSectionsFromConfiguration(question);
 
-    // Helper methods to avoid section/question directive conflicts
-    private string GetSectionTitle(QuestionSection section) => section.Title;
-    private void SetSectionTitle(QuestionSection section, string value) => section.Title = value ?? "";
-    
-    private string GetSectionDescription(QuestionSection section) => section.Description;
-    private void SetSectionDescription(QuestionSection section, string value) => section.Description = value ?? "";
-    
-    private string GetQuestionTitle(QuestionItem question) => question.Title;
-    private void SetQuestionTitle(QuestionItem question, string value) => question.Title = value ?? "";
-    
-    private string GetQuestionDescription(QuestionItem question) => question.Description;
-    private void SetQuestionDescription(QuestionItem question, string value) => question.Description = value ?? "";
+		var parameters = new Dictionary<string, object>();
+		parameters.Add("Question", question);
+		parameters.Add("TextSections", textSections);
 
-    private async Task AddQuestionOfType(QuestionType questionType)
-    {
-        if (selectedSectionIndex >= 0 && selectedSectionIndex < template.Sections.Count)
-        {
-            var section = template.Sections[selectedSectionIndex];
-            var newQuestion = new QuestionItem
-            {
-                Id = Guid.NewGuid(),
-                Title = GetDefaultQuestionTitle(questionType),
-                Type = questionType,
-                Order = section.Questions.Count,
-                IsRequired = true
-            };
+		var result = await DialogService.OpenAsync<TextQuestionEditor>($"Edit {questionTypeLabels[QuestionType.TextQuestion]} Question",
+			parameters,
+			new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
 
-            // For Self-Assessment questions, show competency editor before adding
-            if (questionType == QuestionType.SelfAssessment)
-            {
-                var competencies = GetCompetenciesFromConfiguration(newQuestion);
-                var parameters = new Dictionary<string, object>();
-                parameters.Add("Question", newQuestion);
-                parameters.Add("Competencies", competencies);
-                
-                var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>($"Configure {questionTypeLabels[QuestionType.SelfAssessment]} Competencies",
-                    parameters,
-                    new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-                    
-                if (result != null)
-                {
-                    // Save the competencies to the configuration
-                    SaveCompetenciesToConfiguration(newQuestion, (List<CompetencyDefinition>)result);
-                    section.Questions.Add(newQuestion);
-                }
-                else
-                {
-                    // User cancelled, don't add the question
-                    showQuestionTypeSelection = false;
-                    selectedSectionIndex = -1;
-                    selectedQuestionType = null;
-                    return;
-                }
-            }
-            else if (questionType == QuestionType.TextQuestion)
-            {
-                var parameters = new Dictionary<string, object>();
-                parameters.Add("Question", newQuestion);
-                parameters.Add("SectionTitle", GetTextQuestionSectionTitle(newQuestion));
-                parameters.Add("SectionDescription", GetTextQuestionSectionDescription(newQuestion));
-                
-                var result = await DialogService.OpenAsync<TextQuestionEditor>($"Configure {questionTypeLabels[QuestionType.TextQuestion]}",
-                    parameters,
-                    new DialogOptions() { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
-                    
-                if (result != null)
-                {
-                    // Save the text question configuration
-                    var config = (TextQuestionEditor.TextQuestionConfiguration)result;
-                    SaveTextQuestionConfiguration(newQuestion, config);
-                    section.Questions.Add(newQuestion);
-                }
-                else
-                {
-                    // User cancelled, don't add the question
-                    showQuestionTypeSelection = false;
-                    selectedSectionIndex = -1;
-                    selectedQuestionType = null;
-                    return;
-                }
-            }
-            else
-            {
-                // For other question types, add directly
-                section.Questions.Add(newQuestion);
-            }
-        }
-        
-        // Reset selection state
-        showQuestionTypeSelection = false;
-        selectedSectionIndex = -1;
-        selectedQuestionType = null;
-    }
-    
-    private void CancelQuestionTypeSelection()
-    {
-        showQuestionTypeSelection = false;
-        selectedSectionIndex = -1;
-        selectedQuestionType = null;
-    }
+		if (result != null)
+		{
+			// Save the text question configuration
+			var config = (TextQuestionEditor.TextQuestionConfiguration)result;
+			SaveTextQuestionConfiguration(question, config);
+		}
+	}
 
-    private string GetDefaultQuestionTitle(QuestionType type)
-    {
-        return type switch
-        {
-            QuestionType.SelfAssessment => $"{questionTypeLabels[QuestionType.SelfAssessment]} of Competencies",
-            QuestionType.GoalAchievement => $"{questionTypeLabels[QuestionType.GoalAchievement]} Review",
-            QuestionType.TextQuestion => "Career Development & Planning",
-            _ => "New Question"
-        };
-    }
-    
-    private string GetQuestionTypeLabel(QuestionItem question)
-    {
-        // Check if question has a custom type label stored in configuration
-        if (question.Configuration.ContainsKey("QuestionTitle"))
-        {
-            var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
-            if (!string.IsNullOrWhiteSpace(customTitle))
-            {
-                return customTitle;
-            }
-        }
+	private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("Competencies"))
+		{
+			var competenciesObj = question.Configuration["Competencies"];
 
-        // Fall back to global labels
-        return questionTypeLabels[question.Type];
-    }
+			// Handle direct cast (when set in editor)
+			if (competenciesObj is List<CompetencyDefinition> competencies)
+			{
+				return competencies;
+			}
 
-    // Event handler overloads for the new component structure
-    private async Task EditQuestion((int sectionIndex, int questionIndex) indices)
-    {
-        await EditQuestion(indices.sectionIndex, indices.questionIndex);
-    }
+			// Handle JSON deserialization (when loaded from API)
+			if (competenciesObj is System.Text.Json.JsonElement jsonElement)
+			{
+				try
+				{
+					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+					{
+						return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing competencies: {ex.Message}");
+				}
+			}
 
-    // Event handler overloads for the new component structure
-    private void RemoveQuestion((int sectionIndex, int questionIndex) indices)
-    {
-        RemoveQuestion(indices.sectionIndex, indices.questionIndex);
-    }
+			// Handle string representation (backup case)
+			if (competenciesObj is string jsonString)
+			{
+				try
+				{
+					return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonString) ?? new List<CompetencyDefinition>();
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing competencies from string: {ex.Message}");
+				}
+			}
+		}
 
-    private void MoveQuestionUp((int sectionIndex, int questionIndex) indices)
-    {
-        MoveQuestionUp(indices.sectionIndex, indices.questionIndex);
-    }
+		// Return default competencies if none exist
+		return new List<CompetencyDefinition>();
+	}
 
-    private void MoveQuestionDown((int sectionIndex, int questionIndex) indices)
-    {
-        MoveQuestionDown(indices.sectionIndex, indices.questionIndex);
-    }
+	private void SaveCompetenciesToConfiguration(QuestionItem question, List<CompetencyDefinition> competencies)
+	{
+		question.Configuration["Competencies"] = competencies;
+	}
+
+	private List<GoalAchievementQuestionEditor.GoalCategory> GetGoalCategoriesFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("GoalCategories") && question.Configuration["GoalCategories"] is List<GoalAchievementQuestionEditor.GoalCategory> categories)
+		{
+			return categories;
+		}
+
+		// Return default goal categories if none exist
+		return new List<GoalAchievementQuestionEditor.GoalCategory>();
+	}
+
+	private void SaveGoalCategoriesToConfiguration(QuestionItem question, List<GoalAchievementQuestionEditor.GoalCategory> goalCategories)
+	{
+		question.Configuration["GoalCategories"] = goalCategories;
+	}
+
+	private string GetTextQuestionSectionTitle(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("SectionTitle"))
+		{
+			return question.Configuration["SectionTitle"].ToString() ?? "Career Ambitions";
+		}
+		return "Career Ambitions";
+	}
+
+	private string GetTextQuestionSectionDescription(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("SectionDescription"))
+		{
+			return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
+		}
+		return "Where do you see yourself long-term in your professional career?";
+	}
+
+	private List<TextQuestionEditor.TextSection> GetTextSectionsFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("TextSections") && question.Configuration["TextSections"] is List<TextQuestionEditor.TextSection> sections)
+		{
+			return sections;
+		}
+
+		// Check for legacy format and convert
+		if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
+		{
+			return new List<TextQuestionEditor.TextSection>
+			{
+				new TextQuestionEditor.TextSection
+				{
+					Title = question.Configuration.ContainsKey("SectionTitle") ? question.Configuration["SectionTitle"].ToString() ?? "" : "",
+					Description = question.Configuration.ContainsKey("SectionDescription") ? question.Configuration["SectionDescription"].ToString() ?? "" : ""
+				}
+			};
+		}
+
+		// Return empty list if no configuration exists
+		return new List<TextQuestionEditor.TextSection>();
+	}
+
+	private void SaveTextQuestionConfiguration(QuestionItem question, TextQuestionEditor.TextQuestionConfiguration config)
+	{
+		question.Configuration["TextSections"] = config.TextSections;
+
+		// Keep backward compatibility for now
+		if (config.TextSections.Count > 0)
+		{
+			question.Configuration["SectionTitle"] = config.TextSections[0].Title;
+			question.Configuration["SectionDescription"] = config.TextSections[0].Description;
+		}
+	}
+
+	private void RemoveQuestion(int sectionIndex, int questionIndex)
+	{
+		var section = template.Sections[sectionIndex];
+		if (questionIndex >= 0 && questionIndex < section.Questions.Count)
+		{
+			section.Questions.RemoveAt(questionIndex);
+			// Reorder remaining questions
+			for (int i = 0; i < section.Questions.Count; i++)
+			{
+				section.Questions[i].Order = i;
+			}
+		}
+	}
+
+	private void MoveQuestionUp(int sectionIndex, int questionIndex)
+	{
+		var questions = template.Sections[sectionIndex].Questions;
+		if (questionIndex > 0)
+		{
+			(questions[questionIndex], questions[questionIndex - 1]) = (questions[questionIndex - 1], questions[questionIndex]);
+			questions[questionIndex].Order = questionIndex;
+			questions[questionIndex - 1].Order = questionIndex - 1;
+		}
+	}
+
+	private void MoveQuestionDown(int sectionIndex, int questionIndex)
+	{
+		var questions = template.Sections[sectionIndex].Questions;
+		if (questionIndex < questions.Count - 1)
+		{
+			(questions[questionIndex], questions[questionIndex + 1]) = (questions[questionIndex + 1], questions[questionIndex]);
+			questions[questionIndex].Order = questionIndex;
+			questions[questionIndex + 1].Order = questionIndex + 1;
+		}
+	}
+
+	private string GetQuestionTypeIcon(QuestionType type)
+	{
+		return type switch
+		{
+			QuestionType.SelfAssessment => "self_improvement",
+			QuestionType.GoalAchievement => "track_changes",
+			QuestionType.TextQuestion => "psychology",
+			_ => "help"
+		};
+	}
+
+	private RenderFragment GetQuestionPreview(QuestionItem question)
+	{
+		return question.Type switch
+		{
+			QuestionType.SelfAssessment => @<div class="self-assessment-preview">
+@{
+var competencies = GetCompetenciesFromConfiguration(question);
+	}
+@if (competencies.Count > 0)
+		{
+			@foreach (var competency in competencies.Take(2)) // Show first 2 competencies as preview
+			{
+					<div class="competency-preview mb-3 p-3 border rounded">
+						<RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">@competency.Title</RadzenText>
+						<RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@competency.Description</RadzenText>
+						<div class="d-flex align-items-center mb-2">
+							<RadzenRating Value="0" Disabled="true" Stars="4" Class="me-2" />
+							<RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Rate satisfaction</RadzenText>
+						</div>
+						<RadzenTextArea Placeholder="Optional comments..." Disabled="true" Rows="2" Class="w-100" />
+					</div>
+			}
+			@if (competencies.Count > 2)
+			{
+					<RadzenText TextStyle="TextStyle.Caption" Class="text-muted">... and @(competencies.Count - 2) more competencies</RadzenText>
+			}
+		}
+		else
+		{
+				<RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Click Edit to configure competencies</RadzenText>
+		}
+		</div>,
+		QuestionType.GoalAchievement => @<div class="goal-achievement-preview">
+			<div class="goal-preview mb-3 p-3 border rounded">
+				<RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">Goal 1</RadzenText>
+				<RadzenTextArea Placeholder="Describe the goal that was set for 2023..." Disabled="true" Rows="2" Class="w-100 mb-2" />
+				<div class="row">
+					<div class="col-md-6">
+						<RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Achievement Percentage</RadzenText>
+						<div class="d-flex align-items-center">
+							<RadzenNumeric TValue="int" Value="0" Disabled="true" Class="flex-grow-1 me-2" />
+							<RadzenText TextStyle="TextStyle.Body2">%</RadzenText>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Status</RadzenText>
+						<div class="p-2 rounded bg-light">
+							<RadzenText TextStyle="TextStyle.Caption">Not Achieved</RadzenText>
+						</div>
+					</div>
+				</div>
+				<RadzenTextArea Placeholder="Your reasoning/justification..." Disabled="true" Rows="2" Class="w-100 mt-2" />
+			</div>
+			<RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Multiple goals can be added dynamically...</RadzenText>
+		</div>,
+		QuestionType.TextQuestion => @<div class="text-question-preview">
+			<RadzenCard Class="mb-3 p-3 border-start border-primary border-3">
+				<RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary mb-2">
+					<RadzenIcon Icon="timeline" Class="me-2" />
+					@GetTextQuestionSectionTitle(question)
+				</RadzenText>
+				<RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
+					@GetTextQuestionSectionDescription(question)
+				</RadzenText>
+				<RadzenTextArea Placeholder="User will enter their response here..." Disabled="true" Rows="4" Class="w-100" />
+			</RadzenCard>
+		</div>,
+		_ => @<RadzenTextBox Placeholder="Preview not available" Disabled="true" Class="w-100" />
+	};
+}
+
+private async Task PreviewQuestionnaire()
+{
+	// Open questionnaire in preview mode
+	NotificationService.Notify(NotificationSeverity.Info, "Preview", "Preview functionality would open here");
+}
+
+private async Task SaveQuestionnaire()
+{
+	if (string.IsNullOrWhiteSpace(template.Name))
+	{
+		NotificationService.Notify(NotificationSeverity.Warning, "Validation Error", "Please enter a template name");
+		return;
+	}
+
+	try
+	{
+		template.LastModified = DateTime.Now;
+
+		if (IsEditMode)
+		{
+			var updated = await ApiService.UpdateTemplateAsync(template);
+			if (updated != null)
+			{
+				NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template updated successfully");
+			}
+			else
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update template - no response from server");
+			}
+		}
+		else
+		{
+			var created = await ApiService.CreateTemplateAsync(template);
+			template.Id = created.Id; // Update with the server-generated ID
+			NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
+		}
+	}
+	catch (Exception ex)
+	{
+		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save template: {ex.Message}");
+	}
+}
+
+private async Task PublishQuestionnaire()
+{
+	await SaveQuestionnaire();
+	template.IsActive = true;
+	// TODO: Additional publish logic
+	NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template published successfully");
+}
+
+// Helper methods to avoid section/question directive conflicts
+private string GetSectionTitle(QuestionSection section) => section.Title;
+private void SetSectionTitle(QuestionSection section, string value) => section.Title = value ?? "";
+
+private string GetSectionDescription(QuestionSection section) => section.Description;
+private void SetSectionDescription(QuestionSection section, string value) => section.Description = value ?? "";
+
+private string GetQuestionTitle(QuestionItem question) => question.Title;
+private void SetQuestionTitle(QuestionItem question, string value) => question.Title = value ?? "";
+
+private string GetQuestionDescription(QuestionItem question) => question.Description;
+private void SetQuestionDescription(QuestionItem question, string value) => question.Description = value ?? "";
+
+private async Task AddQuestionOfType(QuestionType questionType)
+{
+	if (selectedSectionIndex >= 0 && selectedSectionIndex < template.Sections.Count)
+	{
+		var section = template.Sections[selectedSectionIndex];
+		var newQuestion = new QuestionItem
+		{
+			Id = Guid.NewGuid(),
+			Title = GetDefaultQuestionTitle(questionType),
+			Type = questionType,
+			Order = section.Questions.Count,
+			IsRequired = true
+		};
+
+		// For Self-Assessment questions, show competency editor before adding
+		if (questionType == QuestionType.SelfAssessment)
+		{
+			var competencies = GetCompetenciesFromConfiguration(newQuestion);
+			var parameters = new Dictionary<string, object>();
+			parameters.Add("Question", newQuestion);
+			parameters.Add("Competencies", competencies);
+
+			var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>($"Configure {questionTypeLabels[QuestionType.SelfAssessment]} Competencies",
+				parameters,
+				new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
+
+			if (result != null)
+			{
+				// Save the competencies to the configuration
+				SaveCompetenciesToConfiguration(newQuestion, (List<CompetencyDefinition>)result);
+				section.Questions.Add(newQuestion);
+			}
+			else
+			{
+				// User cancelled, don't add the question
+				showQuestionTypeSelection = false;
+				selectedSectionIndex = -1;
+				selectedQuestionType = null;
+				return;
+			}
+		}
+		else if (questionType == QuestionType.TextQuestion)
+		{
+			var parameters = new Dictionary<string, object>();
+			parameters.Add("Question", newQuestion);
+			parameters.Add("SectionTitle", GetTextQuestionSectionTitle(newQuestion));
+			parameters.Add("SectionDescription", GetTextQuestionSectionDescription(newQuestion));
+
+			var result = await DialogService.OpenAsync<TextQuestionEditor>($"Configure {questionTypeLabels[QuestionType.TextQuestion]}",
+				parameters,
+				new DialogOptions() { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
+
+			if (result != null)
+			{
+				// Save the text question configuration
+				var config = (TextQuestionEditor.TextQuestionConfiguration)result;
+				SaveTextQuestionConfiguration(newQuestion, config);
+				section.Questions.Add(newQuestion);
+			}
+			else
+			{
+				// User cancelled, don't add the question
+				showQuestionTypeSelection = false;
+				selectedSectionIndex = -1;
+				selectedQuestionType = null;
+				return;
+			}
+		}
+		else
+		{
+			// For other question types, add directly
+			section.Questions.Add(newQuestion);
+		}
+	}
+
+	// Reset selection state
+	showQuestionTypeSelection = false;
+	selectedSectionIndex = -1;
+	selectedQuestionType = null;
+}
+
+private void CancelQuestionTypeSelection()
+{
+	showQuestionTypeSelection = false;
+	selectedSectionIndex = -1;
+	selectedQuestionType = null;
+}
+
+private string GetDefaultQuestionTitle(QuestionType type)
+{
+	return type switch
+	{
+		QuestionType.SelfAssessment => $"{questionTypeLabels[QuestionType.SelfAssessment]} of Competencies",
+		QuestionType.GoalAchievement => $"{questionTypeLabels[QuestionType.GoalAchievement]} Review",
+		QuestionType.TextQuestion => "Career Development & Planning",
+		_ => "New Question"
+	};
+}
+
+private string GetQuestionTypeLabel(QuestionItem question)
+{
+	// Check if question has a custom type label stored in configuration
+	if (question.Configuration.ContainsKey("QuestionTitle"))
+	{
+		var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
+		if (!string.IsNullOrWhiteSpace(customTitle))
+		{
+			return customTitle;
+		}
+	}
+
+	// Fall back to global labels
+	return questionTypeLabels[question.Type];
+}
+
+// Event handler overloads for the new component structure
+private async Task EditQuestion((int sectionIndex, int questionIndex) indices)
+{
+	await EditQuestion(indices.sectionIndex, indices.questionIndex);
+}
+
+// Event handler overloads for the new component structure
+private void RemoveQuestion((int sectionIndex, int questionIndex) indices)
+{
+	RemoveQuestion(indices.sectionIndex, indices.questionIndex);
+}
+
+private void MoveQuestionUp((int sectionIndex, int questionIndex) indices)
+{
+	MoveQuestionUp(indices.sectionIndex, indices.questionIndex);
+}
+
+private void MoveQuestionDown((int sectionIndex, int questionIndex) indices)
+{
+	MoveQuestionDown(indices.sectionIndex, indices.questionIndex);
+}
 }

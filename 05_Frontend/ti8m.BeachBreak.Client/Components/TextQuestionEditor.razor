@@ -2,6 +2,23 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
+<style>
+    .border-dashed {
+        border: 2px dashed var(--rz-primary-lighter) !important;
+        background-color: var(--rz-primary-lighter, rgba(0, 123, 255, 0.1));
+    }
+
+    .text-question-config {
+        border-left: 4px solid var(--rz-info) !important;
+    }
+
+    .text-question-editor .rz-textbox:focus,
+    .text-question-editor .rz-textarea:focus {
+        border-color: var(--rz-primary);
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+</style>
+
 <div class="text-question-editor">
     <div class="mb-3">
         <RadzenTextBox @bind-Value="@QuestionTitle"
@@ -9,40 +26,73 @@
                       Class="w-100"
                       Style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;" />
     </div>
-    
-    <RadzenCard Class="mb-4 p-3 border">
-        <div class="mb-3">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Section Title *</RadzenText>
-            <RadzenTextBox @bind-Value="@SectionTitle"
-                          Placeholder="Enter section title (e.g., Career Ambitions)..."
-                          Class="w-100" />
-        </div>
 
-        <div class="mb-3">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Section Description *</RadzenText>
-            <RadzenTextArea @bind-Value="@SectionDescription"
-                           Placeholder="Describe what this question asks about (e.g., Where do you see yourself long-term in your professional career?)..."
-                           Rows="3"
-                           Class="w-100" />
-        </div>
-
-        <div class="mb-3">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Preview</RadzenText>
-            <RadzenCard Class="p-3 border-start border-primary border-3 bg-light">
-                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold text-primary mb-2">
-                    <RadzenIcon Icon="timeline" Class="me-2" />
-                    @(string.IsNullOrWhiteSpace(SectionTitle) ? "Section Title" : SectionTitle)
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                    @(string.IsNullOrWhiteSpace(SectionDescription) ? "Section description will appear here..." : SectionDescription)
-                </RadzenText>
-                <RadzenTextArea Placeholder="User will enter their response here..." 
-                               Disabled="true" 
-                               Rows="4" 
-                               Class="w-100" />
-            </RadzenCard>
+    <RadzenCard Class="add-section mb-4 p-3 border-dashed">
+        <div class="text-center">
+            <RadzenButton Text="Add Text Section"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Icon="add"
+                         Size="ButtonSize.Medium"
+                         Click="@AddTextSection" />
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-2">
+                Add sections for different text input areas
+            </RadzenText>
         </div>
     </RadzenCard>
+
+    @if (TextSections.Count == 0)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+            <RadzenText TextStyle="TextStyle.Body2">
+                Click "Add Text Section" to start adding text input sections for this question.
+            </RadzenText>
+        </RadzenAlert>
+    }
+
+    @for (int i = 0; i < TextSections.Count; i++)
+    {
+        var sectionIndex = i;
+        var textSection = TextSections[sectionIndex];
+
+        <RadzenCard Class="text-question-config mb-3 p-3 border">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center">
+                    <RadzenIcon Icon="psychology" Class="me-2" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                        Text Section @(sectionIndex + 1)
+                    </RadzenText>
+                </div>
+                <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                             Icon="delete"
+                             Size="ButtonSize.Small"
+                             Title="Remove this section"
+                             Click="@(() => RemoveTextSection(sectionIndex))" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Section Title *</RadzenText>
+                <RadzenTextBox Value="@textSection.Title"
+                              ValueChanged="@(value => OnSectionTitleChanged(sectionIndex, value))"
+                              Placeholder="Enter section title (e.g., Career Ambitions)..."
+                              Class="w-100" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Section Description *</RadzenText>
+                <RadzenTextArea Value="@textSection.Description"
+                               ValueChanged="@(value => OnSectionDescriptionChanged(sectionIndex, value))"
+                               Placeholder="Describe what this question asks about (e.g., Where do you see yourself long-term in your professional career?)..."
+                               Rows="4"
+                               Class="w-100" />
+            </div>
+
+            <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mt-3">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    Users will see a text area where they can provide detailed written responses to this section.
+                </RadzenText>
+            </RadzenAlert>
+        </RadzenCard>
+    }
 
     <div class="d-flex justify-content-end gap-2 mt-4">
         <RadzenButton Text="Cancel" 
@@ -58,33 +108,89 @@
 
 @code {
     [Parameter] public QuestionItem Question { get; set; } = default!;
-    [Parameter] public string SectionTitle { get; set; } = "";
-    [Parameter] public string SectionDescription { get; set; } = "";
-    
+    [Parameter] public List<TextSection> TextSections { get; set; } = new();
+
     [Inject] protected DialogService DialogService { get; set; } = default!;
-    
+
     private string QuestionTitle { get; set; } = "Configure Text Question";
 
     protected override void OnInitialized()
     {
-        // Load existing configuration if available
+        // Initialize with existing title or default
         if (Question.Configuration.ContainsKey("QuestionTitle"))
         {
             QuestionTitle = Question.Configuration["QuestionTitle"].ToString() ?? "Configure Text Question";
         }
-        if (Question.Configuration.ContainsKey("SectionTitle"))
+
+        // Ensure we have a working copy of text sections
+        if (TextSections == null)
         {
-            SectionTitle = Question.Configuration["SectionTitle"].ToString() ?? "";
+            TextSections = new List<TextSection>();
         }
-        if (Question.Configuration.ContainsKey("SectionDescription"))
+
+        // Load existing sections or create default one
+        if (TextSections.Count == 0)
         {
-            SectionDescription = Question.Configuration["SectionDescription"].ToString() ?? "";
+            // Check if we have old format configuration
+            if (Question.Configuration.ContainsKey("SectionTitle") || Question.Configuration.ContainsKey("SectionDescription"))
+            {
+                TextSections.Add(new TextSection
+                {
+                    Title = Question.Configuration.ContainsKey("SectionTitle") ? Question.Configuration["SectionTitle"].ToString() ?? "" : "",
+                    Description = Question.Configuration.ContainsKey("SectionDescription") ? Question.Configuration["SectionDescription"].ToString() ?? "" : ""
+                });
+            }
+            else
+            {
+                // Start with one empty section
+                TextSections.Add(new TextSection
+                {
+                    Title = "",
+                    Description = ""
+                });
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private void AddTextSection()
+    {
+        TextSections.Add(new TextSection
+        {
+            Title = "",
+            Description = ""
+        });
+    }
+
+    private void RemoveTextSection(int index)
+    {
+        if (index >= 0 && index < TextSections.Count)
+        {
+            TextSections.RemoveAt(index);
+        }
+    }
+
+    private void OnSectionTitleChanged(int index, string value)
+    {
+        if (index >= 0 && index < TextSections.Count)
+        {
+            TextSections[index].Title = value ?? "";
+        }
+    }
+
+    private void OnSectionDescriptionChanged(int index, string value)
+    {
+        if (index >= 0 && index < TextSections.Count)
+        {
+            TextSections[index].Description = value ?? "";
         }
     }
 
     private bool CanSave()
     {
-        return !string.IsNullOrWhiteSpace(SectionTitle) && !string.IsNullOrWhiteSpace(SectionDescription);
+        return TextSections.Count > 0 &&
+               TextSections.All(s => !string.IsNullOrWhiteSpace(s.Title) && !string.IsNullOrWhiteSpace(s.Description));
     }
 
     private void Cancel()
@@ -100,16 +206,20 @@
             Question.Configuration["QuestionTitle"] = QuestionTitle;
             var result = new TextQuestionConfiguration
             {
-                SectionTitle = SectionTitle,
-                SectionDescription = SectionDescription
+                TextSections = TextSections.ToList()
             };
             DialogService.Close(result);
         }
     }
 
+    public class TextSection
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+    }
+
     public class TextQuestionConfiguration
     {
-        public string SectionTitle { get; set; } = "";
-        public string SectionDescription { get; set; } = "";
+        public List<TextSection> TextSections { get; set; } = new();
     }
 }

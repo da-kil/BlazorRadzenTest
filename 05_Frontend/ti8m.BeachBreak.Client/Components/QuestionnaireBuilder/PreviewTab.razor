@@ -176,9 +176,44 @@
 
     private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
     {
-        if (question.Configuration.ContainsKey("Competencies") && question.Configuration["Competencies"] is List<CompetencyDefinition> competencies)
+        if (question.Configuration.ContainsKey("Competencies"))
         {
-            return competencies;
+            var competenciesObj = question.Configuration["Competencies"];
+
+            // Handle direct cast (when set in editor)
+            if (competenciesObj is List<CompetencyDefinition> competencies)
+            {
+                return competencies;
+            }
+
+            // Handle JSON deserialization (when loaded from API)
+            if (competenciesObj is System.Text.Json.JsonElement jsonElement)
+            {
+                try
+                {
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing competencies: {ex.Message}");
+                }
+            }
+
+            // Handle string representation (backup case)
+            if (competenciesObj is string jsonString)
+            {
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonString) ?? new List<CompetencyDefinition>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing competencies from string: {ex.Message}");
+                }
+            }
         }
 
         // Return empty list if none exist

@@ -84,7 +84,7 @@ public class QuestionnaireTemplatesController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            Result result = await commandDispatcher.SendAsync(new UpdateQuestionnaireTemplateCommand(id, new QuestionnaireTemplate
+            var template = new QuestionnaireTemplate
             {
                 Category = questionnaireTemplate.Category,
                 Description = questionnaireTemplate.Description,
@@ -118,9 +118,18 @@ public class QuestionnaireTemplatesController : BaseController
                     SuccessMessage = questionnaireTemplate.Settings.SuccessMessage,
                     TimeLimit = questionnaireTemplate.Settings.TimeLimit
                 }
-            }));
+            };
 
-            return CreateResponse(result);
+            Result result = await commandDispatcher.SendAsync(new UpdateQuestionnaireTemplateCommand(id, template));
+
+            if (result.Succeeded)
+            {
+                return Ok(template);
+            }
+            else
+            {
+                return Problem(detail: result.Message, statusCode: result.StatusCode);
+            }
         }
         catch (Exception ex)
         {

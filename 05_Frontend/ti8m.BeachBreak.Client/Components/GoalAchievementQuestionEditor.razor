@@ -1,0 +1,196 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<style>
+    .border-dashed {
+        border: 2px dashed var(--rz-primary-lighter) !important;
+        background-color: var(--rz-primary-lighter, rgba(0, 123, 255, 0.1));
+    }
+
+    .goal-category-editor {
+        border-left: 4px solid var(--rz-success) !important;
+    }
+
+    .achievement-levels .rz-badge {
+        font-size: 0.875rem;
+    }
+
+    .goal-achievement-editor .rz-textbox:focus,
+    .goal-achievement-editor .rz-textarea:focus {
+        border-color: var(--rz-primary);
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+</style>
+
+<div class="goal-achievement-editor">
+    <div class="mb-3">
+        <RadzenTextBox @bind-Value="@QuestionTitle"
+                      Placeholder="Enter question title..."
+                      Class="w-100"
+                      Style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;" />
+    </div>
+
+    <RadzenCard Class="add-section mb-4 p-3 border-dashed">
+        <div class="text-center">
+            <RadzenButton Text="Add Goal Category"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Icon="add"
+                         Size="ButtonSize.Medium"
+                         Click="@AddGoalCategory" />
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-2">
+                Add categories for different types of goals users can set
+            </RadzenText>
+        </div>
+    </RadzenCard>
+
+    @if (GoalCategories.Count == 0)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+            <RadzenText TextStyle="TextStyle.Body2">
+                Click "Add Goal Category" to start adding goal categories for this achievement assessment.
+            </RadzenText>
+        </RadzenAlert>
+    }
+
+    @for (int i = 0; i < GoalCategories.Count; i++)
+    {
+        var categoryIndex = i;
+        var category = GoalCategories[categoryIndex];
+
+        <RadzenCard Class="goal-category-editor mb-3 p-3 border">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="d-flex align-items-center">
+                    <RadzenIcon Icon="track_changes" Class="me-2" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                        Goal Category @(categoryIndex + 1)
+                    </RadzenText>
+                </div>
+                <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                             Icon="delete"
+                             Size="ButtonSize.Small"
+                             Title="Remove this category"
+                             Click="@(() => RemoveGoalCategory(categoryIndex))" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Category Name *</RadzenText>
+                <RadzenTextBox @bind-Value="@category.Name"
+                              Placeholder="Enter goal category name (e.g., Professional Development)..."
+                              Class="w-100" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Description *</RadzenText>
+                <RadzenTextArea @bind-Value="@category.Description"
+                               Placeholder="Describe what goals this category covers..."
+                               Rows="3"
+                               Class="w-100" />
+            </div>
+
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Levels</RadzenText>
+                <div class="achievement-levels d-flex gap-2 flex-wrap">
+                    <RadzenBadge Text="Not Achieved" BadgeStyle="BadgeStyle.Danger" Class="px-3 py-2" />
+                    <RadzenBadge Text="Partially Achieved" BadgeStyle="BadgeStyle.Warning" Class="px-3 py-2" />
+                    <RadzenBadge Text="Fully Achieved" BadgeStyle="BadgeStyle.Success" Class="px-3 py-2" />
+                    <RadzenBadge Text="Exceeded" BadgeStyle="BadgeStyle.Info" Class="px-3 py-2" />
+                </div>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                    Users will be able to select one of these achievement levels for each goal they set.
+                </RadzenText>
+            </div>
+        </RadzenCard>
+    }
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel" />
+        <RadzenButton Text="Save"
+                     ButtonStyle="ButtonStyle.Success"
+                     Icon="save"
+                     Click="@Save"
+                     Disabled="@(!CanSave())" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionItem Question { get; set; } = default!;
+    [Parameter] public List<GoalCategory> GoalCategories { get; set; } = new();
+
+    [Inject] protected DialogService DialogService { get; set; } = default!;
+
+    private string QuestionTitle { get; set; } = "Configure Goal Achievement Assessment";
+
+    protected override void OnInitialized()
+    {
+        // Initialize with existing title or default
+        if (Question.Configuration.ContainsKey("QuestionTitle"))
+        {
+            QuestionTitle = Question.Configuration["QuestionTitle"].ToString() ?? "Configure Goal Achievement Assessment";
+        }
+
+        // Ensure we have a working copy of goal categories
+        if (GoalCategories == null)
+        {
+            GoalCategories = new List<GoalCategory>();
+        }
+
+        // If no categories are provided, start with a default one
+        if (GoalCategories.Count == 0)
+        {
+            GoalCategories.Add(new GoalCategory
+            {
+                Name = "",
+                Description = ""
+            });
+        }
+
+        StateHasChanged();
+    }
+
+    private void AddGoalCategory()
+    {
+        GoalCategories.Add(new GoalCategory
+        {
+            Name = "",
+            Description = ""
+        });
+    }
+
+    private void RemoveGoalCategory(int index)
+    {
+        if (index >= 0 && index < GoalCategories.Count)
+        {
+            GoalCategories.RemoveAt(index);
+        }
+    }
+
+    private bool CanSave()
+    {
+        return GoalCategories.Count > 0 &&
+               GoalCategories.All(c => !string.IsNullOrWhiteSpace(c.Name) && !string.IsNullOrWhiteSpace(c.Description));
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private void Save()
+    {
+        if (CanSave())
+        {
+            // Save the title to question configuration
+            Question.Configuration["QuestionTitle"] = QuestionTitle;
+            DialogService.Close(GoalCategories);
+        }
+    }
+
+    public class GoalCategory
+    {
+        public string Name { get; set; } = "";
+        public string Description { get; set; } = "";
+    }
+}

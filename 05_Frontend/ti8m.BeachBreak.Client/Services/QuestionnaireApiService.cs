@@ -83,14 +83,21 @@ public class QuestionnaireApiService : IQuestionnaireApiService
             };
 
             var response = await httpCommandClient.PutAsJsonAsync($"c/api/v1/questionnaire-templates/{template.Id}", updateRequest);
-            response.EnsureSuccessStatusCode();
-            
-            return await response.Content.ReadFromJsonAsync<QuestionnaireTemplate>();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"API Error updating template {template.Id}: {response.StatusCode} - {errorContent}");
+                throw new HttpRequestException($"Failed to update template: {response.StatusCode} - {response.ReasonPhrase}");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<QuestionnaireTemplate>();
+            return result;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Error updating template {template.Id}: {ex.Message}");
-            return null;
+            throw; // Re-throw the exception instead of returning null
         }
     }
 

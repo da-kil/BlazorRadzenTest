@@ -2,6 +2,23 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
+<style>
+    .border-dashed {
+        border: 2px dashed var(--rz-primary-lighter) !important;
+        background-color: var(--rz-primary-lighter, rgba(0, 123, 255, 0.1));
+    }
+
+    .competency-editor {
+        border-left: 4px solid var(--rz-primary) !important;
+    }
+
+    .self-assessment-editor .rz-textbox:focus,
+    .self-assessment-editor .rz-textarea:focus {
+        border-color: var(--rz-primary);
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+</style>
+
 <div class="self-assessment-editor">
     <div class="mb-3">
         <RadzenTextBox @bind-Value="@QuestionTitle"
@@ -10,13 +27,18 @@
                       Style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;" />
     </div>
     
-    <div class="mb-4">
-        <RadzenButton Text="Add Competency" 
-                     ButtonStyle="ButtonStyle.Primary" 
-                     Icon="add" 
-                     Size="ButtonSize.Medium"
-                     Click="@AddCompetency" />
-    </div>
+    <RadzenCard Class="add-section mb-4 p-3 border-dashed">
+        <div class="text-center">
+            <RadzenButton Text="Add Competency"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Icon="add"
+                         Size="ButtonSize.Medium"
+                         Click="@AddCompetency" />
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-2">
+                Add competencies that users will self-assess
+            </RadzenText>
+        </div>
+    </RadzenCard>
 
     @if (Competencies.Count == 0)
     {
@@ -34,12 +56,16 @@
 
         <RadzenCard Class="competency-editor mb-3 p-3 border">
             <div class="d-flex justify-content-between align-items-start mb-3">
-                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
-                    Competency @(competencyIndex + 1)
-                </RadzenText>
-                <RadzenButton ButtonStyle="ButtonStyle.Danger" 
-                             Icon="delete" 
+                <div class="d-flex align-items-center">
+                    <RadzenIcon Icon="self_improvement" Class="me-2" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                        Competency @(competencyIndex + 1)
+                    </RadzenText>
+                </div>
+                <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                             Icon="delete"
                              Size="ButtonSize.Small"
+                             Title="Remove this competency"
                              Click="@(() => RemoveCompetency(competencyIndex))" />
             </div>
 
@@ -87,6 +113,24 @@
         {
             QuestionTitle = Question.Configuration["QuestionTitle"].ToString() ?? "Configure Self-Assessment Competencies";
         }
+
+        // Ensure we have a working copy of competencies
+        if (Competencies == null)
+        {
+            Competencies = new List<CompetencyDefinition>();
+        }
+
+        // If no competencies are provided, start with a default one
+        if (Competencies.Count == 0)
+        {
+            Competencies.Add(new CompetencyDefinition(
+                "competency_1",
+                "",
+                ""
+            ));
+        }
+
+        StateHasChanged();
     }
 
     private void AddCompetency()
