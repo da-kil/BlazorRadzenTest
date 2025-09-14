@@ -40,9 +40,9 @@
                                                Placeholder="Filter by Category"
                                                AllowClear="true"
                                                Change="@FilterTemplates" />
-                                <RadzenTextBox @bind-Value="@searchText" 
+                                <RadzenTextBox @bind-Value="@searchText"
                                               Placeholder="Search templates..."
-                                              oninput="@FilterTemplates" />
+                                              @oninput="@OnSearchTextChanged" />
                             </div>
                             <RadzenToggleButton @bind-Value="@showInactiveTemplates" 
                                                Text="Show Inactive" 
@@ -108,30 +108,30 @@
                                 <RadzenDataGridColumn Filterable="false" Sortable="false" Width="200px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
                                         <div class="d-flex gap-1">
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                                         Icon="preview" 
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                         Icon="preview"
                                                          Size="ButtonSize.Small"
-                                                         Tooltip="Preview"
+                                                         Title="Preview"
                                                          Click="@(() => PreviewTemplate(template))" />
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                                         Icon="edit" 
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                         Icon="edit"
                                                          Size="ButtonSize.Small"
-                                                         Tooltip="Edit"
+                                                         Title="Edit"
                                                          Click="@(() => EditTemplate(template))" />
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                                         Icon="content_copy" 
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                         Icon="content_copy"
                                                          Size="ButtonSize.Small"
-                                                         Tooltip="Clone"
+                                                         Title="Clone"
                                                          Click="@(() => CloneTemplate(template))" />
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                                         Icon="assignment" 
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                         Icon="assignment"
                                                          Size="ButtonSize.Small"
-                                                         Tooltip="Assign"
+                                                         Title="Assign"
                                                          Click="@(() => AssignTemplate(template))" />
-                                            <RadzenButton ButtonStyle="@(template.IsActive ? ButtonStyle.Warning : ButtonStyle.Success)" 
-                                                         Icon="@(template.IsActive ? "pause_circle" : "play_circle")" 
+                                            <RadzenButton ButtonStyle="@(template.IsActive ? ButtonStyle.Warning : ButtonStyle.Success)"
+                                                         Icon="@(template.IsActive ? "pause_circle" : "play_circle")"
                                                          Size="ButtonSize.Small"
-                                                         Tooltip="@(template.IsActive ? "Deactivate" : "Activate")"
+                                                         Title="@(template.IsActive ? "Deactivate" : "Activate")"
                                                          Click="@(() => ToggleTemplateStatus(template))" />
                                         </div>
                                     </Template>
@@ -326,16 +326,22 @@
         };
     }
 
+    private void OnSearchTextChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        FilterTemplates();
+    }
+
     private void FilterTemplates()
     {
         filteredTemplates = templates.Where(t =>
             (showInactiveTemplates || t.IsActive) &&
             (string.IsNullOrWhiteSpace(categoryFilter) || t.Category == categoryFilter) &&
-            (string.IsNullOrWhiteSpace(searchText) || 
+            (string.IsNullOrWhiteSpace(searchText) ||
              t.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
              t.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase))
         ).ToList();
-        
+
         StateHasChanged();
     }
 
