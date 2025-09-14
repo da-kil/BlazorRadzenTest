@@ -2,23 +2,6 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
-<style>
-    .border-dashed {
-        border: 2px dashed var(--rz-primary-lighter) !important;
-        background-color: var(--rz-primary-lighter, rgba(0, 123, 255, 0.1));
-    }
-
-    .competency-editor {
-        border-left: 4px solid var(--rz-primary) !important;
-    }
-
-    .self-assessment-editor .rz-textbox:focus,
-    .self-assessment-editor .rz-textarea:focus {
-        border-color: var(--rz-primary);
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    }
-</style>
-
 <div class="self-assessment-editor">
     <div class="mb-3">
         <RadzenTextBox @bind-Value="@QuestionTitle"
