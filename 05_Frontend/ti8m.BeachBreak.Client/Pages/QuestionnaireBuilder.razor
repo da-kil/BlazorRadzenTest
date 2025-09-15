@@ -58,7 +58,6 @@
 								  OnShowAddQuestionDialog="@ShowAddQuestionDialog"
 								  OnCancelQuestionTypeSelection="@CancelQuestionTypeSelection"
 								  OnAddQuestionOfType="@AddQuestionOfType"
-								  OnEditQuestion="@EditQuestion"
 								  OnMoveQuestionUp="@MoveQuestionUp"
 								  OnMoveQuestionDown="@MoveQuestionDown"
 								  OnRemoveQuestion="@RemoveQuestion" />
@@ -182,15 +181,23 @@
 		template.Sections.Add(newSection);
 	}
 
-	private void RemoveSection(int index)
+	private async Task RemoveSection(int index)
 	{
 		if (index >= 0 && index < template.Sections.Count)
 		{
-			template.Sections.RemoveAt(index);
-			// Reorder remaining sections
-			for (int i = 0; i < template.Sections.Count; i++)
+			var section = template.Sections[index];
+			var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {index + 1}" : section.Title;
+			var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{sectionName}'? This will also delete all questions in this section.", "Delete Section",
+				new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+			if (confirmed.HasValue && confirmed.Value)
 			{
-				template.Sections[i].Order = i;
+				template.Sections.RemoveAt(index);
+				// Reorder remaining sections
+				for (int i = 0; i < template.Sections.Count; i++)
+				{
+					template.Sections[i].Order = i;
+				}
 			}
 		}
 	}
@@ -223,12 +230,6 @@
 		selectedQuestionType = null;
 	}
 
-	private async Task EditQuestion(int sectionIndex, int questionIndex)
-	{
-		// Questions are now edited inline, no dialog needed
-		// This method is kept for compatibility but does nothing
-		await Task.CompletedTask;
-	}
 
 	// These dialog-based editing methods are no longer needed as editing is now inline
 	// Keeping the helper methods for configuration management
@@ -321,16 +322,24 @@
 		return new List<object>();
 	}
 
-	private void RemoveQuestion(int sectionIndex, int questionIndex)
+	private async Task RemoveQuestion(int sectionIndex, int questionIndex)
 	{
 		var section = template.Sections[sectionIndex];
 		if (questionIndex >= 0 && questionIndex < section.Questions.Count)
 		{
-			section.Questions.RemoveAt(questionIndex);
-			// Reorder remaining questions
-			for (int i = 0; i < section.Questions.Count; i++)
+			var question = section.Questions[questionIndex];
+			var questionName = string.IsNullOrWhiteSpace(question.Title) ? $"Question {questionIndex + 1}" : question.Title;
+			var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{questionName}'?", "Delete Question",
+				new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+			if (confirmed.HasValue && confirmed.Value)
 			{
-				section.Questions[i].Order = i;
+				section.Questions.RemoveAt(questionIndex);
+				// Reorder remaining questions
+				for (int i = 0; i < section.Questions.Count; i++)
+				{
+					section.Questions[i].Order = i;
+				}
 			}
 		}
 	}
@@ -516,16 +525,11 @@ private string GetQuestionTypeLabel(QuestionItem question)
 	return questionTypeLabels[question.Type];
 }
 
-// Event handler overloads for the new component structure
-private async Task EditQuestion((int sectionIndex, int questionIndex) indices)
-{
-	await EditQuestion(indices.sectionIndex, indices.questionIndex);
-}
 
 // Event handler overloads for the new component structure
-private void RemoveQuestion((int sectionIndex, int questionIndex) indices)
+private async Task RemoveQuestion((int sectionIndex, int questionIndex) indices)
 {
-	RemoveQuestion(indices.sectionIndex, indices.questionIndex);
+	await RemoveQuestion(indices.sectionIndex, indices.questionIndex);
 }
 
 private void MoveQuestionUp((int sectionIndex, int questionIndex) indices)
