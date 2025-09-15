@@ -26,13 +26,13 @@ public class QuestionnaireTemplateQueryHandler :
             await using var cmd = connection.CreateCommand();
             
             cmd.CommandText = """
-                SELECT id, name, description, category, sections, settings, created_at, updated_at
-                FROM questionnaire_templates 
+                SELECT id, name, description, category, is_active, sections, settings, created_at, updated_at
+                FROM questionnaire_templates
                 ORDER BY created_at DESC
                 """;
 
             var templates = new List<QuestionnaireTemplate>();
-            
+
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
@@ -44,7 +44,7 @@ public class QuestionnaireTemplateQueryHandler :
                     Category = reader.IsDBNull("category") ? string.Empty : reader.GetString("category"),
                     CreatedDate = reader.GetDateTime("created_at"),
                     LastModified = reader.GetDateTime("updated_at"),
-                    IsActive = true,
+                    IsActive = reader.IsDBNull("is_active") ? true : reader.GetBoolean("is_active"),
                     Sections = JsonSerializer.Deserialize<List<QuestionSection>>(reader.GetString("sections")) ?? new(),
                     Settings = JsonSerializer.Deserialize<QuestionnaireSettings>(reader.GetString("settings")) ?? new()
                 };
@@ -70,13 +70,13 @@ public class QuestionnaireTemplateQueryHandler :
             await using var cmd = connection.CreateCommand();
             
             cmd.CommandText = """
-                SELECT id, name, description, category, sections, settings, created_at, updated_at
-                FROM questionnaire_templates 
+                SELECT id, name, description, category, is_active, sections, settings, created_at, updated_at
+                FROM questionnaire_templates
                 WHERE id = @id
                 """;
-            
+
             cmd.Parameters.AddWithValue("@id", query.Id);
-            
+
             await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
             if (await reader.ReadAsync(cancellationToken))
             {
@@ -88,7 +88,7 @@ public class QuestionnaireTemplateQueryHandler :
                     Category = reader.IsDBNull("category") ? string.Empty : reader.GetString("category"),
                     CreatedDate = reader.GetDateTime("created_at"),
                     LastModified = reader.GetDateTime("updated_at"),
-                    IsActive = true,
+                    IsActive = reader.IsDBNull("is_active") ? true : reader.GetBoolean("is_active"),
                     Sections = JsonSerializer.Deserialize<List<QuestionSection>>(reader.GetString("sections")) ?? new(),
                     Settings = JsonSerializer.Deserialize<QuestionnaireSettings>(reader.GetString("settings")) ?? new()
                 };

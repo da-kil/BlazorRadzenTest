@@ -5,6 +5,7 @@ public class QuestionnaireTemplateDto
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
+    public bool IsActive { get; set; } = true;
     public List<QuestionSectionDto> Sections { get; set; } = new();
     public QuestionnaireSettingsDto Settings { get; set; } = new();
 }

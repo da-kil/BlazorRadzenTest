@@ -28,14 +28,15 @@ public class QuestionnaireTemplateCommandHandler :
             await using var cmd = connection.CreateCommand();
             
             cmd.CommandText = """
-                INSERT INTO questionnaire_templates (id, name, description, category, sections, settings, created_at, updated_at)
-                VALUES (@id, @name, @description, @category, @sections, @settings, @created_at, @updated_at)
+                INSERT INTO questionnaire_templates (id, name, description, category, is_active, sections, settings, created_at, updated_at)
+                VALUES (@id, @name, @description, @category, @is_active, @sections, @settings, @created_at, @updated_at)
                 """;
 
             cmd.Parameters.AddWithValue("@id", id);
             cmd.Parameters.AddWithValue("@name", command.QuestionnaireTemplate.Name);
             cmd.Parameters.AddWithValue("@description", command.QuestionnaireTemplate.Description);
             cmd.Parameters.AddWithValue("@category", command.QuestionnaireTemplate.Category);
+            cmd.Parameters.AddWithValue("@is_active", command.QuestionnaireTemplate.IsActive);
             cmd.Parameters.Add("@sections", NpgsqlDbType.Jsonb).Value = sectionsJson;
             cmd.Parameters.Add("@settings", NpgsqlDbType.Jsonb).Value = settingsJson;
             cmd.Parameters.AddWithValue("@created_at", DateTime.UtcNow);
@@ -61,12 +62,13 @@ public class QuestionnaireTemplateCommandHandler :
             await using var cmd = connection.CreateCommand();
             
             cmd.CommandText = """
-                UPDATE questionnaire_templates 
-                SET name = @name, 
-                    description = @description, 
-                    category = @category, 
-                    sections = @sections, 
-                    settings = @settings, 
+                UPDATE questionnaire_templates
+                SET name = @name,
+                    description = @description,
+                    category = @category,
+                    is_active = @is_active,
+                    sections = @sections,
+                    settings = @settings,
                     updated_at = @updated_at
                 WHERE id = @id
                 """;
@@ -75,6 +77,7 @@ public class QuestionnaireTemplateCommandHandler :
             cmd.Parameters.AddWithValue("@name", command.QuestionnaireTemplate.Name);
             cmd.Parameters.AddWithValue("@description", command.QuestionnaireTemplate.Description);
             cmd.Parameters.AddWithValue("@category", command.QuestionnaireTemplate.Category);
+            cmd.Parameters.AddWithValue("@is_active", command.QuestionnaireTemplate.IsActive);
             cmd.Parameters.Add("@sections", NpgsqlDbType.Jsonb).Value = sectionsJson;
             cmd.Parameters.Add("@settings", NpgsqlDbType.Jsonb).Value = settingsJson;
             cmd.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);

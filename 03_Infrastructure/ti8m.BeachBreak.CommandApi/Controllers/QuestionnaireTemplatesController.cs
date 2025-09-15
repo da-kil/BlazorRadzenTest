@@ -36,6 +36,7 @@ public class QuestionnaireTemplatesController : BaseController
                 Category = questionnaireTemplate.Category,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
+                IsActive = questionnaireTemplate.IsActive,
                 Sections = questionnaireTemplate.Sections.Select(section => new QuestionSection
                 {
                     Description = section.Description,
@@ -89,6 +90,7 @@ public class QuestionnaireTemplatesController : BaseController
                 Category = questionnaireTemplate.Category,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
+                IsActive = questionnaireTemplate.IsActive,
                 Sections = questionnaireTemplate.Sections.Select(section => new QuestionSection
                 {
                     Description = section.Description,

@@ -51,6 +51,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
                 template.Name,
                 template.Description,
                 template.Category,
+                template.IsActive,
                 template.Sections,
                 template.Settings
             };
@@ -78,6 +79,7 @@ public class QuestionnaireApiService : IQuestionnaireApiService
                 template.Name,
                 template.Description,
                 template.Category,
+                template.IsActive,
                 template.Sections,
                 template.Settings
             };

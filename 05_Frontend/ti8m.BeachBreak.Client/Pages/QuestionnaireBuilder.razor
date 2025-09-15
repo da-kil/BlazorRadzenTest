@@ -648,8 +648,7 @@ private async Task AddQuestionOfType(QuestionType questionType)
 		{
 			var parameters = new Dictionary<string, object>();
 			parameters.Add("Question", newQuestion);
-			parameters.Add("SectionTitle", GetTextQuestionSectionTitle(newQuestion));
-			parameters.Add("SectionDescription", GetTextQuestionSectionDescription(newQuestion));
+			parameters.Add("TextSections", GetTextSectionsFromConfiguration(newQuestion));
 
 			var result = await DialogService.OpenAsync<TextQuestionEditor>($"Configure {questionTypeLabels[QuestionType.TextQuestion]}",
 				parameters,

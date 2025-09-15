@@ -46,15 +46,26 @@ public class DatabaseInitializer
                 name VARCHAR(255) NOT NULL,
                 description TEXT,
                 category VARCHAR(100),
+                is_active BOOLEAN NOT NULL DEFAULT true,
                 sections JSONB NOT NULL,
                 settings JSONB NOT NULL,
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL,
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL
             );
 
+            -- Add the is_active column if it doesn't exist (for existing tables)
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                              WHERE table_name = 'questionnaire_templates' AND column_name = 'is_active') THEN
+                    ALTER TABLE questionnaire_templates ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT true;
+                END IF;
+            END $$;
+
             -- Create indexes for better performance
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_name ON questionnaire_templates(name);
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_category ON questionnaire_templates(category);
+            CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_is_active ON questionnaire_templates(is_active);
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_created_at ON questionnaire_templates(created_at);
             """;
 
