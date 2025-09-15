@@ -225,83 +225,13 @@
 
 	private async Task EditQuestion(int sectionIndex, int questionIndex)
 	{
-		// Open question editor dialog
-		var question = template.Sections[sectionIndex].Questions[questionIndex];
-
-		if (question.Type == QuestionType.SelfAssessment)
-		{
-			await EditSelfAssessmentQuestion(question);
-		}
-		else if (question.Type == QuestionType.GoalAchievement)
-		{
-			await EditGoalAchievementQuestion(question);
-		}
-		else if (question.Type == QuestionType.TextQuestion)
-		{
-			await EditTextQuestion(question);
-		}
+		// Questions are now edited inline, no dialog needed
+		// This method is kept for compatibility but does nothing
+		await Task.CompletedTask;
 	}
 
-	private async Task EditSelfAssessmentQuestion(QuestionItem question)
-	{
-		// Get existing competencies from configuration or create default ones
-		var competencies = GetCompetenciesFromConfiguration(question);
-
-		var parameters = new Dictionary<string, object>();
-		parameters.Add("Question", question);
-		parameters.Add("Competencies", competencies);
-
-		var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>($"Edit {questionTypeLabels[QuestionType.SelfAssessment]} Question",
-			parameters,
-			new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-
-		if (result != null)
-		{
-			// Save the competencies back to the configuration
-			SaveCompetenciesToConfiguration(question, (List<CompetencyDefinition>)result);
-		}
-	}
-
-	private async Task EditGoalAchievementQuestion(QuestionItem question)
-	{
-		// Get existing goal categories from configuration or create default ones
-		var goalCategories = GetGoalCategoriesFromConfiguration(question);
-
-		var parameters = new Dictionary<string, object>();
-		parameters.Add("Question", question);
-		parameters.Add("GoalCategories", goalCategories);
-
-		var result = await DialogService.OpenAsync<GoalAchievementQuestionEditor>($"Edit {questionTypeLabels[QuestionType.GoalAchievement]} Question",
-			parameters,
-			new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-
-		if (result != null)
-		{
-			// Save the goal categories back to the configuration
-			SaveGoalCategoriesToConfiguration(question, (List<GoalAchievementQuestionEditor.GoalCategory>)result);
-		}
-	}
-
-	private async Task EditTextQuestion(QuestionItem question)
-	{
-		// Get existing text sections from configuration or create default ones
-		var textSections = GetTextSectionsFromConfiguration(question);
-
-		var parameters = new Dictionary<string, object>();
-		parameters.Add("Question", question);
-		parameters.Add("TextSections", textSections);
-
-		var result = await DialogService.OpenAsync<TextQuestionEditor>($"Edit {questionTypeLabels[QuestionType.TextQuestion]} Question",
-			parameters,
-			new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-
-		if (result != null)
-		{
-			// Save the text question configuration
-			var config = (TextQuestionEditor.TextQuestionConfiguration)result;
-			SaveTextQuestionConfiguration(question, config);
-		}
-	}
+	// These dialog-based editing methods are no longer needed as editing is now inline
+	// Keeping the helper methods for configuration management
 
 	private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
 	{
@@ -354,43 +284,23 @@
 		question.Configuration["Competencies"] = competencies;
 	}
 
-	private List<GoalAchievementQuestionEditor.GoalCategory> GetGoalCategoriesFromConfiguration(QuestionItem question)
+	// Goal categories configuration methods - simplified since editing is now inline
+	private List<object> GetGoalCategoriesFromConfiguration(QuestionItem question)
 	{
-		if (question.Configuration.ContainsKey("GoalCategories") && question.Configuration["GoalCategories"] is List<GoalAchievementQuestionEditor.GoalCategory> categories)
+		if (question.Configuration.ContainsKey("GoalCategories") && question.Configuration["GoalCategories"] is List<object> categories)
 		{
 			return categories;
 		}
 
-		// Return default goal categories if none exist
-		return new List<GoalAchievementQuestionEditor.GoalCategory>();
+		return new List<object>();
 	}
 
-	private void SaveGoalCategoriesToConfiguration(QuestionItem question, List<GoalAchievementQuestionEditor.GoalCategory> goalCategories)
-	{
-		question.Configuration["GoalCategories"] = goalCategories;
-	}
+	// Text question helper methods are no longer needed as configuration is inline
 
-	private string GetTextQuestionSectionTitle(QuestionItem question)
+	// Text sections configuration methods - simplified since editing is now inline
+	private List<object> GetTextSectionsFromConfiguration(QuestionItem question)
 	{
-		if (question.Configuration.ContainsKey("SectionTitle"))
-		{
-			return question.Configuration["SectionTitle"].ToString() ?? "Career Ambitions";
-		}
-		return "Career Ambitions";
-	}
-
-	private string GetTextQuestionSectionDescription(QuestionItem question)
-	{
-		if (question.Configuration.ContainsKey("SectionDescription"))
-		{
-			return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
-		}
-		return "Where do you see yourself long-term in your professional career?";
-	}
-
-	private List<TextQuestionEditor.TextSection> GetTextSectionsFromConfiguration(QuestionItem question)
-	{
-		if (question.Configuration.ContainsKey("TextSections") && question.Configuration["TextSections"] is List<TextQuestionEditor.TextSection> sections)
+		if (question.Configuration.ContainsKey("TextSections") && question.Configuration["TextSections"] is List<object> sections)
 		{
 			return sections;
 		}
@@ -398,9 +308,9 @@
 		// Check for legacy format and convert
 		if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
 		{
-			return new List<TextQuestionEditor.TextSection>
+			return new List<object>
 			{
-				new TextQuestionEditor.TextSection
+				new
 				{
 					Title = question.Configuration.ContainsKey("SectionTitle") ? question.Configuration["SectionTitle"].ToString() ?? "" : "",
 					Description = question.Configuration.ContainsKey("SectionDescription") ? question.Configuration["SectionDescription"].ToString() ?? "" : ""
@@ -408,20 +318,7 @@
 			};
 		}
 
-		// Return empty list if no configuration exists
-		return new List<TextQuestionEditor.TextSection>();
-	}
-
-	private void SaveTextQuestionConfiguration(QuestionItem question, TextQuestionEditor.TextQuestionConfiguration config)
-	{
-		question.Configuration["TextSections"] = config.TextSections;
-
-		// Keep backward compatibility for now
-		if (config.TextSections.Count > 0)
-		{
-			question.Configuration["SectionTitle"] = config.TextSections[0].Title;
-			question.Configuration["SectionDescription"] = config.TextSections[0].Description;
-		}
+		return new List<object>();
 	}
 
 	private void RemoveQuestion(int sectionIndex, int questionIndex)
@@ -471,76 +368,7 @@
 		};
 	}
 
-	private RenderFragment GetQuestionPreview(QuestionItem question)
-	{
-		return question.Type switch
-		{
-			QuestionType.SelfAssessment => @<div class="self-assessment-preview">
-@{
-var competencies = GetCompetenciesFromConfiguration(question);
-	}
-@if (competencies.Count > 0)
-		{
-			@foreach (var competency in competencies.Take(2)) // Show first 2 competencies as preview
-			{
-					<div class="competency-preview mb-3 p-3 border rounded">
-						<RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">@competency.Title</RadzenText>
-						<RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@competency.Description</RadzenText>
-						<div class="d-flex align-items-center mb-2">
-							<RadzenRating Value="0" Disabled="true" Stars="4" Class="me-2" />
-							<RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Rate satisfaction</RadzenText>
-						</div>
-						<RadzenTextArea Placeholder="Optional comments..." Disabled="true" Rows="2" Class="w-100" />
-					</div>
-			}
-			@if (competencies.Count > 2)
-			{
-					<RadzenText TextStyle="TextStyle.Caption" Class="text-muted">... and @(competencies.Count - 2) more competencies</RadzenText>
-			}
-		}
-		else
-		{
-				<RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Click Edit to configure competencies</RadzenText>
-		}
-		</div>,
-		QuestionType.GoalAchievement => @<div class="goal-achievement-preview">
-			<div class="goal-preview mb-3 p-3 border rounded">
-				<RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">Goal 1</RadzenText>
-				<RadzenTextArea Placeholder="Describe the goal that was set for 2023..." Disabled="true" Rows="2" Class="w-100 mb-2" />
-				<div class="row">
-					<div class="col-md-6">
-						<RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Achievement Percentage</RadzenText>
-						<div class="d-flex align-items-center">
-							<RadzenNumeric TValue="int" Value="0" Disabled="true" Class="flex-grow-1 me-2" />
-							<RadzenText TextStyle="TextStyle.Body2">%</RadzenText>
-						</div>
-					</div>
-					<div class="col-md-6">
-						<RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Status</RadzenText>
-						<div class="p-2 rounded bg-light">
-							<RadzenText TextStyle="TextStyle.Caption">Not Achieved</RadzenText>
-						</div>
-					</div>
-				</div>
-				<RadzenTextArea Placeholder="Your reasoning/justification..." Disabled="true" Rows="2" Class="w-100 mt-2" />
-			</div>
-			<RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Multiple goals can be added dynamically...</RadzenText>
-		</div>,
-		QuestionType.TextQuestion => @<div class="text-question-preview">
-			<RadzenCard Class="mb-3 p-3 border-start border-primary border-3">
-				<RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary mb-2">
-					<RadzenIcon Icon="timeline" Class="me-2" />
-					@GetTextQuestionSectionTitle(question)
-				</RadzenText>
-				<RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
-					@GetTextQuestionSectionDescription(question)
-				</RadzenText>
-				<RadzenTextArea Placeholder="User will enter their response here..." Disabled="true" Rows="4" Class="w-100" />
-			</RadzenCard>
-		</div>,
-		_ => @<RadzenTextBox Placeholder="Preview not available" Disabled="true" Class="w-100" />
-	};
-}
+	// Question preview is now handled inline within the QuestionCard component
 
 private async Task PreviewQuestionnaire()
 {
@@ -620,64 +448,32 @@ private async Task AddQuestionOfType(QuestionType questionType)
 			IsRequired = true
 		};
 
-		// For Self-Assessment questions, show competency editor before adding
+		// Initialize default configuration for each question type
 		if (questionType == QuestionType.SelfAssessment)
 		{
-			var competencies = GetCompetenciesFromConfiguration(newQuestion);
-			var parameters = new Dictionary<string, object>();
-			parameters.Add("Question", newQuestion);
-			parameters.Add("Competencies", competencies);
-
-			var result = await DialogService.OpenAsync<SelfAssessmentQuestionEditor>($"Configure {questionTypeLabels[QuestionType.SelfAssessment]} Competencies",
-				parameters,
-				new DialogOptions() { Width = "800px", Height = "600px", Resizable = true, Draggable = true });
-
-			if (result != null)
+			// Initialize with one default competency
+			var competencies = new List<CompetencyDefinition>
 			{
-				// Save the competencies to the configuration
-				SaveCompetenciesToConfiguration(newQuestion, (List<CompetencyDefinition>)result);
-				section.Questions.Add(newQuestion);
-			}
-			else
-			{
-				// User cancelled, don't add the question
-				showQuestionTypeSelection = false;
-				selectedSectionIndex = -1;
-				selectedQuestionType = null;
-				return;
-			}
+				new CompetencyDefinition("competency_1", "", "", false)
+			};
+			newQuestion.Configuration["Competencies"] = competencies;
+		}
+		else if (questionType == QuestionType.GoalAchievement)
+		{
+			// Initialize with default goal categories structure
+			newQuestion.Configuration["GoalCategories"] = new List<object>();
 		}
 		else if (questionType == QuestionType.TextQuestion)
 		{
-			var parameters = new Dictionary<string, object>();
-			parameters.Add("Question", newQuestion);
-			parameters.Add("TextSections", GetTextSectionsFromConfiguration(newQuestion));
-
-			var result = await DialogService.OpenAsync<TextQuestionEditor>($"Configure {questionTypeLabels[QuestionType.TextQuestion]}",
-				parameters,
-				new DialogOptions() { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
-
-			if (result != null)
+			// Initialize with one default text section
+			newQuestion.Configuration["TextSections"] = new List<object>
 			{
-				// Save the text question configuration
-				var config = (TextQuestionEditor.TextQuestionConfiguration)result;
-				SaveTextQuestionConfiguration(newQuestion, config);
-				section.Questions.Add(newQuestion);
-			}
-			else
-			{
-				// User cancelled, don't add the question
-				showQuestionTypeSelection = false;
-				selectedSectionIndex = -1;
-				selectedQuestionType = null;
-				return;
-			}
+				new { Title = "", Description = "" }
+			};
 		}
-		else
-		{
-			// For other question types, add directly
-			section.Questions.Add(newQuestion);
-		}
+
+		// Add the question to the section
+		section.Questions.Add(newQuestion);
 	}
 
 	// Reset selection state
