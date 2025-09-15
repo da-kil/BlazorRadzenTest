@@ -43,10 +43,10 @@
                             <RadzenIcon Icon="quiz" Class="me-2 text-success fs-4" />
                             <div>
                                 <RadzenText TextStyle="TextStyle.H5" Class="fw-bold text-success mb-0">
-                                    @Template.Sections.Sum(s => s.Questions.Count)
+                                    @GetTotalItemsCount()
                                 </RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                                    Total Questions
+                                    Total Items
                                 </RadzenText>
                             </div>
                         </div>
@@ -141,6 +141,70 @@
     {
         // Section description is already updated in SectionCard component
         StateHasChanged();
+    }
+
+    private int GetTotalItemsCount()
+    {
+        int totalItems = 0;
+
+        foreach (var section in Template.Sections)
+        {
+            foreach (var question in section.Questions)
+            {
+                switch (question.Type)
+                {
+                    case QuestionType.SelfAssessment:
+                        if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
+                        {
+                            if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            {
+                                try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                            }
+                            else if (competenciesObj is System.Collections.ICollection collection)
+                            {
+                                totalItems += collection.Count;
+                            }
+                        }
+                        break;
+                    case QuestionType.GoalAchievement:
+                        if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
+                        {
+                            if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            {
+                                try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                            }
+                            else if (goalCategoriesObj is System.Collections.ICollection collection)
+                            {
+                                totalItems += collection.Count;
+                            }
+                        }
+                        break;
+                    case QuestionType.TextQuestion:
+                        if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
+                        {
+                            if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            {
+                                try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                            }
+                            else if (textSectionsObj is System.Collections.ICollection collection)
+                            {
+                                totalItems += collection.Count;
+                            }
+                        }
+                        // Check for legacy format
+                        else if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
+                        {
+                            totalItems += 1;
+                        }
+                        break;
+                    default:
+                        totalItems += 1; // Fallback for unknown question types
+                        break;
+                }
+            }
+        }
+
+        return totalItems;
     }
 
 }

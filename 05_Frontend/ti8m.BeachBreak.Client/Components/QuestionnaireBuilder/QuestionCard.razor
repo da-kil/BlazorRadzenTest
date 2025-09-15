@@ -1,71 +1,286 @@
+@using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
 <RadzenCard Class="question-card mb-3 shadow-sm border-0">
-    <div class="question-header p-3 @GetQuestionHeaderClass(Question.Type) text-white rounded-top">
-        <div class="d-flex justify-content-between align-items-start">
+    <div class="question-content p-3 bg-white">
+        <!-- Question Title and Controls -->
+        <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="flex-grow-1">
-                <div class="d-flex align-items-center mb-2">
-                    <RadzenIcon Icon="@GetQuestionTypeIcon(Question.Type)" Class="me-2 fs-5" />
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-white-75 text-uppercase fw-bold">
-                        @GetQuestionTypeDisplayName(Question.Type)
-                    </RadzenText>
-                    @if (Question.IsRequired)
-                    {
-                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Required" Class="ms-2 text-dark" />
-                    }
-                </div>
-                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-0 text-white">
-                    @GetMeaningfulQuestionTitle()
-                </RadzenText>
+                <RadzenTextBox @bind-Value="@Question.Title"
+                             Placeholder="Enter question title..."
+                             Class="w-100"
+                             Style="font-weight: 600; font-size: 1.1rem;" />
             </div>
-            <div class="d-flex gap-1">
-                <RadzenButton ButtonStyle="ButtonStyle.Light"
-                             Icon="settings"
-                             Size="ButtonSize.ExtraSmall"
-                             Click="@(() => OnEditClick())"
-                             Class="text-dark"
-                             Title="Configure question" />
+            <div class="d-flex gap-1 ms-3">
                 <RadzenButton ButtonStyle="ButtonStyle.Light"
                              Icon="keyboard_arrow_up"
                              Size="ButtonSize.ExtraSmall"
                              Click="@(() => OnMoveUpClick())"
                              Disabled="@(!CanMoveUp)"
-                             Class="text-dark" />
+                             Title="Move up" />
                 <RadzenButton ButtonStyle="ButtonStyle.Light"
                              Icon="keyboard_arrow_down"
                              Size="ButtonSize.ExtraSmall"
                              Click="@(() => OnMoveDownClick())"
                              Disabled="@(!CanMoveDown)"
-                             Class="text-dark" />
+                             Title="Move down" />
                 <RadzenButton ButtonStyle="ButtonStyle.Danger"
                              Icon="delete_outline"
                              Size="ButtonSize.ExtraSmall"
-                             Click="@(() => OnDeleteClick())" />
+                             Click="@(() => OnDeleteClick())"
+                             Title="Delete question" />
             </div>
         </div>
-    </div>
-
-    <div class="question-content p-3 bg-white">
-        <div class="question-preview p-3 bg-light rounded mb-3">
-            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted text-uppercase fw-bold mb-2">
-                <RadzenIcon Icon="preview" Class="me-1" />
-                What Users Will See
-            </RadzenText>
-            @GetQuestionPreview()
+        <!-- Question Description -->
+        <div class="mb-3">
+            <RadzenTextArea @bind-Value="@Question.Description"
+                           Placeholder="Enter question description or instructions..."
+                           Class="w-100 border-2 rounded"
+                           Rows="2" />
         </div>
 
-        <div class="d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <RadzenCheckBox @bind-Value="@Question.IsRequired" Name="@($"req_{Question.Id}")" />
-                <RadzenLabel Text="This question is required" Component="@($"req_{Question.Id}")" Class="ms-2" />
+        <!-- Self-Assessment Configuration -->
+        @if (Question.Type == QuestionType.SelfAssessment)
+        {
+            var competencies = GetCompetenciesFromConfiguration();
+            <div class="competencies-config">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary">
+                        <RadzenIcon Icon="self_improvement" Class="me-2" />
+                        Competencies (@competencies.Count)
+                    </RadzenText>
+                    <RadzenButton Text="Add Competency"
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Icon="add"
+                                 Size="ButtonSize.Small"
+                                 Click="@AddCompetency" />
+                </div>
+
+                @if (competencies.Count == 0)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
+                        Click "Add Competency" to start adding competencies for this self-assessment.
+                    </RadzenAlert>
+                }
+                else
+                {
+                    @for (int i = 0; i < competencies.Count; i++)
+                    {
+                        var competencyIndex = i;
+                        var competency = competencies[competencyIndex];
+
+                        <RadzenCard Class="competency-item mb-2 p-3 border border-primary border-opacity-25 bg-primary bg-opacity-5">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold text-primary">
+                                    Competency @(competencyIndex + 1)
+                                </RadzenText>
+                                <div class="d-flex gap-1">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                 Icon="keyboard_arrow_up"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => MoveCompetencyUp(competencyIndex))"
+                                                 Disabled="@(competencyIndex == 0)"
+                                                 Title="Move up" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                 Icon="keyboard_arrow_down"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => MoveCompetencyDown(competencyIndex))"
+                                                 Disabled="@(competencyIndex == competencies.Count - 1)"
+                                                 Title="Move down" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                                 Icon="delete"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => RemoveCompetency(competencyIndex))"
+                                                 Title="Delete" />
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <RadzenTextBox Value="@competency.Title"
+                                              ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
+                                              Placeholder="Enter competency title..."
+                                              Class="w-100 mb-2" />
+                            </div>
+                            <div class="mb-2">
+                                <RadzenTextArea Value="@competency.Description"
+                                               ValueChanged="@((string value) => UpdateCompetencyDescription(competencyIndex, value))"
+                                               Placeholder="Describe what this competency evaluates..."
+                                               Rows="2"
+                                               Class="w-100" />
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
+                                               ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
+                                               Name="@($"comp_req_{Question.Id}_{competencyIndex}")" />
+                                <RadzenLabel Text="This competency is required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-2" />
+                            </div>
+                        </RadzenCard>
+                    }
+                }
             </div>
-            <RadzenButton Text="Configure"
-                         ButtonStyle="ButtonStyle.Primary"
-                         Icon="tune"
-                         Size="ButtonSize.Small"
-                         Click="@(() => OnEditClick())" />
-        </div>
+        }
+
+        <!-- Goal Achievement Configuration -->
+        @if (Question.Type == QuestionType.GoalAchievement)
+        {
+            var goalCategories = GetGoalCategoriesFromConfiguration();
+            <div class="goal-categories-config">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-warning">
+                        <RadzenIcon Icon="track_changes" Class="me-2" />
+                        Goal Categories (@goalCategories.Count)
+                    </RadzenText>
+                    <RadzenButton Text="Add Goal Category"
+                                 ButtonStyle="ButtonStyle.Warning"
+                                 Icon="add"
+                                 Size="ButtonSize.Small"
+                                 Click="@AddGoalCategory" />
+                </div>
+
+                @if (goalCategories.Count == 0)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
+                        Click "Add Goal Category" to start adding goal categories for this assessment.
+                    </RadzenAlert>
+                }
+                else
+                {
+                    @for (int i = 0; i < goalCategories.Count; i++)
+                    {
+                        var categoryIndex = i;
+                        var category = goalCategories[categoryIndex];
+
+                        <RadzenCard Class="goal-category-item mb-2 p-3 border border-warning border-opacity-25 bg-warning bg-opacity-5">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold text-warning">
+                                    Goal Category @(categoryIndex + 1)
+                                </RadzenText>
+                                <div class="d-flex gap-1">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                 Icon="keyboard_arrow_up"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => MoveGoalCategoryUp(categoryIndex))"
+                                                 Disabled="@(categoryIndex == 0)"
+                                                 Title="Move up" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                 Icon="keyboard_arrow_down"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => MoveGoalCategoryDown(categoryIndex))"
+                                                 Disabled="@(categoryIndex == goalCategories.Count - 1)"
+                                                 Title="Move down" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                                 Icon="delete"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => RemoveGoalCategory(categoryIndex))"
+                                                 Title="Delete" />
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <RadzenTextBox Value="@category.Title"
+                                              ValueChanged="@((string value) => UpdateGoalCategoryTitle(categoryIndex, value))"
+                                              Placeholder="Enter goal category title..."
+                                              Class="w-100 mb-2" />
+                            </div>
+                            <div class="mb-2">
+                                <RadzenTextArea Value="@category.Description"
+                                               ValueChanged="@((string value) => UpdateGoalCategoryDescription(categoryIndex, value))"
+                                               Placeholder="Describe this goal category..."
+                                               Rows="2"
+                                               Class="w-100" />
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <RadzenCheckBox Value="@GetGoalCategoryRequired(categoryIndex)"
+                                               ValueChanged="@((bool value) => UpdateGoalCategoryRequired(categoryIndex, value))"
+                                               Name="@($"goal_req_{Question.Id}_{categoryIndex}")" />
+                                <RadzenLabel Text="This goal category is required" Component="@($"goal_req_{Question.Id}_{categoryIndex}")" Class="ms-2" />
+                            </div>
+                        </RadzenCard>
+                    }
+                }
+            </div>
+        }
+
+        <!-- Text Question Configuration -->
+        @if (Question.Type == QuestionType.TextQuestion)
+        {
+            var textSections = GetTextSectionsFromConfiguration();
+            <div class="text-sections-config">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info">
+                        <RadzenIcon Icon="psychology" Class="me-2" />
+                        Text Sections (@textSections.Count)
+                    </RadzenText>
+                    <RadzenButton Text="Add Text Section"
+                                 ButtonStyle="ButtonStyle.Info"
+                                 Icon="add"
+                                 Size="ButtonSize.Small"
+                                 Click="@AddTextSection" />
+                </div>
+
+                @if (textSections.Count == 0)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
+                        Click "Add Text Section" to start adding text sections for this question.
+                    </RadzenAlert>
+                }
+                else
+                {
+                    @for (int i = 0; i < textSections.Count; i++)
+                    {
+                        var sectionIndex = i;
+                        var textSection = textSections[sectionIndex];
+
+                        <RadzenCard Class="text-section-item mb-2 p-3 border border-info border-opacity-25 bg-info bg-opacity-5">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold text-info">
+                                    Text Section @(sectionIndex + 1)
+                                </RadzenText>
+                                <div class="d-flex gap-1">
+                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                 Icon="keyboard_arrow_up"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => MoveTextSectionUp(sectionIndex))"
+                                                 Disabled="@(sectionIndex == 0)"
+                                                 Title="Move up" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                 Icon="keyboard_arrow_down"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => MoveTextSectionDown(sectionIndex))"
+                                                 Disabled="@(sectionIndex == textSections.Count - 1)"
+                                                 Title="Move down" />
+                                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                                 Icon="delete"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => RemoveTextSection(sectionIndex))"
+                                                 Title="Delete" />
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <RadzenTextBox Value="@textSection.Title"
+                                              ValueChanged="@((string value) => UpdateTextSectionTitle(sectionIndex, value))"
+                                              Placeholder="Enter section title..."
+                                              Class="w-100 mb-2" />
+                            </div>
+                            <div class="mb-2">
+                                <RadzenTextArea Value="@textSection.Description"
+                                               ValueChanged="@((string value) => UpdateTextSectionDescription(sectionIndex, value))"
+                                               Placeholder="Describe this text section..."
+                                               Rows="2"
+                                               Class="w-100" />
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
+                                               ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
+                                               Name="@($"text_req_{Question.Id}_{sectionIndex}")" />
+                                <RadzenLabel Text="This text section is required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-2" />
+                            </div>
+                        </RadzenCard>
+                    }
+                }
+            </div>
+        }
+
+        <!-- Question-level required flag is removed as individual items now have their own required flags -->
     </div>
 </RadzenCard>
 
@@ -74,6 +289,8 @@
     [Parameter, EditorRequired] public bool CanMoveUp { get; set; }
     [Parameter, EditorRequired] public bool CanMoveDown { get; set; }
     [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
+
+    [Inject] private DialogService DialogService { get; set; } = default!;
 
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback OnMoveUp { get; set; }
@@ -93,70 +310,475 @@
         _ => "help"
     };
 
-    private string GetQuestionHeaderClass(QuestionType type) => type switch
-    {
-        QuestionType.SelfAssessment => "bg-gradient-success",
-        QuestionType.GoalAchievement => "bg-gradient-warning",
-        QuestionType.TextQuestion => "bg-gradient-info",
-        _ => "bg-gradient-secondary"
-    };
 
-    private string GetQuestionTypeDisplayName(QuestionType type) => type switch
+    // Self-Assessment methods
+    private List<CompetencyDefinition> GetCompetenciesFromConfiguration()
     {
-        QuestionType.SelfAssessment => "Self-Assessment",
-        QuestionType.GoalAchievement => "Goal Review",
-        QuestionType.TextQuestion => "Text Response",
-        _ => "Question"
-    };
-
-    private string GetMeaningfulQuestionTitle()
-    {
-        if (!string.IsNullOrWhiteSpace(Question.Title))
-            return Question.Title;
-
-        return Question.Type switch
+        if (Question.Configuration.ContainsKey("Competencies"))
         {
-            QuestionType.SelfAssessment => "Rate your competencies and skills",
-            QuestionType.GoalAchievement => "Review and assess goal achievements",
-            QuestionType.TextQuestion => "Provide written feedback and insights",
-            _ => "Untitled Question"
-        };
-    }
+            var competenciesObj = Question.Configuration["Competencies"];
 
-
-    private RenderFragment GetQuestionPreview()
-    {
-        return Question.Type switch
-        {
-            QuestionType.SelfAssessment => @<div class="text-muted">
-                <RadzenIcon Icon="star_rate" Class="me-2" />
-                Users will rate multiple competencies on a 1-4 scale with optional comments
-            </div>,
-            QuestionType.GoalAchievement => @<div class="text-muted">
-                <RadzenIcon Icon="flag" Class="me-2" />
-                Users will track goal progress with percentage completion and status
-            </div>,
-            QuestionType.TextQuestion => @<div class="text-muted">
-                <RadzenIcon Icon="edit_note" Class="me-2" />
-                Users will provide written responses in text areas
-            </div>,
-            _ => @<div class="text-muted">Question preview not available</div>
-        };
-    }
-
-    private string GetQuestionTypeLabel(QuestionItem question)
-    {
-        // Check if question has a custom type label stored in configuration
-        if (question.Configuration.ContainsKey("QuestionTitle"))
-        {
-            var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
-            if (!string.IsNullOrWhiteSpace(customTitle))
+            // Handle direct cast (when set in editor)
+            if (competenciesObj is List<CompetencyDefinition> competencies)
             {
-                return customTitle;
+                return competencies;
+            }
+
+            // Handle JSON deserialization (when loaded from API)
+            if (competenciesObj is System.Text.Json.JsonElement jsonElement)
+            {
+                try
+                {
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing competencies: {ex.Message}");
+                }
+            }
+
+            // Handle string representation (backup case)
+            if (competenciesObj is string jsonString)
+            {
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonString) ?? new List<CompetencyDefinition>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing competencies from string: {ex.Message}");
+                }
             }
         }
 
-        // Fall back to global labels
-        return QuestionTypeLabels.TryGetValue(question.Type, out var label) ? label : question.Type.ToString();
+        // Return default competencies if none exist
+        return new List<CompetencyDefinition>();
+    }
+
+    private void AddCompetency()
+    {
+        var competencies = GetCompetenciesFromConfiguration();
+        competencies.Add(new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false));
+        Question.Configuration["Competencies"] = competencies;
+        StateHasChanged();
+    }
+
+    private async Task RemoveCompetency(int index)
+    {
+        var competencies = GetCompetenciesFromConfiguration();
+        if (index >= 0 && index < competencies.Count)
+        {
+            var competencyName = string.IsNullOrWhiteSpace(competencies[index].Title) ? $"Competency {index + 1}" : competencies[index].Title;
+            var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{competencyName}'?", "Delete Competency",
+                new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+            if (confirmed == true)
+            {
+                competencies.RemoveAt(index);
+                Question.Configuration["Competencies"] = competencies;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void UpdateCompetencyTitle(int index, string value)
+    {
+        var competencies = GetCompetenciesFromConfiguration();
+        if (index >= 0 && index < competencies.Count)
+        {
+            competencies[index].Title = value ?? "";
+            Question.Configuration["Competencies"] = competencies;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateCompetencyDescription(int index, string value)
+    {
+        var competencies = GetCompetenciesFromConfiguration();
+        if (index >= 0 && index < competencies.Count)
+        {
+            competencies[index].Description = value ?? "";
+            Question.Configuration["Competencies"] = competencies;
+            StateHasChanged();
+        }
+    }
+
+    // Goal Achievement methods
+    private List<GoalCategory> GetGoalCategoriesFromConfiguration()
+    {
+        if (Question.Configuration.ContainsKey("GoalCategories"))
+        {
+            var goalCategoriesObj = Question.Configuration["GoalCategories"];
+
+            // Handle direct cast (when set in editor)
+            if (goalCategoriesObj is List<GoalCategory> categories)
+            {
+                return categories;
+            }
+
+            // Handle JSON deserialization (when loaded from API)
+            if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement)
+            {
+                try
+                {
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<GoalCategory>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing goal categories: {ex.Message}");
+                }
+            }
+
+            // Handle string representation (backup case)
+            if (goalCategoriesObj is string jsonString)
+            {
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(jsonString) ?? new List<GoalCategory>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing goal categories from string: {ex.Message}");
+                }
+            }
+
+            // Handle List<object> (legacy format)
+            if (goalCategoriesObj is List<object> objectList)
+            {
+                try
+                {
+                    var json = System.Text.Json.JsonSerializer.Serialize(objectList);
+                    return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<GoalCategory>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing goal categories from List<object>: {ex.Message}");
+                }
+            }
+        }
+        return new List<GoalCategory>();
+    }
+
+    private void AddGoalCategory()
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        categories.Add(new GoalCategory { Title = "", Description = "", IsRequired = false });
+        Question.Configuration["GoalCategories"] = categories;
+        StateHasChanged();
+    }
+
+    private async Task RemoveGoalCategory(int index)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count)
+        {
+            var categoryName = string.IsNullOrWhiteSpace(categories[index].Title) ? $"Goal Category {index + 1}" : categories[index].Title;
+            var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{categoryName}'?", "Delete Goal Category",
+                new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+            if (confirmed == true)
+            {
+                categories.RemoveAt(index);
+                Question.Configuration["GoalCategories"] = categories;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void UpdateGoalCategoryTitle(int index, string value)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count)
+        {
+            categories[index].Title = value ?? "";
+            Question.Configuration["GoalCategories"] = categories;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateGoalCategoryDescription(int index, string value)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count)
+        {
+            categories[index].Description = value ?? "";
+            Question.Configuration["GoalCategories"] = categories;
+            StateHasChanged();
+        }
+    }
+
+    // Text Question methods
+    private List<TextSection> GetTextSectionsFromConfiguration()
+    {
+        if (Question.Configuration.ContainsKey("TextSections"))
+        {
+            var textSectionsObj = Question.Configuration["TextSections"];
+
+            // Handle direct cast (when set in editor)
+            if (textSectionsObj is List<TextSection> sections)
+            {
+                return sections;
+            }
+
+            // Handle JSON deserialization (when loaded from API)
+            if (textSectionsObj is System.Text.Json.JsonElement jsonElement)
+            {
+                try
+                {
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<TextSection>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing text sections: {ex.Message}");
+                }
+            }
+
+            // Handle string representation (backup case)
+            if (textSectionsObj is string jsonString)
+            {
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(jsonString) ?? new List<TextSection>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing text sections from string: {ex.Message}");
+                }
+            }
+
+            // Handle List<object> (legacy format)
+            if (textSectionsObj is List<object> objectList)
+            {
+                try
+                {
+                    var json = System.Text.Json.JsonSerializer.Serialize(objectList);
+                    return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<TextSection>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing text sections from List<object>: {ex.Message}");
+                }
+            }
+        }
+
+        // Check for legacy format and convert
+        if (Question.Configuration.ContainsKey("SectionTitle") || Question.Configuration.ContainsKey("SectionDescription"))
+        {
+            return new List<TextSection>
+            {
+                new TextSection
+                {
+                    Title = Question.Configuration.ContainsKey("SectionTitle") ? Question.Configuration["SectionTitle"].ToString() ?? "" : "",
+                    Description = Question.Configuration.ContainsKey("SectionDescription") ? Question.Configuration["SectionDescription"].ToString() ?? "" : "",
+                    IsRequired = false
+                }
+            };
+        }
+
+        return new List<TextSection>();
+    }
+
+    private void AddTextSection()
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        sections.Add(new TextSection { Title = "", Description = "", IsRequired = false });
+        Question.Configuration["TextSections"] = sections;
+        StateHasChanged();
+    }
+
+    private async Task RemoveTextSection(int index)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count)
+        {
+            var sectionName = string.IsNullOrWhiteSpace(sections[index].Title) ? $"Text Section {index + 1}" : sections[index].Title;
+            var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{sectionName}'?", "Delete Text Section",
+                new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+            if (confirmed == true)
+            {
+                sections.RemoveAt(index);
+                Question.Configuration["TextSections"] = sections;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private void UpdateTextSectionTitle(int index, string value)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].Title = value ?? "";
+            Question.Configuration["TextSections"] = sections;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateTextSectionDescription(int index, string value)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].Description = value ?? "";
+            Question.Configuration["TextSections"] = sections;
+            StateHasChanged();
+        }
+    }
+
+    private void MoveTextSectionUp(int index)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index > 0 && index < sections.Count)
+        {
+            (sections[index], sections[index - 1]) = (sections[index - 1], sections[index]);
+            Question.Configuration["TextSections"] = sections;
+            StateHasChanged();
+        }
+    }
+
+    private void MoveTextSectionDown(int index)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count - 1)
+        {
+            (sections[index], sections[index + 1]) = (sections[index + 1], sections[index]);
+            Question.Configuration["TextSections"] = sections;
+            StateHasChanged();
+        }
+    }
+
+    // Required flag methods for competencies
+    private bool GetCompetencyRequired(int index)
+    {
+        var competencies = GetCompetenciesFromConfiguration();
+        if (index >= 0 && index < competencies.Count)
+        {
+            return competencies[index].IsRequired;
+        }
+        return false;
+    }
+
+    private void UpdateCompetencyRequired(int index, bool value)
+    {
+        var competencies = GetCompetenciesFromConfiguration();
+        if (index >= 0 && index < competencies.Count)
+        {
+            competencies[index].IsRequired = value;
+            Question.Configuration["Competencies"] = competencies;
+            StateHasChanged();
+        }
+    }
+
+    private void MoveCompetencyUp(int index)
+    {
+        var competencies = GetCompetenciesFromConfiguration();
+        if (index > 0 && index < competencies.Count)
+        {
+            (competencies[index], competencies[index - 1]) = (competencies[index - 1], competencies[index]);
+            Question.Configuration["Competencies"] = competencies;
+            StateHasChanged();
+        }
+    }
+
+    private void MoveCompetencyDown(int index)
+    {
+        var competencies = GetCompetenciesFromConfiguration();
+        if (index >= 0 && index < competencies.Count - 1)
+        {
+            (competencies[index], competencies[index + 1]) = (competencies[index + 1], competencies[index]);
+            Question.Configuration["Competencies"] = competencies;
+            StateHasChanged();
+        }
+    }
+
+    // Required flag methods for goal categories
+    private bool GetGoalCategoryRequired(int index)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count)
+        {
+            return categories[index].IsRequired;
+        }
+        return false;
+    }
+
+    private void UpdateGoalCategoryRequired(int index, bool value)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count)
+        {
+            categories[index].IsRequired = value;
+            Question.Configuration["GoalCategories"] = categories;
+            StateHasChanged();
+        }
+    }
+
+    private void MoveGoalCategoryUp(int index)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index > 0 && index < categories.Count)
+        {
+            (categories[index], categories[index - 1]) = (categories[index - 1], categories[index]);
+            Question.Configuration["GoalCategories"] = categories;
+            StateHasChanged();
+        }
+    }
+
+    private void MoveGoalCategoryDown(int index)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count - 1)
+        {
+            (categories[index], categories[index + 1]) = (categories[index + 1], categories[index]);
+            Question.Configuration["GoalCategories"] = categories;
+            StateHasChanged();
+        }
+    }
+
+    // Required flag methods for text sections
+    private bool GetTextSectionRequired(int index)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count)
+        {
+            return sections[index].IsRequired;
+        }
+        return false;
+    }
+
+    private void UpdateTextSectionRequired(int index, bool value)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].IsRequired = value;
+            Question.Configuration["TextSections"] = sections;
+            StateHasChanged();
+        }
+    }
+
+    // Helper classes for configuration
+    public class GoalCategory
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public bool IsRequired { get; set; } = false;
+    }
+
+    public class TextSection
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public bool IsRequired { get; set; } = false;
     }
 }

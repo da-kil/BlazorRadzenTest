@@ -21,7 +21,7 @@
     </RadzenAlert>
 
     <div class="competencies-container">
-        @foreach (var competency in competencies)
+        @foreach (var competency in Competencies)
         {
             <RadzenCard Class="competency-card mb-3 p-3 border">
                 <RadzenRow>
@@ -57,39 +57,27 @@
 
     <div class="mt-4">
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-            Progress: @completedCompetencies out of @competencies.Count competencies rated
+            Progress: @completedCompetencies out of @Competencies.Count competencies rated
         </RadzenText>
         <RadzenProgressBar Value="@progressPercentage" Max="100" Class="mt-2" />
     </div>
 </RadzenCard>
 
 @code {
+    [Parameter] public List<CompetencyDefinition> Competencies { get; set; } = new();
     [Parameter] public Dictionary<string, CompetencyRating> Ratings { get; set; } = new();
     [Parameter] public EventCallback<Dictionary<string, CompetencyRating>> RatingsChanged { get; set; }
-    
+
     [Parameter] public bool CanProceed { get; set; } = false;
     [Parameter] public EventCallback<bool> CanProceedChanged { get; set; }
 
-    private List<CompetencyDefinition> competencies = new()
-    {
-        new("expertise", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities."),
-        new("quality", "Work Quality", "Assessment of accuracy, efficiency, and completeness of the work performed."),
-        new("reliability", "Reliability", "Reflection on punctuality, meeting deadlines, and reliability in fulfilling tasks and commitments."),
-        new("resilience", "Stress Resilience", "Assessment of ability to work effectively under pressure and handle stress."),
-        new("independence", "Independence", "Assessment of ability to complete tasks independently and without constant guidance."),
-        new("communication", "Communication Skills", "Assessment of ability to communicate information clearly and understandably, as well as understanding communication needs."),
-        new("proactivity", "Proactivity and Initiative", "Assessment of tendency to act independently and suggest new ideas or solutions."),
-        new("problem_solving", "Problem-Solving Skills", "Assessment of ability to identify challenges and develop effective solutions."),
-        new("behavior", "Professional Behavior", "Assessment of your own behavior in the work context, especially in dealing with colleagues and clients, superiors, and other stakeholders.")
-    };
-
     private int completedCompetencies => Ratings.Count(r => r.Value.Rating > 0);
-    private double progressPercentage => competencies.Count > 0 ? (double)completedCompetencies / competencies.Count * 100 : 0;
+    private double progressPercentage => Competencies.Count > 0 ? (double)completedCompetencies / Competencies.Count * 100 : 0;
 
     protected override async Task OnInitializedAsync()
     {
         // Initialize ratings if empty
-        foreach (var competency in competencies)
+        foreach (var competency in Competencies)
         {
             if (!Ratings.ContainsKey(competency.Key))
             {
@@ -129,7 +117,7 @@
 
     private async Task UpdateProgress()
     {
-        bool canProceed = competencies.All(c => Ratings.ContainsKey(c.Key) && Ratings[c.Key].Rating > 0);
+        bool canProceed = Competencies.All(c => Ratings.ContainsKey(c.Key) && Ratings[c.Key].Rating > 0);
         await CanProceedChanged.InvokeAsync(canProceed);
         await RatingsChanged.InvokeAsync(Ratings);
     }

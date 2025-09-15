@@ -1,6 +1,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@using System.Collections
 
 <RadzenCard Class="section-card mb-5 shadow-lg border-0 overflow-hidden">
     <!-- Section Header -->
@@ -70,10 +71,10 @@
                                     <RadzenIcon Icon="quiz" Class="text-primary fs-5" />
                                 </div>
                                 <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-primary mb-0">
-                                    @Section.Questions.Count
+                                    @GetTotalItemsCount()
                                 </RadzenText>
                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                    Questions
+                                    Items
                                 </RadzenText>
                             </div>
                         </div>
@@ -171,42 +172,87 @@
                     <div class="p-4">
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <div class="question-type-card h-100 p-3 rounded-3 border-2 border-success bg-success bg-opacity-5 text-center position-relative cursor-pointer"
-                                     style="transition: all 0.2s;"
-                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.SelfAssessment)">
-                                    <RadzenIcon Icon="self_improvement" Class="text-success fs-1 mb-2" />
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-success mb-2">
+                                <div class="question-type-card h-100 p-4 rounded-3 border-2 border-primary bg-primary bg-opacity-5 text-center position-relative cursor-pointer shadow-sm user-select-none"
+                                     style="transition: all 0.15s ease-in-out; transform: scale(1);"
+                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.SelfAssessment)"
+                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(13, 110, 253, 0.15)'; this.style.borderColor='#0b5ed7'"
+                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='#0d6efd'"
+                                     onmousedown="this.style.transform='scale(0.98)'"
+                                     onmouseup="this.style.transform='scale(1.02)'"
+                                     tabindex="0"
+                                     role="button"
+                                     aria-label="Add Self-Assessment Question">
+                                    <div class="position-absolute top-0 start-50 translate-middle">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                            <RadzenIcon Icon="add" />
+                                        </div>
+                                    </div>
+                                    <RadzenIcon Icon="self_improvement" Class="text-primary fs-1 mb-3 mt-2" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary mb-2">
                                         Self-Assessment
                                     </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
                                         Rate competencies and skills on a scale
                                     </RadzenText>
+                                    <div class="mt-3">
+                                        <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="question-type-card h-100 p-3 rounded-3 border-2 border-warning bg-warning bg-opacity-5 text-center position-relative cursor-pointer"
-                                     style="transition: all 0.2s;"
-                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.GoalAchievement)">
-                                    <RadzenIcon Icon="track_changes" Class="text-warning fs-1 mb-2" />
+                                <div class="question-type-card h-100 p-4 rounded-3 border-2 border-warning bg-warning bg-opacity-5 text-center position-relative cursor-pointer shadow-sm user-select-none"
+                                     style="transition: all 0.15s ease-in-out; transform: scale(1);"
+                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.GoalAchievement)"
+                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(255, 193, 7, 0.15)'; this.style.borderColor='#ffca2c'"
+                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='#ffc107'"
+                                     onmousedown="this.style.transform='scale(0.98)'"
+                                     onmouseup="this.style.transform='scale(1.02)'"
+                                     tabindex="0"
+                                     role="button"
+                                     aria-label="Add Goal Review Question">
+                                    <div class="position-absolute top-0 start-50 translate-middle">
+                                        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                            <RadzenIcon Icon="add" />
+                                        </div>
+                                    </div>
+                                    <RadzenIcon Icon="track_changes" Class="text-warning fs-1 mb-3 mt-2" />
                                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-warning mb-2">
                                         Goal Review
                                     </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
                                         Track progress and achievement status
                                     </RadzenText>
+                                    <div class="mt-3">
+                                        <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="question-type-card h-100 p-3 rounded-3 border-2 border-info bg-info bg-opacity-5 text-center position-relative cursor-pointer"
-                                     style="transition: all 0.2s;"
-                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.TextQuestion)">
-                                    <RadzenIcon Icon="psychology" Class="text-info fs-1 mb-2" />
+                                <div class="question-type-card h-100 p-4 rounded-3 border-2 border-info bg-info bg-opacity-5 text-center position-relative cursor-pointer shadow-sm user-select-none"
+                                     style="transition: all 0.15s ease-in-out; transform: scale(1);"
+                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.TextQuestion)"
+                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(13, 202, 240, 0.15)'; this.style.borderColor='#31d2f2'"
+                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='#0dcaf0'"
+                                     onmousedown="this.style.transform='scale(0.98)'"
+                                     onmouseup="this.style.transform='scale(1.02)'"
+                                     tabindex="0"
+                                     role="button"
+                                     aria-label="Add Text Response Question">
+                                    <div class="position-absolute top-0 start-50 translate-middle">
+                                        <div class="bg-info text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                            <RadzenIcon Icon="add" />
+                                        </div>
+                                    </div>
+                                    <RadzenIcon Icon="psychology" Class="text-info fs-1 mb-3 mt-2" />
                                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info mb-2">
                                         Text Response
                                     </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
                                         Collect written feedback and insights
                                     </RadzenText>
+                                    <div class="mt-3">
+                                        <span class="badge bg-info bg-opacity-10 text-info px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -302,5 +348,66 @@
     {
         // Count unique question types in this section
         return Section.Questions.Select(q => q.Type).Distinct().Count();
+    }
+
+    private int GetTotalItemsCount()
+    {
+        int totalItems = 0;
+
+        foreach (var question in Section.Questions)
+        {
+            switch (question.Type)
+            {
+                case QuestionType.SelfAssessment:
+                    if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
+                    {
+                        if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                        }
+                        else if (competenciesObj is System.Collections.ICollection collection)
+                        {
+                            totalItems += collection.Count;
+                        }
+                    }
+                    break;
+                case QuestionType.GoalAchievement:
+                    if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
+                    {
+                        if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                        }
+                        else if (goalCategoriesObj is System.Collections.ICollection collection)
+                        {
+                            totalItems += collection.Count;
+                        }
+                    }
+                    break;
+                case QuestionType.TextQuestion:
+                    if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
+                    {
+                        if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                        }
+                        else if (textSectionsObj is System.Collections.ICollection collection)
+                        {
+                            totalItems += collection.Count;
+                        }
+                    }
+                    // Check for legacy format
+                    else if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
+                    {
+                        totalItems += 1;
+                    }
+                    break;
+                default:
+                    totalItems += 1; // Fallback for unknown question types
+                    break;
+            }
+        }
+
+        return totalItems;
     }
 }
