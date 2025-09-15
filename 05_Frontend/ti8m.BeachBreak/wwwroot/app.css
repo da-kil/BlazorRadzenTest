@@ -1,19 +1,77 @@
+:root {
+    /* Color Palette from Fargen.png */
+    --blue-new: #0F69FF;
+    --green-new: #00E6C8;
+    --dark-blue: #002650;
+    --ice-blue: #7F9AAE;
+    --purple-rain: #935BA9;
+    --golden-milk: #E6BF7F;
+    --light-blue: #D8E0E6;
+    --peach-kiss: #F08080;
+
+    /* Semantic color assignments */
+    --primary-color: var(--blue-new);
+    --secondary-color: var(--ice-blue);
+    --success-color: var(--green-new);
+    --warning-color: var(--golden-milk);
+    --danger-color: var(--peach-kiss);
+    --info-color: var(--purple-rain);
+    --dark-color: var(--dark-blue);
+    --light-color: var(--light-blue);
+
+    /* Question type specific colors */
+    --question-self-assessment: var(--blue-new);
+    --question-goal-achievement: var(--golden-milk);
+    --question-text-response: var(--purple-rain);
+}
+
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: var(--dark-blue);
 }
 
 a, .btn-link {
-    color: #006bb7;
+    color: var(--primary-color);
 }
 
 .btn-primary {
     color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-secondary {
+    color: #fff;
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+.btn-success {
+    color: #fff;
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+.btn-warning {
+    color: var(--dark-blue);
+    background-color: var(--warning-color);
+    border-color: var(--warning-color);
+}
+
+.btn-danger {
+    color: #fff;
+    background-color: var(--danger-color);
+    border-color: var(--danger-color);
+}
+
+.btn-info {
+    color: #fff;
+    background-color: var(--info-color);
+    border-color: var(--info-color);
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(15, 105, 255, 0.25);
 }
 
 .content {
@@ -25,15 +83,15 @@ h1:focus {
 }
 
 .valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+    outline: 1px solid var(--success-color);
 }
 
 .invalid {
-    outline: 1px solid #e50000;
+    outline: 1px solid var(--danger-color);
 }
 
 .validation-message {
-    color: #e50000;
+    color: var(--danger-color);
 }
 
 .blazor-error-boundary {

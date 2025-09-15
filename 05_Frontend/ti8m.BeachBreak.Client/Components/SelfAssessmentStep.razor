@@ -3,7 +3,7 @@
 @using ti8m.BeachBreak.Client.Models
 
 <RadzenCard Class="self-assessment-step">
-    <RadzenText TextStyle="TextStyle.H4" Class="text-primary mb-3">
+    <RadzenText TextStyle="TextStyle.H4" Class="text-competency mb-3">
         <RadzenIcon Icon="self_improvement" Class="me-2" />
         2023 Self-Assessment of Competencies
     </RadzenText>
@@ -40,7 +40,7 @@
                                         ValueChanged="@(value => SetRating(competency.Key, value))"
                                         Stars="4" 
                                         Class="mb-2" />
-                            <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-competency">
                                 @GetRatingText(GetRating(competency.Key))
                             </RadzenText>
                         </div>

@@ -343,8 +343,8 @@
                 }
 
                 <div class="planning-sections">
-                    <RadzenCard Class="planning-card mb-4 p-3 border-start border-primary border-3">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold text-primary mb-3">
+                    <RadzenCard Class="planning-card mb-4 p-3 border-start border-competency border-3">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold text-competency mb-3">
                             <RadzenIcon Icon="timeline" Class="me-2" />
                             @sectionTitle
                         </RadzenText>
@@ -577,10 +577,10 @@
     {
         var color = percentage switch
         {
-            >= 90 => "background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724;",
-            >= 70 => "background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460;",
-            >= 50 => "background-color: #fff3cd; border: 1px solid #ffeaa7; color: #856404;",
-            _ => "background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;"
+            >= 90 => "background-color: var(--light-blue); border: 1px solid var(--success-color); color: var(--dark-blue);",
+            >= 70 => "background-color: rgba(0, 230, 200, 0.1); border: 1px solid var(--green-new); color: var(--dark-blue);",
+            >= 50 => "background-color: rgba(230, 191, 127, 0.2); border: 1px solid var(--golden-milk); color: var(--dark-blue);",
+            _ => "background-color: rgba(240, 128, 128, 0.2); border: 1px solid var(--peach-kiss); color: var(--dark-blue);"
         };
         return color;
     }

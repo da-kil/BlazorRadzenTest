@@ -39,11 +39,11 @@
                              ValueChanged="@(value => OnSectionTitleChanged(value))"
                              Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
                              Class="w-100 border border-2 bg-white rounded px-3 py-2 shadow-sm"
-                             Style="font-size: 1.1rem; font-weight: 600; border-color: #dee2e6 !important; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;"
-                             onmouseover="this.style.borderColor='#0d6efd'"
-                             onmouseout="this.style.borderColor='#dee2e6'"
-                             onfocus="this.style.borderColor='#0d6efd'; this.style.boxShadow='0 0 0 0.25rem rgba(13, 110, 253, 0.25)'"
-                             onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'" />
+                             Style="font-size: 1.1rem; font-weight: 600; border-color: var(--ice-blue) !important; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;"
+                             onmouseover="this.style.borderColor='var(--primary-color)'"
+                             onmouseout="this.style.borderColor='var(--ice-blue)'"
+                             onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 0.25rem rgba(15, 105, 255, 0.25)'"
+                             onblur="this.style.borderColor='var(--ice-blue)'; this.style.boxShadow='none'" />
             </div>
 
             <!-- Description Input -->
@@ -52,11 +52,11 @@
                               ValueChanged="@(value => OnSectionDescriptionChanged(value))"
                               Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
                               Class="w-100 border border-2 bg-white rounded px-3 py-2 shadow-sm"
-                              Style="resize: vertical; min-height: 60px; line-height: 1.4; border-color: #dee2e6 !important; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;"
-                              onmouseover="this.style.borderColor='#0d6efd'"
-                              onmouseout="this.style.borderColor='#dee2e6'"
-                              onfocus="this.style.borderColor='#0d6efd'; this.style.boxShadow='0 0 0 0.25rem rgba(13, 110, 253, 0.25)'"
-                              onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'"
+                              Style="resize: vertical; min-height: 60px; line-height: 1.4; border-color: var(--ice-blue) !important; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;"
+                              onmouseover="this.style.borderColor='var(--primary-color)'"
+                              onmouseout="this.style.borderColor='var(--ice-blue)'"
+                              onfocus="this.style.borderColor='var(--primary-color)'; this.style.boxShadow='0 0 0 0.25rem rgba(15, 105, 255, 0.25)'"
+                              onblur="this.style.borderColor='var(--ice-blue)'; this.style.boxShadow='none'"
                               Rows="2" />
             </div>
 
@@ -67,10 +67,10 @@
                     <div class="row g-3 text-center">
                         <div class="col-4">
                             <div class="d-flex flex-column align-items-center">
-                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 mb-2">
-                                    <RadzenIcon Icon="quiz" Class="text-primary fs-5" />
+                                <div class="bg-competency-opacity rounded-circle p-2 mb-2">
+                                    <RadzenIcon Icon="quiz" Class="text-competency fs-5" />
                                 </div>
-                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-primary mb-0">
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-competency mb-0">
                                     @GetTotalItemsCount()
                                 </RadzenText>
                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
@@ -80,10 +80,10 @@
                         </div>
                         <div class="col-4">
                             <div class="d-flex flex-column align-items-center">
-                                <div class="bg-warning bg-opacity-10 rounded-circle p-2 mb-2">
-                                    <RadzenIcon Icon="star" Class="text-warning fs-5" />
+                                <div class="bg-goal-category-opacity rounded-circle p-2 mb-2">
+                                    <RadzenIcon Icon="star" Class="text-goal-category fs-5" />
                                 </div>
-                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-warning mb-0">
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-goal-category mb-0">
                                     @Section.Questions.Count(q => q.IsRequired)
                                 </RadzenText>
                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
@@ -93,10 +93,10 @@
                         </div>
                         <div class="col-4">
                             <div class="d-flex flex-column align-items-center">
-                                <div class="bg-info bg-opacity-10 rounded-circle p-2 mb-2">
-                                    <RadzenIcon Icon="category" Class="text-info fs-5" />
+                                <div class="bg-text-response-opacity rounded-circle p-2 mb-2">
+                                    <RadzenIcon Icon="category" Class="text-text-response fs-5" />
                                 </div>
-                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-info mb-0">
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-text-response mb-0">
                                     @GetQuestionTypesCount()
                                 </RadzenText>
                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
@@ -115,8 +115,8 @@
         <div class="questions-header mb-4 p-3 bg-light rounded-3">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
-                    <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
-                        <RadzenIcon Icon="quiz" Class="text-primary fs-4" />
+                    <div class="bg-competency-opacity rounded-circle p-2 me-3">
+                        <RadzenIcon Icon="quiz" Class="text-competency fs-4" />
                     </div>
                     <div>
                         <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-0 text-dark">Assessment Questions</RadzenText>
@@ -149,11 +149,11 @@
         @if (ShowQuestionTypeSelection)
         {
             <div class="question-type-selection mb-4">
-                <RadzenCard Class="border-2 border-primary shadow-sm">
-                    <div class="bg-primary bg-opacity-10 p-3 rounded-top">
+                <RadzenCard Class="border-2 border-competency shadow-sm">
+                    <div class="bg-competency-opacity p-3 rounded-top">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-1 text-primary">
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-1 text-competency">
                                     <RadzenIcon Icon="add_circle" Class="me-2" />
                                     Choose Question Type
                                 </RadzenText>
@@ -172,86 +172,86 @@
                     <div class="p-4">
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <div class="question-type-card h-100 p-4 rounded-3 border-2 border-primary bg-primary bg-opacity-5 text-center position-relative cursor-pointer shadow-sm user-select-none"
+                                <div class="question-type-card self-assessment h-100 p-4 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
                                      style="transition: all 0.15s ease-in-out; transform: scale(1);"
                                      @onclick="async () => await OnAddQuestionOfType(QuestionType.SelfAssessment)"
-                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(13, 110, 253, 0.15)'; this.style.borderColor='#0b5ed7'"
-                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='#0d6efd'"
+                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(15, 105, 255, 0.15)'; this.style.borderColor='var(--primary-color)'"
+                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='var(--primary-color)'"
                                      onmousedown="this.style.transform='scale(0.98)'"
                                      onmouseup="this.style.transform='scale(1.02)'"
                                      tabindex="0"
                                      role="button"
                                      aria-label="Add Self-Assessment Question">
                                     <div class="position-absolute top-0 start-50 translate-middle">
-                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                        <div class="bg-self-assessment text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
                                             <RadzenIcon Icon="add" />
                                         </div>
                                     </div>
-                                    <RadzenIcon Icon="self_improvement" Class="text-primary fs-1 mb-3 mt-2" />
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary mb-2">
+                                    <RadzenIcon Icon="self_improvement" Class="question-self-assessment fs-1 mb-3 mt-2" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-self-assessment mb-2">
                                         Self-Assessment
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
                                         Rate competencies and skills on a scale
                                     </RadzenText>
                                     <div class="mt-3">
-                                        <span class="badge bg-primary bg-opacity-10 text-primary px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
+                                        <span class="badge badge-self-assessment px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="question-type-card h-100 p-4 rounded-3 border-2 border-warning bg-warning bg-opacity-5 text-center position-relative cursor-pointer shadow-sm user-select-none"
+                                <div class="question-type-card goal-achievement h-100 p-4 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
                                      style="transition: all 0.15s ease-in-out; transform: scale(1);"
                                      @onclick="async () => await OnAddQuestionOfType(QuestionType.GoalAchievement)"
-                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(255, 193, 7, 0.15)'; this.style.borderColor='#ffca2c'"
-                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='#ffc107'"
+                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(230, 191, 127, 0.15)'; this.style.borderColor='var(--golden-milk)'"
+                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='var(--warning-color)'"
                                      onmousedown="this.style.transform='scale(0.98)'"
                                      onmouseup="this.style.transform='scale(1.02)'"
                                      tabindex="0"
                                      role="button"
                                      aria-label="Add Goal Review Question">
                                     <div class="position-absolute top-0 start-50 translate-middle">
-                                        <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                        <div class="bg-goal-achievement text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
                                             <RadzenIcon Icon="add" />
                                         </div>
                                     </div>
-                                    <RadzenIcon Icon="track_changes" Class="text-warning fs-1 mb-3 mt-2" />
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-warning mb-2">
+                                    <RadzenIcon Icon="track_changes" Class="question-goal-achievement fs-1 mb-3 mt-2" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-goal-achievement mb-2">
                                         Goal Review
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
                                         Track progress and achievement status
                                     </RadzenText>
                                     <div class="mt-3">
-                                        <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
+                                        <span class="badge badge-goal-achievement px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="question-type-card h-100 p-4 rounded-3 border-2 border-info bg-info bg-opacity-5 text-center position-relative cursor-pointer shadow-sm user-select-none"
+                                <div class="question-type-card text-response h-100 p-4 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
                                      style="transition: all 0.15s ease-in-out; transform: scale(1);"
                                      @onclick="async () => await OnAddQuestionOfType(QuestionType.TextQuestion)"
-                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(13, 202, 240, 0.15)'; this.style.borderColor='#31d2f2'"
-                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='#0dcaf0'"
+                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(147, 91, 169, 0.15)'; this.style.borderColor='var(--purple-rain)'"
+                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='var(--info-color)'"
                                      onmousedown="this.style.transform='scale(0.98)'"
                                      onmouseup="this.style.transform='scale(1.02)'"
                                      tabindex="0"
                                      role="button"
                                      aria-label="Add Text Response Question">
                                     <div class="position-absolute top-0 start-50 translate-middle">
-                                        <div class="bg-info text-dark rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                        <div class="bg-text-response text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
                                             <RadzenIcon Icon="add" />
                                         </div>
                                     </div>
-                                    <RadzenIcon Icon="psychology" Class="text-info fs-1 mb-3 mt-2" />
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info mb-2">
+                                    <RadzenIcon Icon="psychology" Class="question-text-response fs-1 mb-3 mt-2" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-text-response mb-2">
                                         Text Response
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
                                         Collect written feedback and insights
                                     </RadzenText>
                                     <div class="mt-3">
-                                        <span class="badge bg-info bg-opacity-10 text-info px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
+                                        <span class="badge badge-text-response px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
                                     </div>
                                 </div>
                             </div>

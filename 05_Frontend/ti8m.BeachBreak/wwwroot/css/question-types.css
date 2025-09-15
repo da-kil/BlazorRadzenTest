@@ -1,0 +1,171 @@
+/* Question Type Specific Styling */
+
+/* Self-Assessment Question Colors */
+.question-self-assessment,
+.text-self-assessment {
+    color: var(--question-self-assessment) !important;
+}
+
+.bg-self-assessment {
+    background-color: var(--question-self-assessment) !important;
+}
+
+.bg-self-assessment-opacity {
+    background-color: rgba(15, 105, 255, 0.1) !important;
+}
+
+.border-self-assessment {
+    border-color: var(--question-self-assessment) !important;
+}
+
+.badge-self-assessment {
+    background-color: rgba(15, 105, 255, 0.1) !important;
+    color: var(--question-self-assessment) !important;
+}
+
+/* Goal Achievement Question Colors */
+.question-goal-achievement,
+.text-goal-achievement {
+    color: var(--question-goal-achievement) !important;
+}
+
+.bg-goal-achievement {
+    background-color: var(--question-goal-achievement) !important;
+}
+
+.bg-goal-achievement-opacity {
+    background-color: rgba(230, 191, 127, 0.1) !important;
+}
+
+.border-goal-achievement {
+    border-color: var(--question-goal-achievement) !important;
+}
+
+.badge-goal-achievement {
+    background-color: rgba(230, 191, 127, 0.1) !important;
+    color: var(--dark-blue) !important;
+}
+
+/* Text Response Question Colors */
+.question-text-response,
+.text-text-response {
+    color: var(--question-text-response) !important;
+}
+
+.bg-text-response {
+    background-color: var(--question-text-response) !important;
+}
+
+.bg-text-response-opacity {
+    background-color: rgba(147, 91, 169, 0.1) !important;
+}
+
+.border-text-response {
+    border-color: var(--question-text-response) !important;
+}
+
+.badge-text-response {
+    background-color: rgba(147, 91, 169, 0.1) !important;
+    color: var(--question-text-response) !important;
+}
+
+/* Question Type Cards */
+.question-type-card.self-assessment {
+    border-color: var(--question-self-assessment) !important;
+    background-color: rgba(15, 105, 255, 0.05) !important;
+}
+
+.question-type-card.self-assessment:hover {
+    box-shadow: 0 8px 25px rgba(15, 105, 255, 0.15) !important;
+    border-color: var(--question-self-assessment) !important;
+}
+
+.question-type-card.goal-achievement {
+    border-color: var(--question-goal-achievement) !important;
+    background-color: rgba(230, 191, 127, 0.05) !important;
+}
+
+.question-type-card.goal-achievement:hover {
+    box-shadow: 0 8px 25px rgba(230, 191, 127, 0.15) !important;
+    border-color: var(--question-goal-achievement) !important;
+}
+
+.question-type-card.text-response {
+    border-color: var(--question-text-response) !important;
+    background-color: rgba(147, 91, 169, 0.05) !important;
+}
+
+.question-type-card.text-response:hover {
+    box-shadow: 0 8px 25px rgba(147, 91, 169, 0.15) !important;
+    border-color: var(--question-text-response) !important;
+}
+
+/* Competency Styling */
+.competency-item {
+    border-color: var(--question-self-assessment) !important;
+    background-color: rgba(15, 105, 255, 0.05) !important;
+}
+
+.competency-item .competency-title {
+    color: var(--question-self-assessment) !important;
+}
+
+.border-competency {
+    border-color: var(--question-self-assessment) !important;
+}
+
+.bg-competency {
+    background-color: var(--question-self-assessment) !important;
+}
+
+.bg-competency-opacity {
+    background-color: rgba(15, 105, 255, 0.1) !important;
+}
+
+.text-competency {
+    color: var(--question-self-assessment) !important;
+}
+
+/* Goal Category Styling */
+.goal-category-item {
+    border-color: var(--question-goal-achievement) !important;
+    background-color: rgba(230, 191, 127, 0.05) !important;
+}
+
+.goal-category-item .goal-title {
+    color: var(--question-goal-achievement) !important;
+}
+
+.border-goal-category {
+    border-color: var(--question-goal-achievement) !important;
+}
+
+.bg-goal-category {
+    background-color: var(--question-goal-achievement) !important;
+}
+
+.bg-goal-category-opacity {
+    background-color: rgba(230, 191, 127, 0.1) !important;
+}
+
+.text-goal-category {
+    color: var(--question-goal-achievement) !important;
+}
+
+/* Text Section Styling */
+.text-section-item {
+    border-color: var(--question-text-response) !important;
+    background-color: rgba(147, 91, 169, 0.05) !important;
+}
+
+.text-section-item .section-title {
+    color: var(--question-text-response) !important;
+}
+
+.border-text-response {
+    border-color: var(--question-text-response) !important;
+}
+
+.bg-text-response-opacity {
+    background-color: rgba(147, 91, 169, 0.1) !important;
+}

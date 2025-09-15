@@ -2,8 +2,8 @@
 
 /* Common border styles */
 .border-dashed {
-    border: 2px dashed var(--rz-primary-lighter) !important;
-    background-color: var(--rz-primary-lighter, rgba(0, 123, 255, 0.1));
+    border: 2px dashed var(--primary-color) !important;
+    background-color: rgba(15, 105, 255, 0.1);
 }
 
 /* Editor container styles with focus states */
@@ -15,25 +15,25 @@
 .text-question-editor .rz-textarea:focus,
 .goal-achievement-editor .rz-textbox:focus,
 .goal-achievement-editor .rz-textarea:focus {
-    border-color: var(--rz-primary);
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(15, 105, 255, 0.25);
 }
 
 /* Configuration section styles */
 .config-section {
-    border-left: 4px solid var(--rz-primary) !important;
+    border-left: 4px solid var(--primary-color) !important;
 }
 
 .competency-editor {
-    border-left: 4px solid var(--rz-primary) !important;
+    border-left: 4px solid var(--primary-color) !important;
 }
 
 .text-question-config {
-    border-left: 4px solid var(--rz-info) !important;
+    border-left: 4px solid var(--info-color) !important;
 }
 
 .goal-category-editor {
-    border-left: 4px solid var(--rz-success) !important;
+    border-left: 4px solid var(--success-color) !important;
 }
 
 /* Goal achievement specific styles */
@@ -47,6 +47,6 @@
 }
 
 .add-section:hover {
-    background-color: var(--rz-primary-lighter, rgba(0, 123, 255, 0.15)) !important;
-    border-color: var(--rz-primary) !important;
+    background-color: rgba(15, 105, 255, 0.15) !important;
+    border-color: var(--primary-color) !important;
 }

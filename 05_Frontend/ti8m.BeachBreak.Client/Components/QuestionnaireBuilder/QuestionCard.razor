@@ -46,7 +46,7 @@
             var competencies = GetOrderedCompetencies();
             <div class="competencies-config">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-self-assessment">
                         <RadzenIcon Icon="self_improvement" Class="me-2" />
                         Competencies (@competencies.Count)
                     </RadzenText>
@@ -70,9 +70,9 @@
                         var competencyIndex = i;
                         var competency = competencies[competencyIndex];
 
-                        <RadzenCard Class="competency-item mb-2 p-3 border border-primary border-opacity-25 bg-primary bg-opacity-5">
+                        <RadzenCard Class="competency-item mb-2 p-3 border">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold text-primary">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-self-assessment">
                                     Competency @(competencyIndex + 1)
                                 </RadzenText>
                                 <div class="d-flex gap-1">
@@ -126,7 +126,7 @@
             var goalCategories = GetOrderedGoalCategories();
             <div class="goal-categories-config">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-warning">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-goal-achievement">
                         <RadzenIcon Icon="track_changes" Class="me-2" />
                         Goal Categories (@goalCategories.Count)
                     </RadzenText>
@@ -150,9 +150,9 @@
                         var categoryIndex = i;
                         var category = goalCategories[categoryIndex];
 
-                        <RadzenCard Class="goal-category-item mb-2 p-3 border border-warning border-opacity-25 bg-warning bg-opacity-5">
+                        <RadzenCard Class="goal-category-item mb-2 p-3 border">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold text-warning">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-goal-achievement">
                                     Goal Category @(categoryIndex + 1)
                                 </RadzenText>
                                 <div class="d-flex gap-1">
@@ -206,7 +206,7 @@
             var textSections = GetOrderedTextSections();
             <div class="text-sections-config">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-text-response">
                         <RadzenIcon Icon="psychology" Class="me-2" />
                         Text Sections (@textSections.Count)
                     </RadzenText>
@@ -230,9 +230,9 @@
                         var sectionIndex = i;
                         var textSection = textSections[sectionIndex];
 
-                        <RadzenCard Class="text-section-item mb-2 p-3 border border-info border-opacity-25 bg-info bg-opacity-5">
+                        <RadzenCard Class="text-section-item mb-2 p-3 border border-text-response">
                             <div class="d-flex justify-content-between align-items-start mb-2">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold text-info">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-text-response">
                                     Text Section @(sectionIndex + 1)
                                 </RadzenText>
                                 <div class="d-flex gap-1">
