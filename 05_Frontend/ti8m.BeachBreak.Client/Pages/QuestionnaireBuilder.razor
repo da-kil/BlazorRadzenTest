@@ -285,42 +285,8 @@
 		question.Configuration["Competencies"] = competencies;
 	}
 
-	// Goal categories configuration methods - simplified since editing is now inline
-	private List<object> GetGoalCategoriesFromConfiguration(QuestionItem question)
-	{
-		if (question.Configuration.ContainsKey("GoalCategories") && question.Configuration["GoalCategories"] is List<object> categories)
-		{
-			return categories;
-		}
-
-		return new List<object>();
-	}
-
-	// Text question helper methods are no longer needed as configuration is inline
-
-	// Text sections configuration methods - simplified since editing is now inline
-	private List<object> GetTextSectionsFromConfiguration(QuestionItem question)
-	{
-		if (question.Configuration.ContainsKey("TextSections") && question.Configuration["TextSections"] is List<object> sections)
-		{
-			return sections;
-		}
-
-		// Check for legacy format and convert
-		if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
-		{
-			return new List<object>
-			{
-				new
-				{
-					Title = question.Configuration.ContainsKey("SectionTitle") ? question.Configuration["SectionTitle"].ToString() ?? "" : "",
-					Description = question.Configuration.ContainsKey("SectionDescription") ? question.Configuration["SectionDescription"].ToString() ?? "" : ""
-				}
-			};
-		}
-
-		return new List<object>();
-	}
+	// These helper methods are no longer needed since editing is now handled inline in QuestionCard.razor
+	// Keeping them for potential future use, but with proper type safety
 
 	private async Task RemoveQuestion(int sectionIndex, int questionIndex)
 	{
@@ -463,21 +429,21 @@ private async Task AddQuestionOfType(QuestionType questionType)
 			// Initialize with one default competency
 			var competencies = new List<CompetencyDefinition>
 			{
-				new CompetencyDefinition("competency_1", "", "", false)
+				new CompetencyDefinition("competency_1", "", "", false, 0)
 			};
 			newQuestion.Configuration["Competencies"] = competencies;
 		}
 		else if (questionType == QuestionType.GoalAchievement)
 		{
-			// Initialize with default goal categories structure
-			newQuestion.Configuration["GoalCategories"] = new List<object>();
+			// Initialize with empty goal categories using proper type
+			newQuestion.Configuration["GoalCategories"] = new List<QuestionCard.GoalCategory>();
 		}
 		else if (questionType == QuestionType.TextQuestion)
 		{
-			// Initialize with one default text section
-			newQuestion.Configuration["TextSections"] = new List<object>
+			// Initialize with one default text section using proper type
+			newQuestion.Configuration["TextSections"] = new List<QuestionCard.TextSection>
 			{
-				new { Title = "", Description = "" }
+				new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = 0 }
 			};
 		}
 

@@ -43,7 +43,7 @@
         <!-- Self-Assessment Configuration -->
         @if (Question.Type == QuestionType.SelfAssessment)
         {
-            var competencies = GetCompetenciesFromConfiguration();
+            var competencies = GetOrderedCompetencies();
             <div class="competencies-config">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-primary">
@@ -123,7 +123,7 @@
         <!-- Goal Achievement Configuration -->
         @if (Question.Type == QuestionType.GoalAchievement)
         {
-            var goalCategories = GetGoalCategoriesFromConfiguration();
+            var goalCategories = GetOrderedGoalCategories();
             <div class="goal-categories-config">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-warning">
@@ -203,7 +203,7 @@
         <!-- Text Question Configuration -->
         @if (Question.Type == QuestionType.TextQuestion)
         {
-            var textSections = GetTextSectionsFromConfiguration();
+            var textSections = GetOrderedTextSections();
             <div class="text-sections-config">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info">
@@ -358,50 +358,76 @@
         return new List<CompetencyDefinition>();
     }
 
+    private List<CompetencyDefinition> GetOrderedCompetencies()
+    {
+        var competencies = GetCompetenciesFromConfiguration();
+
+        // Check if we need to initialize Order values (for legacy data or duplicates)
+        var orderValues = competencies.Select(c => c.Order).ToList();
+        var distinctOrderCount = orderValues.Distinct().Count();
+        var hasUnsetOrders = orderValues.Any(o => o == 0) && competencies.Count > 1;
+        var hasDuplicateOrders = distinctOrderCount != competencies.Count;
+
+        if (hasUnsetOrders || hasDuplicateOrders)
+        {
+            // Re-assign all Order values sequentially
+            for (int i = 0; i < competencies.Count; i++)
+            {
+                competencies[i].Order = i;
+            }
+            Question.Configuration["Competencies"] = competencies;
+        }
+
+        return competencies.OrderBy(c => c.Order).ToList();
+    }
+
     private void AddCompetency()
     {
         var competencies = GetCompetenciesFromConfiguration();
-        competencies.Add(new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false));
+        var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
+        competencies.Add(new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false, nextOrder));
         Question.Configuration["Competencies"] = competencies;
         StateHasChanged();
     }
 
-    private async Task RemoveCompetency(int index)
+    private async Task RemoveCompetency(int displayIndex)
     {
-        var competencies = GetCompetenciesFromConfiguration();
-        if (index >= 0 && index < competencies.Count)
+        var orderedCompetencies = GetOrderedCompetencies();
+        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
-            var competencyName = string.IsNullOrWhiteSpace(competencies[index].Title) ? $"Competency {index + 1}" : competencies[index].Title;
+            var competencyToRemove = orderedCompetencies[displayIndex];
+            var competencyName = string.IsNullOrWhiteSpace(competencyToRemove.Title) ? $"Competency {displayIndex + 1}" : competencyToRemove.Title;
             var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{competencyName}'?", "Delete Competency",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
 
             if (confirmed == true)
             {
-                competencies.RemoveAt(index);
-                Question.Configuration["Competencies"] = competencies;
+                var allCompetencies = GetCompetenciesFromConfiguration();
+                allCompetencies.Remove(competencyToRemove);
+                Question.Configuration["Competencies"] = allCompetencies;
                 StateHasChanged();
             }
         }
     }
 
-    private void UpdateCompetencyTitle(int index, string value)
+    private void UpdateCompetencyTitle(int displayIndex, string value)
     {
-        var competencies = GetCompetenciesFromConfiguration();
-        if (index >= 0 && index < competencies.Count)
+        var orderedCompetencies = GetOrderedCompetencies();
+        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
-            competencies[index].Title = value ?? "";
-            Question.Configuration["Competencies"] = competencies;
+            orderedCompetencies[displayIndex].Title = value ?? "";
+            Question.Configuration["Competencies"] = GetCompetenciesFromConfiguration();
             StateHasChanged();
         }
     }
 
-    private void UpdateCompetencyDescription(int index, string value)
+    private void UpdateCompetencyDescription(int displayIndex, string value)
     {
-        var competencies = GetCompetenciesFromConfiguration();
-        if (index >= 0 && index < competencies.Count)
+        var orderedCompetencies = GetOrderedCompetencies();
+        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
-            competencies[index].Description = value ?? "";
-            Question.Configuration["Competencies"] = competencies;
+            orderedCompetencies[displayIndex].Description = value ?? "";
+            Question.Configuration["Competencies"] = GetCompetenciesFromConfiguration();
             StateHasChanged();
         }
     }
@@ -448,7 +474,9 @@
                 }
             }
 
-            // Handle List<object> (legacy format)
+            // Handle List<object> from API deserialization
+            // Note: List<object> is necessary here because JSON API data sometimes comes as untyped objects
+            // that need to be converted to strongly-typed GoalCategory objects
             if (goalCategoriesObj is List<object> objectList)
             {
                 try
@@ -458,17 +486,41 @@
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error deserializing goal categories from List<object>: {ex.Message}");
+                    Console.WriteLine($"Error deserializing goal categories from API List<object>: {ex.Message}");
                 }
             }
         }
         return new List<GoalCategory>();
     }
 
+    private List<GoalCategory> GetOrderedGoalCategories()
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+
+        // Check if we need to initialize Order values (for legacy data or duplicates)
+        var orderValues = categories.Select(c => c.Order).ToList();
+        var distinctOrderCount = orderValues.Distinct().Count();
+        var hasUnsetOrders = orderValues.Any(o => o == 0) && categories.Count > 1;
+        var hasDuplicateOrders = distinctOrderCount != categories.Count;
+
+        if (hasUnsetOrders || hasDuplicateOrders)
+        {
+            // Re-assign all Order values sequentially
+            for (int i = 0; i < categories.Count; i++)
+            {
+                categories[i].Order = i;
+            }
+            Question.Configuration["GoalCategories"] = categories;
+        }
+
+        return categories.OrderBy(c => c.Order).ToList();
+    }
+
     private void AddGoalCategory()
     {
         var categories = GetGoalCategoriesFromConfiguration();
-        categories.Add(new GoalCategory { Title = "", Description = "", IsRequired = false });
+        var nextOrder = categories.Count > 0 ? categories.Max(c => c.Order) + 1 : 0;
+        categories.Add(new GoalCategory { Title = "", Description = "", IsRequired = false, Order = nextOrder });
         Question.Configuration["GoalCategories"] = categories;
         StateHasChanged();
     }
@@ -555,7 +607,9 @@
                 }
             }
 
-            // Handle List<object> (legacy format)
+            // Handle List<object> from API deserialization
+            // Note: List<object> is necessary here because JSON API data sometimes comes as untyped objects
+            // that need to be converted to strongly-typed TextSection objects
             if (textSectionsObj is List<object> objectList)
             {
                 try
@@ -565,7 +619,7 @@
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error deserializing text sections from List<object>: {ex.Message}");
+                    Console.WriteLine($"Error deserializing text sections from API List<object>: {ex.Message}");
                 }
             }
         }
@@ -587,10 +641,34 @@
         return new List<TextSection>();
     }
 
+    private List<TextSection> GetOrderedTextSections()
+    {
+        var sections = GetTextSectionsFromConfiguration();
+
+        // Check if we need to initialize Order values (for legacy data or duplicates)
+        var orderValues = sections.Select(s => s.Order).ToList();
+        var distinctOrderCount = orderValues.Distinct().Count();
+        var hasUnsetOrders = orderValues.Any(o => o == 0) && sections.Count > 1;
+        var hasDuplicateOrders = distinctOrderCount != sections.Count;
+
+        if (hasUnsetOrders || hasDuplicateOrders)
+        {
+            // Re-assign all Order values sequentially
+            for (int i = 0; i < sections.Count; i++)
+            {
+                sections[i].Order = i;
+            }
+            Question.Configuration["TextSections"] = sections;
+        }
+
+        return sections.OrderBy(s => s.Order).ToList();
+    }
+
     private void AddTextSection()
     {
         var sections = GetTextSectionsFromConfiguration();
-        sections.Add(new TextSection { Title = "", Description = "", IsRequired = false });
+        var nextOrder = sections.Count > 0 ? sections.Max(s => s.Order) + 1 : 0;
+        sections.Add(new TextSection { Title = "", Description = "", IsRequired = false, Order = nextOrder });
         Question.Configuration["TextSections"] = sections;
         StateHasChanged();
     }
@@ -635,67 +713,99 @@
         }
     }
 
-    private void MoveTextSectionUp(int index)
+    private void MoveTextSectionUp(int displayIndex)
     {
-        var sections = GetTextSectionsFromConfiguration();
-        if (index > 0 && index < sections.Count)
+        var sections = GetOrderedTextSections();
+        if (displayIndex > 0 && displayIndex < sections.Count)
         {
-            (sections[index], sections[index - 1]) = (sections[index - 1], sections[index]);
+            // Simple array swap - exactly like the original working code
+            (sections[displayIndex], sections[displayIndex - 1]) = (sections[displayIndex - 1], sections[displayIndex]);
+
+            // Now update Order properties to match new positions
+            for (int i = 0; i < sections.Count; i++)
+            {
+                sections[i].Order = i;
+            }
+
             Question.Configuration["TextSections"] = sections;
             StateHasChanged();
         }
     }
 
-    private void MoveTextSectionDown(int index)
+    private void MoveTextSectionDown(int displayIndex)
     {
-        var sections = GetTextSectionsFromConfiguration();
-        if (index >= 0 && index < sections.Count - 1)
+        var sections = GetOrderedTextSections();
+        if (displayIndex >= 0 && displayIndex < sections.Count - 1)
         {
-            (sections[index], sections[index + 1]) = (sections[index + 1], sections[index]);
+            // Simple array swap - exactly like the original working code
+            (sections[displayIndex], sections[displayIndex + 1]) = (sections[displayIndex + 1], sections[displayIndex]);
+
+            // Now update Order properties to match new positions
+            for (int i = 0; i < sections.Count; i++)
+            {
+                sections[i].Order = i;
+            }
+
             Question.Configuration["TextSections"] = sections;
             StateHasChanged();
         }
     }
 
     // Required flag methods for competencies
-    private bool GetCompetencyRequired(int index)
+    private bool GetCompetencyRequired(int displayIndex)
     {
-        var competencies = GetCompetenciesFromConfiguration();
-        if (index >= 0 && index < competencies.Count)
+        var orderedCompetencies = GetOrderedCompetencies();
+        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
-            return competencies[index].IsRequired;
+            return orderedCompetencies[displayIndex].IsRequired;
         }
         return false;
     }
 
-    private void UpdateCompetencyRequired(int index, bool value)
+    private void UpdateCompetencyRequired(int displayIndex, bool value)
     {
-        var competencies = GetCompetenciesFromConfiguration();
-        if (index >= 0 && index < competencies.Count)
+        var orderedCompetencies = GetOrderedCompetencies();
+        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
-            competencies[index].IsRequired = value;
+            orderedCompetencies[displayIndex].IsRequired = value;
+            Question.Configuration["Competencies"] = GetCompetenciesFromConfiguration();
+            StateHasChanged();
+        }
+    }
+
+    private void MoveCompetencyUp(int displayIndex)
+    {
+        var competencies = GetOrderedCompetencies();
+        if (displayIndex > 0 && displayIndex < competencies.Count)
+        {
+            // Simple array swap - exactly like the original working code
+            (competencies[displayIndex], competencies[displayIndex - 1]) = (competencies[displayIndex - 1], competencies[displayIndex]);
+
+            // Now update Order properties to match new positions
+            for (int i = 0; i < competencies.Count; i++)
+            {
+                competencies[i].Order = i;
+            }
+
             Question.Configuration["Competencies"] = competencies;
             StateHasChanged();
         }
     }
 
-    private void MoveCompetencyUp(int index)
+    private void MoveCompetencyDown(int displayIndex)
     {
-        var competencies = GetCompetenciesFromConfiguration();
-        if (index > 0 && index < competencies.Count)
+        var competencies = GetOrderedCompetencies();
+        if (displayIndex >= 0 && displayIndex < competencies.Count - 1)
         {
-            (competencies[index], competencies[index - 1]) = (competencies[index - 1], competencies[index]);
-            Question.Configuration["Competencies"] = competencies;
-            StateHasChanged();
-        }
-    }
+            // Simple array swap - exactly like the original working code
+            (competencies[displayIndex], competencies[displayIndex + 1]) = (competencies[displayIndex + 1], competencies[displayIndex]);
 
-    private void MoveCompetencyDown(int index)
-    {
-        var competencies = GetCompetenciesFromConfiguration();
-        if (index >= 0 && index < competencies.Count - 1)
-        {
-            (competencies[index], competencies[index + 1]) = (competencies[index + 1], competencies[index]);
+            // Now update Order properties to match new positions
+            for (int i = 0; i < competencies.Count; i++)
+            {
+                competencies[i].Order = i;
+            }
+
             Question.Configuration["Competencies"] = competencies;
             StateHasChanged();
         }
@@ -723,23 +833,39 @@
         }
     }
 
-    private void MoveGoalCategoryUp(int index)
+    private void MoveGoalCategoryUp(int displayIndex)
     {
-        var categories = GetGoalCategoriesFromConfiguration();
-        if (index > 0 && index < categories.Count)
+        var categories = GetOrderedGoalCategories();
+        if (displayIndex > 0 && displayIndex < categories.Count)
         {
-            (categories[index], categories[index - 1]) = (categories[index - 1], categories[index]);
+            // Simple array swap - exactly like the original working code
+            (categories[displayIndex], categories[displayIndex - 1]) = (categories[displayIndex - 1], categories[displayIndex]);
+
+            // Now update Order properties to match new positions
+            for (int i = 0; i < categories.Count; i++)
+            {
+                categories[i].Order = i;
+            }
+
             Question.Configuration["GoalCategories"] = categories;
             StateHasChanged();
         }
     }
 
-    private void MoveGoalCategoryDown(int index)
+    private void MoveGoalCategoryDown(int displayIndex)
     {
-        var categories = GetGoalCategoriesFromConfiguration();
-        if (index >= 0 && index < categories.Count - 1)
+        var categories = GetOrderedGoalCategories();
+        if (displayIndex >= 0 && displayIndex < categories.Count - 1)
         {
-            (categories[index], categories[index + 1]) = (categories[index + 1], categories[index]);
+            // Simple array swap - exactly like the original working code
+            (categories[displayIndex], categories[displayIndex + 1]) = (categories[displayIndex + 1], categories[displayIndex]);
+
+            // Now update Order properties to match new positions
+            for (int i = 0; i < categories.Count; i++)
+            {
+                categories[i].Order = i;
+            }
+
             Question.Configuration["GoalCategories"] = categories;
             StateHasChanged();
         }
@@ -773,6 +899,7 @@
         public string Title { get; set; } = "";
         public string Description { get; set; } = "";
         public bool IsRequired { get; set; } = false;
+        public int Order { get; set; } = 0;
     }
 
     public class TextSection
@@ -780,5 +907,6 @@
         public string Title { get; set; } = "";
         public string Description { get; set; } = "";
         public bool IsRequired { get; set; } = false;
+        public int Order { get; set; } = 0;
     }
 }
