@@ -2,82 +2,214 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 
-<RadzenCard Class="section-card mb-4 border-start border-primary border-3">
-    <div class="d-flex justify-content-between align-items-start mb-3">
-        <div class="flex-grow-1">
-            <RadzenTextBox Value="@Section.Title"
-                         ValueChanged="@(value => OnSectionTitleChanged(value))"
-                         Placeholder="Section title..."
-                         Class="fw-bold mb-2 section-title-input" />
-            <RadzenTextBox Value="@Section.Description"
-                         ValueChanged="@(value => OnSectionDescriptionChanged(value))"
-                         Placeholder="Section description (optional)..."
-                         Class="text-muted section-desc-input" />
-        </div>
-        <div class="d-flex gap-2">
-            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                         Icon="keyboard_arrow_up"
-                         Size="ButtonSize.Small"
-                         Click="@(() => OnMoveUpClick())"
-                         Disabled="@(!CanMoveUp)" />
-            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                         Icon="keyboard_arrow_down"
-                         Size="ButtonSize.Small"
-                         Click="@(() => OnMoveDownClick())"
-                         Disabled="@(!CanMoveDown)" />
-            <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                         Icon="delete"
-                         Size="ButtonSize.Small"
-                         Click="@(() => OnDeleteClick())" />
+<RadzenCard Class="section-card mb-5 shadow-lg border-0 overflow-hidden">
+    <!-- Section Header -->
+    <div class="section-header-wrapper">
+        <div class="section-content p-4 bg-light position-relative">
+            <!-- Action Buttons -->
+            <div class="position-absolute" style="top: 1rem; right: 1rem;">
+                <div class="btn-group-vertical" role="group">
+                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                 Icon="keyboard_arrow_up"
+                                 Size="ButtonSize.ExtraSmall"
+                                 Click="@(() => OnMoveUpClick())"
+                                 Disabled="@(!CanMoveUp)"
+                                 Class="mb-1 shadow-sm"
+                                 Title="Move section up" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                 Icon="keyboard_arrow_down"
+                                 Size="ButtonSize.ExtraSmall"
+                                 Click="@(() => OnMoveDownClick())"
+                                 Disabled="@(!CanMoveDown)"
+                                 Class="mb-1 shadow-sm"
+                                 Title="Move section down" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                 Icon="delete_outline"
+                                 Size="ButtonSize.ExtraSmall"
+                                 Click="@(() => OnDeleteClick())"
+                                 Class="shadow-sm"
+                                 Title="Delete section" />
+                </div>
+            </div>
+
+            <!-- Title Input -->
+            <div class="mb-3 pe-5">
+                <RadzenTextBox Value="@Section.Title"
+                             ValueChanged="@(value => OnSectionTitleChanged(value))"
+                             Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
+                             Class="w-100 border border-2 bg-white rounded px-3 py-2 shadow-sm"
+                             Style="font-size: 1.1rem; font-weight: 600; border-color: #dee2e6 !important; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;"
+                             onmouseover="this.style.borderColor='#0d6efd'"
+                             onmouseout="this.style.borderColor='#dee2e6'"
+                             onfocus="this.style.borderColor='#0d6efd'; this.style.boxShadow='0 0 0 0.25rem rgba(13, 110, 253, 0.25)'"
+                             onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'" />
+            </div>
+
+            <!-- Description Input -->
+            <div class="mb-4 pe-5">
+                <RadzenTextArea Value="@Section.Description"
+                              ValueChanged="@(value => OnSectionDescriptionChanged(value))"
+                              Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
+                              Class="w-100 border border-2 bg-white rounded px-3 py-2 shadow-sm"
+                              Style="resize: vertical; min-height: 60px; line-height: 1.4; border-color: #dee2e6 !important; transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;"
+                              onmouseover="this.style.borderColor='#0d6efd'"
+                              onmouseout="this.style.borderColor='#dee2e6'"
+                              onfocus="this.style.borderColor='#0d6efd'; this.style.boxShadow='0 0 0 0.25rem rgba(13, 110, 253, 0.25)'"
+                              onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'"
+                              Rows="2" />
+            </div>
+
+            <!-- Section Stats - only show if there are questions -->
+            @if (Section.Questions.Count > 0)
+            {
+                <div class="section-stats bg-white p-3 rounded-3 shadow-sm border">
+                    <div class="row g-3 text-center">
+                        <div class="col-4">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="bg-primary bg-opacity-10 rounded-circle p-2 mb-2">
+                                    <RadzenIcon Icon="quiz" Class="text-primary fs-5" />
+                                </div>
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-primary mb-0">
+                                    @Section.Questions.Count
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    Questions
+                                </RadzenText>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="bg-warning bg-opacity-10 rounded-circle p-2 mb-2">
+                                    <RadzenIcon Icon="star" Class="text-warning fs-5" />
+                                </div>
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-warning mb-0">
+                                    @Section.Questions.Count(q => q.IsRequired)
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    Required
+                                </RadzenText>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="d-flex flex-column align-items-center">
+                                <div class="bg-info bg-opacity-10 rounded-circle p-2 mb-2">
+                                    <RadzenIcon Icon="category" Class="text-info fs-5" />
+                                </div>
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold text-info mb-0">
+                                    @GetQuestionTypesCount()
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    Types
+                                </RadzenText>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 
-    <div class="questions-area">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">Questions</RadzenText>
-            <RadzenButton Text="Add Question"
-                         ButtonStyle="ButtonStyle.Light"
-                         Size="ButtonSize.Small"
-                         Click="@(() => OnAddQuestionClick())" />
+    <!-- Questions Area -->
+    <div class="questions-area bg-white p-4">
+        <div class="questions-header mb-4 p-3 bg-light rounded-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                        <RadzenIcon Icon="quiz" Class="text-primary fs-4" />
+                    </div>
+                    <div>
+                        <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-0 text-dark">Assessment Questions</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            @if (Section.Questions.Count == 0)
+                            {
+                                <span>Add questions to make this section interactive</span>
+                            }
+                            else if (Section.Questions.Count == 1)
+                            {
+                                <span>1 question configured</span>
+                            }
+                            else
+                            {
+                                <span>@Section.Questions.Count questions configured</span>
+                            }
+                        </RadzenText>
+                    </div>
+                </div>
+                <RadzenButton Text="Add Question"
+                             ButtonStyle="ButtonStyle.Primary"
+                             Icon="add_circle_outline"
+                             Size="ButtonSize.Medium"
+                             Click="@(() => OnAddQuestionClick())"
+                             Class="shadow-sm" />
+            </div>
         </div>
 
         @* Question Type Selection *@
         @if (ShowQuestionTypeSelection)
         {
-            <div class="question-type-selection mb-3">
-                <RadzenCard Class="p-3 bg-light">
-                    <div class="mb-2">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">
-                            Select Question Type
-                        </RadzenText>
-                    </div>
-                    <div class="row justify-content-center">
-                        <div class="col-md-8">
-                            <RadzenButton Text="@QuestionTypeLabels[QuestionType.SelfAssessment]"
-                                         Icon="self_improvement"
-                                         ButtonStyle="ButtonStyle.Secondary"
-                                         Size="ButtonSize.Medium"
-                                         Class="w-100 mb-3"
-                                         Click="@(async () => await OnAddQuestionOfType(QuestionType.SelfAssessment))" />
-                            <RadzenButton Text="@QuestionTypeLabels[QuestionType.GoalAchievement]"
-                                         Icon="track_changes"
-                                         ButtonStyle="ButtonStyle.Secondary"
-                                         Size="ButtonSize.Medium"
-                                         Class="w-100 mb-3"
-                                         Click="@(async () => await OnAddQuestionOfType(QuestionType.GoalAchievement))" />
-                            <RadzenButton Text="@QuestionTypeLabels[QuestionType.TextQuestion]"
-                                         Icon="psychology"
-                                         ButtonStyle="ButtonStyle.Secondary"
-                                         Size="ButtonSize.Medium"
-                                         Class="w-100 mb-3"
-                                         Click="@(async () => await OnAddQuestionOfType(QuestionType.TextQuestion))" />
+            <div class="question-type-selection mb-4">
+                <RadzenCard Class="border-2 border-primary shadow-sm">
+                    <div class="bg-primary bg-opacity-10 p-3 rounded-top">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-1 text-primary">
+                                    <RadzenIcon Icon="add_circle" Class="me-2" />
+                                    Choose Question Type
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    Select the type of question you want to add to this section
+                                </RadzenText>
+                            </div>
+                            <RadzenButton Icon="close"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Size="ButtonSize.Small"
+                                         Click="@(() => OnCancelQuestionTypeSelection())"
+                                         Class="shadow-sm"
+                                         Title="Cancel" />
                         </div>
                     </div>
-                    <div class="text-end mt-2">
-                        <RadzenButton Text="Cancel"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Size="ButtonSize.Small"
-                                     Click="@(() => OnCancelQuestionTypeSelection())" />
+                    <div class="p-4">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <div class="question-type-card h-100 p-3 rounded-3 border-2 border-success bg-success bg-opacity-5 text-center position-relative cursor-pointer"
+                                     style="transition: all 0.2s;"
+                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.SelfAssessment)">
+                                    <RadzenIcon Icon="self_improvement" Class="text-success fs-1 mb-2" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-success mb-2">
+                                        Self-Assessment
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                        Rate competencies and skills on a scale
+                                    </RadzenText>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="question-type-card h-100 p-3 rounded-3 border-2 border-warning bg-warning bg-opacity-5 text-center position-relative cursor-pointer"
+                                     style="transition: all 0.2s;"
+                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.GoalAchievement)">
+                                    <RadzenIcon Icon="track_changes" Class="text-warning fs-1 mb-2" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-warning mb-2">
+                                        Goal Review
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                        Track progress and achievement status
+                                    </RadzenText>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="question-type-card h-100 p-3 rounded-3 border-2 border-info bg-info bg-opacity-5 text-center position-relative cursor-pointer"
+                                     style="transition: all 0.2s;"
+                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.TextQuestion)">
+                                    <RadzenIcon Icon="psychology" Class="text-info fs-1 mb-2" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info mb-2">
+                                        Text Response
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                        Collect written feedback and insights
+                                    </RadzenText>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </RadzenCard>
             </div>
@@ -85,9 +217,13 @@
 
         @if (Section.Questions.Count == 0)
         {
-            <div class="text-center p-3 bg-light border rounded">
+            <div class="empty-state text-center p-5 bg-light rounded border-2 border-dashed">
+                <RadzenIcon Icon="help_outline" Style="font-size: 2.5rem; color: var(--rz-text-disabled-color);" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2 mb-2">
+                    This section needs questions to be useful
+                </RadzenText>
                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                    No questions in this section. Use the "Add Question" button above.
+                    Click "Add Question" to choose from self-assessments, goal reviews, or text responses
                 </RadzenText>
             </div>
         }
@@ -105,9 +241,7 @@
                             OnEdit="@(() => OnEditQuestionInternal(currentQuestionIndex))"
                             OnMoveUp="@(() => OnMoveQuestionUpInternal(currentQuestionIndex))"
                             OnMoveDown="@(() => OnMoveQuestionDownInternal(currentQuestionIndex))"
-                            OnDelete="@(() => OnDeleteQuestionInternal(currentQuestionIndex))"
-                            OnTitleChanged="@((value) => OnQuestionTitleChanged(currentQuestionIndex, value))"
-                            OnDescriptionChanged="@((value) => OnQuestionDescriptionChanged(currentQuestionIndex, value))" />
+                            OnDelete="@(() => OnDeleteQuestionInternal(currentQuestionIndex))" />
             }
         }
     </div>
@@ -157,15 +291,16 @@
     private async Task OnMoveQuestionDownInternal(int questionIndex) => await OnMoveQuestionDown.InvokeAsync(questionIndex);
     private async Task OnDeleteQuestionInternal(int questionIndex) => await OnDeleteQuestion.InvokeAsync(questionIndex);
 
-    private async Task OnQuestionTitleChanged(int questionIndex, string value)
+
+    private string GetSectionNumber()
     {
-        // The question title is already updated in QuestionCard component
-        StateHasChanged();
+        // This could be enhanced to get the actual section number from parent
+        return (Section.Order + 1).ToString();
     }
 
-    private async Task OnQuestionDescriptionChanged(int questionIndex, string value)
+    private int GetQuestionTypesCount()
     {
-        // The question description is already updated in QuestionCard component
-        StateHasChanged();
+        // Count unique question types in this section
+        return Section.Questions.Select(q => q.Type).Distinct().Count();
     }
 }

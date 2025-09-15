@@ -13,12 +13,15 @@
 	<RadzenCard Class="p-4">
 		<div class="d-flex justify-content-between align-items-center mb-4">
 			<div>
-				<RadzenText TextStyle="TextStyle.H3" Class="text-primary">
-					<RadzenIcon Icon="quiz" Class="me-2" />
-					@(IsEditMode ? "Edit Questionnaire" : "Create New Questionnaire")
+				<RadzenText TextStyle="TextStyle.H2" Class="text-primary fw-bold mb-2">
+					<RadzenIcon Icon="psychology" Class="me-3" />
+					@(IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")
 				</RadzenText>
-				<RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-					Design dynamic questionnaires with drag-and-drop components
+				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-0">
+					@(IsEditMode ? "Modify and enhance your assessment with intuitive tools" : "Create comprehensive assessments with our visual editor")
+				</RadzenText>
+				<RadzenText TextStyle="TextStyle.Caption" Class="text-secondary">
+					Build sections, configure questions, and customize your evaluation experience
 				</RadzenText>
 			</div>
 			<div class="d-flex gap-2">

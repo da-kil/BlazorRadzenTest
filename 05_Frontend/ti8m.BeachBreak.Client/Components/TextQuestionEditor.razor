@@ -3,12 +3,6 @@
 @using ti8m.BeachBreak.Client.Models
 
 <div class="text-question-editor">
-    <div class="mb-3">
-        <RadzenTextBox @bind-Value="@QuestionTitle"
-                      Placeholder="Enter question title..."
-                      Class="w-100"
-                      Style="font-size: 1.25rem; font-weight: bold; margin-bottom: 1rem;" />
-    </div>
 
     <RadzenCard Class="add-section mb-4 p-3 border-dashed">
         <div class="text-center">
@@ -95,15 +89,8 @@
 
     [Inject] protected DialogService DialogService { get; set; } = default!;
 
-    private string QuestionTitle { get; set; } = "Configure Text Question";
-
     protected override void OnInitialized()
     {
-        // Initialize with existing title or default
-        if (Question.Configuration.ContainsKey("QuestionTitle"))
-        {
-            QuestionTitle = Question.Configuration["QuestionTitle"].ToString() ?? "Configure Text Question";
-        }
 
         // Ensure we have a working copy of text sections
         if (TextSections == null)
@@ -185,8 +172,6 @@
     {
         if (CanSave())
         {
-            // Save the title to question configuration
-            Question.Configuration["QuestionTitle"] = QuestionTitle;
             var result = new TextQuestionConfiguration
             {
                 TextSections = TextSections.ToList()

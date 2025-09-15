@@ -3,15 +3,57 @@
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 
 <div class="p-3">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <RadzenText TextStyle="TextStyle.H5">Questions & Sections</RadzenText>
-        <div class="d-flex gap-2">
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <div>
+                <RadzenText TextStyle="TextStyle.H4" Class="text-dark fw-bold mb-2">
+                    <RadzenIcon Icon="view_list" Class="me-2" />
+                    Structure & Content
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    Organize your assessment into logical sections and configure questions
+                </RadzenText>
+            </div>
             <RadzenButton Text="Add Section"
                          ButtonStyle="ButtonStyle.Primary"
-                         Icon="add"
+                         Icon="add_circle_outline"
                          Size="ButtonSize.Medium"
                          Click="@OnAddSection" />
         </div>
+
+        @if (Template.Sections.Count > 0)
+        {
+            <div class="assessment-stats p-4 mb-4 bg-gradient-light rounded-3 border">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <RadzenIcon Icon="folder" Class="me-2 text-primary fs-4" />
+                            <div>
+                                <RadzenText TextStyle="TextStyle.H5" Class="fw-bold text-primary mb-0">
+                                    @Template.Sections.Count
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                    Sections
+                                </RadzenText>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <RadzenIcon Icon="quiz" Class="me-2 text-success fs-4" />
+                            <div>
+                                <RadzenText TextStyle="TextStyle.H5" Class="fw-bold text-success mb-0">
+                                    @Template.Sections.Sum(s => s.Questions.Count)
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                    Total Questions
+                                </RadzenText>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 
     @if (Template.Sections.Count == 0)
@@ -100,4 +142,5 @@
         // Section description is already updated in SectionCard component
         StateHasChanged();
     }
+
 }

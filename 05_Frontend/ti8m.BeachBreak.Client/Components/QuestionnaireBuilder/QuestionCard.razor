@@ -1,45 +1,70 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
-<RadzenCard Class="question-card mb-2 p-3 bg-light">
-    <div class="d-flex justify-content-between align-items-start">
-        <div class="flex-grow-1">
-            <div class="d-flex align-items-center mb-2">
-                <RadzenIcon Icon="@GetQuestionTypeIcon(Question.Type)" Class="me-2" />
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted me-3">
-                    @GetQuestionTypeLabel(Question)
+<RadzenCard Class="question-card mb-3 shadow-sm border-0">
+    <div class="question-header p-3 @GetQuestionHeaderClass(Question.Type) text-white rounded-top">
+        <div class="d-flex justify-content-between align-items-start">
+            <div class="flex-grow-1">
+                <div class="d-flex align-items-center mb-2">
+                    <RadzenIcon Icon="@GetQuestionTypeIcon(Question.Type)" Class="me-2 fs-5" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-white-75 text-uppercase fw-bold">
+                        @GetQuestionTypeDisplayName(Question.Type)
+                    </RadzenText>
+                    @if (Question.IsRequired)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Required" Class="ms-2 text-dark" />
+                    }
+                </div>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-0 text-white">
+                    @GetMeaningfulQuestionTitle()
                 </RadzenText>
-                <RadzenCheckBox @bind-Value="@Question.IsRequired" Name="@($"req_{Question.Id}")" />
-                <RadzenLabel Text="Required" Component="@($"req_{Question.Id}")" Class="ms-1" />
             </div>
-            <RadzenTextBox Value="@Question.Title"
-                         ValueChanged="@(value => OnQuestionTitleChanged(value))"
-                         Placeholder="Question title..."
-                         Class="w-100 mb-2" />
-            <RadzenTextBox Value="@Question.Description"
-                         ValueChanged="@(value => OnQuestionDescriptionChanged(value))"
-                         Placeholder="Question description (optional)..."
-                         Class="w-100 text-muted" />
+            <div class="d-flex gap-1">
+                <RadzenButton ButtonStyle="ButtonStyle.Light"
+                             Icon="settings"
+                             Size="ButtonSize.ExtraSmall"
+                             Click="@(() => OnEditClick())"
+                             Class="text-dark"
+                             Title="Configure question" />
+                <RadzenButton ButtonStyle="ButtonStyle.Light"
+                             Icon="keyboard_arrow_up"
+                             Size="ButtonSize.ExtraSmall"
+                             Click="@(() => OnMoveUpClick())"
+                             Disabled="@(!CanMoveUp)"
+                             Class="text-dark" />
+                <RadzenButton ButtonStyle="ButtonStyle.Light"
+                             Icon="keyboard_arrow_down"
+                             Size="ButtonSize.ExtraSmall"
+                             Click="@(() => OnMoveDownClick())"
+                             Disabled="@(!CanMoveDown)"
+                             Class="text-dark" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                             Icon="delete_outline"
+                             Size="ButtonSize.ExtraSmall"
+                             Click="@(() => OnDeleteClick())" />
+            </div>
         </div>
-        <div class="d-flex gap-1 ms-3">
-            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                         Icon="edit"
-                         Size="ButtonSize.ExtraSmall"
+    </div>
+
+    <div class="question-content p-3 bg-white">
+        <div class="question-preview p-3 bg-light rounded mb-3">
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted text-uppercase fw-bold mb-2">
+                <RadzenIcon Icon="preview" Class="me-1" />
+                What Users Will See
+            </RadzenText>
+            @GetQuestionPreview()
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <RadzenCheckBox @bind-Value="@Question.IsRequired" Name="@($"req_{Question.Id}")" />
+                <RadzenLabel Text="This question is required" Component="@($"req_{Question.Id}")" Class="ms-2" />
+            </div>
+            <RadzenButton Text="Configure"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Icon="tune"
+                         Size="ButtonSize.Small"
                          Click="@(() => OnEditClick())" />
-            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                         Icon="keyboard_arrow_up"
-                         Size="ButtonSize.ExtraSmall"
-                         Click="@(() => OnMoveUpClick())"
-                         Disabled="@(!CanMoveUp)" />
-            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                         Icon="keyboard_arrow_down"
-                         Size="ButtonSize.ExtraSmall"
-                         Click="@(() => OnMoveDownClick())"
-                         Disabled="@(!CanMoveDown)" />
-            <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                         Icon="delete"
-                         Size="ButtonSize.ExtraSmall"
-                         Click="@(() => OnDeleteClick())" />
         </div>
     </div>
 </RadzenCard>
@@ -54,25 +79,11 @@
     [Parameter] public EventCallback OnMoveUp { get; set; }
     [Parameter] public EventCallback OnMoveDown { get; set; }
     [Parameter] public EventCallback OnDelete { get; set; }
-    [Parameter] public EventCallback<string> OnTitleChanged { get; set; }
-    [Parameter] public EventCallback<string> OnDescriptionChanged { get; set; }
 
     private async Task OnEditClick() => await OnEdit.InvokeAsync();
     private async Task OnMoveUpClick() => await OnMoveUp.InvokeAsync();
     private async Task OnMoveDownClick() => await OnMoveDown.InvokeAsync();
     private async Task OnDeleteClick() => await OnDelete.InvokeAsync();
-
-    private async Task OnQuestionTitleChanged(string value)
-    {
-        Question.Title = value ?? "";
-        await OnTitleChanged.InvokeAsync(value);
-    }
-
-    private async Task OnQuestionDescriptionChanged(string value)
-    {
-        Question.Description = value ?? "";
-        await OnDescriptionChanged.InvokeAsync(value);
-    }
 
     private string GetQuestionTypeIcon(QuestionType type) => type switch
     {
@@ -81,6 +92,57 @@
         QuestionType.TextQuestion => "psychology",
         _ => "help"
     };
+
+    private string GetQuestionHeaderClass(QuestionType type) => type switch
+    {
+        QuestionType.SelfAssessment => "bg-gradient-success",
+        QuestionType.GoalAchievement => "bg-gradient-warning",
+        QuestionType.TextQuestion => "bg-gradient-info",
+        _ => "bg-gradient-secondary"
+    };
+
+    private string GetQuestionTypeDisplayName(QuestionType type) => type switch
+    {
+        QuestionType.SelfAssessment => "Self-Assessment",
+        QuestionType.GoalAchievement => "Goal Review",
+        QuestionType.TextQuestion => "Text Response",
+        _ => "Question"
+    };
+
+    private string GetMeaningfulQuestionTitle()
+    {
+        if (!string.IsNullOrWhiteSpace(Question.Title))
+            return Question.Title;
+
+        return Question.Type switch
+        {
+            QuestionType.SelfAssessment => "Rate your competencies and skills",
+            QuestionType.GoalAchievement => "Review and assess goal achievements",
+            QuestionType.TextQuestion => "Provide written feedback and insights",
+            _ => "Untitled Question"
+        };
+    }
+
+
+    private RenderFragment GetQuestionPreview()
+    {
+        return Question.Type switch
+        {
+            QuestionType.SelfAssessment => @<div class="text-muted">
+                <RadzenIcon Icon="star_rate" Class="me-2" />
+                Users will rate multiple competencies on a 1-4 scale with optional comments
+            </div>,
+            QuestionType.GoalAchievement => @<div class="text-muted">
+                <RadzenIcon Icon="flag" Class="me-2" />
+                Users will track goal progress with percentage completion and status
+            </div>,
+            QuestionType.TextQuestion => @<div class="text-muted">
+                <RadzenIcon Icon="edit_note" Class="me-2" />
+                Users will provide written responses in text areas
+            </div>,
+            _ => @<div class="text-muted">Question preview not available</div>
+        };
+    }
 
     private string GetQuestionTypeLabel(QuestionItem question)
     {
