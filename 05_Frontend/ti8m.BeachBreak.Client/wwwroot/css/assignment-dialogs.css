@@ -1,0 +1,477 @@
+/* Assignment Dialogs Responsive Design and Accessibility */
+
+/* Accessibility improvements */
+.assignment-dialog,
+.bulk-assignment-dialog {
+    --focus-ring-color: rgba(15, 105, 255, 0.6);
+    --focus-ring-width: 2px;
+    --focus-ring-offset: 2px;
+}
+
+/* Focus management */
+.assignment-dialog *:focus,
+.bulk-assignment-dialog *:focus {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+    border-radius: 4px;
+}
+
+/* Skip to content for screen readers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0.5rem;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    background: var(--blue-new);
+    color: white;
+    font-weight: bold;
+    z-index: 10000;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .assignment-step,
+    .bulk-step {
+        border-width: 3px;
+        border-color: ButtonText;
+    }
+
+    .employee-card,
+    .questionnaire-card,
+    .questionnaire-option {
+        border-width: 2px;
+        border-color: ButtonText;
+    }
+
+    .step-number,
+    .step-icon {
+        border: 2px solid ButtonText;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .assignment-step,
+    .bulk-step,
+    .employee-card,
+    .questionnaire-card,
+    .questionnaire-option,
+    .transfer-btn {
+        transition: none;
+    }
+
+    .employee-card:hover,
+    .questionnaire-card:hover,
+    .questionnaire-option:hover {
+        transform: none;
+    }
+}
+
+/* Mobile-first responsive design */
+@media (max-width: 767px) {
+    .assignment-dialog {
+        min-width: 95vw;
+        max-width: 95vw;
+        margin: 1rem;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .bulk-assignment-dialog {
+        min-width: 95vw;
+        max-width: 95vw;
+        margin: 0.5rem;
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+
+    .assignment-header,
+    .bulk-header {
+        margin: -1rem -1rem 1.5rem -1rem;
+        padding: 1.5rem 1rem;
+    }
+
+    .assignment-header h4,
+    .bulk-header h3 {
+        font-size: 1.25rem;
+    }
+
+    .assignment-step,
+    .bulk-step {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .step-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .step-icon,
+    .step-number {
+        width: 36px;
+        height: 36px;
+        font-size: 1.25rem;
+    }
+
+    /* Stack form elements vertically on mobile */
+    .settings-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .summary-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .priority-selector {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .priority-option {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    /* Make selection grid vertical on mobile */
+    .selection-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto auto;
+        gap: 1rem;
+        height: auto;
+    }
+
+    .transfer-controls {
+        flex-direction: row;
+        justify-content: center;
+        order: 2;
+    }
+
+    .panel-content {
+        height: 250px;
+    }
+
+    /* Questionnaire cards as single column */
+    .questionnaire-selection {
+        grid-template-columns: 1fr;
+    }
+
+    /* Form actions stack on mobile */
+    .form-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .form-actions .rz-button {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* Tablet responsive design */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .assignment-dialog {
+        min-width: 600px;
+        max-width: 80vw;
+    }
+
+    .bulk-assignment-dialog {
+        min-width: 700px;
+        max-width: 85vw;
+    }
+
+    .settings-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .summary-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .questionnaire-selection {
+        grid-template-columns: 1fr;
+    }
+
+    .selection-grid {
+        grid-template-columns: 1fr 80px 1fr;
+    }
+
+    .transfer-controls {
+        gap: 0.75rem;
+    }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1200px) {
+    .assignment-dialog {
+        min-width: 700px;
+        max-width: 900px;
+    }
+
+    .bulk-assignment-dialog {
+        min-width: 1000px;
+        max-width: 1400px;
+    }
+
+    .settings-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .summary-stats {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .questionnaire-selection {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Print styles */
+@media print {
+    .assignment-dialog,
+    .bulk-assignment-dialog {
+        background: white;
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+
+    .assignment-header,
+    .bulk-header {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        border-bottom: 2px solid #000;
+    }
+
+    .form-actions {
+        display: none;
+    }
+
+    .progress-overlay {
+        display: none;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .assignment-dialog,
+    .bulk-assignment-dialog {
+        background: #1a1a1a;
+        color: #ffffff;
+    }
+
+    .assignment-step,
+    .bulk-step {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .employee-card,
+    .questionnaire-card,
+    .questionnaire-option,
+    .selection-panel {
+        background: #2a2a2a;
+        border-color: #444;
+        color: #fff;
+    }
+
+    .panel-header {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: #444;
+    }
+
+    .stat-card {
+        background: #2a2a2a;
+        color: #fff;
+    }
+}
+
+/* Touch-friendly improvements */
+@media (pointer: coarse) {
+    .employee-card,
+    .questionnaire-card,
+    .questionnaire-option,
+    .priority-option,
+    .transfer-btn {
+        min-height: 44px;
+        padding: 0.75rem;
+    }
+
+    .transfer-btn {
+        width: 48px;
+        height: 48px;
+    }
+
+    .step-icon,
+    .step-number {
+        width: 44px;
+        height: 44px;
+    }
+}
+
+/* Animation and loading states */
+.loading-shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Error state styling */
+.has-error {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.125rem rgba(220, 53, 69, 0.25);
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.error-message::before {
+    content: "⚠";
+    flex-shrink: 0;
+}
+
+/* Success state styling */
+.has-success {
+    border-color: #28a745 !important;
+    box-shadow: 0 0 0 0.125rem rgba(40, 167, 69, 0.25);
+}
+
+.success-message {
+    color: #28a745;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.success-message::before {
+    content: "✓";
+    flex-shrink: 0;
+}
+
+/* Loading button states */
+.rz-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.rz-button.loading {
+    position: relative;
+    color: transparent;
+}
+
+.rz-button.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid currentColor;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: button-spin 1s linear infinite;
+}
+
+@keyframes button-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Improved accessibility for screen readers */
+[aria-busy="true"] {
+    cursor: wait;
+}
+
+[aria-invalid="true"] {
+    border-color: #dc3545;
+}
+
+[role="status"][aria-live="polite"] {
+    position: absolute;
+    left: -10000px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+
+/* Tooltip improvements */
+.tooltip-trigger {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip-trigger:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    white-space: nowrap;
+    z-index: 1000;
+    font-size: 0.875rem;
+}
+
+/* Enhanced focus indicators for better accessibility */
+.rz-button:focus,
+.rz-textbox:focus,
+.rz-dropdown:focus,
+.rz-datepicker:focus,
+.rz-checkbox:focus {
+    outline: 2px solid var(--focus-ring-color);
+    outline-offset: 2px;
+}
+
+/* Ensure sufficient color contrast */
+.text-muted {
+    color: #6c757d !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    .text-muted {
+        color: #adb5bd !important;
+    }
+}

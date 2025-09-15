@@ -3,72 +3,395 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
 
 <PageTitle>Questionnaire Assignments</PageTitle>
 
+<style>
+    .assignment-header {
+        background: linear-gradient(135deg, var(--blue-new) 0%, var(--purple-rain) 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        margin-bottom: 2rem;
+    }
+
+    .assignment-form {
+        background: rgba(var(--blue-new-rgb), 0.05);
+        border: 2px solid rgba(var(--blue-new-rgb), 0.1);
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-section {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .employee-selection {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .employee-item {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+    }
+
+    .employee-item:hover {
+        border-color: var(--blue-new);
+        background: rgba(var(--blue-new-rgb), 0.05);
+    }
+
+    .employee-item.selected {
+        border-color: var(--blue-new);
+        background: rgba(var(--blue-new-rgb), 0.1);
+    }
+
+    .questionnaire-item {
+        border: 1px solid #e9ecef;
+        border-radius: 6px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+    }
+
+    .questionnaire-item:hover {
+        border-color: var(--purple-rain);
+        background: rgba(var(--purple-rain-rgb), 0.05);
+    }
+
+    .questionnaire-item.selected {
+        border-color: var(--purple-rain);
+        background: rgba(var(--purple-rain-rgb), 0.1);
+    }
+
+    .selected-summary {
+        background: linear-gradient(135deg, rgba(var(--green-new-rgb), 0.1), rgba(var(--blue-new-rgb), 0.1));
+        border: 2px solid var(--green-new);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin: 1.5rem 0;
+    }
+
+    .assignment-grid {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    :root {
+        --blue-new-rgb: 15, 105, 255;
+        --purple-rain-rgb: 147, 91, 169;
+        --green-new-rgb: 0, 230, 200;
+    }
+</style>
+
 <div class="container-fluid">
-    <RadzenCard Class="p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
+    <!-- Header -->
+    <div class="assignment-header">
+        <div class="d-flex align-items-center">
+            <RadzenIcon Icon="assignment_ind" Style="font-size: 3rem; margin-right: 1.5rem;" />
             <div>
-                <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
-                    <RadzenIcon Icon="assignment" Class="me-2" />
-                    Questionnaire Assignments
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                    Assign questionnaires to employees and track completion
+                <RadzenText TextStyle="TextStyle.H3" Class="mb-2">Questionnaire Assignments</RadzenText>
+                <RadzenText TextStyle="TextStyle.H6" Style="opacity: 0.9;">
+                    Create and manage questionnaire assignments with real-time API integration
                 </RadzenText>
             </div>
-            <RadzenButton Text="New Assignment" 
-                         ButtonStyle="ButtonStyle.Primary" 
-                         Icon="add"
-                         Click="@ShowAssignmentDialog" />
         </div>
+    </div>
 
-        <RadzenTabs>
-            <Tabs>
-                <RadzenTabsItem Text="All Assignments">
-                    <div class="p-3">
-                        <div class="d-flex justify-content-between mb-3">
-                            <div class="d-flex gap-2">
-                                <RadzenDropDown @bind-Value="@statusFilter" 
-                                               Data="@statusOptions" 
-                                               TextProperty="Text" 
-                                               ValueProperty="Value"
-                                               Placeholder="Filter by Status"
-                                               AllowClear="true"
-                                               Change="@FilterAssignments"
-                                               Class="me-2" />
-                                <RadzenTextBox @bind-Value="@searchText" 
-                                              Placeholder="Search employees..."
-                                              oninput="@FilterAssignments" />
+    <RadzenTabs>
+        <Tabs>
+            <!-- Create Assignment Tab -->
+            <RadzenTabsItem Text="Create Assignment">
+                <div class="p-3">
+                    @if (isLoading)
+                    {
+                        <div class="text-center p-5">
+                            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary"
+                                                     Value="100"
+                                                     Size="ProgressBarCircularSize.Large" />
+                            <RadzenText TextStyle="TextStyle.H6" Class="mt-3">Loading data...</RadzenText>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="assignment-form">
+                            <RadzenRow Gap="2rem">
+                                <!-- Employee Selection -->
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <div class="form-section">
+                                        <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
+                                            <RadzenIcon Icon="people" Class="me-2" Style="color: var(--blue-new);" />
+                                            Select Employees
+                                        </RadzenText>
+
+                                        <div class="mb-3">
+                                            <RadzenTextBox @bind-Value="@employeeSearchText"
+                                                         Placeholder="Search employees by name, email, or department..."
+                                                         Class="w-100 mb-2"
+                                                         oninput="@(() => FilterEmployees())" />
+
+                                            <div class="d-flex gap-2 mb-2">
+                                                <RadzenButton Text="Select All Filtered"
+                                                            ButtonStyle="ButtonStyle.Secondary"
+                                                            Size="ButtonSize.Small"
+                                                            Icon="select_all"
+                                                            Click="@SelectAllFilteredEmployees" />
+                                                <RadzenButton Text="Clear Selection"
+                                                            ButtonStyle="ButtonStyle.Light"
+                                                            Size="ButtonSize.Small"
+                                                            Icon="clear"
+                                                            Click="@ClearEmployeeSelection" />
+                                            </div>
+                                        </div>
+
+                                        <div class="employee-selection">
+                                            @if (filteredEmployees.Any())
+                                            {
+                                                @foreach (var employee in filteredEmployees)
+                                                {
+                                                    <div class="employee-item @(selectedEmployeeIds.Contains(employee.Id) ? "selected" : "")"
+                                                         @onclick="() => ToggleEmployeeSelection(employee.Id)">
+                                                        <div class="d-flex align-items-center">
+                                                            <RadzenCheckBox Value="@selectedEmployeeIds.Contains(employee.Id)"
+                                                                          TValue="bool"
+                                                                          Change="@(args => ToggleEmployeeSelection(employee.Id))"
+                                                                          Class="me-2" />
+                                                            <div class="flex-grow-1">
+                                                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@employee.FullName</RadzenText>
+                                                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.EMail</RadzenText>
+                                                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.Department • @employee.Role</RadzenText>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <div class="text-center text-muted p-3">
+                                                    <RadzenIcon Icon="search_off" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
+                                                    <RadzenText TextStyle="TextStyle.Body2">No employees found matching your search.</RadzenText>
+                                                </div>
+                                            }
+                                        </div>
+
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-2">
+                                            Selected: @selectedEmployeeIds.Count employee(s)
+                                        </RadzenText>
+                                    </div>
+                                </RadzenColumn>
+
+                                <!-- Questionnaire Selection -->
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <div class="form-section">
+                                        <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
+                                            <RadzenIcon Icon="quiz" Class="me-2" Style="color: var(--purple-rain);" />
+                                            Select Questionnaire
+                                        </RadzenText>
+
+                                        <div class="mb-3">
+                                            <RadzenDropDown @bind-Value="@selectedCategory"
+                                                          Data="@availableCategories"
+                                                          AllowClear="true"
+                                                          Placeholder="Filter by category"
+                                                          Change="@FilterQuestionnaires"
+                                                          Class="w-100" />
+                                        </div>
+
+                                        <div style="max-height: 400px; overflow-y: auto;">
+                                            @if (filteredQuestionnaires.Any())
+                                            {
+                                                @foreach (var questionnaire in filteredQuestionnaires)
+                                                {
+                                                    <div class="questionnaire-item @(selectedQuestionnaireId == questionnaire.Id ? "selected" : "")"
+                                                         @onclick="() => SelectQuestionnaire(questionnaire.Id)">
+                                                        <div class="d-flex align-items-start">
+                                                            <RadzenIcon Icon="@GetCategoryIcon(questionnaire.Category)"
+                                                                      Style="font-size: 1.5rem; margin-right: 0.75rem; color: var(--purple-rain);" />
+                                                            <div class="flex-grow-1">
+                                                                <div class="d-flex justify-content-between align-items-start">
+                                                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@questionnaire.Name</RadzenText>
+                                                                    <RadzenBadge Text="@questionnaire.Category" BadgeStyle="BadgeStyle.Info" />
+                                                                </div>
+                                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@questionnaire.Description</RadzenText>
+                                                                <div class="d-flex gap-3 mt-2">
+                                                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                                                        <RadzenIcon Icon="layers" Style="font-size: 0.85rem; margin-right: 4px;" />
+                                                                        @questionnaire.Sections.Count sections
+                                                                    </RadzenText>
+                                                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                                                        <RadzenIcon Icon="schedule" Style="font-size: 0.85rem; margin-right: 4px;" />
+                                                                        @GetEstimatedDuration(questionnaire) min
+                                                                    </RadzenText>
+                                                                </div>
+                                                            </div>
+                                                            @if (selectedQuestionnaireId == questionnaire.Id)
+                                                            {
+                                                                <RadzenIcon Icon="check_circle" Style="color: var(--green-new); font-size: 1.5rem;" />
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <div class="text-center text-muted p-3">
+                                                    <RadzenIcon Icon="quiz" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
+                                                    <RadzenText TextStyle="TextStyle.Body2">No questionnaires available.</RadzenText>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </RadzenColumn>
+                            </RadzenRow>
+
+                            <!-- Assignment Configuration -->
+                            <div class="form-section">
+                                <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
+                                    <RadzenIcon Icon="settings" Class="me-2" Style="color: var(--golden-milk);" />
+                                    Assignment Settings
+                                </RadzenText>
+
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeMD="4">
+                                        <RadzenLabel Text="Due Date (Optional)" />
+                                        <RadzenDatePicker @bind-Value="@assignmentDueDate"
+                                                        DateFormat="dd/MM/yyyy"
+                                                        Min="@DateTime.Today"
+                                                        Class="w-100" />
+                                    </RadzenColumn>
+
+                                    <RadzenColumn Size="12" SizeMD="8">
+                                        <RadzenLabel Text="Notes (Optional)" />
+                                        <RadzenTextArea @bind-Value="@assignmentNotes"
+                                                       Placeholder="Add any specific instructions or context for this assignment..."
+                                                       Rows="3"
+                                                       Class="w-100" />
+                                    </RadzenColumn>
+                                </RadzenRow>
                             </div>
-                            <div class="d-flex gap-2">
-                                <RadzenButton Text="Bulk Assign" 
-                                             ButtonStyle="ButtonStyle.Secondary" 
-                                             Icon="group_add"
-                                             Click="@ShowBulkAssignDialog" />
-                                <RadzenButton Text="Send Reminders" 
-                                             ButtonStyle="ButtonStyle.Warning" 
-                                             Icon="notifications"
-                                             Click="@SendReminders" />
+
+                            <!-- Assignment Summary -->
+                            @if (CanCreateAssignment())
+                            {
+                                <div class="selected-summary">
+                                    <RadzenText TextStyle="TextStyle.H6" Class="mb-3 d-flex align-items-center">
+                                        <RadzenIcon Icon="preview" Class="me-2" />
+                                        Assignment Summary
+                                    </RadzenText>
+
+                                    <RadzenRow Gap="1rem">
+                                        <RadzenColumn Size="12" SizeMD="4">
+                                            <div class="text-center">
+                                                <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--blue-new); margin-bottom: 0.5rem;" />
+                                                <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@selectedEmployeeIds.Count</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Employee(s)</RadzenText>
+                                            </div>
+                                        </RadzenColumn>
+
+                                        <RadzenColumn Size="12" SizeMD="4">
+                                            <div class="text-center">
+                                                <RadzenIcon Icon="quiz" Style="font-size: 2rem; color: var(--purple-rain); margin-bottom: 0.5rem;" />
+                                                <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">1</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Questionnaire</RadzenText>
+                                            </div>
+                                        </RadzenColumn>
+
+                                        <RadzenColumn Size="12" SizeMD="4">
+                                            <div class="text-center">
+                                                <RadzenIcon Icon="event" Style="font-size: 2rem; color: var(--golden-milk); margin-bottom: 0.5rem;" />
+                                                <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@(assignmentDueDate?.ToString("dd/MM") ?? "No Date")</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Due Date</RadzenText>
+                                            </div>
+                                        </RadzenColumn>
+                                    </RadzenRow>
+
+                                    <div class="mt-3">
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-semibold">Selected Questionnaire:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">@GetSelectedQuestionnaireName()</RadzenText>
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- Create Assignment Button -->
+                            <div class="text-center mt-4">
+                                <RadzenButton Text="@(isCreatingAssignment ? "Creating Assignments..." : "Create Assignment")"
+                                            ButtonStyle="ButtonStyle.Primary"
+                                            Icon="@(isCreatingAssignment ? "hourglass_empty" : "assignment_turned_in")"
+                                            Size="ButtonSize.Large"
+                                            Disabled="@(!CanCreateAssignment() || isCreatingAssignment)"
+                                            Click="@CreateAssignment"
+                                            Style="min-width: 250px; padding: 1rem 2rem;" />
                             </div>
                         </div>
+                    }
+                </div>
+            </RadzenTabsItem>
 
-                        <RadzenDataGrid @ref="assignmentsGrid" 
-                                       Data="@filteredAssignments" 
-                                       AllowFiltering="true" 
+            <!-- Existing Assignments Tab -->
+            <RadzenTabsItem Text="Manage Assignments">
+                <div class="p-3">
+                    <div class="assignment-grid">
+                        <!-- Filters -->
+                        <div class="p-3 border-bottom">
+                            <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
+                                <RadzenColumn Size="12" SizeMD="3">
+                                    <RadzenLabel Text="Filter by Status" />
+                                    <RadzenDropDown @bind-Value="@statusFilter"
+                                                   Data="@statusOptions"
+                                                   TextProperty="Text"
+                                                   ValueProperty="Value"
+                                                   AllowClear="true"
+                                                   Change="@FilterAssignments"
+                                                   Class="w-100" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="6">
+                                    <RadzenLabel Text="Search" />
+                                    <RadzenTextBox @bind-Value="@searchText"
+                                                  Placeholder="Search by employee name or email..."
+                                                  oninput="@(() => FilterAssignments())"
+                                                  Class="w-100" />
+                                </RadzenColumn>
+                                <RadzenColumn Size="12" SizeMD="3">
+                                    <RadzenButton Text="Refresh"
+                                                ButtonStyle="ButtonStyle.Secondary"
+                                                Icon="refresh"
+                                                Click="@(() => LoadAssignments())"
+                                                Class="w-100" />
+                                </RadzenColumn>
+                            </RadzenRow>
+                        </div>
+
+                        <!-- Assignments Grid -->
+                        <RadzenDataGrid @ref="assignmentsGrid"
+                                       Data="@filteredAssignments"
+                                       AllowFiltering="true"
                                        AllowColumnResize="true"
-                                       AllowAlternatingRows="true" 
-                                       FilterMode="FilterMode.Advanced" 
-                                       AllowSorting="true" 
-                                       PageSize="20" 
-                                       AllowPaging="true" 
-                                       PagerHorizontalAlign="HorizontalAlign.Left" 
+                                       AllowAlternatingRows="true"
+                                       FilterMode="FilterMode.Advanced"
+                                       AllowSorting="true"
+                                       PageSize="20"
+                                       AllowPaging="true"
+                                       PagerHorizontalAlign="HorizontalAlign.Left"
                                        ShowPagingSummary="true"
-                                       SelectionMode="DataGridSelectionMode.Multiple" 
-                                       Value="@selectedAssignments"
-                                       ValueChanged="@(EventCallback.Factory.Create<IList<QuestionnaireAssignment>>(this, OnSelectionChanged))">
-                            
+                                       LoadData="@LoadAssignments">
+
                             <Columns>
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.EmployeeName)" Title="Employee" Frozen="true" Width="200px">
                                     <Template Context="assignment">
@@ -78,7 +401,7 @@
                                         </div>
                                     </Template>
                                 </RadzenDataGridColumn>
-                                
+
                                 <RadzenDataGridColumn Property="TemplateName" Title="Questionnaire" Width="250px">
                                     <Template Context="assignment">
                                         <div>
@@ -87,22 +410,22 @@
                                         </div>
                                     </Template>
                                 </RadzenDataGridColumn>
-                                
+
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.Status)" Title="Status" Width="130px">
                                     <Template Context="assignment">
-                                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(assignment.Status)" 
+                                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
                                                    Text="@assignment.Status.ToString()" />
                                     </Template>
                                 </RadzenDataGridColumn>
-                                
+
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedDate)" Title="Assigned" Width="120px" FormatString="{0:dd/MM/yyyy}" />
-                                
+
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.DueDate)" Title="Due Date" Width="120px">
                                     <Template Context="assignment">
                                         @if (assignment.DueDate.HasValue)
                                         {
                                             var isOverdue = assignment.DueDate < DateTime.Now && assignment.Status != AssignmentStatus.Completed;
-                                            <RadzenText TextStyle="TextStyle.Body2" 
+                                            <RadzenText TextStyle="TextStyle.Body2"
                                                        Class="@(isOverdue ? "text-danger fw-bold" : "")">
                                                 @assignment.DueDate.Value.ToString("dd/MM/yyyy")
                                                 @if (isOverdue) { <RadzenIcon Icon="warning" Class="ms-1" /> }
@@ -114,7 +437,7 @@
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
-                                
+
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.CompletedDate)" Title="Completed" Width="120px">
                                     <Template Context="assignment">
                                         @if (assignment.CompletedDate.HasValue)
@@ -127,13 +450,13 @@
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
-                                
+
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedBy)" Title="Assigned By" Width="150px" />
-                                
+
                                 <RadzenDataGridColumn Filterable="false" Sortable="false" Width="120px" TextAlign="TextAlign.Center">
                                     <Template Context="assignment">
-                                        <RadzenDropDown Data="@GetActionOptions(assignment)" 
-                                                       TextProperty="Text" 
+                                        <RadzenDropDown Data="@GetActionOptions(assignment)"
+                                                       TextProperty="Text"
                                                        ValueProperty="Value"
                                                        TValue="string"
                                                        Placeholder="Actions"
@@ -144,92 +467,43 @@
                             </Columns>
                         </RadzenDataGrid>
                     </div>
-                </RadzenTabsItem>
-                
-                <RadzenTabsItem Text="Dashboard">
-                    <div class="p-3">
-                        <RadzenText TextStyle="TextStyle.H5" Class="mb-4">Assignment Dashboard</RadzenText>
-                        
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12" SizeMD="3">
-                                <RadzenCard Class="text-center p-3 h-100">
-                                    <RadzenIcon Icon="assignment" Style="font-size: 2.5rem; color: var(--rz-primary);" />
-                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@assignments.Count</RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Total Assignments</RadzenText>
-                                </RadzenCard>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="3">
-                                <RadzenCard Class="text-center p-3 h-100">
-                                    <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; color: var(--rz-warning);" />
-                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@assignments.Count(a => a.Status == AssignmentStatus.InProgress)</RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">In Progress</RadzenText>
-                                </RadzenCard>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="3">
-                                <RadzenCard Class="text-center p-3 h-100">
-                                    <RadzenIcon Icon="check_circle" Style="font-size: 2.5rem; color: var(--rz-success);" />
-                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@assignments.Count(a => a.Status == AssignmentStatus.Completed)</RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Completed</RadzenText>
-                                </RadzenCard>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="3">
-                                <RadzenCard Class="text-center p-3 h-100">
-                                    <RadzenIcon Icon="warning" Style="font-size: 2.5rem; color: var(--rz-danger);" />
-                                    <RadzenText TextStyle="TextStyle.H4" Class="fw-bold mt-2">@assignments.Count(a => a.Status == AssignmentStatus.Overdue)</RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Overdue</RadzenText>
-                                </RadzenCard>
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <RadzenRow Gap="1rem" Class="mt-4">
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenCard Class="p-3">
-                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Completion Rate by Questionnaire</RadzenText>
-                                    <RadzenChart>
-                                        <RadzenDonutSeries Data="@GetCompletionData()" 
-                                                          CategoryProperty="Template" 
-                                                          ValueProperty="CompletionRate"
-                                                          Title="Completion Rate" />
-                                    </RadzenChart>
-                                </RadzenCard>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenCard Class="p-3">
-                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Recent Activity</RadzenText>
-                                    <div class="activity-list">
-                                        @foreach (var activity in GetRecentActivity().Take(5))
-                                        {
-                                            <div class="d-flex align-items-center mb-2 p-2 border-bottom">
-                                                <RadzenIcon Icon="@activity.Icon" Class="me-2" />
-                                                <div class="flex-grow-1">
-                                                    <RadzenText TextStyle="TextStyle.Body2">@activity.Description</RadzenText>
-                                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@activity.Time.ToString("dd/MM/yyyy HH:mm")</RadzenText>
-                                                </div>
-                                            </div>
-                                        }
-                                    </div>
-                                </RadzenCard>
-                            </RadzenColumn>
-                        </RadzenRow>
-                    </div>
-                </RadzenTabsItem>
-            </Tabs>
-        </RadzenTabs>
-    </RadzenCard>
+                </div>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
 </div>
 
 @code {
-    [Inject] protected DialogService DialogService { get; set; } = default!;
+    [Inject] protected IQuestionnaireApiService QuestionnaireApiService { get; set; } = default!;
+    [Inject] protected IEmployeeApiService EmployeeApiService { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
 
-    private RadzenDataGrid<QuestionnaireAssignment> assignmentsGrid = default!;
+    // Data
+    private List<EmployeeDto> allEmployees = new();
+    private List<EmployeeDto> filteredEmployees = new();
+    private List<QuestionnaireTemplate> allQuestionnaires = new();
+    private List<QuestionnaireTemplate> filteredQuestionnaires = new();
     private List<QuestionnaireAssignment> assignments = new();
     private List<QuestionnaireAssignment> filteredAssignments = new();
-    private List<QuestionnaireAssignment> selectedAssignments = new();
-    
+
+    // UI State
+    private RadzenDataGrid<QuestionnaireAssignment> assignmentsGrid = default!;
+    private bool isLoading = true;
+    private bool isCreatingAssignment = false;
+
+    // Form State
+    private string employeeSearchText = "";
+    private List<Guid> selectedEmployeeIds = new();
+    private Guid selectedQuestionnaireId = Guid.Empty;
+    private DateTime? assignmentDueDate;
+    private string assignmentNotes = "";
+
+    // Filters
     private string searchText = "";
     private AssignmentStatus? statusFilter;
-    
+    private string selectedCategory = "";
+    private List<string> availableCategories = new();
+
     private readonly List<StatusOption> statusOptions = new()
     {
         new("All", null),
@@ -242,31 +516,246 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadAssignments();
-        FilterAssignments();
+        await LoadInitialData();
     }
 
-    private async Task LoadAssignments()
+    private async Task LoadInitialData()
     {
-        // In a real application, load from database
-        assignments = new List<QuestionnaireAssignment>
+        isLoading = true;
+        StateHasChanged();
+
+        try
         {
-            new() { EmployeeName = "John Doe", EmployeeEmail = "john.doe@company.com", TemplateId = Guid.NewGuid(), AssignedDate = DateTime.Now.AddDays(-5), Status = AssignmentStatus.InProgress },
-            new() { EmployeeName = "Jane Smith", EmployeeEmail = "jane.smith@company.com", TemplateId = Guid.NewGuid(), AssignedDate = DateTime.Now.AddDays(-10), Status = AssignmentStatus.Completed, CompletedDate = DateTime.Now.AddDays(-2) },
-            new() { EmployeeName = "Bob Johnson", EmployeeEmail = "bob.johnson@company.com", TemplateId = Guid.NewGuid(), AssignedDate = DateTime.Now.AddDays(-15), DueDate = DateTime.Now.AddDays(-5), Status = AssignmentStatus.Overdue },
-        };
+            // Load employees and questionnaires in parallel
+            var employeesTask = EmployeeApiService.GetAllEmployeesAsync();
+            var questionnairesTask = QuestionnaireApiService.GetAllTemplatesAsync();
+            var assignmentsTask = QuestionnaireApiService.GetAllAssignmentsAsync();
+
+            await Task.WhenAll(employeesTask, questionnairesTask, assignmentsTask);
+
+            allEmployees = await employeesTask;
+            allQuestionnaires = await questionnairesTask;
+            assignments = await assignmentsTask;
+
+            // Set up initial filtered data
+            filteredEmployees = allEmployees.Where(e => !e.IsDeleted).ToList();
+            filteredQuestionnaires = allQuestionnaires.Where(q => q.IsActive).ToList();
+            filteredAssignments = assignments.ToList();
+
+            // Extract available categories
+            availableCategories = allQuestionnaires.Select(q => q.Category).Distinct().ToList();
+
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Data Loaded",
+                $"Loaded {allEmployees.Count} employees and {allQuestionnaires.Count} questionnaires");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                "Loading Failed",
+                "Failed to load initial data. Please refresh the page.");
+            Console.WriteLine($"Error loading initial data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void FilterEmployees()
+    {
+        if (string.IsNullOrWhiteSpace(employeeSearchText))
+        {
+            filteredEmployees = allEmployees.Where(e => !e.IsDeleted).ToList();
+        }
+        else
+        {
+            filteredEmployees = allEmployees.Where(e =>
+                !e.IsDeleted &&
+                (e.FullName.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                 e.EMail.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                 e.Department.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                 e.Role.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+        }
+        StateHasChanged();
+    }
+
+    private void FilterQuestionnaires()
+    {
+        if (string.IsNullOrWhiteSpace(selectedCategory))
+        {
+            filteredQuestionnaires = allQuestionnaires.Where(q => q.IsActive).ToList();
+        }
+        else
+        {
+            filteredQuestionnaires = allQuestionnaires.Where(q =>
+                q.IsActive && q.Category == selectedCategory
+            ).ToList();
+        }
+        StateHasChanged();
     }
 
     private void FilterAssignments()
     {
         filteredAssignments = assignments.Where(a =>
             (statusFilter == null || a.Status == statusFilter) &&
-            (string.IsNullOrWhiteSpace(searchText) || 
+            (string.IsNullOrWhiteSpace(searchText) ||
              a.EmployeeName.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
              a.EmployeeEmail.Contains(searchText, StringComparison.OrdinalIgnoreCase))
         ).ToList();
-        
+
         StateHasChanged();
+    }
+
+    private void ToggleEmployeeSelection(Guid employeeId)
+    {
+        if (selectedEmployeeIds.Contains(employeeId))
+        {
+            selectedEmployeeIds.Remove(employeeId);
+        }
+        else
+        {
+            selectedEmployeeIds.Add(employeeId);
+        }
+        StateHasChanged();
+    }
+
+    private void SelectAllFilteredEmployees()
+    {
+        foreach (var employee in filteredEmployees)
+        {
+            if (!selectedEmployeeIds.Contains(employee.Id))
+            {
+                selectedEmployeeIds.Add(employee.Id);
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void ClearEmployeeSelection()
+    {
+        selectedEmployeeIds.Clear();
+        StateHasChanged();
+    }
+
+    private void SelectQuestionnaire(Guid questionnaireId)
+    {
+        selectedQuestionnaireId = questionnaireId;
+        StateHasChanged();
+    }
+
+    private bool CanCreateAssignment()
+    {
+        return selectedEmployeeIds.Any() && selectedQuestionnaireId != Guid.Empty;
+    }
+
+    private async Task CreateAssignment()
+    {
+        if (!CanCreateAssignment()) return;
+
+        isCreatingAssignment = true;
+        StateHasChanged();
+
+        try
+        {
+            var selectedEmployeeIdsString = selectedEmployeeIds.Select(id => id.ToString()).ToList();
+
+            var newAssignments = await QuestionnaireApiService.CreateAssignmentsAsync(
+                selectedQuestionnaireId,
+                selectedEmployeeIdsString,
+                assignmentDueDate,
+                assignmentNotes,
+                "Current User" // In real app, get from auth context
+            );
+
+            if (newAssignments.Any())
+            {
+                assignments.AddRange(newAssignments);
+                FilterAssignments();
+
+                NotificationService.Notify(NotificationSeverity.Success,
+                    "Assignments Created",
+                    $"Successfully created {newAssignments.Count} questionnaire assignments",
+                    duration: 6000);
+
+                // Reset form
+                selectedEmployeeIds.Clear();
+                selectedQuestionnaireId = Guid.Empty;
+                assignmentDueDate = null;
+                assignmentNotes = "";
+                employeeSearchText = "";
+                FilterEmployees();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Warning,
+                    "No Assignments Created",
+                    "No assignments were created. Please check your selection and try again.");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                "Assignment Creation Failed",
+                "An error occurred while creating assignments. Please try again.");
+            Console.WriteLine($"Error creating assignments: {ex.Message}");
+        }
+        finally
+        {
+            isCreatingAssignment = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadAssignments(LoadDataArgs? args = null)
+    {
+        try
+        {
+            assignments = await QuestionnaireApiService.GetAllAssignmentsAsync();
+            FilterAssignments();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load assignments");
+            Console.WriteLine($"Error loading assignments: {ex.Message}");
+        }
+    }
+
+    private string GetSelectedQuestionnaireName()
+    {
+        return allQuestionnaires.FirstOrDefault(q => q.Id == selectedQuestionnaireId)?.Name ?? "";
+    }
+
+    private string GetTemplateName(Guid templateId)
+    {
+        return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.Name ?? "Unknown Questionnaire";
+    }
+
+    private string GetTemplateCategory(Guid templateId)
+    {
+        return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.Category ?? "Unknown";
+    }
+
+    private int GetEstimatedDuration(QuestionnaireTemplate questionnaire)
+    {
+        // Estimate 2 minutes per question
+        var totalQuestions = questionnaire.Sections.Sum(s => s.Questions.Count);
+        return Math.Max(5, totalQuestions * 2);
+    }
+
+    private string GetCategoryIcon(string category)
+    {
+        return category switch
+        {
+            "Performance" => "trending_up",
+            "Team" => "groups",
+            "Leadership" => "emoji_events",
+            "Technical" => "engineering",
+            "Service" => "support_agent",
+            _ => "quiz"
+        };
     }
 
     private BadgeStyle GetStatusBadgeStyle(AssignmentStatus status)
@@ -280,17 +769,6 @@
             AssignmentStatus.Cancelled => BadgeStyle.Light,
             _ => BadgeStyle.Secondary
         };
-    }
-
-    private string GetTemplateName(Guid templateId)
-    {
-        // In real app, look up from templates
-        return "Employee Performance Review";
-    }
-
-    private string GetTemplateCategory(Guid templateId)
-    {
-        return "Performance Review";
     }
 
     private List<ActionOption> GetActionOptions(QuestionnaireAssignment assignment)
@@ -314,90 +792,26 @@
         return options;
     }
 
-    private void OnSelectionChanged(IList<QuestionnaireAssignment> selection)
-    {
-        selectedAssignments = selection.ToList();
-    }
-
     private async Task ExecuteAction(QuestionnaireAssignment assignment, object value)
     {
         var action = value?.ToString();
         switch (action)
         {
             case "view":
-                await ViewAssignment(assignment);
+                NotificationService.Notify(NotificationSeverity.Info, "View", $"Viewing assignment for {assignment.EmployeeName}");
                 break;
             case "edit":
-                await EditAssignment(assignment);
+                NotificationService.Notify(NotificationSeverity.Info, "Edit", $"Editing assignment for {assignment.EmployeeName}");
                 break;
             case "remind":
-                await SendReminder(assignment);
+                NotificationService.Notify(NotificationSeverity.Success, "Reminder Sent", $"Reminder sent to {assignment.EmployeeName}");
                 break;
             case "cancel":
-                await CancelAssignment(assignment);
+                assignment.Status = AssignmentStatus.Cancelled;
+                NotificationService.Notify(NotificationSeverity.Info, "Cancelled", $"Assignment cancelled for {assignment.EmployeeName}");
+                FilterAssignments();
                 break;
         }
-    }
-
-    private async Task ShowAssignmentDialog()
-    {
-        // TODO: Show assignment creation dialog
-        NotificationService.Notify(NotificationSeverity.Info, "Assignment", "Assignment dialog would open here");
-    }
-
-    private async Task ShowBulkAssignDialog()
-    {
-        NotificationService.Notify(NotificationSeverity.Info, "Bulk Assign", "Bulk assignment dialog would open here");
-    }
-
-    private async Task ViewAssignment(QuestionnaireAssignment assignment)
-    {
-        NotificationService.Notify(NotificationSeverity.Info, "View", $"Viewing assignment for {assignment.EmployeeName}");
-    }
-
-    private async Task EditAssignment(QuestionnaireAssignment assignment)
-    {
-        NotificationService.Notify(NotificationSeverity.Info, "Edit", $"Editing assignment for {assignment.EmployeeName}");
-    }
-
-    private async Task SendReminder(QuestionnaireAssignment assignment)
-    {
-        NotificationService.Notify(NotificationSeverity.Success, "Reminder Sent", $"Reminder sent to {assignment.EmployeeName}");
-    }
-
-    private async Task SendReminders()
-    {
-        var pendingCount = assignments.Count(a => a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress);
-        NotificationService.Notify(NotificationSeverity.Success, "Reminders Sent", $"Reminders sent to {pendingCount} employees");
-    }
-
-    private async Task CancelAssignment(QuestionnaireAssignment assignment)
-    {
-        assignment.Status = AssignmentStatus.Cancelled;
-        NotificationService.Notify(NotificationSeverity.Info, "Cancelled", $"Assignment cancelled for {assignment.EmployeeName}");
-        FilterAssignments();
-    }
-
-    private List<CompletionData> GetCompletionData()
-    {
-        // Group by template and calculate completion rates
-        return new List<CompletionData>
-        {
-            new() { Template = "Performance Review", CompletionRate = 75 },
-            new() { Template = "Training Assessment", CompletionRate = 90 },
-            new() { Template = "Team Evaluation", CompletionRate = 60 }
-        };
-    }
-
-    private List<ActivityItem> GetRecentActivity()
-    {
-        return new List<ActivityItem>
-        {
-            new() { Icon = "check_circle", Description = "Jane Smith completed Performance Review", Time = DateTime.Now.AddHours(-2) },
-            new() { Icon = "assignment", Description = "New assignment created for Bob Johnson", Time = DateTime.Now.AddHours(-4) },
-            new() { Icon = "schedule", Description = "Reminder sent to John Doe", Time = DateTime.Now.AddHours(-6) },
-            new() { Icon = "warning", Description = "Assignment overdue for Mike Wilson", Time = DateTime.Now.AddDays(-1) },
-        };
     }
 
     // Helper classes
@@ -421,18 +835,5 @@
         }
         public string Text { get; set; }
         public string Value { get; set; }
-    }
-
-    public class CompletionData
-    {
-        public string Template { get; set; } = "";
-        public int CompletionRate { get; set; }
-    }
-
-    public class ActivityItem
-    {
-        public string Icon { get; set; } = "";
-        public string Description { get; set; } = "";
-        public DateTime Time { get; set; }
     }
 }

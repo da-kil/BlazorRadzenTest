@@ -1,0 +1,1018 @@
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.ValidationHelpers
+
+<style>
+    .bulk-assignment-dialog {
+        min-width: 900px;
+        max-width: 1200px;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .bulk-header {
+        background: linear-gradient(135deg, var(--green-new) 0%, var(--blue-new) 100%);
+        margin: -1.5rem -1.5rem 2rem -1.5rem;
+        padding: 2rem 1.5rem;
+        color: white;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .bulk-step {
+        background: rgba(var(--green-new-rgb), 0.05);
+        border: 2px solid rgba(var(--green-new-rgb), 0.1);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .bulk-step::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--green-new), var(--blue-new));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .bulk-step.active {
+        border-color: var(--green-new);
+        background: rgba(var(--green-new-rgb), 0.08);
+        box-shadow: 0 8px 32px rgba(var(--green-new-rgb), 0.15);
+    }
+
+    .bulk-step.active::before {
+        opacity: 1;
+    }
+
+    .step-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .step-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--green-new), var(--blue-new));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+
+    .selection-grid {
+        display: grid;
+        grid-template-columns: 1fr 60px 1fr;
+        gap: 2rem;
+        height: 400px;
+    }
+
+    .selection-panel {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .panel-header {
+        background: linear-gradient(135deg, rgba(var(--blue-new-rgb), 0.1), rgba(var(--purple-rain-rgb), 0.1));
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .panel-content {
+        height: calc(100% - 60px);
+        overflow-y: auto;
+        padding: 1rem;
+    }
+
+    .transfer-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .transfer-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+        background: var(--blue-new);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .transfer-btn:hover {
+        background: var(--purple-rain);
+        transform: scale(1.1);
+    }
+
+    .transfer-btn:disabled {
+        background: #dee2e6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .employee-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+    }
+
+    .employee-item:hover {
+        border-color: var(--blue-new);
+        background: rgba(var(--blue-new-rgb), 0.05);
+        transform: translateX(4px);
+    }
+
+    .employee-item.selected {
+        border-color: var(--blue-new);
+        background: rgba(var(--blue-new-rgb), 0.1);
+    }
+
+    .questionnaire-selection {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .questionnaire-option {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+        position: relative;
+    }
+
+    .questionnaire-option:hover {
+        border-color: var(--purple-rain);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(var(--purple-rain-rgb), 0.15);
+    }
+
+    .questionnaire-option.selected {
+        border-color: var(--purple-rain);
+        background: rgba(var(--purple-rain-rgb), 0.08);
+    }
+
+    .questionnaire-check {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--green-new);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .questionnaire-option.selected .questionnaire-check {
+        opacity: 1;
+    }
+
+    .assignment-settings {
+        background: linear-gradient(135deg, rgba(var(--golden-milk-rgb), 0.1), rgba(var(--green-new-rgb), 0.1));
+        border: 2px solid var(--golden-milk);
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 2rem 0;
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .bulk-summary {
+        background: linear-gradient(135deg, rgba(var(--blue-new-rgb), 0.1), rgba(var(--green-new-rgb), 0.1));
+        border: 2px solid var(--blue-new);
+        border-radius: 16px;
+        padding: 2rem;
+        margin: 2rem 0;
+    }
+
+    .summary-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .progress-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .progress-card {
+        background: white;
+        border-radius: 16px;
+        padding: 3rem;
+        text-align: center;
+        min-width: 400px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .filter-section {
+        margin-bottom: 1rem;
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-chip {
+        background: rgba(var(--blue-new-rgb), 0.1);
+        border: 1px solid var(--blue-new);
+        border-radius: 20px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .filter-chip.active {
+        background: var(--blue-new);
+        color: white;
+    }
+
+    :root {
+        --blue-new-rgb: 15, 105, 255;
+        --purple-rain-rgb: 147, 91, 169;
+        --green-new-rgb: 0, 230, 200;
+        --golden-milk-rgb: 230, 191, 127;
+    }
+</style>
+
+<EditForm Model="@bulkAssignmentModel" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator />
+
+    <div class="bulk-assignment-dialog">
+        <div class="bulk-header">
+            <div class="d-flex align-items-center">
+                <RadzenIcon Icon="group_add" Style="font-size: 3rem; margin-right: 1.5rem;" />
+                <div>
+                    <RadzenText TextStyle="TextStyle.H3" Class="mb-2">Bulk Assignment Wizard</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H6" Style="opacity: 0.9;">
+                        Efficiently assign questionnaires to multiple employees with advanced controls
+                    </RadzenText>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Select Employees -->
+        <div class="bulk-step @(currentStep >= 1 ? "active" : "")">
+            <div class="step-header">
+                <div class="step-icon">
+                    <RadzenIcon Icon="people" />
+                </div>
+                <div>
+                    <RadzenText TextStyle="TextStyle.H5" Class="mb-1">Select Employees</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">
+                        Choose employees to receive questionnaire assignments
+                    </RadzenText>
+                </div>
+            </div>
+
+            <!-- Employee Filters -->
+            <div class="filter-section">
+                <RadzenText TextStyle="TextStyle.Body2" Class="fw-semibold me-2">Filter by:</RadzenText>
+                @foreach (var dept in departments)
+                {
+                    <div class="filter-chip @(selectedDepartments.Contains(dept) ? "active" : "")"
+                         @onclick="() => ToggleDepartmentFilter(dept)">
+                        @dept
+                    </div>
+                }
+            </div>
+
+            <div class="selection-grid">
+                <!-- Available Employees -->
+                <div class="selection-panel">
+                    <div class="panel-header">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">Available Employees</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@GetFilteredAvailableEmployees().Count() employees</RadzenText>
+                        </div>
+                        <RadzenTextBox @bind-Value="@employeeSearchText"
+                                      Placeholder="Search..."
+                                      Style="width: 150px;"
+                                      oninput="@StateHasChanged" />
+                    </div>
+                    <div class="panel-content">
+                        @foreach (var employee in GetFilteredAvailableEmployees())
+                        {
+                            <div class="employee-item @(selectedEmployeesForTransfer.Contains(employee.Id) ? "selected" : "")"
+                                 @onclick="() => ToggleEmployeeSelection(employee.Id, true)">
+                                <RadzenCheckBox Value="@selectedEmployeesForTransfer.Contains(employee.Id)"
+                                              TValue="bool"
+                                              Change="@(args => ToggleEmployeeSelection(employee.Id, true))"
+                                              Class="me-2" />
+                                <RadzenGravatar Email="@employee.Email" Size="32" Class="me-2" />
+                                <div class="flex-grow-1">
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-semibold">@employee.Name</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.Department • @employee.Role</RadzenText>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Transfer Controls -->
+                <div class="transfer-controls">
+                    <button type="button" class="transfer-btn" @onclick="TransferSelectedEmployees"
+                            disabled="@(!selectedEmployeesForTransfer.Any())">
+                        <RadzenIcon Icon="arrow_forward" />
+                    </button>
+                    <button type="button" class="transfer-btn" @onclick="TransferAllEmployees"
+                            disabled="@(!GetFilteredAvailableEmployees().Any())">
+                        <RadzenIcon Icon="double_arrow" />
+                    </button>
+                    <button type="button" class="transfer-btn" @onclick="RemoveAllEmployees"
+                            disabled="@(!selectedEmployees.Any())">
+                        <RadzenIcon Icon="keyboard_double_arrow_left" />
+                    </button>
+                    <button type="button" class="transfer-btn" @onclick="RemoveSelectedEmployees"
+                            disabled="@(!selectedEmployeesForRemoval.Any())">
+                        <RadzenIcon Icon="arrow_back" />
+                    </button>
+                </div>
+
+                <!-- Selected Employees -->
+                <div class="selection-panel">
+                    <div class="panel-header">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">Selected Employees</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@selectedEmployees.Count selected</RadzenText>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        @foreach (var employee in selectedEmployees)
+                        {
+                            <div class="employee-item @(selectedEmployeesForRemoval.Contains(employee.Id) ? "selected" : "")"
+                                 @onclick="() => ToggleEmployeeSelection(employee.Id, false)">
+                                <RadzenCheckBox Value="@selectedEmployeesForRemoval.Contains(employee.Id)"
+                                              TValue="bool"
+                                              Change="@(args => ToggleEmployeeSelection(employee.Id, false))"
+                                              Class="me-2" />
+                                <RadzenGravatar Email="@employee.Email" Size="32" Class="me-2" />
+                                <div class="flex-grow-1">
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-semibold">@employee.Name</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.Department • @employee.Role</RadzenText>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <ValidationMessage For="@(() => bulkAssignmentModel.SelectedEmployeeIds)" class="text-danger mt-2" />
+        </div>
+
+        <!-- Step 2: Select Questionnaire -->
+        <div class="bulk-step @(currentStep >= 2 ? "active" : "")">
+            <div class="step-header">
+                <div class="step-icon">
+                    <RadzenIcon Icon="quiz" />
+                </div>
+                <div>
+                    <RadzenText TextStyle="TextStyle.H5" Class="mb-1">Choose Questionnaire</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">
+                        Select the questionnaire to assign to all selected employees
+                    </RadzenText>
+                </div>
+            </div>
+
+            <div class="questionnaire-selection">
+                @foreach (var questionnaire in availableQuestionnaires)
+                {
+                    <div class="questionnaire-option @(bulkAssignmentModel.SelectedQuestionnaireId == questionnaire.Id ? "selected" : "")"
+                         @onclick="() => SelectQuestionnaire(questionnaire)">
+                        <div class="questionnaire-check">
+                            <RadzenIcon Icon="check" />
+                        </div>
+
+                        <div class="d-flex align-items-start mb-3">
+                            <RadzenIcon Icon="@GetQuestionnaireIcon(questionnaire.Category)"
+                                      Style="font-size: 2.5rem; margin-right: 1rem; color: var(--purple-rain);" />
+                            <div class="flex-grow-1">
+                                <RadzenBadge Text="@questionnaire.Category"
+                                           BadgeStyle="BadgeStyle.Info"
+                                           Class="mb-2" />
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-2">@questionnaire.Title</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@questionnaire.Description</RadzenText>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between text-muted">
+                            <RadzenText TextStyle="TextStyle.Caption">
+                                <RadzenIcon Icon="schedule" Style="font-size: 0.9rem; margin-right: 4px;" />
+                                ~@questionnaire.EstimatedDuration min
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption">
+                                <RadzenIcon Icon="quiz" Style="font-size: 0.9rem; margin-right: 4px;" />
+                                @questionnaire.QuestionCount questions
+                            </RadzenText>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <ValidationMessage For="@(() => bulkAssignmentModel.SelectedQuestionnaireId)" class="text-danger mt-2" />
+        </div>
+
+        <!-- Step 3: Assignment Settings -->
+        <div class="bulk-step @(currentStep >= 3 ? "active" : "")">
+            <div class="step-header">
+                <div class="step-icon">
+                    <RadzenIcon Icon="settings" />
+                </div>
+                <div>
+                    <RadzenText TextStyle="TextStyle.H5" Class="mb-1">Assignment Settings</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">
+                        Configure assignment details and notification preferences
+                    </RadzenText>
+                </div>
+            </div>
+
+            <div class="assignment-settings">
+                <RadzenText TextStyle="TextStyle.H6" Class="mb-3 d-flex align-items-center">
+                    <RadzenIcon Icon="tune" Class="me-2" />
+                    Global Settings
+                </RadzenText>
+
+                <div class="settings-grid">
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="mb-2 fw-semibold">Due Date (Optional)</RadzenText>
+                        <RadzenDatePicker @bind-Value="@bulkAssignmentModel.DueDate"
+                                        DateFormat="dd/MM/yyyy"
+                                        Min="@DateTime.Today"
+                                        Class="w-100"
+                                        Placeholder="Select due date" />
+                    </div>
+
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="mb-2 fw-semibold">Priority Level</RadzenText>
+                        <RadzenDropDown @bind-Value="@bulkAssignmentModel.Priority"
+                                      Data="@priorityOptions"
+                                      TextProperty="Text"
+                                      ValueProperty="Value"
+                                      Class="w-100" />
+                    </div>
+
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="mb-2 fw-semibold">Stagger Assignments</RadzenText>
+                        <RadzenCheckBox @bind-Value="@bulkAssignmentModel.StaggerAssignments" Name="stagger" />
+                        <RadzenLabel Text="Spread assignments over time" Component="stagger" Class="ms-2" />
+
+                        @if (bulkAssignmentModel.StaggerAssignments)
+                        {
+                            <RadzenNumeric @bind-Value="@bulkAssignmentModel.StaggerDays"
+                                         TValue="int"
+                                         Min="1"
+                                         Max="30"
+                                         Class="w-100 mt-2"
+                                         Placeholder="Days between assignments" />
+                        }
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-2 fw-semibold">Assignment Notes</RadzenText>
+                    <RadzenTextArea @bind-Value="@bulkAssignmentModel.Notes"
+                                   Placeholder="Add instructions or context for this bulk assignment..."
+                                   Rows="3"
+                                   Class="w-100" />
+                </div>
+
+                <div class="mt-4">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-3 fw-semibold">Notification Settings</RadzenText>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <RadzenCheckBox @bind-Value="@bulkAssignmentModel.SendEmailNotification" Name="email" />
+                            <RadzenLabel Text="Send email notifications" Component="email" Class="ms-2" />
+                        </div>
+                        <div class="col-md-6">
+                            <RadzenCheckBox @bind-Value="@bulkAssignmentModel.SendSlackNotification" Name="slack" />
+                            <RadzenLabel Text="Send Slack notifications" Component="slack" Class="ms-2" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignment Summary -->
+        @if (IsReadyToAssign())
+        {
+            <div class="bulk-summary">
+                <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
+                    <RadzenIcon Icon="preview" Class="me-2" />
+                    Bulk Assignment Summary
+                </RadzenText>
+
+                <div class="summary-stats">
+                    <div class="stat-card">
+                        <RadzenIcon Icon="people" Style="font-size: 2.5rem; color: var(--blue-new); margin-bottom: 0.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@selectedEmployees.Count</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Employees</RadzenText>
+                    </div>
+
+                    <div class="stat-card">
+                        <RadzenIcon Icon="quiz" Style="font-size: 2.5rem; color: var(--purple-rain); margin-bottom: 0.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">1</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Questionnaire</RadzenText>
+                    </div>
+
+                    <div class="stat-card">
+                        <RadzenIcon Icon="schedule" Style="font-size: 2.5rem; color: var(--golden-milk); margin-bottom: 0.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@GetEstimatedDuration()</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Total Time</RadzenText>
+                    </div>
+
+                    <div class="stat-card">
+                        <RadzenIcon Icon="event" Style="font-size: 2.5rem; color: var(--green-new); margin-bottom: 0.5rem;" />
+                        <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@(bulkAssignmentModel.DueDate?.ToString("dd/MM") ?? "No Date")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Due Date</RadzenText>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-semibold mb-2">Selected Questionnaire:</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">@GetSelectedQuestionnaireName()</RadzenText>
+                </div>
+            </div>
+        }
+
+        <!-- Form Actions -->
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+            <RadzenButton Text="Cancel"
+                         ButtonStyle="ButtonStyle.Light"
+                         Icon="close"
+                         Click="@Close" />
+
+            <div class="d-flex gap-2">
+                <RadzenButton Text="Preview Assignments"
+                             ButtonStyle="ButtonStyle.Secondary"
+                             Icon="preview"
+                             Click="@ShowPreview"
+                             Disabled="@(!IsReadyToAssign())" />
+
+                <RadzenButton Text="@(isLoading ? "Creating Assignments..." : "Create Bulk Assignment")"
+                             ButtonStyle="ButtonStyle.Primary"
+                             Icon="@(isLoading ? "hourglass_empty" : "assignment_turned_in")"
+                             ButtonType="ButtonType.Submit"
+                             Disabled="@(!IsReadyToAssign() || isLoading)"
+                             Style="min-width: 200px;" />
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+<!-- Progress Overlay -->
+@if (isLoading)
+{
+    <div class="progress-overlay">
+        <div class="progress-card">
+            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary"
+                                     Value="@progressValue"
+                                     Size="ProgressBarCircularSize.Large" />
+            <RadzenText TextStyle="TextStyle.H6" Class="mt-3">@progressMessage</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">
+                Creating @selectedEmployees.Count assignments...
+            </RadzenText>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public EventCallback<BulkAssignmentModel> OnBulkAssignmentCreated { get; set; }
+    [Parameter] public EventCallback OnClosed { get; set; }
+
+    [Inject] protected DialogService DialogService { get; set; } = default!;
+    [Inject] protected NotificationService NotificationService { get; set; } = default!;
+
+    private BulkAssignmentModel bulkAssignmentModel = new();
+    private List<Employee> availableEmployees = new();
+    private List<Employee> selectedEmployees = new();
+    private List<Questionnaire> availableQuestionnaires = new();
+    private List<string> selectedEmployeesForTransfer = new();
+    private List<string> selectedEmployeesForRemoval = new();
+    private List<string> departments = new();
+    private List<string> selectedDepartments = new();
+
+    private string employeeSearchText = "";
+    private int currentStep = 1;
+    private bool isLoading = false;
+    private double progressValue = 0;
+    private string progressMessage = "";
+
+    private readonly List<PriorityOption> priorityOptions = new()
+    {
+        new("Low Priority", "Low"),
+        new("Normal Priority", "Normal"),
+        new("High Priority", "High"),
+        new("Critical Priority", "Critical")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+        UpdateCurrentStep();
+    }
+
+    private async Task LoadData()
+    {
+        // In real app, load from API
+        availableEmployees = new List<Employee>
+        {
+            new() { Id = Guid.NewGuid().ToString(), Name = "Alice Johnson", Email = "alice.johnson@company.com", Department = "Engineering", Role = "Senior Developer" },
+            new() { Id = Guid.NewGuid().ToString(), Name = "Bob Smith", Email = "bob.smith@company.com", Department = "Marketing", Role = "Marketing Manager" },
+            new() { Id = Guid.NewGuid().ToString(), Name = "Carol Davis", Email = "carol.davis@company.com", Department = "HR", Role = "HR Specialist" },
+            new() { Id = Guid.NewGuid().ToString(), Name = "David Wilson", Email = "david.wilson@company.com", Department = "Sales", Role = "Sales Representative" },
+            new() { Id = Guid.NewGuid().ToString(), Name = "Eva Brown", Email = "eva.brown@company.com", Department = "Engineering", Role = "Product Manager" },
+            new() { Id = Guid.NewGuid().ToString(), Name = "Frank Miller", Email = "frank.miller@company.com", Department = "Finance", Role = "Financial Analyst" },
+            new() { Id = Guid.NewGuid().ToString(), Name = "Grace Lee", Email = "grace.lee@company.com", Department = "Design", Role = "UX Designer" },
+            new() { Id = Guid.NewGuid().ToString(), Name = "Henry Chen", Email = "henry.chen@company.com", Department = "Engineering", Role = "DevOps Engineer" },
+        };
+
+        departments = availableEmployees.Select(e => e.Department).Distinct().ToList();
+
+        availableQuestionnaires = new List<Questionnaire>
+        {
+            new() { Id = Guid.NewGuid(), Title = "Annual Performance Review", Description = "Comprehensive evaluation of employee performance, goals, and development areas", Category = "Performance", EstimatedDuration = 15, QuestionCount = 25 },
+            new() { Id = Guid.NewGuid(), Title = "Team Collaboration Assessment", Description = "Evaluate teamwork, communication skills, and collaborative effectiveness", Category = "Team", EstimatedDuration = 10, QuestionCount = 18 },
+            new() { Id = Guid.NewGuid(), Title = "Leadership Skills Evaluation", Description = "Assessment of leadership capabilities and potential for growth", Category = "Leadership", EstimatedDuration = 20, QuestionCount = 30 },
+            new() { Id = Guid.NewGuid(), Title = "Technical Competency Check", Description = "Evaluate technical skills and knowledge in specific domains", Category = "Technical", EstimatedDuration = 25, QuestionCount = 35 },
+        };
+
+        bulkAssignmentModel.Priority = "Normal";
+        bulkAssignmentModel.SendEmailNotification = true;
+        bulkAssignmentModel.StaggerDays = 1;
+    }
+
+    private IEnumerable<Employee> GetFilteredAvailableEmployees()
+    {
+        var filtered = availableEmployees.Where(e => !selectedEmployees.Any(se => se.Id == e.Id));
+
+        if (selectedDepartments.Any())
+        {
+            filtered = filtered.Where(e => selectedDepartments.Contains(e.Department));
+        }
+
+        if (!string.IsNullOrWhiteSpace(employeeSearchText))
+        {
+            filtered = filtered.Where(e =>
+                e.Name.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                e.Email.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                e.Department.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                e.Role.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase)
+            );
+        }
+
+        return filtered;
+    }
+
+    private void ToggleDepartmentFilter(string department)
+    {
+        if (selectedDepartments.Contains(department))
+        {
+            selectedDepartments.Remove(department);
+        }
+        else
+        {
+            selectedDepartments.Add(department);
+        }
+        StateHasChanged();
+    }
+
+    private void ToggleEmployeeSelection(string employeeId, bool isForTransfer)
+    {
+        var targetList = isForTransfer ? selectedEmployeesForTransfer : selectedEmployeesForRemoval;
+
+        if (targetList.Contains(employeeId))
+        {
+            targetList.Remove(employeeId);
+        }
+        else
+        {
+            targetList.Add(employeeId);
+        }
+        StateHasChanged();
+    }
+
+    private void TransferSelectedEmployees()
+    {
+        var employeesToTransfer = availableEmployees.Where(e => selectedEmployeesForTransfer.Contains(e.Id)).ToList();
+        selectedEmployees.AddRange(employeesToTransfer);
+        selectedEmployeesForTransfer.Clear();
+        UpdateCurrentStep();
+        StateHasChanged();
+    }
+
+    private void TransferAllEmployees()
+    {
+        var allAvailable = GetFilteredAvailableEmployees().ToList();
+        selectedEmployees.AddRange(allAvailable);
+        UpdateCurrentStep();
+        StateHasChanged();
+    }
+
+    private void RemoveSelectedEmployees()
+    {
+        selectedEmployees.RemoveAll(e => selectedEmployeesForRemoval.Contains(e.Id));
+        selectedEmployeesForRemoval.Clear();
+        UpdateCurrentStep();
+        StateHasChanged();
+    }
+
+    private void RemoveAllEmployees()
+    {
+        selectedEmployees.Clear();
+        selectedEmployeesForRemoval.Clear();
+        UpdateCurrentStep();
+        StateHasChanged();
+    }
+
+    private void UpdateCurrentStep()
+    {
+        if (selectedEmployees.Any())
+        {
+            currentStep = Math.Max(currentStep, 2);
+            bulkAssignmentModel.SelectedEmployeeIds = selectedEmployees.Select(e => e.Id).ToList();
+        }
+        else
+        {
+            currentStep = 1;
+            bulkAssignmentModel.SelectedEmployeeIds.Clear();
+        }
+    }
+
+    private void SelectQuestionnaire(Questionnaire questionnaire)
+    {
+        bulkAssignmentModel.SelectedQuestionnaireId = questionnaire.Id;
+        bulkAssignmentModel.SelectedQuestionnaireName = questionnaire.Title;
+        currentStep = Math.Max(currentStep, 3);
+        StateHasChanged();
+    }
+
+    private string GetQuestionnaireIcon(string category)
+    {
+        return category switch
+        {
+            "Performance" => "trending_up",
+            "Team" => "groups",
+            "Leadership" => "emoji_events",
+            "Technical" => "engineering",
+            "Service" => "support_agent",
+            _ => "quiz"
+        };
+    }
+
+    private bool IsReadyToAssign()
+    {
+        return selectedEmployees.Any() && bulkAssignmentModel.SelectedQuestionnaireId != Guid.Empty;
+    }
+
+    private string GetSelectedQuestionnaireName()
+    {
+        return availableQuestionnaires.FirstOrDefault(q => q.Id == bulkAssignmentModel.SelectedQuestionnaireId)?.Title ?? "";
+    }
+
+    private string GetEstimatedDuration()
+    {
+        var questionnaire = availableQuestionnaires.FirstOrDefault(q => q.Id == bulkAssignmentModel.SelectedQuestionnaireId);
+        if (questionnaire == null) return "0 min";
+
+        var totalMinutes = questionnaire.EstimatedDuration * selectedEmployees.Count;
+        return totalMinutes > 60 ? $"{totalMinutes / 60}h {totalMinutes % 60}m" : $"{totalMinutes} min";
+    }
+
+    private async Task ShowPreview()
+    {
+        // TODO: Show preview dialog
+        NotificationService.Notify(NotificationSeverity.Info, "Preview", "Assignment preview would show here");
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (!IsReadyToAssign()) return;
+
+        // Perform custom validation
+        var validationErrors = bulkAssignmentModel.ValidateBulkAssignment();
+        if (validationErrors.Any())
+        {
+            foreach (var error in validationErrors)
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Validation Error", error);
+            }
+            return;
+        }
+
+        isLoading = true;
+        progressValue = 0;
+        progressMessage = "Preparing bulk assignments...";
+        StateHasChanged();
+
+        try
+        {
+            var totalAssignments = selectedEmployees.Count;
+            var failedAssignments = 0;
+            var successfulAssignments = 0;
+
+            for (int i = 0; i < totalAssignments; i++)
+            {
+                progressValue = (double)(i + 1) / totalAssignments * 100;
+                progressMessage = $"Creating assignment {i + 1} of {totalAssignments}";
+                StateHasChanged();
+
+                try
+                {
+                    // Simulate API call delay and potential individual failures
+                    await Task.Delay(Random.Shared.Next(300, 800));
+
+                    // Simulate random failure for individual assignments (3% chance)
+                    if (Random.Shared.Next(100) < 3)
+                    {
+                        throw new InvalidOperationException($"Failed to assign to {selectedEmployees[i].Name}");
+                    }
+
+                    successfulAssignments++;
+                }
+                catch (Exception)
+                {
+                    failedAssignments++;
+                    // Continue with next assignment
+                }
+            }
+
+            progressMessage = "Finalizing assignments...";
+            StateHasChanged();
+            await Task.Delay(1000);
+
+            await OnBulkAssignmentCreated.InvokeAsync(bulkAssignmentModel);
+
+            // Show appropriate success/warning message
+            if (failedAssignments == 0)
+            {
+                NotificationService.Notify(NotificationSeverity.Success,
+                    "Bulk Assignment Complete",
+                    $"Successfully created all {totalAssignments} questionnaire assignments",
+                    duration: 7000);
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Warning,
+                    "Bulk Assignment Partially Complete",
+                    $"Created {successfulAssignments} assignments successfully, {failedAssignments} failed. Please review and retry failed assignments.",
+                    duration: 10000);
+            }
+
+            await Close();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                "Permission Denied",
+                "You don't have permission to create bulk assignments. Please contact your administrator.");
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("server"))
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                "Server Error",
+                "The server is currently unavailable. Please try again later.");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                "Bulk Assignment Failed",
+                "An unexpected error occurred during bulk assignment. Please try again or contact support.");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Close()
+    {
+        await OnClosed.InvokeAsync();
+        DialogService.Close();
+    }
+
+    // Model classes
+    public class BulkAssignmentModel
+    {
+        [MinLengthList(1, ErrorMessage = "Please select at least one employee")]
+        [MaxLengthList(100, ErrorMessage = "Bulk assignments are limited to 100 employees")]
+        public List<string> SelectedEmployeeIds { get; set; } = new();
+
+        public string SelectedQuestionnaireName { get; set; } = "";
+
+        [NotEmptyGuid(ErrorMessage = "Please select a questionnaire")]
+        public Guid SelectedQuestionnaireId { get; set; } = Guid.Empty;
+
+        [FutureDate(allowToday: true)]
+        [MaxDateRange(maxYears: 1)]
+        public DateTime? DueDate { get; set; }
+
+        [Required(ErrorMessage = "Please select a priority level")]
+        public string Priority { get; set; } = "Normal";
+
+        [MaxLength(1000, ErrorMessage = "Notes cannot exceed 1000 characters")]
+        public string Notes { get; set; } = "";
+
+        public bool SendEmailNotification { get; set; } = true;
+
+        public bool SendSlackNotification { get; set; } = false;
+
+        public bool StaggerAssignments { get; set; } = false;
+
+        [StaggerValidation]
+        public int StaggerDays { get; set; } = 1;
+    }
+
+    public class Employee
+    {
+        public string Id { get; set; } = "";
+        public string Name { get; set; } = "";
+        public string Email { get; set; } = "";
+        public string Department { get; set; } = "";
+        public string Role { get; set; } = "";
+    }
+
+    public class Questionnaire
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string Category { get; set; } = "";
+        public int EstimatedDuration { get; set; }
+        public int QuestionCount { get; set; }
+    }
+
+    public class PriorityOption
+    {
+        public PriorityOption(string text, string value)
+        {
+            Text = text;
+            Value = value;
+        }
+        public string Text { get; set; }
+        public string Value { get; set; }
+    }
+}
