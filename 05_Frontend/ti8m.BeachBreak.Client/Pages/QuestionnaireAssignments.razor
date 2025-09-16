@@ -4,6 +4,8 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components
+@using ti8m.BeachBreak.Client.Components.Dialogs
 
 <PageTitle>Questionnaire Assignments</PageTitle>
 
@@ -453,15 +455,11 @@
 
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedBy)" Title="Assigned By" Width="150px" />
 
-                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="120px" TextAlign="TextAlign.Center">
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="120px" TextAlign="TextAlign.Center" Title="Actions">
                                     <Template Context="assignment">
-                                        <RadzenDropDown Data="@GetActionOptions(assignment)"
-                                                       TextProperty="Text"
-                                                       ValueProperty="Value"
-                                                       TValue="string"
-                                                       Placeholder="Actions"
-                                                       Change="@(args => ExecuteAction(assignment, args))"
-                                                       Style="width: 100px" />
+                                        <AssignmentActionsDropdown Assignment="@assignment"
+                                                                 OnActionExecuted="@HandleAssignmentAction"
+                                                                 IsDisabled="@isProcessingAction" />
                                     </Template>
                                 </RadzenDataGridColumn>
                             </Columns>
@@ -477,6 +475,7 @@
     [Inject] protected IQuestionnaireApiService QuestionnaireApiService { get; set; } = default!;
     [Inject] protected IEmployeeApiService EmployeeApiService { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
+    [Inject] protected DialogService DialogService { get; set; } = default!;
 
     // Data
     private List<EmployeeDto> allEmployees = new();
@@ -490,6 +489,7 @@
     private RadzenDataGrid<QuestionnaireAssignment> assignmentsGrid = default!;
     private bool isLoading = true;
     private bool isCreatingAssignment = false;
+    private bool isProcessingAction = false;
 
     // Form State
     private string employeeSearchText = "";
@@ -781,70 +781,271 @@
         };
     }
 
-    private List<ActionOption> GetActionOptions(QuestionnaireAssignment assignment)
+
+    private async Task HandleAssignmentAction(AssignmentActionsDropdown.AssignmentActionEventArgs eventArgs)
     {
-        var options = new List<ActionOption>
-        {
-            new("View", "view"),
-            new("Edit", "edit"),
-        };
+        if (isProcessingAction) return;
 
-        if (assignment.Status == AssignmentStatus.Assigned)
-        {
-            options.Add(new("Send Reminder", "remind"));
-        }
-
-        if (assignment.Status != AssignmentStatus.Completed)
-        {
-            options.Add(new("Cancel", "cancel"));
-        }
-
-        return options;
-    }
-
-    private async Task ExecuteAction(QuestionnaireAssignment assignment, object value)
-    {
-        var action = value?.ToString();
-        switch (action)
+        switch (eventArgs.Action)
         {
             case "view":
-                // TODO: Navigate to assignment details view
-                NotificationService.Notify(NotificationSeverity.Info, "View Assignment", $"Opening assignment details for {assignment.EmployeeName}");
+                await HandleViewAction(eventArgs.Assignment);
                 break;
             case "edit":
-                // TODO: Open assignment edit dialog or navigate to edit page
-                NotificationService.Notify(NotificationSeverity.Info, "Edit Assignment", $"Edit functionality not yet implemented for {assignment.EmployeeName}");
+                await HandleEditAction(eventArgs.Assignment);
                 break;
             case "remind":
-                // TODO: Implement actual reminder sending (email, notification, etc.)
-                try
-                {
-                    // Placeholder for actual reminder API call
-                    await Task.Delay(100); // Simulate API call
-                    NotificationService.Notify(NotificationSeverity.Success, "Reminder Sent",
-                        $"Reminder notification sent to {assignment.EmployeeName}");
-                }
-                catch (Exception ex)
-                {
-                    NotificationService.Notify(NotificationSeverity.Error, "Error",
-                        $"Failed to send reminder: {ex.Message}");
-                }
+                await HandleReminderAction(eventArgs.Assignment);
                 break;
             case "cancel":
-                // TODO: Call API to update assignment status
-                try
-                {
-                    assignment.Status = AssignmentStatus.Cancelled;
-                    NotificationService.Notify(NotificationSeverity.Info, "Assignment Cancelled",
-                        $"Assignment cancelled for {assignment.EmployeeName}");
-                    FilterAssignments();
-                }
-                catch (Exception ex)
-                {
-                    NotificationService.Notify(NotificationSeverity.Error, "Error",
-                        $"Failed to cancel assignment: {ex.Message}");
-                }
+                await HandleCancelAction(eventArgs.Assignment);
                 break;
+        }
+    }
+
+    private async Task HandleViewAction(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            var questionnaire = allQuestionnaires.FirstOrDefault(q => q.Id == assignment.TemplateId);
+
+            await DialogService.OpenAsync<AssignmentDetailsDialog>("Assignment Details",
+                new Dictionary<string, object>
+                {
+                    { "Assignment", assignment },
+                    { "Questionnaire", questionnaire! },
+                    { "OnEditClick", EventCallback.Factory.Create(this, () => HandleEditAction(assignment)) },
+                    { "OnCloseClick", EventCallback.Factory.Create(this, () => DialogService.Close()) },
+                    { "OnAssignToMoreClick", EventCallback.Factory.Create(this, () => HandleAssignToMoreAction(assignment)) }
+                },
+                new DialogOptions
+                {
+                    Width = "1000px",
+                    Height = "auto",
+                    Resizable = true,
+                    Draggable = true,
+                    CloseDialogOnOverlayClick = true,
+                    ShowClose = true
+                });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to open assignment details: {ex.Message}");
+        }
+    }
+
+    private async Task HandleEditAction(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            var questionnaire = allQuestionnaires.FirstOrDefault(q => q.Id == assignment.TemplateId);
+
+            var result = await DialogService.OpenAsync<EditAssignmentDialog>("Edit Assignment",
+                new Dictionary<string, object>
+                {
+                    { "Assignment", assignment },
+                    { "Questionnaire", questionnaire! },
+                    { "AllEmployees", allEmployees },
+                    { "OnSave", EventCallback.Factory.Create<EditAssignmentDialog.EditAssignmentModel>(this, (model) => SaveAssignmentChanges(assignment, model)) },
+                    { "OnCancel", EventCallback.Factory.Create(this, () => DialogService.Close()) },
+                    { "IsLoading", isProcessingAction }
+                },
+                new DialogOptions
+                {
+                    Width = "1200px",
+                    Height = "auto",
+                    Resizable = true,
+                    Draggable = true,
+                    CloseDialogOnOverlayClick = false,
+                    ShowClose = true
+                });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to open edit dialog: {ex.Message}");
+        }
+    }
+
+    private async Task HandleReminderAction(QuestionnaireAssignment assignment)
+    {
+        isProcessingAction = true;
+        StateHasChanged();
+
+        try
+        {
+            // Show confirmation for sending reminder
+            var confirmed = await DialogService.Confirm(
+                $"Send a reminder notification to {assignment.EmployeeName}?",
+                "Send Reminder",
+                new ConfirmOptions { OkButtonText = "Send", CancelButtonText = "Cancel" });
+
+            if (confirmed == true)
+            {
+                // TODO: Implement actual reminder API call
+                await Task.Delay(1000); // Simulate API call
+
+                NotificationService.Notify(NotificationSeverity.Success,
+                    "Reminder Sent",
+                    $"Reminder notification sent successfully to {assignment.EmployeeName}",
+                    duration: 5000);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to send reminder: {ex.Message}");
+        }
+        finally
+        {
+            isProcessingAction = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleCancelAction(QuestionnaireAssignment assignment)
+    {
+        isProcessingAction = true;
+        StateHasChanged();
+
+        try
+        {
+            // Show confirmation dialog for destructive action
+            var options = new ConfirmOptions
+            {
+                OkButtonText = "Cancel Assignment",
+                CancelButtonText = "Keep Assignment"
+            };
+
+            var confirmed = await DialogService.Confirm(
+                $"Are you sure you want to cancel the assignment for {assignment.EmployeeName}? This action cannot be undone.",
+                "Cancel Assignment",
+                options);
+
+            if (confirmed == true)
+            {
+                // TODO: Call actual API to update assignment status
+                await Task.Delay(1000); // Simulate API call
+
+                assignment.Status = AssignmentStatus.Cancelled;
+                FilterAssignments();
+
+                NotificationService.Notify(NotificationSeverity.Success,
+                    "Assignment Cancelled",
+                    $"Assignment has been cancelled for {assignment.EmployeeName}",
+                    duration: 5000);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to cancel assignment: {ex.Message}");
+        }
+        finally
+        {
+            isProcessingAction = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveAssignmentChanges(QuestionnaireAssignment assignment, EditAssignmentDialog.EditAssignmentModel editModel)
+    {
+        isProcessingAction = true;
+        StateHasChanged();
+
+        try
+        {
+            // Handle employee changes - create new assignments for additional employees
+            if (editModel.SelectedEmployeeIds.Count > 1)
+            {
+                var newEmployeeIds = editModel.SelectedEmployeeIds.Where(id => id != assignment.EmployeeId).ToList();
+
+                if (newEmployeeIds.Any())
+                {
+                    // Create additional assignments for new employees
+                    var newAssignments = await QuestionnaireApiService.CreateAssignmentsAsync(
+                        assignment.TemplateId,
+                        newEmployeeIds,
+                        editModel.DueDate,
+                        editModel.Notes,
+                        editModel.AssignedBy ?? await GetCurrentUserAsync()
+                    );
+
+                    if (newAssignments.Any())
+                    {
+                        assignments.AddRange(newAssignments);
+
+                        NotificationService.Notify(NotificationSeverity.Info,
+                            "Additional Assignments Created",
+                            $"Created {newAssignments.Count} additional assignments for other selected employees",
+                            duration: 5000);
+                    }
+                }
+            }
+
+            // Update the original assignment
+            // TODO: Implement actual API call to update assignment
+            await Task.Delay(1000); // Simulate API call
+
+            // Update the local assignment object
+            assignment.Status = editModel.Status;
+            assignment.DueDate = editModel.DueDate;
+            assignment.Notes = editModel.Notes;
+            assignment.AssignedBy = editModel.AssignedBy;
+
+            // Refresh the filtered assignments
+            FilterAssignments();
+
+            var totalAssignments = editModel.SelectedEmployeeIds.Count;
+            var message = totalAssignments > 1
+                ? $"Assignment updated and {totalAssignments - 1} additional assignments created"
+                : $"Assignment for {assignment.EmployeeName} has been updated successfully";
+
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Assignment Updated",
+                message,
+                duration: 5000);
+
+            DialogService.Close();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to update assignment: {ex.Message}");
+        }
+        finally
+        {
+            isProcessingAction = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleAssignToMoreAction(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            // Close the current details dialog first
+            DialogService.Close();
+
+            // Open the bulk assignment dialog with the same questionnaire pre-selected
+            var questionnaire = allQuestionnaires.FirstOrDefault(q => q.Id == assignment.TemplateId);
+
+            if (questionnaire != null)
+            {
+                // TODO: Open a bulk assignment dialog with the questionnaire pre-selected
+                // For now, show a notification
+                NotificationService.Notify(NotificationSeverity.Info,
+                    "Assign to More Employees",
+                    $"Bulk assignment feature will open with '{questionnaire.Name}' pre-selected");
+
+                // You can implement a BulkAssignmentDialog here similar to the existing ones
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to open bulk assignment: {ex.Message}");
         }
     }
 
@@ -868,14 +1069,4 @@
         public AssignmentStatus? Value { get; set; }
     }
 
-    public class ActionOption
-    {
-        public ActionOption(string text, string value)
-        {
-            Text = text;
-            Value = value;
-        }
-        public string Text { get; set; }
-        public string Value { get; set; }
-    }
 }

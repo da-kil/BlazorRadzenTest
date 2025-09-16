@@ -1,0 +1,139 @@
+@using Radzen
+@using Radzen.Blazor
+
+<style>
+    .confirmation-dialog {
+        max-width: 450px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .dialog-header {
+        background: linear-gradient(135deg, var(--danger-color), var(--danger-color-dark));
+        color: white;
+        padding: 1.5rem;
+        border-radius: 12px 12px 0 0;
+        margin: -1rem -1rem 0 -1rem;
+    }
+
+    .dialog-header.warning {
+        background: linear-gradient(135deg, var(--warning-color), var(--warning-color-dark));
+    }
+
+    .dialog-header.info {
+        background: linear-gradient(135deg, var(--info-color), var(--info-color-dark));
+    }
+
+    .dialog-content {
+        padding: 1.5rem 0;
+    }
+
+    .dialog-actions {
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+    }
+
+    .warning-icon {
+        font-size: 3rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin-bottom: 0.5rem;
+    }
+
+    :root {
+        --danger-color: #dc3545;
+        --danger-color-dark: #c82333;
+        --warning-color: #fd7e14;
+        --warning-color-dark: #e8690b;
+        --info-color: #0f69ff;
+        --info-color-dark: #0056d1;
+    }
+</style>
+
+<RadzenDialog>
+    <div class="confirmation-dialog">
+        <div class="dialog-header @GetHeaderClass()">
+            <div class="text-center">
+                <RadzenIcon Icon="@GetHeaderIcon()" Class="warning-icon" />
+                <RadzenText TextStyle="TextStyle.H5" Class="mb-0">@Title</RadzenText>
+            </div>
+        </div>
+
+        <div class="dialog-content">
+            <div class="text-center">
+                <RadzenText TextStyle="TextStyle.Body1" Class="mb-3">@Message</RadzenText>
+
+                @if (!string.IsNullOrEmpty(Details))
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@Details</RadzenText>
+                }
+            </div>
+        </div>
+
+        <div class="dialog-actions">
+            <RadzenButton Text="@CancelText"
+                         ButtonStyle="ButtonStyle.Light"
+                         Click="@OnCancel"
+                         Size="ButtonSize.Medium" />
+
+            <RadzenButton Text="@ConfirmText"
+                         ButtonStyle="@GetConfirmButtonStyle()"
+                         Click="@OnConfirm"
+                         Size="ButtonSize.Medium"
+                         Icon="@ConfirmIcon" />
+        </div>
+    </div>
+</RadzenDialog>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Confirm Action";
+    [Parameter] public string Message { get; set; } = "Are you sure you want to proceed?";
+    [Parameter] public string Details { get; set; } = string.Empty;
+    [Parameter] public string ConfirmText { get; set; } = "Confirm";
+    [Parameter] public string CancelText { get; set; } = "Cancel";
+    [Parameter] public string ConfirmIcon { get; set; } = "check";
+    [Parameter] public ConfirmationType Type { get; set; } = ConfirmationType.Danger;
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string GetHeaderClass()
+    {
+        return Type switch
+        {
+            ConfirmationType.Warning => "warning",
+            ConfirmationType.Info => "info",
+            _ => ""
+        };
+    }
+
+    private string GetHeaderIcon()
+    {
+        return Type switch
+        {
+            ConfirmationType.Danger => "warning",
+            ConfirmationType.Warning => "info",
+            ConfirmationType.Info => "help",
+            _ => "warning"
+        };
+    }
+
+    private ButtonStyle GetConfirmButtonStyle()
+    {
+        return Type switch
+        {
+            ConfirmationType.Danger => ButtonStyle.Danger,
+            ConfirmationType.Warning => ButtonStyle.Warning,
+            ConfirmationType.Info => ButtonStyle.Primary,
+            _ => ButtonStyle.Danger
+        };
+    }
+
+    public enum ConfirmationType
+    {
+        Danger,
+        Warning,
+        Info
+    }
+}

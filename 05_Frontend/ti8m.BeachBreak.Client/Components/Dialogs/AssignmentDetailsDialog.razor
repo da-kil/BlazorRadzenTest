@@ -1,0 +1,515 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<style>
+    .assignment-details-container {
+        max-width: 1000px;
+        width: 95vw;
+        max-height: 95vh;
+        overflow-y: auto;
+        padding: 0;
+    }
+
+    .detail-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .detail-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    .status-assigned {
+        background: rgba(108, 117, 125, 0.2);
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .status-in-progress {
+        background: rgba(13, 202, 240, 0.2);
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .status-completed {
+        background: rgba(25, 135, 84, 0.2);
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .status-overdue {
+        background: rgba(220, 53, 69, 0.2);
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .status-cancelled {
+        background: rgba(173, 181, 189, 0.2);
+        color: #fff;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .content-body {
+        padding: 1.5rem;
+        background: #f8f9fa;
+    }
+
+    .info-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e9ecef;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .info-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f8f9fa;
+    }
+
+    .card-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        color: white;
+    }
+
+    .card-icon.employee {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .card-icon.timeline {
+        background: linear-gradient(135deg, #f093fb, #f5576c);
+    }
+
+    .card-icon.questionnaire {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+    }
+
+    .card-icon.notes {
+        background: linear-gradient(135deg, #43e97b, #38f9d7);
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .info-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        font-size: 0.875rem;
+        opacity: 0.8;
+    }
+
+    .info-value {
+        font-weight: 500;
+        color: #212529;
+        text-align: right;
+        flex: 1;
+        margin-left: 1rem;
+    }
+
+    .questionnaire-preview {
+        background: linear-gradient(135deg, rgba(79, 172, 254, 0.1), rgba(0, 242, 254, 0.1));
+        border: 2px solid rgba(79, 172, 254, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .questionnaire-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid rgba(79, 172, 254, 0.2);
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #4facfe;
+        display: block;
+    }
+
+    .stat-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(79, 172, 254, 0.2);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #4facfe, #00f2fe);
+        border-radius: 4px;
+        transition: width 0.3s ease;
+    }
+
+    .action-bar {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding: 1.5rem;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        position: sticky;
+        bottom: 0;
+    }
+
+    .warning-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .notes-content {
+        background: #fff;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        font-style: italic;
+        color: #6c757d;
+        line-height: 1.5;
+    }
+
+    @@media (max-width: 768px) {
+        .info-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .questionnaire-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .action-bar {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="assignment-details-container">
+    <!-- Hero Section -->
+    <div class="detail-hero">
+        <div class="hero-content">
+            <div class="status-chip @GetStatusClass()">
+                <RadzenIcon Icon="@GetStatusIcon()" />
+                @Assignment.Status.ToString()
+            </div>
+
+            <RadzenText TextStyle="TextStyle.H3" Class="mb-2">Assignment Details</RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" Style="opacity: 0.9;">
+                @Assignment.EmployeeName • Assigned @Assignment.AssignedDate.ToString("MMM dd, yyyy")
+            </RadzenText>
+
+            @if (IsOverdue())
+            {
+                <div class="warning-badge mt-3">
+                    <RadzenIcon Icon="warning" />
+                    Overdue by @((DateTime.Now - Assignment.DueDate!.Value).Days) days
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Content Body -->
+    <div class="content-body">
+        <div class="info-cards">
+            <!-- Employee Information Card -->
+            <div class="info-card">
+                <div class="card-header">
+                    <div class="card-icon employee">
+                        <RadzenIcon Icon="person" />
+                    </div>
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-0">Employee</RadzenText>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Full Name</span>
+                    <span class="info-value">@Assignment.EmployeeName</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Email</span>
+                    <span class="info-value">@Assignment.EmployeeEmail</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Employee ID</span>
+                    <span class="info-value">@Assignment.EmployeeId</span>
+                </div>
+            </div>
+
+            <!-- Timeline Card -->
+            <div class="info-card">
+                <div class="card-header">
+                    <div class="card-icon timeline">
+                        <RadzenIcon Icon="schedule" />
+                    </div>
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-0">Timeline</RadzenText>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Assigned</span>
+                    <span class="info-value">@Assignment.AssignedDate.ToString("MMM dd, yyyy 'at' HH:mm")</span>
+                </div>
+
+                @if (Assignment.DueDate.HasValue)
+                {
+                    <div class="info-item">
+                        <span class="info-label">Due Date</span>
+                        <span class="info-value @(IsOverdue() ? "text-danger fw-bold" : "")">
+                            @Assignment.DueDate.Value.ToString("MMM dd, yyyy")
+                        </span>
+                    </div>
+                }
+
+                @if (Assignment.CompletedDate.HasValue)
+                {
+                    <div class="info-item">
+                        <span class="info-label">Completed</span>
+                        <span class="info-value text-success fw-bold">
+                            @Assignment.CompletedDate.Value.ToString("MMM dd, yyyy 'at' HH:mm")
+                        </span>
+                    </div>
+                }
+
+                <div class="info-item">
+                    <span class="info-label">Assigned By</span>
+                    <span class="info-value">@(Assignment.AssignedBy ?? "System")</span>
+                </div>
+            </div>
+
+            <!-- Questionnaire Card -->
+            @if (Questionnaire != null)
+            {
+                <div class="info-card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <div class="card-icon questionnaire">
+                            <RadzenIcon Icon="quiz" />
+                        </div>
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-0">Questionnaire</RadzenText>
+                    </div>
+
+                    <div class="questionnaire-preview">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <RadzenText TextStyle="TextStyle.H5" Class="fw-bold mb-1">@Questionnaire.Name</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@Questionnaire.Description</RadzenText>
+                            </div>
+                            <RadzenBadge Text="@Questionnaire.Category" BadgeStyle="BadgeStyle.Info" />
+                        </div>
+
+                        <div class="questionnaire-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">@Questionnaire.Sections.Count</span>
+                                <div class="stat-label">Sections</div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">@GetTotalQuestions()</span>
+                                <div class="stat-label">Questions</div>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">~@GetEstimatedDuration()</span>
+                                <div class="stat-label">Minutes</div>
+                            </div>
+                        </div>
+
+                        @if (Assignment.Status == AssignmentStatus.InProgress)
+                        {
+                            <div class="mt-3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Progress</RadzenText>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 60%;"></div>
+                                </div>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    Employee is actively working on this questionnaire
+                                </RadzenText>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Notes Card -->
+            @if (!string.IsNullOrWhiteSpace(Assignment.Notes))
+            {
+                <div class="info-card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <div class="card-icon notes">
+                            <RadzenIcon Icon="note" />
+                        </div>
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-0">Notes</RadzenText>
+                    </div>
+
+                    <div class="notes-content">
+                        "@Assignment.Notes"
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        @if (Assignment.Status != AssignmentStatus.Completed && Assignment.Status != AssignmentStatus.Cancelled)
+        {
+            <RadzenButton Text="Assign to More"
+                         ButtonStyle="ButtonStyle.Secondary"
+                         Icon="group_add"
+                         Click="@OnAssignToMoreClick"
+                         Size="ButtonSize.Medium" />
+
+            <RadzenButton Text="Edit Assignment"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Icon="edit"
+                         Click="@OnEditClick"
+                         Size="ButtonSize.Medium" />
+        }
+
+        <RadzenButton Text="Close"
+                     ButtonStyle="ButtonStyle.Light"
+                     Icon="close"
+                     Click="@OnCloseClick"
+                     Size="ButtonSize.Medium" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionnaireAssignment Assignment { get; set; } = default!;
+    [Parameter] public QuestionnaireTemplate? Questionnaire { get; set; }
+    [Parameter] public EventCallback OnEditClick { get; set; }
+    [Parameter] public EventCallback OnCloseClick { get; set; }
+    [Parameter] public EventCallback OnAssignToMoreClick { get; set; }
+
+    private string GetStatusClass()
+    {
+        return Assignment.Status switch
+        {
+            AssignmentStatus.Assigned => "status-assigned",
+            AssignmentStatus.InProgress => "status-in-progress",
+            AssignmentStatus.Completed => "status-completed",
+            AssignmentStatus.Overdue => "status-overdue",
+            AssignmentStatus.Cancelled => "status-cancelled",
+            _ => "status-assigned"
+        };
+    }
+
+    private string GetStatusIcon()
+    {
+        return Assignment.Status switch
+        {
+            AssignmentStatus.Assigned => "assignment",
+            AssignmentStatus.InProgress => "hourglass_top",
+            AssignmentStatus.Completed => "check_circle",
+            AssignmentStatus.Overdue => "warning",
+            AssignmentStatus.Cancelled => "cancel",
+            _ => "assignment"
+        };
+    }
+
+    private bool IsOverdue()
+    {
+        return Assignment.DueDate.HasValue &&
+               Assignment.DueDate < DateTime.Now &&
+               Assignment.Status != AssignmentStatus.Completed;
+    }
+
+    private int GetTotalQuestions()
+    {
+        return Questionnaire?.Sections.Sum(s => s.Questions.Count) ?? 0;
+    }
+
+    private int GetEstimatedDuration()
+    {
+        if (Questionnaire?.Settings?.TimeLimit.HasValue == true)
+        {
+            return (int)Questionnaire.Settings.TimeLimit.Value.TotalMinutes;
+        }
+
+        var totalQuestions = GetTotalQuestions();
+        return Math.Max(5, totalQuestions * 2);
+    }
+}

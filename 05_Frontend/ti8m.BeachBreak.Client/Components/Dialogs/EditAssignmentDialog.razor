@@ -1,0 +1,1004 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+
+<style>
+    .edit-assignment-container {
+        max-width: 1200px;
+        width: 95vw;
+        max-height: 95vh;
+        overflow-y: auto;
+        padding: 0;
+    }
+
+    .edit-hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .edit-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 150px;
+        height: 150px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(-30%, -30%);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .edit-body {
+        padding: 2rem;
+        background: #f8f9fa;
+    }
+
+    .edit-tabs {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .tab-headers {
+        display: flex;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .tab-header {
+        flex: 1;
+        padding: 1.5rem;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-weight: 600;
+        color: #6c757d;
+    }
+
+    .tab-header.active {
+        background: white;
+        color: #667eea;
+        border-bottom: 3px solid #667eea;
+    }
+
+    .tab-header:hover:not(.active) {
+        background: rgba(102, 126, 234, 0.05);
+        color: #667eea;
+    }
+
+    .tab-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        background: #e9ecef;
+        color: #6c757d;
+    }
+
+    .tab-header.active .tab-icon {
+        background: #667eea;
+        color: white;
+    }
+
+    .tab-content {
+        padding: 2rem;
+        min-height: 400px;
+    }
+
+    .current-assignment {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+        border: 2px solid rgba(102, 126, 234, 0.2);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .assignment-overview {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 1.5rem;
+        align-items: center;
+    }
+
+    .employee-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .assignment-info h4 {
+        margin: 0 0 0.5rem 0;
+        color: #212529;
+    }
+
+    .assignment-info p {
+        margin: 0;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .questionnaire-badge {
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        color: white;
+        padding: 0.75rem 1.25rem;
+        border-radius: 20px;
+        font-weight: 600;
+        text-align: center;
+        min-width: 150px;
+    }
+
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .section-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f8f9fa;
+    }
+
+    .section-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        color: white;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .form-field {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-field:last-child {
+        margin-bottom: 0;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+        font-size: 0.875rem;
+    }
+
+    .employee-search {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+        align-items: flex-end;
+    }
+
+    .employee-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+
+    .employee-card {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+
+    .employee-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+        transform: translateY(-1px);
+    }
+
+    .employee-card.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .employee-card.current {
+        border-color: #28a745;
+        background: rgba(40, 167, 69, 0.05);
+    }
+
+    .employee-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .employee-mini-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+        font-weight: bold;
+    }
+
+    .employee-card.current .employee-mini-avatar {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+
+    .employee-details h6 {
+        margin: 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .employee-details p {
+        margin: 0;
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .employee-meta {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+
+    .selection-indicator {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #667eea;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+
+    .employee-card.selected .selection-indicator,
+    .employee-card.current .selection-indicator {
+        opacity: 1;
+    }
+
+    .employee-card.current .selection-indicator {
+        background: #28a745;
+    }
+
+    .status-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1rem;
+    }
+
+    .status-option {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.25rem;
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: white;
+    }
+
+    .status-option:hover {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.05);
+    }
+
+    .status-option.selected {
+        border-color: #667eea;
+        background: rgba(102, 126, 234, 0.1);
+    }
+
+    .status-indicator {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+    }
+
+    .status-assigned .status-indicator {
+        background-color: #6c757d;
+    }
+
+    .status-in-progress .status-indicator {
+        background-color: #0dcaf0;
+    }
+
+    .status-completed .status-indicator {
+        background-color: #198754;
+    }
+
+    .status-cancelled .status-indicator {
+        background-color: #dc3545;
+    }
+
+    .status-overdue .status-indicator {
+        background-color: #fd7e14;
+    }
+
+    .selection-summary {
+        background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(32, 201, 151, 0.1));
+        border: 2px solid rgba(40, 167, 69, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .changes-summary {
+        background: linear-gradient(135deg, rgba(253, 126, 20, 0.1), rgba(255, 193, 7, 0.1));
+        border: 2px solid rgba(253, 126, 20, 0.3);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .summary-item {
+        text-align: center;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+
+    .summary-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #28a745;
+        display: block;
+    }
+
+    .summary-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+
+    .action-bar {
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        padding: 1.5rem 2rem;
+        background: white;
+        border-top: 1px solid #e9ecef;
+        position: sticky;
+        bottom: 0;
+    }
+
+    .action-left {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .action-right {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .validation-error {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    @@media (max-width: 768px) {
+        .tab-headers {
+            flex-direction: column;
+        }
+
+        .employee-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .status-options {
+            grid-template-columns: 1fr;
+        }
+
+        .action-bar {
+            flex-direction: column-reverse;
+            gap: 1rem;
+        }
+
+        .action-right {
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="edit-assignment-container">
+    <!-- Hero Section -->
+    <div class="edit-hero">
+        <div class="hero-content">
+            <RadzenText TextStyle="TextStyle.H3" Class="mb-2">Edit Assignment</RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" Style="opacity: 0.9;">
+                Modify assignment details, change employees, and update settings
+            </RadzenText>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div class="edit-body">
+        <!-- Current Assignment Overview -->
+        <div class="current-assignment">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Current Assignment</RadzenText>
+            <div class="assignment-overview">
+                <div class="employee-avatar">
+                    @GetEmployeeInitials()
+                </div>
+                <div class="assignment-info">
+                    <RadzenText TextStyle="TextStyle.H5" Class="fw-bold">@Assignment.EmployeeName</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@Assignment.EmployeeEmail</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Assigned @Assignment.AssignedDate.ToString("MMM dd, yyyy")</RadzenText>
+                </div>
+                @if (Questionnaire != null)
+                {
+                    <div class="questionnaire-badge">
+                        <RadzenIcon Icon="quiz" Style="margin-right: 0.5rem;" />
+                        @Questionnaire.Name
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Tabbed Interface -->
+        <div class="edit-tabs">
+            <div class="tab-headers">
+                <button class="tab-header @(activeTab == "employees" ? "active" : "")" @onclick='() => SetActiveTab("employees")'>
+                    <div class="tab-icon">
+                        <RadzenIcon Icon="people" />
+                    </div>
+                    <span>Assigned Employees</span>
+                </button>
+                <button class="tab-header @(activeTab == "details" ? "active" : "")" @onclick='() => SetActiveTab("details")'>
+                    <div class="tab-icon">
+                        <RadzenIcon Icon="settings" />
+                    </div>
+                    <span>Assignment Details</span>
+                </button>
+                <button class="tab-header @(activeTab == "review" ? "active" : "")" @onclick='() => SetActiveTab("review")'>
+                    <div class="tab-icon">
+                        <RadzenIcon Icon="preview" />
+                    </div>
+                    <span>Review Changes</span>
+                </button>
+            </div>
+
+            <div class="tab-content">
+                @if (activeTab == "employees")
+                {
+                    <!-- Employee Selection Tab -->
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Select Employees for Assignment</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-4">
+                        Choose which employees should receive this questionnaire. The current assignee is highlighted in green.
+                    </RadzenText>
+
+                    <div class="employee-search">
+                        <div style="flex: 1;">
+                            <RadzenLabel Text="Search Employees" Class="form-label" />
+                            <RadzenTextBox @bind-Value="@employeeSearchText"
+                                          Placeholder="Search by name, email, or department..."
+                                          Class="w-100"
+                                          @oninput="@(async (args) => { employeeSearchText = args.Value?.ToString() ?? ""; await FilterEmployees(); })"
+                                          Icon="search" />
+                        </div>
+                        <div>
+                            <RadzenButton Text="Select All Filtered"
+                                        ButtonStyle="ButtonStyle.Secondary"
+                                        Size="ButtonSize.Small"
+                                        Icon="select_all"
+                                        Click="@SelectAllFilteredEmployees" />
+                        </div>
+                        <div>
+                            <RadzenButton Text="Clear Selection"
+                                        ButtonStyle="ButtonStyle.Light"
+                                        Size="ButtonSize.Small"
+                                        Icon="clear"
+                                        Click="@ClearEmployeeSelection" />
+                        </div>
+                    </div>
+
+                    <div class="employee-grid">
+                        @foreach (var employee in filteredEmployees)
+                        {
+                            var isCurrentAssignee = employee.Id.ToString() == Assignment.EmployeeId;
+                            var isSelected = selectedEmployeeIds.Contains(employee.Id.ToString());
+
+                            <div class="employee-card @(isSelected ? "selected" : "") @(isCurrentAssignee ? "current" : "")"
+                                 @onclick="() => ToggleEmployeeSelection(employee.Id.ToString())">
+
+                                <div class="selection-indicator">
+                                    <RadzenIcon Icon="@(isCurrentAssignee ? "star" : "check")" />
+                                </div>
+
+                                <div class="employee-header">
+                                    <div class="employee-mini-avatar">
+                                        @GetEmployeeInitials(employee.FullName)
+                                    </div>
+                                    <div class="employee-details">
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@employee.FullName</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.EMail</RadzenText>
+                                    </div>
+                                </div>
+
+                                <div class="employee-meta">
+                                    @employee.Department • @employee.Role
+                                    @if (isCurrentAssignee)
+                                    {
+                                        <div style="color: #28a745; font-weight: 600; margin-top: 0.25rem;">
+                                            <RadzenIcon Icon="star" Style="font-size: 0.75rem; margin-right: 0.25rem;" />
+                                            Current Assignee
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (selectedEmployeeIds.Any())
+                    {
+                        <div class="selection-summary">
+                            <RadzenText TextStyle="TextStyle.H6" Class="mb-2">Selection Summary</RadzenText>
+                            <div class="summary-grid">
+                                <div class="summary-item">
+                                    <span class="summary-number">@selectedEmployeeIds.Count</span>
+                                    <div class="summary-label">Selected Employees</div>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-number">@(selectedEmployeeIds.Contains(Assignment.EmployeeId) ? "Yes" : "No")</span>
+                                    <div class="summary-label">Includes Current Assignee</div>
+                                </div>
+                                <div class="summary-item">
+                                    <span class="summary-number">@(selectedEmployeeIds.Count - (selectedEmployeeIds.Contains(Assignment.EmployeeId) ? 1 : 0))</span>
+                                    <div class="summary-label">New Assignments</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else if (activeTab == "details")
+                {
+                    <!-- Assignment Details Tab -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <RadzenIcon Icon="flag" />
+                            </div>
+                            <div>
+                                <RadzenText TextStyle="TextStyle.H6" Class="mb-0">Assignment Status</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Update the current status</RadzenText>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <span class="form-label">Current Status *</span>
+                            <div class="status-options">
+                                @foreach (var status in GetAvailableStatuses())
+                                {
+                                    <div class="status-option @(editModel.Status == status.Value ? "selected" : "") status-@status.Value.ToString().ToLower()"
+                                         @onclick="() => editModel.Status = status.Value">
+                                        <div class="status-indicator"></div>
+                                        <span>@status.Text</span>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <RadzenIcon Icon="schedule" />
+                            </div>
+                            <div>
+                                <RadzenText TextStyle="TextStyle.H6" Class="mb-0">Schedule & Timing</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Set deadline for completion</RadzenText>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <RadzenLabel Text="Due Date" Class="form-label" />
+                            <RadzenDatePicker @bind-Value="@editModel.DueDate"
+                                             DateFormat="dd/MM/yyyy"
+                                             Min="@DateTime.Today"
+                                             Class="w-100"
+                                             Placeholder="Select due date (optional)"
+                                             ShowCalendarWeek="true" />
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">
+                                <RadzenIcon Icon="note" />
+                            </div>
+                            <div>
+                                <RadzenText TextStyle="TextStyle.H6" Class="mb-0">Notes & Instructions</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Add context for employees</RadzenText>
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <RadzenLabel Text="Assignment Notes" Class="form-label" />
+                            <RadzenTextArea @bind-Value="@editModel.Notes"
+                                           Placeholder="Add notes or instructions for this assignment..."
+                                           Rows="4"
+                                           Class="w-100"
+                                           MaxLength="1000" />
+                            <div style="font-size: 0.75rem; color: #6c757d; text-align: right; margin-top: 0.25rem;">
+                                @(editModel.Notes?.Length ?? 0)/1000 characters
+                            </div>
+                        </div>
+
+                        <div class="form-field">
+                            <RadzenLabel Text="Assigned By" Class="form-label" />
+                            <RadzenTextBox @bind-Value="@editModel.AssignedBy"
+                                          Class="w-100"
+                                          Placeholder="Enter who assigned this questionnaire"
+                                          Icon="person" />
+                        </div>
+                    </div>
+                }
+                else if (activeTab == "review")
+                {
+                    <!-- Review Changes Tab -->
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Review Your Changes</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-4">
+                        Please review the changes below before saving the assignment.
+                    </RadzenText>
+
+                    @if (HasChanges())
+                    {
+                        <div class="changes-summary">
+                            <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                                <RadzenIcon Icon="summarize" Class="me-2" />
+                                Changes Summary
+                            </RadzenText>
+
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                @foreach (var change in GetAllChanges())
+                                {
+                                    <li style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0; color: #495057;">
+                                        <RadzenIcon Icon="arrow_forward" Style="color: #fd7e14;" />
+                                        @change
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="text-align: center; padding: 3rem; color: #6c757d;">
+                            <RadzenIcon Icon="check_circle" Style="font-size: 3rem; margin-bottom: 1rem; color: #28a745;" />
+                            <RadzenText TextStyle="TextStyle.H6">No Changes to Save</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2">Make changes in the other tabs to see them here.</RadzenText>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+        <div class="action-left">
+            @if (HasChanges())
+            {
+                <RadzenIcon Icon="edit" />
+                <span>@GetAllChanges().Count unsaved changes</span>
+            }
+            else
+            {
+                <RadzenIcon Icon="check" />
+                <span>No changes to save</span>
+            }
+        </div>
+
+        <div class="action-right">
+            <RadzenButton Text="Cancel"
+                         ButtonStyle="ButtonStyle.Light"
+                         Click="@OnCancelClick"
+                         Size="ButtonSize.Medium" />
+
+            <RadzenButton Text="@(IsLoading ? "Saving..." : "Save Changes")"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Icon="@(IsLoading ? "hourglass_empty" : "save")"
+                         Click="@OnSaveClick"
+                         Disabled="@(IsLoading || !IsValid() || !HasChanges())"
+                         Size="ButtonSize.Medium" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionnaireAssignment Assignment { get; set; } = default!;
+    [Parameter] public QuestionnaireTemplate? Questionnaire { get; set; }
+    [Parameter] public List<EmployeeDto> AllEmployees { get; set; } = new();
+    [Parameter] public EventCallback<EditAssignmentModel> OnSave { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public bool IsLoading { get; set; } = false;
+
+    private EditAssignmentModel editModel = new();
+    private Dictionary<string, string> validationErrors = new();
+    private string activeTab = "employees";
+    private string employeeSearchText = "";
+    private List<EmployeeDto> filteredEmployees = new();
+    private List<string> selectedEmployeeIds = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        editModel = new EditAssignmentModel
+        {
+            Status = Assignment.Status,
+            DueDate = Assignment.DueDate,
+            Notes = Assignment.Notes ?? string.Empty,
+            AssignedBy = Assignment.AssignedBy ?? string.Empty
+        };
+
+        // Initialize with current assignee
+        selectedEmployeeIds = new List<string> { Assignment.EmployeeId };
+
+        await FilterEmployees();
+        validationErrors.Clear();
+    }
+
+    private void SetActiveTab(string tab)
+    {
+        activeTab = tab;
+        StateHasChanged();
+    }
+
+    private string GetEmployeeInitials(string? name = null)
+    {
+        var employeeName = name ?? Assignment.EmployeeName;
+        var names = employeeName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (names.Length >= 2)
+        {
+            return $"{names[0][0]}{names[1][0]}".ToUpper();
+        }
+        return names.Length > 0 ? names[0][0].ToString().ToUpper() : "?";
+    }
+
+    private async Task FilterEmployees()
+    {
+        await Task.Delay(1); // Prevent blocking UI
+
+        if (string.IsNullOrWhiteSpace(employeeSearchText))
+        {
+            filteredEmployees = AllEmployees.Where(e => !e.IsDeleted).ToList();
+        }
+        else
+        {
+            filteredEmployees = AllEmployees.Where(e =>
+                !e.IsDeleted &&
+                (e.FullName.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                 e.EMail.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                 e.Department.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
+                 e.Role.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+        }
+        StateHasChanged();
+    }
+
+    private void ToggleEmployeeSelection(string employeeId)
+    {
+        if (selectedEmployeeIds.Contains(employeeId))
+        {
+            selectedEmployeeIds.Remove(employeeId);
+        }
+        else
+        {
+            selectedEmployeeIds.Add(employeeId);
+        }
+        StateHasChanged();
+    }
+
+    private void SelectAllFilteredEmployees()
+    {
+        foreach (var employee in filteredEmployees)
+        {
+            if (!selectedEmployeeIds.Contains(employee.Id.ToString()))
+            {
+                selectedEmployeeIds.Add(employee.Id.ToString());
+            }
+        }
+        StateHasChanged();
+    }
+
+    private void ClearEmployeeSelection()
+    {
+        selectedEmployeeIds.Clear();
+        StateHasChanged();
+    }
+
+    private List<StatusOption> GetAvailableStatuses()
+    {
+        var options = new List<StatusOption>
+        {
+            new("Assigned", AssignmentStatus.Assigned),
+            new("In Progress", AssignmentStatus.InProgress),
+            new("Completed", AssignmentStatus.Completed),
+            new("Cancelled", AssignmentStatus.Cancelled)
+        };
+
+        if (Assignment.DueDate.HasValue && Assignment.DueDate < DateTime.Now)
+        {
+            options.Add(new("Overdue", AssignmentStatus.Overdue));
+        }
+
+        return options;
+    }
+
+    private bool IsValid()
+    {
+        validationErrors.Clear();
+
+        if (!selectedEmployeeIds.Any())
+        {
+            validationErrors["Employees"] = "At least one employee must be selected";
+        }
+
+        if (editModel.Status == default)
+        {
+            validationErrors["Status"] = "Status is required";
+        }
+
+        return !validationErrors.Any();
+    }
+
+    private bool HasChanges()
+    {
+        var hasDetailChanges = editModel.Status != Assignment.Status ||
+                               editModel.DueDate != Assignment.DueDate ||
+                               editModel.Notes != (Assignment.Notes ?? string.Empty) ||
+                               editModel.AssignedBy != (Assignment.AssignedBy ?? string.Empty);
+
+        var hasEmployeeChanges = selectedEmployeeIds.Count != 1 || !selectedEmployeeIds.Contains(Assignment.EmployeeId);
+
+        return hasDetailChanges || hasEmployeeChanges;
+    }
+
+    private List<string> GetAllChanges()
+    {
+        var changes = new List<string>();
+
+        // Employee changes
+        if (selectedEmployeeIds.Count != 1 || !selectedEmployeeIds.Contains(Assignment.EmployeeId))
+        {
+            if (selectedEmployeeIds.Count == 1 && !selectedEmployeeIds.Contains(Assignment.EmployeeId))
+            {
+                var newEmployee = AllEmployees.FirstOrDefault(e => e.Id.ToString() == selectedEmployeeIds.First());
+                changes.Add($"Assignment transferred to: {newEmployee?.FullName ?? "Unknown Employee"}");
+            }
+            else if (selectedEmployeeIds.Count > 1)
+            {
+                changes.Add($"Assignment will be duplicated to {selectedEmployeeIds.Count} employees");
+                if (!selectedEmployeeIds.Contains(Assignment.EmployeeId))
+                {
+                    changes.Add("Original assignment will be removed");
+                }
+            }
+            else
+            {
+                changes.Add("Original assignment will be removed");
+            }
+        }
+
+        // Detail changes
+        if (editModel.Status != Assignment.Status)
+        {
+            changes.Add($"Status: {Assignment.Status} → {editModel.Status}");
+        }
+
+        if (editModel.DueDate != Assignment.DueDate)
+        {
+            var oldDate = Assignment.DueDate?.ToString("dd/MM/yyyy") ?? "No due date";
+            var newDate = editModel.DueDate?.ToString("dd/MM/yyyy") ?? "No due date";
+            changes.Add($"Due Date: {oldDate} → {newDate}");
+        }
+
+        if (editModel.Notes != (Assignment.Notes ?? string.Empty))
+        {
+            changes.Add("Assignment notes updated");
+        }
+
+        if (editModel.AssignedBy != (Assignment.AssignedBy ?? string.Empty))
+        {
+            changes.Add($"Assigned By updated");
+        }
+
+        return changes;
+    }
+
+    private async Task OnSaveClick()
+    {
+        if (IsValid() && HasChanges())
+        {
+            editModel.SelectedEmployeeIds = selectedEmployeeIds;
+            await OnSave.InvokeAsync(editModel);
+        }
+    }
+
+    private async Task OnCancelClick()
+    {
+        await OnCancel.InvokeAsync();
+    }
+
+    public class EditAssignmentModel
+    {
+        public AssignmentStatus Status { get; set; }
+        public DateTime? DueDate { get; set; }
+        public string Notes { get; set; } = string.Empty;
+        public string AssignedBy { get; set; } = string.Empty;
+        public List<string> SelectedEmployeeIds { get; set; } = new();
+    }
+
+    public class StatusOption
+    {
+        public StatusOption(string text, AssignmentStatus value)
+        {
+            Text = text;
+            Value = value;
+        }
+
+        public string Text { get; set; }
+        public AssignmentStatus Value { get; set; }
+    }
+}
