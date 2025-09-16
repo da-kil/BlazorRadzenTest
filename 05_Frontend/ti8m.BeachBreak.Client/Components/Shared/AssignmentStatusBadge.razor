@@ -1,0 +1,48 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<RadzenBadge BadgeStyle="@GetBadgeStyle()" Text="@GetStatusText()" />
+
+@code {
+    [Parameter] public AssignmentStatus Status { get; set; }
+    [Parameter] public bool ShowIcon { get; set; } = false;
+    [Parameter] public DateTime? DueDate { get; set; }
+
+    private BadgeStyle GetBadgeStyle()
+    {
+        // Check if overdue first
+        if (IsOverdue())
+        {
+            return BadgeStyle.Danger;
+        }
+
+        return Status switch
+        {
+            AssignmentStatus.Assigned => BadgeStyle.Secondary,
+            AssignmentStatus.InProgress => BadgeStyle.Info,
+            AssignmentStatus.Completed => BadgeStyle.Success,
+            AssignmentStatus.Overdue => BadgeStyle.Danger,
+            AssignmentStatus.Cancelled => BadgeStyle.Light,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private string GetStatusText()
+    {
+        if (IsOverdue())
+        {
+            return "Overdue";
+        }
+
+        return Status.ToString();
+    }
+
+    private bool IsOverdue()
+    {
+        return DueDate.HasValue &&
+               DueDate < DateTime.Now &&
+               Status != AssignmentStatus.Completed &&
+               Status != AssignmentStatus.Cancelled;
+    }
+}

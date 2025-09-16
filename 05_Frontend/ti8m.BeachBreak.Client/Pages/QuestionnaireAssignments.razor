@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Components.Shared
 
 <PageTitle>Questionnaire Assignments</PageTitle>
 
@@ -141,48 +142,9 @@
                                             </div>
                                         </div>
 
-                                        <div class="employee-selection">
-                                            @if (filteredEmployees.Any())
-                                            {
-                                                @foreach (var employee in filteredEmployees)
-                                                {
-                                                    var isSelected = selectedEmployeeIds.Contains(employee.Id);
-
-                                                    <div class="employee-card @(isSelected ? "selected" : "")"
-                                                         @onclick="() => ToggleEmployeeSelection(employee.Id)">
-
-                                                        <div class="selection-indicator">
-                                                            <RadzenIcon Icon="check" />
-                                                        </div>
-
-                                                        <div class="employee-header">
-                                                            <div class="employee-mini-avatar">
-                                                                @GetEmployeeInitials(employee.FullName)
-                                                            </div>
-                                                            <div class="employee-details">
-                                                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@employee.FullName</RadzenText>
-                                                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.EMail</RadzenText>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="employee-meta">
-                                                            @employee.Department • @employee.Role
-                                                        </div>
-                                                    </div>
-                                                }
-                                            }
-                                            else
-                                            {
-                                                <div class="text-center text-muted p-3" style="grid-column: 1 / -1;">
-                                                    <RadzenIcon Icon="search_off" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
-                                                    <RadzenText TextStyle="TextStyle.Body2">No employees found matching your search.</RadzenText>
-                                                </div>
-                                            }
-                                        </div>
-
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-2">
-                                            Selected: @selectedEmployeeIds.Count employee(s)
-                                        </RadzenText>
+                                        <EmployeeSelectionGrid Employees="@filteredEmployees"
+                                                              SelectedEmployeeIds="@selectedEmployeeIds.Select(id => id.ToString()).ToList()"
+                                                              OnEmployeeToggle="@ToggleEmployeeSelection" />
                                     </div>
                                 </RadzenColumn>
 
@@ -596,8 +558,9 @@
         StateHasChanged();
     }
 
-    private void ToggleEmployeeSelection(Guid employeeId)
+    private void ToggleEmployeeSelection(EmployeeDto employee)
     {
+        var employeeId = employee.Id;
         if (selectedEmployeeIds.Contains(employeeId))
         {
             selectedEmployeeIds.Remove(employeeId);

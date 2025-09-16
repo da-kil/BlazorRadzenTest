@@ -1,0 +1,53 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+
+<link href="css/assignment-dialogs.css" rel="stylesheet" />
+
+<div class="employee-selection">
+    @if (Employees.Any())
+    {
+        @foreach (var employee in Employees)
+        {
+            <EmployeeCard Employee="@employee"
+                         IsSelected="@IsEmployeeSelected(employee)"
+                         IsCurrent="@IsCurrentAssignee(employee)"
+                         OnClick="@OnEmployeeToggle" />
+        }
+    }
+    else
+    {
+        <div class="text-center text-muted p-3" style="grid-column: 1 / -1;">
+            <RadzenIcon Icon="search_off" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
+            <RadzenText TextStyle="TextStyle.Body2">@EmptyMessage</RadzenText>
+        </div>
+    }
+</div>
+
+@if (ShowSelectionSummary && SelectedEmployeeIds.Any())
+{
+    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-2">
+        Selected: @SelectedEmployeeIds.Count employee(s)
+    </RadzenText>
+}
+
+@code {
+    [Parameter] public List<EmployeeDto> Employees { get; set; } = new();
+    [Parameter] public List<string> SelectedEmployeeIds { get; set; } = new();
+    [Parameter] public string? CurrentAssigneeId { get; set; }
+    [Parameter] public EventCallback<EmployeeDto> OnEmployeeToggle { get; set; }
+    [Parameter] public bool ShowSelectionSummary { get; set; } = true;
+    [Parameter] public string EmptyMessage { get; set; } = "No employees found matching your search.";
+
+    private bool IsEmployeeSelected(EmployeeDto employee)
+    {
+        return SelectedEmployeeIds.Contains(employee.Id.ToString());
+    }
+
+    private bool IsCurrentAssignee(EmployeeDto employee)
+    {
+        return !string.IsNullOrEmpty(CurrentAssigneeId) &&
+               employee.Id.ToString() == CurrentAssigneeId;
+    }
+}

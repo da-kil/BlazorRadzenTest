@@ -3,6 +3,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 
 <PageTitle>Questionnaire Management</PageTitle>
@@ -233,37 +234,8 @@
 
                                 <RadzenDataGridColumn Filterable="false" Sortable="false" Width="250px" TextAlign="TextAlign.Center" Title="Actions">
                                     <Template Context="assignment">
-                                        <div class="d-flex gap-1">
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                         Icon="visibility"
-                                                         Size="ButtonSize.Small"
-                                                         Title="View Details"
-                                                         Click="@(() => ViewAssignmentDetails(assignment))" />
-                                            @if (CanEditAssignment(assignment))
-                                            {
-                                                <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                             Icon="edit"
-                                                             Size="ButtonSize.Small"
-                                                             Title="Edit Assignment"
-                                                             Click="@(() => EditAssignment(assignment))" />
-                                            }
-                                            @if (CanSendReminder(assignment))
-                                            {
-                                                <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                             Icon="notifications"
-                                                             Size="ButtonSize.Small"
-                                                             Title="Send Reminder"
-                                                             Click="@(() => SendReminder(assignment))" />
-                                            }
-                                            @if (CanCancelAssignment(assignment))
-                                            {
-                                                <RadzenButton ButtonStyle="ButtonStyle.Warning"
-                                                             Icon="cancel"
-                                                             Size="ButtonSize.Small"
-                                                             Title="Cancel Assignment"
-                                                             Click="@(() => CancelAssignment(assignment))" />
-                                            }
-                                        </div>
+                                        <AssignmentActionButtons Assignment="@assignment"
+                                                               OnActionClick="@HandleAssignmentAction" />
                                     </Template>
                                 </RadzenDataGridColumn>
                             </Columns>
@@ -682,22 +654,25 @@
         };
     }
 
-    private bool CanEditAssignment(QuestionnaireAssignment assignment)
-    {
-        return assignment.Status != AssignmentStatus.Completed &&
-               assignment.Status != AssignmentStatus.Cancelled;
-    }
+    // Can* methods moved to AssignmentActionButtons component
 
-    private bool CanSendReminder(QuestionnaireAssignment assignment)
+    private async Task HandleAssignmentAction(AssignmentActionButtons.AssignmentActionEventArgs args)
     {
-        return assignment.Status == AssignmentStatus.Assigned ||
-               assignment.Status == AssignmentStatus.InProgress;
-    }
-
-    private bool CanCancelAssignment(QuestionnaireAssignment assignment)
-    {
-        return assignment.Status != AssignmentStatus.Completed &&
-               assignment.Status != AssignmentStatus.Cancelled;
+        switch (args.Action)
+        {
+            case "view":
+                await ViewAssignmentDetails(args.Assignment);
+                break;
+            case "edit":
+                await EditAssignment(args.Assignment);
+                break;
+            case "remind":
+                await SendReminder(args.Assignment);
+                break;
+            case "cancel":
+                await CancelAssignment(args.Assignment);
+                break;
+        }
     }
 
     private async Task ViewAssignmentDetails(QuestionnaireAssignment assignment)

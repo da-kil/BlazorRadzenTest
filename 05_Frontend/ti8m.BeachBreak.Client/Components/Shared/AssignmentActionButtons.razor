@@ -1,0 +1,74 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<div class="d-flex gap-1">
+    @if (ShowViewAction)
+    {
+        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                     Icon="visibility"
+                     Size="ButtonSize.Small"
+                     Title="View Details"
+                     Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "view" }))" />
+    }
+
+    @if (ShowEditAction && CanEdit())
+    {
+        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                     Icon="edit"
+                     Size="ButtonSize.Small"
+                     Title="Edit Assignment"
+                     Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "edit" }))" />
+    }
+
+    @if (ShowReminderAction && CanSendReminder())
+    {
+        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                     Icon="notifications"
+                     Size="ButtonSize.Small"
+                     Title="Send Reminder"
+                     Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "remind" }))" />
+    }
+
+    @if (ShowCancelAction && CanCancel())
+    {
+        <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                     Icon="cancel"
+                     Size="ButtonSize.Small"
+                     Title="Cancel Assignment"
+                     Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "cancel" }))" />
+    }
+</div>
+
+@code {
+    [Parameter] public QuestionnaireAssignment Assignment { get; set; } = default!;
+    [Parameter] public EventCallback<AssignmentActionEventArgs> OnActionClick { get; set; }
+    [Parameter] public bool ShowViewAction { get; set; } = true;
+    [Parameter] public bool ShowEditAction { get; set; } = true;
+    [Parameter] public bool ShowReminderAction { get; set; } = true;
+    [Parameter] public bool ShowCancelAction { get; set; } = true;
+
+    private bool CanEdit()
+    {
+        return Assignment.Status != AssignmentStatus.Completed &&
+               Assignment.Status != AssignmentStatus.Cancelled;
+    }
+
+    private bool CanSendReminder()
+    {
+        return Assignment.Status == AssignmentStatus.Assigned ||
+               Assignment.Status == AssignmentStatus.InProgress;
+    }
+
+    private bool CanCancel()
+    {
+        return Assignment.Status != AssignmentStatus.Completed &&
+               Assignment.Status != AssignmentStatus.Cancelled;
+    }
+
+    public class AssignmentActionEventArgs
+    {
+        public QuestionnaireAssignment Assignment { get; set; } = default!;
+        public string Action { get; set; } = string.Empty;
+    }
+}

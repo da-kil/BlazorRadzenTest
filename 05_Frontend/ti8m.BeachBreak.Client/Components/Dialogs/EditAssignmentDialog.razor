@@ -2,6 +2,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
 
 <link href="css/assignment-dialogs.css" rel="stylesheet" />
 
@@ -452,42 +453,11 @@
                         </div>
                     </div>
 
-                    <div class="employee-grid">
-                        @foreach (var employee in filteredEmployees)
-                        {
-                            var isCurrentAssignee = employee.Id.ToString() == Assignment.EmployeeId;
-                            var isSelected = selectedEmployeeIds.Contains(employee.Id.ToString());
-
-                            <div class="employee-card @(isSelected ? "selected" : "") @(isCurrentAssignee ? "current" : "")"
-                                 @onclick="() => ToggleEmployeeSelection(employee.Id.ToString())">
-
-                                <div class="selection-indicator">
-                                    <RadzenIcon Icon="@(isCurrentAssignee ? "star" : "check")" />
-                                </div>
-
-                                <div class="employee-header">
-                                    <div class="employee-mini-avatar">
-                                        @GetEmployeeInitials(employee.FullName)
-                                    </div>
-                                    <div class="employee-details">
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@employee.FullName</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.EMail</RadzenText>
-                                    </div>
-                                </div>
-
-                                <div class="employee-meta">
-                                    @employee.Department • @employee.Role
-                                    @if (isCurrentAssignee)
-                                    {
-                                        <div style="color: #28a745; font-weight: 600; margin-top: 0.25rem;">
-                                            <RadzenIcon Icon="star" Style="font-size: 0.75rem; margin-right: 0.25rem;" />
-                                            Current Assignee
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </div>
+                    <EmployeeSelectionGrid Employees="@filteredEmployees"
+                                          SelectedEmployeeIds="@selectedEmployeeIds"
+                                          CurrentAssigneeId="@Assignment.EmployeeId"
+                                          OnEmployeeToggle="@ToggleEmployeeSelection"
+                                          ShowSelectionSummary="false" />
 
                     @if (selectedEmployeeIds.Any())
                     {
@@ -702,10 +672,9 @@
         StateHasChanged();
     }
 
-    private string GetEmployeeInitials(string? name = null)
+    private string GetEmployeeInitials()
     {
-        var employeeName = name ?? Assignment.EmployeeName;
-        var names = employeeName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var names = Assignment.EmployeeName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (names.Length >= 2)
         {
             return $"{names[0][0]}{names[1][0]}".ToUpper();
@@ -734,8 +703,9 @@
         StateHasChanged();
     }
 
-    private void ToggleEmployeeSelection(string employeeId)
+    private void ToggleEmployeeSelection(EmployeeDto employee)
     {
+        var employeeId = employee.Id.ToString();
         if (selectedEmployeeIds.Contains(employeeId))
         {
             selectedEmployeeIds.Remove(employeeId);
