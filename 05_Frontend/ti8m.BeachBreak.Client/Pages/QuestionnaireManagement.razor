@@ -3,6 +3,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Dialogs
 
 <PageTitle>Questionnaire Management</PageTitle>
 
@@ -133,6 +134,135 @@
                                                          Size="ButtonSize.Small"
                                                          Title="@(template.IsActive ? "Deactivate" : "Activate")"
                                                          Click="@(() => ToggleTemplateStatus(template))" />
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </div>
+                </RadzenTabsItem>
+
+                <RadzenTabsItem Text="Assignments">
+                    <div class="p-3">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div class="d-flex gap-2">
+                                <RadzenDropDown @bind-Value="@assignmentStatusFilter"
+                                               Data="@assignmentStatusOptions"
+                                               TextProperty="Text"
+                                               ValueProperty="Value"
+                                               Placeholder="Filter by Status"
+                                               AllowClear="true"
+                                               Change="@FilterAssignments" />
+                                <RadzenTextBox @bind-Value="@assignmentSearchText"
+                                              Placeholder="Search by employee name..."
+                                              @oninput="@OnAssignmentSearchTextChanged" />
+                            </div>
+                            <RadzenButton Text="Refresh Assignments"
+                                         ButtonStyle="ButtonStyle.Secondary"
+                                         Icon="refresh"
+                                         Click="@LoadAssignments" />
+                        </div>
+
+                        <RadzenDataGrid Data="@filteredAssignments"
+                                       AllowFiltering="true"
+                                       AllowColumnResize="true"
+                                       AllowAlternatingRows="true"
+                                       AllowSorting="true"
+                                       PageSize="10"
+                                       AllowPaging="true">
+                            <Columns>
+                                <RadzenDataGridColumn Property="EmployeeName" Title="Employee" Width="200px">
+                                    <Template Context="assignment">
+                                        <div>
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@assignment.EmployeeName</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@assignment.EmployeeEmail</RadzenText>
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="TemplateName" Title="Questionnaire" Width="250px">
+                                    <Template Context="assignment">
+                                        <div>
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@GetAssignmentTemplateName(assignment.TemplateId)</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@GetAssignmentTemplateCategory(assignment.TemplateId)</RadzenText>
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="Status" Title="Status" Width="130px">
+                                    <Template Context="assignment">
+                                        <RadzenBadge BadgeStyle="@GetAssignmentStatusBadgeStyle(assignment.Status)"
+                                                   Text="@assignment.Status.ToString()" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="AssignedDate" Title="Assigned" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+
+                                <RadzenDataGridColumn Property="DueDate" Title="Due Date" Width="120px">
+                                    <Template Context="assignment">
+                                        @if (assignment.DueDate.HasValue)
+                                        {
+                                            var isOverdue = assignment.DueDate < DateTime.Now && assignment.Status != AssignmentStatus.Completed;
+                                            <RadzenText TextStyle="TextStyle.Body2"
+                                                       Class="@(isOverdue ? "text-danger fw-bold" : "")">
+                                                @assignment.DueDate.Value.ToString("dd/MM/yyyy")
+                                                @if (isOverdue) { <RadzenIcon Icon="warning" Class="ms-1" /> }
+                                            </RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">No due date</span>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="CompletedDate" Title="Completed" Width="120px">
+                                    <Template Context="assignment">
+                                        @if (assignment.CompletedDate.HasValue)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2">@assignment.CompletedDate.Value.ToString("dd/MM/yyyy")</RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="AssignedBy" Title="Assigned By" Width="150px" />
+
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="250px" TextAlign="TextAlign.Center" Title="Actions">
+                                    <Template Context="assignment">
+                                        <div class="d-flex gap-1">
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                         Icon="visibility"
+                                                         Size="ButtonSize.Small"
+                                                         Title="View Details"
+                                                         Click="@(() => ViewAssignmentDetails(assignment))" />
+                                            @if (CanEditAssignment(assignment))
+                                            {
+                                                <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                             Icon="edit"
+                                                             Size="ButtonSize.Small"
+                                                             Title="Edit Assignment"
+                                                             Click="@(() => EditAssignment(assignment))" />
+                                            }
+                                            @if (CanSendReminder(assignment))
+                                            {
+                                                <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                             Icon="notifications"
+                                                             Size="ButtonSize.Small"
+                                                             Title="Send Reminder"
+                                                             Click="@(() => SendReminder(assignment))" />
+                                            }
+                                            @if (CanCancelAssignment(assignment))
+                                            {
+                                                <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                                             Icon="cancel"
+                                                             Size="ButtonSize.Small"
+                                                             Title="Cancel Assignment"
+                                                             Click="@(() => CancelAssignment(assignment))" />
+                                            }
                                         </div>
                                     </Template>
                                 </RadzenDataGridColumn>
@@ -280,15 +410,31 @@
 
     private List<QuestionnaireTemplate> templates = new();
     private List<QuestionnaireTemplate> filteredTemplates = new();
-    
+
     private string searchText = "";
     private string categoryFilter = "";
     private bool showInactiveTemplates = false;
 
+    // Assignment management
+    private List<QuestionnaireAssignment> assignments = new();
+    private List<QuestionnaireAssignment> filteredAssignments = new();
+    private string assignmentSearchText = "";
+    private AssignmentStatus? assignmentStatusFilter;
+
     private readonly List<string> categories = new()
     {
-        "Performance Review", "Employee Feedback", "Training Assessment", 
+        "Performance Review", "Employee Feedback", "Training Assessment",
         "Customer Satisfaction", "Team Evaluation", "Goal Setting", "Other"
+    };
+
+    private readonly List<StatusOption> assignmentStatusOptions = new()
+    {
+        new("All", null),
+        new("Assigned", AssignmentStatus.Assigned),
+        new("In Progress", AssignmentStatus.InProgress),
+        new("Completed", AssignmentStatus.Completed),
+        new("Overdue", AssignmentStatus.Overdue),
+        new("Cancelled", AssignmentStatus.Cancelled)
     };
 
     private SystemSettings settings = new();
@@ -296,9 +442,11 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadTemplates();
+        await LoadAssignments();
         await LoadAnalytics();
         LoadSettings();
         FilterTemplates();
+        FilterAssignments();
     }
 
     private async Task LoadTemplates()
@@ -479,6 +627,228 @@
         NotificationService.Notify(NotificationSeverity.Info, "View Response", $"Viewing response from {response.EmployeeName}");
     }
 
+    // Assignment management methods
+    private async Task LoadAssignments()
+    {
+        try
+        {
+            assignments = await ApiService.GetAllAssignmentsAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load assignments: {ex.Message}");
+            assignments = new List<QuestionnaireAssignment>();
+        }
+    }
+
+    private void FilterAssignments()
+    {
+        filteredAssignments = assignments.Where(a =>
+            (assignmentStatusFilter == null || a.Status == assignmentStatusFilter) &&
+            (string.IsNullOrWhiteSpace(assignmentSearchText) ||
+             a.EmployeeName.Contains(assignmentSearchText, StringComparison.OrdinalIgnoreCase) ||
+             a.EmployeeEmail.Contains(assignmentSearchText, StringComparison.OrdinalIgnoreCase))
+        ).ToList();
+
+        StateHasChanged();
+    }
+
+    private void OnAssignmentSearchTextChanged(ChangeEventArgs e)
+    {
+        assignmentSearchText = e.Value?.ToString() ?? "";
+        FilterAssignments();
+    }
+
+    private string GetAssignmentTemplateName(Guid templateId)
+    {
+        return templates.FirstOrDefault(t => t.Id == templateId)?.Name ?? "Unknown Template";
+    }
+
+    private string GetAssignmentTemplateCategory(Guid templateId)
+    {
+        return templates.FirstOrDefault(t => t.Id == templateId)?.Category ?? "Unknown";
+    }
+
+    private BadgeStyle GetAssignmentStatusBadgeStyle(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => BadgeStyle.Secondary,
+            AssignmentStatus.InProgress => BadgeStyle.Info,
+            AssignmentStatus.Completed => BadgeStyle.Success,
+            AssignmentStatus.Overdue => BadgeStyle.Danger,
+            AssignmentStatus.Cancelled => BadgeStyle.Light,
+            _ => BadgeStyle.Secondary
+        };
+    }
+
+    private bool CanEditAssignment(QuestionnaireAssignment assignment)
+    {
+        return assignment.Status != AssignmentStatus.Completed &&
+               assignment.Status != AssignmentStatus.Cancelled;
+    }
+
+    private bool CanSendReminder(QuestionnaireAssignment assignment)
+    {
+        return assignment.Status == AssignmentStatus.Assigned ||
+               assignment.Status == AssignmentStatus.InProgress;
+    }
+
+    private bool CanCancelAssignment(QuestionnaireAssignment assignment)
+    {
+        return assignment.Status != AssignmentStatus.Completed &&
+               assignment.Status != AssignmentStatus.Cancelled;
+    }
+
+    private async Task ViewAssignmentDetails(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            var template = templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
+
+            await DialogService.OpenAsync<AssignmentDetailsDialog>("Assignment Details",
+                new Dictionary<string, object>
+                {
+                    { "Assignment", assignment },
+                    { "Questionnaire", template! },
+                    { "OnEditClick", EventCallback.Factory.Create(this, () => EditAssignment(assignment)) },
+                    { "OnCloseClick", EventCallback.Factory.Create(this, () => DialogService.Close()) }
+                },
+                new DialogOptions
+                {
+                    Width = "1000px",
+                    Height = "auto",
+                    Resizable = true,
+                    Draggable = true,
+                    CloseDialogOnOverlayClick = true,
+                    ShowClose = true
+                });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to open assignment details: {ex.Message}");
+        }
+    }
+
+    private async Task EditAssignment(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            var template = templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
+
+            await DialogService.OpenAsync<EditAssignmentDialog>("Edit Assignment",
+                new Dictionary<string, object>
+                {
+                    { "Assignment", assignment },
+                    { "Questionnaire", template! },
+                    { "OnSave", EventCallback.Factory.Create<EditAssignmentDialog.EditAssignmentModel>(this, (model) => SaveAssignmentChanges(assignment, model)) },
+                    { "OnCancel", EventCallback.Factory.Create(this, () => DialogService.Close()) }
+                },
+                new DialogOptions
+                {
+                    Width = "1200px",
+                    Height = "auto",
+                    Resizable = true,
+                    Draggable = true,
+                    CloseDialogOnOverlayClick = false,
+                    ShowClose = true
+                });
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to open edit dialog: {ex.Message}");
+        }
+    }
+
+    private async Task SendReminder(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                $"Send a reminder notification to {assignment.EmployeeName}?",
+                "Send Reminder",
+                new ConfirmOptions { OkButtonText = "Send", CancelButtonText = "Cancel" });
+
+            if (confirmed == true)
+            {
+                // TODO: Implement actual reminder API call
+                await Task.Delay(1000); // Simulate API call
+
+                NotificationService.Notify(NotificationSeverity.Success,
+                    "Reminder Sent",
+                    $"Reminder notification sent successfully to {assignment.EmployeeName}",
+                    duration: 5000);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to send reminder: {ex.Message}");
+        }
+    }
+
+    private async Task CancelAssignment(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                $"Are you sure you want to cancel the assignment for {assignment.EmployeeName}? This action cannot be undone.",
+                "Cancel Assignment",
+                new ConfirmOptions { OkButtonText = "Cancel Assignment", CancelButtonText = "Keep Assignment" });
+
+            if (confirmed == true)
+            {
+                // TODO: Call actual API to update assignment status
+                await Task.Delay(1000); // Simulate API call
+
+                assignment.Status = AssignmentStatus.Cancelled;
+                FilterAssignments();
+
+                NotificationService.Notify(NotificationSeverity.Success,
+                    "Assignment Cancelled",
+                    $"Assignment has been cancelled for {assignment.EmployeeName}",
+                    duration: 5000);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to cancel assignment: {ex.Message}");
+        }
+    }
+
+    private async Task SaveAssignmentChanges(QuestionnaireAssignment assignment, EditAssignmentDialog.EditAssignmentModel editModel)
+    {
+        try
+        {
+            // TODO: Implement actual API call to update assignment
+            await Task.Delay(1000); // Simulate API call
+
+            // Update the local assignment object
+            assignment.Status = editModel.Status;
+            assignment.DueDate = editModel.DueDate;
+            assignment.Notes = editModel.Notes;
+            assignment.AssignedBy = editModel.AssignedBy;
+
+            // Refresh the filtered assignments
+            FilterAssignments();
+
+            NotificationService.Notify(NotificationSeverity.Success,
+                "Assignment Updated",
+                $"Assignment for {assignment.EmployeeName} has been updated successfully",
+                duration: 5000);
+
+            DialogService.Close();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                $"Failed to update assignment: {ex.Message}");
+        }
+    }
+
     // Helper classes
     public class SystemSettings
     {
@@ -507,5 +877,16 @@
         public string TemplateName { get; set; } = "";
         public DateTime CompletedDate { get; set; }
         public ResponseStatus Status { get; set; }
+    }
+
+    public class StatusOption
+    {
+        public StatusOption(string text, AssignmentStatus? value)
+        {
+            Text = text;
+            Value = value;
+        }
+        public string Text { get; set; }
+        public AssignmentStatus? Value { get; set; }
     }
 }
