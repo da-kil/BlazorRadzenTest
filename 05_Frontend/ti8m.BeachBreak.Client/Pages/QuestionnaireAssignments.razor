@@ -667,7 +667,7 @@
                 selectedEmployeeIdsString,
                 assignmentDueDate,
                 assignmentNotes,
-                "Current User" // In real app, get from auth context
+                await GetCurrentUserAsync()
             );
 
             if (newAssignments.Any())
@@ -740,7 +740,13 @@
 
     private int GetEstimatedDuration(QuestionnaireTemplate questionnaire)
     {
-        // Estimate 2 minutes per question
+        // Use template settings if available, otherwise calculate from question count
+        if (questionnaire.Settings?.TimeLimit.HasValue == true)
+        {
+            return (int)questionnaire.Settings.TimeLimit.Value.TotalMinutes;
+        }
+
+        // Fallback: estimate based on question count (2 minutes per question, minimum 5 minutes)
         var totalQuestions = questionnaire.Sections.Sum(s => s.Questions.Count);
         return Math.Max(5, totalQuestions * 2);
     }
@@ -749,11 +755,15 @@
     {
         return category switch
         {
-            "Performance" => "trending_up",
-            "Team" => "groups",
-            "Leadership" => "emoji_events",
-            "Technical" => "engineering",
-            "Service" => "support_agent",
+            "Performance Review" => "trending_up",
+            "Employee Feedback" => "feedback",
+            "Training Assessment" => "school",
+            "Goal Setting" => "flag",
+            "Skills Assessment" => "engineering",
+            "Team Evaluation" => "groups",
+            "Exit Interview" => "exit_to_app",
+            "Onboarding" => "person_add",
+            "Other" => "quiz",
             _ => "quiz"
         };
     }
@@ -798,20 +808,52 @@
         switch (action)
         {
             case "view":
-                NotificationService.Notify(NotificationSeverity.Info, "View", $"Viewing assignment for {assignment.EmployeeName}");
+                // TODO: Navigate to assignment details view
+                NotificationService.Notify(NotificationSeverity.Info, "View Assignment", $"Opening assignment details for {assignment.EmployeeName}");
                 break;
             case "edit":
-                NotificationService.Notify(NotificationSeverity.Info, "Edit", $"Editing assignment for {assignment.EmployeeName}");
+                // TODO: Open assignment edit dialog or navigate to edit page
+                NotificationService.Notify(NotificationSeverity.Info, "Edit Assignment", $"Edit functionality not yet implemented for {assignment.EmployeeName}");
                 break;
             case "remind":
-                NotificationService.Notify(NotificationSeverity.Success, "Reminder Sent", $"Reminder sent to {assignment.EmployeeName}");
+                // TODO: Implement actual reminder sending (email, notification, etc.)
+                try
+                {
+                    // Placeholder for actual reminder API call
+                    await Task.Delay(100); // Simulate API call
+                    NotificationService.Notify(NotificationSeverity.Success, "Reminder Sent",
+                        $"Reminder notification sent to {assignment.EmployeeName}");
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error",
+                        $"Failed to send reminder: {ex.Message}");
+                }
                 break;
             case "cancel":
-                assignment.Status = AssignmentStatus.Cancelled;
-                NotificationService.Notify(NotificationSeverity.Info, "Cancelled", $"Assignment cancelled for {assignment.EmployeeName}");
-                FilterAssignments();
+                // TODO: Call API to update assignment status
+                try
+                {
+                    assignment.Status = AssignmentStatus.Cancelled;
+                    NotificationService.Notify(NotificationSeverity.Info, "Assignment Cancelled",
+                        $"Assignment cancelled for {assignment.EmployeeName}");
+                    FilterAssignments();
+                }
+                catch (Exception ex)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error",
+                        $"Failed to cancel assignment: {ex.Message}");
+                }
                 break;
         }
+    }
+
+    private async Task<string> GetCurrentUserAsync()
+    {
+        // TODO: Replace with actual authentication service when implemented
+        // For now, return a system user identifier
+        await Task.CompletedTask; // Placeholder for async auth call
+        return Environment.UserName ?? "System Administrator";
     }
 
     // Helper classes

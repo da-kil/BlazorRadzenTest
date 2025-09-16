@@ -37,6 +37,7 @@ public class DatabaseInitializer
         await CreateCategoriesTableAsync(connection);
         await CreateQuestionnaireTemplatesTableAsync(connection);
         await CreateEmployeesTableAsync(connection);
+        await CreateAssignmentsTableAsync(connection);
     }
 
     private async Task CreateQuestionnaireTemplatesTableAsync(NpgsqlConnection connection)
@@ -190,5 +191,40 @@ public class DatabaseInitializer
         _logger.LogInformation("Creating employees table...");
         await command.ExecuteNonQueryAsync();
         _logger.LogInformation("Employees table created successfully with synthetic data.");
+    }
+
+    private async Task CreateAssignmentsTableAsync(NpgsqlConnection connection)
+    {
+        const string sql = """
+            CREATE TABLE IF NOT EXISTS questionnaire_assignments (
+                id UUID PRIMARY KEY,
+                template_id UUID NOT NULL,
+                employee_id UUID NOT NULL,
+                employee_name VARCHAR(200) NOT NULL,
+                employee_email VARCHAR(255) NOT NULL,
+                assigned_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                due_date TIMESTAMP WITH TIME ZONE,
+                completed_date TIMESTAMP WITH TIME ZONE,
+                status VARCHAR(50) NOT NULL DEFAULT 'Assigned',
+                assigned_by VARCHAR(200),
+                notes TEXT,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            );
+
+            -- Create indexes for better performance
+            CREATE INDEX IF NOT EXISTS idx_assignments_template_id ON questionnaire_assignments(template_id);
+            CREATE INDEX IF NOT EXISTS idx_assignments_employee_id ON questionnaire_assignments(employee_id);
+            CREATE INDEX IF NOT EXISTS idx_assignments_status ON questionnaire_assignments(status);
+            CREATE INDEX IF NOT EXISTS idx_assignments_assigned_date ON questionnaire_assignments(assigned_date);
+            CREATE INDEX IF NOT EXISTS idx_assignments_due_date ON questionnaire_assignments(due_date);
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+
+        _logger.LogInformation("Creating questionnaire_assignments table...");
+        await command.ExecuteNonQueryAsync();
+        _logger.LogInformation("Questionnaire assignments table created successfully with sample data.");
     }
 }

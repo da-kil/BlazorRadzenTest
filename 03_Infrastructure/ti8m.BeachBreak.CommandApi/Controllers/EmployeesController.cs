@@ -37,7 +37,7 @@ public class EmployeesController : BaseController
                 return BadRequest(ModelState);
             }
 
-            if (!employeeDtos.Any())
+            if (employeeDtos == null || !employeeDtos.Any())
             {
                 logger.LogWarning("Bulk insert request received with no employees");
                 return BadRequest("No employees provided for bulk insert");
@@ -99,7 +99,7 @@ public class EmployeesController : BaseController
                 return BadRequest(ModelState);
             }
 
-            if (!employeeDtos.Any())
+            if (employeeDtos == null || !employeeDtos.Any())
             {
                 logger.LogWarning("Bulk update request received with no employees");
                 return BadRequest("No employees provided for bulk update");
@@ -154,7 +154,7 @@ public class EmployeesController : BaseController
 
         try
         {
-            if (!employeeIds.Any())
+            if (employeeIds == null || !employeeIds.Any())
             {
                 logger.LogWarning("Bulk delete request received with no employee IDs");
                 return BadRequest("No employee IDs provided for bulk delete");
