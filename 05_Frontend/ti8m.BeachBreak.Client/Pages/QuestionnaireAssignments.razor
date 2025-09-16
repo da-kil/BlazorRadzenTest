@@ -145,7 +145,7 @@
                                             <RadzenTextBox @bind-Value="@employeeSearchText"
                                                          Placeholder="Search employees by name, email, or department..."
                                                          Class="w-100 mb-2"
-                                                         oninput="@(() => FilterEmployees())" />
+                                                         @oninput="@(async (args) => { employeeSearchText = args.Value?.ToString() ?? ""; FilterEmployees(); })" />
 
                                             <div class="d-flex gap-2 mb-2">
                                                 <RadzenButton Text="Select All Filtered"

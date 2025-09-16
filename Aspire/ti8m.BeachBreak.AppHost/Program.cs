@@ -9,6 +9,7 @@ var postgresdb = builder.AddPostgres("postgres")
     .AddDatabase("beachbreakdb");
 
 var commandApi = builder.AddProject<Projects.ti8m_BeachBreak_CommandApi>("CommandApi")
+    .WaitFor(postgresdb)
     .WithReference(postgresdb);
 
 var queryApi = builder.AddProject<Projects.ti8m_BeachBreak_QueryApi>("QueryApi")
