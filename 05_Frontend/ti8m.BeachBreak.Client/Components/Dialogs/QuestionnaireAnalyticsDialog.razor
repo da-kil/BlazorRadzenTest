@@ -1,0 +1,733 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inject IQuestionnaireApiService QuestionnaireApiService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenCard Class="questionnaire-analytics-dialog">
+    <div class="dialog-header mb-4">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="questionnaire-icon-large me-3">
+                    <RadzenIcon Icon="quiz" Size="3rem" Class="text-primary" />
+                </div>
+                <div>
+                    <RadzenText TextStyle="TextStyle.H4" Class="mb-1 fw-bold">@Questionnaire.Name</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted mb-1">@Questionnaire.Category</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@GetAssignmentCount() total assignments</RadzenText>
+                </div>
+            </div>
+            <div class="questionnaire-status">
+                @if (GetCompletionRate() >= 80)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="High Performance" Class="mb-2" />
+                }
+                else if (GetOverdueCount() > 0)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@($"{GetOverdueCount()} Overdue")" Class="mb-2" />
+                }
+                else
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="In Progress" Class="mb-2" />
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 col-12 mb-3">
+            <RadzenCard Class="text-center stats-card stats-assigned">
+                <RadzenIcon Icon="assignment" Size="2rem" Class="text-primary mb-2" />
+                <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@GetAssignmentCount()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Assigned</RadzenText>
+            </RadzenCard>
+        </div>
+        <div class="col-lg-3 col-md-6 col-12 mb-3">
+            <RadzenCard Class="text-center stats-card stats-completed">
+                <RadzenIcon Icon="task_alt" Size="2rem" Class="text-success mb-2" />
+                <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@GetCompletedCount()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Completed</RadzenText>
+            </RadzenCard>
+        </div>
+        <div class="col-lg-3 col-md-6 col-12 mb-3">
+            <RadzenCard Class="text-center stats-card stats-rate">
+                <RadzenIcon Icon="trending_up" Size="2rem" Class="text-info mb-2" />
+                <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@GetCompletionRate()%</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Completion Rate</RadzenText>
+            </RadzenCard>
+        </div>
+        <div class="col-lg-3 col-md-6 col-12 mb-3">
+            <RadzenCard Class="text-center stats-card stats-time">
+                <RadzenIcon Icon="schedule" Size="2rem" Class="text-warning mb-2" />
+                <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@GetAverageCompletionDays()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Avg Days</RadzenText>
+            </RadzenCard>
+        </div>
+    </div>
+
+    <!-- Performance Analysis -->
+    <RadzenCard Class="mb-4 performance-analysis">
+        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+            <RadzenIcon Icon="analytics" Class="me-2 text-info" />
+            Performance Analysis
+        </RadzenText>
+        <div class="row">
+            <div class="col-md-8">
+                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Overall Completion Progress</RadzenText>
+                <RadzenProgressBar Value="@GetCompletionRate()" Max="100" ProgressBarStyle="@GetCompletionProgressStyle()" Class="mb-2" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @GetCompletedCount() of @GetAssignmentCount() assignments completed
+                </RadzenText>
+            </div>
+            <div class="col-md-4 text-end">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Performance Rating</RadzenText>
+                <RadzenText TextStyle="TextStyle.H5" Class="@GetPerformanceClass()">
+                    @GetPerformanceText()
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @GetPerformanceInsight()
+                </RadzenText>
+            </div>
+        </div>
+    </RadzenCard>
+
+    <!-- Department Breakdown -->
+    @if (GetDepartmentStats().Any())
+    {
+        <RadzenCard Class="mb-4">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                <RadzenIcon Icon="business" Class="me-2 text-primary" />
+                Department Breakdown
+            </RadzenText>
+            <div class="row">
+                @foreach (var dept in GetDepartmentStats())
+                {
+                    <div class="col-lg-3 col-md-6 col-12 mb-3">
+                        <RadzenCard Class="department-breakdown-card">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@dept.Department</RadzenText>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Progress</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@dept.CompletionRate%</RadzenText>
+                            </div>
+                            <RadzenProgressBar Value="@dept.CompletionRate" Max="100" ProgressBarStyle="@GetDepartmentProgressStyle(dept.CompletionRate)" Size="ProgressBarSize.ExtraSmall" />
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                                @dept.CompletedCount/@dept.TotalCount assignments
+                            </RadzenText>
+                        </RadzenCard>
+                    </div>
+                }
+            </div>
+        </RadzenCard>
+    }
+
+    <!-- Detailed Views -->
+    <RadzenTabs @bind-SelectedIndex="selectedTabIndex" Class="mb-4">
+        <Tabs>
+            <RadzenTabsItem Text="@($"Current Assignments ({GetActiveAssignments().Count})")">
+                @RenderCurrentAssignments()
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="@($"Completed ({GetCompletedAssignments().Count})")">
+                @RenderCompletedAssignments()
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="@($"Overdue ({GetOverdueAssignments().Count})")">
+                @RenderOverdueAssignments()
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="Performance Insights">
+                @RenderPerformanceInsights()
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between">
+        <div class="d-flex gap-2">
+            @if (GetOverdueAssignments().Any())
+            {
+                <RadzenButton Text="Send Overdue Reminders"
+                             Icon="email"
+                             ButtonStyle="ButtonStyle.Warning"
+                             Click="@SendOverdueReminders"
+                             Size="ButtonSize.Medium" />
+            }
+            @if (GetActiveAssignments().Any())
+            {
+                <RadzenButton Text="Send Progress Reminder"
+                             Icon="notifications"
+                             ButtonStyle="ButtonStyle.Info"
+                             Click="@SendProgressReminder"
+                             Size="ButtonSize.Medium" />
+            }
+        </div>
+        <div class="d-flex gap-2">
+            <RadzenButton Text="Export Analytics"
+                         Icon="download"
+                         ButtonStyle="ButtonStyle.Success"
+                         Click="@ExportAnalytics"
+                         Size="ButtonSize.Medium" />
+            <RadzenButton Text="Close"
+                         Icon="close"
+                         ButtonStyle="ButtonStyle.Secondary"
+                         Click="@Close"
+                         Size="ButtonSize.Medium" />
+        </div>
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public QuestionnaireTemplate Questionnaire { get; set; } = new();
+    [Parameter] public List<QuestionnaireAssignment> Assignments { get; set; } = new();
+    [Parameter] public List<EmployeeDto> Employees { get; set; } = new();
+
+    private int selectedTabIndex = 0;
+
+    private RenderFragment RenderCurrentAssignments()
+    {
+        var activeAssignments = GetActiveAssignments();
+
+        return @<div>
+            @if (!activeAssignments.Any())
+            {
+                <div class="text-center p-4">
+                    <RadzenIcon Icon="assignment_turned_in" Size="3rem" Class="text-muted mb-3" />
+                    <RadzenText TextStyle="TextStyle.H6" Class="text-muted mb-2">No active assignments</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">All assignments for this questionnaire have been completed.</RadzenText>
+                </div>
+            }
+            else
+            {
+                <div class="assignments-grid">
+                    @foreach (var assignment in activeAssignments.OrderBy(a => a.DueDate ?? DateTime.MaxValue))
+                    {
+                        @RenderAssignmentCard(assignment, "active")
+                    }
+                </div>
+            }
+        </div>;
+    }
+
+    private RenderFragment RenderCompletedAssignments()
+    {
+        var completedAssignments = GetCompletedAssignments();
+
+        return @<div>
+            @if (!completedAssignments.Any())
+            {
+                <div class="text-center p-4">
+                    <RadzenIcon Icon="pending_actions" Size="3rem" Class="text-muted mb-3" />
+                    <RadzenText TextStyle="TextStyle.H6" Class="text-muted mb-2">No completed assignments</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">No assignments have been completed yet.</RadzenText>
+                </div>
+            }
+            else
+            {
+                <div class="assignments-grid">
+                    @foreach (var assignment in completedAssignments.OrderByDescending(a => a.CompletedDate))
+                    {
+                        @RenderAssignmentCard(assignment, "completed")
+                    }
+                </div>
+            }
+        </div>;
+    }
+
+    private RenderFragment RenderOverdueAssignments()
+    {
+        var overdueAssignments = GetOverdueAssignments();
+
+        return @<div>
+            @if (!overdueAssignments.Any())
+            {
+                <div class="text-center p-4">
+                    <RadzenIcon Icon="check_circle" Size="3rem" Class="text-success mb-3" />
+                    <RadzenText TextStyle="TextStyle.H6" Class="text-success mb-2">No overdue assignments</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">All assignments are on track or completed.</RadzenText>
+                </div>
+            }
+            else
+            {
+                <div class="assignments-grid">
+                    @foreach (var assignment in overdueAssignments.OrderBy(a => a.DueDate))
+                    {
+                        @RenderAssignmentCard(assignment, "overdue")
+                    }
+                </div>
+            }
+        </div>;
+    }
+
+    private RenderFragment RenderAssignmentCard(QuestionnaireAssignment assignment, string type)
+    {
+        var employee = Employees.FirstOrDefault(e => e.Id.ToString() == assignment.EmployeeId);
+
+        return @<RadzenCard Class="@($"assignment-analytics-card assignment-{type}")">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="flex-grow-1">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-1">
+                        @(employee?.FullName ?? "Unknown Employee")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                        @(employee?.Department ?? "Unknown Department")
+                    </RadzenText>
+                    <AssignmentStatusBadge Status="@assignment.Status" DueDate="@assignment.DueDate" />
+                </div>
+                <div class="assignment-actions">
+                    <RadzenButton Text="View"
+                                 Icon="visibility"
+                                 ButtonStyle="ButtonStyle.Light"
+                                 Click="@(() => ViewAssignmentDetails(assignment))"
+                                 Size="ButtonSize.ExtraSmall" />
+                </div>
+            </div>
+
+            <div class="assignment-timeline">
+                <div class="timeline-item">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Assigned</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2">@assignment.AssignedDate.ToString("MMM dd, yyyy")</RadzenText>
+                </div>
+                @if (assignment.DueDate.HasValue)
+                {
+                    <div class="timeline-item">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Due Date</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="@GetDueDateClass(assignment)">
+                            @assignment.DueDate.Value.ToString("MMM dd, yyyy")
+                        </RadzenText>
+                    </div>
+                }
+                @if (assignment.CompletedDate.HasValue)
+                {
+                    <div class="timeline-item">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Completed</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-success">
+                            @assignment.CompletedDate.Value.ToString("MMM dd, yyyy")
+                        </RadzenText>
+                    </div>
+                }
+            </div>
+            @if (type == "completed" && assignment.CompletedDate.HasValue)
+            {
+                <div class="completion-info mt-2">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-success">
+                        Completed in @GetCompletionDays(assignment) days
+                    </RadzenText>
+                </div>
+            }
+        </RadzenCard>;
+    }
+
+    private RenderFragment RenderPerformanceInsights()
+    {
+        return @<div>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <RadzenCard Class="h-100">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                            <RadzenIcon Icon="insights" Class="me-2 text-warning" />
+                            Key Performance Insights
+                        </RadzenText>
+                        <div class="insights-list">
+                            @foreach (var insight in GetPerformanceInsights())
+                            {
+                                <div class="insight-item mb-3">
+                                    <RadzenIcon Icon="@insight.Icon" Class="@($"{insight.ColorClass} me-2")" />
+                                    <RadzenText TextStyle="TextStyle.Body2">@insight.Message</RadzenText>
+                                </div>
+                            }
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <RadzenCard Class="h-100">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                            <RadzenIcon Icon="bar_chart" Class="me-2 text-info" />
+                            Completion Statistics
+                        </RadzenText>
+                        <div class="statistics-list">
+                            <div class="statistic-item mb-3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Fastest Completion</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="text-success">@GetFastestCompletion() days</RadzenText>
+                            </div>
+                            <div class="statistic-item mb-3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Slowest Completion</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="text-warning">@GetSlowestCompletion() days</RadzenText>
+                            </div>
+                            <div class="statistic-item mb-3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">On-Time Rate</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="text-info">@GetOnTimeRate()%</RadzenText>
+                            </div>
+                            <div class="statistic-item">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Best Department</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="text-primary">@GetBestDepartment()</RadzenText>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </div>
+            </div>
+        </div>;
+    }
+
+    // Helper methods
+    private int GetAssignmentCount() => Assignments.Count;
+    private int GetCompletedCount() => Assignments.Count(a => a.Status == AssignmentStatus.Completed);
+    private int GetOverdueCount() => Assignments.Count(IsOverdue);
+
+    private int GetCompletionRate()
+    {
+        return Assignments.Any() ? (GetCompletedCount() * 100 / Assignments.Count) : 0;
+    }
+
+    private double GetAverageCompletionDays()
+    {
+        var completed = Assignments.Where(a => a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        if (!completed.Any()) return 0;
+
+        return Math.Round(completed.Average(a => (a.CompletedDate!.Value - a.AssignedDate).TotalDays), 1);
+    }
+
+    private List<QuestionnaireAssignment> GetActiveAssignments()
+    {
+        return Assignments.Where(a => a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress).ToList();
+    }
+
+    private List<QuestionnaireAssignment> GetCompletedAssignments()
+    {
+        return Assignments.Where(a => a.Status == AssignmentStatus.Completed).ToList();
+    }
+
+    private List<QuestionnaireAssignment> GetOverdueAssignments()
+    {
+        return Assignments.Where(IsOverdue).ToList();
+    }
+
+    private List<dynamic> GetDepartmentStats()
+    {
+        var employeeDict = Employees.ToDictionary(e => e.Id.ToString(), e => e);
+
+        return Assignments
+            .Where(a => employeeDict.ContainsKey(a.EmployeeId))
+            .GroupBy(a => employeeDict[a.EmployeeId].Department)
+            .Select(g => new
+            {
+                Department = g.Key,
+                TotalCount = g.Count(),
+                CompletedCount = g.Count(a => a.Status == AssignmentStatus.Completed),
+                CompletionRate = g.Any() ? (g.Count(a => a.Status == AssignmentStatus.Completed) * 100 / g.Count()) : 0
+            })
+            .OrderByDescending(x => x.CompletionRate)
+            .Cast<dynamic>()
+            .ToList();
+    }
+
+    private ProgressBarStyle GetCompletionProgressStyle()
+    {
+        var rate = GetCompletionRate();
+        return rate switch
+        {
+            >= 80 => ProgressBarStyle.Success,
+            >= 60 => ProgressBarStyle.Info,
+            >= 40 => ProgressBarStyle.Warning,
+            _ => ProgressBarStyle.Danger
+        };
+    }
+
+    private ProgressBarStyle GetDepartmentProgressStyle(int rate)
+    {
+        return rate switch
+        {
+            >= 80 => ProgressBarStyle.Success,
+            >= 60 => ProgressBarStyle.Info,
+            >= 40 => ProgressBarStyle.Warning,
+            _ => ProgressBarStyle.Danger
+        };
+    }
+
+    private string GetPerformanceClass()
+    {
+        var rate = GetCompletionRate();
+        return rate switch
+        {
+            >= 80 => "text-success",
+            >= 60 => "text-info",
+            >= 40 => "text-warning",
+            _ => "text-danger"
+        };
+    }
+
+    private string GetPerformanceText()
+    {
+        var rate = GetCompletionRate();
+        return rate switch
+        {
+            >= 80 => "Excellent",
+            >= 60 => "Good",
+            >= 40 => "Fair",
+            _ => "Poor"
+        };
+    }
+
+    private string GetPerformanceInsight()
+    {
+        var rate = GetCompletionRate();
+        if (rate >= 80) return "High engagement";
+        if (GetOverdueCount() > 0) return $"{GetOverdueCount()} overdue";
+        return "Needs attention";
+    }
+
+    private List<dynamic> GetPerformanceInsights()
+    {
+        var insights = new List<dynamic>();
+
+        var completionRate = GetCompletionRate();
+        if (completionRate >= 80)
+        {
+            insights.Add(new { Icon = "trending_up", ColorClass = "text-success", Message = $"Excellent completion rate of {completionRate}% indicates high employee engagement" });
+        }
+
+        var avgDays = GetAverageCompletionDays();
+        if (avgDays > 0)
+        {
+            insights.Add(new { Icon = "schedule", ColorClass = "text-info", Message = $"Average completion time of {avgDays} days is within expected range" });
+        }
+
+        var overdueCount = GetOverdueCount();
+        if (overdueCount > 0)
+        {
+            insights.Add(new { Icon = "warning", ColorClass = "text-danger", Message = $"{overdueCount} assignments are overdue and require immediate follow-up" });
+        }
+
+        var bestDept = GetBestDepartment();
+        if (!string.IsNullOrEmpty(bestDept))
+        {
+            insights.Add(new { Icon = "star", ColorClass = "text-warning", Message = $"{bestDept} department shows the highest completion rate" });
+        }
+
+        return insights;
+    }
+
+    private int GetFastestCompletion()
+    {
+        var completed = Assignments.Where(a => a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        if (!completed.Any()) return 0;
+
+        return (int)completed.Min(a => (a.CompletedDate!.Value - a.AssignedDate).TotalDays);
+    }
+
+    private int GetSlowestCompletion()
+    {
+        var completed = Assignments.Where(a => a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        if (!completed.Any()) return 0;
+
+        return (int)completed.Max(a => (a.CompletedDate!.Value - a.AssignedDate).TotalDays);
+    }
+
+    private int GetOnTimeRate()
+    {
+        var withDueDate = Assignments.Where(a => a.DueDate.HasValue && a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        if (!withDueDate.Any()) return 0;
+
+        var onTime = withDueDate.Count(a => a.CompletedDate <= a.DueDate);
+        return onTime * 100 / withDueDate.Count();
+    }
+
+    private string GetBestDepartment()
+    {
+        var deptStats = GetDepartmentStats();
+        return deptStats.FirstOrDefault()?.Department ?? "N/A";
+    }
+
+    private bool IsOverdue(QuestionnaireAssignment assignment)
+    {
+        return assignment.DueDate.HasValue &&
+               assignment.DueDate < DateTime.Now &&
+               assignment.Status != AssignmentStatus.Completed &&
+               assignment.Status != AssignmentStatus.Cancelled;
+    }
+
+    private string GetDueDateClass(QuestionnaireAssignment assignment)
+    {
+        if (IsOverdue(assignment)) return "text-danger fw-bold";
+        if (assignment.DueDate.HasValue && assignment.DueDate < DateTime.Now.AddDays(3)) return "text-warning fw-bold";
+        return "";
+    }
+
+    private int GetCompletionDays(QuestionnaireAssignment assignment)
+    {
+        if (!assignment.CompletedDate.HasValue) return 0;
+        return (int)(assignment.CompletedDate.Value - assignment.AssignedDate).TotalDays;
+    }
+
+    // Action methods
+    private async Task SendOverdueReminders()
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Reminders Sent", $"Overdue reminders sent for {Questionnaire.Name}");
+    }
+
+    private async Task SendProgressReminder()
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Reminder Sent", "Progress reminder sent to active assignments");
+    }
+
+    private async Task ExportAnalytics()
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Export", $"Analytics for {Questionnaire.Name} would be exported");
+    }
+
+    private async Task ViewAssignmentDetails(QuestionnaireAssignment assignment)
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Assignment Details", "Assignment details would open");
+    }
+
+    private void Close()
+    {
+        DialogService.Close();
+    }
+}
+
+<style>
+    .questionnaire-analytics-dialog {
+        min-width: 900px;
+        max-width: 1200px;
+    }
+
+    .questionnaire-icon-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--purple-rain), var(--blue-new));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stats-card {
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .stats-assigned {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .stats-completed {
+        border-left: 4px solid var(--success-color);
+    }
+
+    .stats-rate {
+        border-left: 4px solid var(--info-color);
+    }
+
+    .stats-time {
+        border-left: 4px solid var(--warning-color);
+    }
+
+    .performance-analysis {
+        background: linear-gradient(135deg, rgba(147, 91, 169, 0.05), rgba(15, 105, 255, 0.05));
+        border: 1px solid rgba(147, 91, 169, 0.1);
+    }
+
+    .department-breakdown-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .assignments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .assignment-analytics-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .assignment-analytics-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .assignment-active {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .assignment-completed {
+        border-left: 4px solid var(--success-color);
+        background: linear-gradient(135deg, rgba(0, 230, 200, 0.02), rgba(0, 230, 200, 0.05));
+    }
+
+    .assignment-overdue {
+        border-left: 4px solid var(--danger-color);
+        background: linear-gradient(135deg, rgba(240, 128, 128, 0.02), rgba(240, 128, 128, 0.05));
+    }
+
+    .assignment-timeline {
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 6px;
+        padding: 0.75rem;
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .timeline-item {
+        flex: 1;
+        min-width: 80px;
+    }
+
+    .insights-list .insight-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 0.5rem;
+        border-radius: 6px;
+        background: rgba(248, 249, 250, 0.3);
+    }
+
+    .statistics-list .statistic-item {
+        padding: 0.75rem;
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 8px;
+        border-left: 3px solid var(--primary-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .completion-info {
+        background: rgba(0, 230, 200, 0.1);
+        border-radius: 4px;
+        padding: 0.5rem;
+        text-align: center;
+    }
+
+    @@media (max-width: 768px) {
+        .questionnaire-analytics-dialog {
+            min-width: unset;
+            width: 100%;
+        }
+
+        .assignments-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .assignment-timeline {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .timeline-item {
+            min-width: unset;
+        }
+    }
+</style>
