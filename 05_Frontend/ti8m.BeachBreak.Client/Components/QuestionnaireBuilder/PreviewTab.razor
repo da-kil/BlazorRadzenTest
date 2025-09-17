@@ -113,8 +113,34 @@
                         <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">@competency.Title</RadzenText>
                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@competency.Description</RadzenText>
                         <div class="d-flex align-items-center mb-2">
-                            <RadzenRating Value="0" Disabled="true" Stars="4" Class="me-2" />
-                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Rate satisfaction</RadzenText>
+                            @{
+                                var ratingScale = GetRatingScaleFromQuestion(question);
+                                var scaleLowLabel = GetScaleLowLabelFromQuestion(question);
+                                var scaleHighLabel = GetScaleHighLabelFromQuestion(question);
+                            }
+                            @if (ratingScale <= 5)
+                            {
+                                <RadzenRating Value="0" Disabled="true" Stars="@ratingScale" Class="me-2" />
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center me-2">
+                                    <RadzenNumeric TValue="int" Value="0" Disabled="true" Min="1" Max="@ratingScale" Class="me-2" Style="width: 80px;" />
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">/ @ratingScale</RadzenText>
+                                </div>
+                            }
+                            <div class="d-flex flex-column">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    @if (!string.IsNullOrWhiteSpace(scaleLowLabel) && !string.IsNullOrWhiteSpace(scaleHighLabel))
+                                    {
+                                        <text>@scaleLowLabel to @scaleHighLabel</text>
+                                    }
+                                    else
+                                    {
+                                        <text>Rate satisfaction</text>
+                                    }
+                                </RadzenText>
+                            </div>
                         </div>
                         <RadzenTextArea Placeholder="Optional comments..." Disabled="true" Rows="2" Class="w-100" />
                     </div>
@@ -236,5 +262,35 @@
             return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
         }
         return "Where do you see yourself long-term in your professional career?";
+    }
+
+    private int GetRatingScaleFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("RatingScale"))
+        {
+            if (question.Configuration["RatingScale"] is int scale)
+                return scale;
+            if (int.TryParse(question.Configuration["RatingScale"]?.ToString(), out var parsedScale))
+                return parsedScale;
+        }
+        return 4; // Default to 1-4 scale
+    }
+
+    private string GetScaleLowLabelFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("ScaleLowLabel"))
+        {
+            return question.Configuration["ScaleLowLabel"]?.ToString() ?? "";
+        }
+        return "";
+    }
+
+    private string GetScaleHighLabelFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("ScaleHighLabel"))
+        {
+            return question.Configuration["ScaleHighLabel"]?.ToString() ?? "";
+        }
+        return "";
     }
 }

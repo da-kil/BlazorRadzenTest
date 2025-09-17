@@ -45,6 +45,39 @@
         {
             var competencies = GetOrderedCompetencies();
             <div class="competencies-config">
+                <div class="mb-3 p-3 bg-light rounded">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                        <RadzenIcon Icon="tune" Class="me-2" />
+                        Rating Scale Configuration
+                    </RadzenText>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rating Scale</RadzenText>
+                            <RadzenDropDown Value="@GetRatingScale()"
+                                           Data="@GetAvailableRatingScales()"
+                                           ValueProperty="Value"
+                                           TextProperty="Text"
+                                           ValueChanged="@((int value) => UpdateRatingScale(value))"
+                                           Class="w-100"
+                                           Placeholder="Select rating scale..." />
+                        </div>
+                        <div class="col-md-6">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Scale Labels</RadzenText>
+                            <div class="d-flex align-items-center">
+                                <RadzenTextBox Value="@GetScaleLowLabel()"
+                                              ValueChanged="@((string value) => UpdateScaleLowLabel(value))"
+                                              Placeholder="Low (e.g., Poor)"
+                                              Class="me-2" />
+                                <RadzenText TextStyle="TextStyle.Caption" Class="mx-2">to</RadzenText>
+                                <RadzenTextBox Value="@GetScaleHighLabel()"
+                                              ValueChanged="@((string value) => UpdateScaleHighLabel(value))"
+                                              Placeholder="High (e.g., Excellent)"
+                                              Class="ms-2" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-self-assessment">
                         <RadzenIcon Icon="self_improvement" Class="me-2" />
@@ -893,7 +926,72 @@
         }
     }
 
+    // Rating scale configuration methods for SelfAssessment
+    private int GetRatingScale()
+    {
+        if (Question.Configuration.ContainsKey("RatingScale"))
+        {
+            if (Question.Configuration["RatingScale"] is int scale)
+                return scale;
+            if (int.TryParse(Question.Configuration["RatingScale"]?.ToString(), out var parsedScale))
+                return parsedScale;
+        }
+        return 4; // Default to 1-4 scale
+    }
+
+    private void UpdateRatingScale(int scale)
+    {
+        Question.Configuration["RatingScale"] = scale;
+        StateHasChanged();
+    }
+
+    private string GetScaleLowLabel()
+    {
+        if (Question.Configuration.ContainsKey("ScaleLowLabel"))
+        {
+            return Question.Configuration["ScaleLowLabel"]?.ToString() ?? "";
+        }
+        return "";
+    }
+
+    private void UpdateScaleLowLabel(string label)
+    {
+        Question.Configuration["ScaleLowLabel"] = label ?? "";
+        StateHasChanged();
+    }
+
+    private string GetScaleHighLabel()
+    {
+        if (Question.Configuration.ContainsKey("ScaleHighLabel"))
+        {
+            return Question.Configuration["ScaleHighLabel"]?.ToString() ?? "";
+        }
+        return "";
+    }
+
+    private void UpdateScaleHighLabel(string label)
+    {
+        Question.Configuration["ScaleHighLabel"] = label ?? "";
+        StateHasChanged();
+    }
+
+    private List<RatingScaleOption> GetAvailableRatingScales()
+    {
+        return new List<RatingScaleOption>
+        {
+            new RatingScaleOption { Value = 4, Text = "1-4 Stars (Traditional)" },
+            new RatingScaleOption { Value = 5, Text = "1-5 Stars" },
+            new RatingScaleOption { Value = 10, Text = "1-10 Scale (Detailed)" }
+        };
+    }
+
     // Helper classes for configuration
+    public class RatingScaleOption
+    {
+        public int Value { get; set; }
+        public string Text { get; set; } = "";
+    }
+
     public class GoalCategory
     {
         public string Title { get; set; } = "";
