@@ -353,9 +353,8 @@ private async Task PreviewQuestionnaire()
 
 private async Task SaveQuestionnaire()
 {
-	if (string.IsNullOrWhiteSpace(template.Name))
+	if (!ValidateQuestionnaire())
 	{
-		NotificationService.Notify(NotificationSeverity.Warning, "Validation Error", "Please enter a template name");
 		return;
 	}
 
@@ -390,10 +389,120 @@ private async Task SaveQuestionnaire()
 
 private async Task PublishQuestionnaire()
 {
+	if (!ValidateQuestionnaire())
+	{
+		return;
+	}
+
 	await SaveQuestionnaire();
 	template.IsActive = true;
 	// TODO: Additional publish logic
 	NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template published successfully");
+}
+
+private bool ValidateQuestionnaire()
+{
+	var validationErrors = new List<string>();
+
+	// Validate template name
+	if (string.IsNullOrWhiteSpace(template.Name))
+	{
+		validationErrors.Add("Template name is required");
+	}
+
+	// Validate sections and questions
+	foreach (var section in template.Sections)
+	{
+		// Check if section has any questions
+		if (section.Questions.Count == 0)
+		{
+			var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
+			validationErrors.Add($"'{sectionName}' must contain at least one question");
+			continue;
+		}
+
+		// Validate each question in the section
+		foreach (var question in section.Questions)
+		{
+			var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
+			var questionPos = $"Question {question.Order + 1}";
+
+			// Validate question title
+			if (string.IsNullOrWhiteSpace(question.Title))
+			{
+				validationErrors.Add($"{questionPos} in '{sectionName}' requires a title");
+			}
+
+			// Validate question content based on type
+			if (question.Type == QuestionType.SelfAssessment)
+			{
+				var competencies = GetCompetenciesFromConfiguration(question);
+				if (competencies.Count == 0)
+				{
+					validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one competency");
+				}
+				else
+				{
+					for (int i = 0; i < competencies.Count; i++)
+					{
+						if (string.IsNullOrWhiteSpace(competencies[i].Title))
+						{
+							validationErrors.Add($"Competency {i + 1} in {questionPos} ('{sectionName}') requires a title");
+						}
+					}
+				}
+			}
+			else if (question.Type == QuestionType.GoalAchievement)
+			{
+				var goalCategories = GetGoalCategoriesFromConfiguration(question);
+				if (goalCategories.Count == 0)
+				{
+					validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one goal category");
+				}
+				else
+				{
+					for (int i = 0; i < goalCategories.Count; i++)
+					{
+						if (string.IsNullOrWhiteSpace(goalCategories[i].Title))
+						{
+							validationErrors.Add($"Goal category {i + 1} in {questionPos} ('{sectionName}') requires a title");
+						}
+					}
+				}
+			}
+			else if (question.Type == QuestionType.TextQuestion)
+			{
+				var textSections = GetTextSectionsFromConfiguration(question);
+				if (textSections.Count == 0)
+				{
+					validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one text section");
+				}
+				else
+				{
+					for (int i = 0; i < textSections.Count; i++)
+					{
+						if (string.IsNullOrWhiteSpace(textSections[i].Title))
+						{
+							validationErrors.Add($"Text section {i + 1} in {questionPos} ('{sectionName}') requires a title");
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Show validation errors if any
+	if (validationErrors.Count > 0)
+	{
+		var errorMessage = validationErrors.Count == 1
+			? validationErrors[0]
+			: $"Please fix the following issues:\n• {string.Join("\n• ", validationErrors)}";
+
+		NotificationService.Notify(NotificationSeverity.Warning, "Validation Required", errorMessage);
+		return false;
+	}
+
+	return true;
 }
 
 // Helper methods to avoid section/question directive conflicts
@@ -494,6 +603,84 @@ private string GetQuestionTypeLabel(QuestionItem question)
 
 	// Fall back to global labels
 	return questionTypeLabels[question.Type];
+}
+
+// Helper methods for validation
+private List<QuestionCard.GoalCategory> GetGoalCategoriesFromConfiguration(QuestionItem question)
+{
+	if (question.Configuration.ContainsKey("GoalCategories"))
+	{
+		var goalCategoriesObj = question.Configuration["GoalCategories"];
+
+		// Handle direct cast (when set in editor)
+		if (goalCategoriesObj is List<QuestionCard.GoalCategory> categories)
+		{
+			return categories;
+		}
+
+		// Handle JSON deserialization (when loaded from API)
+		if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement)
+		{
+			try
+			{
+				if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+				{
+					return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error deserializing goal categories: {ex.Message}");
+			}
+		}
+	}
+	return new List<QuestionCard.GoalCategory>();
+}
+
+private List<QuestionCard.TextSection> GetTextSectionsFromConfiguration(QuestionItem question)
+{
+	if (question.Configuration.ContainsKey("TextSections"))
+	{
+		var textSectionsObj = question.Configuration["TextSections"];
+
+		// Handle direct cast (when set in editor)
+		if (textSectionsObj is List<QuestionCard.TextSection> sections)
+		{
+			return sections;
+		}
+
+		// Handle JSON deserialization (when loaded from API)
+		if (textSectionsObj is System.Text.Json.JsonElement jsonElement)
+		{
+			try
+			{
+				if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+				{
+					return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"Error deserializing text sections: {ex.Message}");
+			}
+		}
+	}
+
+	// Check for legacy format and convert
+	if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
+	{
+		return new List<QuestionCard.TextSection>
+		{
+			new QuestionCard.TextSection
+			{
+				Title = question.Configuration.ContainsKey("SectionTitle") ? question.Configuration["SectionTitle"].ToString() ?? "" : "",
+				Description = question.Configuration.ContainsKey("SectionDescription") ? question.Configuration["SectionDescription"].ToString() ?? "" : "",
+				IsRequired = false
+			}
+		};
+	}
+
+	return new List<QuestionCard.TextSection>();
 }
 
 

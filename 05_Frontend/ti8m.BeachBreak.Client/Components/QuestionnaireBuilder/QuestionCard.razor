@@ -7,10 +7,20 @@
         <!-- Question Title and Controls -->
         <div class="d-flex justify-content-between align-items-start mb-3">
             <div class="flex-grow-1">
-                <RadzenTextBox @bind-Value="@Question.Title"
-                             Placeholder="Enter question title..."
-                             Class="w-100"
-                             Style="font-weight: 600; font-size: 1.1rem;" />
+                <div class="position-relative">
+                    <RadzenTextBox @bind-Value="@Question.Title"
+                                 Placeholder="Enter question title..."
+                                 Class="@GetTitleValidationClass()"
+                                 Style="font-weight: 600; font-size: 1.1rem;"
+                                 @onblur="ValidateTitle" />
+                    @if (!isTitleValid && hasBeenValidated)
+                    {
+                        <div class="validation-message text-danger small mt-1">
+                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
+                            Question title is required
+                        </div>
+                    }
+                </div>
             </div>
             <div class="d-flex gap-1 ms-3">
                 <RadzenButton ButtonStyle="ButtonStyle.Light"
@@ -129,10 +139,20 @@
                                 </div>
                             </div>
                             <div class="mb-2">
-                                <RadzenTextBox Value="@competency.Title"
-                                              ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
-                                              Placeholder="Enter competency title..."
-                                              Class="w-100 mb-2" />
+                                <div class="position-relative">
+                                    <RadzenTextBox Value="@competency.Title"
+                                                  ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
+                                                  Placeholder="Enter competency title..."
+                                                  Class="@GetCompetencyTitleValidationClass(competencyIndex)"
+                                                  @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
+                                    @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
+                                    {
+                                        <div class="validation-message text-danger small mt-1">
+                                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
+                                            Competency title is required
+                                        </div>
+                                    }
+                                </div>
                             </div>
                             <div class="mb-2">
                                 <RadzenTextArea Value="@competency.Description"
@@ -209,10 +229,20 @@
                                 </div>
                             </div>
                             <div class="mb-2">
-                                <RadzenTextBox Value="@category.Title"
-                                              ValueChanged="@((string value) => UpdateGoalCategoryTitle(categoryIndex, value))"
-                                              Placeholder="Enter goal category title..."
-                                              Class="w-100 mb-2" />
+                                <div class="position-relative">
+                                    <RadzenTextBox Value="@category.Title"
+                                                  ValueChanged="@((string value) => UpdateGoalCategoryTitle(categoryIndex, value))"
+                                                  Placeholder="Enter goal category title..."
+                                                  Class="@GetGoalCategoryTitleValidationClass(categoryIndex)"
+                                                  @onblur="@(() => ValidateGoalCategoryTitle(categoryIndex))" />
+                                    @if (!GetGoalCategoryTitleValid(categoryIndex) && GetGoalCategoryTitleValidated(categoryIndex))
+                                    {
+                                        <div class="validation-message text-danger small mt-1">
+                                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
+                                            Goal category title is required
+                                        </div>
+                                    }
+                                </div>
                             </div>
                             <div class="mb-2">
                                 <RadzenTextArea Value="@category.Description"
@@ -289,10 +319,20 @@
                                 </div>
                             </div>
                             <div class="mb-2">
-                                <RadzenTextBox Value="@textSection.Title"
-                                              ValueChanged="@((string value) => UpdateTextSectionTitle(sectionIndex, value))"
-                                              Placeholder="Enter section title..."
-                                              Class="w-100 mb-2" />
+                                <div class="position-relative">
+                                    <RadzenTextBox Value="@textSection.Title"
+                                                  ValueChanged="@((string value) => UpdateTextSectionTitle(sectionIndex, value))"
+                                                  Placeholder="Enter section title..."
+                                                  Class="@GetTextSectionTitleValidationClass(sectionIndex)"
+                                                  @onblur="@(() => ValidateTextSectionTitle(sectionIndex))" />
+                                    @if (!GetTextSectionTitleValid(sectionIndex) && GetTextSectionTitleValidated(sectionIndex))
+                                    {
+                                        <div class="validation-message text-danger small mt-1">
+                                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
+                                            Text section title is required
+                                        </div>
+                                    }
+                                </div>
                             </div>
                             <div class="mb-2">
                                 <RadzenTextArea Value="@textSection.Description"
@@ -330,10 +370,181 @@
     [Parameter] public EventCallback OnMoveDown { get; set; }
     [Parameter] public EventCallback OnDelete { get; set; }
 
+    // Validation state
+    private bool isTitleValid = true;
+    private bool hasBeenValidated = false;
+
+    // Competency validation state
+    private Dictionary<int, bool> competencyTitleValid = new();
+    private Dictionary<int, bool> competencyTitleValidated = new();
+
+    // Goal category validation state
+    private Dictionary<int, bool> goalCategoryTitleValid = new();
+    private Dictionary<int, bool> goalCategoryTitleValidated = new();
+
+    // Text section validation state
+    private Dictionary<int, bool> textSectionTitleValid = new();
+    private Dictionary<int, bool> textSectionTitleValidated = new();
+
     private async Task OnEditClick() => await OnEdit.InvokeAsync();
     private async Task OnMoveUpClick() => await OnMoveUp.InvokeAsync();
     private async Task OnMoveDownClick() => await OnMoveDown.InvokeAsync();
     private async Task OnDeleteClick() => await OnDelete.InvokeAsync();
+
+    // Validation methods
+    private void ValidateTitle()
+    {
+        hasBeenValidated = true;
+        isTitleValid = !string.IsNullOrWhiteSpace(Question.Title);
+        StateHasChanged();
+    }
+
+    private string GetTitleValidationClass()
+    {
+        var baseClass = "w-100";
+        if (hasBeenValidated && !isTitleValid)
+        {
+            return $"{baseClass} border-danger";
+        }
+        return baseClass;
+    }
+
+    public bool IsQuestionValid()
+    {
+        ValidateTitle();
+
+        // Validate question content based on type
+        bool contentValid = true;
+
+        if (Question.Type == QuestionType.SelfAssessment)
+        {
+            var competencies = GetOrderedCompetencies();
+            for (int i = 0; i < competencies.Count; i++)
+            {
+                ValidateCompetencyTitle(i);
+                if (!GetCompetencyTitleValid(i))
+                    contentValid = false;
+            }
+        }
+        else if (Question.Type == QuestionType.GoalAchievement)
+        {
+            var categories = GetOrderedGoalCategories();
+            for (int i = 0; i < categories.Count; i++)
+            {
+                ValidateGoalCategoryTitle(i);
+                if (!GetGoalCategoryTitleValid(i))
+                    contentValid = false;
+            }
+        }
+        else if (Question.Type == QuestionType.TextQuestion)
+        {
+            var sections = GetOrderedTextSections();
+            for (int i = 0; i < sections.Count; i++)
+            {
+                ValidateTextSectionTitle(i);
+                if (!GetTextSectionTitleValid(i))
+                    contentValid = false;
+            }
+        }
+
+        return isTitleValid && contentValid;
+    }
+
+    // Competency validation methods
+    private void ValidateCompetencyTitle(int index)
+    {
+        var competencies = GetOrderedCompetencies();
+        if (index >= 0 && index < competencies.Count)
+        {
+            competencyTitleValidated[index] = true;
+            competencyTitleValid[index] = !string.IsNullOrWhiteSpace(competencies[index].Title);
+            StateHasChanged();
+        }
+    }
+
+    private bool GetCompetencyTitleValid(int index)
+    {
+        return competencyTitleValid.GetValueOrDefault(index, true);
+    }
+
+    private bool GetCompetencyTitleValidated(int index)
+    {
+        return competencyTitleValidated.GetValueOrDefault(index, false);
+    }
+
+    private string GetCompetencyTitleValidationClass(int index)
+    {
+        var baseClass = "w-100 mb-2";
+        if (GetCompetencyTitleValidated(index) && !GetCompetencyTitleValid(index))
+        {
+            return $"{baseClass} border-danger";
+        }
+        return baseClass;
+    }
+
+    // Goal category validation methods
+    private void ValidateGoalCategoryTitle(int index)
+    {
+        var categories = GetOrderedGoalCategories();
+        if (index >= 0 && index < categories.Count)
+        {
+            goalCategoryTitleValidated[index] = true;
+            goalCategoryTitleValid[index] = !string.IsNullOrWhiteSpace(categories[index].Title);
+            StateHasChanged();
+        }
+    }
+
+    private bool GetGoalCategoryTitleValid(int index)
+    {
+        return goalCategoryTitleValid.GetValueOrDefault(index, true);
+    }
+
+    private bool GetGoalCategoryTitleValidated(int index)
+    {
+        return goalCategoryTitleValidated.GetValueOrDefault(index, false);
+    }
+
+    private string GetGoalCategoryTitleValidationClass(int index)
+    {
+        var baseClass = "w-100 mb-2";
+        if (GetGoalCategoryTitleValidated(index) && !GetGoalCategoryTitleValid(index))
+        {
+            return $"{baseClass} border-danger";
+        }
+        return baseClass;
+    }
+
+    // Text section validation methods
+    private void ValidateTextSectionTitle(int index)
+    {
+        var sections = GetOrderedTextSections();
+        if (index >= 0 && index < sections.Count)
+        {
+            textSectionTitleValidated[index] = true;
+            textSectionTitleValid[index] = !string.IsNullOrWhiteSpace(sections[index].Title);
+            StateHasChanged();
+        }
+    }
+
+    private bool GetTextSectionTitleValid(int index)
+    {
+        return textSectionTitleValid.GetValueOrDefault(index, true);
+    }
+
+    private bool GetTextSectionTitleValidated(int index)
+    {
+        return textSectionTitleValidated.GetValueOrDefault(index, false);
+    }
+
+    private string GetTextSectionTitleValidationClass(int index)
+    {
+        var baseClass = "w-100 mb-2";
+        if (GetTextSectionTitleValidated(index) && !GetTextSectionTitleValid(index))
+        {
+            return $"{baseClass} border-danger";
+        }
+        return baseClass;
+    }
 
     private string GetQuestionTypeIcon(QuestionType type) => type switch
     {
