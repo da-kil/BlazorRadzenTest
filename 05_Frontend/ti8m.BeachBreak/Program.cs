@@ -39,6 +39,9 @@ public class Program
         builder.Services.AddScoped<IQuestionnaireApiService, QuestionnaireApiService>();
         builder.Services.AddScoped<ICategoryApiService, CategoryApiService>();
         builder.Services.AddScoped<IEmployeeApiService, EmployeeApiService>();
+        builder.Services.AddScoped<IEmployeeQuestionnaireService, EmployeeQuestionnaireService>();
+        builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
+        builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
 
         // Add services to the container.
         builder.Services.AddRazorComponents()

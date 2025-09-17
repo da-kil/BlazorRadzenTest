@@ -4,6 +4,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
 
 <PageTitle>@(template?.Name ?? "Questionnaire")</PageTitle>
 
@@ -138,6 +139,8 @@
     [Inject] protected DialogService DialogService { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
+    [Inject] protected IQuestionnaireApiService QuestionnaireApiService { get; set; } = default!;
+    [Inject] protected IEmployeeQuestionnaireService EmployeeQuestionnaireService { get; set; } = default!;
 
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse response = new();
@@ -147,14 +150,33 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadTemplate();
+        await LoadExistingResponse();
         InitializeResponse();
         UpdateProgress();
     }
 
     private async Task LoadTemplate()
     {
-        // In a real application, load from database/API
-        // For demo, create a sample template
+        try
+        {
+            template = await QuestionnaireApiService.GetTemplateByIdAsync(TemplateId);
+            if (template == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Questionnaire template not found");
+                NavigationManager.NavigateTo("/my-questionnaires");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load questionnaire: {ex.Message}");
+            NavigationManager.NavigateTo("/my-questionnaires");
+            return;
+        }
+
+        // Fallback to sample template if API fails
+        if (template == null)
+        {
         template = new QuestionnaireTemplate
         {
             Id = TemplateId,
@@ -214,6 +236,29 @@
                 }
             }
         };
+        }
+    }
+
+    private async Task LoadExistingResponse()
+    {
+        if (!AssignmentId.HasValue) return;
+
+        try
+        {
+            var existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(AssignmentId.Value);
+            if (existingResponse != null)
+            {
+                response = existingResponse;
+                // Find current section based on progress
+                var completedSections = response.SectionResponses.Count(sr => sr.Value.IsCompleted);
+                currentSectionIndex = Math.Min(completedSections, (template?.Sections.Count ?? 1) - 1);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not load existing response: {ex.Message}");
+            // Continue with new response
+        }
     }
 
     private void InitializeResponse()
@@ -839,8 +884,21 @@
 
     private async Task SaveProgress()
     {
-        // TODO: Save to database
-        NotificationService.Notify(NotificationSeverity.Success, "Saved", "Your progress has been saved");
+        if (!AssignmentId.HasValue)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Cannot Save", "No assignment ID available");
+            return;
+        }
+
+        try
+        {
+            await EmployeeQuestionnaireService.SaveMyResponseAsync(AssignmentId.Value, response.SectionResponses);
+            NotificationService.Notify(NotificationSeverity.Success, "Saved", "Your progress has been saved successfully");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Save Failed", $"Failed to save progress: {ex.Message}");
+        }
     }
 
     private async Task ShowReview()
@@ -857,14 +915,37 @@
             return;
         }
 
-        response.Status = ResponseStatus.Completed;
-        response.CompletedDate = DateTime.Now;
-        
-        // TODO: Submit to database
-        NotificationService.Notify(NotificationSeverity.Success, "Submitted", template.Settings.SuccessMessage);
-        
-        // Navigate to completion page or questionnaire list
-        NavigationManager.NavigateTo("/questionnaire-completed");
+        if (!AssignmentId.HasValue)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Cannot Submit", "No assignment ID available");
+            return;
+        }
+
+        try
+        {
+            // First save the current responses
+            await EmployeeQuestionnaireService.SaveMyResponseAsync(AssignmentId.Value, response.SectionResponses);
+
+            // Then submit the questionnaire
+            var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(AssignmentId.Value);
+
+            if (submittedResponse != null)
+            {
+                response = submittedResponse;
+                NotificationService.Notify(NotificationSeverity.Success, "Submitted", template.Settings.SuccessMessage);
+
+                // Navigate back to questionnaire list
+                NavigationManager.NavigateTo("/my-questionnaires");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", "Failed to submit questionnaire");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", $"Failed to submit questionnaire: {ex.Message}");
+        }
     }
 
     // Competency-specific helper methods

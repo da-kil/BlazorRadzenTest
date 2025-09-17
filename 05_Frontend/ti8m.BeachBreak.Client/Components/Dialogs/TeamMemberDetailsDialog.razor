@@ -1,0 +1,636 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inject IQuestionnaireApiService QuestionnaireApiService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenCard Class="team-member-details-dialog">
+    <div class="dialog-header mb-4">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center">
+                <div class="member-avatar-large me-3">
+                    <RadzenIcon Icon="person" Size="3rem" Class="text-primary" />
+                </div>
+                <div>
+                    <RadzenText TextStyle="TextStyle.H4" Class="mb-1 fw-bold">@Employee.FullName</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted mb-1">@Employee.Role</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@Employee.EMail</RadzenText>
+                </div>
+            </div>
+            <div class="member-status">
+                @if (GetOverdueCount() > 0)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@($"{GetOverdueCount()} Overdue")" Class="mb-2" />
+                }
+                else if (GetInProgressCount() > 0)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="In Progress" Class="mb-2" />
+                }
+                else if (Assignments.All(a => a.Status == AssignmentStatus.Completed))
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="All Complete" Class="mb-2" />
+                }
+                else
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="Assigned" Class="mb-2" />
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Overview -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-6 mb-3">
+            <RadzenCard Class="text-center stats-mini-card">
+                <RadzenIcon Icon="assignment" Size="1.5rem" Class="text-primary mb-2" />
+                <RadzenText TextStyle="TextStyle.H5" Class="mb-1">@Assignments.Count</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Total</RadzenText>
+            </RadzenCard>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <RadzenCard Class="text-center stats-mini-card">
+                <RadzenIcon Icon="task_alt" Size="1.5rem" Class="text-success mb-2" />
+                <RadzenText TextStyle="TextStyle.H5" Class="mb-1">@GetCompletedCount()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Completed</RadzenText>
+            </RadzenCard>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <RadzenCard Class="text-center stats-mini-card">
+                <RadzenIcon Icon="pending_actions" Size="1.5rem" Class="text-warning mb-2" />
+                <RadzenText TextStyle="TextStyle.H5" Class="mb-1">@GetPendingCount()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Pending</RadzenText>
+            </RadzenCard>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <RadzenCard Class="text-center stats-mini-card">
+                <RadzenIcon Icon="warning" Size="1.5rem" Class="text-danger mb-2" />
+                <RadzenText TextStyle="TextStyle.H5" Class="mb-1">@GetOverdueCount()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overdue</RadzenText>
+            </RadzenCard>
+        </div>
+    </div>
+
+    <!-- Performance Overview -->
+    <RadzenCard Class="mb-4 performance-overview">
+        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+            <RadzenIcon Icon="analytics" Class="me-2 text-info" />
+            Performance Overview
+        </RadzenText>
+        <div class="row">
+            <div class="col-md-8">
+                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Overall Completion Progress</RadzenText>
+                <RadzenProgressBar Value="@GetCompletionPercentage()" Max="100" ProgressBarStyle="@GetProgressStyle()" Class="mb-2" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @GetCompletedCount() of @Assignments.Count assignments completed (@GetCompletionPercentage()%)
+                </RadzenText>
+            </div>
+            <div class="col-md-4 text-end">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Performance Rating</RadzenText>
+                <RadzenText TextStyle="TextStyle.H5" Class="@GetPerformanceClass()">
+                    @GetPerformanceText()
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    Avg: @GetAverageCompletionDays() days
+                </RadzenText>
+            </div>
+        </div>
+    </RadzenCard>
+
+    <!-- Assignment Details -->
+    <RadzenTabs @bind-SelectedIndex="selectedTabIndex" Class="mb-4">
+        <Tabs>
+            <RadzenTabsItem Text="@($"Active Assignments ({GetActiveAssignments().Count})")">
+                @RenderAssignmentsList(GetActiveAssignments(), "No active assignments", "This team member has no pending questionnaires.")
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="@($"Completed ({GetCompletedAssignments().Count})")">
+                @RenderAssignmentsList(GetCompletedAssignments(), "No completed assignments", "No questionnaires have been completed yet.")
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="@($"Overdue ({GetOverdueAssignments().Count})")">
+                @RenderAssignmentsList(GetOverdueAssignments(), "No overdue assignments", "Great! No assignments are overdue.")
+            </RadzenTabsItem>
+            <RadzenTabsItem Text="Assignment History">
+                @RenderAssignmentHistory()
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+
+    <!-- Action Buttons -->
+    <div class="d-flex justify-content-between">
+        <div class="d-flex gap-2">
+            @if (GetActiveAssignments().Any())
+            {
+                <RadzenButton Text="Send Reminder"
+                             Icon="email"
+                             ButtonStyle="ButtonStyle.Info"
+                             Click="@SendReminder"
+                             Size="ButtonSize.Medium" />
+            }
+            @if (GetOverdueAssignments().Any())
+            {
+                <RadzenButton Text="Escalate Overdue"
+                             Icon="priority_high"
+                             ButtonStyle="ButtonStyle.Warning"
+                             Click="@EscalateOverdue"
+                             Size="ButtonSize.Medium" />
+            }
+        </div>
+        <div class="d-flex gap-2">
+            <RadzenButton Text="Export Report"
+                         Icon="download"
+                         ButtonStyle="ButtonStyle.Light"
+                         Click="@ExportMemberReport"
+                         Size="ButtonSize.Medium" />
+            <RadzenButton Text="Close"
+                         Icon="close"
+                         ButtonStyle="ButtonStyle.Secondary"
+                         Click="@Close"
+                         Size="ButtonSize.Medium" />
+        </div>
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public EmployeeDto Employee { get; set; } = new();
+    [Parameter] public List<QuestionnaireAssignment> Assignments { get; set; } = new();
+    [Parameter] public List<QuestionnaireTemplate> Templates { get; set; } = new();
+
+    private int selectedTabIndex = 0;
+    private List<QuestionnaireAssignment> activeAssignments = new();
+    private List<QuestionnaireAssignment> completedAssignments = new();
+    private List<QuestionnaireAssignment> overdueAssignments = new();
+
+    protected override void OnParametersSet()
+    {
+        CategorizeAssignments();
+    }
+
+    private void CategorizeAssignments()
+    {
+        activeAssignments = Assignments.Where(a =>
+            a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress).ToList();
+
+        completedAssignments = Assignments.Where(a =>
+            a.Status == AssignmentStatus.Completed).ToList();
+
+        overdueAssignments = Assignments.Where(IsOverdue).ToList();
+    }
+
+    private RenderFragment RenderAssignmentsList(List<QuestionnaireAssignment> assignments, string emptyTitle, string emptyMessage)
+    {
+        return @<div>
+            @if (!assignments.Any())
+            {
+                <div class="text-center p-4">
+                    <RadzenIcon Icon="assignment_turned_in" Size="3rem" Class="text-muted mb-3" />
+                    <RadzenText TextStyle="TextStyle.H6" Class="text-muted mb-2">@emptyTitle</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@emptyMessage</RadzenText>
+                </div>
+            }
+            else
+            {
+                <div class="assignments-list">
+                    @foreach (var assignment in assignments.OrderBy(a => a.DueDate ?? DateTime.MaxValue))
+                    {
+                        @RenderAssignmentCard(assignment)
+                    }
+                </div>
+            }
+        </div>;
+    }
+
+    private RenderFragment RenderAssignmentCard(QuestionnaireAssignment assignment)
+    {
+        var template = Templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
+        var categoryInfo = GetCategoryInfo(template?.Category ?? "General");
+
+        return @<RadzenCard Class="@($"assignment-detail-card {GetAssignmentCardClass(assignment)} mb-3")">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center mb-2">
+                        <RadzenIcon Icon="@categoryInfo.Icon" Class="@($"me-2 {categoryInfo.ColorClass}")" Size="1.2rem" />
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-0 fw-bold">
+                            @(template?.Name ?? "Questionnaire")
+                        </RadzenText>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(template?.Description))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                            @template.Description
+                        </RadzenText>
+                    }
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenBadge BadgeStyle="@categoryInfo.BadgeStyle" Text="@(template?.Category ?? "General")" />
+                        <AssignmentStatusBadge Status="@assignment.Status" DueDate="@assignment.DueDate" />
+                    </div>
+                </div>
+                <div class="assignment-actions">
+                    @if (assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress)
+                    {
+                        <RadzenButton Text="View"
+                                     Icon="visibility"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Click="@(() => ViewAssignment(assignment))"
+                                     Size="ButtonSize.Small" />
+                    }
+                    else if (assignment.Status == AssignmentStatus.Completed)
+                    {
+                        <RadzenButton Text="Results"
+                                     Icon="analytics"
+                                     ButtonStyle="ButtonStyle.Success"
+                                     Click="@(() => ViewResults(assignment))"
+                                     Size="ButtonSize.Small" />
+                    }
+                </div>
+            </div>
+
+            <div class="assignment-timeline">
+                <div class="row">
+                    <div class="col-md-4">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Assigned</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
+                            @assignment.AssignedDate.ToString("MMM dd, yyyy")
+                        </RadzenText>
+                    </div>
+                    @if (assignment.DueDate.HasValue)
+                    {
+                        <div class="col-md-4">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Due Date</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="@GetDueDateClass(assignment)">
+                                @assignment.DueDate.Value.ToString("MMM dd, yyyy")
+                            </RadzenText>
+                        </div>
+                    }
+                    @if (assignment.CompletedDate.HasValue)
+                    {
+                        <div class="col-md-4">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Completed</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-success fw-bold">
+                                @assignment.CompletedDate.Value.ToString("MMM dd, yyyy")
+                            </RadzenText>
+                        </div>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(assignment.Notes))
+                {
+                    <div class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Notes</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">@assignment.Notes</RadzenText>
+                    </div>
+                }
+            </div>
+        </RadzenCard>;
+    }
+
+    private RenderFragment RenderAssignmentHistory()
+    {
+        var sortedAssignments = Assignments.OrderByDescending(a => a.AssignedDate).ToList();
+
+        return @<div class="assignment-history">
+            <div class="timeline">
+                @foreach (var assignment in sortedAssignments)
+                {
+                    var template = Templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
+                    <div class="timeline-item">
+                        <div class="timeline-marker @GetTimelineMarkerClass(assignment)">
+                            <RadzenIcon Icon="@GetTimelineIcon(assignment)" Size="1rem" />
+                        </div>
+                        <div class="timeline-content">
+                            <RadzenCard Class="timeline-card">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-1">
+                                            @(template?.Name ?? "Questionnaire")
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                                            Assigned on @assignment.AssignedDate.ToString("MMM dd, yyyy")
+                                        </RadzenText>
+                                        <AssignmentStatusBadge Status="@assignment.Status" DueDate="@assignment.DueDate" />
+                                    </div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                        @GetTimeAgo(assignment.AssignedDate)
+                                    </RadzenText>
+                                </div>
+                                @if (assignment.CompletedDate.HasValue)
+                                {
+                                    <div class="mt-2">
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-success">
+                                            Completed in @GetCompletionTime(assignment) days
+                                        </RadzenText>
+                                    </div>
+                                }
+                            </RadzenCard>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>;
+    }
+
+    // Helper methods
+    private List<QuestionnaireAssignment> GetActiveAssignments() => activeAssignments;
+    private List<QuestionnaireAssignment> GetCompletedAssignments() => completedAssignments;
+    private List<QuestionnaireAssignment> GetOverdueAssignments() => overdueAssignments;
+
+    private int GetCompletedCount() => Assignments.Count(a => a.Status == AssignmentStatus.Completed);
+    private int GetPendingCount() => Assignments.Count(a => a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress);
+    private int GetOverdueCount() => overdueAssignments.Count;
+    private int GetInProgressCount() => Assignments.Count(a => a.Status == AssignmentStatus.InProgress);
+
+    private int GetCompletionPercentage()
+    {
+        return Assignments.Any() ? (GetCompletedCount() * 100 / Assignments.Count) : 0;
+    }
+
+    private ProgressBarStyle GetProgressStyle()
+    {
+        var progress = GetCompletionPercentage();
+        return progress switch
+        {
+            >= 80 => ProgressBarStyle.Success,
+            >= 60 => ProgressBarStyle.Info,
+            >= 40 => ProgressBarStyle.Warning,
+            _ => ProgressBarStyle.Danger
+        };
+    }
+
+    private string GetPerformanceClass()
+    {
+        var progress = GetCompletionPercentage();
+        return progress switch
+        {
+            >= 80 => "text-success",
+            >= 60 => "text-info",
+            >= 40 => "text-warning",
+            _ => "text-danger"
+        };
+    }
+
+    private string GetPerformanceText()
+    {
+        var progress = GetCompletionPercentage();
+        return progress switch
+        {
+            >= 80 => "Excellent",
+            >= 60 => "Good",
+            >= 40 => "Fair",
+            _ => "Needs Attention"
+        };
+    }
+
+    private double GetAverageCompletionDays()
+    {
+        var completed = Assignments.Where(a => a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        if (!completed.Any()) return 0;
+
+        return Math.Round(completed.Average(a => (a.CompletedDate!.Value - a.AssignedDate).TotalDays), 1);
+    }
+
+    private bool IsOverdue(QuestionnaireAssignment assignment)
+    {
+        return assignment.DueDate.HasValue &&
+               assignment.DueDate < DateTime.Now &&
+               assignment.Status != AssignmentStatus.Completed &&
+               assignment.Status != AssignmentStatus.Cancelled;
+    }
+
+    private string GetAssignmentCardClass(QuestionnaireAssignment assignment)
+    {
+        if (IsOverdue(assignment)) return "assignment-overdue";
+        if (assignment.Status == AssignmentStatus.Completed) return "assignment-completed";
+        if (assignment.Status == AssignmentStatus.InProgress) return "assignment-inprogress";
+        return "assignment-assigned";
+    }
+
+    private string GetDueDateClass(QuestionnaireAssignment assignment)
+    {
+        if (IsOverdue(assignment)) return "text-danger fw-bold";
+        if (assignment.DueDate.HasValue && assignment.DueDate < DateTime.Now.AddDays(3)) return "text-warning fw-bold";
+        return "fw-bold";
+    }
+
+    private (string Icon, string ColorClass, BadgeStyle BadgeStyle) GetCategoryInfo(string category)
+    {
+        return category.ToLower() switch
+        {
+            "performance" => ("trending_up", "text-info", BadgeStyle.Info),
+            "annual review" => ("event_note", "text-primary", BadgeStyle.Primary),
+            "onboarding" => ("person_add", "text-success", BadgeStyle.Success),
+            "training" => ("school", "text-warning", BadgeStyle.Warning),
+            "feedback" => ("feedback", "text-secondary", BadgeStyle.Secondary),
+            _ => ("assignment", "text-muted", BadgeStyle.Light)
+        };
+    }
+
+    private string GetTimelineMarkerClass(QuestionnaireAssignment assignment)
+    {
+        if (assignment.Status == AssignmentStatus.Completed) return "timeline-completed";
+        if (IsOverdue(assignment)) return "timeline-overdue";
+        if (assignment.Status == AssignmentStatus.InProgress) return "timeline-inprogress";
+        return "timeline-assigned";
+    }
+
+    private string GetTimelineIcon(QuestionnaireAssignment assignment)
+    {
+        return assignment.Status switch
+        {
+            AssignmentStatus.Completed => "check_circle",
+            AssignmentStatus.InProgress => "play_circle",
+            _ => IsOverdue(assignment) ? "warning" : "assignment"
+        };
+    }
+
+    private string GetTimeAgo(DateTime date)
+    {
+        var timeSpan = DateTime.Now - date;
+        if (timeSpan.TotalDays >= 1) return $"{(int)timeSpan.TotalDays} days ago";
+        if (timeSpan.TotalHours >= 1) return $"{(int)timeSpan.TotalHours} hours ago";
+        return "Today";
+    }
+
+    private int GetCompletionTime(QuestionnaireAssignment assignment)
+    {
+        if (!assignment.CompletedDate.HasValue) return 0;
+        return (int)(assignment.CompletedDate.Value - assignment.AssignedDate).TotalDays;
+    }
+
+    // Action methods
+    private async Task SendReminder()
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Reminder Sent", $"Reminder sent to {Employee.FullName}");
+    }
+
+    private async Task EscalateOverdue()
+    {
+        NotificationService.Notify(NotificationSeverity.Warning, "Escalated", "Overdue assignments have been escalated");
+    }
+
+    private async Task ExportMemberReport()
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Export", $"Report for {Employee.FullName} would be exported");
+    }
+
+    private async Task ViewAssignment(QuestionnaireAssignment assignment)
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "View Assignment", "Assignment details would open");
+    }
+
+    private async Task ViewResults(QuestionnaireAssignment assignment)
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "View Results", "Assignment results would open");
+    }
+
+    private void Close()
+    {
+        DialogService.Close();
+    }
+}
+
+<style>
+    .team-member-details-dialog {
+        min-width: 800px;
+        max-width: 1000px;
+    }
+
+    .member-avatar-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--light-blue), var(--primary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .stats-mini-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .stats-mini-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .performance-overview {
+        background: linear-gradient(135deg, rgba(15, 105, 255, 0.05), rgba(0, 230, 200, 0.05));
+        border: 1px solid rgba(15, 105, 255, 0.1);
+    }
+
+    .assignment-detail-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .assignment-detail-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+
+    .assignment-assigned {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .assignment-inprogress {
+        border-left: 4px solid var(--info-color);
+        background: linear-gradient(135deg, rgba(15, 105, 255, 0.02), rgba(15, 105, 255, 0.05));
+    }
+
+    .assignment-completed {
+        border-left: 4px solid var(--success-color);
+        background: linear-gradient(135deg, rgba(0, 230, 200, 0.02), rgba(0, 230, 200, 0.05));
+    }
+
+    .assignment-overdue {
+        border-left: 4px solid var(--danger-color);
+        background: linear-gradient(135deg, rgba(240, 128, 128, 0.02), rgba(240, 128, 128, 0.05));
+    }
+
+    .assignment-timeline {
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 6px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, var(--primary-color), var(--light-blue));
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-marker {
+        position: absolute;
+        left: -2rem;
+        top: 0.5rem;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .timeline-completed {
+        background: var(--success-color);
+        color: white;
+    }
+
+    .timeline-overdue {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    .timeline-inprogress {
+        background: var(--info-color);
+        color: white;
+    }
+
+    .timeline-assigned {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    .timeline-card {
+        margin-left: 1rem;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+    }
+
+    @@media (max-width: 768px) {
+        .team-member-details-dialog {
+            min-width: unset;
+            width: 100%;
+        }
+
+        .dialog-header .d-flex {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+
+        .member-status {
+            margin-top: 1rem;
+        }
+    }
+</style>

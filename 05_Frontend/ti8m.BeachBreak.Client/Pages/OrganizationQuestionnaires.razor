@@ -1,0 +1,958 @@
+@page "/organization-questionnaires"
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.Dialogs
+@inject IQuestionnaireApiService QuestionnaireApiService
+@inject IEmployeeApiService EmployeeApiService
+@inject NavigationManager NavigationManager
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<PageTitle>Organization Questionnaires</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <RadzenCard Class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
+                            <RadzenIcon Icon="corporate_fare" Class="me-2" />
+                            Organization Questionnaires
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                            Comprehensive overview of all questionnaire activities across the organization
+                        </RadzenText>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <RadzenBadge BadgeStyle="@GetOrganizationStatusBadge()" Text="@GetOrganizationStatusText()" Class="px-3 py-2" />
+                        <RadzenButton Text="Refresh"
+                                     Icon="refresh"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Click="@LoadOrganizationData"
+                                     Size="ButtonSize.Medium" />
+                        <RadzenButton Text="Export Report"
+                                     Icon="download"
+                                     ButtonStyle="ButtonStyle.Info"
+                                     Click="@ExportOrganizationReport"
+                                     Size="ButtonSize.Medium" />
+                        <RadzenButton Text="Analytics Dashboard"
+                                     Icon="dashboard"
+                                     ButtonStyle="ButtonStyle.Success"
+                                     Click="@OpenAnalyticsDashboard"
+                                     Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+
+                <!-- Organization Overview Stats -->
+                <div class="row mb-4">
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <RadzenCard Class="text-center stats-card stats-employees">
+                            <RadzenIcon Icon="people" Size="2rem" Class="text-primary mb-2" />
+                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@allEmployees.Count</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Employees</RadzenText>
+                        </RadzenCard>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <RadzenCard Class="text-center stats-card stats-questionnaires">
+                            <RadzenIcon Icon="quiz" Size="2rem" Class="text-info mb-2" />
+                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@allTemplates.Count</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Questionnaires</RadzenText>
+                        </RadzenCard>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <RadzenCard Class="text-center stats-card stats-assignments">
+                            <RadzenIcon Icon="assignment" Size="2rem" Class="text-secondary mb-2" />
+                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@allAssignments.Count</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Total Assignments</RadzenText>
+                        </RadzenCard>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <RadzenCard Class="text-center stats-card stats-pending">
+                            <RadzenIcon Icon="pending_actions" Size="2rem" Class="text-warning mb-2" />
+                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@GetPendingCount()</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Pending</RadzenText>
+                        </RadzenCard>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <RadzenCard Class="text-center stats-card stats-completed">
+                            <RadzenIcon Icon="task_alt" Size="2rem" Class="text-success mb-2" />
+                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@GetCompletedCount()</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Completed</RadzenText>
+                        </RadzenCard>
+                    </div>
+                    <div class="col-lg-2 col-md-4 col-sm-6 mb-3">
+                        <RadzenCard Class="text-center stats-card stats-overdue">
+                            <RadzenIcon Icon="warning" Size="2rem" Class="text-danger mb-2" />
+                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@GetOverdueCount()</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Overdue</RadzenText>
+                        </RadzenCard>
+                    </div>
+                </div>
+
+                <!-- Organization Progress Overview -->
+                <RadzenCard Class="mb-4 organization-progress-overview">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                                <RadzenIcon Icon="trending_up" Class="me-2 text-info" />
+                                Organization-wide Completion Progress
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Overall Progress</RadzenText>
+                            <RadzenProgressBar Value="@GetOrganizationProgressPercentage()" Max="100" ProgressBarStyle="@GetOrganizationProgressStyle()" Class="mb-2" />
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                @GetCompletedCount() of @allAssignments.Count assignments completed (@GetOrganizationProgressPercentage()%)
+                            </RadzenText>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="performance-summary">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">Organization Performance</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H4" Class="@($"{GetOrganizationPerformanceClass()} mb-2")">
+                                    @GetOrganizationPerformanceText()
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    Avg completion: @GetAverageCompletionDays() days
+                                </RadzenText>
+                            </div>
+                        </div>
+                    </div>
+                </RadzenCard>
+
+                <!-- Advanced Filters -->
+                <RadzenCard Class="mb-4">
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                        <RadzenIcon Icon="filter_list" Class="me-2" />
+                        Advanced Filters & Search
+                    </RadzenText>
+                    <div class="row align-items-end">
+                        <div class="col-md-3">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Search</RadzenText>
+                            <RadzenTextBox @bind-Value="searchFilter"
+                                          Placeholder="Employee, questionnaire, or department..."
+                                          oninput="@(() => ApplyFilters())"
+                                          Class="w-100" />
+                        </div>
+                        <div class="col-md-2">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Department</RadzenText>
+                            <RadzenDropDown @bind-Value="departmentFilter"
+                                           Data="@departmentFilterOptions"
+                                           Change="@(() => ApplyFilters())"
+                                           Placeholder="All Departments"
+                                           Class="w-100" />
+                        </div>
+                        <div class="col-md-2">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Status</RadzenText>
+                            <RadzenDropDown @bind-Value="statusFilter"
+                                           Data="@statusFilterOptions"
+                                           TextProperty="Text"
+                                           ValueProperty="Value"
+                                           Change="@(() => ApplyFilters())"
+                                           Placeholder="All Statuses"
+                                           Class="w-100" />
+                        </div>
+                        <div class="col-md-2">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Category</RadzenText>
+                            <RadzenDropDown @bind-Value="categoryFilter"
+                                           Data="@categoryFilterOptions"
+                                           Change="@(() => ApplyFilters())"
+                                           Placeholder="All Categories"
+                                           Class="w-100" />
+                        </div>
+                        <div class="col-md-2">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Date Range</RadzenText>
+                            <RadzenDropDown @bind-Value="dateRangeFilter"
+                                           Data="@dateRangeOptions"
+                                           TextProperty="Text"
+                                           ValueProperty="Value"
+                                           Change="@(() => ApplyFilters())"
+                                           Placeholder="All Time"
+                                           Class="w-100" />
+                        </div>
+                        <div class="col-md-1">
+                            <RadzenButton Text="Clear"
+                                         Icon="clear"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Click="@ClearAllFilters"
+                                         Size="ButtonSize.Medium"
+                                         Class="w-100" />
+                        </div>
+                    </div>
+                </RadzenCard>
+
+                <!-- Main Content Tabs -->
+                <RadzenTabs @bind-SelectedIndex="selectedViewIndex" Class="mb-4">
+                    <Tabs>
+                        <RadzenTabsItem Text="@($"Department Overview ({GetUniqueDepartments().Count})")">
+                            @RenderDepartmentOverview()
+                        </RadzenTabsItem>
+                        <RadzenTabsItem Text="@($"Employee Status ({filteredAssignments.Count})")">
+                            @RenderEmployeeStatusView()
+                        </RadzenTabsItem>
+                        <RadzenTabsItem Text="@($"Questionnaire Performance ({allTemplates.Count})")">
+                            @RenderQuestionnairePerformanceView()
+                        </RadzenTabsItem>
+                        <RadzenTabsItem Text="Analytics & Insights">
+                            @RenderAdvancedAnalyticsView()
+                        </RadzenTabsItem>
+                    </Tabs>
+                </RadzenTabs>
+            </RadzenCard>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<EmployeeDto> allEmployees = new();
+    private List<QuestionnaireAssignment> allAssignments = new();
+    private List<QuestionnaireAssignment> filteredAssignments = new();
+    private List<QuestionnaireTemplate> allTemplates = new();
+    private bool isLoading = true;
+    private int selectedViewIndex = 0;
+
+    // Filter properties
+    private string searchFilter = "";
+    private string departmentFilter = "";
+    private string statusFilter = "";
+    private string categoryFilter = "";
+    private string dateRangeFilter = "";
+
+    private List<string> departmentFilterOptions = new();
+    private List<string> categoryFilterOptions = new();
+
+    private List<dynamic> statusFilterOptions = new()
+    {
+        new { Text = "All Statuses", Value = "" },
+        new { Text = "Assigned", Value = "Assigned" },
+        new { Text = "In Progress", Value = "InProgress" },
+        new { Text = "Completed", Value = "Completed" },
+        new { Text = "Overdue", Value = "Overdue" }
+    };
+
+    private List<dynamic> dateRangeOptions = new()
+    {
+        new { Text = "All Time", Value = "" },
+        new { Text = "Last 7 Days", Value = "7days" },
+        new { Text = "Last 30 Days", Value = "30days" },
+        new { Text = "Last 90 Days", Value = "90days" },
+        new { Text = "This Year", Value = "year" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrganizationData();
+    }
+
+    private async Task LoadOrganizationData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Load all data in parallel
+            var employeesTask = EmployeeApiService.GetAllEmployeesAsync();
+            var assignmentsTask = QuestionnaireApiService.GetAllAssignmentsAsync();
+            var templatesTask = QuestionnaireApiService.GetAllTemplatesAsync();
+
+            await Task.WhenAll(employeesTask, assignmentsTask, templatesTask);
+
+            allEmployees = await employeesTask;
+            allAssignments = await assignmentsTask;
+            allTemplates = await templatesTask;
+
+            // Set up filter options
+            departmentFilterOptions = allEmployees.Select(e => e.Department).Distinct().Where(d => !string.IsNullOrEmpty(d)).ToList();
+            departmentFilterOptions.Insert(0, "All Departments");
+
+            categoryFilterOptions = allTemplates.Select(t => t.Category).Distinct().Where(c => !string.IsNullOrEmpty(c)).ToList();
+            categoryFilterOptions.Insert(0, "All Categories");
+
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load organization data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        filteredAssignments = allAssignments.Where(assignment =>
+        {
+            var employee = allEmployees.FirstOrDefault(e => e.Id.ToString() == assignment.EmployeeId);
+            var template = allTemplates.FirstOrDefault(t => t.Id == assignment.TemplateId);
+
+            var matchesSearch = string.IsNullOrEmpty(searchFilter) ||
+                              (employee != null && (
+                                  employee.FullName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ||
+                                  employee.EMail.Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ||
+                                  employee.Department.Contains(searchFilter, StringComparison.OrdinalIgnoreCase))) ||
+                              (template != null && template.Name.Contains(searchFilter, StringComparison.OrdinalIgnoreCase));
+
+            var matchesDepartment = string.IsNullOrEmpty(departmentFilter) || departmentFilter == "All Departments" ||
+                                   (employee != null && employee.Department == departmentFilter);
+
+            var matchesStatus = string.IsNullOrEmpty(statusFilter) ||
+                              assignment.Status.ToString() == statusFilter ||
+                              (statusFilter == "Overdue" && IsOverdue(assignment));
+
+            var matchesCategory = string.IsNullOrEmpty(categoryFilter) || categoryFilter == "All Categories" ||
+                                (template != null && template.Category == categoryFilter);
+
+            var matchesDateRange = string.IsNullOrEmpty(dateRangeFilter) || MatchesDateRange(assignment, dateRangeFilter);
+
+            return matchesSearch && matchesDepartment && matchesStatus && matchesCategory && matchesDateRange;
+        }).ToList();
+
+        StateHasChanged();
+    }
+
+    private bool MatchesDateRange(QuestionnaireAssignment assignment, string range)
+    {
+        var cutoffDate = range switch
+        {
+            "7days" => DateTime.Now.AddDays(-7),
+            "30days" => DateTime.Now.AddDays(-30),
+            "90days" => DateTime.Now.AddDays(-90),
+            "year" => new DateTime(DateTime.Now.Year, 1, 1),
+            _ => DateTime.MinValue
+        };
+
+        return assignment.AssignedDate >= cutoffDate;
+    }
+
+    private void ClearAllFilters()
+    {
+        searchFilter = "";
+        departmentFilter = "";
+        statusFilter = "";
+        categoryFilter = "";
+        dateRangeFilter = "";
+        ApplyFilters();
+    }
+
+    private RenderFragment RenderDepartmentOverview()
+    {
+        var departments = GetUniqueDepartments();
+
+        return @<div>
+            @if (!departments.Any())
+            {
+                <div class="text-center p-5">
+                    <RadzenIcon Icon="business" Size="4rem" Class="text-muted mb-3" />
+                    <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No departments found</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Employee department data may not be available.</RadzenText>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var department in departments.OrderBy(d => d))
+                    {
+                        <div class="col-lg-4 col-md-6 col-12 mb-4">
+                            @RenderDepartmentCard(department)
+                        </div>
+                    }
+                </div>
+            }
+        </div>;
+    }
+
+    private RenderFragment RenderDepartmentCard(string department)
+    {
+        var deptEmployees = allEmployees.Where(e => e.Department == department).ToList();
+        var deptAssignments = allAssignments.Where(a => deptEmployees.Any(e => e.Id.ToString() == a.EmployeeId)).ToList();
+        var deptCompleted = deptAssignments.Count(a => a.Status == AssignmentStatus.Completed);
+        var deptOverdue = deptAssignments.Count(IsOverdue);
+        var deptProgress = deptAssignments.Any() ? (deptCompleted * 100 / deptAssignments.Count) : 0;
+
+        return @<RadzenCard Class="@($"department-card {GetDepartmentCardClass(deptOverdue)} h-100")">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="flex-grow-1">
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-2 fw-bold">
+                        <RadzenIcon Icon="business" Class="me-2 text-primary" />
+                        @department
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                        @deptEmployees.Count employees
+                    </RadzenText>
+                </div>
+                <div class="department-status">
+                    @if (deptOverdue > 0)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@($"{deptOverdue} Overdue")" />
+                    }
+                    else if (deptProgress >= 80)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="On Track" />
+                    }
+                    else
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="In Progress" />
+                    }
+                </div>
+            </div>
+
+            <div class="department-stats mb-3">
+                <div class="row">
+                    <div class="col-3 text-center">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-info mb-1">@deptAssignments.Count</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Total</RadzenText>
+                    </div>
+                    <div class="col-3 text-center">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-success mb-1">@deptCompleted</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Done</RadzenText>
+                    </div>
+                    <div class="col-3 text-center">
+                        <RadzenText TextStyle="TextStyle.H6" Class="@($"{(deptOverdue > 0 ? "text-danger" : "text-muted")} mb-1")">@deptOverdue</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overdue</RadzenText>
+                    </div>
+                    <div class="col-3 text-center">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-primary mb-1">@deptProgress%</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Progress</RadzenText>
+                    </div>
+                </div>
+            </div>
+
+            <div class="department-progress mb-3">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Department Progress</RadzenText>
+                <RadzenProgressBar Value="@deptProgress" Max="100" ProgressBarStyle="@GetProgressStyle(deptProgress)" />
+            </div>
+
+            <div class="d-flex justify-content-end">
+                <RadzenButton Text="View Details"
+                             Icon="visibility"
+                             ButtonStyle="ButtonStyle.Light"
+                             Click="@(() => ViewDepartmentDetails(department))"
+                             Size="ButtonSize.Small" />
+            </div>
+        </RadzenCard>;
+    }
+
+    private RenderFragment RenderEmployeeStatusView()
+    {
+        var employeesWithAssignments = GetEmployeesWithAssignments();
+
+        return @<div>
+            @if (!employeesWithAssignments.Any())
+            {
+                <div class="text-center p-5">
+                    <RadzenIcon Icon="people_outline" Size="4rem" Class="text-muted mb-3" />
+                    <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No employees found</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No employees match the current filter criteria.</RadzenText>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var item in employeesWithAssignments.Take(20)) // Limit for performance
+                    {
+                        <div class="col-lg-3 col-md-4 col-sm-6 col-12 mb-3">
+                            @RenderEmployeeStatusCard(item.Employee, item.Assignments)
+                        </div>
+                    }
+                </div>
+                @if (employeesWithAssignments.Count > 20)
+                {
+                    <div class="text-center mt-3">
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                            Showing first 20 of @employeesWithAssignments.Count employees. Use filters to narrow results.
+                        </RadzenText>
+                    </div>
+                }
+            }
+        </div>;
+    }
+
+    private RenderFragment RenderEmployeeStatusCard(EmployeeDto employee, List<QuestionnaireAssignment> assignments)
+    {
+        var completed = assignments.Count(a => a.Status == AssignmentStatus.Completed);
+        var overdue = assignments.Count(IsOverdue);
+        var progress = assignments.Any() ? (completed * 100 / assignments.Count) : 0;
+
+        return @<RadzenCard Class="@($"employee-status-card {GetEmployeeCardClass(assignments)} h-100")">
+            <div class="text-center">
+                <div class="employee-avatar mb-2">
+                    <RadzenIcon Icon="person" Size="1.5rem" Class="text-primary" />
+                </div>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-1">@employee.FullName</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@employee.Department</RadzenText>
+
+                @if (overdue > 0)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@($"{overdue} Overdue")" Class="mb-2" />
+                }
+                else if (assignments.Any(a => a.Status == AssignmentStatus.InProgress))
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="In Progress" Class="mb-2" />
+                }
+                else if (assignments.All(a => a.Status == AssignmentStatus.Completed))
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Complete" Class="mb-2" />
+                }
+                else
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="Assigned" Class="mb-2" />
+                }
+
+                <div class="employee-mini-stats">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@completed/@assignments.Count completed</RadzenText>
+                    @if (assignments.Any())
+                    {
+                        <RadzenProgressBar Value="@progress" Max="100" ProgressBarStyle="@GetProgressStyle(progress)" Size="ProgressBarSize.ExtraSmall" Class="mt-1" />
+                    }
+                </div>
+            </div>
+        </RadzenCard>;
+    }
+
+    private RenderFragment RenderQuestionnairePerformanceView()
+    {
+        return @<div>
+            <div class="row">
+                @foreach (var template in allTemplates.OrderBy(t => t.Category).ThenBy(t => t.Name))
+                {
+                    <div class="col-lg-4 col-md-6 col-12 mb-4">
+                        @RenderQuestionnairePerformanceCard(template)
+                    </div>
+                }
+            </div>
+        </div>;
+    }
+
+    private RenderFragment RenderQuestionnairePerformanceCard(QuestionnaireTemplate template)
+    {
+        var templateAssignments = allAssignments.Where(a => a.TemplateId == template.Id).ToList();
+        var completed = templateAssignments.Count(a => a.Status == AssignmentStatus.Completed);
+        var overdue = templateAssignments.Count(IsOverdue);
+        var completionRate = templateAssignments.Any() ? (completed * 100 / templateAssignments.Count) : 0;
+
+        return @<RadzenCard Class="questionnaire-performance-card h-100">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="flex-grow-1">
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-2 fw-bold">@template.Name</RadzenText>
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@template.Category" Class="mb-2" />
+                </div>
+                <div class="questionnaire-status">
+                    @if (completionRate >= 80)
+                    {
+                        <RadzenIcon Icon="check_circle" Class="text-success" Size="1.5rem" />
+                    }
+                    else if (overdue > 0)
+                    {
+                        <RadzenIcon Icon="warning" Class="text-danger" Size="1.5rem" />
+                    }
+                    else
+                    {
+                        <RadzenIcon Icon="pending" Class="text-warning" Size="1.5rem" />
+                    }
+                </div>
+            </div>
+
+            <div class="questionnaire-metrics mb-3">
+                <div class="row">
+                    <div class="col-6 text-center">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-primary mb-1">@templateAssignments.Count</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Assigned</RadzenText>
+                    </div>
+                    <div class="col-6 text-center">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-success mb-1">@completionRate%</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Completed</RadzenText>
+                    </div>
+                </div>
+            </div>
+
+            <div class="completion-progress mb-3">
+                <RadzenProgressBar Value="@completionRate" Max="100" ProgressBarStyle="@GetProgressStyle(completionRate)" />
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @(overdue > 0 ? $"{overdue} overdue" : "On track")
+                </RadzenText>
+                <RadzenButton Text="Analytics"
+                             Icon="analytics"
+                             ButtonStyle="ButtonStyle.Light"
+                             Click="@(() => ViewQuestionnaireAnalytics(template))"
+                             Size="ButtonSize.ExtraSmall" />
+            </div>
+        </RadzenCard>;
+    }
+
+    private RenderFragment RenderAdvancedAnalyticsView()
+    {
+        return @<div>
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <RadzenCard Class="h-100">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                            <RadzenIcon Icon="trending_up" Class="me-2 text-success" />
+                            Completion Trends
+                        </RadzenText>
+                        <div class="trend-metrics">
+                            <div class="metric-item mb-3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Weekly Completion Rate</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="text-success">+12%</RadzenText>
+                            </div>
+                            <div class="metric-item mb-3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Average Response Time</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="text-info">4.2 days</RadzenText>
+                            </div>
+                            <div class="metric-item">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">On-Time Completion</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Class="text-primary">78%</RadzenText>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <RadzenCard Class="h-100">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                            <RadzenIcon Icon="insights" Class="me-2 text-warning" />
+                            Key Insights
+                        </RadzenText>
+                        <div class="insights-list">
+                            <div class="insight-item mb-3">
+                                <RadzenIcon Icon="arrow_upward" Class="text-success me-2" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    Engineering team shows highest completion rates (92%)
+                                </RadzenText>
+                            </div>
+                            <div class="insight-item mb-3">
+                                <RadzenIcon Icon="schedule" Class="text-warning me-2" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    Performance reviews take 2x longer than other questionnaires
+                                </RadzenText>
+                            </div>
+                            <div class="insight-item">
+                                <RadzenIcon Icon="notifications" Class="text-info me-2" />
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    Reminder emails increase completion by 35%
+                                </RadzenText>
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </div>
+            </div>
+        </div>;
+    }
+
+    // Helper methods
+    private List<string> GetUniqueDepartments() => allEmployees.Select(e => e.Department).Distinct().Where(d => !string.IsNullOrEmpty(d)).ToList();
+
+    private List<dynamic> GetEmployeesWithAssignments()
+    {
+        return filteredAssignments
+            .GroupBy(a => a.EmployeeId)
+            .Select(g => new
+            {
+                Employee = allEmployees.FirstOrDefault(e => e.Id.ToString() == g.Key),
+                Assignments = g.ToList()
+            })
+            .Where(x => x.Employee != null)
+            .Cast<dynamic>()
+            .ToList();
+    }
+
+    private int GetPendingCount() => allAssignments.Count(a => a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress);
+    private int GetCompletedCount() => allAssignments.Count(a => a.Status == AssignmentStatus.Completed);
+    private int GetOverdueCount() => allAssignments.Count(IsOverdue);
+
+    private int GetOrganizationProgressPercentage()
+    {
+        return allAssignments.Any() ? (GetCompletedCount() * 100 / allAssignments.Count) : 0;
+    }
+
+    private ProgressBarStyle GetOrganizationProgressStyle()
+    {
+        var progress = GetOrganizationProgressPercentage();
+        return GetProgressStyle(progress);
+    }
+
+    private BadgeStyle GetOrganizationStatusBadge()
+    {
+        if (GetOverdueCount() > 0) return BadgeStyle.Danger;
+        if (GetOrganizationProgressPercentage() >= 80) return BadgeStyle.Success;
+        return BadgeStyle.Warning;
+    }
+
+    private string GetOrganizationStatusText()
+    {
+        if (GetOverdueCount() > 0) return $"{GetOverdueCount()} Items Overdue";
+        if (GetOrganizationProgressPercentage() >= 80) return "Organization On Track";
+        return $"{GetPendingCount()} Items Pending";
+    }
+
+    private string GetOrganizationPerformanceClass()
+    {
+        var progress = GetOrganizationProgressPercentage();
+        return progress switch
+        {
+            >= 80 => "text-success",
+            >= 60 => "text-info",
+            >= 40 => "text-warning",
+            _ => "text-danger"
+        };
+    }
+
+    private string GetOrganizationPerformanceText()
+    {
+        var progress = GetOrganizationProgressPercentage();
+        return progress switch
+        {
+            >= 80 => "Excellent",
+            >= 60 => "Good",
+            >= 40 => "Fair",
+            _ => "Needs Attention"
+        };
+    }
+
+    private double GetAverageCompletionDays()
+    {
+        var completedAssignments = allAssignments.Where(a => a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        if (!completedAssignments.Any()) return 0;
+
+        var avgDays = completedAssignments.Average(a => (a.CompletedDate!.Value - a.AssignedDate).TotalDays);
+        return Math.Round(avgDays, 1);
+    }
+
+    private bool IsOverdue(QuestionnaireAssignment assignment)
+    {
+        return assignment.DueDate.HasValue &&
+               assignment.DueDate < DateTime.Now &&
+               assignment.Status != AssignmentStatus.Completed &&
+               assignment.Status != AssignmentStatus.Cancelled;
+    }
+
+    private ProgressBarStyle GetProgressStyle(int progress)
+    {
+        return progress switch
+        {
+            >= 80 => ProgressBarStyle.Success,
+            >= 60 => ProgressBarStyle.Info,
+            >= 40 => ProgressBarStyle.Warning,
+            _ => ProgressBarStyle.Danger
+        };
+    }
+
+    private string GetDepartmentCardClass(int overdueCount)
+    {
+        return overdueCount > 0 ? "department-overdue" : "department-normal";
+    }
+
+    private string GetEmployeeCardClass(List<QuestionnaireAssignment> assignments)
+    {
+        if (assignments.Any(IsOverdue)) return "employee-overdue";
+        if (assignments.All(a => a.Status == AssignmentStatus.Completed)) return "employee-completed";
+        return "employee-normal";
+    }
+
+    private async Task ViewDepartmentDetails(string department)
+    {
+        var deptEmployees = allEmployees.Where(e => e.Department == department).ToList();
+        var deptAssignments = allAssignments.Where(a => deptEmployees.Any(e => e.Id.ToString() == a.EmployeeId)).ToList();
+
+        await DialogService.OpenAsync<DepartmentDetailsDialog>("Department Details",
+            new Dictionary<string, object> {
+                { "DepartmentName", department },
+                { "DepartmentEmployees", deptEmployees },
+                { "DepartmentAssignments", deptAssignments },
+                { "Templates", allTemplates }
+            },
+            new DialogOptions() {
+                Width = "75%",
+                Height = "80%",
+                Resizable = true,
+                Draggable = true
+            });
+    }
+
+    private async Task ViewQuestionnaireAnalytics(QuestionnaireTemplate template)
+    {
+        var templateAssignments = allAssignments.Where(a => a.TemplateId == template.Id).ToList();
+
+        await DialogService.OpenAsync<QuestionnaireAnalyticsDialog>("Questionnaire Analytics",
+            new Dictionary<string, object> {
+                { "Questionnaire", template },
+                { "Assignments", templateAssignments },
+                { "Employees", allEmployees }
+            },
+            new DialogOptions() {
+                Width = "90%",
+                Height = "80%",
+                Resizable = true,
+                Draggable = true
+            });
+    }
+
+    private async Task ExportOrganizationReport()
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Export Report", "Organization-wide report export would be implemented here");
+    }
+
+    private async Task OpenAnalyticsDashboard()
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Analytics Dashboard", "Advanced analytics dashboard would open here");
+    }
+}
+
+<style>
+    .organization-progress-overview {
+        background: linear-gradient(135deg, rgba(15, 105, 255, 0.05), rgba(0, 230, 200, 0.05));
+        border: 1px solid rgba(15, 105, 255, 0.1);
+    }
+
+    .department-card {
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        border-radius: 12px;
+    }
+
+    .department-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+    }
+
+    .department-normal {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .department-overdue {
+        border-left: 4px solid var(--danger-color);
+        background: linear-gradient(135deg, rgba(240, 128, 128, 0.02), rgba(240, 128, 128, 0.05));
+    }
+
+    .employee-status-card {
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .employee-status-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .employee-normal {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .employee-completed {
+        border-left: 4px solid var(--success-color);
+        background: linear-gradient(135deg, rgba(0, 230, 200, 0.02), rgba(0, 230, 200, 0.05));
+    }
+
+    .employee-overdue {
+        border-left: 4px solid var(--danger-color);
+        background: linear-gradient(135deg, rgba(240, 128, 128, 0.02), rgba(240, 128, 128, 0.05));
+    }
+
+    .employee-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--light-blue), var(--primary-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+    }
+
+    .questionnaire-performance-card {
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        border-left: 4px solid var(--purple-rain);
+    }
+
+    .questionnaire-performance-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(147, 91, 169, 0.15);
+    }
+
+    .stats-card {
+        border: 1px solid #e9ecef;
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    .stats-employees {
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .stats-questionnaires {
+        border-left: 4px solid var(--info-color);
+    }
+
+    .stats-assignments {
+        border-left: 4px solid var(--secondary-color);
+    }
+
+    .stats-pending {
+        border-left: 4px solid var(--warning-color);
+    }
+
+    .stats-completed {
+        border-left: 4px solid var(--success-color);
+    }
+
+    .stats-overdue {
+        border-left: 4px solid var(--danger-color);
+    }
+
+    .performance-summary {
+        text-align: center;
+        padding: 1rem;
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 8px;
+    }
+
+    .department-stats {
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 8px;
+        padding: 1rem;
+    }
+
+    .trend-metrics .metric-item {
+        padding: 0.75rem;
+        background: rgba(248, 249, 250, 0.5);
+        border-radius: 8px;
+        border-left: 3px solid var(--primary-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .insights-list .insight-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 0.5rem;
+        border-radius: 6px;
+        background: rgba(248, 249, 250, 0.3);
+    }
+
+    @@media (max-width: 768px) {
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+
+        .employee-status-card {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
