@@ -404,11 +404,14 @@
 
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedBy)" Title="Assigned By" Width="150px" />
 
-                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="120px" TextAlign="TextAlign.Center" Title="Actions">
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="250px" TextAlign="TextAlign.Center" Title="Actions">
                                     <Template Context="assignment">
-                                        <AssignmentActionsDropdown Assignment="@assignment"
-                                                                 OnActionExecuted="@HandleAssignmentAction"
-                                                                 IsDisabled="@isProcessingAction" />
+                                        <AssignmentActionButtons Assignment="@assignment"
+                                                               OnActionClick="@HandleAssignmentActionClick"
+                                                               ShowViewAction="true"
+                                                               ShowEditAction="true"
+                                                               ShowReminderAction="true"
+                                                               ShowCancelAction="true" />
                                     </Template>
                                 </RadzenDataGridColumn>
                             </Columns>
@@ -732,7 +735,7 @@
     }
 
 
-    private async Task HandleAssignmentAction(AssignmentActionsDropdown.AssignmentActionEventArgs eventArgs)
+    private async Task HandleAssignmentActionClick(AssignmentActionButtons.AssignmentActionEventArgs eventArgs)
     {
         if (isProcessingAction) return;
 
