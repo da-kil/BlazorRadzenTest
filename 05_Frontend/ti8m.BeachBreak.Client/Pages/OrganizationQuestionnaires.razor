@@ -130,9 +130,9 @@
                     <div class="row align-items-end">
                         <div class="col-md-3">
                             <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Search</RadzenText>
-                            <RadzenTextBox @bind-Value="searchFilter"
+                            <RadzenTextBox Value="@searchFilter"
+                                          @oninput="@(async (args) => { searchFilter = args.Value?.ToString() ?? string.Empty; await ApplyFiltersAsync(); })"
                                           Placeholder="Employee, questionnaire, or department..."
-                                          oninput="@(() => ApplyFilters())"
                                           Class="w-100" />
                         </div>
                         <div class="col-md-2">
@@ -185,13 +185,13 @@
                 <!-- Main Content Tabs -->
                 <RadzenTabs @bind-SelectedIndex="selectedViewIndex" Class="mb-4">
                     <Tabs>
-                        <RadzenTabsItem Text="@($"Department Overview ({GetUniqueDepartments().Count})")">
+                        <RadzenTabsItem Text="@($"Department Overview ({GetFilteredDepartments().Count})")">
                             @RenderDepartmentOverview()
                         </RadzenTabsItem>
                         <RadzenTabsItem Text="@($"Employee Status ({filteredAssignments.Count})")">
                             @RenderEmployeeStatusView()
                         </RadzenTabsItem>
-                        <RadzenTabsItem Text="@($"Questionnaire Performance ({allTemplates.Count})")">
+                        <RadzenTabsItem Text="@($"Questionnaire Performance ({GetFilteredTemplates().Count})")">
                             @RenderQuestionnairePerformanceView()
                         </RadzenTabsItem>
                         <RadzenTabsItem Text="Analytics & Insights">
@@ -283,6 +283,13 @@
         }
     }
 
+    private async Task ApplyFiltersAsync()
+    {
+        ApplyFilters();
+        StateHasChanged();
+        await Task.CompletedTask;
+    }
+
     private void ApplyFilters()
     {
         filteredAssignments = allAssignments.Where(assignment =>
@@ -292,10 +299,10 @@
 
             var matchesSearch = string.IsNullOrEmpty(searchFilter) ||
                               (employee != null && (
-                                  employee.FullName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ||
-                                  employee.EMail.Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ||
-                                  employee.Department.Contains(searchFilter, StringComparison.OrdinalIgnoreCase))) ||
-                              (template != null && template.Name.Contains(searchFilter, StringComparison.OrdinalIgnoreCase));
+                                  (!string.IsNullOrEmpty(employee.FullName) && employee.FullName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase)) ||
+                                  (!string.IsNullOrEmpty(employee.EMail) && employee.EMail.Contains(searchFilter, StringComparison.OrdinalIgnoreCase)) ||
+                                  (!string.IsNullOrEmpty(employee.Department) && employee.Department.Contains(searchFilter, StringComparison.OrdinalIgnoreCase)))) ||
+                              (template != null && !string.IsNullOrEmpty(template.Name) && template.Name.Contains(searchFilter, StringComparison.OrdinalIgnoreCase));
 
             var matchesDepartment = string.IsNullOrEmpty(departmentFilter) || departmentFilter == "All Departments" ||
                                    (employee != null && employee.Department == departmentFilter);
@@ -341,7 +348,8 @@
 
     private RenderFragment RenderDepartmentOverview()
     {
-        var departments = GetUniqueDepartments();
+        // Get departments from filtered assignments instead of all employees
+        var departments = GetFilteredDepartments();
 
         return @<div>
             @if (!departments.Any())
@@ -349,7 +357,7 @@
                 <div class="text-center p-5">
                     <RadzenIcon Icon="business" Size="4rem" Class="text-muted mb-3" />
                     <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No departments found</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Employee department data may not be available.</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No departments match the current search criteria.</RadzenText>
                 </div>
             }
             else
@@ -516,15 +524,29 @@
 
     private RenderFragment RenderQuestionnairePerformanceView()
     {
+        // Get templates that are referenced in filtered assignments
+        var filteredTemplates = GetFilteredTemplates();
+
         return @<div>
-            <div class="row">
-                @foreach (var template in allTemplates.OrderBy(t => t.Category).ThenBy(t => t.Name))
-                {
-                    <div class="col-lg-4 col-md-6 col-12 mb-4">
-                        @RenderQuestionnairePerformanceCard(template)
-                    </div>
-                }
-            </div>
+            @if (!filteredTemplates.Any())
+            {
+                <div class="text-center p-5">
+                    <RadzenIcon Icon="quiz" Size="4rem" Class="text-muted mb-3" />
+                    <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No questionnaires found</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No questionnaires match the current search criteria.</RadzenText>
+                </div>
+            }
+            else
+            {
+                <div class="row">
+                    @foreach (var template in filteredTemplates.OrderBy(t => t.Category).ThenBy(t => t.Name))
+                    {
+                        <div class="col-lg-4 col-md-6 col-12 mb-4">
+                            @RenderQuestionnairePerformanceCard(template)
+                        </div>
+                    }
+                </div>
+            }
         </div>;
     }
 
@@ -647,6 +669,24 @@
 
     // Helper methods
     private List<string> GetUniqueDepartments() => allEmployees.Select(e => e.Department).Distinct().Where(d => !string.IsNullOrEmpty(d)).ToList();
+
+    private List<string> GetFilteredDepartments()
+    {
+        // Get departments from employees that appear in filtered assignments
+        var filteredEmployeeIds = filteredAssignments.Select(a => a.EmployeeId).Distinct();
+        return allEmployees.Where(e => filteredEmployeeIds.Contains(e.Id.ToString()))
+                          .Select(e => e.Department)
+                          .Distinct()
+                          .Where(d => !string.IsNullOrEmpty(d))
+                          .ToList();
+    }
+
+    private List<QuestionnaireTemplate> GetFilteredTemplates()
+    {
+        // Get templates that are referenced in filtered assignments
+        var filteredTemplateIds = filteredAssignments.Select(a => a.TemplateId).Distinct();
+        return allTemplates.Where(t => filteredTemplateIds.Contains(t.Id)).ToList();
+    }
 
     private List<dynamic> GetEmployeesWithAssignments()
     {

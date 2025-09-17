@@ -102,9 +102,9 @@
                     <div class="row align-items-center">
                         <div class="col-md-4">
                             <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Search Team Members</RadzenText>
-                            <RadzenTextBox @bind-Value="searchFilter"
+                            <RadzenTextBox Value="@searchFilter"
+                                          @oninput="@(async (args) => { searchFilter = args.Value?.ToString() ?? string.Empty; await FilterTeamMembersAsync(); })"
                                           Placeholder="Search by name, email, or role..."
-                                          oninput="@(() => FilterTeamMembers())"
                                           Class="w-100" />
                         </div>
                         <div class="col-md-3">
@@ -226,6 +226,12 @@
             isLoading = false;
             StateHasChanged();
         }
+    }
+
+    private async Task FilterTeamMembersAsync()
+    {
+        FilterTeamMembers();
+        await Task.CompletedTask;
     }
 
     private void FilterTeamMembers()
