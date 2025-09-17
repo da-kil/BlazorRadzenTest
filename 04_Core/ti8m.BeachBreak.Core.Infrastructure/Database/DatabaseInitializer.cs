@@ -49,18 +49,47 @@ public class DatabaseInitializer
                 description TEXT,
                 category VARCHAR(100),
                 is_active BOOLEAN NOT NULL DEFAULT true,
+                is_published BOOLEAN NOT NULL DEFAULT false,
+                published_date TIMESTAMP WITH TIME ZONE,
+                last_published_date TIMESTAMP WITH TIME ZONE,
+                published_by VARCHAR(255),
                 sections JSONB NOT NULL,
                 settings JSONB NOT NULL,
                 created_at TIMESTAMP WITH TIME ZONE NOT NULL,
                 updated_at TIMESTAMP WITH TIME ZONE NOT NULL
             );
 
-            -- Add the is_active column if it doesn't exist (for existing tables)
+            -- Add new semantic columns if they don't exist (for existing tables)
             DO $$
             BEGIN
+                -- Add is_active column (backward compatibility)
                 IF NOT EXISTS (SELECT 1 FROM information_schema.columns
                               WHERE table_name = 'questionnaire_templates' AND column_name = 'is_active') THEN
                     ALTER TABLE questionnaire_templates ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT true;
+                END IF;
+
+                -- Add is_published column
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                              WHERE table_name = 'questionnaire_templates' AND column_name = 'is_published') THEN
+                    ALTER TABLE questionnaire_templates ADD COLUMN is_published BOOLEAN NOT NULL DEFAULT false;
+                END IF;
+
+                -- Add published_date column
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                              WHERE table_name = 'questionnaire_templates' AND column_name = 'published_date') THEN
+                    ALTER TABLE questionnaire_templates ADD COLUMN published_date TIMESTAMP WITH TIME ZONE;
+                END IF;
+
+                -- Add last_published_date column
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                              WHERE table_name = 'questionnaire_templates' AND column_name = 'last_published_date') THEN
+                    ALTER TABLE questionnaire_templates ADD COLUMN last_published_date TIMESTAMP WITH TIME ZONE;
+                END IF;
+
+                -- Add published_by column
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                              WHERE table_name = 'questionnaire_templates' AND column_name = 'published_by') THEN
+                    ALTER TABLE questionnaire_templates ADD COLUMN published_by VARCHAR(255);
                 END IF;
             END $$;
 
@@ -68,7 +97,13 @@ public class DatabaseInitializer
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_name ON questionnaire_templates(name);
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_category ON questionnaire_templates(category);
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_is_active ON questionnaire_templates(is_active);
+            CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_is_published ON questionnaire_templates(is_published);
+            CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_published_date ON questionnaire_templates(published_date);
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_created_at ON questionnaire_templates(created_at);
+
+            -- Create composite indexes for status queries
+            CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_status ON questionnaire_templates(is_active, is_published);
+            CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_assignable ON questionnaire_templates(is_active, is_published) WHERE is_active = true AND is_published = true;
             """;
 
         await using var command = connection.CreateCommand();

@@ -37,6 +37,10 @@ public class QuestionnaireTemplatesController : BaseController
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
                 IsActive = questionnaireTemplate.IsActive,
+                IsPublished = questionnaireTemplate.IsPublished,
+                PublishedDate = questionnaireTemplate.PublishedDate,
+                LastPublishedDate = questionnaireTemplate.LastPublishedDate,
+                PublishedBy = questionnaireTemplate.PublishedBy,
                 Sections = questionnaireTemplate.Sections.Select(section => new QuestionSection
                 {
                     Description = section.Description,
@@ -91,6 +95,10 @@ public class QuestionnaireTemplatesController : BaseController
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
                 IsActive = questionnaireTemplate.IsActive,
+                IsPublished = questionnaireTemplate.IsPublished,
+                PublishedDate = questionnaireTemplate.PublishedDate,
+                LastPublishedDate = questionnaireTemplate.LastPublishedDate,
+                PublishedBy = questionnaireTemplate.PublishedBy,
                 Sections = questionnaireTemplate.Sections.Select(section => new QuestionSection
                 {
                     Description = section.Description,
@@ -153,6 +161,70 @@ public class QuestionnaireTemplatesController : BaseController
         {
             logger.LogError(ex, "Error deleting template {TemplateId}", id);
             return StatusCode(500, "An error occurred while deleting the template");
+        }
+    }
+
+    [HttpPost("{id:guid}/publish")]
+    public async Task<IActionResult> PublishTemplate(Guid id, [FromBody] string publishedBy)
+    {
+        try
+        {
+            Result result = await commandDispatcher.SendAsync(new PublishQuestionnaireTemplateCommand(id, publishedBy));
+
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error publishing template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while publishing the template");
+        }
+    }
+
+    [HttpPost("{id:guid}/unpublish")]
+    public async Task<IActionResult> UnpublishTemplate(Guid id)
+    {
+        try
+        {
+            Result result = await commandDispatcher.SendAsync(new UnpublishQuestionnaireTemplateCommand(id));
+
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error unpublishing template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while unpublishing the template");
+        }
+    }
+
+    [HttpPost("{id:guid}/activate")]
+    public async Task<IActionResult> ActivateTemplate(Guid id)
+    {
+        try
+        {
+            Result result = await commandDispatcher.SendAsync(new ActivateQuestionnaireTemplateCommand(id));
+
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error activating template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while activating the template");
+        }
+    }
+
+    [HttpPost("{id:guid}/deactivate")]
+    public async Task<IActionResult> DeactivateTemplate(Guid id)
+    {
+        try
+        {
+            Result result = await commandDispatcher.SendAsync(new DeactivateQuestionnaireTemplateCommand(id));
+
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error deactivating template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while deactivating the template");
         }
     }
 

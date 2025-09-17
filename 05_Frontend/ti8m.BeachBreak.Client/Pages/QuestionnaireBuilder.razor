@@ -13,30 +13,87 @@
 	<RadzenCard Class="p-4">
 		<div class="d-flex justify-content-between align-items-center mb-4">
 			<div>
-				<RadzenText TextStyle="TextStyle.H2" Class="text-primary fw-bold mb-2">
-					<RadzenIcon Icon="psychology" Class="me-3" />
-					@(IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")
-				</RadzenText>
+				<div class="d-flex align-items-center mb-2">
+					<RadzenText TextStyle="TextStyle.H2" Class="text-primary fw-bold me-3">
+						<RadzenIcon Icon="psychology" Class="me-3" />
+						@(IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")
+					</RadzenText>
+					<div class="publish-status-badge">
+						@{
+							var status = IsEditMode ? template.Status : TemplateStatus.Draft;
+							var statusText = IsEditMode ? TemplateStatusHelper.GetStatusText(template.Status) : "NEW";
+							var statusIcon = IsEditMode ? TemplateStatusHelper.GetStatusIcon(template.Status) : "add_circle";
+							var statusClass = IsEditMode ? TemplateStatusHelper.GetStatusBadgeClass(template.Status) : "badge bg-info text-dark";
+						}
+						<span class="@statusClass d-flex align-items-center">
+							<RadzenIcon Icon="@statusIcon" Class="me-1" Style="font-size: 0.8rem;" />
+							@statusText
+						</span>
+					</div>
+				</div>
 				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-0">
-					@(IsEditMode ? "Modify and enhance your assessment with intuitive tools" : "Create comprehensive assessments with our visual editor")
+					@GetStatusDescription()
 				</RadzenText>
 				<RadzenText TextStyle="TextStyle.Caption" Class="text-secondary">
 					Build sections, configure questions, and customize your evaluation experience
 				</RadzenText>
 			</div>
-			<div class="d-flex gap-2">
+			<div class="d-flex gap-2 btn-group-status">
 				<RadzenButton Text="Preview"
 							  ButtonStyle="ButtonStyle.Info"
 							  Icon="preview"
 							  Click="@PreviewQuestionnaire" />
-				<RadzenButton Text="Save Draft"
-							  ButtonStyle="ButtonStyle.Secondary"
-							  Icon="save"
-							  Click="@SaveQuestionnaire" />
-				<RadzenButton Text="Save & Publish"
-							  ButtonStyle="ButtonStyle.Success"
-							  Icon="publish"
-							  Click="@PublishQuestionnaire" />
+
+				@{
+					var currentStatus = IsEditMode ? template.Status : TemplateStatus.Draft;
+				}
+
+				@switch (currentStatus)
+				{
+					case TemplateStatus.Draft:
+						<RadzenButton Text="Save Draft"
+									  ButtonStyle="ButtonStyle.Secondary"
+									  Icon="save"
+									  Click="@SaveQuestionnaire" />
+						<RadzenButton Text="Publish"
+									  ButtonStyle="ButtonStyle.Success"
+									  Icon="publish"
+									  Click="@PublishQuestionnaire" />
+						break;
+
+					case TemplateStatus.Published:
+						<RadzenButton Text="Save Changes"
+									  ButtonStyle="ButtonStyle.Primary"
+									  Icon="save"
+									  Click="@SaveQuestionnaire" />
+						<RadzenButton Text="Unpublish"
+									  ButtonStyle="ButtonStyle.Warning"
+									  Icon="unpublished"
+									  Click="@UnpublishQuestionnaire" />
+						<RadzenButton Text="Disable"
+									  ButtonStyle="ButtonStyle.Secondary"
+									  Icon="block"
+									  Click="@DisableQuestionnaire" />
+						break;
+
+					case TemplateStatus.PublishedInactive:
+						<RadzenButton Text="Enable"
+									  ButtonStyle="ButtonStyle.Success"
+									  Icon="check_circle"
+									  Click="@EnableQuestionnaire" />
+						<RadzenButton Text="Edit"
+									  ButtonStyle="ButtonStyle.Primary"
+									  Icon="edit"
+									  Click="@EditInactiveQuestionnaire" />
+						break;
+
+					case TemplateStatus.Inactive:
+						<RadzenButton Text="Activate"
+									  ButtonStyle="ButtonStyle.Primary"
+									  Icon="play_arrow"
+									  Click="@ActivateQuestionnaire" />
+						break;
+				}
 			</div>
 		</div>
 
@@ -394,10 +451,166 @@ private async Task PublishQuestionnaire()
 		return;
 	}
 
-	await SaveQuestionnaire();
-	template.IsActive = true;
-	// TODO: Additional publish logic
-	NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template published successfully");
+	try
+	{
+		// Save the template first
+		await SaveQuestionnaire();
+
+		// Set as published
+		template.IsPublished = true;
+		template.IsActive = true; // Ensure it's also active
+		template.LastModified = DateTime.Now;
+		template.LastPublishedDate = DateTime.Now;
+
+		// Set PublishedDate only on first publish
+		if (template.PublishedDate == null)
+		{
+			template.PublishedDate = DateTime.Now;
+		}
+
+		// TODO: Set PublishedBy when user context is available
+		// template.PublishedBy = currentUser.Name;
+
+		// Update the template with published status
+		if (IsEditMode)
+		{
+			var updated = await ApiService.UpdateTemplateAsync(template);
+			if (updated != null)
+			{
+				NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template is now published and available for assignments");
+			}
+			else
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
+				// Revert on failure
+				template.IsPublished = false;
+				template.LastPublishedDate = null;
+			}
+		}
+		else
+		{
+			// For new templates, properties are already set, just show success
+			NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template created and published successfully");
+		}
+	}
+	catch (Exception ex)
+	{
+		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
+		// Revert on failure
+		template.IsPublished = false;
+		template.LastPublishedDate = null;
+	}
+}
+
+private async Task UnpublishQuestionnaire()
+{
+	try
+	{
+		// Set as unpublished (back to draft)
+		template.IsPublished = false;
+		template.LastModified = DateTime.Now;
+
+		// Update the template with unpublished status
+		var updated = await ApiService.UpdateTemplateAsync(template);
+		if (updated != null)
+		{
+			NotificationService.Notify(NotificationSeverity.Info, "Unpublished", "Questionnaire template is now in draft mode and unavailable for new assignments");
+		}
+		else
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unpublish template");
+			template.IsPublished = true; // Revert on failure
+		}
+	}
+	catch (Exception ex)
+	{
+		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
+		template.IsPublished = true; // Revert on failure
+	}
+}
+
+private async Task DisableQuestionnaire()
+{
+	try
+	{
+		// Set as inactive while keeping published status
+		template.IsActive = false;
+		template.LastModified = DateTime.Now;
+
+		var updated = await ApiService.UpdateTemplateAsync(template);
+		if (updated != null)
+		{
+			NotificationService.Notify(NotificationSeverity.Warning, "Disabled", "Questionnaire template is temporarily disabled but remains published");
+		}
+		else
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to disable template");
+			template.IsActive = true; // Revert on failure
+		}
+	}
+	catch (Exception ex)
+	{
+		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to disable template: {ex.Message}");
+		template.IsActive = true; // Revert on failure
+	}
+}
+
+private async Task EnableQuestionnaire()
+{
+	try
+	{
+		// Re-activate while keeping published status
+		template.IsActive = true;
+		template.LastModified = DateTime.Now;
+
+		var updated = await ApiService.UpdateTemplateAsync(template);
+		if (updated != null)
+		{
+			NotificationService.Notify(NotificationSeverity.Success, "Enabled", "Questionnaire template is now active and available for assignments");
+		}
+		else
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to enable template");
+			template.IsActive = false; // Revert on failure
+		}
+	}
+	catch (Exception ex)
+	{
+		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to enable template: {ex.Message}");
+		template.IsActive = false; // Revert on failure
+	}
+}
+
+private async Task ActivateQuestionnaire()
+{
+	try
+	{
+		// Activate but keep as draft (unpublished)
+		template.IsActive = true;
+		template.LastModified = DateTime.Now;
+
+		var updated = await ApiService.UpdateTemplateAsync(template);
+		if (updated != null)
+		{
+			NotificationService.Notify(NotificationSeverity.Success, "Activated", "Questionnaire template is now active and ready for editing");
+		}
+		else
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to activate template");
+			template.IsActive = false; // Revert on failure
+		}
+	}
+	catch (Exception ex)
+	{
+		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to activate template: {ex.Message}");
+		template.IsActive = false; // Revert on failure
+	}
+}
+
+private async Task EditInactiveQuestionnaire()
+{
+	// Simply enable and allow editing
+	await EnableQuestionnaire();
 }
 
 private bool ValidateQuestionnaire()
@@ -589,6 +802,17 @@ private string GetDefaultQuestionTitle(QuestionType type)
 	};
 }
 
+private string GetStatusDescription()
+{
+	if (!IsEditMode)
+	{
+		return "Create comprehensive assessments with our visual editor";
+	}
+
+	return TemplateStatusHelper.GetStatusDescription(template.Status);
+}
+
+
 private string GetQuestionTypeLabel(QuestionItem question)
 {
 	// Check if question has a custom type label stored in configuration
@@ -700,3 +924,74 @@ private void MoveQuestionDown((int sectionIndex, int questionIndex) indices)
 	MoveQuestionDown(indices.sectionIndex, indices.questionIndex);
 }
 }
+
+<style>
+.publish-status-badge .badge {
+	font-size: 0.75rem;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	padding: 0.4rem 0.8rem;
+	border-radius: 1rem;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	transition: all 0.2s ease-in-out;
+}
+
+.publish-status-badge .badge:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.publish-status-badge .bg-success {
+	background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.publish-status-badge .bg-warning {
+	background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.publish-status-badge .bg-info {
+	background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	color: white !important;
+}
+
+/* Enhanced button styling for status-aware buttons */
+.btn-group-status {
+	gap: 0.5rem;
+}
+
+.btn-group-status .btn {
+	font-weight: 500;
+	padding: 0.5rem 1.2rem;
+	border-radius: 0.5rem;
+	transition: all 0.2s ease-in-out;
+}
+
+.btn-group-status .btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Status-specific animations */
+@@keyframes publishPulse {
+	0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+	70% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
+	100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+@@keyframes draftPulse {
+	0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
+	70% { box-shadow: 0 0 0 8px rgba(255, 193, 7, 0); }
+	100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+}
+
+.publish-status-badge .bg-success {
+	animation: publishPulse 2s infinite;
+}
+
+.publish-status-badge .bg-warning {
+	animation: draftPulse 3s infinite;
+}
+</style>

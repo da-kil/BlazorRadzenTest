@@ -40,6 +40,10 @@ public class QuestionnaireTemplatesController : BaseController
                     CreatedDate = template.CreatedDate,
                     LastModified = template.LastModified,
                     IsActive = template.IsActive,
+                    IsPublished = template.IsPublished,
+                    PublishedDate = template.PublishedDate,
+                    LastPublishedDate = template.LastPublishedDate,
+                    PublishedBy = template.PublishedBy,
                     Sections = template.Sections.Select(section => new QuestionSectionDto
                     {
                         Id = section.Id,
@@ -98,6 +102,10 @@ public class QuestionnaireTemplatesController : BaseController
                 CreatedDate = template.CreatedDate,
                 LastModified = template.LastModified,
                 IsActive = template.IsActive,
+                IsPublished = template.IsPublished,
+                PublishedDate = template.PublishedDate,
+                LastPublishedDate = template.LastPublishedDate,
+                PublishedBy = template.PublishedBy,
                 Sections = template.Sections.Select(section => new QuestionSectionDto
                 {
                     Id = section.Id,
@@ -150,6 +158,189 @@ public class QuestionnaireTemplatesController : BaseController
     //        return StatusCode(500, "An error occurred while retrieving templates");
     //    }
     //}
+
+    [HttpGet("published")]
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPublishedTemplates()
+    {
+        try
+        {
+            var result = await queryDispatcher.QueryAsync(new PublishedQuestionnaireTemplatesQuery());
+            return CreateResponse(result, templates =>
+            {
+                return templates.Select(template => new QuestionnaireTemplateDto
+                {
+                    Id = template.Id,
+                    Name = template.Name,
+                    Description = template.Description,
+                    Category = template.Category,
+                    CreatedDate = template.CreatedDate,
+                    LastModified = template.LastModified,
+                    IsActive = template.IsActive,
+                    IsPublished = template.IsPublished,
+                    PublishedDate = template.PublishedDate,
+                    LastPublishedDate = template.LastPublishedDate,
+                    PublishedBy = template.PublishedBy,
+                    Sections = template.Sections.Select(section => new QuestionSectionDto
+                    {
+                        Id = section.Id,
+                        Title = section.Title,
+                        Description = section.Description,
+                        Order = section.Order,
+                        IsRequired = section.IsRequired,
+                        Questions = section.Questions.Select(question => new QuestionItemDto
+                        {
+                            Id = question.Id,
+                            Title = question.Title,
+                            Description = question.Description,
+                            Type = MapQuestionTypeToDto[question.Type],
+                            Order = question.Order,
+                            IsRequired = question.IsRequired,
+                            Configuration = question.Configuration,
+                            Options = question.Options
+                        }).ToList()
+                    }).ToList(),
+                    Settings = new QuestionnaireSettingsDto
+                    {
+                        AllowSaveProgress = template.Settings.AllowSaveProgress,
+                        ShowProgressBar = template.Settings.ShowProgressBar,
+                        RequireAllSections = template.Settings.RequireAllSections,
+                        SuccessMessage = template.Settings.SuccessMessage,
+                        IncompleteMessage = template.Settings.IncompleteMessage,
+                        TimeLimit = template.Settings.TimeLimit,
+                        AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
+                    }
+                });
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving published questionnaire templates");
+            return StatusCode(500, "An error occurred while retrieving published templates");
+        }
+    }
+
+    [HttpGet("drafts")]
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetDraftTemplates()
+    {
+        try
+        {
+            var result = await queryDispatcher.QueryAsync(new DraftQuestionnaireTemplatesQuery());
+            return CreateResponse(result, templates =>
+            {
+                return templates.Select(template => new QuestionnaireTemplateDto
+                {
+                    Id = template.Id,
+                    Name = template.Name,
+                    Description = template.Description,
+                    Category = template.Category,
+                    CreatedDate = template.CreatedDate,
+                    LastModified = template.LastModified,
+                    IsActive = template.IsActive,
+                    IsPublished = template.IsPublished,
+                    PublishedDate = template.PublishedDate,
+                    LastPublishedDate = template.LastPublishedDate,
+                    PublishedBy = template.PublishedBy,
+                    Sections = template.Sections.Select(section => new QuestionSectionDto
+                    {
+                        Id = section.Id,
+                        Title = section.Title,
+                        Description = section.Description,
+                        Order = section.Order,
+                        IsRequired = section.IsRequired,
+                        Questions = section.Questions.Select(question => new QuestionItemDto
+                        {
+                            Id = question.Id,
+                            Title = question.Title,
+                            Description = question.Description,
+                            Type = MapQuestionTypeToDto[question.Type],
+                            Order = question.Order,
+                            IsRequired = question.IsRequired,
+                            Configuration = question.Configuration,
+                            Options = question.Options
+                        }).ToList()
+                    }).ToList(),
+                    Settings = new QuestionnaireSettingsDto
+                    {
+                        AllowSaveProgress = template.Settings.AllowSaveProgress,
+                        ShowProgressBar = template.Settings.ShowProgressBar,
+                        RequireAllSections = template.Settings.RequireAllSections,
+                        SuccessMessage = template.Settings.SuccessMessage,
+                        IncompleteMessage = template.Settings.IncompleteMessage,
+                        TimeLimit = template.Settings.TimeLimit,
+                        AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
+                    }
+                });
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving draft questionnaire templates");
+            return StatusCode(500, "An error occurred while retrieving draft templates");
+        }
+    }
+
+    [HttpGet("assignable")]
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAssignableTemplates()
+    {
+        try
+        {
+            var result = await queryDispatcher.QueryAsync(new AssignableQuestionnaireTemplatesQuery());
+            return CreateResponse(result, templates =>
+            {
+                return templates.Select(template => new QuestionnaireTemplateDto
+                {
+                    Id = template.Id,
+                    Name = template.Name,
+                    Description = template.Description,
+                    Category = template.Category,
+                    CreatedDate = template.CreatedDate,
+                    LastModified = template.LastModified,
+                    IsActive = template.IsActive,
+                    IsPublished = template.IsPublished,
+                    PublishedDate = template.PublishedDate,
+                    LastPublishedDate = template.LastPublishedDate,
+                    PublishedBy = template.PublishedBy,
+                    Sections = template.Sections.Select(section => new QuestionSectionDto
+                    {
+                        Id = section.Id,
+                        Title = section.Title,
+                        Description = section.Description,
+                        Order = section.Order,
+                        IsRequired = section.IsRequired,
+                        Questions = section.Questions.Select(question => new QuestionItemDto
+                        {
+                            Id = question.Id,
+                            Title = question.Title,
+                            Description = question.Description,
+                            Type = MapQuestionTypeToDto[question.Type],
+                            Order = question.Order,
+                            IsRequired = question.IsRequired,
+                            Configuration = question.Configuration,
+                            Options = question.Options
+                        }).ToList()
+                    }).ToList(),
+                    Settings = new QuestionnaireSettingsDto
+                    {
+                        AllowSaveProgress = template.Settings.AllowSaveProgress,
+                        ShowProgressBar = template.Settings.ShowProgressBar,
+                        RequireAllSections = template.Settings.RequireAllSections,
+                        SuccessMessage = template.Settings.SuccessMessage,
+                        IncompleteMessage = template.Settings.IncompleteMessage,
+                        TimeLimit = template.Settings.TimeLimit,
+                        AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
+                    }
+                });
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving assignable questionnaire templates");
+            return StatusCode(500, "An error occurred while retrieving assignable templates");
+        }
+    }
 
     //[HttpGet("{id:guid}/analytics")]
     //public async Task<ActionResult<Dictionary<string, object>>> GetTemplateAnalytics(Guid id)

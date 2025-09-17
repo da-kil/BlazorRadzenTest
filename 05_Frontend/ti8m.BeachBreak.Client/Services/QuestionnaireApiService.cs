@@ -52,6 +52,10 @@ public class QuestionnaireApiService : IQuestionnaireApiService
                 template.Description,
                 template.Category,
                 template.IsActive,
+                template.IsPublished,
+                template.PublishedDate,
+                template.LastPublishedDate,
+                template.PublishedBy,
                 template.Sections,
                 template.Settings
             };
@@ -75,11 +79,14 @@ public class QuestionnaireApiService : IQuestionnaireApiService
         {
             var updateRequest = new
             {
-                template.Id,
                 template.Name,
                 template.Description,
                 template.Category,
                 template.IsActive,
+                template.IsPublished,
+                template.PublishedDate,
+                template.LastPublishedDate,
+                template.PublishedBy,
                 template.Sections,
                 template.Settings
             };
@@ -333,6 +340,173 @@ public class QuestionnaireApiService : IQuestionnaireApiService
         catch (Exception ex)
         {
             Console.WriteLine($"Error fetching overall analytics: {ex.Message}");
+            return new Dictionary<string, object>();
+        }
+    }
+
+    // Enhanced status-specific template queries (placeholder implementations)
+    public async Task<List<QuestionnaireTemplate>> GetPublishedTemplatesAsync()
+    {
+        try
+        {
+            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireTemplate>>("q/api/v1/questionnaire-templates/published");
+            return response ?? new List<QuestionnaireTemplate>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching published templates: {ex.Message}");
+            return new List<QuestionnaireTemplate>();
+        }
+    }
+
+    public async Task<List<QuestionnaireTemplate>> GetDraftTemplatesAsync()
+    {
+        try
+        {
+            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireTemplate>>("q/api/v1/questionnaire-templates/drafts");
+            return response ?? new List<QuestionnaireTemplate>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching draft templates: {ex.Message}");
+            return new List<QuestionnaireTemplate>();
+        }
+    }
+
+    public async Task<List<QuestionnaireTemplate>> GetAssignableTemplatesAsync()
+    {
+        try
+        {
+            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireTemplate>>("q/api/v1/questionnaire-templates/assignable");
+            return response ?? new List<QuestionnaireTemplate>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching assignable templates: {ex.Message}");
+            return new List<QuestionnaireTemplate>();
+        }
+    }
+
+    public async Task<List<QuestionnaireTemplate>> GetActiveTemplatesAsync()
+    {
+        try
+        {
+            var templates = await GetAllTemplatesAsync();
+            return templates.Where(t => t.IsActive).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching active templates: {ex.Message}");
+            return new List<QuestionnaireTemplate>();
+        }
+    }
+
+    public async Task<List<QuestionnaireTemplate>> GetInactiveTemplatesAsync()
+    {
+        try
+        {
+            var templates = await GetAllTemplatesAsync();
+            return templates.Where(t => !t.IsActive).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching inactive templates: {ex.Message}");
+            return new List<QuestionnaireTemplate>();
+        }
+    }
+
+    // Publishing operations (placeholder implementations)
+    public async Task<QuestionnaireTemplate?> PublishTemplateAsync(Guid templateId, string publishedBy)
+    {
+        try
+        {
+            var response = await httpCommandClient.PostAsJsonAsync($"c/api/v1/questionnaire-templates/{templateId}/publish", publishedBy);
+            if (response.IsSuccessStatusCode)
+            {
+                return await GetTemplateByIdAsync(templateId);
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error publishing template: {ex.Message}");
+            return null;
+        }
+    }
+
+    public async Task<QuestionnaireTemplate?> UnpublishTemplateAsync(Guid templateId)
+    {
+        try
+        {
+            var response = await httpCommandClient.PostAsync($"c/api/v1/questionnaire-templates/{templateId}/unpublish", null);
+            if (response.IsSuccessStatusCode)
+            {
+                return await GetTemplateByIdAsync(templateId);
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error unpublishing template: {ex.Message}");
+            return null;
+        }
+    }
+
+    public async Task<QuestionnaireTemplate?> ActivateTemplateAsync(Guid templateId)
+    {
+        try
+        {
+            var response = await httpCommandClient.PostAsync($"c/api/v1/questionnaire-templates/{templateId}/activate", null);
+            if (response.IsSuccessStatusCode)
+            {
+                return await GetTemplateByIdAsync(templateId);
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error activating template: {ex.Message}");
+            return null;
+        }
+    }
+
+    public async Task<QuestionnaireTemplate?> DeactivateTemplateAsync(Guid templateId)
+    {
+        try
+        {
+            var response = await httpCommandClient.PostAsync($"c/api/v1/questionnaire-templates/{templateId}/deactivate", null);
+            if (response.IsSuccessStatusCode)
+            {
+                return await GetTemplateByIdAsync(templateId);
+            }
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deactivating template: {ex.Message}");
+            return null;
+        }
+    }
+
+    public async Task<Dictionary<string, object>> GetPublishingAnalyticsAsync()
+    {
+        try
+        {
+            var templates = await GetAllTemplatesAsync();
+            var analytics = new Dictionary<string, object>
+            {
+                ["TotalTemplates"] = templates.Count,
+                ["PublishedTemplates"] = templates.Count(t => t.IsPublished),
+                ["DraftTemplates"] = templates.Count(t => t.Status == TemplateStatus.Draft),
+                ["InactiveTemplates"] = templates.Count(t => !t.IsActive),
+                ["AssignableTemplates"] = templates.Count(t => t.CanBeAssigned),
+                ["PublishingRate"] = templates.Count > 0 ? (double)templates.Count(t => t.IsPublished) / templates.Count : 0.0
+            };
+            return analytics;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching publishing analytics: {ex.Message}");
             return new Dictionary<string, object>();
         }
     }

@@ -11,6 +11,19 @@ public interface IQuestionnaireApiService
     Task<QuestionnaireTemplate?> UpdateTemplateAsync(QuestionnaireTemplate template);
     Task<bool> DeleteTemplateAsync(Guid id);
     Task<List<QuestionnaireTemplate>> GetTemplatesByCategoryAsync(string category);
+
+    // Enhanced status-specific template queries
+    Task<List<QuestionnaireTemplate>> GetPublishedTemplatesAsync();
+    Task<List<QuestionnaireTemplate>> GetDraftTemplatesAsync();
+    Task<List<QuestionnaireTemplate>> GetAssignableTemplatesAsync(); // Active + Published
+    Task<List<QuestionnaireTemplate>> GetActiveTemplatesAsync();
+    Task<List<QuestionnaireTemplate>> GetInactiveTemplatesAsync();
+
+    // Publishing operations
+    Task<QuestionnaireTemplate?> PublishTemplateAsync(Guid templateId, string publishedBy);
+    Task<QuestionnaireTemplate?> UnpublishTemplateAsync(Guid templateId);
+    Task<QuestionnaireTemplate?> ActivateTemplateAsync(Guid templateId);
+    Task<QuestionnaireTemplate?> DeactivateTemplateAsync(Guid templateId);
     
     // Assignment management
     Task<List<QuestionnaireAssignment>> GetAllAssignmentsAsync();
@@ -30,4 +43,5 @@ public interface IQuestionnaireApiService
     // Analytics
     Task<Dictionary<string, object>> GetTemplateAnalyticsAsync(Guid templateId);
     Task<Dictionary<string, object>> GetOverallAnalyticsAsync();
+    Task<Dictionary<string, object>> GetPublishingAnalyticsAsync();
 }
