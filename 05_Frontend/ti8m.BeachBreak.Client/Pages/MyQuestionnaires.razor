@@ -68,6 +68,34 @@
                     </div>
                 </div>
 
+                <!-- Questionnaire Category Filter -->
+                @if (availableCategories.Count > 1)
+                {
+                    <RadzenCard Class="mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Filter by Category</RadzenText>
+                                <RadzenDropDown @bind-Value="questionnaireCategoryFilter"
+                                               Data="@availableCategories"
+                                               Change="@(() => CategorizeQuestionnaires())"
+                                               Placeholder="All Categories"
+                                               Class="w-100" />
+                            </div>
+                            @if (!string.IsNullOrEmpty(questionnaireCategoryFilter) && questionnaireCategoryFilter != "All Categories")
+                            {
+                                <div class="col-md-2">
+                                    <RadzenButton Text="Clear Filter"
+                                                 Icon="clear"
+                                                 ButtonStyle="ButtonStyle.Light"
+                                                 Click="@ClearCategoryFilter"
+                                                 Size="ButtonSize.Medium"
+                                                 Style="margin-top: 1.5rem;" />
+                                </div>
+                            }
+                        </div>
+                    </RadzenCard>
+                }
+
                 <!-- Filter Tabs -->
                 <RadzenTabs @bind-SelectedIndex="selectedTabIndex" Class="mb-4">
                     <Tabs>
@@ -100,6 +128,10 @@
     private bool isLoading = true;
     private int selectedTabIndex = 0;
     private string currentEmployeeId = "current-user"; // TODO: Get from auth context
+
+    // Filter properties
+    private string questionnaireCategoryFilter = "";
+    private List<string> availableCategories = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,22 +171,46 @@
     {
         var now = DateTime.Now;
 
-        currentQuestionnaires = allAssignments.Where(a =>
+        // Populate available categories from templates
+        availableCategories = templates.Where(t => !string.IsNullOrEmpty(t.Category))
+                                     .Select(t => t.Category)
+                                     .Distinct()
+                                     .OrderBy(c => c)
+                                     .ToList();
+        availableCategories.Insert(0, "All Categories");
+
+        // Apply category filter if selected
+        var filteredAssignments = string.IsNullOrEmpty(questionnaireCategoryFilter) || questionnaireCategoryFilter == "All Categories"
+            ? allAssignments
+            : allAssignments.Where(a =>
+            {
+                var template = templates.FirstOrDefault(t => t.Id == a.TemplateId);
+                return template?.Category == questionnaireCategoryFilter;
+            }).ToList();
+
+        currentQuestionnaires = filteredAssignments.Where(a =>
             (a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress) &&
             (!a.DueDate.HasValue || a.DueDate >= now)).ToList();
 
-        upcomingQuestionnaires = allAssignments.Where(a =>
+        upcomingQuestionnaires = filteredAssignments.Where(a =>
             a.Status == AssignmentStatus.Assigned &&
             a.AssignedDate > now).ToList();
 
-        completedQuestionnaires = allAssignments.Where(a =>
+        completedQuestionnaires = filteredAssignments.Where(a =>
             a.Status == AssignmentStatus.Completed).ToList();
 
-        overdueQuestionnaires = allAssignments.Where(a =>
+        overdueQuestionnaires = filteredAssignments.Where(a =>
             a.DueDate.HasValue &&
             a.DueDate < now &&
             a.Status != AssignmentStatus.Completed &&
             a.Status != AssignmentStatus.Cancelled).ToList();
+    }
+
+    private void ClearCategoryFilter()
+    {
+        questionnaireCategoryFilter = "All Categories";
+        CategorizeQuestionnaires();
+        StateHasChanged();
     }
 
     private RenderFragment RenderQuestionnaireList(List<QuestionnaireAssignment> questionnaires, string emptyTitle, string emptyMessage)
