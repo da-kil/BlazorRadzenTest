@@ -31,7 +31,7 @@
             </div>
 
             <!-- Title Input -->
-            <div class="mb-3 pe-5">
+            <div class="mb-3" style="padding-right: 6.5rem;">
                 <RadzenTextBox Value="@Section.Title"
                              ValueChanged="@(value => OnSectionTitleChanged(value))"
                              Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
@@ -40,7 +40,7 @@
             </div>
 
             <!-- Description Input -->
-            <div class="mb-3 pe-5">
+            <div class="mb-3" style="padding-right: 6.5rem;">
                 <RadzenTextArea Value="@Section.Description"
                               ValueChanged="@(value => OnSectionDescriptionChanged(value))"
                               Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
