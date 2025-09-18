@@ -1,0 +1,161 @@
+@using ti8m.BeachBreak.Core.Infrastructure.ValueObjects
+@inherits ComponentBase
+
+<div class="multilingual-options">
+    <div class="language-tabs mb-2">
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button"
+                    class="btn @(CurrentLanguage == "en" ? "btn-primary" : "btn-outline-primary")"
+                    @onclick="() => SetLanguage(\"en\")">
+                🇺🇸 English @(RequireEnglish ? "*" : "")
+            </button>
+            <button type="button"
+                    class="btn @(CurrentLanguage == "de" ? "btn-primary" : "btn-outline-primary")"
+                    @onclick="() => SetLanguage(\"de\")">
+                🇩🇪 Deutsch @(RequireGerman ? "*" : "")
+            </button>
+        </div>
+        @if (ShowValidationIcon)
+        {
+            <span class="validation-icon ms-2">
+                @if (Value.HasBothLanguages)
+                {
+                    <span class="text-success" title="Both languages provided">✓</span>
+                }
+                else if (Value.HasEnglish || Value.HasGerman)
+                {
+                    <span class="text-warning" title="Missing translation">⚠️</span>
+                }
+                else
+                {
+                    <span class="text-danger" title="No options provided">❌</span>
+                }
+            </span>
+        }
+    </div>
+
+    <div class="options-content">
+        <div class="mb-2">
+            <small class="text-muted">
+                @if (CurrentLanguage == "en")
+                {
+                    <span>English options @(RequireEnglish ? "(required)" : "(optional)") - One option per line</span>
+                }
+                else
+                {
+                    <span>German options @(RequireGerman ? "(required)" : "(optional)") - Eine Option pro Zeile</span>
+                }
+            </small>
+        </div>
+
+        <textarea class="form-control @GetValidationClass()"
+                  placeholder="@GetPlaceholder()"
+                  rows="@Math.Max(3, CurrentOptions.Count + 1)"
+                  @bind="CurrentOptionsText"
+                  @oninput="OnOptionsChanged"
+                  required="@IsCurrentLanguageRequired()">
+        </textarea>
+
+        @if (CurrentOptions.Any())
+        {
+            <div class="options-preview mt-2">
+                <small class="text-muted">Preview (@CurrentOptions.Count options):</small>
+                <ul class="list-group list-group-flush">
+                    @foreach (var (option, index) in CurrentOptions.Select((o, i) => (o, i)))
+                    {
+                        <li class="list-group-item py-1 px-2">
+                            <span class="badge bg-light text-dark me-2">@(index + 1)</span>
+                            @option
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public MultilingualOptions Value { get; set; } = new();
+    [Parameter] public EventCallback<MultilingualOptions> ValueChanged { get; set; }
+    [Parameter] public bool RequireEnglish { get; set; } = true;
+    [Parameter] public bool RequireGerman { get; set; } = false;
+    [Parameter] public bool ShowValidationIcon { get; set; } = true;
+    [Parameter] public string Class { get; set; } = "";
+
+    private string CurrentLanguage { get; set; } = "en";
+
+    private List<string> CurrentOptions => CurrentLanguage == "en" ? Value.English : Value.German;
+
+    private string CurrentOptionsText
+    {
+        get => string.Join(Environment.NewLine, CurrentOptions);
+        set => UpdateCurrentOptions(value);
+    }
+
+    protected override void OnInitialized()
+    {
+        // Start with English if it has content, otherwise German
+        CurrentLanguage = Value.HasEnglish ? "en" : "de";
+    }
+
+    private void SetLanguage(string language)
+    {
+        CurrentLanguage = language;
+        StateHasChanged();
+    }
+
+    private void UpdateCurrentOptions(string text)
+    {
+        var options = (text ?? string.Empty)
+            .Split(new[] { Environment.NewLine, "\n" }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(o => o.Trim())
+            .Where(o => !string.IsNullOrEmpty(o))
+            .ToList();
+
+        if (CurrentLanguage == "en")
+        {
+            Value.English.Clear();
+            Value.English.AddRange(options);
+        }
+        else
+        {
+            Value.German.Clear();
+            Value.German.AddRange(options);
+        }
+    }
+
+    private async Task OnOptionsChanged(ChangeEventArgs e)
+    {
+        UpdateCurrentOptions(e.Value?.ToString() ?? string.Empty);
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private string GetPlaceholder()
+    {
+        if (CurrentLanguage == "en")
+        {
+            return "Option 1\nOption 2\nOption 3\n...";
+        }
+        else
+        {
+            return "Option 1\nOption 2\nOption 3\n...";
+        }
+    }
+
+    private string GetValidationClass()
+    {
+        if (!ShowValidationIcon) return "";
+
+        if (IsCurrentLanguageRequired() && !CurrentOptions.Any())
+        {
+            return "is-invalid";
+        }
+
+        return CurrentOptions.Any() ? "is-valid" : "";
+    }
+
+    private bool IsCurrentLanguageRequired()
+    {
+        return CurrentLanguage == "en" ? RequireEnglish : RequireGerman;
+    }
+}

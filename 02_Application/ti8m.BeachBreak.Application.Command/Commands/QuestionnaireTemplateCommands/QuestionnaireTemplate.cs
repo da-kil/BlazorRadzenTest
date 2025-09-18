@@ -1,9 +1,11 @@
-﻿namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
+﻿using ti8m.BeachBreak.Core.Infrastructure.ValueObjects;
+
+namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 
 public class QuestionnaireTemplate
 {
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    public MultilingualText Name { get; set; } = new();
+    public MultilingualText Description { get; set; } = new();
     public string Category { get; set; } = string.Empty;
 
     // Semantic status properties

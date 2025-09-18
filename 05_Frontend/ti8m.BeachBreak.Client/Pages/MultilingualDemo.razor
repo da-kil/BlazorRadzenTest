@@ -1,0 +1,181 @@
+@page "/multilingual-demo"
+@using ti8m.BeachBreak.Core.Infrastructure.ValueObjects
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inject ILanguageService LanguageService
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Multilingual Components Demo</h1>
+                <div class="btn-group" role="group">
+                    <button class="btn @(LanguageService.CurrentLanguage == "en" ? "btn-primary" : "btn-outline-primary")"
+                            @onclick="() => LanguageService.SetLanguage(\"en\")">
+                        🇺🇸 View in English
+                    </button>
+                    <button class="btn @(LanguageService.CurrentLanguage == "de" ? "btn-primary" : "btn-outline-primary")"
+                            @onclick="() => LanguageService.SetLanguage(\"de\")">
+                        🇩🇪 Auf Deutsch anzeigen
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">📝 Multilingual Text Input</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Questionnaire Title</label>
+                        <MultilingualTextInput @bind-Value="SampleTitle"
+                                               Placeholder="Enter questionnaire title..."
+                                               PlaceholderDe="Fragebogen-Titel eingeben..."
+                                               RequireEnglish="true"
+                                               RequireGerman="false" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <MultilingualTextInput @bind-Value="SampleDescription"
+                                               Placeholder="Enter detailed description..."
+                                               PlaceholderDe="Detaillierte Beschreibung eingeben..."
+                                               IsTextArea="true"
+                                               Rows="4"
+                                               RequireEnglish="true"
+                                               RequireGerman="false" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">📋 Multilingual Options Input</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Answer Options</label>
+                        <MultilingualOptionsInput @bind-Value="SampleOptions"
+                                                  RequireEnglish="true"
+                                                  RequireGerman="false" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">👀 Display Preview</h5>
+                    <small class="text-muted">How content appears to end users</small>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Title</h6>
+                            <MultilingualDisplay Text="SampleTitle"
+                                                 ShowLanguageIndicator="true"
+                                                 ShowFallback="true"
+                                                 Class="p-3 bg-light rounded mb-3" />
+
+                            <h6>Description</h6>
+                            <MultilingualDisplay Text="SampleDescription"
+                                                 ShowLanguageIndicator="true"
+                                                 ShowFallback="true"
+                                                 Class="p-3 bg-light rounded mb-3" />
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Options</h6>
+                            <div class="p-3 bg-light rounded">
+                                @{
+                                    var displayOptions = LanguageService.GetOptions(SampleOptions);
+                                }
+                                @if (displayOptions.Any())
+                                {
+                                    <ol>
+                                        @foreach (var option in displayOptions)
+                                        {
+                                            <li>@option</li>
+                                        }
+                                    </ol>
+                                }
+                                else
+                                {
+                                    <em class="text-muted">No options available in current language</em>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">🔍 Data Structure Preview</h5>
+                    <small class="text-muted">JSON representation of multilingual data</small>
+                </div>
+                <div class="card-body">
+                    <pre class="bg-dark text-light p-3 rounded">
+<code>@GetJsonPreview()</code>
+                    </pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link href="css/multilingual.css" rel="stylesheet" />
+
+@code {
+    private MultilingualText SampleTitle { get; set; } = new("Annual Performance Review", "Jährliche Leistungsbeurteilung");
+    private MultilingualText SampleDescription { get; set; } = new(
+        "This questionnaire evaluates your performance over the past year and helps identify areas for growth and development.",
+        "Dieser Fragebogen bewertet Ihre Leistung im vergangenen Jahr und hilft dabei, Bereiche für Wachstum und Entwicklung zu identifizieren."
+    );
+    private MultilingualOptions SampleOptions { get; set; } = new(
+        new List<string> { "Strongly Agree", "Agree", "Neutral", "Disagree", "Strongly Disagree" },
+        new List<string> { "Stimme voll zu", "Stimme zu", "Neutral", "Stimme nicht zu", "Stimme überhaupt nicht zu" }
+    );
+
+    protected override void OnInitialized()
+    {
+        LanguageService.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(string newLanguage)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetJsonPreview()
+    {
+        var preview = new
+        {
+            Title = new { English = SampleTitle.English, German = SampleTitle.German },
+            Description = new { English = SampleDescription.English, German = SampleDescription.German },
+            Options = new { English = SampleOptions.English, German = SampleOptions.German }
+        };
+
+        return System.Text.Json.JsonSerializer.Serialize(preview, new System.Text.Json.JsonSerializerOptions
+        {
+            WriteIndented = true
+        });
+    }
+
+    public void Dispose()
+    {
+        LanguageService.LanguageChanged -= OnLanguageChanged;
+    }
+}

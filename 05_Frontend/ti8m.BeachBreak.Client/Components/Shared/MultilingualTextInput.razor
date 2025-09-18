@@ -1,0 +1,156 @@
+@using ti8m.BeachBreak.Core.Infrastructure.ValueObjects
+@inherits ComponentBase
+
+<div class="multilingual-input">
+    <div class="language-tabs mb-2">
+        <div class="btn-group btn-group-sm" role="group">
+            <button type="button"
+                    class="btn @(CurrentLanguage == "en" ? "btn-primary" : "btn-outline-primary")"
+                    @onclick="() => SetLanguage(\"en\")">
+                🇺🇸 English @(IsRequiredLanguage("en") ? "*" : "")
+            </button>
+            <button type="button"
+                    class="btn @(CurrentLanguage == "de" ? "btn-primary" : "btn-outline-primary")"
+                    @onclick="() => SetLanguage(\"de\")">
+                🇩🇪 Deutsch @(IsRequiredLanguage("de") ? "*" : "")
+            </button>
+        </div>
+        @if (ShowValidationIcon)
+        {
+            <span class="validation-icon ms-2">
+                @if (Value.HasBothLanguages)
+                {
+                    <span class="text-success" title="Both languages provided">✓</span>
+                }
+                else if (Value.HasEnglish || Value.HasGerman)
+                {
+                    <span class="text-warning" title="Missing translation">⚠️</span>
+                }
+                else
+                {
+                    <span class="text-danger" title="No content provided">❌</span>
+                }
+            </span>
+        }
+    </div>
+
+    <div class="language-content">
+        @if (IsTextArea)
+        {
+            <textarea class="form-control @GetValidationClass()"
+                      placeholder="@GetPlaceholder()"
+                      rows="@Rows"
+                      @bind="CurrentValue"
+                      @oninput="OnInput"
+                      required="@IsCurrentLanguageRequired()">
+            </textarea>
+        }
+        else
+        {
+            <input type="text"
+                   class="form-control @GetValidationClass()"
+                   placeholder="@GetPlaceholder()"
+                   @bind="CurrentValue"
+                   @oninput="OnInput"
+                   required="@IsCurrentLanguageRequired()" />
+        }
+    </div>
+
+    @if (ShowHelperText)
+    {
+        <div class="form-text">
+            @if (CurrentLanguage == "en")
+            {
+                <span>English content @(RequireEnglish ? "(required)" : "(optional)")</span>
+            }
+            else
+            {
+                <span>German content @(RequireGerman ? "(required)" : "(optional)")</span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public MultilingualText Value { get; set; } = new();
+    [Parameter] public EventCallback<MultilingualText> ValueChanged { get; set; }
+    [Parameter] public string Placeholder { get; set; } = "";
+    [Parameter] public string PlaceholderDe { get; set; } = "";
+    [Parameter] public bool IsTextArea { get; set; } = false;
+    [Parameter] public int Rows { get; set; } = 3;
+    [Parameter] public bool RequireEnglish { get; set; } = true;
+    [Parameter] public bool RequireGerman { get; set; } = false;
+    [Parameter] public bool ShowValidationIcon { get; set; } = true;
+    [Parameter] public bool ShowHelperText { get; set; } = true;
+    [Parameter] public string Class { get; set; } = "";
+
+    private string CurrentLanguage { get; set; } = "en";
+
+    private string CurrentValue
+    {
+        get => CurrentLanguage == "en" ? Value.English : Value.German;
+        set
+        {
+            if (CurrentLanguage == "en")
+            {
+                Value.English = value ?? string.Empty;
+            }
+            else
+            {
+                Value.German = value ?? string.Empty;
+            }
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        // Start with English if it has content, otherwise German
+        CurrentLanguage = !string.IsNullOrEmpty(Value.English) ? "en" : "de";
+    }
+
+    private void SetLanguage(string language)
+    {
+        CurrentLanguage = language;
+        StateHasChanged();
+    }
+
+    private async Task OnInput(ChangeEventArgs e)
+    {
+        CurrentValue = e.Value?.ToString() ?? string.Empty;
+        await ValueChanged.InvokeAsync(Value);
+    }
+
+    private string GetPlaceholder()
+    {
+        if (CurrentLanguage == "en")
+        {
+            return !string.IsNullOrEmpty(Placeholder) ? Placeholder : "Enter English text...";
+        }
+        else
+        {
+            return !string.IsNullOrEmpty(PlaceholderDe) ? PlaceholderDe : "Deutschen Text eingeben...";
+        }
+    }
+
+    private string GetValidationClass()
+    {
+        if (!ShowValidationIcon) return "";
+
+        if (IsCurrentLanguageRequired() && string.IsNullOrEmpty(CurrentValue))
+        {
+            return "is-invalid";
+        }
+
+        return !string.IsNullOrEmpty(CurrentValue) ? "is-valid" : "";
+    }
+
+    private bool IsCurrentLanguageRequired()
+    {
+        return CurrentLanguage == "en" ? RequireEnglish : RequireGerman;
+    }
+
+    private bool IsRequiredLanguage(string language)
+    {
+        return language == "en" ? RequireEnglish : RequireGerman;
+    }
+}

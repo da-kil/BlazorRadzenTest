@@ -1,10 +1,12 @@
-﻿namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+﻿using ti8m.BeachBreak.Core.Infrastructure.ValueObjects;
+
+namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 
 public class QuestionnaireTemplate
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    public MultilingualText Name { get; set; } = new();
+    public MultilingualText Description { get; set; } = new();
     public string Category { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; } = DateTime.Now;
     public DateTime? LastModified { get; set; }

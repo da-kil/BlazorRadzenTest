@@ -1,0 +1,70 @@
+@using ti8m.BeachBreak.Core.Infrastructure.ValueObjects
+@using ti8m.BeachBreak.Client.Services
+@inject ILanguageService LanguageService
+@implements IDisposable
+
+<div class="multilingual-display @Class">
+    @if (ShowLanguageIndicator && Text != null && Text.HasBothLanguages)
+    {
+        <span class="language-indicator @(LanguageService.CurrentLanguage)">
+            @(LanguageService.CurrentLanguage.ToUpper())
+        </span>
+    }
+
+    @if (IsHtml)
+    {
+        @((MarkupString)DisplayText)
+    }
+    else
+    {
+        @DisplayText
+    }
+
+    @if (ShowFallback && !string.IsNullOrEmpty(FallbackText))
+    {
+        <small class="text-muted d-block mt-1">
+            <em>Fallback: @FallbackText</em>
+        </small>
+    }
+</div>
+
+@code {
+    [Parameter] public MultilingualText? Text { get; set; }
+    [Parameter] public bool ShowLanguageIndicator { get; set; } = false;
+    [Parameter] public bool ShowFallback { get; set; } = false;
+    [Parameter] public bool IsHtml { get; set; } = false;
+    [Parameter] public string Class { get; set; } = "";
+    [Parameter] public string Fallback { get; set; } = "";
+
+    private string DisplayText => Text != null ? LanguageService.GetText(Text) : string.Empty;
+
+    private string FallbackText
+    {
+        get
+        {
+            if (Text == null) return string.Empty;
+
+            var currentText = LanguageService.GetText(Text);
+            var otherLang = LanguageService.CurrentLanguage == "en" ? "de" : "en";
+            var otherText = Text.GetText(otherLang);
+
+            // Show fallback if current language is empty but other language has content
+            return string.IsNullOrEmpty(currentText) && !string.IsNullOrEmpty(otherText) ? otherText : string.Empty;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        LanguageService.LanguageChanged += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged(string newLanguage)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        LanguageService.LanguageChanged -= OnLanguageChanged;
+    }
+}

@@ -1,0 +1,147 @@
+/* Multilingual Components Styles */
+
+.multilingual-input, .multilingual-options {
+    margin-bottom: 1rem;
+}
+
+.language-tabs {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.language-tabs .btn-group {
+    border-radius: 0.375rem;
+    overflow: hidden;
+}
+
+.language-tabs .btn {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+    font-weight: 500;
+    border: 1px solid var(--ice-blue);
+    transition: all 0.2s ease;
+}
+
+.language-tabs .btn:not(.btn-primary) {
+    background-color: white;
+    color: var(--dark-blue);
+}
+
+.language-tabs .btn:not(.btn-primary):hover {
+    background-color: var(--light-blue);
+    border-color: var(--blue-new);
+    color: var(--dark-blue);
+}
+
+.language-tabs .btn.btn-primary {
+    background: linear-gradient(135deg, var(--blue-new), var(--green-new));
+    border-color: var(--blue-new);
+    color: white;
+}
+
+.validation-icon {
+    font-size: 1.125rem;
+    display: inline-flex;
+    align-items: center;
+}
+
+.language-content .form-control {
+    border: 2px solid var(--light-blue);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.language-content .form-control:focus {
+    border-color: var(--blue-new);
+    box-shadow: 0 0 0 0.2rem rgba(15, 105, 255, 0.25);
+}
+
+.language-content .form-control.is-valid {
+    border-color: var(--green-new);
+}
+
+.language-content .form-control.is-valid:focus {
+    border-color: var(--green-new);
+    box-shadow: 0 0 0 0.2rem rgba(0, 230, 200, 0.25);
+}
+
+.language-content .form-control.is-invalid {
+    border-color: var(--peach-kiss);
+}
+
+.language-content .form-control.is-invalid:focus {
+    border-color: var(--peach-kiss);
+    box-shadow: 0 0 0 0.2rem rgba(240, 128, 128, 0.25);
+}
+
+.options-preview {
+    background-color: #f8f9fa;
+    border: 1px solid var(--light-blue);
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.options-preview .list-group-item {
+    background-color: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    font-size: 0.875rem;
+}
+
+.options-preview .list-group-item:last-child {
+    border-bottom: none;
+}
+
+.options-preview .badge {
+    background-color: var(--ice-blue) !important;
+    color: var(--dark-blue) !important;
+    font-size: 0.75rem;
+    min-width: 1.5rem;
+}
+
+/* Language indicator for readonly display */
+.multilingual-display {
+    position: relative;
+}
+
+.multilingual-display .language-indicator {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: var(--blue-new);
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    z-index: 1;
+}
+
+.multilingual-display .language-indicator.de {
+    background: var(--purple-rain);
+}
+
+/* Form text styling */
+.form-text {
+    font-size: 0.875rem;
+    color: var(--ice-blue);
+    margin-top: 0.25rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+    .language-tabs .btn {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .validation-icon {
+        font-size: 1rem;
+    }
+
+    .options-preview {
+        max-height: 150px;
+    }
+}
