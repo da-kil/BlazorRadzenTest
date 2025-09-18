@@ -520,8 +520,20 @@
 
 private async Task PreviewQuestionnaire()
 {
-	// Open questionnaire in preview mode
-	NotificationService.Notify(NotificationSeverity.Info, "Preview", "Preview functionality would open here");
+	var result = await DialogService.OpenAsync<QuestionnairePreview>("Questionnaire Preview",
+		new Dictionary<string, object>()
+		{
+			{ "Template", template },
+			{ "QuestionTypeLabels", questionTypeLabels }
+		},
+		new DialogOptions()
+		{
+			Width = "95vw",
+			Height = "95vh",
+			Resizable = false,
+			ShowClose = true,
+			CloseDialogOnOverlayClick = false
+		});
 }
 
 private async Task SaveQuestionnaire()
