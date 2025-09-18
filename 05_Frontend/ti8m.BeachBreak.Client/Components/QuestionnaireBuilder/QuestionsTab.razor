@@ -2,15 +2,11 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 
-<div class="p-3">
+<div class="questions-tab-content">
     <div class="mb-4">
-        <div class="d-flex justify-content-between align-items-start mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <RadzenText TextStyle="TextStyle.H4" Class="text-dark fw-bold mb-2">
-                    <RadzenIcon Icon="view_list" Class="me-2" />
-                    Structure & Content
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">
                     Organize your assessment into logical sections and configure questions
                 </RadzenText>
             </div>
@@ -23,29 +19,29 @@
 
         @if (Template.Sections.Count > 0)
         {
-            <div class="assessment-stats p-4 mb-4 bg-gradient-light rounded-3 border">
-                <div class="row text-center">
-                    <div class="col-6">
+            <div class="assessment-stats mb-4">
+                <div class="d-flex gap-4 justify-content-center text-center p-3 bg-light rounded">
+                    <div class="stat-item">
                         <div class="d-flex align-items-center justify-content-center">
-                            <RadzenIcon Icon="folder" Class="me-2 text-competency fs-4" />
+                            <RadzenIcon Icon="folder" Class="me-2 fs-5" style="color: var(--primary-color);" />
                             <div>
-                                <RadzenText TextStyle="TextStyle.H5" Class="fw-bold text-competency mb-0">
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-0" style="color: var(--primary-color);">
                                     @Template.Sections.Count
                                 </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
                                     Sections
                                 </RadzenText>
                             </div>
                         </div>
                     </div>
-                    <div class="col-6">
+                    <div class="stat-item">
                         <div class="d-flex align-items-center justify-content-center">
-                            <RadzenIcon Icon="quiz" Class="me-2 text-success fs-4" />
+                            <RadzenIcon Icon="quiz" Class="me-2 fs-5" style="color: var(--success-color);" />
                             <div>
-                                <RadzenText TextStyle="TextStyle.H5" Class="fw-bold text-success mb-0">
+                                <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-0" style="color: var(--success-color);">
                                     @GetTotalItemsCount()
                                 </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
                                     Total Items
                                 </RadzenText>
                             </div>
@@ -58,16 +54,16 @@
 
     @if (Template.Sections.Count == 0)
     {
-        <RadzenCard Class="text-center p-4 border-dashed">
-            <RadzenIcon Icon="quiz" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+        <div class="empty-state text-center p-5">
+            <RadzenIcon Icon="quiz" Style="font-size: 3rem; color: #6c757d;" />
             <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2">
                 No sections created yet. Click "Add Section" to get started.
             </RadzenText>
-        </RadzenCard>
+        </div>
     }
     else
     {
-        <div class="sections-container">
+        <div class="sections-container space-y-3">
             @for (int sectionIndex = 0; sectionIndex < Template.Sections.Count; sectionIndex++)
             {
                 var templateSection = Template.Sections[sectionIndex];
@@ -94,6 +90,26 @@
         </div>
     }
 </div>
+
+<style>
+.questions-tab-content {
+    padding: 0;
+}
+
+.stat-item {
+    flex: 1;
+}
+
+.empty-state {
+    background: #f8f9fa;
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+}
+
+.space-y-3 > * + * {
+    margin-top: 1.5rem;
+}
+</style>
 
 @code {
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
