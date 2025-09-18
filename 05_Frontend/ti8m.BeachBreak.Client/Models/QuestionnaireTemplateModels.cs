@@ -161,6 +161,15 @@ public static class TemplateStatusHelper
         _ => "badge bg-info"
     };
 
+    public static Radzen.BadgeStyle GetStatusBadgeStyle(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Published => Radzen.BadgeStyle.Success,
+        TemplateStatus.Draft => Radzen.BadgeStyle.Warning,
+        TemplateStatus.PublishedInactive => Radzen.BadgeStyle.Secondary,
+        TemplateStatus.Inactive => Radzen.BadgeStyle.Danger,
+        _ => Radzen.BadgeStyle.Info
+    };
+
     public static string GetStatusText(TemplateStatus status) => status switch
     {
         TemplateStatus.Published => "PUBLISHED",
@@ -208,4 +217,111 @@ public static class TemplateStatusHelper
         "edit" => status != TemplateStatus.Inactive,
         _ => false
     };
+}
+
+// Phase 3: Versioning and Scheduling Models
+
+public class TemplateVersion
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid TemplateId { get; set; }
+    public int VersionNumber { get; set; }
+    public string VersionLabel { get; set; } = string.Empty; // e.g., "v1.0", "v2.1"
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+    public string CreatedBy { get; set; } = string.Empty;
+    public string ChangeDescription { get; set; } = string.Empty;
+    public bool IsCurrentVersion { get; set; } = false;
+
+    // Snapshot of template content at this version
+    public string TemplateSnapshot { get; set; } = string.Empty; // JSON serialized template
+    public TemplateVersionType VersionType { get; set; } = TemplateVersionType.Minor;
+
+    // Publishing information for this version
+    public bool WasPublished { get; set; } = false;
+    public DateTime? PublishedDate { get; set; }
+    public string PublishedBy { get; set; } = string.Empty;
+}
+
+public enum TemplateVersionType
+{
+    Major,      // Breaking changes, significant restructuring
+    Minor,      // New features, question additions
+    Patch       // Bug fixes, minor text changes
+}
+
+public class PublishSchedule
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid TemplateId { get; set; }
+    public DateTime ScheduledPublishTime { get; set; }
+    public string ScheduledBy { get; set; } = string.Empty;
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
+    public PublishScheduleStatus Status { get; set; } = PublishScheduleStatus.Pending;
+    public string Notes { get; set; } = string.Empty;
+
+    // Optional: Unpublish scheduling
+    public DateTime? ScheduledUnpublishTime { get; set; }
+
+    // Execution tracking
+    public DateTime? ExecutedDate { get; set; }
+    public string ExecutionLog { get; set; } = string.Empty;
+    public string ErrorMessage { get; set; } = string.Empty;
+}
+
+public enum PublishScheduleStatus
+{
+    Pending,    // Waiting to be executed
+    Executed,   // Successfully published
+    Failed,     // Failed to publish
+    Cancelled   // Cancelled before execution
+}
+
+public class StakeholderNotification
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid TemplateId { get; set; }
+    public string EventType { get; set; } = string.Empty; // "Published", "Unpublished", "Scheduled", etc.
+    public string RecipientEmail { get; set; } = string.Empty;
+    public string RecipientName { get; set; } = string.Empty;
+    public string RecipientRole { get; set; } = string.Empty;
+    public DateTime SentDate { get; set; } = DateTime.Now;
+    public NotificationStatus Status { get; set; } = NotificationStatus.Pending;
+    public string Subject { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string ErrorMessage { get; set; } = string.Empty;
+}
+
+public enum NotificationStatus
+{
+    Pending,    // Not yet sent
+    Sent,       // Successfully sent
+    Failed,     // Failed to send
+    Bounced     // Email bounced back
+}
+
+public class PublishHistory
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid TemplateId { get; set; }
+    public Guid? VersionId { get; set; }
+    public PublishHistoryAction Action { get; set; }
+    public DateTime ActionDate { get; set; } = DateTime.Now;
+    public string PerformedBy { get; set; } = string.Empty;
+    public string Notes { get; set; } = string.Empty;
+    public bool WasScheduled { get; set; } = false;
+    public Guid? ScheduleId { get; set; }
+
+    // Stakeholder notifications sent for this action
+    public List<Guid> NotificationIds { get; set; } = new();
+}
+
+public enum PublishHistoryAction
+{
+    Published,
+    Unpublished,
+    ScheduledPublish,
+    ScheduledUnpublish,
+    CancelledSchedule,
+    VersionCreated,
+    VersionReverted
 }

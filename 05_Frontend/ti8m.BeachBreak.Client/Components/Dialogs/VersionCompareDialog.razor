@@ -1,0 +1,104 @@
+@using ti8m.BeachBreak.Client.Models
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H4" Class="mb-3">
+        <RadzenIcon Icon="compare" Class="me-2" />
+        Version Comparison
+    </RadzenText>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <RadzenCard Class="p-3 border-primary">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2 text-primary">
+                    <RadzenIcon Icon="history" Class="me-2" />
+                    From: @FromVersion.VersionLabel
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">Created: @FromVersion.CreatedDate.ToString("dd/MM/yyyy HH:mm")</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">By: @FromVersion.CreatedBy</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">Type: @FromVersion.VersionType</RadzenText>
+            </RadzenCard>
+        </div>
+        <div class="col-md-6">
+            <RadzenCard Class="p-3 border-success">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2 text-success">
+                    <RadzenIcon Icon="update" Class="me-2" />
+                    To: @ToVersion.VersionLabel
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">Created: @ToVersion.CreatedDate.ToString("dd/MM/yyyy HH:mm")</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">By: @ToVersion.CreatedBy</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">Type: @ToVersion.VersionType</RadzenText>
+            </RadzenCard>
+        </div>
+    </div>
+
+    <RadzenCard Class="p-3">
+        <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-3">
+            <RadzenIcon Icon="difference" Class="me-2" />
+            Changes Detected
+        </RadzenText>
+
+        @if (!string.IsNullOrEmpty(DiffContent))
+        {
+            <div class="diff-content">
+                @foreach (var line in DiffContent.Split('\n'))
+                {
+                    <div class="diff-line mb-2 p-2" style="background: #f8f9fa; border-left: 4px solid #28a745; border-radius: 4px;">
+                        <RadzenIcon Icon="compare_arrows" Class="me-2 text-primary" />
+                        <RadzenText TextStyle="TextStyle.Body2">@line</RadzenText>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Light">
+                <RadzenIcon Icon="info" Class="me-2" />
+                No significant changes detected between these versions
+            </RadzenAlert>
+        }
+    </RadzenCard>
+
+    <RadzenCard Class="p-3 mt-3">
+        <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-3">Change Descriptions</RadzenText>
+
+        <div class="row">
+            <div class="col-md-6">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary mb-2">@FromVersion.VersionLabel:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="mb-3">@FromVersion.ChangeDescription</RadzenText>
+            </div>
+            <div class="col-md-6">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-success mb-2">@ToVersion.VersionLabel:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="mb-3">@ToVersion.ChangeDescription</RadzenText>
+            </div>
+        </div>
+    </RadzenCard>
+
+    <div class="d-flex justify-content-end mt-4">
+        <RadzenButton Text="Close"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@(() => { })" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public TemplateVersion FromVersion { get; set; } = new();
+    [Parameter] public TemplateVersion ToVersion { get; set; } = new();
+    [Parameter] public string DiffContent { get; set; } = string.Empty;
+}
+
+<style>
+.diff-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.diff-line {
+    transition: background-color 0.2s ease;
+}
+
+.diff-line:hover {
+    background: #e9ecef !important;
+}
+</style>

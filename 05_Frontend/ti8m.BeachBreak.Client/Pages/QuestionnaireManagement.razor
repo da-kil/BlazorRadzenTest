@@ -85,10 +85,37 @@
                                     </Template>
                                 </RadzenDataGridColumn>
                                 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.IsActive)" Title="Status" Width="120px">
+                                <RadzenDataGridColumn Property="Status" Title="Status" Width="120px">
                                     <Template Context="template">
-                                        <RadzenBadge BadgeStyle="@(template.IsActive ? BadgeStyle.Success : BadgeStyle.Light)" 
-                                                   Text="@(template.IsActive ? "Active" : "Inactive")" />
+                                        <div class="d-flex flex-column">
+                                            <RadzenBadge BadgeStyle="@TemplateStatusHelper.GetStatusBadgeStyle(template.Status)"
+                                                       Text="@TemplateStatusHelper.GetStatusText(template.Status)" />
+                                            @if (template.IsPublished && template.LastPublishedDate.HasValue)
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                                                    Published @template.LastPublishedDate.Value.ToString("dd/MM/yyyy")
+                                                </RadzenText>
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.PublishedBy)" Title="Published By" Width="150px">
+                                    <Template Context="template">
+                                        @if (template.IsPublished && !string.IsNullOrEmpty(template.PublishedBy))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2">@template.PublishedBy</RadzenText>
+                                            @if (template.PublishedDate.HasValue)
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                                    First: @template.PublishedDate.Value.ToString("dd/MM/yyyy")
+                                                </RadzenText>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
                                     </Template>
                                 </RadzenDataGridColumn>
                                 
@@ -107,9 +134,10 @@
                                     </Template>
                                 </RadzenDataGridColumn>
                                 
-                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="200px" TextAlign="TextAlign.Center">
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="300px" TextAlign="TextAlign.Center" Title="Actions">
                                     <Template Context="template">
-                                        <div class="d-flex gap-1">
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            <!-- Basic Actions -->
                                             <RadzenButton ButtonStyle="ButtonStyle.Light"
                                                          Icon="preview"
                                                          Size="ButtonSize.Small"
@@ -120,21 +148,63 @@
                                                          Size="ButtonSize.Small"
                                                          Title="Edit"
                                                          Click="@(() => EditTemplate(template))" />
+
+                                            <!-- Publishing Actions -->
+                                            @switch (template.Status)
+                                            {
+                                                case TemplateStatus.Draft:
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                                                 Icon="publish"
+                                                                 Size="ButtonSize.Small"
+                                                                 Title="Publish"
+                                                                 Click="@(() => PublishTemplate(template))" />
+                                                    break;
+
+                                                case TemplateStatus.Published:
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                                                 Icon="unpublished"
+                                                                 Size="ButtonSize.Small"
+                                                                 Title="Unpublish"
+                                                                 Click="@(() => UnpublishTemplate(template))" />
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                                                                 Icon="block"
+                                                                 Size="ButtonSize.Small"
+                                                                 Title="Disable"
+                                                                 Click="@(() => DeactivateTemplate(template))" />
+                                                    break;
+
+                                                case TemplateStatus.PublishedInactive:
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                                                 Icon="check_circle"
+                                                                 Size="ButtonSize.Small"
+                                                                 Title="Enable"
+                                                                 Click="@(() => ActivateTemplate(template))" />
+                                                    break;
+
+                                                case TemplateStatus.Inactive:
+                                                    <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                                                 Icon="play_arrow"
+                                                                 Size="ButtonSize.Small"
+                                                                 Title="Activate"
+                                                                 Click="@(() => ActivateTemplate(template))" />
+                                                    break;
+                                            }
+
+                                            <!-- Additional Actions -->
                                             <RadzenButton ButtonStyle="ButtonStyle.Light"
                                                          Icon="content_copy"
                                                          Size="ButtonSize.Small"
                                                          Title="Clone"
                                                          Click="@(() => CloneTemplate(template))" />
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                         Icon="assignment"
-                                                         Size="ButtonSize.Small"
-                                                         Title="Assign"
-                                                         Click="@(() => AssignTemplate(template))" />
-                                            <RadzenButton ButtonStyle="@(template.IsActive ? ButtonStyle.Warning : ButtonStyle.Success)"
-                                                         Icon="@(template.IsActive ? "pause_circle" : "play_circle")"
-                                                         Size="ButtonSize.Small"
-                                                         Title="@(template.IsActive ? "Deactivate" : "Activate")"
-                                                         Click="@(() => ToggleTemplateStatus(template))" />
+
+                                            @if (template.CanBeAssigned)
+                                            {
+                                                <RadzenButton ButtonStyle="ButtonStyle.Info"
+                                                             Icon="assignment"
+                                                             Size="ButtonSize.Small"
+                                                             Title="Assign"
+                                                             Click="@(() => AssignTemplate(template))" />
+                                            }
                                         </div>
                                     </Template>
                                 </RadzenDataGridColumn>
@@ -832,6 +902,91 @@
         public bool SendCompletionEmails { get; set; }
         public int DefaultDueDays { get; set; }
         public int ReminderDaysBeforeDue { get; set; }
+    }
+
+    // Status management methods
+    private async Task PublishTemplate(QuestionnaireTemplate template)
+    {
+        try
+        {
+            var published = await ApiService.PublishTemplateAsync(template.Id, "Current User");
+            if (published != null)
+            {
+                await LoadTemplates();
+                NotificationService.Notify(NotificationSeverity.Success, "Published", $"Template '{template.Name}' has been published");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
+        }
+    }
+
+    private async Task UnpublishTemplate(QuestionnaireTemplate template)
+    {
+        try
+        {
+            var unpublished = await ApiService.UnpublishTemplateAsync(template.Id);
+            if (unpublished != null)
+            {
+                await LoadTemplates();
+                NotificationService.Notify(NotificationSeverity.Info, "Unpublished", $"Template '{template.Name}' has been unpublished");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unpublish template");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
+        }
+    }
+
+    private async Task ActivateTemplate(QuestionnaireTemplate template)
+    {
+        try
+        {
+            var activated = await ApiService.ActivateTemplateAsync(template.Id);
+            if (activated != null)
+            {
+                await LoadTemplates();
+                NotificationService.Notify(NotificationSeverity.Success, "Activated", $"Template '{template.Name}' has been activated");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to activate template");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to activate template: {ex.Message}");
+        }
+    }
+
+    private async Task DeactivateTemplate(QuestionnaireTemplate template)
+    {
+        try
+        {
+            var deactivated = await ApiService.DeactivateTemplateAsync(template.Id);
+            if (deactivated != null)
+            {
+                await LoadTemplates();
+                NotificationService.Notify(NotificationSeverity.Warning, "Deactivated", $"Template '{template.Name}' has been deactivated");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to deactivate template");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to deactivate template: {ex.Message}");
+        }
     }
 
     public class ResponseTrend

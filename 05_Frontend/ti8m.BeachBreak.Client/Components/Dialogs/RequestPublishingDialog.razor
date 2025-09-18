@@ -1,0 +1,74 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@inject IApprovalWorkflowService ApprovalService
+@inject NotificationService NotificationService
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">
+        <RadzenIcon Icon="send" Class="me-2" />
+        Request Publishing Approval
+    </RadzenText>
+
+    <RadzenText TextStyle="TextStyle.Body1" Class="mb-3">
+        Template: <strong>@TemplateName</strong>
+    </RadzenText>
+
+    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-4">
+        Please provide a reason for requesting publication approval. This will help reviewers understand the context and urgency of your request.
+    </RadzenText>
+
+    <RadzenFormField Text="Reason for Publishing" Class="w-100">
+        <RadzenTextArea @bind-Value="@requestReason"
+                       Placeholder="Describe why this template should be published (e.g., ready for production, stakeholder approval received, testing completed)"
+                       Rows="4"
+                       Style="width: 100%;" />
+    </RadzenFormField>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel" />
+        <RadzenButton Text="Submit Request"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="send"
+                     Click="@SubmitRequest"
+                     Disabled="@(string.IsNullOrWhiteSpace(requestReason))" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid TemplateId { get; set; }
+    [Parameter] public string TemplateName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnRequestSubmitted { get; set; }
+
+    private string requestReason = string.Empty;
+
+    private async Task SubmitRequest()
+    {
+        if (string.IsNullOrWhiteSpace(requestReason))
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Required", "Please provide a reason for the publishing request");
+            return;
+        }
+
+        var request = await ApprovalService.RequestPublishingAsync(TemplateId, requestReason.Trim());
+        if (request != null)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Request Submitted",
+                "Your publishing request has been submitted for approval");
+
+            await OnRequestSubmitted.InvokeAsync();
+            await Cancel();
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                "Failed to submit publishing request. You may not have permission or the request already exists.");
+        }
+    }
+
+    private async Task Cancel()
+    {
+        await OnRequestSubmitted.InvokeAsync();
+    }
+}

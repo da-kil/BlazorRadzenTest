@@ -42,6 +42,13 @@ public class Program
         builder.Services.AddScoped<IEmployeeQuestionnaireService, EmployeeQuestionnaireService>();
         builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
+        builder.Services.AddScoped<IApprovalWorkflowService, ApprovalWorkflowService>();
+
+        // Phase 3 Services
+        builder.Services.AddScoped<IVersioningService, VersioningService>();
+        builder.Services.AddScoped<ISchedulingService, SchedulingService>();
+        builder.Services.AddScoped<INotificationService, StakeholderNotificationService>();
 
         // Add services to the container.
         builder.Services.AddRazorComponents()

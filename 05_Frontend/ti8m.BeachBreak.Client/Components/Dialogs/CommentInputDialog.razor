@@ -1,0 +1,55 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">
+        @Title
+    </RadzenText>
+
+    <RadzenFormField Text="Comments" Class="w-100">
+        <RadzenTextArea @bind-Value="@comments"
+                       Placeholder="@Placeholder"
+                       Rows="4"
+                       Style="width: 100%;" />
+    </RadzenFormField>
+
+    @if (Required && string.IsNullOrWhiteSpace(comments))
+    {
+        <RadzenText TextStyle="TextStyle.Caption" Class="text-danger mt-1">
+            Comments are required
+        </RadzenText>
+    }
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel" />
+        <RadzenButton Text="Submit"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Click="@Submit"
+                     Disabled="@(Required && string.IsNullOrWhiteSpace(comments))" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Comments";
+    [Parameter] public string Placeholder { get; set; } = "Enter your comments...";
+    [Parameter] public bool Required { get; set; } = false;
+    [Parameter] public EventCallback<string> OnSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string comments = string.Empty;
+
+    private async Task Submit()
+    {
+        if (Required && string.IsNullOrWhiteSpace(comments))
+            return;
+
+        await OnSubmit.InvokeAsync(comments.Trim());
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+    }
+}

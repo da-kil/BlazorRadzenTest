@@ -1,0 +1,190 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using Microsoft.JSInterop
+@inject IApprovalWorkflowService ApprovalService
+@inject IJSRuntime JSRuntime
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">
+        <RadzenIcon Icon="history" Class="me-2" />
+        Audit Trail - @TemplateName
+    </RadzenText>
+
+    @if (auditEntries.Any())
+    {
+        <RadzenTimeline>
+            @foreach (var entry in auditEntries)
+            {
+                <RadzenTimelineItem>
+                    <ChildContent>
+                        <RadzenCard Class="p-3 mb-2" Style="@($"border-left: 4px solid {GetActionColor(entry.Action)};")">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">
+                                        <RadzenIcon Icon="@GetActionIcon(entry.Action)" Class="me-2" />
+                                        @GetActionDisplayName(entry.Action)
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                        by @entry.PerformedBy
+                                    </RadzenText>
+                                    @if (!string.IsNullOrEmpty(entry.Details))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="mt-2">
+                                            @entry.Details
+                                        </RadzenText>
+                                    }
+                                </div>
+                                <div class="text-end">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                        @entry.Timestamp.ToString("dd/MM/yyyy HH:mm")
+                                    </RadzenText>
+                                </div>
+                            </div>
+                        </RadzenCard>
+                    </ChildContent>
+                </RadzenTimelineItem>
+            }
+        </RadzenTimeline>
+    }
+    else
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Light">
+            <RadzenIcon Icon="info" Class="me-2" />
+            No audit trail entries found for this template
+        </RadzenAlert>
+    }
+
+    <div class="d-flex justify-content-end mt-4">
+        <RadzenButton Text="Close"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@(() => OnClose.InvokeAsync())" />
+        <RadzenButton Text="Export"
+                     ButtonStyle="ButtonStyle.Secondary"
+                     Icon="download"
+                     Click="@ExportAuditTrail"
+                     Class="ms-2" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid TemplateId { get; set; }
+    [Parameter] public string TemplateName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private List<AuditTrailEntry> auditEntries = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        auditEntries = await ApprovalService.GetAuditTrailAsync(TemplateId);
+    }
+
+    private static string GetActionColor(AuditAction action) => action switch
+    {
+        AuditAction.Created => "#28a745",
+        AuditAction.Published => "#007bff",
+        AuditAction.Unpublished => "#ffc107",
+        AuditAction.Modified => "#17a2b8",
+        AuditAction.Deleted => "#dc3545",
+        AuditAction.PublishingRequested => "#6f42c1",
+        AuditAction.PublishingApproved => "#28a745",
+        AuditAction.PublishingRejected => "#dc3545",
+        _ => "#6c757d"
+    };
+
+    private static string GetActionIcon(AuditAction action) => action switch
+    {
+        AuditAction.Created => "add_circle",
+        AuditAction.Published => "publish",
+        AuditAction.Unpublished => "unpublished",
+        AuditAction.Modified => "edit",
+        AuditAction.Deleted => "delete",
+        AuditAction.Activated => "play_circle",
+        AuditAction.Deactivated => "pause_circle",
+        AuditAction.PublishingRequested => "send",
+        AuditAction.PublishingApproved => "check_circle",
+        AuditAction.PublishingRejected => "cancel",
+        AuditAction.Cloned => "content_copy",
+        AuditAction.Assigned => "assignment",
+        _ => "info"
+    };
+
+    private static string GetActionDisplayName(AuditAction action) => action switch
+    {
+        AuditAction.Created => "Template Created",
+        AuditAction.Modified => "Template Modified",
+        AuditAction.Published => "Template Published",
+        AuditAction.Unpublished => "Template Unpublished",
+        AuditAction.Activated => "Template Activated",
+        AuditAction.Deactivated => "Template Deactivated",
+        AuditAction.Deleted => "Template Deleted",
+        AuditAction.PublishingRequested => "Publishing Approval Requested",
+        AuditAction.PublishingApproved => "Publishing Request Approved",
+        AuditAction.PublishingRejected => "Publishing Request Rejected",
+        AuditAction.Cloned => "Template Cloned",
+        AuditAction.Assigned => "Template Assigned",
+        _ => action.ToString()
+    };
+
+    private async Task ExportAuditTrail()
+    {
+        try
+        {
+            var csv = GenerateAuditTrailCsv();
+            var fileName = $"audit_trail_{TemplateName}_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+
+            // Use browser download API
+            var bytes = System.Text.Encoding.UTF8.GetBytes(csv);
+            var base64 = Convert.ToBase64String(bytes);
+            var dataUrl = $"data:text/csv;base64,{base64}";
+
+            await JSRuntime.InvokeVoidAsync("downloadFile", dataUrl, fileName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error exporting audit trail: {ex.Message}");
+            // Could show notification here if NotificationService was injected
+        }
+    }
+
+    private string GenerateAuditTrailCsv()
+    {
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("Timestamp,Action,Performed By,Details");
+
+        foreach (var entry in auditEntries.OrderBy(e => e.Timestamp))
+        {
+            var details = entry.Details?.Replace("\"", "\"\"") ?? "";
+            sb.AppendLine($"\"{entry.Timestamp:yyyy-MM-dd HH:mm:ss}\",\"{GetActionDisplayName(entry.Action)}\",\"{entry.PerformedBy}\",\"{details}\"");
+        }
+
+        return sb.ToString();
+    }
+}
+
+<style>
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 0.25rem;
+        top: 0.5rem;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: #007bff;
+    }
+</style>

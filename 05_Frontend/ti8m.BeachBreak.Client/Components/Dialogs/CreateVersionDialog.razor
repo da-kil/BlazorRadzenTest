@@ -1,0 +1,85 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using Radzen
+@using Radzen.Blazor
+@inject IVersioningService VersioningService
+@inject NotificationService NotificationService
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">
+        <RadzenIcon Icon="add" Class="me-2" />
+        Create New Version
+    </RadzenText>
+
+    <RadzenFormField Text="Version Type" Class="w-100 mb-3">
+        <RadzenDropDown @bind-Value="@versionType"
+                       Data="@versionTypes"
+                       TextProperty="Text"
+                       ValueProperty="Value"
+                       Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Change Description" Class="w-100 mb-3">
+        <RadzenTextArea @bind-Value="@changeDescription"
+                       Placeholder="Describe the changes made in this version..."
+                       Rows="4"
+                       Style="width: 100%;" />
+    </RadzenFormField>
+
+    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-3">
+        Version types:
+        <br />• <strong>Major:</strong> Breaking changes, significant restructuring
+        <br />• <strong>Minor:</strong> New features, question additions
+        <br />• <strong>Patch:</strong> Bug fixes, minor text changes
+    </RadzenText>
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel" />
+        <RadzenButton Text="Create Version"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="add"
+                     Click="@CreateVersion"
+                     Disabled="@(string.IsNullOrWhiteSpace(changeDescription))" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid TemplateId { get; set; }
+    [Parameter] public EventCallback OnVersionCreated { get; set; }
+
+    private TemplateVersionType versionType = TemplateVersionType.Minor;
+    private string changeDescription = string.Empty;
+
+    private readonly List<object> versionTypes = new()
+    {
+        new { Text = "Major - Breaking changes", Value = TemplateVersionType.Major },
+        new { Text = "Minor - New features", Value = TemplateVersionType.Minor },
+        new { Text = "Patch - Bug fixes", Value = TemplateVersionType.Patch }
+    };
+
+    private async Task CreateVersion()
+    {
+        if (string.IsNullOrWhiteSpace(changeDescription)) return;
+
+        var version = await VersioningService.CreateVersionAsync(TemplateId, changeDescription.Trim(), versionType);
+        if (version != null)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Version Created",
+                $"Version {version.VersionLabel} created successfully");
+
+            await OnVersionCreated.InvokeAsync();
+            await Cancel();
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to create version");
+        }
+    }
+
+    private async Task Cancel()
+    {
+        await OnVersionCreated.InvokeAsync();
+    }
+}

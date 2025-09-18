@@ -1,0 +1,127 @@
+@using ti8m.BeachBreak.Client.Models
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H4" Class="mb-3">
+        <RadzenIcon Icon="visibility" Class="me-2" />
+        @Version.VersionLabel - @Template.Name
+    </RadzenText>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <RadzenCard Class="p-3">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">Version Information</RadzenText>
+                <div class="mb-2">
+                    <RadzenText TextStyle="TextStyle.Body2"><strong>Version:</strong> @Version.VersionLabel</RadzenText>
+                </div>
+                <div class="mb-2">
+                    <RadzenText TextStyle="TextStyle.Body2"><strong>Type:</strong> @Version.VersionType</RadzenText>
+                </div>
+                <div class="mb-2">
+                    <RadzenText TextStyle="TextStyle.Body2"><strong>Created:</strong> @Version.CreatedDate.ToString("dd/MM/yyyy HH:mm")</RadzenText>
+                </div>
+                <div class="mb-2">
+                    <RadzenText TextStyle="TextStyle.Body2"><strong>Created By:</strong> @Version.CreatedBy</RadzenText>
+                </div>
+                @if (Version.WasPublished)
+                {
+                    <div class="mb-2">
+                        <RadzenText TextStyle="TextStyle.Body2"><strong>Published:</strong> @Version.PublishedDate?.ToString("dd/MM/yyyy HH:mm")</RadzenText>
+                    </div>
+                }
+            </RadzenCard>
+        </div>
+        <div class="col-md-6">
+            <RadzenCard Class="p-3">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">Change Description</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">@Version.ChangeDescription</RadzenText>
+            </RadzenCard>
+        </div>
+    </div>
+
+    <RadzenCard Class="p-3">
+        <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-3">Template Content</RadzenText>
+
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <RadzenText TextStyle="TextStyle.Body2"><strong>Name:</strong> @Template.Name</RadzenText>
+            </div>
+            <div class="col-md-4">
+                <RadzenText TextStyle="TextStyle.Body2"><strong>Category:</strong> @Template.Category</RadzenText>
+            </div>
+            <div class="col-md-4">
+                <RadzenText TextStyle="TextStyle.Body2"><strong>Sections:</strong> @Template.Sections.Count</RadzenText>
+            </div>
+        </div>
+
+        <RadzenText TextStyle="TextStyle.Body2" Class="mb-3"><strong>Description:</strong> @Template.Description</RadzenText>
+
+        @if (Template.Sections.Any())
+        {
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-2">Sections & Questions:</RadzenText>
+            @foreach (var templateSection in Template.Sections.OrderBy(s => s.Order))
+            {
+                <RadzenCard Class="mb-3 p-3" Style="border-left: 4px solid #007bff;">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
+                        @(templateSection.Order + 1). @templateSection.Title
+                    </RadzenText>
+                    @if (!string.IsNullOrEmpty(templateSection.Description))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">@templateSection.Description</RadzenText>
+                    }
+
+                    @if (templateSection.Questions.Any())
+                    {
+                        <div class="ms-3">
+                            @foreach (var question in templateSection.Questions.OrderBy(q => q.Order))
+                            {
+                                <div class="mb-2 p-2" style="background: #f8f9fa; border-radius: 4px;">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        <RadzenIcon Icon="@GetQuestionIcon(question.Type)" Class="me-2" />
+                                        <strong>@question.Title</strong> (@question.Type)
+                                    </RadzenText>
+                                    @if (!string.IsNullOrEmpty(question.Description))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted ms-4">@question.Description</RadzenText>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted ms-3">No questions in this section</RadzenText>
+                    }
+                </RadzenCard>
+            }
+        }
+        else
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Light">
+                <RadzenIcon Icon="info" Class="me-2" />
+                No sections defined in this template version
+            </RadzenAlert>
+        }
+    </RadzenCard>
+
+    <div class="d-flex justify-content-end mt-4">
+        <RadzenButton Text="Close"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@(() => { })" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public QuestionnaireTemplate Template { get; set; } = new();
+    [Parameter] public TemplateVersion Version { get; set; } = new();
+    [Parameter] public bool IsReadOnly { get; set; } = true;
+
+    private static string GetQuestionIcon(QuestionType type) => type switch
+    {
+        QuestionType.SelfAssessment => "star_rate",
+        QuestionType.GoalAchievement => "track_changes",
+        QuestionType.TextQuestion => "short_text",
+        _ => "help"
+    };
+}

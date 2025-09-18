@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Dialogs
 
 <PageTitle>Questionnaire Builder</PageTitle>
 
@@ -44,6 +45,41 @@
 							  Icon="preview"
 							  Click="@PreviewQuestionnaire" />
 
+				@if (canViewAuditTrail && IsEditMode)
+				{
+					<RadzenButton Text="Audit Trail"
+								  ButtonStyle="ButtonStyle.Light"
+								  Icon="history"
+								  Click="@ShowAuditTrail" />
+				}
+
+				@* Phase 3: Version History *@
+				@if (IsEditMode)
+				{
+					<RadzenButton Text="Versions"
+								  ButtonStyle="ButtonStyle.Light"
+								  Icon="history"
+								  Click="@ShowVersionHistory" />
+				}
+
+				@* Phase 3: Schedule Publishing *@
+				@if (IsEditMode && (canPublish || canRequestPublishing))
+				{
+					<RadzenButton Text="Schedule"
+								  ButtonStyle="ButtonStyle.Info"
+								  Icon="schedule"
+								  Click="@ShowScheduleDialog" />
+				}
+
+				@* Phase 3: Notifications *@
+				@if (IsEditMode && (canPublish || canRequestPublishing))
+				{
+					<RadzenButton Text="Notifications"
+								  ButtonStyle="ButtonStyle.Light"
+								  Icon="notifications"
+								  Click="@ShowNotificationConfig" />
+				}
+
 				@{
 					var currentStatus = IsEditMode ? template.Status : TemplateStatus.Draft;
 				}
@@ -51,47 +87,78 @@
 				@switch (currentStatus)
 				{
 					case TemplateStatus.Draft:
-						<RadzenButton Text="Save Draft"
-									  ButtonStyle="ButtonStyle.Secondary"
-									  Icon="save"
-									  Click="@SaveQuestionnaire" />
-						<RadzenButton Text="Publish"
-									  ButtonStyle="ButtonStyle.Success"
-									  Icon="publish"
-									  Click="@PublishQuestionnaire" />
+						@if (canEdit)
+						{
+							<RadzenButton Text="Save Draft"
+										  ButtonStyle="ButtonStyle.Secondary"
+										  Icon="save"
+										  Click="@SaveQuestionnaire" />
+						}
+						@if (canPublish)
+						{
+							<RadzenButton Text="Publish"
+										  ButtonStyle="ButtonStyle.Success"
+										  Icon="publish"
+										  Click="@PublishQuestionnaire" />
+						}
+						else if (canRequestPublishing)
+						{
+							<RadzenButton Text="Request Publishing"
+										  ButtonStyle="ButtonStyle.Primary"
+										  Icon="send"
+										  Click="@RequestPublishing" />
+						}
 						break;
 
 					case TemplateStatus.Published:
-						<RadzenButton Text="Save Changes"
-									  ButtonStyle="ButtonStyle.Primary"
-									  Icon="save"
-									  Click="@SaveQuestionnaire" />
-						<RadzenButton Text="Unpublish"
-									  ButtonStyle="ButtonStyle.Warning"
-									  Icon="unpublished"
-									  Click="@UnpublishQuestionnaire" />
-						<RadzenButton Text="Disable"
-									  ButtonStyle="ButtonStyle.Secondary"
-									  Icon="block"
-									  Click="@DisableQuestionnaire" />
+						@if (canEdit)
+						{
+							<RadzenButton Text="Save Changes"
+										  ButtonStyle="ButtonStyle.Primary"
+										  Icon="save"
+										  Click="@SaveQuestionnaire" />
+						}
+						@if (canUnpublish)
+						{
+							<RadzenButton Text="Unpublish"
+										  ButtonStyle="ButtonStyle.Warning"
+										  Icon="unpublished"
+										  Click="@UnpublishQuestionnaire" />
+						}
+						@if (canDeactivate)
+						{
+							<RadzenButton Text="Disable"
+										  ButtonStyle="ButtonStyle.Secondary"
+										  Icon="block"
+										  Click="@DisableQuestionnaire" />
+						}
 						break;
 
 					case TemplateStatus.PublishedInactive:
-						<RadzenButton Text="Enable"
-									  ButtonStyle="ButtonStyle.Success"
-									  Icon="check_circle"
-									  Click="@EnableQuestionnaire" />
-						<RadzenButton Text="Edit"
-									  ButtonStyle="ButtonStyle.Primary"
-									  Icon="edit"
-									  Click="@EditInactiveQuestionnaire" />
+						@if (canActivate)
+						{
+							<RadzenButton Text="Enable"
+										  ButtonStyle="ButtonStyle.Success"
+										  Icon="check_circle"
+										  Click="@EnableQuestionnaire" />
+						}
+						@if (canEdit)
+						{
+							<RadzenButton Text="Edit"
+										  ButtonStyle="ButtonStyle.Primary"
+										  Icon="edit"
+										  Click="@EditInactiveQuestionnaire" />
+						}
 						break;
 
 					case TemplateStatus.Inactive:
-						<RadzenButton Text="Activate"
-									  ButtonStyle="ButtonStyle.Primary"
-									  Icon="play_arrow"
-									  Click="@ActivateQuestionnaire" />
+						@if (canActivate)
+						{
+							<RadzenButton Text="Activate"
+										  ButtonStyle="ButtonStyle.Primary"
+										  Icon="play_arrow"
+										  Click="@ActivateQuestionnaire" />
+						}
 						break;
 				}
 			</div>
@@ -135,9 +202,23 @@
 	[Inject] protected NavigationManager NavigationManager { get; set; } = default!;
 	[Inject] protected IQuestionnaireApiService ApiService { get; set; } = default!;
 	[Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
+	[Inject] protected IPermissionService PermissionService { get; set; } = default!;
+	[Inject] protected IApprovalWorkflowService ApprovalService { get; set; } = default!;
+	[Inject] protected IVersioningService VersioningService { get; set; } = default!;
+	[Inject] protected ISchedulingService SchedulingService { get; set; } = default!;
+	[Inject] protected INotificationService StakeholderNotificationService { get; set; } = default!;
 
 	private QuestionnaireTemplate template = new();
 	private bool IsEditMode => TemplateId.HasValue;
+
+	// Permission flags
+	private bool canEdit = false;
+	private bool canPublish = false;
+	private bool canUnpublish = false;
+	private bool canActivate = false;
+	private bool canDeactivate = false;
+	private bool canRequestPublishing = false;
+	private bool canViewAuditTrail = false;
 
 	// Question type selection state
 	private bool showQuestionTypeSelection = false;
@@ -158,6 +239,9 @@
 	{
 		// Load categories first
 		await LoadCategories();
+
+		// Load permissions
+		await LoadPermissions();
 
 		if (IsEditMode && TemplateId.HasValue)
 		{
@@ -197,6 +281,26 @@
 		}
 	}
 
+	private async Task LoadPermissions()
+	{
+		try
+		{
+			canEdit = await PermissionService.CanEditTemplateAsync(template);
+			canPublish = await PermissionService.HasPermissionAsync(TemplatePermission.Publish);
+			canUnpublish = await PermissionService.HasPermissionAsync(TemplatePermission.Unpublish);
+			canActivate = await PermissionService.HasPermissionAsync(TemplatePermission.Activate);
+			canDeactivate = await PermissionService.HasPermissionAsync(TemplatePermission.Deactivate);
+			canRequestPublishing = await PermissionService.HasPermissionAsync(TemplatePermission.RequestPublishing);
+			canViewAuditTrail = await PermissionService.HasPermissionAsync(TemplatePermission.ViewAuditTrail);
+		}
+		catch (Exception ex)
+		{
+			// Default to no permissions on error
+			canEdit = canPublish = canUnpublish = canActivate = canDeactivate = canRequestPublishing = canViewAuditTrail = false;
+			NotificationService.Notify(NotificationSeverity.Warning, "Warning", $"Failed to load permissions: {ex.Message}");
+		}
+	}
+
 	private async Task LoadTemplate(Guid templateId)
 	{
 		try
@@ -205,6 +309,8 @@
 			if (loadedTemplate != null)
 			{
 				template = loadedTemplate;
+				// Reload permissions now that we have the template
+				await LoadPermissions();
 			}
 			else
 			{
@@ -446,75 +552,65 @@ private async Task SaveQuestionnaire()
 
 private async Task PublishQuestionnaire()
 {
-	if (!ValidateQuestionnaire())
+	// Check permissions first
+	var validation = await PermissionService.ValidateTemplateForPublishingAsync(template);
+	if (!validation.IsValid)
 	{
+		var errorMessage = validation.Errors.Count == 1
+			? validation.Errors[0]
+			: $"Cannot publish template:\n• {string.Join("\n• ", validation.Errors)}";
+
+		NotificationService.Notify(NotificationSeverity.Error, "Publishing Failed", errorMessage);
 		return;
+	}
+
+	// Show warnings if any
+	if (validation.Warnings.Count > 0)
+	{
+		var warningMessage = $"Template published with warnings:\n• {string.Join("\n• ", validation.Warnings)}";
+		NotificationService.Notify(NotificationSeverity.Warning, "Publishing Warnings", warningMessage);
 	}
 
 	try
 	{
-		// Save the template first
-		await SaveQuestionnaire();
+		// Use the dedicated publish endpoint
+		var currentUser = PermissionService.GetCurrentUserName();
+		var published = await ApiService.PublishTemplateAsync(template.Id, currentUser);
 
-		// Set as published
-		template.IsPublished = true;
-		template.IsActive = true; // Ensure it's also active
-		template.LastModified = DateTime.Now;
-		template.LastPublishedDate = DateTime.Now;
-
-		// Set PublishedDate only on first publish
-		if (template.PublishedDate == null)
+		if (published != null)
 		{
-			template.PublishedDate = DateTime.Now;
-		}
-
-		// TODO: Set PublishedBy when user context is available
-		// template.PublishedBy = currentUser.Name;
-
-		// Update the template with published status
-		if (IsEditMode)
-		{
-			var updated = await ApiService.UpdateTemplateAsync(template);
-			if (updated != null)
-			{
-				NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template is now published and available for assignments");
-			}
-			else
-			{
-				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
-				// Revert on failure
-				template.IsPublished = false;
-				template.LastPublishedDate = null;
-			}
+			template = published;
+			NotificationService.Notify(NotificationSeverity.Success, "Published", "Template published successfully!");
+			StateHasChanged();
 		}
 		else
 		{
-			// For new templates, properties are already set, just show success
-			NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template created and published successfully");
+			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
 		}
 	}
 	catch (Exception ex)
 	{
 		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
-		// Revert on failure
-		template.IsPublished = false;
-		template.LastPublishedDate = null;
 	}
 }
 
 private async Task UnpublishQuestionnaire()
 {
+	// Check permissions first
+	if (!await PermissionService.HasPermissionAsync(TemplatePermission.Unpublish))
+	{
+		NotificationService.Notify(NotificationSeverity.Error, "Access Denied", "You do not have permission to unpublish templates");
+		return;
+	}
+
 	try
 	{
-		// Set as unpublished (back to draft)
-		template.IsPublished = false;
-		template.LastModified = DateTime.Now;
-
-		// Update the template with unpublished status
-		var updated = await ApiService.UpdateTemplateAsync(template);
-		if (updated != null)
+		var unpublished = await ApiService.UnpublishTemplateAsync(template.Id);
+		if (unpublished != null)
 		{
-			NotificationService.Notify(NotificationSeverity.Info, "Unpublished", "Questionnaire template is now in draft mode and unavailable for new assignments");
+			template = unpublished;
+			NotificationService.Notify(NotificationSeverity.Info, "Unpublished", "Template is now in draft mode");
+			StateHasChanged();
 		}
 		else
 		{
@@ -922,6 +1018,173 @@ private void MoveQuestionUp((int sectionIndex, int questionIndex) indices)
 private void MoveQuestionDown((int sectionIndex, int questionIndex) indices)
 {
 	MoveQuestionDown(indices.sectionIndex, indices.questionIndex);
+}
+
+private async Task ShowAuditTrail()
+{
+	if (!IsEditMode || !TemplateId.HasValue || !canViewAuditTrail)
+	{
+		NotificationService.Notify(NotificationSeverity.Warning, "Access Denied", "Unable to view audit trail");
+		return;
+	}
+
+	var parameters = new Dictionary<string, object>
+	{
+		["TemplateId"] = TemplateId.Value,
+		["TemplateName"] = template.Name,
+		["OnClose"] = EventCallback.Factory.Create(this, () => { })
+	};
+
+	await DialogService.OpenAsync<Components.Dialogs.AuditTrailDialog>("Audit Trail", parameters, new DialogOptions
+	{
+		Width = "900px",
+		Height = "600px",
+		Resizable = true,
+		Draggable = true
+	});
+}
+
+private async Task RequestPublishing()
+{
+	if (!IsEditMode || !TemplateId.HasValue || !canRequestPublishing)
+	{
+		NotificationService.Notify(NotificationSeverity.Warning, "Access Denied", "Unable to request publishing approval");
+		return;
+	}
+
+	// Validate the template first
+	var validation = await PermissionService.ValidateTemplateForPublishingAsync(template);
+	if (!validation.IsValid)
+	{
+		var errorMessage = validation.Errors.Count == 1
+			? validation.Errors[0]
+			: $"Cannot request publishing approval:\n• {string.Join("\n• ", validation.Errors)}";
+		NotificationService.Notify(NotificationSeverity.Error, "Validation Failed", errorMessage);
+		return;
+	}
+
+	var parameters = new Dictionary<string, object>
+	{
+		["TemplateId"] = TemplateId.Value,
+		["TemplateName"] = template.Name,
+		["OnRequestSubmitted"] = EventCallback.Factory.Create(this, async () => {
+			// Refresh template to get updated status
+			await LoadTemplate(TemplateId.Value);
+			StateHasChanged();
+		})
+	};
+
+	await DialogService.OpenAsync<Components.Dialogs.RequestPublishingDialog>("Request Publishing Approval", parameters, new DialogOptions
+	{
+		Width = "600px",
+		Height = "400px",
+		Resizable = true,
+		Draggable = true
+	});
+}
+
+// Phase 3: Version History
+private async Task ShowVersionHistory()
+{
+	if (!IsEditMode || !TemplateId.HasValue)
+	{
+		NotificationService.Notify(NotificationSeverity.Warning, "Access Denied", "Version history is only available for existing templates");
+		return;
+	}
+
+	var parameters = new Dictionary<string, object>
+	{
+		["TemplateId"] = TemplateId.Value,
+		["TemplateName"] = template.Name,
+		["OnClose"] = EventCallback.Factory.Create(this, () => { })
+	};
+
+	await DialogService.OpenAsync<Components.Dialogs.VersionHistoryDialog>("Version History", parameters, new DialogOptions
+	{
+		Width = "1200px",
+		Height = "700px",
+		Resizable = true,
+		Draggable = true
+	});
+}
+
+// Phase 3: Schedule Publishing
+private async Task ShowScheduleDialog()
+{
+	if (!IsEditMode || !TemplateId.HasValue)
+	{
+		NotificationService.Notify(NotificationSeverity.Warning, "Access Denied", "Scheduling is only available for existing templates");
+		return;
+	}
+
+	var parameters = new Dictionary<string, object>
+	{
+		["TemplateId"] = TemplateId.Value,
+		["TemplateName"] = template.Name,
+		["OnScheduleCreated"] = EventCallback.Factory.Create(this, async () => {
+			// Refresh to show any status changes
+			await LoadTemplate(TemplateId.Value);
+			StateHasChanged();
+		})
+	};
+
+	await DialogService.OpenAsync<Components.Dialogs.SchedulePublishDialog>("Schedule Publishing", parameters, new DialogOptions
+	{
+		Width = "600px",
+		Height = "500px",
+		Resizable = true,
+		Draggable = true
+	});
+}
+
+// Phase 3: Notification Configuration
+private async Task ShowNotificationConfig()
+{
+	if (!IsEditMode || !TemplateId.HasValue)
+	{
+		NotificationService.Notify(NotificationSeverity.Warning, "Access Denied", "Notification configuration is only available for existing templates");
+		return;
+	}
+
+	var parameters = new Dictionary<string, object>
+	{
+		["TemplateId"] = TemplateId.Value,
+		["TemplateName"] = template.Name,
+		["OnClose"] = EventCallback.Factory.Create(this, () => { })
+	};
+
+	await DialogService.OpenAsync<Components.Dialogs.NotificationConfigDialog>("Stakeholder Notifications", parameters, new DialogOptions
+	{
+		Width = "900px",
+		Height = "600px",
+		Resizable = true,
+		Draggable = true
+	});
+}
+
+// Enhanced publish method with Phase 3 features
+private async Task PublishWithNotifications()
+{
+	// First validate and publish
+	await PublishQuestionnaire();
+
+	// If publish was successful, send notifications
+	if (template.IsPublished)
+	{
+		var stakeholders = await StakeholderNotificationService.GetStakeholdersAsync(TemplateId!.Value);
+		if (stakeholders.Any())
+		{
+			await StakeholderNotificationService.SendPublishNotificationAsync(
+				TemplateId.Value, template.Name, "Published", stakeholders);
+
+			NotificationService.Notify(NotificationSeverity.Info, "Notifications Sent",
+				$"Published and notified {stakeholders.Count} stakeholders");
+		}
+
+		// Create version for the publish
+		await VersioningService.CreateVersionAsync(TemplateId.Value,
+			"Template published", TemplateVersionType.Minor);
+	}
 }
 }
 

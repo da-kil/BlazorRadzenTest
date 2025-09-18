@@ -1,0 +1,298 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using Radzen
+@using Radzen.Blazor
+@inject INotificationService NotificationService
+@inject NotificationService RadzenNotificationService
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">
+        <RadzenIcon Icon="notifications" Class="me-2" />
+        Stakeholder Notifications
+    </RadzenText>
+
+    <RadzenText TextStyle="TextStyle.Body1" Class="mb-3">
+        Template: <strong>@TemplateName</strong>
+    </RadzenText>
+
+    <RadzenTabs>
+        <Tabs>
+            <RadzenTabsItem Text="Configure Stakeholders">
+                <div class="p-3">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-3">
+                        Stakeholder Email Addresses
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+                        These stakeholders will be notified when the template is published, unpublished, or scheduled.
+                    </RadzenText>
+
+                    <RadzenFormField Text="Email Addresses (one per line)" Class="w-100 mb-3">
+                        <RadzenTextArea @bind-Value="@stakeholderEmailsText"
+                                       Placeholder="Enter email addresses, one per line:&#10;john.doe@company.com&#10;jane.smith@company.com&#10;team-lead@company.com"
+                                       Rows="6"
+                                       Style="width: 100%;" />
+                    </RadzenFormField>
+
+                    @if (validationErrors.Any())
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Light" Class="mb-3">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-2">Invalid Email Addresses:</RadzenText>
+                            @foreach (var error in validationErrors)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Class="d-block">• @error</RadzenText>
+                            }
+                        </RadzenAlert>
+                    }
+
+                    @if (validEmails.Any())
+                    {
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-2">Valid Emails (@validEmails.Count):</RadzenText>
+                        <div class="mb-3">
+                            @foreach (var email in validEmails)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="@email" Class="me-2 mb-2" />
+                            }
+                        </div>
+                    }
+
+                    <div class="d-flex gap-2">
+                        <RadzenButton Text="Validate Emails"
+                                     ButtonStyle="ButtonStyle.Secondary"
+                                     Icon="check"
+                                     Click="@ValidateEmails" />
+                        <RadzenButton Text="Save Configuration"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Icon="save"
+                                     Click="@SaveConfiguration"
+                                     Disabled="@(!validEmails.Any())" />
+                    </div>
+                </div>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Notification History">
+                <div class="p-3">
+                    @if (notificationHistory.Any())
+                    {
+                        <RadzenDataGrid Data="@notificationHistory" AllowPaging="true" PageSize="10" AllowSorting="true">
+                            <Columns>
+                                <RadzenDataGridColumn Property="EventType" Title="Event" Width="120px" />
+                                <RadzenDataGridColumn Property="RecipientEmail" Title="Recipient" Width="200px" />
+                                <RadzenDataGridColumn Property="SentDate" Title="Sent" Width="140px" FormatString="{0:dd/MM/yyyy HH:mm}" />
+                                <RadzenDataGridColumn Property="Status" Title="Status" Width="100px">
+                                    <Template Context="notification">
+                                        <RadzenBadge BadgeStyle="@GetNotificationStatusBadgeStyle(notification.Status)" Text="@notification.Status.ToString()" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="Subject" Title="Subject" Width="300px">
+                                    <Template Context="notification">
+                                        <RadzenText TextStyle="TextStyle.Body2">
+                                            @(notification.Subject.Length > 40 ? notification.Subject.Substring(0, 40) + "..." : notification.Subject)
+                                        </RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="100px" Title="Actions">
+                                    <Template Context="notification">
+                                        @if (notification.Status == NotificationStatus.Failed)
+                                        {
+                                            <RadzenButton Text="Retry"
+                                                         ButtonStyle="ButtonStyle.Warning"
+                                                         Size="ButtonSize.Small"
+                                                         Icon="refresh"
+                                                         Click="@(() => RetryNotification(notification.Id))" />
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Light">
+                            <RadzenIcon Icon="info" Class="me-2" />
+                            No notification history available for this template.
+                        </RadzenAlert>
+                    }
+                </div>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="Test Notification">
+                <div class="p-3">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-3">
+                        Send Test Notification
+                    </RadzenText>
+
+                    <RadzenFormField Text="Test Email" Class="w-100 mb-3">
+                        <RadzenTextBox @bind-Value="@testEmail"
+                                      Placeholder="Enter email address for test notification"
+                                      Style="width: 100%;" />
+                    </RadzenFormField>
+
+                    <RadzenFormField Text="Event Type" Class="w-100 mb-3">
+                        <RadzenDropDown @bind-Value="@testEventType"
+                                       Data="@testEventTypes"
+                                       Style="width: 100%;" />
+                    </RadzenFormField>
+
+                    <RadzenButton Text="Send Test"
+                                 ButtonStyle="ButtonStyle.Info"
+                                 Icon="send"
+                                 Click="@SendTestNotification"
+                                 Disabled="@(string.IsNullOrWhiteSpace(testEmail))" />
+                </div>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+
+    <div class="d-flex justify-content-end mt-4">
+        <RadzenButton Text="Close"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@(() => OnClose.InvokeAsync())" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid TemplateId { get; set; }
+    [Parameter] public string TemplateName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string stakeholderEmailsText = string.Empty;
+    private List<string> validEmails = new();
+    private List<string> validationErrors = new();
+    private List<StakeholderNotification> notificationHistory = new();
+
+    // Test notification
+    private string testEmail = string.Empty;
+    private string testEventType = "Published";
+    private readonly List<string> testEventTypes = new() { "Published", "Unpublished", "Scheduled", "Approved", "Rejected" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadConfiguration();
+        await LoadNotificationHistory();
+    }
+
+    private async Task LoadConfiguration()
+    {
+        var stakeholders = await NotificationService.GetStakeholdersAsync(TemplateId);
+        stakeholderEmailsText = string.Join("\n", stakeholders);
+        validEmails = stakeholders;
+        StateHasChanged();
+    }
+
+    private async Task LoadNotificationHistory()
+    {
+        notificationHistory = await NotificationService.GetNotificationHistoryAsync(TemplateId);
+        StateHasChanged();
+    }
+
+    private async Task ValidateEmails()
+    {
+        validationErrors.Clear();
+        validEmails.Clear();
+
+        if (string.IsNullOrWhiteSpace(stakeholderEmailsText))
+        {
+            validationErrors.Add("No email addresses provided");
+            return;
+        }
+
+        var lines = stakeholderEmailsText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+        foreach (var line in lines)
+        {
+            var email = line.Trim();
+            if (string.IsNullOrWhiteSpace(email)) continue;
+
+            if (IsValidEmail(email))
+            {
+                if (!validEmails.Contains(email.ToLower()))
+                    validEmails.Add(email.ToLower());
+            }
+            else
+            {
+                validationErrors.Add($"Invalid email format: {email}");
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task SaveConfiguration()
+    {
+        await ValidateEmails();
+
+        if (!validEmails.Any())
+        {
+            RadzenNotificationService.Notify(NotificationSeverity.Warning, "Validation", "No valid email addresses to save");
+            return;
+        }
+
+        var success = await NotificationService.ConfigureStakeholdersAsync(TemplateId, validEmails);
+        if (success)
+        {
+            RadzenNotificationService.Notify(NotificationSeverity.Success, "Saved",
+                $"Stakeholder configuration saved with {validEmails.Count} email addresses");
+        }
+        else
+        {
+            RadzenNotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to save stakeholder configuration");
+        }
+    }
+
+    private async Task SendTestNotification()
+    {
+        if (string.IsNullOrWhiteSpace(testEmail) || !IsValidEmail(testEmail))
+        {
+            RadzenNotificationService.Notify(NotificationSeverity.Warning, "Invalid Email", "Please enter a valid email address");
+            return;
+        }
+
+        var success = await NotificationService.SendPublishNotificationAsync(TemplateId, TemplateName, testEventType, new List<string> { testEmail });
+        if (success)
+        {
+            RadzenNotificationService.Notify(NotificationSeverity.Success, "Test Sent", "Test notification sent successfully");
+            await LoadNotificationHistory();
+            testEmail = string.Empty;
+        }
+        else
+        {
+            RadzenNotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to send test notification");
+        }
+    }
+
+    private async Task RetryNotification(Guid notificationId)
+    {
+        var retried = await NotificationService.RetryFailedNotificationAsync(notificationId);
+        if (retried != null)
+        {
+            RadzenNotificationService.Notify(NotificationSeverity.Success, "Retried", "Notification retry successful");
+            await LoadNotificationHistory();
+        }
+        else
+        {
+            RadzenNotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to retry notification");
+        }
+    }
+
+    private static bool IsValidEmail(string email)
+    {
+        try
+        {
+            var addr = new System.Net.Mail.MailAddress(email);
+            return addr.Address == email;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static Radzen.BadgeStyle GetNotificationStatusBadgeStyle(NotificationStatus status) => status switch
+    {
+        NotificationStatus.Sent => Radzen.BadgeStyle.Success,
+        NotificationStatus.Pending => Radzen.BadgeStyle.Warning,
+        NotificationStatus.Failed => Radzen.BadgeStyle.Danger,
+        NotificationStatus.Bounced => Radzen.BadgeStyle.Secondary,
+        _ => Radzen.BadgeStyle.Info
+    };
+}

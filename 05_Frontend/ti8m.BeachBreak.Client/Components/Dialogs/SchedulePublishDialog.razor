@@ -1,0 +1,172 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using Radzen
+@using Radzen.Blazor
+@inject ISchedulingService SchedulingService
+@inject NotificationService NotificationService
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">
+        <RadzenIcon Icon="schedule" Class="me-2" />
+        Schedule Publishing
+    </RadzenText>
+
+    <RadzenText TextStyle="TextStyle.Body1" Class="mb-3">
+        Template: <strong>@TemplateName</strong>
+    </RadzenText>
+
+    <RadzenFormField Text="Publish Date & Time" Class="w-100 mb-3">
+        <RadzenDatePicker @bind-Value="@scheduledDateTime"
+                         ShowTime="true"
+                         DateFormat="dd/MM/yyyy HH:mm"
+                         Style="width: 100%;"
+                         Min="DateTime.Now.AddMinutes(5)" />
+    </RadzenFormField>
+
+    <RadzenFormField Text="Auto-Unpublish (Optional)" Class="w-100 mb-3">
+        <RadzenCheckBox @bind-Value="@enableAutoUnpublish" Name="autoUnpublish" />
+        <RadzenLabel Text="Schedule automatic unpublishing" Component="autoUnpublish" Style="margin-left: 8px;" />
+    </RadzenFormField>
+
+    @if (enableAutoUnpublish)
+    {
+        <RadzenFormField Text="Unpublish Date & Time" Class="w-100 mb-3">
+            <RadzenDatePicker @bind-Value="@scheduledUnpublishDateTime"
+                             ShowTime="true"
+                             DateFormat="dd/MM/yyyy HH:mm"
+                             Style="width: 100%;"
+                             Min="scheduledDateTime?.AddHours(1)" />
+        </RadzenFormField>
+    }
+
+    <RadzenFormField Text="Notes (Optional)" Class="w-100 mb-3">
+        <RadzenTextArea @bind-Value="@notes"
+                       Placeholder="Add any notes about this scheduled publishing..."
+                       Rows="3"
+                       Style="width: 100%;" />
+    </RadzenFormField>
+
+    @if (existingSchedules.Any())
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Light" Class="mb-3">
+            <RadzenIcon Icon="warning" Class="me-2" />
+            This template has existing scheduled publishes. Creating a new schedule will cancel the previous ones.
+        </RadzenAlert>
+
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-2">Existing Schedules:</RadzenText>
+        <div class="mb-3">
+            @foreach (var schedule in existingSchedules.Where(s => s.Status == PublishScheduleStatus.Pending))
+            {
+                <RadzenCard Class="p-2 mb-2" Style="background: #fff3cd; border: 1px solid #ffeaa7;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body2">
+                                <RadzenIcon Icon="schedule" Class="me-1" />
+                                @schedule.ScheduledPublishTime.ToString("dd/MM/yyyy HH:mm")
+                            </RadzenText>
+                            @if (!string.IsNullOrEmpty(schedule.Notes))
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    @schedule.Notes
+                                </RadzenText>
+                            }
+                        </div>
+                        <RadzenButton Text="Cancel"
+                                     ButtonStyle="ButtonStyle.Danger"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => CancelSchedule(schedule.Id))" />
+                    </div>
+                </RadzenCard>
+            }
+        </div>
+    }
+
+    <div class="d-flex justify-content-end gap-2 mt-4">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel" />
+        <RadzenButton Text="Schedule Publish"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="schedule"
+                     Click="@SchedulePublish"
+                     Disabled="@(!IsValidSchedule())" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid TemplateId { get; set; }
+    [Parameter] public string TemplateName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnScheduleCreated { get; set; }
+
+    private DateTime? scheduledDateTime = DateTime.Now.AddHours(1);
+    private DateTime? scheduledUnpublishDateTime = null;
+    private bool enableAutoUnpublish = false;
+    private string notes = string.Empty;
+    private List<PublishSchedule> existingSchedules = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadExistingSchedules();
+    }
+
+    private async Task LoadExistingSchedules()
+    {
+        existingSchedules = await SchedulingService.GetScheduledPublishesAsync(TemplateId);
+        StateHasChanged();
+    }
+
+    private async Task SchedulePublish()
+    {
+        if (!IsValidSchedule()) return;
+
+        var unpublishTime = enableAutoUnpublish ? scheduledUnpublishDateTime : null;
+        var schedule = await SchedulingService.SchedulePublishAsync(TemplateId, scheduledDateTime!.Value, notes, unpublishTime);
+
+        if (schedule != null)
+        {
+            NotificationService.Notify(NotificationSeverity.Success, "Scheduled",
+                $"Template scheduled for publishing on {scheduledDateTime!.Value:dd/MM/yyyy HH:mm}");
+
+            await OnScheduleCreated.InvokeAsync();
+            await Cancel();
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error",
+                "Failed to schedule publishing. Please check the date and time.");
+        }
+    }
+
+    private async Task CancelSchedule(Guid scheduleId)
+    {
+        var success = await SchedulingService.CancelScheduleAsync(scheduleId);
+        if (success)
+        {
+            NotificationService.Notify(NotificationSeverity.Info, "Cancelled", "Schedule cancelled successfully");
+            await LoadExistingSchedules();
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to cancel schedule");
+        }
+    }
+
+    private async Task Cancel()
+    {
+        await OnScheduleCreated.InvokeAsync();
+    }
+
+    private bool IsValidSchedule()
+    {
+        if (!scheduledDateTime.HasValue) return false;
+        if (scheduledDateTime.Value <= DateTime.Now.AddMinutes(5)) return false;
+
+        if (enableAutoUnpublish)
+        {
+            if (!scheduledUnpublishDateTime.HasValue) return false;
+            if (scheduledUnpublishDateTime.Value <= scheduledDateTime.Value.AddHours(1)) return false;
+        }
+
+        return true;
+    }
+}

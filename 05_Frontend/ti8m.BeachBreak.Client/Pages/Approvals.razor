@@ -1,0 +1,46 @@
+@page "/approvals"
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Models
+@inject IPermissionService PermissionService
+@inject NotificationService NotificationService
+
+<PageTitle>Publishing Approvals</PageTitle>
+
+<div class="container-fluid">
+    @if (hasApprovalPermissions)
+    {
+        <ApprovalDashboardDialog />
+    }
+    else
+    {
+        <RadzenCard Class="p-4">
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Shade="Shade.Light">
+                <RadzenIcon Icon="warning" Class="me-2" />
+                You do not have permission to access the approval dashboard.
+            </RadzenAlert>
+        </RadzenCard>
+    }
+</div>
+
+@code {
+    private bool hasApprovalPermissions = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // Check if user has any approval-related permissions
+            hasApprovalPermissions =
+                await PermissionService.HasPermissionAsync(TemplatePermission.ApprovePublishing) ||
+                await PermissionService.HasPermissionAsync(TemplatePermission.RequestPublishing);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load permissions: {ex.Message}");
+            hasApprovalPermissions = false;
+        }
+    }
+}

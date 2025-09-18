@@ -1,0 +1,220 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@inject IApprovalWorkflowService ApprovalService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H4" Class="mb-3">
+        <RadzenIcon Icon="approval" Class="me-2" />
+        Publishing Approvals
+    </RadzenText>
+
+    <RadzenTabs>
+        <Tabs>
+            <RadzenTabsItem Text="Pending Requests">
+                <div class="p-3">
+                    @if (pendingRequests.Any())
+                    {
+                        <RadzenDataGrid Data="@pendingRequests" AllowPaging="true" PageSize="10">
+                            <Columns>
+                                <RadzenDataGridColumn Property="RequestedBy" Title="Requested By" Width="150px" />
+                                <RadzenDataGridColumn Property="RequestedDate" Title="Requested" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+                                <RadzenDataGridColumn Property="RequestReason" Title="Reason" Width="300px">
+                                    <Template Context="request">
+                                        <RadzenText TextStyle="TextStyle.Body2">@(request.RequestReason.Length > 50 ? request.RequestReason.Substring(0, 50) + "..." : request.RequestReason)</RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="200px" Title="Actions">
+                                    <Template Context="request">
+                                        <div class="d-flex gap-1">
+                                            <RadzenButton Text="View"
+                                                         ButtonStyle="ButtonStyle.Light"
+                                                         Size="ButtonSize.Small"
+                                                         Click="@(() => ViewRequest(request))" />
+                                            <RadzenButton Text="Approve"
+                                                         ButtonStyle="ButtonStyle.Success"
+                                                         Size="ButtonSize.Small"
+                                                         Click="@(() => ApproveRequest(request))" />
+                                            <RadzenButton Text="Reject"
+                                                         ButtonStyle="ButtonStyle.Danger"
+                                                         Size="ButtonSize.Small"
+                                                         Click="@(() => RejectRequest(request))" />
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Light">
+                            <RadzenIcon Icon="info" Class="me-2" />
+                            No pending approval requests
+                        </RadzenAlert>
+                    }
+                </div>
+            </RadzenTabsItem>
+
+            <RadzenTabsItem Text="My Requests">
+                <div class="p-3">
+                    @if (myRequests.Any())
+                    {
+                        <RadzenDataGrid Data="@myRequests" AllowPaging="true" PageSize="10">
+                            <Columns>
+                                <RadzenDataGridColumn Property="RequestedDate" Title="Requested" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+                                <RadzenDataGridColumn Property="Status" Title="Status" Width="120px">
+                                    <Template Context="request">
+                                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(request.Status)" Text="@request.Status.ToString()" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="RequestReason" Title="Reason" Width="300px">
+                                    <Template Context="request">
+                                        <RadzenText TextStyle="TextStyle.Body2">@(request.RequestReason.Length > 50 ? request.RequestReason.Substring(0, 50) + "..." : request.RequestReason)</RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn Property="ReviewedBy" Title="Reviewed By" Width="150px" />
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="150px" Title="Actions">
+                                    <Template Context="request">
+                                        <div class="d-flex gap-1">
+                                            <RadzenButton Text="View"
+                                                         ButtonStyle="ButtonStyle.Light"
+                                                         Size="ButtonSize.Small"
+                                                         Click="@(() => ViewRequest(request))" />
+                                            @if (request.Status == ApprovalStatus.PendingApproval)
+                                            {
+                                                <RadzenButton Text="Withdraw"
+                                                             ButtonStyle="ButtonStyle.Warning"
+                                                             Size="ButtonSize.Small"
+                                                             Click="@(() => WithdrawRequest(request))" />
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Light">
+                            <RadzenIcon Icon="info" Class="me-2" />
+                            No publishing requests submitted
+                        </RadzenAlert>
+                    }
+                </div>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+</RadzenCard>
+
+@code {
+    private List<PublishingRequest> pendingRequests = new();
+    private List<PublishingRequest> myRequests = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        pendingRequests = await ApprovalService.GetPendingRequestsAsync();
+        myRequests = await ApprovalService.GetMyRequestsAsync();
+        StateHasChanged();
+    }
+
+    private async Task ViewRequest(PublishingRequest request)
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            ["Request"] = request
+        };
+
+        await DialogService.OpenAsync<RequestDetailDialog>("Request Details", parameters);
+    }
+
+    private async Task ApproveRequest(PublishingRequest request)
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            ["Title"] = "Approve Publishing Request",
+            ["Placeholder"] = "Enter approval comments (optional)",
+            ["Required"] = false,
+            ["OnSubmit"] = EventCallback.Factory.Create<string>(this, async (comments) => {
+                var approved = await ApprovalService.ApproveRequestAsync(request.Id, comments);
+                if (approved != null)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, "Approved",
+                        $"Publishing request from {request.RequestedBy} has been approved");
+                    await LoadData();
+                }
+                DialogService.Close();
+            }),
+            ["OnCancel"] = EventCallback.Factory.Create(this, () => DialogService.Close())
+        };
+
+        await DialogService.OpenAsync<CommentInputDialog>("Approval Comments", parameters);
+    }
+
+    private async Task RejectRequest(PublishingRequest request)
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            ["Title"] = "Reject Publishing Request",
+            ["Placeholder"] = "Enter rejection reason (required)",
+            ["Required"] = true,
+            ["OnSubmit"] = EventCallback.Factory.Create<string>(this, async (comments) => {
+                if (!string.IsNullOrEmpty(comments))
+                {
+                    var rejected = await ApprovalService.RejectRequestAsync(request.Id, comments);
+                    if (rejected != null)
+                    {
+                        NotificationService.Notify(NotificationSeverity.Warning, "Rejected",
+                            $"Publishing request from {request.RequestedBy} has been rejected");
+                        await LoadData();
+                    }
+                }
+                DialogService.Close();
+            }),
+            ["OnCancel"] = EventCallback.Factory.Create(this, () => DialogService.Close())
+        };
+
+        await DialogService.OpenAsync<CommentInputDialog>("Rejection Comments", parameters);
+    }
+
+    private async Task WithdrawRequest(PublishingRequest request)
+    {
+        var confirm = await DialogService.Confirm("Are you sure you want to withdraw this publishing request?",
+            "Withdraw Request", new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+
+        if (confirm == true)
+        {
+            var withdrawn = await ApprovalService.WithdrawRequestAsync(request.Id);
+            if (withdrawn != null)
+            {
+                NotificationService.Notify(NotificationSeverity.Info, "Withdrawn",
+                    "Publishing request has been withdrawn");
+                await LoadData();
+            }
+        }
+    }
+
+    private static Radzen.BadgeStyle GetStatusBadgeStyle(ApprovalStatus status) => status switch
+    {
+        ApprovalStatus.PendingApproval => Radzen.BadgeStyle.Warning,
+        ApprovalStatus.Approved => Radzen.BadgeStyle.Success,
+        ApprovalStatus.Rejected => Radzen.BadgeStyle.Danger,
+        ApprovalStatus.RequestWithdrawn => Radzen.BadgeStyle.Secondary,
+        _ => Radzen.BadgeStyle.Info
+    };
+}
+
+<style>
+    .approval-card {
+        transition: box-shadow 0.3s ease;
+    }
+
+    .approval-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>

@@ -1,0 +1,212 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using Radzen
+@using Radzen.Blazor
+@inject IVersioningService VersioningService
+@inject IQuestionnaireApiService QuestionnaireService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H4" Class="mb-3">
+        <RadzenIcon Icon="history" Class="me-2" />
+        Version History - @TemplateName
+    </RadzenText>
+
+    @if (versions.Any())
+    {
+        <RadzenDataGrid Data="@versions" AllowPaging="true" PageSize="10" AllowSorting="true">
+            <Columns>
+                <RadzenDataGridColumn Property="VersionLabel" Title="Version" Width="100px" />
+                <RadzenDataGridColumn Property="VersionType" Title="Type" Width="80px">
+                    <Template Context="version">
+                        <RadzenBadge BadgeStyle="@GetVersionTypeBadgeStyle(version.VersionType)" Text="@version.VersionType.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="ChangeDescription" Title="Changes" Width="300px">
+                    <Template Context="version">
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @(version.ChangeDescription.Length > 50 ? version.ChangeDescription.Substring(0, 50) + "..." : version.ChangeDescription)
+                        </RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Property="CreatedBy" Title="Created By" Width="120px" />
+                <RadzenDataGridColumn Property="CreatedDate" Title="Date" Width="120px" FormatString="{0:dd/MM/yyyy HH:mm}" />
+                <RadzenDataGridColumn Property="IsCurrentVersion" Title="Current" Width="80px">
+                    <Template Context="version">
+                        @if (version.IsCurrentVersion)
+                        {
+                            <RadzenIcon Icon="check_circle" Style="color: green;" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="200px" Title="Actions">
+                    <Template Context="version">
+                        <div class="d-flex gap-1">
+                            <RadzenButton Text="View"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Size="ButtonSize.Small"
+                                         Icon="visibility"
+                                         Click="@(() => ViewVersion(version))" />
+                            @if (!version.IsCurrentVersion)
+                            {
+                                <RadzenButton Text="Revert"
+                                             ButtonStyle="ButtonStyle.Warning"
+                                             Size="ButtonSize.Small"
+                                             Icon="restore"
+                                             Click="@(() => RevertToVersion(version))" />
+                            }
+                            @if (versions.Count > 1)
+                            {
+                                <RadzenButton Text="Compare"
+                                             ButtonStyle="ButtonStyle.Info"
+                                             Size="ButtonSize.Small"
+                                             Icon="compare"
+                                             Click="@(() => CompareVersion(version))" />
+                            }
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Light">
+            <RadzenIcon Icon="info" Class="me-2" />
+            No version history available. Create the first version by making changes to the template.
+        </RadzenAlert>
+    }
+
+    <div class="d-flex justify-content-between mt-4">
+        <div>
+            <RadzenButton Text="Create Version"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Icon="add"
+                         Click="@ShowCreateVersionDialog" />
+        </div>
+        <div>
+            <RadzenButton Text="Close"
+                         ButtonStyle="ButtonStyle.Light"
+                         Click="@(() => OnClose.InvokeAsync())" />
+        </div>
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public Guid TemplateId { get; set; }
+    [Parameter] public string TemplateName { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private List<TemplateVersion> versions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadVersions();
+    }
+
+    private async Task LoadVersions()
+    {
+        versions = await VersioningService.GetVersionHistoryAsync(TemplateId);
+        StateHasChanged();
+    }
+
+    private async Task ViewVersion(TemplateVersion version)
+    {
+        var template = await VersioningService.GetTemplateAtVersionAsync(version.Id);
+        if (template != null)
+        {
+            var parameters = new Dictionary<string, object>
+            {
+                ["Template"] = template,
+                ["Version"] = version,
+                ["IsReadOnly"] = true
+            };
+
+            await DialogService.OpenAsync<VersionViewDialog>($"View {version.VersionLabel}", parameters, new DialogOptions
+            {
+                Width = "1200px",
+                Height = "800px",
+                Resizable = true,
+                Draggable = true
+            });
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "Unable to load version content");
+        }
+    }
+
+    private async Task RevertToVersion(TemplateVersion version)
+    {
+        var confirm = await DialogService.Confirm(
+            $"Are you sure you want to revert to {version.VersionLabel}? This will create a new version with the content from {version.VersionLabel}.",
+            "Revert to Version",
+            new ConfirmOptions { OkButtonText = "Yes, Revert", CancelButtonText = "Cancel" });
+
+        if (confirm == true)
+        {
+            var success = await VersioningService.RevertToVersionAsync(TemplateId, version.Id);
+            if (success)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Reverted", $"Successfully reverted to {version.VersionLabel}");
+                await LoadVersions();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to revert to selected version");
+            }
+        }
+    }
+
+    private async Task CompareVersion(TemplateVersion version)
+    {
+        var currentVersion = versions.FirstOrDefault(v => v.IsCurrentVersion);
+        if (currentVersion != null && currentVersion.Id != version.Id)
+        {
+            var diff = await VersioningService.GetVersionDiffAsync(version.Id, currentVersion.Id);
+
+            var parameters = new Dictionary<string, object>
+            {
+                ["FromVersion"] = version,
+                ["ToVersion"] = currentVersion,
+                ["DiffContent"] = diff
+            };
+
+            await DialogService.OpenAsync<VersionCompareDialog>("Version Comparison", parameters, new DialogOptions
+            {
+                Width = "1000px",
+                Height = "600px",
+                Resizable = true,
+                Draggable = true
+            });
+        }
+        else
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Compare", "No other version available for comparison");
+        }
+    }
+
+    private async Task ShowCreateVersionDialog()
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            ["TemplateId"] = TemplateId,
+            ["OnVersionCreated"] = EventCallback.Factory.Create(this, LoadVersions)
+        };
+
+        await DialogService.OpenAsync<CreateVersionDialog>("Create New Version", parameters, new DialogOptions
+        {
+            Width = "500px",
+            Height = "400px"
+        });
+    }
+
+    private static Radzen.BadgeStyle GetVersionTypeBadgeStyle(TemplateVersionType versionType) => versionType switch
+    {
+        TemplateVersionType.Major => Radzen.BadgeStyle.Danger,
+        TemplateVersionType.Minor => Radzen.BadgeStyle.Warning,
+        TemplateVersionType.Patch => Radzen.BadgeStyle.Success,
+        _ => Radzen.BadgeStyle.Info
+    };
+}

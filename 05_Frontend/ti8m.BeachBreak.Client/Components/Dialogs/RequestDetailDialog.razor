@@ -1,0 +1,72 @@
+@using ti8m.BeachBreak.Client.Models
+
+<RadzenCard Class="p-4">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">
+        <RadzenIcon Icon="info" Class="me-2" />
+        Publishing Request Details
+    </RadzenText>
+
+    <div class="row">
+        <div class="col-md-6">
+            <RadzenFormField Text="Requested By" Class="w-100 mb-3">
+                <RadzenTextBox Value="@Request.RequestedBy" ReadOnly="true" Style="width: 100%;" />
+            </RadzenFormField>
+        </div>
+        <div class="col-md-6">
+            <RadzenFormField Text="Request Date" Class="w-100 mb-3">
+                <RadzenTextBox Value="@Request.RequestedDate.ToString("dd/MM/yyyy HH:mm")" ReadOnly="true" Style="width: 100%;" />
+            </RadzenFormField>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <RadzenFormField Text="Status" Class="w-100 mb-3">
+                <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(Request.Status)" Text="@Request.Status.ToString()" />
+            </RadzenFormField>
+        </div>
+        <div class="col-md-6">
+            @if (!string.IsNullOrEmpty(Request.ReviewedBy))
+            {
+                <RadzenFormField Text="Reviewed By" Class="w-100 mb-3">
+                    <RadzenTextBox Value="@Request.ReviewedBy" ReadOnly="true" Style="width: 100%;" />
+                </RadzenFormField>
+            }
+        </div>
+    </div>
+
+    <RadzenFormField Text="Request Reason" Class="w-100 mb-3">
+        <RadzenTextArea Value="@Request.RequestReason" ReadOnly="true" Rows="4" Style="width: 100%;" />
+    </RadzenFormField>
+
+    @if (!string.IsNullOrEmpty(Request.ReviewComments))
+    {
+        <RadzenFormField Text="Review Comments" Class="w-100 mb-3">
+            <RadzenTextArea Value="@Request.ReviewComments" ReadOnly="true" Rows="3" Style="width: 100%;" />
+        </RadzenFormField>
+    }
+
+    <div class="d-flex justify-content-end mt-4">
+        <RadzenButton Text="Close"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Close" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public PublishingRequest Request { get; set; } = new();
+
+    private void Close()
+    {
+        // Close dialog (handled by DialogService)
+    }
+
+    private static Radzen.BadgeStyle GetStatusBadgeStyle(ApprovalStatus status) => status switch
+    {
+        ApprovalStatus.PendingApproval => Radzen.BadgeStyle.Warning,
+        ApprovalStatus.Approved => Radzen.BadgeStyle.Success,
+        ApprovalStatus.Rejected => Radzen.BadgeStyle.Danger,
+        ApprovalStatus.RequestWithdrawn => Radzen.BadgeStyle.Secondary,
+        _ => Radzen.BadgeStyle.Info
+    };
+}
