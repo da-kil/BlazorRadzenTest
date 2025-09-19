@@ -1,63 +1,229 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
-<div class="p-3">
-    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Questionnaire Preview</RadzenText>
-    <div class="preview-container border rounded p-3 bg-light">
-        @if (Template.Sections.Any())
-        {
-            <div class="questionnaire-preview">
-                <RadzenText TextStyle="TextStyle.H4" Class="mb-3">@Template.Name</RadzenText>
-                @if (!string.IsNullOrWhiteSpace(Template.Description))
-                {
-                    <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Template.Description</RadzenText>
-                }
+<style>
+    .clean-preview {
+        --primary-color: #2563eb;
+        --text-color: #374151;
+        --text-muted: #6b7280;
+        --border-light: #f3f4f6;
 
-                @foreach (var templateSection in Template.Sections.OrderBy(s => s.Order))
-                {
-                    <RadzenCard Class="mb-3 p-3">
-                        <RadzenText TextStyle="TextStyle.H6" Class="mb-2">@templateSection.Title</RadzenText>
-                        @if (!string.IsNullOrWhiteSpace(templateSection.Description))
-                        {
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@templateSection.Description</RadzenText>
-                        }
+        padding: 2rem;
+        max-width: 800px;
+        margin: 0 auto;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    }
 
-                        @foreach (var question in templateSection.Questions.OrderBy(q => q.Order))
-                        {
-                            <div class="mb-3 p-2 border rounded bg-white">
-                                <div class="d-flex align-items-center mb-2">
-                                    <RadzenIcon Icon="@GetQuestionTypeIcon(question.Type)" Class="me-2" />
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
-                                        @GetQuestionTypeLabel(question)
-                                        @if (question.IsRequired)
-                                        {
-                                            <span class="text-danger">*</span>
-                                        }
-                                    </RadzenText>
-                                </div>
-                                @if (!string.IsNullOrWhiteSpace(question.Description))
+    .preview-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 2rem;
+    }
+
+    .questionnaire-title {
+        font-size: 1.875rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 1rem;
+        letter-spacing: -0.025em;
+    }
+
+    .questionnaire-description {
+        font-size: 1rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 3rem;
+    }
+
+    .section-spacing {
+        margin-bottom: 4rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.025em;
+    }
+
+    .section-description {
+        font-size: 1rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+
+    .question-spacing {
+        margin-bottom: 3rem;
+    }
+
+    .question-label {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-color);
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .required-indicator {
+        color: #dc2626;
+        font-weight: 700;
+        margin-left: 0.25rem;
+    }
+
+    .question-description {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .preview-field {
+        border: 1px solid var(--border-light);
+        border-radius: 4px;
+        padding: 0.875rem;
+        font-size: 0.95rem;
+        background: white;
+        color: var(--text-muted);
+        font-family: inherit;
+        width: 100%;
+        min-height: 80px;
+        resize: none;
+        cursor: not-allowed;
+    }
+
+    .rating-preview {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .competency-preview {
+        margin-bottom: 2rem;
+    }
+
+    .competency-title {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .competency-description {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        line-height: 1.5;
+    }
+
+    .goal-preview-field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .goal-field-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .goal-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--text-muted);
+    }
+
+    .empty-icon {
+        font-size: 3rem;
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+    }
+
+    @@media (max-width: 768px) {
+        .clean-preview {
+            padding: 1.5rem;
+        }
+
+        .questionnaire-title {
+            font-size: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+        }
+
+        .goal-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+    }
+</style>
+
+<div class="clean-preview">
+    <h2 class="preview-title">Questionnaire Preview</h2>
+
+    @if (Template.Sections.Any())
+    {
+        <div class="questionnaire-preview">
+            <h1 class="questionnaire-title">@Template.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(Template.Description))
+            {
+                <p class="questionnaire-description">@Template.Description</p>
+            }
+
+            @foreach (var templateSection in Template.Sections.OrderBy(s => s.Order))
+            {
+                <div class="section-spacing">
+                    <h2 class="section-title">@templateSection.Title</h2>
+                    @if (!string.IsNullOrWhiteSpace(templateSection.Description))
+                    {
+                        <p class="section-description">@templateSection.Description</p>
+                    }
+
+                    @foreach (var question in templateSection.Questions.OrderBy(q => q.Order))
+                    {
+                        <div class="question-spacing">
+                            <label class="question-label">
+                                @GetQuestionTypeLabel(question)
+                                @if (question.IsRequired)
                                 {
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@question.Description</RadzenText>
+                                    <span class="required-indicator">*</span>
                                 }
-                                <div class="preview-input">
-                                    @GetQuestionPreview(question)
-                                </div>
+                            </label>
+                            @if (!string.IsNullOrWhiteSpace(question.Description))
+                            {
+                                <p class="question-description">@question.Description</p>
+                            }
+                            <div class="preview-input">
+                                @GetQuestionPreview(question)
                             </div>
-                        }
-                    </RadzenCard>
-                }
-            </div>
-        }
-        else
-        {
-            <div class="text-center p-4">
-                <RadzenIcon Icon="preview" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2">
-                    Add sections and questions to see the preview
-                </RadzenText>
-            </div>
-        }
-    </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>Add sections and questions to see the preview</p>
+        </div>
+    }
 </div>
 
 @code {
@@ -109,10 +275,13 @@
             {
                 @foreach (var competency in competencies.Take(2)) // Show first 2 competencies as preview
                 {
-                    <div class="competency-preview mb-3 p-3 border rounded">
-                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">@competency.Title</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">@competency.Description</RadzenText>
-                        <div class="d-flex align-items-center mb-2">
+                    <div class="competency-preview">
+                        <div class="competency-title">@competency.Title</div>
+                        @if (!string.IsNullOrWhiteSpace(competency.Description))
+                        {
+                            <div class="competency-description">@competency.Description</div>
+                        }
+                        <div class="rating-preview">
                             @{
                                 var ratingScale = GetRatingScaleFromQuestion(question);
                                 var scaleLowLabel = GetScaleLowLabelFromQuestion(question);
@@ -120,39 +289,31 @@
                             }
                             @if (ratingScale <= 5)
                             {
-                                <RadzenRating Value="0" Disabled="true" Stars="@ratingScale" Class="me-2" />
+                                <RadzenRating Value="0" Disabled="true" Stars="@ratingScale" />
                             }
                             else
                             {
-                                <div class="d-flex align-items-center me-2">
-                                    <RadzenNumeric TValue="int" Value="0" Disabled="true" Min="1" Max="@ratingScale" Class="me-2" Style="width: 80px;" />
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">/ @ratingScale</RadzenText>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <input type="number" value="0" disabled style="width: 80px; padding: 0.5rem; border: 1px solid var(--border-light); border-radius: 4px;" min="1" max="@ratingScale" />
+                                    <span style="color: var(--text-muted);">/ @ratingScale</span>
                                 </div>
                             }
-                            <div class="d-flex flex-column">
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                    @if (!string.IsNullOrWhiteSpace(scaleLowLabel) && !string.IsNullOrWhiteSpace(scaleHighLabel))
-                                    {
-                                        <text>@scaleLowLabel to @scaleHighLabel</text>
-                                    }
-                                    else
-                                    {
-                                        <text>Rate satisfaction</text>
-                                    }
-                                </RadzenText>
-                            </div>
+                            @if (!string.IsNullOrWhiteSpace(scaleLowLabel) && !string.IsNullOrWhiteSpace(scaleHighLabel))
+                            {
+                                <span style="color: var(--text-muted); font-size: 0.875rem;">@scaleLowLabel to @scaleHighLabel</span>
+                            }
                         </div>
-                        <RadzenTextArea Placeholder="Optional comments..." Disabled="true" Rows="2" Class="w-100" />
+                        <textarea class="preview-field" placeholder="Optional comments..." disabled></textarea>
                     </div>
                 }
                 @if (competencies.Count > 2)
                 {
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">... and @(competencies.Count - 2) more competencies</RadzenText>
+                    <p style="color: var(--text-muted); font-size: 0.875rem; margin: 1rem 0 0 0;">... and @(competencies.Count - 2) more competencies</p>
                 }
             }
             else
             {
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Click Edit to configure competencies</RadzenText>
+                <p style="color: var(--text-muted); font-size: 0.875rem;">Click Edit to configure competencies</p>
             }
         </div>;
     }
@@ -160,43 +321,38 @@
     private RenderFragment GetGoalAchievementPreview()
     {
         return @<div class="goal-achievement-preview">
-            <div class="goal-preview mb-3 p-3 border rounded">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">Goal 1</RadzenText>
-                <RadzenTextArea Placeholder="Describe the goal that was set for 2023..." Disabled="true" Rows="2" Class="w-100 mb-2" />
-                <div class="row">
-                    <div class="col-md-6">
-                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Achievement Percentage</RadzenText>
-                        <div class="d-flex align-items-center">
-                            <RadzenNumeric TValue="int" Value="0" Disabled="true" Class="flex-grow-1 me-2" />
-                            <RadzenText TextStyle="TextStyle.Body2">%</RadzenText>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Status</RadzenText>
-                        <div class="p-2 rounded bg-light">
-                            <RadzenText TextStyle="TextStyle.Caption">Not Achieved</RadzenText>
-                        </div>
-                    </div>
-                </div>
-                <RadzenTextArea Placeholder="Your reasoning/justification..." Disabled="true" Rows="2" Class="w-100 mt-2" />
+            <div class="goal-preview-field">
+                <label class="goal-field-label">Goal Description</label>
+                <textarea class="preview-field" placeholder="Describe your goal..." disabled></textarea>
             </div>
-            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Multiple goals can be added dynamically...</RadzenText>
+
+            <div class="goal-row">
+                <div class="goal-preview-field">
+                    <label class="goal-field-label">Start Date</label>
+                    <input type="date" class="preview-field" disabled style="min-height: auto; padding: 0.75rem;" />
+                </div>
+                <div class="goal-preview-field">
+                    <label class="goal-field-label">End Date</label>
+                    <input type="date" class="preview-field" disabled style="min-height: auto; padding: 0.75rem;" />
+                </div>
+            </div>
+
+            <div class="goal-preview-field">
+                <label class="goal-field-label">Measurement Criteria</label>
+                <input type="text" class="preview-field" placeholder="How will success be measured?" disabled style="min-height: auto; padding: 0.75rem;" />
+            </div>
+
+            <div class="goal-preview-field">
+                <label class="goal-field-label">Achievement Percentage (%)</label>
+                <input type="number" class="preview-field" placeholder="0" disabled style="min-height: auto; padding: 0.75rem;" min="0" max="100" />
+            </div>
         </div>;
     }
 
     private RenderFragment GetTextQuestionPreview(QuestionItem question)
     {
         return @<div class="text-question-preview">
-            <RadzenCard Class="mb-3 p-3 border-start border-competency border-3">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-competency mb-2">
-                    <RadzenIcon Icon="timeline" Class="me-2" />
-                    @GetTextQuestionSectionTitle(question)
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
-                    @GetTextQuestionSectionDescription(question)
-                </RadzenText>
-                <RadzenTextArea Placeholder="User will enter their response here..." Disabled="true" Rows="4" Class="w-100" />
-            </RadzenCard>
+            <textarea class="preview-field" placeholder="Your response..." disabled></textarea>
         </div>;
     }
 

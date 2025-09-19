@@ -3,371 +3,175 @@
 @implements IDisposable
 
 <style>
-    .goal-question-card {
-        --primary-color: #007bff;
-        --success-color: #28a745;
-        --warning-color: #ffc107;
-        --border-color: #e9ecef;
-        --hover-bg: #f8f9fa;
-        --text-muted: #6c757d;
-        --focus-color: rgba(0, 123, 255, 0.25);
+    .goal-section {
+        --primary-color: #2563eb;
+        --text-color: #374151;
+        --text-muted: #6b7280;
+        --border-light: #f3f4f6;
+        --focus-ring: rgba(37, 99, 235, 0.1);
 
-        border-radius: 1rem;
-        background: white;
-        border: 1px solid var(--border-color);
-        transition: all 0.2s ease-in-out;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        margin-bottom: 3rem;
     }
 
-    .goal-question-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary-color), var(--success-color));
-    }
-
-    .goal-question-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 35px rgba(0,0,0,0.12);
-    }
-
-    .card-header {
-        background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
-        padding: 1.5rem;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .goal-title {
+    .section-title {
         font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--primary-color);
-        margin: 0;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0 0 2rem 0;
+        letter-spacing: -0.025em;
+    }
+
+    .goal-fields {
         display: flex;
-        align-items: center;
-        gap: 0.75rem;
+        flex-direction: column;
+        gap: 2rem;
     }
 
-    .card-body {
-        padding: 2rem;
-    }
-
-    .goal-field {
-        margin-bottom: 2rem;
-        position: relative;
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     .field-label {
+        font-size: 0.875rem;
         font-weight: 600;
-        color: var(--rz-text-color);
-        margin-bottom: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 1rem;
+        color: var(--text-color);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
 
     .field-input {
-        border: 2px solid var(--border-color);
-        border-radius: 0.75rem;
-        transition: all 0.2s ease-in-out;
+        border: 1px solid var(--border-light);
+        border-radius: 4px;
+        padding: 0.875rem;
         font-size: 0.95rem;
-        position: relative;
+        line-height: 1.6;
         background: white;
+        transition: border-color 0.15s ease;
+        font-family: inherit;
     }
 
     .field-input:focus {
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.2rem var(--focus-color);
+        box-shadow: 0 0 0 3px var(--focus-ring);
         outline: none;
-        background: rgba(0, 123, 255, 0.02);
     }
 
-    .field-input:not(:placeholder-shown):not(:focus) {
-        border-color: var(--success-color);
-        background: rgba(40, 167, 69, 0.02);
+    .field-input:not(:placeholder-shown) {
+        border-color: var(--primary-color);
     }
 
-    .date-field {
-        position: relative;
-    }
-
-    .date-field::after {
-        content: '';
-        position: absolute;
-        right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 1.2rem;
-        height: 1.2rem;
-        background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23007bff'%3e%3cpath d='M8 0a8 8 0 1 1 0 16A8 8 0 0 1 8 0zM4.5 7.5a.5.5 0 0 0 0 1h5.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708l-3-3a.5.5 0 1 0-.708.708L10.293 7.5H4.5z'/%3e%3c/svg%3e") no-repeat center;
-        background-size: contain;
-        pointer-events: none;
-        opacity: 0.6;
+    .field-input::placeholder {
+        color: var(--text-muted);
     }
 
     .textarea-field {
-        min-height: 120px;
+        min-height: 100px;
         resize: vertical;
-        padding: 1rem;
-        line-height: 1.6;
     }
 
-    .numeric-field {
-        text-align: center;
-        font-weight: 600;
-        font-size: 1.1rem;
-        position: relative;
+    .date-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
     }
 
-    .field-helper {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin-top: 0.5rem;
-        font-style: italic;
-        display: flex;
-        align-items: center;
-        gap: 0.25rem;
-    }
-
-    .auto-save-indicator {
-        position: absolute;
-        top: -0.5rem;
+    .auto-save-status {
+        position: fixed;
+        top: 1rem;
         right: 1rem;
-        background: var(--success-color);
+        background: #059669;
         color: white;
-        padding: 0.25rem 0.6rem;
-        border-radius: 1rem;
-        font-size: 0.7rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
         font-weight: 500;
         opacity: 0;
-        transform: translateY(-5px);
-        transition: all 0.3s ease-in-out;
-        z-index: 10;
+        transform: translateY(-8px);
+        transition: all 0.2s ease;
+        z-index: 1000;
     }
 
-    .auto-save-indicator.show {
+    .auto-save-status.visible {
         opacity: 1;
         transform: translateY(0);
     }
 
-    .field-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 2rem;
-    }
-
-    .completion-indicator {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-        border-radius: 0.75rem;
-        padding: 1.5rem;
-        margin-top: 1.5rem;
-        border-left: 4px solid var(--primary-color);
-    }
-
-    .completion-stats {
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        text-align: center;
-    }
-
-    .stat-item {
-        flex: 1;
-    }
-
-    .stat-value {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--primary-color);
-        margin-bottom: 0.25rem;
-    }
-
-    .stat-label {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        font-weight: 500;
-        letter-spacing: 0.5px;
-    }
-
-    .progress-ring {
-        width: 60px;
-        height: 60px;
-        position: relative;
-    }
-
-    .progress-circle {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: conic-gradient(var(--success-color) 0deg, var(--success-color) calc(var(--progress) * 3.6deg), #e9ecef calc(var(--progress) * 3.6deg));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .progress-inner {
-        width: 70%;
-        height: 70%;
-        background: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 600;
-        font-size: 0.8rem;
-        color: var(--primary-color);
-    }
-
     @@media (max-width: 768px) {
-        .field-row {
+        .section-title {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .date-row {
             grid-template-columns: 1fr;
-            gap: 1rem;
+            gap: 2rem;
         }
 
-        .card-body {
-            padding: 1.5rem;
-        }
-
-        .completion-stats {
-            flex-direction: column;
-            gap: 1rem;
+        .field-input {
+            padding: 0.75rem;
         }
     }
 </style>
 
-<div class="goal-question-card mb-4">
-    <div class="auto-save-indicator @(ShowAutoSave ? "show" : "")">
-        <RadzenIcon Icon="check_circle" Style="font-size: 0.7rem;" /> Auto-saved
+<div class="goal-section">
+    <div class="auto-save-status @(ShowAutoSave ? "visible" : "")">
+        Saved
     </div>
 
-    <div class="card-header">
-        <h2 class="goal-title">
-            <RadzenIcon Icon="flag" />
-            Goal Setting
-        </h2>
-    </div>
+    <h2 class="section-title">Goal Achievement Review</h2>
 
-    <div class="card-body">
-        <div class="field-row">
-            <div class="goal-field date-field">
-                <div class="field-label">
-                    <RadzenIcon Icon="schedule" />
-                    Start Date
-                </div>
+    <div class="goal-fields">
+        <div class="date-row">
+            <div class="field-group">
+                <label class="field-label">Start Date</label>
                 <RadzenDatePicker @bind-Value="@TimeFrameFrom"
                                 @bind-Value:after="@(() => { OnTimeFrameFromChanged(); ShowAutoSaveIndicator(); })"
                                 ShowTime="false"
                                 DateFormat="dd/MM/yyyy"
-                                Class="w-100 field-input"
+                                Class="field-input"
                                 Placeholder="Select start date" />
-                <div class="field-helper">
-                    <RadzenIcon Icon="info" Style="font-size: 0.7rem;" />
-                    When will you begin working on this goal?
-                </div>
             </div>
 
-            <div class="goal-field date-field">
-                <div class="field-label">
-                    <RadzenIcon Icon="event" />
-                    End Date
-                </div>
+            <div class="field-group">
+                <label class="field-label">End Date</label>
                 <RadzenDatePicker @bind-Value="@TimeFrameTo"
                                 @bind-Value:after="@(() => { OnTimeFrameToChanged(); ShowAutoSaveIndicator(); })"
                                 ShowTime="false"
                                 DateFormat="dd/MM/yyyy"
-                                Class="w-100 field-input"
+                                Class="field-input"
                                 Placeholder="Select target date" />
-                <div class="field-helper">
-                    <RadzenIcon Icon="info" Style="font-size: 0.7rem;" />
-                    Target completion date for this goal
-                </div>
             </div>
         </div>
 
-        <div class="goal-field">
-            <div class="field-label">
-                <RadzenIcon Icon="description" />
-                Goal Description
-            </div>
+        <div class="field-group">
+            <label class="field-label">Goal Description</label>
             <RadzenTextArea @bind-Value="@GoalDescription"
                           @bind-Value:after="@(() => { OnGoalDescriptionChanged(); ShowAutoSaveIndicator(); })"
-                          Rows="4"
-                          Placeholder="Describe your goal in detail. Be specific about what you want to achieve and why it matters..."
-                          Class="w-100 field-input textarea-field" />
-            <div class="field-helper">
-                <RadzenIcon Icon="lightbulb" Style="font-size: 0.7rem;" />
-                Make it SMART: Specific, Measurable, Achievable, Relevant, Time-bound
-            </div>
+                          Placeholder="Describe your goal..."
+                          Class="field-input textarea-field" />
         </div>
 
-        <div class="goal-field">
-            <div class="field-label">
-                <RadzenIcon Icon="analytics" />
-                Measurement Criteria
-            </div>
+        <div class="field-group">
+            <label class="field-label">Measurement Criteria</label>
             <RadzenTextBox @bind-Value="@MeasurementVariable"
                          @bind-Value:after="@(() => { OnMeasurementVariableChanged(); ShowAutoSaveIndicator(); })"
-                         Placeholder="How will success be measured? Define specific, quantifiable metrics..."
-                         Class="w-100 field-input" />
-            <div class="field-helper">
-                <RadzenIcon Icon="trending_up" Style="font-size: 0.7rem;" />
-                Examples: "Increase sales by 20%", "Complete 5 training courses", "Reduce errors to &lt;2%"
-            </div>
+                         Placeholder="How will success be measured?"
+                         Class="field-input" />
         </div>
 
-        <div class="goal-field">
-            <div class="field-label">
-                <RadzenIcon Icon="percent" />
-                Goal Weighting (%)
-            </div>
+        <div class="field-group">
+            <label class="field-label">Achievement Percentage (%)</label>
             <RadzenNumeric @bind-Value="@Weighting"
                          @bind-Value:after="@(() => { OnWeightingChanged(); ShowAutoSaveIndicator(); })"
                          Min="0"
                          Max="100"
                          Step="5"
                          Format="0"
-                         Class="w-100 field-input numeric-field"
+                         Class="field-input"
                          Placeholder="0" />
-            <div class="field-helper">
-                <RadzenIcon Icon="balance" Style="font-size: 0.7rem;" />
-                How important is this goal relative to your other objectives?
-            </div>
         </div>
-
-        @if (TimeFrameFrom.HasValue && TimeFrameTo.HasValue)
-        {
-            var duration = (TimeFrameTo.Value - TimeFrameFrom.Value).Days;
-            var progressPercentage = GetCompletionPercentage();
-
-            <div class="completion-indicator">
-                <div class="completion-stats">
-                    <div class="stat-item">
-                        <div class="stat-value">@duration</div>
-                        <div class="stat-label">Days Duration</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-value">@(duration / 30.0).ToString("F1")</div>
-                        <div class="stat-label">Months</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="progress-ring">
-                            <div class="progress-circle" style="--progress: @progressPercentage">
-                                <div class="progress-inner">
-                                    @(progressPercentage)%
-                                </div>
-                            </div>
-                        </div>
-                        <div class="stat-label">Complete</div>
-                    </div>
-                </div>
-            </div>
-        }
     </div>
 </div>
 
