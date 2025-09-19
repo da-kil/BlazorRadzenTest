@@ -2,76 +2,18 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
-<RadzenCard Class="question-card mb-3 shadow-sm border-0">
-    <div class="question-content p-3 bg-white">
-        <!-- Question Title and Controls -->
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="flex-grow-1">
-                <div class="position-relative">
-                    <RadzenTextBox @bind-Value="@Question.Title"
-                                 Placeholder="Enter question title..."
-                                 Class="@GetTitleValidationClass()"
-                                 Style="font-weight: 600; font-size: 1.1rem;"
-                                 @onblur="ValidateTitle" />
-                    @if (!isTitleValid && hasBeenValidated)
-                    {
-                        <div class="validation-message text-danger small mt-1">
-                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
-                            Question title is required
-                        </div>
-                    }
-                </div>
-            </div>
-            <div class="d-flex gap-1 ms-3">
-                <RadzenButton ButtonStyle="ButtonStyle.Light"
-                             Icon="keyboard_arrow_up"
-                             Size="ButtonSize.ExtraSmall"
-                             Click="@(() => OnMoveUpClick())"
-                             Disabled="@(!CanMoveUp)"
-                             Title="Move up" />
-                <RadzenButton ButtonStyle="ButtonStyle.Light"
-                             Icon="keyboard_arrow_down"
-                             Size="ButtonSize.ExtraSmall"
-                             Click="@(() => OnMoveDownClick())"
-                             Disabled="@(!CanMoveDown)"
-                             Title="Move down" />
-                <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                             Icon="delete_outline"
-                             Size="ButtonSize.ExtraSmall"
-                             Click="@(() => OnDeleteClick())"
-                             Title="Delete question" />
-            </div>
-        </div>
-        <!-- Question Description -->
-        <div class="mb-3">
-            <RadzenTextArea @bind-Value="@Question.Description"
-                           Placeholder="Enter question description or instructions..."
-                           Class="w-100 border-2 rounded"
-                           Rows="2" />
-        </div>
-
+<div class="competencies-container">
         <!-- Self-Assessment Configuration -->
         @if (Question.Type == QuestionType.SelfAssessment)
         {
             var competencies = GetOrderedCompetencies();
             <div class="competencies-config">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">
-                        <RadzenIcon Icon="self_improvement" Style="color: var(--primary-color);" Class="me-2" />
-                        Competencies (@competencies.Count)
-                    </RadzenText>
-                    <RadzenButton Text="Add Competency"
-                                 ButtonStyle="ButtonStyle.Primary"
-                                 Icon="add"
-                                 Size="ButtonSize.Small"
-                                 Click="@AddCompetency" />
-                </div>
 
                 @if (competencies.Count == 0)
                 {
                     <div class="text-center p-3 text-muted">
                         <RadzenIcon Icon="self_improvement" Style="font-size: 1.5rem; opacity: 0.5; color: var(--primary-color);" />
-                        <div class="mt-2 small">Click "Add Competency" to get started</div>
+                        <div class="mt-2 small">No competencies configured</div>
                     </div>
                 }
                 else
@@ -332,8 +274,7 @@
         }
 
         <!-- Question-level required flag is removed as individual items now have their own required flags -->
-    </div>
-</RadzenCard>
+</div>
 
 @code {
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = null!;
