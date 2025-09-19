@@ -7,14 +7,29 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">
-                    Organize your assessment into logical sections and configure questions
+                    Create sections for your assessment - each section focuses on one type of evaluation
                 </RadzenText>
             </div>
-            <RadzenButton Text="Add Section"
-                         ButtonStyle="ButtonStyle.Primary"
-                         Icon="add_circle_outline"
-                         Size="ButtonSize.Medium"
-                         Click="@OnAddSection" />
+            <div class="d-flex gap-2">
+                <RadzenButton Text="Self-Assessment"
+                             ButtonStyle="ButtonStyle.Primary"
+                             Icon="self_improvement"
+                             Size="ButtonSize.Small"
+                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.SelfAssessment))"
+                             Title="Add rating-based competency assessment" />
+                <RadzenButton Text="Goal Achievement"
+                             ButtonStyle="ButtonStyle.Success"
+                             Icon="track_changes"
+                             Size="ButtonSize.Small"
+                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.GoalAchievement))"
+                             Title="Add goal and achievement review" />
+                <RadzenButton Text="Text Question"
+                             ButtonStyle="ButtonStyle.Secondary"
+                             Icon="psychology"
+                             Size="ButtonSize.Small"
+                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
+                             Title="Add open-ended text responses" />
+            </div>
         </div>
 
         @if (Template.Sections.Count > 0)
@@ -78,6 +93,7 @@
                            OnMoveDown="@(() => OnMoveSectionDownInternal(currentSectionIndex))"
                            OnDelete="@(() => OnRemoveSectionInternal(currentSectionIndex))"
                            OnAddQuestion="@(() => OnShowAddQuestionDialogInternal(currentSectionIndex))"
+                           OnAddItemDirectly="@(() => OnAddItemDirectlyInternal(currentSectionIndex))"
                            OnCancelQuestionSelection="@OnCancelQuestionTypeSelection"
                            OnAddQuestionType="@((type) => OnAddQuestionOfTypeInternal(type))"
                            OnEditQuestion="@((questionIndex) => OnEditQuestionInternal(currentSectionIndex, questionIndex))"
@@ -118,10 +134,12 @@
     [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
 
     [Parameter] public EventCallback OnAddSection { get; set; }
+    [Parameter] public EventCallback<QuestionType> OnAddSectionWithType { get; set; }
     [Parameter] public EventCallback<int> OnMoveSectionUp { get; set; }
     [Parameter] public EventCallback<int> OnMoveSectionDown { get; set; }
     [Parameter] public EventCallback<int> OnRemoveSection { get; set; }
     [Parameter] public EventCallback<int> OnShowAddQuestionDialog { get; set; }
+    [Parameter] public EventCallback<int> OnAddItemDirectly { get; set; }
     [Parameter] public EventCallback OnCancelQuestionTypeSelection { get; set; }
     [Parameter] public EventCallback<QuestionType> OnAddQuestionOfType { get; set; }
     [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnEditQuestion { get; set; }
@@ -129,10 +147,12 @@
     [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnMoveQuestionDown { get; set; }
     [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnRemoveQuestion { get; set; }
 
+    private async Task OnAddSectionWithTypeInternal(QuestionType type) => await OnAddSectionWithType.InvokeAsync(type);
     private async Task OnMoveSectionUpInternal(int sectionIndex) => await OnMoveSectionUp.InvokeAsync(sectionIndex);
     private async Task OnMoveSectionDownInternal(int sectionIndex) => await OnMoveSectionDown.InvokeAsync(sectionIndex);
     private async Task OnRemoveSectionInternal(int sectionIndex) => await OnRemoveSection.InvokeAsync(sectionIndex);
     private async Task OnShowAddQuestionDialogInternal(int sectionIndex) => await OnShowAddQuestionDialog.InvokeAsync(sectionIndex);
+    private async Task OnAddItemDirectlyInternal(int sectionIndex) => await OnAddItemDirectly.InvokeAsync(sectionIndex);
     private async Task OnAddQuestionOfTypeInternal(QuestionType type) => await OnAddQuestionOfType.InvokeAsync(type);
 
     private async Task OnEditQuestionInternal(int sectionIndex, int questionIndex) =>
@@ -165,57 +185,66 @@
 
         foreach (var section in Template.Sections)
         {
-            foreach (var question in section.Questions)
+            // Check if this section uses the new simplified structure
+            if (section.Configuration.Any())
             {
-                switch (question.Type)
+                totalItems += section.GetItemCount();
+            }
+            // Fallback to legacy Questions structure
+            else
+            {
+                foreach (var question in section.Questions)
                 {
-                    case QuestionType.SelfAssessment:
-                        if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
-                        {
-                            if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    switch (question.Type)
+                    {
+                        case QuestionType.SelfAssessment:
+                            if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
                             {
-                                try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                                if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                {
+                                    try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                                }
+                                else if (competenciesObj is System.Collections.ICollection collection)
+                                {
+                                    totalItems += collection.Count;
+                                }
                             }
-                            else if (competenciesObj is System.Collections.ICollection collection)
+                            break;
+                        case QuestionType.GoalAchievement:
+                            if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
                             {
-                                totalItems += collection.Count;
+                                if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                {
+                                    try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                                }
+                                else if (goalCategoriesObj is System.Collections.ICollection collection)
+                                {
+                                    totalItems += collection.Count;
+                                }
                             }
-                        }
-                        break;
-                    case QuestionType.GoalAchievement:
-                        if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
-                        {
-                            if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                            break;
+                        case QuestionType.TextQuestion:
+                            if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
                             {
-                                try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                                if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                                {
+                                    try { totalItems += jsonElement.GetArrayLength(); } catch { }
+                                }
+                                else if (textSectionsObj is System.Collections.ICollection collection)
+                                {
+                                    totalItems += collection.Count;
+                                }
                             }
-                            else if (goalCategoriesObj is System.Collections.ICollection collection)
+                            // Check for legacy format
+                            else if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
                             {
-                                totalItems += collection.Count;
+                                totalItems += 1;
                             }
-                        }
-                        break;
-                    case QuestionType.TextQuestion:
-                        if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
-                        {
-                            if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                            {
-                                try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                            }
-                            else if (textSectionsObj is System.Collections.ICollection collection)
-                            {
-                                totalItems += collection.Count;
-                            }
-                        }
-                        // Check for legacy format
-                        else if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
-                        {
-                            totalItems += 1;
-                        }
-                        break;
-                    default:
-                        totalItems += 1; // Fallback for unknown question types
-                        break;
+                            break;
+                        default:
+                            totalItems += 1; // Fallback for unknown question types
+                            break;
+                    }
                 }
             }
         }

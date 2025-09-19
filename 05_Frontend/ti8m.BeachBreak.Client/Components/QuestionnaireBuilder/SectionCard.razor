@@ -30,6 +30,17 @@
                 </div>
             </div>
 
+            <!-- Section Type Indicator -->
+            <div class="mb-3" style="padding-right: 6.5rem;">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="section-type-badge d-flex align-items-center gap-2 px-2 py-1 rounded-pill"
+                         style="@($"background-color: {GetSectionTypeColor()}15; border: 1px solid {GetSectionTypeColor()}30;")">
+                        <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"color: {GetSectionTypeColor()};")" Class="fs-6" />
+                        <span class="small fw-medium" style="@($"color: {GetSectionTypeColor()};")">@GetSectionTypeName()</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Title Input -->
             <div class="mb-3" style="padding-right: 6.5rem;">
                 <RadzenTextBox Value="@Section.Title"
@@ -48,84 +59,102 @@
                               Rows="2" />
             </div>
 
-            <!-- Section Stats - only show if there are questions -->
-            @if (Section.Questions.Count > 0)
+            <!-- Rating Scale Configuration - only for Self-Assessment sections -->
+            @if (Section.Questions.Any() && Section.Questions.First().Type == QuestionType.SelfAssessment)
             {
-                <div class="section-stats">
-                    <div class="d-flex gap-3 text-center p-2 bg-light rounded">
-                        <div class="flex-fill">
-                            <div class="d-flex align-items-center justify-content-center gap-1">
-                                <RadzenIcon Icon="quiz" Style="color: var(--primary-color);" Class="fs-6" />
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0" Style="color: var(--primary-color);">
-                                    @GetTotalItemsCount()
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                    Items
-                                </RadzenText>
-                            </div>
+                var firstQuestion = Section.Questions.First();
+                <div class="rating-scale-config mb-3 p-3 bg-light rounded">
+                    <div class="d-flex align-items-center mb-3">
+                        <RadzenIcon Icon="tune" Style="color: var(--primary-color);" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-0">Rating Scale</RadzenText>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1 text-muted">Scale</RadzenText>
+                            <RadzenDropDown Value="@GetRatingScale(firstQuestion)"
+                                           ValueChanged="@((int value) => SetRatingScale(firstQuestion, value))"
+                                           Data="@(new List<int> { 3, 4, 5, 7, 10 })"
+                                           Class="w-100" />
                         </div>
-                        <div class="flex-fill">
-                            <div class="d-flex align-items-center justify-content-center gap-1">
-                                <RadzenIcon Icon="star" Style="color: var(--warning-color);" Class="fs-6" />
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0" Style="color: var(--warning-color);">
-                                    @Section.Questions.Count(q => q.IsRequired)
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                    Required
-                                </RadzenText>
-                            </div>
+                        <div class="col-md-4">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1 text-muted">Low Label</RadzenText>
+                            <RadzenTextBox Value="@GetScaleLowLabel(firstQuestion)"
+                                          ValueChanged="@((string value) => SetScaleLowLabel(firstQuestion, value))"
+                                          Placeholder="e.g., Poor, Beginner"
+                                          Class="w-100" />
                         </div>
-                        <div class="flex-fill">
-                            <div class="d-flex align-items-center justify-content-center gap-1">
-                                <RadzenIcon Icon="category" Style="color: var(--purple-rain);" Class="fs-6" />
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0" Style="color: var(--purple-rain);">
-                                    @GetQuestionTypesCount()
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                    Types
-                                </RadzenText>
-                            </div>
+                        <div class="col-md-4">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1 text-muted">High Label</RadzenText>
+                            <RadzenTextBox Value="@GetScaleHighLabel(firstQuestion)"
+                                          ValueChanged="@((string value) => SetScaleHighLabel(firstQuestion, value))"
+                                          Placeholder="e.g., Excellent, Expert"
+                                          Class="w-100" />
                         </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Simplified Section Stats -->
+            @if (GetItemCount() > 0)
+            {
+                <div class="section-stats mb-2">
+                    <div class="d-flex align-items-center gap-3 text-muted small">
+                        <span class="d-flex align-items-center gap-1">
+                            <RadzenIcon Icon="quiz" Class="fs-6" />
+                            <strong>@GetItemCount()</strong> items
+                        </span>
+                        @if (GetRequiredItemCount() > 0)
+                        {
+                            <span class="d-flex align-items-center gap-1">
+                                <RadzenIcon Icon="star" Class="fs-6" />
+                                <strong>@GetRequiredItemCount()</strong> required
+                            </span>
+                        }
                     </div>
                 </div>
             }
         </div>
     </div>
 
-    <!-- Questions Area -->
-    <div class="questions-area p-3">
-        <div class="questions-header mb-3">
-            <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
-                <div class="d-flex align-items-center">
-                    <RadzenIcon Icon="quiz" Style="color: var(--primary-color);" Class="me-2 fs-5" />
-                    <div>
-                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">Questions</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                            @if (Section.Questions.Count == 0)
-                            {
-                                <span>Add questions to make this section interactive</span>
-                            }
-                            else if (Section.Questions.Count == 1)
-                            {
-                                <span>1 question configured</span>
-                            }
-                            else
-                            {
-                                <span>@Section.Questions.Count questions configured</span>
-                            }
-                        </RadzenText>
-                    </div>
-                </div>
-                <RadzenButton Text="Add Question"
+    <!-- Items Area -->
+    <div class="items-area p-3 pt-0">
+        <div class="items-header mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0 d-flex align-items-center">
+                    <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"color: {GetSectionTypeColor()};")" Class="me-2" />
+                    @GetSectionTypeName() Items
+                </RadzenText>
+                <RadzenButton Text="Add Item"
                              ButtonStyle="ButtonStyle.Primary"
                              Icon="add_circle_outline"
                              Size="ButtonSize.Small"
-                             Click="@(() => OnAddQuestionClick())" />
+                             Click="@(() => OnAddItemClick())" />
             </div>
         </div>
 
-        @* Question Type Selection *@
-        @if (ShowQuestionTypeSelection)
+        @* Existing Questions Display *@
+        @if (Section.Questions.Any())
+        {
+            <div class="questions-list mb-3">
+                @for (int questionIndex = 0; questionIndex < Section.Questions.Count; questionIndex++)
+                {
+                    var question = Section.Questions[questionIndex];
+                    var currentQuestionIndex = questionIndex;
+
+                    <QuestionCard Question="@question"
+                                 CanMoveUp="@(currentQuestionIndex > 0)"
+                                 CanMoveDown="@(currentQuestionIndex < Section.Questions.Count - 1)"
+                                 QuestionTypeLabels="@QuestionTypeLabels"
+                                 OnEdit="@(() => OnEditQuestionInternal(currentQuestionIndex))"
+                                 OnMoveUp="@(() => OnMoveQuestionUpInternal(currentQuestionIndex))"
+                                 OnMoveDown="@(() => OnMoveQuestionDownInternal(currentQuestionIndex))"
+                                 OnDelete="@(() => OnDeleteQuestionInternal(currentQuestionIndex))" />
+                }
+            </div>
+        }
+
+        @* Question Type Selection - Only show if section has no questions yet *@
+        @if (ShowQuestionTypeSelection && !Section.Questions.Any())
         {
             <div class="question-type-selection mb-4">
                 <div class="border-2 rounded p-0" style="border-color: var(--primary-color);">
@@ -241,13 +270,13 @@
 
         @if (Section.Questions.Count == 0)
         {
-            <div class="empty-questions text-center p-4">
-                <RadzenIcon Icon="help_outline" Style="font-size: 2rem; color: #6c757d;" />
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2 mb-2">
-                    This section needs questions to be useful
+            <div class="empty-questions text-center py-4">
+                <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"font-size: 1.5rem; color: {GetSectionTypeColor()}; opacity: 0.5;")" />
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">
+                    No @GetSectionTypeName().ToLower() items yet
                 </RadzenText>
                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                    Click "Add Question" to choose from self-assessments, goal reviews, or text responses
+                    Click "Add Item" to get started
                 </RadzenText>
             </div>
         }
@@ -333,6 +362,7 @@
     [Parameter] public EventCallback OnMoveDown { get; set; }
     [Parameter] public EventCallback OnDelete { get; set; }
     [Parameter] public EventCallback OnAddQuestion { get; set; }
+    [Parameter] public EventCallback OnAddItemDirectly { get; set; }
     [Parameter] public EventCallback OnCancelQuestionSelection { get; set; }
     [Parameter] public EventCallback<QuestionType> OnAddQuestionType { get; set; }
     [Parameter] public EventCallback<int> OnEditQuestion { get; set; }
@@ -346,6 +376,19 @@
     private async Task OnMoveDownClick() => await OnMoveDown.InvokeAsync();
     private async Task OnDeleteClick() => await OnDelete.InvokeAsync();
     private async Task OnAddQuestionClick() => await OnAddQuestion.InvokeAsync();
+    private async Task OnAddItemClick()
+    {
+        // If section already has questions, add another of the same type
+        if (Section.Questions.Any())
+        {
+            await OnAddItemDirectly.InvokeAsync();
+        }
+        else
+        {
+            // No questions yet, show question type selection
+            await OnAddQuestion.InvokeAsync();
+        }
+    }
     private async Task OnCancelQuestionTypeSelection() => await OnCancelQuestionSelection.InvokeAsync();
     private async Task OnAddQuestionOfType(QuestionType type) => await OnAddQuestionType.InvokeAsync(type);
 
@@ -439,4 +482,108 @@
 
         return totalItems;
     }
+
+    // New methods for simplified structure
+    private string GetSectionTypeIcon()
+    {
+        return Section.Questions.FirstOrDefault()?.Type switch
+        {
+            QuestionType.SelfAssessment => "self_improvement",
+            QuestionType.GoalAchievement => "track_changes",
+            QuestionType.TextQuestion => "psychology",
+            _ => "help"
+        };
+    }
+
+    private string GetSectionTypeName()
+    {
+        return Section.Questions.FirstOrDefault()?.Type switch
+        {
+            QuestionType.SelfAssessment => "Self-Assessment",
+            QuestionType.GoalAchievement => "Goal Achievement",
+            QuestionType.TextQuestion => "Text Question",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetSectionTypeColor()
+    {
+        return Section.Questions.FirstOrDefault()?.Type switch
+        {
+            QuestionType.SelfAssessment => "#0F60FF",
+            QuestionType.GoalAchievement => "#00E6C8",
+            QuestionType.TextQuestion => "#935BA9",
+            _ => "#6c757d"
+        };
+    }
+
+    private int GetItemCount()
+    {
+        return GetTotalItemsCount();
+    }
+
+    private int GetRequiredItemCount()
+    {
+        return Section.Questions.Count(q => q.IsRequired);
+    }
+
+    // Rating scale configuration methods for Self-Assessment sections
+    private int GetRatingScale(QuestionItem question)
+    {
+        if (question.Configuration.TryGetValue("RatingScale", out var scale))
+        {
+            return Convert.ToInt32(scale);
+        }
+        return 4; // Default
+    }
+
+    private void SetRatingScale(QuestionItem question, int value)
+    {
+        question.Configuration["RatingScale"] = value;
+        // Apply to all questions in the section
+        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.SelfAssessment))
+        {
+            q.Configuration["RatingScale"] = value;
+        }
+        StateHasChanged();
+    }
+
+    private string GetScaleLowLabel(QuestionItem question)
+    {
+        if (question.Configuration.TryGetValue("ScaleLowLabel", out var label))
+        {
+            return label.ToString() ?? "Poor";
+        }
+        return "Poor";
+    }
+
+    private void SetScaleLowLabel(QuestionItem question, string value)
+    {
+        // Apply to all questions in the section
+        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.SelfAssessment))
+        {
+            q.Configuration["ScaleLowLabel"] = value ?? "Poor";
+        }
+        StateHasChanged();
+    }
+
+    private string GetScaleHighLabel(QuestionItem question)
+    {
+        if (question.Configuration.TryGetValue("ScaleHighLabel", out var label))
+        {
+            return label.ToString() ?? "Excellent";
+        }
+        return "Excellent";
+    }
+
+    private void SetScaleHighLabel(QuestionItem question, string value)
+    {
+        // Apply to all questions in the section
+        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.SelfAssessment))
+        {
+            q.Configuration["ScaleHighLabel"] = value ?? "Excellent";
+        }
+        StateHasChanged();
+    }
+
 }

@@ -41,7 +41,115 @@ public class QuestionSection
     public string Description { get; set; } = string.Empty;
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
+
+    // New simplified structure - each section has one question type
+    public QuestionType QuestionType { get; set; }
+    public Dictionary<string, object> Configuration { get; set; } = new();
+
+    // Keep Questions for backward compatibility during migration
+    [Obsolete("Use QuestionType and Configuration instead. This will be removed in future versions.")]
     public List<QuestionItem> Questions { get; set; } = new();
+
+    // Helper methods for the new simplified structure
+    public int GetItemCount()
+    {
+        return QuestionType switch
+        {
+            QuestionType.SelfAssessment => GetCompetencies().Count,
+            QuestionType.GoalAchievement => GetGoalCategories().Count,
+            QuestionType.TextQuestion => GetTextSections().Count,
+            _ => 0
+        };
+    }
+
+    public int GetRequiredItemCount()
+    {
+        return QuestionType switch
+        {
+            QuestionType.SelfAssessment => GetCompetencies().Count(c => c.IsRequired),
+            QuestionType.GoalAchievement => GetGoalCategories().Count(g => g.IsRequired),
+            QuestionType.TextQuestion => GetTextSections().Count(t => t.IsRequired),
+            _ => 0
+        };
+    }
+
+    public List<CompetencyDefinition> GetCompetencies()
+    {
+        if (Configuration.TryGetValue("Competencies", out var competenciesObj))
+        {
+            if (competenciesObj is List<CompetencyDefinition> competencies)
+                return competencies;
+        }
+        return new List<CompetencyDefinition>();
+    }
+
+    public void SetCompetencies(List<CompetencyDefinition> competencies)
+    {
+        Configuration["Competencies"] = competencies;
+    }
+
+    public List<GoalCategory> GetGoalCategories()
+    {
+        if (Configuration.TryGetValue("GoalCategories", out var categoriesObj))
+        {
+            if (categoriesObj is List<GoalCategory> categories)
+                return categories;
+        }
+        return new List<GoalCategory>();
+    }
+
+    public void SetGoalCategories(List<GoalCategory> categories)
+    {
+        Configuration["GoalCategories"] = categories;
+    }
+
+    public List<TextSection> GetTextSections()
+    {
+        if (Configuration.TryGetValue("TextSections", out var sectionsObj))
+        {
+            if (sectionsObj is List<TextSection> sections)
+                return sections;
+        }
+        return new List<TextSection>();
+    }
+
+    public void SetTextSections(List<TextSection> sections)
+    {
+        Configuration["TextSections"] = sections;
+    }
+
+    public string GetTypeIcon()
+    {
+        return QuestionType switch
+        {
+            QuestionType.SelfAssessment => "self_improvement",
+            QuestionType.GoalAchievement => "track_changes",
+            QuestionType.TextQuestion => "psychology",
+            _ => "help"
+        };
+    }
+
+    public string GetTypeName()
+    {
+        return QuestionType switch
+        {
+            QuestionType.SelfAssessment => "Self-Assessment",
+            QuestionType.GoalAchievement => "Goal Achievement",
+            QuestionType.TextQuestion => "Text Question",
+            _ => "Unknown"
+        };
+    }
+
+    public string GetTypeColor()
+    {
+        return QuestionType switch
+        {
+            QuestionType.SelfAssessment => "#0F60FF", // primary-color
+            QuestionType.GoalAchievement => "#00E6C8", // success-color
+            QuestionType.TextQuestion => "#935BA9", // purple-rain
+            _ => "#6c757d"
+        };
+    }
 }
 
 public class QuestionItem
@@ -208,4 +316,21 @@ public static class TemplateStatusHelper
         "edit" => status != TemplateStatus.Inactive,
         _ => false
     };
+}
+
+// Supporting classes for the new simplified structure
+public class GoalCategory
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool IsRequired { get; set; } = false;
+    public int Order { get; set; }
+}
+
+public class TextSection
+{
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public bool IsRequired { get; set; } = false;
+    public int Order { get; set; }
 }

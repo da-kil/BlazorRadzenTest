@@ -55,42 +55,9 @@
         {
             var competencies = GetOrderedCompetencies();
             <div class="competencies-config">
-                <div class="mb-3 p-3 bg-light rounded">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
-                        <RadzenIcon Icon="tune" Class="me-2" />
-                        Rating Scale Configuration
-                    </RadzenText>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rating Scale</RadzenText>
-                            <RadzenDropDown Value="@GetRatingScale()"
-                                           Data="@GetAvailableRatingScales()"
-                                           ValueProperty="Value"
-                                           TextProperty="Text"
-                                           ValueChanged="@((int value) => UpdateRatingScale(value))"
-                                           Class="w-100"
-                                           Placeholder="Select rating scale..." />
-                        </div>
-                        <div class="col-md-6">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Scale Labels</RadzenText>
-                            <div class="d-flex align-items-center">
-                                <RadzenTextBox Value="@GetScaleLowLabel()"
-                                              ValueChanged="@((string value) => UpdateScaleLowLabel(value))"
-                                              Placeholder="Low (e.g., Poor)"
-                                              Class="me-2" />
-                                <RadzenText TextStyle="TextStyle.Caption" Class="mx-2">to</RadzenText>
-                                <RadzenTextBox Value="@GetScaleHighLabel()"
-                                              ValueChanged="@((string value) => UpdateScaleHighLabel(value))"
-                                              Placeholder="High (e.g., Excellent)"
-                                              Class="ms-2" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-self-assessment">
-                        <RadzenIcon Icon="self_improvement" Class="me-2" />
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">
+                        <RadzenIcon Icon="self_improvement" Style="color: var(--primary-color);" Class="me-2" />
                         Competencies (@competencies.Count)
                     </RadzenText>
                     <RadzenButton Text="Add Competency"
@@ -102,9 +69,10 @@
 
                 @if (competencies.Count == 0)
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
-                        Click "Add Competency" to start adding competencies for this self-assessment.
-                    </RadzenAlert>
+                    <div class="text-center p-3 text-muted">
+                        <RadzenIcon Icon="self_improvement" Style="font-size: 1.5rem; opacity: 0.5; color: var(--primary-color);" />
+                        <div class="mt-2 small">Click "Add Competency" to get started</div>
+                    </div>
                 }
                 else
                 {
@@ -113,11 +81,17 @@
                         var competencyIndex = i;
                         var competency = competencies[competencyIndex];
 
-                        <RadzenCard Class="competency-item mb-2 p-3 border">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-self-assessment">
-                                    Competency @(competencyIndex + 1)
-                                </RadzenText>
+                        <div class="competency-item mb-3 p-3 border rounded bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="competency-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width: 24px; height: 24px; font-size: 0.75rem; font-weight: bold;">
+                                        @(competencyIndex + 1)
+                                    </div>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
+                                        Competency @(competencyIndex + 1)
+                                    </RadzenText>
+                                </div>
                                 <div class="d-flex gap-1">
                                     <RadzenButton ButtonStyle="ButtonStyle.Light"
                                                  Icon="keyboard_arrow_up"
@@ -132,42 +106,46 @@
                                                  Disabled="@(competencyIndex == competencies.Count - 1)"
                                                  Title="Move down" />
                                     <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                                 Icon="delete"
+                                                 Icon="delete_outline"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => RemoveCompetency(competencyIndex))"
-                                                 Title="Delete" />
+                                                 Title="Delete competency" />
                                 </div>
                             </div>
-                            <div class="mb-2">
-                                <div class="position-relative">
-                                    <RadzenTextBox Value="@competency.Title"
-                                                  ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
-                                                  Placeholder="Enter competency title..."
-                                                  Class="@GetCompetencyTitleValidationClass(competencyIndex)"
-                                                  @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
-                                    @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
-                                    {
-                                        <div class="validation-message text-danger small mt-1">
-                                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
-                                            Competency title is required
-                                        </div>
-                                    }
+                            <div class="row g-2 mb-2">
+                                <div class="col-md-8">
+                                    <div class="position-relative">
+                                        <RadzenTextBox Value="@competency.Title"
+                                                      ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
+                                                      Placeholder="Enter competency title..."
+                                                      Class="@GetCompetencyTitleValidationClass(competencyIndex)"
+                                                      @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
+                                        @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
+                                        {
+                                            <div class="validation-message text-danger small mt-1">
+                                                <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
+                                                Competency title is required
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="d-flex align-items-center h-100">
+                                        <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
+                                                       ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
+                                                       Name="@($"comp_req_{Question.Id}_{competencyIndex}")" />
+                                        <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-2 small" />
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mb-2">
+                            <div class="mb-0">
                                 <RadzenTextArea Value="@competency.Description"
                                                ValueChanged="@((string value) => UpdateCompetencyDescription(competencyIndex, value))"
                                                Placeholder="Describe what this competency evaluates..."
                                                Rows="2"
                                                Class="w-100" />
                             </div>
-                            <div class="d-flex align-items-center">
-                                <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
-                                               ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
-                                               Name="@($"comp_req_{Question.Id}_{competencyIndex}")" />
-                                <RadzenLabel Text="This competency is required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-2" />
-                            </div>
-                        </RadzenCard>
+                        </div>
                     }
                 }
             </div>
