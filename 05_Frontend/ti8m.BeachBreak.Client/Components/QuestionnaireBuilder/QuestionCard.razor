@@ -2,109 +2,102 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
-<RadzenCard Class="question-card mb-3 shadow-sm border-0">
-    <div class="question-content p-3 bg-white">
-        <!-- Question Title and Controls -->
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <div class="flex-grow-1">
-                <div class="position-relative">
-                    <RadzenTextBox @bind-Value="@Question.Title"
-                                 Placeholder="Enter question title..."
-                                 Class="@GetTitleValidationClass()"
-                                 Style="font-weight: 600; font-size: 1.1rem;"
-                                 @onblur="ValidateTitle" />
-                    @if (!isTitleValid && hasBeenValidated)
-                    {
-                        <div class="validation-message text-danger small mt-1">
-                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
-                            Question title is required
-                        </div>
-                    }
-                </div>
-            </div>
-            <div class="d-flex gap-1 ms-3">
-                <RadzenButton ButtonStyle="ButtonStyle.Light"
-                             Icon="keyboard_arrow_up"
-                             Size="ButtonSize.ExtraSmall"
-                             Click="@(() => OnMoveUpClick())"
-                             Disabled="@(!CanMoveUp)"
-                             Title="Move up" />
-                <RadzenButton ButtonStyle="ButtonStyle.Light"
-                             Icon="keyboard_arrow_down"
-                             Size="ButtonSize.ExtraSmall"
-                             Click="@(() => OnMoveDownClick())"
-                             Disabled="@(!CanMoveDown)"
-                             Title="Move down" />
-                <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                             Icon="delete_outline"
-                             Size="ButtonSize.ExtraSmall"
-                             Click="@(() => OnDeleteClick())"
-                             Title="Delete question" />
-            </div>
-        </div>
-        <!-- Question Description -->
-        <div class="mb-3">
-            <RadzenTextArea @bind-Value="@Question.Description"
-                           Placeholder="Enter question description or instructions..."
-                           Class="w-100 border-2 rounded"
-                           Rows="2" />
-        </div>
+<style>
+    .competency-input-row,
+    .goal-category-input-row,
+    .text-section-input-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: start;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
 
+    .input-field-container {
+        position: relative;
+        min-height: 38px; /* Height of input field */
+        margin-bottom: 1.5rem; /* Reserve space for validation message */
+    }
+
+    .input-field-container .rz-textbox {
+        width: 100%;
+    }
+
+    .validation-message {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+        line-height: 1.2;
+        z-index: 10;
+    }
+
+    .required-checkbox-container {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        padding-top: 0.375rem; /* Align with input field top */
+        height: 38px; /* Match input height for consistent alignment */
+    }
+
+    .required-checkbox-container label {
+        margin-bottom: 0;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .competency-input-row,
+        .goal-category-input-row,
+        .text-section-input-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+
+        .required-checkbox-container {
+            padding-top: 0;
+            height: auto;
+        }
+
+        .input-field-container {
+            min-height: 38px;
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* Ensure consistent spacing for all question items */
+    .competency-item,
+    .goal-category-item,
+    .text-section-item {
+        position: relative;
+    }
+
+    .competency-item .validation-message,
+    .goal-category-item .validation-message,
+    .text-section-item .validation-message {
+        z-index: 1;
+    }
+</style>
+
+<div class="competencies-container">
         <!-- Self-Assessment Configuration -->
         @if (Question.Type == QuestionType.SelfAssessment)
         {
             var competencies = GetOrderedCompetencies();
             <div class="competencies-config">
-                <div class="mb-3 p-3 bg-light rounded">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
-                        <RadzenIcon Icon="tune" Class="me-2" />
-                        Rating Scale Configuration
-                    </RadzenText>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rating Scale</RadzenText>
-                            <RadzenDropDown Value="@GetRatingScale()"
-                                           Data="@GetAvailableRatingScales()"
-                                           ValueProperty="Value"
-                                           TextProperty="Text"
-                                           ValueChanged="@((int value) => UpdateRatingScale(value))"
-                                           Class="w-100"
-                                           Placeholder="Select rating scale..." />
-                        </div>
-                        <div class="col-md-6">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Scale Labels</RadzenText>
-                            <div class="d-flex align-items-center">
-                                <RadzenTextBox Value="@GetScaleLowLabel()"
-                                              ValueChanged="@((string value) => UpdateScaleLowLabel(value))"
-                                              Placeholder="Low (e.g., Poor)"
-                                              Class="me-2" />
-                                <RadzenText TextStyle="TextStyle.Caption" Class="mx-2">to</RadzenText>
-                                <RadzenTextBox Value="@GetScaleHighLabel()"
-                                              ValueChanged="@((string value) => UpdateScaleHighLabel(value))"
-                                              Placeholder="High (e.g., Excellent)"
-                                              Class="ms-2" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-self-assessment">
-                        <RadzenIcon Icon="self_improvement" Class="me-2" />
-                        Competencies (@competencies.Count)
-                    </RadzenText>
-                    <RadzenButton Text="Add Competency"
-                                 ButtonStyle="ButtonStyle.Primary"
-                                 Icon="add"
-                                 Size="ButtonSize.Small"
-                                 Click="@AddCompetency" />
-                </div>
 
                 @if (competencies.Count == 0)
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
-                        Click "Add Competency" to start adding competencies for this self-assessment.
-                    </RadzenAlert>
+                    <div class="text-center p-3 text-muted">
+                        <RadzenIcon Icon="self_improvement" Style="font-size: 1.5rem; opacity: 0.5; color: var(--primary-color);" />
+                        <div class="mt-2 small">No competencies configured</div>
+                    </div>
                 }
                 else
                 {
@@ -113,11 +106,17 @@
                         var competencyIndex = i;
                         var competency = competencies[competencyIndex];
 
-                        <RadzenCard Class="competency-item mb-2 p-3 border">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-self-assessment">
-                                    Competency @(competencyIndex + 1)
-                                </RadzenText>
+                        <div class="competency-item mb-3 p-3 border rounded bg-white">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="competency-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width: 24px; height: 24px; font-size: 0.75rem; font-weight: bold;">
+                                        @(competencyIndex + 1)
+                                    </div>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
+                                        Competency @(competencyIndex + 1)
+                                    </RadzenText>
+                                </div>
                                 <div class="d-flex gap-1">
                                     <RadzenButton ButtonStyle="ButtonStyle.Light"
                                                  Icon="keyboard_arrow_up"
@@ -132,14 +131,14 @@
                                                  Disabled="@(competencyIndex == competencies.Count - 1)"
                                                  Title="Move down" />
                                     <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                                 Icon="delete"
+                                                 Icon="delete_outline"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => RemoveCompetency(competencyIndex))"
-                                                 Title="Delete" />
+                                                 Title="Delete competency" />
                                 </div>
                             </div>
-                            <div class="mb-2">
-                                <div class="position-relative">
+                            <div class="competency-input-row">
+                                <div class="input-field-container">
                                     <RadzenTextBox Value="@competency.Title"
                                                   ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
                                                   Placeholder="Enter competency title..."
@@ -147,27 +146,27 @@
                                                   @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
                                     @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
                                     {
-                                        <div class="validation-message text-danger small mt-1">
+                                        <div class="validation-message">
                                             <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
                                             Competency title is required
                                         </div>
                                     }
                                 </div>
+                                <div class="required-checkbox-container">
+                                    <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
+                                                   ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
+                                                   Name="@($"comp_req_{Question.Id}_{competencyIndex}")" />
+                                    <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-2" />
+                                </div>
                             </div>
-                            <div class="mb-2">
+                            <div class="mb-0">
                                 <RadzenTextArea Value="@competency.Description"
                                                ValueChanged="@((string value) => UpdateCompetencyDescription(competencyIndex, value))"
                                                Placeholder="Describe what this competency evaluates..."
                                                Rows="2"
                                                Class="w-100" />
                             </div>
-                            <div class="d-flex align-items-center">
-                                <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
-                                               ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
-                                               Name="@($"comp_req_{Question.Id}_{competencyIndex}")" />
-                                <RadzenLabel Text="This competency is required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-2" />
-                            </div>
-                        </RadzenCard>
+                        </div>
                     }
                 }
             </div>
@@ -178,23 +177,12 @@
         {
             var goalCategories = GetOrderedGoalCategories();
             <div class="goal-categories-config">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-goal-achievement">
-                        <RadzenIcon Icon="track_changes" Class="me-2" />
-                        Goal Categories (@goalCategories.Count)
-                    </RadzenText>
-                    <RadzenButton Text="Add Goal Category"
-                                 ButtonStyle="ButtonStyle.Warning"
-                                 Icon="add"
-                                 Size="ButtonSize.Small"
-                                 Click="@AddGoalCategory" />
-                </div>
-
                 @if (goalCategories.Count == 0)
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
-                        Click "Add Goal Category" to start adding goal categories for this assessment.
-                    </RadzenAlert>
+                    <div class="text-center p-3 text-muted">
+                        <RadzenIcon Icon="track_changes" Style="font-size: 1.5rem; opacity: 0.5; color: var(--success-color);" />
+                        <div class="mt-2 small">No goal categories configured</div>
+                    </div>
                 }
                 else
                 {
@@ -228,8 +216,8 @@
                                                  Title="Delete" />
                                 </div>
                             </div>
-                            <div class="mb-2">
-                                <div class="position-relative">
+                            <div class="goal-category-input-row">
+                                <div class="input-field-container">
                                     <RadzenTextBox Value="@category.Title"
                                                   ValueChanged="@((string value) => UpdateGoalCategoryTitle(categoryIndex, value))"
                                                   Placeholder="Enter goal category title..."
@@ -237,11 +225,17 @@
                                                   @onblur="@(() => ValidateGoalCategoryTitle(categoryIndex))" />
                                     @if (!GetGoalCategoryTitleValid(categoryIndex) && GetGoalCategoryTitleValidated(categoryIndex))
                                     {
-                                        <div class="validation-message text-danger small mt-1">
+                                        <div class="validation-message">
                                             <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
                                             Goal category title is required
                                         </div>
                                     }
+                                </div>
+                                <div class="required-checkbox-container">
+                                    <RadzenCheckBox Value="@GetGoalCategoryRequired(categoryIndex)"
+                                                   ValueChanged="@((bool value) => UpdateGoalCategoryRequired(categoryIndex, value))"
+                                                   Name="@($"goal_req_{Question.Id}_{categoryIndex}")" />
+                                    <RadzenLabel Text="Required" Component="@($"goal_req_{Question.Id}_{categoryIndex}")" Class="ms-2" />
                                 </div>
                             </div>
                             <div class="mb-2">
@@ -250,12 +244,6 @@
                                                Placeholder="Describe this goal category..."
                                                Rows="2"
                                                Class="w-100" />
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <RadzenCheckBox Value="@GetGoalCategoryRequired(categoryIndex)"
-                                               ValueChanged="@((bool value) => UpdateGoalCategoryRequired(categoryIndex, value))"
-                                               Name="@($"goal_req_{Question.Id}_{categoryIndex}")" />
-                                <RadzenLabel Text="This goal category is required" Component="@($"goal_req_{Question.Id}_{categoryIndex}")" Class="ms-2" />
                             </div>
                         </RadzenCard>
                     }
@@ -268,23 +256,12 @@
         {
             var textSections = GetOrderedTextSections();
             <div class="text-sections-config">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-text-response">
-                        <RadzenIcon Icon="psychology" Class="me-2" />
-                        Text Sections (@textSections.Count)
-                    </RadzenText>
-                    <RadzenButton Text="Add Text Section"
-                                 ButtonStyle="ButtonStyle.Info"
-                                 Icon="add"
-                                 Size="ButtonSize.Small"
-                                 Click="@AddTextSection" />
-                </div>
-
                 @if (textSections.Count == 0)
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
-                        Click "Add Text Section" to start adding text sections for this question.
-                    </RadzenAlert>
+                    <div class="text-center p-3 text-muted">
+                        <RadzenIcon Icon="psychology" Style="font-size: 1.5rem; opacity: 0.5; color: var(--info-color);" />
+                        <div class="mt-2 small">No text sections configured</div>
+                    </div>
                 }
                 else
                 {
@@ -318,8 +295,8 @@
                                                  Title="Delete" />
                                 </div>
                             </div>
-                            <div class="mb-2">
-                                <div class="position-relative">
+                            <div class="text-section-input-row">
+                                <div class="input-field-container">
                                     <RadzenTextBox Value="@textSection.Title"
                                                   ValueChanged="@((string value) => UpdateTextSectionTitle(sectionIndex, value))"
                                                   Placeholder="Enter section title..."
@@ -327,11 +304,17 @@
                                                   @onblur="@(() => ValidateTextSectionTitle(sectionIndex))" />
                                     @if (!GetTextSectionTitleValid(sectionIndex) && GetTextSectionTitleValidated(sectionIndex))
                                     {
-                                        <div class="validation-message text-danger small mt-1">
+                                        <div class="validation-message">
                                             <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
                                             Text section title is required
                                         </div>
                                     }
+                                </div>
+                                <div class="required-checkbox-container">
+                                    <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
+                                                   ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
+                                                   Name="@($"text_req_{Question.Id}_{sectionIndex}")" />
+                                    <RadzenLabel Text="Required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-2" />
                                 </div>
                             </div>
                             <div class="mb-2">
@@ -341,12 +324,6 @@
                                                Rows="2"
                                                Class="w-100" />
                             </div>
-                            <div class="d-flex align-items-center">
-                                <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
-                                               ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
-                                               Name="@($"text_req_{Question.Id}_{sectionIndex}")" />
-                                <RadzenLabel Text="This text section is required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-2" />
-                            </div>
                         </RadzenCard>
                     }
                 }
@@ -354,8 +331,7 @@
         }
 
         <!-- Question-level required flag is removed as individual items now have their own required flags -->
-    </div>
-</RadzenCard>
+</div>
 
 @code {
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = null!;
@@ -369,6 +345,7 @@
     [Parameter] public EventCallback OnMoveUp { get; set; }
     [Parameter] public EventCallback OnMoveDown { get; set; }
     [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback OnRequiredChanged { get; set; }
 
     // Validation state
     private bool isTitleValid = true;
@@ -625,14 +602,6 @@
         return competencies.OrderBy(c => c.Order).ToList();
     }
 
-    private void AddCompetency()
-    {
-        var competencies = GetCompetenciesFromConfiguration();
-        var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
-        competencies.Add(new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false, nextOrder));
-        Question.Configuration["Competencies"] = competencies;
-        StateHasChanged();
-    }
 
     private async Task RemoveCompetency(int displayIndex)
     {
@@ -760,14 +729,6 @@
         return categories.OrderBy(c => c.Order).ToList();
     }
 
-    private void AddGoalCategory()
-    {
-        var categories = GetGoalCategoriesFromConfiguration();
-        var nextOrder = categories.Count > 0 ? categories.Max(c => c.Order) + 1 : 0;
-        categories.Add(new GoalCategory { Title = "", Description = "", IsRequired = false, Order = nextOrder });
-        Question.Configuration["GoalCategories"] = categories;
-        StateHasChanged();
-    }
 
     private async Task RemoveGoalCategory(int index)
     {
@@ -908,14 +869,6 @@
         return sections.OrderBy(s => s.Order).ToList();
     }
 
-    private void AddTextSection()
-    {
-        var sections = GetTextSectionsFromConfiguration();
-        var nextOrder = sections.Count > 0 ? sections.Max(s => s.Order) + 1 : 0;
-        sections.Add(new TextSection { Title = "", Description = "", IsRequired = false, Order = nextOrder });
-        Question.Configuration["TextSections"] = sections;
-        StateHasChanged();
-    }
 
     private async Task RemoveTextSection(int index)
     {
@@ -1006,7 +959,7 @@
         return false;
     }
 
-    private void UpdateCompetencyRequired(int displayIndex, bool value)
+    private async Task UpdateCompetencyRequired(int displayIndex, bool value)
     {
         var orderedCompetencies = GetOrderedCompetencies();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
@@ -1014,6 +967,7 @@
             orderedCompetencies[displayIndex].IsRequired = value;
             Question.Configuration["Competencies"] = GetCompetenciesFromConfiguration();
             StateHasChanged();
+            await OnRequiredChanged.InvokeAsync();
         }
     }
 
@@ -1066,7 +1020,7 @@
         return false;
     }
 
-    private void UpdateGoalCategoryRequired(int index, bool value)
+    private async Task UpdateGoalCategoryRequired(int index, bool value)
     {
         var categories = GetGoalCategoriesFromConfiguration();
         if (index >= 0 && index < categories.Count)
@@ -1074,6 +1028,7 @@
             categories[index].IsRequired = value;
             Question.Configuration["GoalCategories"] = categories;
             StateHasChanged();
+            await OnRequiredChanged.InvokeAsync();
         }
     }
 
@@ -1126,7 +1081,7 @@
         return false;
     }
 
-    private void UpdateTextSectionRequired(int index, bool value)
+    private async Task UpdateTextSectionRequired(int index, bool value)
     {
         var sections = GetTextSectionsFromConfiguration();
         if (index >= 0 && index < sections.Count)
@@ -1134,74 +1089,10 @@
             sections[index].IsRequired = value;
             Question.Configuration["TextSections"] = sections;
             StateHasChanged();
+            await OnRequiredChanged.InvokeAsync();
         }
     }
 
-    // Rating scale configuration methods for SelfAssessment
-    private int GetRatingScale()
-    {
-        if (Question.Configuration.ContainsKey("RatingScale"))
-        {
-            if (Question.Configuration["RatingScale"] is int scale)
-                return scale;
-            if (int.TryParse(Question.Configuration["RatingScale"]?.ToString(), out var parsedScale))
-                return parsedScale;
-        }
-        return 4; // Default to 1-4 scale
-    }
-
-    private void UpdateRatingScale(int scale)
-    {
-        Question.Configuration["RatingScale"] = scale;
-        StateHasChanged();
-    }
-
-    private string GetScaleLowLabel()
-    {
-        if (Question.Configuration.ContainsKey("ScaleLowLabel"))
-        {
-            return Question.Configuration["ScaleLowLabel"]?.ToString() ?? "";
-        }
-        return "";
-    }
-
-    private void UpdateScaleLowLabel(string label)
-    {
-        Question.Configuration["ScaleLowLabel"] = label ?? "";
-        StateHasChanged();
-    }
-
-    private string GetScaleHighLabel()
-    {
-        if (Question.Configuration.ContainsKey("ScaleHighLabel"))
-        {
-            return Question.Configuration["ScaleHighLabel"]?.ToString() ?? "";
-        }
-        return "";
-    }
-
-    private void UpdateScaleHighLabel(string label)
-    {
-        Question.Configuration["ScaleHighLabel"] = label ?? "";
-        StateHasChanged();
-    }
-
-    private List<RatingScaleOption> GetAvailableRatingScales()
-    {
-        return new List<RatingScaleOption>
-        {
-            new RatingScaleOption { Value = 4, Text = "1-4 Stars (Traditional)" },
-            new RatingScaleOption { Value = 5, Text = "1-5 Stars" },
-            new RatingScaleOption { Value = 10, Text = "1-10 Scale (Detailed)" }
-        };
-    }
-
-    // Helper classes for configuration
-    public class RatingScaleOption
-    {
-        public int Value { get; set; }
-        public string Text { get; set; } = "";
-    }
 
     public class GoalCategory
     {

@@ -1,0 +1,739 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+
+<div class="questionnaire-preview">
+	<!-- Header -->
+	<div class="preview-header">
+		<div class="d-flex justify-content-between align-items-center">
+			<div>
+				<RadzenText TextStyle="TextStyle.H4" Class="mb-1 fw-bold">@Template.Name</RadzenText>
+				@if (!string.IsNullOrWhiteSpace(Template.Description))
+				{
+					<RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@Template.Description</RadzenText>
+				}
+			</div>
+			<RadzenButton ButtonStyle="ButtonStyle.Secondary" Icon="close" Click="@(() => OnClose.InvokeAsync())" />
+		</div>
+	</div>
+
+	<!-- Progress Indicator -->
+	<div class="preview-progress">
+		<div class="progress-container">
+			<div class="progress-bar">
+				<div class="progress-fill" style="width: @(GetProgressPercentage())%"></div>
+			</div>
+			<span class="progress-text">Section @(currentSectionIndex + 1) of @Template.Sections.Count</span>
+		</div>
+	</div>
+
+	<!-- Current Section Content -->
+	<div class="preview-content">
+		@if (Template.Sections.Any() && currentSectionIndex < Template.Sections.Count)
+		{
+			var currentSection = Template.Sections[currentSectionIndex];
+
+			<div class="section-container">
+				<!-- Section Header -->
+				<div class="section-header">
+					<RadzenText TextStyle="TextStyle.H5" Class="section-title">@currentSection.Title</RadzenText>
+					@if (!string.IsNullOrWhiteSpace(currentSection.Description))
+					{
+						<RadzenText TextStyle="TextStyle.Body1" Class="section-description text-muted">@currentSection.Description</RadzenText>
+					}
+				</div>
+
+				<!-- Questions -->
+				<div class="questions-container">
+					@foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
+					{
+						<div class="question-preview">
+							<div class="question-header">
+								<RadzenText TextStyle="TextStyle.H6" Class="question-title">
+									@question.Title
+									@if (question.IsRequired)
+									{
+										<span class="required-indicator">*</span>
+									}
+								</RadzenText>
+								@if (!string.IsNullOrWhiteSpace(question.Description))
+								{
+									<RadzenText TextStyle="TextStyle.Body2" Class="question-description text-muted">@question.Description</RadzenText>
+								}
+							</div>
+
+							<div class="question-content">
+								@if (question.Type == QuestionType.SelfAssessment)
+								{
+									@RenderSelfAssessmentPreview(question)
+								}
+								else if (question.Type == QuestionType.GoalAchievement)
+								{
+									@RenderGoalAchievementPreview(question)
+								}
+								else if (question.Type == QuestionType.TextQuestion)
+								{
+									@RenderTextQuestionPreview(question)
+								}
+								else
+								{
+									<div class="alert alert-info">
+										<RadzenIcon Icon="info" Class="me-2" />
+										Unknown question type: @question.Type
+									</div>
+								}
+							</div>
+						</div>
+					}
+				</div>
+			</div>
+		}
+		else
+		{
+			<div class="empty-state">
+				<RadzenIcon Icon="quiz" Style="font-size: 3rem; color: #6c757d;" />
+				<RadzenText TextStyle="TextStyle.H6" Class="text-muted mt-2">No sections or questions have been added yet</RadzenText>
+			</div>
+		}
+	</div>
+
+	<!-- Navigation -->
+	<div class="preview-navigation">
+		<div class="d-flex justify-content-between align-items-center">
+			<RadzenButton
+				Text="Previous"
+				ButtonStyle="ButtonStyle.Light"
+				Icon="chevron_left"
+				Click="@(() => PreviousSection())"
+				Disabled="@(currentSectionIndex == 0)" />
+
+			<div class="section-indicators">
+				@for (int i = 0; i < Template.Sections.Count; i++)
+				{
+					int sectionIndex = i;
+					<button class="section-dot @(i == currentSectionIndex ? "active" : "")"
+							@onclick="@(() => GoToSection(sectionIndex))"
+							type="button">
+						@(i + 1)
+					</button>
+				}
+			</div>
+
+			<RadzenButton
+				Text="Next"
+				ButtonStyle="ButtonStyle.Primary"
+				Icon="chevron_right"
+				IconPosition="IconPosition.Right"
+				Click="@(() => NextSection())"
+				Disabled="@(currentSectionIndex >= Template.Sections.Count - 1)" />
+		</div>
+	</div>
+</div>
+
+@code {
+	[Parameter] public QuestionnaireTemplate Template { get; set; } = new();
+	[Parameter] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = new();
+	[Parameter] public EventCallback OnClose { get; set; }
+
+	private int currentSectionIndex = 0;
+
+	private void NextSection()
+	{
+		if (currentSectionIndex < Template.Sections.Count - 1)
+		{
+			currentSectionIndex++;
+			StateHasChanged();
+		}
+	}
+
+	private void PreviousSection()
+	{
+		if (currentSectionIndex > 0)
+		{
+			currentSectionIndex--;
+			StateHasChanged();
+		}
+	}
+
+	private void GoToSection(int index)
+	{
+		if (index >= 0 && index < Template.Sections.Count)
+		{
+			currentSectionIndex = index;
+			StateHasChanged();
+		}
+	}
+
+	private double GetProgressPercentage()
+	{
+		if (Template.Sections.Count == 0) return 0;
+		return ((double)(currentSectionIndex + 1) / Template.Sections.Count) * 100;
+	}
+
+	private RenderFragment RenderSelfAssessmentPreview(QuestionItem question)
+	{
+		var competencies = GetCompetenciesFromConfiguration(question);
+		var ratingScale = GetRatingScaleFromConfiguration(question);
+		var scaleLowLabel = GetScaleLowLabelFromConfiguration(question);
+		var scaleHighLabel = GetScaleHighLabelFromConfiguration(question);
+
+		return @<div class="self-assessment-preview">
+			@if (competencies.Any())
+			{
+				<div class="competencies-list">
+					@foreach (var competency in competencies)
+					{
+						<div class="competency-item">
+							<div class="competency-header">
+								<RadzenText TextStyle="TextStyle.Subtitle2" Class="competency-title">@competency.Title</RadzenText>
+								@if (!string.IsNullOrWhiteSpace(competency.Description))
+								{
+									<RadzenText TextStyle="TextStyle.Caption" Class="competency-description text-muted">@competency.Description</RadzenText>
+								}
+							</div>
+							<div class="rating-scale">
+								<div class="scale-labels">
+									<span class="scale-label-low">@scaleLowLabel</span>
+									<span class="scale-label-high">@scaleHighLabel</span>
+								</div>
+								<div class="rating-options">
+									@for (int i = 1; i <= ratingScale; i++)
+									{
+										<div class="rating-option">
+											<input type="radio" disabled />
+											<label>@i</label>
+										</div>
+									}
+								</div>
+							</div>
+						</div>
+					}
+				</div>
+			}
+		</div>;
+	}
+
+	private RenderFragment RenderGoalAchievementPreview(QuestionItem question)
+	{
+		var goalCategories = GetGoalCategoriesFromConfiguration(question);
+
+		return @<div class="goal-achievement-preview">
+			@if (goalCategories.Any())
+			{
+				<div class="goal-categories-list">
+					@foreach (var category in goalCategories)
+					{
+						<div class="goal-category-item">
+							<RadzenText TextStyle="TextStyle.Subtitle2" Class="category-title">@category.Title</RadzenText>
+							@if (!string.IsNullOrWhiteSpace(category.Description))
+							{
+								<RadzenText TextStyle="TextStyle.Caption" Class="category-description text-muted mb-2">@category.Description</RadzenText>
+							}
+							<textarea class="goal-textarea" placeholder="Enter your goals and achievements..." disabled></textarea>
+						</div>
+					}
+				</div>
+			}
+		</div>;
+	}
+
+	private RenderFragment RenderTextQuestionPreview(QuestionItem question)
+	{
+		var textSections = GetTextSectionsFromConfiguration(question);
+
+		return @<div class="text-question-preview">
+			@if (textSections.Any())
+			{
+				<div class="text-sections-list">
+					@foreach (var textSection in textSections)
+					{
+						<div class="text-section-item">
+							@if (!string.IsNullOrWhiteSpace(textSection.Title))
+							{
+								<RadzenText TextStyle="TextStyle.Subtitle2" Class="section-title">
+									@textSection.Title
+									@if (textSection.IsRequired)
+									{
+										<span class="required-indicator">*</span>
+									}
+								</RadzenText>
+							}
+							@if (!string.IsNullOrWhiteSpace(textSection.Description))
+							{
+								<RadzenText TextStyle="TextStyle.Caption" Class="section-description text-muted mb-2">@textSection.Description</RadzenText>
+							}
+							<textarea class="text-section-textarea" placeholder="Enter your response..." disabled></textarea>
+						</div>
+					}
+				</div>
+			}
+		</div>;
+	}
+
+	// Helper methods to extract configuration data
+	private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("Competencies"))
+		{
+			var competenciesObj = question.Configuration["Competencies"];
+			if (competenciesObj is List<CompetencyDefinition> competencies)
+			{
+				return competencies;
+			}
+		}
+		return new List<CompetencyDefinition>();
+	}
+
+	private int GetRatingScaleFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("RatingScale"))
+		{
+			if (int.TryParse(question.Configuration["RatingScale"].ToString(), out int scale))
+			{
+				return scale;
+			}
+		}
+		return 4; // Default
+	}
+
+	private string GetScaleLowLabelFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("ScaleLowLabel"))
+		{
+			return question.Configuration["ScaleLowLabel"].ToString() ?? "Poor";
+		}
+		return "Poor";
+	}
+
+	private string GetScaleHighLabelFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("ScaleHighLabel"))
+		{
+			return question.Configuration["ScaleHighLabel"].ToString() ?? "Excellent";
+		}
+		return "Excellent";
+	}
+
+	private List<QuestionCard.GoalCategory> GetGoalCategoriesFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("GoalCategories"))
+		{
+			var goalCategoriesObj = question.Configuration["GoalCategories"];
+
+			// Handle direct cast (when set in editor)
+			if (goalCategoriesObj is List<QuestionCard.GoalCategory> categories)
+			{
+				return categories;
+			}
+
+			// Handle JSON deserialization (when loaded from API)
+			if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement)
+			{
+				try
+				{
+					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+					{
+						return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing goal categories: {ex.Message}");
+				}
+			}
+		}
+		return new List<QuestionCard.GoalCategory>();
+	}
+
+	private List<QuestionCard.TextSection> GetTextSectionsFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("TextSections"))
+		{
+			var textSectionsObj = question.Configuration["TextSections"];
+
+			// Handle direct cast (when set in editor)
+			if (textSectionsObj is List<QuestionCard.TextSection> sections)
+			{
+				return sections;
+			}
+
+			// Handle JSON deserialization (when loaded from API)
+			if (textSectionsObj is System.Text.Json.JsonElement jsonElement)
+			{
+				try
+				{
+					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+					{
+						return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing text sections: {ex.Message}");
+				}
+			}
+		}
+
+		// Check for legacy format and convert
+		if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
+		{
+			return new List<QuestionCard.TextSection>
+			{
+				new QuestionCard.TextSection
+				{
+					Title = question.Configuration.ContainsKey("SectionTitle") ? question.Configuration["SectionTitle"].ToString() ?? "" : "",
+					Description = question.Configuration.ContainsKey("SectionDescription") ? question.Configuration["SectionDescription"].ToString() ?? "" : "",
+					IsRequired = false
+				}
+			};
+		}
+
+		return new List<QuestionCard.TextSection>();
+	}
+}
+
+<style>
+:root {
+	--primary-color: #2563eb;
+	--text-color: #374151;
+	--text-muted: #6b7280;
+	--border-light: #f3f4f6;
+	--focus-ring: rgba(37, 99, 235, 0.1);
+}
+
+.questionnaire-preview {
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	background: white;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+.preview-header {
+	padding: 2rem;
+	border-bottom: 1px solid var(--border-light);
+}
+
+.preview-progress {
+	padding: 1rem 2rem;
+	border-bottom: 1px solid var(--border-light);
+	background: #fafafa;
+}
+
+.progress-container {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.progress-bar {
+	flex: 1;
+	height: 4px;
+	background: var(--border-light);
+	border-radius: 2px;
+	overflow: hidden;
+}
+
+.progress-fill {
+	height: 100%;
+	background: var(--primary-color);
+	transition: width 0.3s ease;
+}
+
+.progress-text {
+	font-size: 0.875rem;
+	color: var(--text-muted);
+	font-weight: 500;
+}
+
+.preview-content {
+	flex: 1;
+	overflow-y: auto;
+	padding: 3rem 2rem;
+}
+
+.section-container {
+	max-width: 800px;
+	margin: 0 auto;
+}
+
+.section-header {
+	margin-bottom: 3rem;
+}
+
+.section-title {
+	font-size: 1.875rem;
+	font-weight: 700;
+	color: var(--text-color);
+	margin-bottom: 0.5rem;
+	letter-spacing: -0.025em;
+}
+
+.section-description {
+	font-size: 1rem;
+	color: var(--text-muted);
+	line-height: 1.6;
+}
+
+.questions-container {
+	display: flex;
+	flex-direction: column;
+	gap: 4rem;
+}
+
+.question-preview {
+	margin-bottom: 2rem;
+}
+
+.question-header {
+	margin-bottom: 2rem;
+}
+
+.question-title {
+	font-size: 1.5rem;
+	font-weight: 700;
+	color: var(--text-color);
+	margin-bottom: 0.75rem;
+	letter-spacing: -0.025em;
+}
+
+.required-indicator {
+	color: #dc2626;
+	font-weight: 700;
+	margin-left: 0.25rem;
+}
+
+.question-description {
+	font-size: 1rem;
+	color: var(--text-muted);
+	line-height: 1.6;
+}
+
+.question-content {
+	margin-top: 1.5rem;
+}
+
+/* Self Assessment Styles */
+.competencies-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2.5rem;
+}
+
+.competency-item {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.competency-header {
+	margin-bottom: 0;
+}
+
+.competency-title {
+	font-size: 1rem;
+	font-weight: 500;
+	color: var(--text-color);
+	margin-bottom: 0.5rem;
+}
+
+.competency-description {
+	font-size: 0.875rem;
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+
+.rating-scale {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.scale-labels {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.875rem;
+	color: var(--text-muted);
+	font-weight: 500;
+}
+
+.rating-options {
+	display: flex;
+	gap: 1rem;
+	align-items: center;
+}
+
+.rating-option {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.rating-option input[type="radio"] {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--primary-color);
+	cursor: not-allowed;
+}
+
+.rating-option label {
+	font-size: 0.875rem;
+	color: var(--text-muted);
+	font-weight: 500;
+}
+
+/* Goal Achievement Styles */
+.goal-categories-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2.5rem;
+}
+
+.goal-category-item {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.category-title {
+	font-size: 1rem;
+	font-weight: 600;
+	color: var(--text-color);
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+
+.category-description {
+	font-size: 0.875rem;
+	color: var(--text-muted);
+	line-height: 1.5;
+}
+
+.goal-textarea {
+	width: 100%;
+	min-height: 100px;
+	padding: 0.875rem;
+	border: 1px solid var(--border-light);
+	border-radius: 4px;
+	font-family: inherit;
+	font-size: 0.95rem;
+	line-height: 1.6;
+	background: white;
+	color: var(--text-muted);
+	resize: vertical;
+	cursor: not-allowed;
+}
+
+/* Text Question Styles */
+.text-sections-list {
+	display: flex;
+	flex-direction: column;
+	gap: 2.5rem;
+	counter-reset: question;
+}
+
+.text-section-item {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.text-section-item .section-title {
+	font-size: 1rem;
+	font-weight: 500;
+	color: var(--text-color);
+	counter-increment: question;
+}
+
+.text-section-item .section-title::before {
+	content: counter(question) ". ";
+	color: var(--primary-color);
+	font-weight: 600;
+}
+
+.text-section-textarea {
+	width: 100%;
+	min-height: 100px;
+	padding: 0.875rem;
+	border: 1px solid var(--border-light);
+	border-radius: 4px;
+	font-family: inherit;
+	font-size: 0.95rem;
+	line-height: 1.6;
+	background: white;
+	color: var(--text-muted);
+	resize: vertical;
+	cursor: not-allowed;
+}
+
+/* Navigation */
+.preview-navigation {
+	padding: 2rem;
+	border-top: 1px solid var(--border-light);
+	background: #fafafa;
+}
+
+.section-indicators {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.section-dot {
+	width: 36px;
+	height: 36px;
+	border-radius: 6px;
+	border: 1px solid var(--border-light);
+	background: white;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--text-muted);
+}
+
+.section-dot:hover {
+	border-color: var(--primary-color);
+	color: var(--primary-color);
+}
+
+.section-dot.active {
+	background: var(--primary-color);
+	border-color: var(--primary-color);
+	color: white;
+}
+
+/* Empty State */
+.empty-state {
+	text-align: center;
+	padding: 4rem 2rem;
+	color: var(--text-muted);
+}
+
+@@media (max-width: 768px) {
+	.preview-content {
+		padding: 2rem 1.5rem;
+	}
+
+	.section-title {
+		font-size: 1.5rem;
+	}
+
+	.question-title {
+		font-size: 1.25rem;
+	}
+
+	.questions-container {
+		gap: 3rem;
+	}
+
+	.competencies-list,
+	.goal-categories-list,
+	.text-sections-list {
+		gap: 2rem;
+	}
+}
+</style>

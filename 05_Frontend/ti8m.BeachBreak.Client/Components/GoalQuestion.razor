@@ -1,72 +1,198 @@
 @using Radzen
 @using Radzen.Blazor
+@implements IDisposable
 
-<RadzenCard Class="mb-3">
-    <RadzenText TextStyle="TextStyle.H5" Class="mb-3">Goal Setting</RadzenText>
-    
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Time Frame - From</RadzenText>
-            <RadzenDatePicker @bind-Value="@TimeFrameFrom" 
-                            @bind-Value:after="OnTimeFrameFromChanged"
-                            ShowTime="false" 
-                            DateFormat="dd/MM/yyyy" 
-                            Class="w-100" />
-        </RadzenColumn>
-        <RadzenColumn Size="12" SizeMD="6">
-            <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Time Frame - To</RadzenText>
-            <RadzenDatePicker @bind-Value="@TimeFrameTo" 
-                            @bind-Value:after="OnTimeFrameToChanged"
-                            ShowTime="false" 
-                            DateFormat="dd/MM/yyyy" 
-                            Class="w-100" />
-        </RadzenColumn>
-    </RadzenRow>
-    
-    <div class="mt-3">
-        <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Goal Description</RadzenText>
-        <RadzenTextArea @bind-Value="@GoalDescription" 
-                      @bind-Value:after="OnGoalDescriptionChanged"
-                      Rows="4" 
-                      Placeholder="Describe your goal in detail..." 
-                      Class="w-100" />
+<style>
+    .goal-section {
+        --primary-color: #2563eb;
+        --text-color: #374151;
+        --text-muted: #6b7280;
+        --border-light: #f3f4f6;
+        --focus-ring: rgba(37, 99, 235, 0.1);
+
+        margin-bottom: 3rem;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin: 0 0 2rem 0;
+        letter-spacing: -0.025em;
+    }
+
+    .goal-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .field-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .field-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .field-input {
+        border: 1px solid var(--border-light);
+        border-radius: 4px;
+        padding: 0.875rem;
+        font-size: 0.95rem;
+        line-height: 1.6;
+        background: white;
+        transition: border-color 0.15s ease;
+        font-family: inherit;
+    }
+
+    .field-input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px var(--focus-ring);
+        outline: none;
+    }
+
+    .field-input:not(:placeholder-shown) {
+        border-color: var(--primary-color);
+    }
+
+    .field-input::placeholder {
+        color: var(--text-muted);
+    }
+
+    .textarea-field {
+        min-height: 100px;
+        resize: vertical;
+    }
+
+    .date-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .auto-save-status {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        background: #059669;
+        color: white;
+        padding: 0.375rem 0.75rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: all 0.2s ease;
+        z-index: 1000;
+    }
+
+    .auto-save-status.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    @@media (max-width: 768px) {
+        .section-title {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .date-row {
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .field-input {
+            padding: 0.75rem;
+        }
+    }
+</style>
+
+<div class="goal-section">
+    <div class="auto-save-status @(ShowAutoSave ? "visible" : "")">
+        Saved
     </div>
-    
-    <div class="mt-3">
-        <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Measurement Variable</RadzenText>
-        <RadzenTextBox @bind-Value="@MeasurementVariable" 
-                     @bind-Value:after="OnMeasurementVariableChanged"
-                     Placeholder="How will success be measured?" 
-                     Class="w-100" />
+
+    <h2 class="section-title">Goal Achievement Review</h2>
+
+    <div class="goal-fields">
+        <div class="date-row">
+            <div class="field-group">
+                <label class="field-label">Start Date</label>
+                <RadzenDatePicker @bind-Value="@TimeFrameFrom"
+                                @bind-Value:after="@(() => { OnTimeFrameFromChanged(); ShowAutoSaveIndicator(); })"
+                                ShowTime="false"
+                                DateFormat="dd/MM/yyyy"
+                                Class="field-input"
+                                Placeholder="Select start date" />
+            </div>
+
+            <div class="field-group">
+                <label class="field-label">End Date</label>
+                <RadzenDatePicker @bind-Value="@TimeFrameTo"
+                                @bind-Value:after="@(() => { OnTimeFrameToChanged(); ShowAutoSaveIndicator(); })"
+                                ShowTime="false"
+                                DateFormat="dd/MM/yyyy"
+                                Class="field-input"
+                                Placeholder="Select target date" />
+            </div>
+        </div>
+
+        <div class="field-group">
+            <label class="field-label">Goal Description</label>
+            <RadzenTextArea @bind-Value="@GoalDescription"
+                          @bind-Value:after="@(() => { OnGoalDescriptionChanged(); ShowAutoSaveIndicator(); })"
+                          Placeholder="Describe your goal..."
+                          Class="field-input textarea-field" />
+        </div>
+
+        <div class="field-group">
+            <label class="field-label">Measurement Criteria</label>
+            <RadzenTextBox @bind-Value="@MeasurementVariable"
+                         @bind-Value:after="@(() => { OnMeasurementVariableChanged(); ShowAutoSaveIndicator(); })"
+                         Placeholder="How will success be measured?"
+                         Class="field-input" />
+        </div>
+
+        <div class="field-group">
+            <label class="field-label">Achievement Percentage (%)</label>
+            <RadzenNumeric @bind-Value="@Weighting"
+                         @bind-Value:after="@(() => { OnWeightingChanged(); ShowAutoSaveIndicator(); })"
+                         Min="0"
+                         Max="100"
+                         Step="5"
+                         Format="0"
+                         Class="field-input"
+                         Placeholder="0" />
+        </div>
     </div>
-    
-    <div class="mt-3">
-        <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">Weighting (%)</RadzenText>
-        <RadzenNumeric @bind-Value="@Weighting" 
-                     @bind-Value:after="OnWeightingChanged"
-                     Min="0" 
-                     Max="100" 
-                     Step="5"
-                     Format="0"
-                     Class="w-100" />
-    </div>
-</RadzenCard>
+</div>
 
 @code {
     [Parameter] public DateTime? TimeFrameFrom { get; set; }
     [Parameter] public EventCallback<DateTime?> TimeFrameFromChanged { get; set; }
-    
+
     [Parameter] public DateTime? TimeFrameTo { get; set; }
     [Parameter] public EventCallback<DateTime?> TimeFrameToChanged { get; set; }
-    
+
     [Parameter] public string GoalDescription { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> GoalDescriptionChanged { get; set; }
-    
+
     [Parameter] public string MeasurementVariable { get; set; } = string.Empty;
     [Parameter] public EventCallback<string> MeasurementVariableChanged { get; set; }
-    
+
     [Parameter] public decimal Weighting { get; set; }
     [Parameter] public EventCallback<decimal> WeightingChanged { get; set; }
+
+    private bool ShowAutoSave = false;
+    private Timer? autoSaveTimer;
 
     private async Task OnTimeFrameFromChanged()
     {
@@ -91,5 +217,39 @@
     private async Task OnWeightingChanged()
     {
         await WeightingChanged.InvokeAsync(Weighting);
+    }
+
+    private void ShowAutoSaveIndicator()
+    {
+        ShowAutoSave = true;
+        StateHasChanged();
+
+        // Clear existing timer
+        autoSaveTimer?.Dispose();
+
+        // Set new timer to hide indicator after 2 seconds
+        autoSaveTimer = new Timer(_ => {
+            ShowAutoSave = false;
+            InvokeAsync(StateHasChanged);
+        }, null, 2000, Timeout.Infinite);
+    }
+
+    private int GetCompletionPercentage()
+    {
+        var fieldsCompleted = 0;
+        var totalFields = 5;
+
+        if (TimeFrameFrom.HasValue) fieldsCompleted++;
+        if (TimeFrameTo.HasValue) fieldsCompleted++;
+        if (!string.IsNullOrWhiteSpace(GoalDescription)) fieldsCompleted++;
+        if (!string.IsNullOrWhiteSpace(MeasurementVariable)) fieldsCompleted++;
+        if (Weighting > 0) fieldsCompleted++;
+
+        return (int)Math.Round((double)fieldsCompleted / totalFields * 100);
+    }
+
+    public void Dispose()
+    {
+        autoSaveTimer?.Dispose();
     }
 }

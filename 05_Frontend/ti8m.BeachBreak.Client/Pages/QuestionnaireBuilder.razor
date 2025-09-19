@@ -9,123 +9,181 @@
 
 <PageTitle>Questionnaire Builder</PageTitle>
 
-<div class="container-fluid">
-	<RadzenCard Class="p-4">
-		<div class="d-flex justify-content-between align-items-center mb-4">
-			<div>
-				<div class="d-flex align-items-center mb-2">
-					<RadzenText TextStyle="TextStyle.H2" Class="text-primary fw-bold me-3">
-						<RadzenIcon Icon="psychology" Class="me-3" />
-						@(IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")
-					</RadzenText>
-					<div class="publish-status-badge">
-						@{
-							var status = IsEditMode ? template.Status : TemplateStatus.Draft;
-							var statusText = IsEditMode ? TemplateStatusHelper.GetStatusText(template.Status) : "NEW";
-							var statusIcon = IsEditMode ? TemplateStatusHelper.GetStatusIcon(template.Status) : "add_circle";
-							var statusClass = IsEditMode ? TemplateStatusHelper.GetStatusBadgeClass(template.Status) : "badge bg-info text-dark";
-						}
-						<span class="@statusClass d-flex align-items-center">
-							<RadzenIcon Icon="@statusIcon" Class="me-1" Style="font-size: 0.8rem;" />
-							@statusText
-						</span>
-					</div>
+<!-- Header -->
+<div class="questionnaire-builder-header">
+	<div class="container-fluid">
+		<div class="d-flex justify-content-between align-items-center py-3">
+			<div class="d-flex align-items-center">
+				<RadzenText TextStyle="TextStyle.H4" Class="text-white fw-bold mb-0">
+					<RadzenIcon Icon="psychology" Class="me-2" />
+					@(IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")
+				</RadzenText>
+				<div class="status-badge ms-3">
+					@{
+						var status = IsEditMode ? template.Status : TemplateStatus.Draft;
+						var statusText = IsEditMode ? TemplateStatusHelper.GetStatusText(template.Status) : "NEW";
+						var statusIcon = IsEditMode ? TemplateStatusHelper.GetStatusIcon(template.Status) : "add_circle";
+						var statusClass = IsEditMode ? TemplateStatusHelper.GetStatusBadgeClass(template.Status) : "badge bg-info text-dark";
+					}
+					<span class="@statusClass d-flex align-items-center px-3 py-1">
+						<RadzenIcon Icon="@statusIcon" Class="me-1" Style="font-size: 0.8rem;" />
+						@statusText
+					</span>
 				</div>
-				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-0">
-					@GetStatusDescription()
-				</RadzenText>
-				<RadzenText TextStyle="TextStyle.Caption" Class="text-secondary">
-					Build sections, configure questions, and customize your evaluation experience
-				</RadzenText>
 			</div>
-			<div class="d-flex gap-2 btn-group-status">
-				<RadzenButton Text="Preview"
-							  ButtonStyle="ButtonStyle.Info"
-							  Icon="preview"
-							  Click="@PreviewQuestionnaire" />
-
+			<div class="d-flex gap-2">
+				<RadzenButton Text="Preview" ButtonStyle="ButtonStyle.Light" Icon="preview" Click="@PreviewQuestionnaire" />
 				@{
 					var currentStatus = IsEditMode ? template.Status : TemplateStatus.Draft;
 				}
-
 				@switch (currentStatus)
 				{
 					case TemplateStatus.Draft:
-						<RadzenButton Text="Save Draft"
-									  ButtonStyle="ButtonStyle.Secondary"
-									  Icon="save"
-									  Click="@SaveQuestionnaire" />
-						<RadzenButton Text="Publish"
-									  ButtonStyle="ButtonStyle.Success"
-									  Icon="publish"
-									  Click="@PublishQuestionnaire" />
+						<RadzenButton Text="Save" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" />
+						<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" />
 						break;
-
 					case TemplateStatus.Published:
-						<RadzenButton Text="Save Changes"
-									  ButtonStyle="ButtonStyle.Primary"
-									  Icon="save"
-									  Click="@SaveQuestionnaire" />
-						<RadzenButton Text="Unpublish"
-									  ButtonStyle="ButtonStyle.Warning"
-									  Icon="unpublished"
-									  Click="@UnpublishQuestionnaire" />
-						<RadzenButton Text="Disable"
-									  ButtonStyle="ButtonStyle.Secondary"
-									  Icon="block"
-									  Click="@DisableQuestionnaire" />
+						<RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveQuestionnaire" />
+						<RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@UnpublishQuestionnaire" />
 						break;
-
 					case TemplateStatus.PublishedInactive:
-						<RadzenButton Text="Enable"
-									  ButtonStyle="ButtonStyle.Success"
-									  Icon="check_circle"
-									  Click="@EnableQuestionnaire" />
-						<RadzenButton Text="Edit"
-									  ButtonStyle="ButtonStyle.Primary"
-									  Icon="edit"
-									  Click="@EditInactiveQuestionnaire" />
+						<RadzenButton Text="Enable" ButtonStyle="ButtonStyle.Success" Icon="check_circle" Click="@EnableQuestionnaire" />
 						break;
-
 					case TemplateStatus.Inactive:
-						<RadzenButton Text="Activate"
-									  ButtonStyle="ButtonStyle.Primary"
-									  Icon="play_arrow"
-									  Click="@ActivateQuestionnaire" />
+						<RadzenButton Text="Activate" ButtonStyle="ButtonStyle.Primary" Icon="play_arrow" Click="@ActivateQuestionnaire" />
 						break;
 				}
 			</div>
 		</div>
+	</div>
+</div>
 
-		<RadzenTabs TabPosition="TabPosition.Left" Change="@OnTabChanged">
-			<Tabs>
-				<RadzenTabsItem Text="Basic Info">
+<!-- Progress Steps -->
+<div class="progress-steps-container">
+	<div class="container-fluid">
+		<div class="progress-steps py-3">
+			<div class="step @(currentStep == 1 ? "active" : currentStep > 1 ? "completed" : "")" @onclick="() => SetCurrentStep(1)">
+				<div class="step-circle">
+					<RadzenIcon Icon="@(currentStep > 1 ? "check" : "info")" />
+				</div>
+				<span class="step-text">Basic Info</span>
+			</div>
+			<div class="step-connector @(currentStep > 1 ? "completed" : "")"></div>
+			<div class="step @(currentStep == 2 ? "active" : currentStep > 2 ? "completed" : "")" @onclick="() => SetCurrentStep(2)">
+				<div class="step-circle">
+					<RadzenIcon Icon="@(currentStep > 2 ? "check" : "view_list")" />
+				</div>
+				<span class="step-text">Build Sections</span>
+			</div>
+			<div class="step-connector @(currentStep > 2 ? "completed" : "")"></div>
+			<div class="step @(currentStep == 3 ? "active" : currentStep > 3 ? "completed" : "")" @onclick="() => SetCurrentStep(3)">
+				<div class="step-circle">
+					<RadzenIcon Icon="@(currentStep > 3 ? "check" : "preview")" />
+				</div>
+				<span class="step-text">Review & Publish</span>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content-area">
+	<div class="container-fluid">
+		@if (showQuestionEditor)
+		{
+			<!-- Full-screen Question Editor -->
+			<div class="question-editor-fullscreen">
+				<div class="editor-header">
+					<div class="d-flex justify-content-between align-items-center py-3">
+						<div class="d-flex align-items-center">
+							<RadzenButton ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@CloseQuestionEditor" Class="me-3" />
+							<RadzenText TextStyle="TextStyle.H5" Class="mb-0 fw-bold">Edit Question: @GetCurrentQuestionTitle()</RadzenText>
+						</div>
+						<div class="d-flex gap-2">
+							<RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CloseQuestionEditor" />
+							<RadzenButton Text="Save Question" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveCurrentQuestion" />
+						</div>
+					</div>
+				</div>
+				<div class="editor-content p-4">
+					@if (editingQuestion != null)
+					{
+						<QuestionCard Question="@editingQuestion"
+									 CanMoveUp="false"
+									 CanMoveDown="false"
+									 QuestionTypeLabels="@questionTypeLabels"
+									 OnEdit="@(() => { })"
+									 OnMoveUp="@(() => { })"
+									 OnMoveDown="@(() => { })"
+									 OnDelete="@(() => { })" />
+					}
+				</div>
+			</div>
+		}
+		else
+		{
+			<!-- Step Content -->
+			@if (currentStep == 1)
+			{
+				<div class="step-content">
+					<div class="step-header">
+						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Template Information</RadzenText>
+						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">@GetStatusDescription()</RadzenText>
+					</div>
 					<BasicInfoTab Template="@template" Categories="@categories" />
-				</RadzenTabsItem>
-
-				<RadzenTabsItem Text="Questions">
+					<div class="step-navigation mt-4 d-flex justify-content-end">
+						<RadzenButton Text="Next: Build Sections" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(2))" />
+					</div>
+				</div>
+			}
+			else if (currentStep == 2)
+			{
+				<div class="step-content">
+					<div class="step-header">
+						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Build Sections</RadzenText>
+						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Organize your assessment into logical sections and configure questions</RadzenText>
+					</div>
 					<QuestionsTab Template="@template"
 								  ShowQuestionTypeSelection="@showQuestionTypeSelection"
 								  SelectedSectionIndex="@selectedSectionIndex"
 								  QuestionTypeLabels="@questionTypeLabels"
-								  OnAddSection="@AddSection"
+								  OnAddSectionWithType="@AddSectionWithType"
 								  OnMoveSectionUp="@MoveSectionUp"
 								  OnMoveSectionDown="@MoveSectionDown"
 								  OnRemoveSection="@RemoveSection"
 								  OnShowAddQuestionDialog="@ShowAddQuestionDialog"
+								  OnAddItemDirectly="@AddItemDirectly"
 								  OnCancelQuestionTypeSelection="@CancelQuestionTypeSelection"
 								  OnAddQuestionOfType="@AddQuestionOfType"
+								  OnEditQuestion="@OpenQuestionEditor"
 								  OnMoveQuestionUp="@MoveQuestionUp"
 								  OnMoveQuestionDown="@MoveQuestionDown"
 								  OnRemoveQuestion="@RemoveQuestion" />
-				</RadzenTabsItem>
-
-				<RadzenTabsItem Text="Preview">
+					<div class="step-navigation mt-4 d-flex justify-content-between">
+						<RadzenButton Text="Previous: Basic Info" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(1))" />
+						<RadzenButton Text="Next: Review" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(3))" />
+					</div>
+				</div>
+			}
+			else if (currentStep == 3)
+			{
+				<div class="step-content">
+					<div class="step-header">
+						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Review & Publish</RadzenText>
+						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Review your questionnaire and make it available for assignments</RadzenText>
+					</div>
 					<PreviewTab Template="@template" QuestionTypeLabels="@questionTypeLabels" />
-				</RadzenTabsItem>
-			</Tabs>
-		</RadzenTabs>
-	</RadzenCard>
+					<div class="step-navigation mt-4 d-flex justify-content-between">
+						<RadzenButton Text="Previous: Build Sections" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
+						<div class="d-flex gap-2">
+							<RadzenButton Text="Save Draft" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" />
+							<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" />
+						</div>
+					</div>
+				</div>
+			}
+		}
+	</div>
 </div>
 
 @code {
@@ -138,6 +196,15 @@
 
 	private QuestionnaireTemplate template = new();
 	private bool IsEditMode => TemplateId.HasValue;
+
+	// Step navigation state
+	private int currentStep = 1;
+
+	// Question editor state
+	private bool showQuestionEditor = false;
+	private QuestionItem? editingQuestion = null;
+	private int editingSectionIndex = -1;
+	private int editingQuestionIndex = -1;
 
 	// Question type selection state
 	private bool showQuestionTypeSelection = false;
@@ -222,20 +289,212 @@
 		}
 	}
 
-	private void OnTabChanged(int index)
+	private void SetCurrentStep(int step)
 	{
-		// Handle tab change if needed
+		currentStep = step;
+		StateHasChanged();
 	}
 
-	private void AddSection()
+	private async Task OpenQuestionEditor((int sectionIndex, int questionIndex) indices)
+	{
+		if (indices.sectionIndex >= 0 && indices.sectionIndex < template.Sections.Count &&
+			indices.questionIndex >= 0 && indices.questionIndex < template.Sections[indices.sectionIndex].Questions.Count)
+		{
+			editingSectionIndex = indices.sectionIndex;
+			editingQuestionIndex = indices.questionIndex;
+			// Create a deep copy of the question for editing
+			var originalQuestion = template.Sections[indices.sectionIndex].Questions[indices.questionIndex];
+			editingQuestion = new QuestionItem
+			{
+				Id = originalQuestion.Id,
+				Title = originalQuestion.Title,
+				Description = originalQuestion.Description,
+				Type = originalQuestion.Type,
+				Order = originalQuestion.Order,
+				IsRequired = originalQuestion.IsRequired,
+				Configuration = new Dictionary<string, object>(originalQuestion.Configuration)
+			};
+			showQuestionEditor = true;
+			StateHasChanged();
+		}
+	}
+
+	private void CloseQuestionEditor()
+	{
+		showQuestionEditor = false;
+		editingQuestion = null;
+		editingSectionIndex = -1;
+		editingQuestionIndex = -1;
+		StateHasChanged();
+	}
+
+	private async Task SaveCurrentQuestion()
+	{
+		if (editingQuestion != null && editingSectionIndex >= 0 && editingQuestionIndex >= 0)
+		{
+			// Save the edited question back to the template
+			template.Sections[editingSectionIndex].Questions[editingQuestionIndex] = editingQuestion;
+			CloseQuestionEditor();
+			NotificationService.Notify(NotificationSeverity.Success, "Saved", "Question updated successfully");
+		}
+	}
+
+	private string GetCurrentQuestionTitle()
+	{
+		return editingQuestion?.Title ?? "Untitled Question";
+	}
+
+
+	private void AddSectionWithType(QuestionType questionType)
 	{
 		var newSection = new QuestionSection
 		{
-			Title = $"Section {template.Sections.Count + 1}",
+			Title = GetDefaultSectionTitle(questionType),
 			Order = template.Sections.Count,
 			IsRequired = true
 		};
+
 		template.Sections.Add(newSection);
+
+		// Immediately add a question of the selected type
+		AddQuestionOfExistingType(template.Sections.Count - 1, questionType);
+	}
+
+	private string GetDefaultSectionTitle(QuestionType type)
+	{
+		return type switch
+		{
+			QuestionType.SelfAssessment => "Self-Assessment",
+			QuestionType.GoalAchievement => "Goal Achievement Review",
+			QuestionType.TextQuestion => "Open-Ended Questions",
+			_ => $"Section {template.Sections.Count + 1}"
+		};
+	}
+
+	private void AddItemDirectly(int sectionIndex)
+	{
+		if (sectionIndex >= 0 && sectionIndex < template.Sections.Count)
+		{
+			var section = template.Sections[sectionIndex];
+
+			// If section already has questions, add an item to the existing question
+			if (section.Questions.Any())
+			{
+				var existingQuestion = section.Questions.First();
+				AddItemToExistingQuestion(existingQuestion);
+			}
+			else
+			{
+				// No questions yet, fall back to showing question type selection
+				ShowAddQuestionDialog(sectionIndex);
+			}
+		}
+	}
+
+	private void AddItemToExistingQuestion(QuestionItem question)
+	{
+		if (question.Type == QuestionType.SelfAssessment)
+		{
+			var competencies = GetCompetenciesFromQuestion(question);
+			var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
+			competencies.Add(new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false, nextOrder));
+			question.Configuration["Competencies"] = competencies;
+		}
+		else if (question.Type == QuestionType.GoalAchievement)
+		{
+			var goalCategories = GetGoalCategoriesFromQuestion(question);
+			var nextOrder = goalCategories.Count > 0 ? goalCategories.Max(g => g.Order) + 1 : 0;
+			goalCategories.Add(new QuestionCard.GoalCategory { Title = "", Description = "", IsRequired = false, Order = nextOrder });
+			question.Configuration["GoalCategories"] = goalCategories;
+		}
+		else if (question.Type == QuestionType.TextQuestion)
+		{
+			var textSections = GetTextSectionsFromQuestion(question);
+			var nextOrder = textSections.Count > 0 ? textSections.Max(t => t.Order) + 1 : 0;
+			textSections.Add(new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = nextOrder });
+			question.Configuration["TextSections"] = textSections;
+		}
+	}
+
+	private List<CompetencyDefinition> GetCompetenciesFromQuestion(QuestionItem question)
+	{
+		if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
+		{
+			if (competenciesObj is List<CompetencyDefinition> competencies)
+				return competencies;
+		}
+		return new List<CompetencyDefinition>();
+	}
+
+	private List<QuestionCard.GoalCategory> GetGoalCategoriesFromQuestion(QuestionItem question)
+	{
+		if (question.Configuration.TryGetValue("GoalCategories", out var categoriesObj))
+		{
+			if (categoriesObj is List<QuestionCard.GoalCategory> categories)
+				return categories;
+		}
+		return new List<QuestionCard.GoalCategory>();
+	}
+
+	private List<QuestionCard.TextSection> GetTextSectionsFromQuestion(QuestionItem question)
+	{
+		if (question.Configuration.TryGetValue("TextSections", out var sectionsObj))
+		{
+			if (sectionsObj is List<QuestionCard.TextSection> sections)
+				return sections;
+		}
+		return new List<QuestionCard.TextSection>();
+	}
+
+	private void AddQuestionOfExistingType(int sectionIndex, QuestionType questionType)
+	{
+		if (sectionIndex >= 0 && sectionIndex < template.Sections.Count)
+		{
+			var section = template.Sections[sectionIndex];
+			var newQuestion = new QuestionItem
+			{
+				Id = Guid.NewGuid(),
+				Title = GetDefaultQuestionTitle(questionType),
+				Type = questionType,
+				Order = section.Questions.Count,
+				IsRequired = true
+			};
+
+			// Initialize default configuration for each question type
+			if (questionType == QuestionType.SelfAssessment)
+			{
+				// Initialize with one default competency
+				var competencies = new List<CompetencyDefinition>
+				{
+					new CompetencyDefinition("competency_1", "", "", false, 0)
+				};
+				newQuestion.Configuration["Competencies"] = competencies;
+
+				// Initialize default rating scale settings
+				newQuestion.Configuration["RatingScale"] = 4; // Default to 1-4 scale
+				newQuestion.Configuration["ScaleLowLabel"] = "Poor";
+				newQuestion.Configuration["ScaleHighLabel"] = "Excellent";
+			}
+			else if (questionType == QuestionType.GoalAchievement)
+			{
+				// Initialize with one default goal category
+				newQuestion.Configuration["GoalCategories"] = new List<QuestionCard.GoalCategory>
+				{
+					new QuestionCard.GoalCategory { Title = "", Description = "", IsRequired = false, Order = 0 }
+				};
+			}
+			else if (questionType == QuestionType.TextQuestion)
+			{
+				// Initialize with one default text section using proper type
+				newQuestion.Configuration["TextSections"] = new List<QuestionCard.TextSection>
+				{
+					new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = 0 }
+				};
+			}
+
+			// Add the question to the section
+			section.Questions.Add(newQuestion);
+		}
 	}
 
 	private async Task RemoveSection(int index)
@@ -288,8 +547,6 @@
 	}
 
 
-	// These dialog-based editing methods are no longer needed as editing is now inline
-	// Keeping the helper methods for configuration management
 
 	private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
 	{
@@ -342,8 +599,6 @@
 		question.Configuration["Competencies"] = competencies;
 	}
 
-	// These helper methods are no longer needed since editing is now handled inline in QuestionCard.razor
-	// Keeping them for potential future use, but with proper type safety
 
 	private async Task RemoveQuestion(int sectionIndex, int questionIndex)
 	{
@@ -400,12 +655,23 @@
 		};
 	}
 
-	// Question preview is now handled inline within the QuestionCard component
 
 private async Task PreviewQuestionnaire()
 {
-	// Open questionnaire in preview mode
-	NotificationService.Notify(NotificationSeverity.Info, "Preview", "Preview functionality would open here");
+	var result = await DialogService.OpenAsync<QuestionnairePreview>("Questionnaire Preview",
+		new Dictionary<string, object>()
+		{
+			{ "Template", template },
+			{ "QuestionTypeLabels", questionTypeLabels }
+		},
+		new DialogOptions()
+		{
+			Width = "95vw",
+			Height = "95vh",
+			Resizable = false,
+			ShowClose = true,
+			CloseDialogOnOverlayClick = false
+		});
 }
 
 private async Task SaveQuestionnaire()
@@ -926,72 +1192,203 @@ private void MoveQuestionDown((int sectionIndex, int questionIndex) indices)
 }
 
 <style>
-.publish-status-badge .badge {
+/* Color Variables from FarbCodes.png */
+:root {
+	--primary-color: #0F60FF; /* Blue new */
+	--dark-blue: #002650; /* Dark Blue */
+	--ice-blue: #7F3AAE; /* Light Blue - using purple rain as accent */
+	--light-gray: #F1F3F4;
+	--success-color: #00E6C8; /* Green new */
+	--warning-color: #E6BF7F; /* Golden Milk */
+	--purple-rain: #935BA9;
+}
+
+/* Header Styling */
+.questionnaire-builder-header {
+	background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-color) 100%);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge .badge {
 	font-size: 0.75rem;
 	font-weight: 600;
 	letter-spacing: 0.5px;
-	padding: 0.4rem 0.8rem;
 	border-radius: 1rem;
 	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Progress Steps */
+.progress-steps-container {
+	background: white;
+	border-bottom: 1px solid #e9ecef;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.progress-steps {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	max-width: 600px;
+	margin: 0 auto;
+}
+
+.step {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	cursor: pointer;
 	transition: all 0.2s ease-in-out;
-}
-
-.publish-status-badge .badge:hover {
-	transform: translateY(-1px);
-	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.publish-status-badge .bg-success {
-	background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.publish-status-badge .bg-warning {
-	background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
-	border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.publish-status-badge .bg-info {
-	background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
-	border: 1px solid rgba(255, 255, 255, 0.2);
-	color: white !important;
-}
-
-/* Enhanced button styling for status-aware buttons */
-.btn-group-status {
-	gap: 0.5rem;
-}
-
-.btn-group-status .btn {
-	font-weight: 500;
-	padding: 0.5rem 1.2rem;
+	padding: 0.5rem;
 	border-radius: 0.5rem;
+}
+
+.step:hover {
+	background: var(--light-gray);
+}
+
+.step-circle {
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #e9ecef;
+	color: #6c757d;
+	transition: all 0.2s ease-in-out;
+	margin-bottom: 0.5rem;
+}
+
+.step.active .step-circle {
+	background: var(--primary-color);
+	color: white;
+	box-shadow: 0 4px 12px rgba(15, 96, 255, 0.3);
+}
+
+.step.completed .step-circle {
+	background: var(--success-color);
+	color: white;
+}
+
+.step-text {
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: #6c757d;
+}
+
+.step.active .step-text {
+	color: var(--primary-color);
+	font-weight: 600;
+}
+
+.step.completed .step-text {
+	color: var(--success-color);
+}
+
+.step-connector {
+	width: 80px;
+	height: 2px;
+	background: #e9ecef;
+	margin: 0 1rem;
 	transition: all 0.2s ease-in-out;
 }
 
-.btn-group-status .btn:hover {
+.step-connector.completed {
+	background: var(--success-color);
+}
+
+/* Main Content */
+.main-content-area {
+	padding: 2rem 0;
+	min-height: calc(100vh - 200px);
+	background: #f8f9fa;
+}
+
+.step-content {
+	max-width: 1200px;
+	margin: 0 auto;
+	background: white;
+	padding: 2rem;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.step-header {
+	text-align: center;
+	margin-bottom: 2rem;
+}
+
+.step-navigation {
+	border-top: 1px solid #e9ecef;
+	padding-top: 1.5rem;
+}
+
+/* Question Editor Full Screen */
+.question-editor-fullscreen {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: white;
+	z-index: 1050;
+	display: flex;
+	flex-direction: column;
+}
+
+.editor-header {
+	background: var(--light-gray);
+	border-bottom: 1px solid #e9ecef;
+	padding: 0 2rem;
+	flex-shrink: 0;
+}
+
+.editor-content {
+	flex: 1;
+	overflow-y: auto;
+	max-width: 1000px;
+	margin: 0 auto;
+	width: 100%;
+}
+
+/* Flat Design Overrides */
+.rz-card {
+	border: none !important;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Remove nested card styling */
+.step-content .rz-card {
+	box-shadow: none !important;
+	border: 1px solid #e9ecef !important;
+}
+
+/* Button enhancements */
+.rz-button {
+	border-radius: 6px !important;
+	font-weight: 500 !important;
+	transition: all 0.2s ease-in-out !important;
+}
+
+.rz-button:hover {
 	transform: translateY(-1px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
-/* Status-specific animations */
-@@keyframes publishPulse {
-	0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
-	70% { box-shadow: 0 0 0 8px rgba(40, 167, 69, 0); }
-	100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+.rz-button-primary {
+	background: var(--primary-color) !important;
+	border-color: var(--primary-color) !important;
 }
 
-@@keyframes draftPulse {
-	0% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.4); }
-	70% { box-shadow: 0 0 0 8px rgba(255, 193, 7, 0); }
-	100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+.rz-button-success {
+	background: var(--success-color) !important;
+	border-color: var(--success-color) !important;
+	color: var(--dark-blue) !important;
 }
 
-.publish-status-badge .bg-success {
-	animation: publishPulse 2s infinite;
-}
-
-.publish-status-badge .bg-warning {
-	animation: draftPulse 3s infinite;
+.rz-button-warning {
+	background: var(--warning-color) !important;
+	border-color: var(--warning-color) !important;
+	color: var(--dark-blue) !important;
 }
 </style>
