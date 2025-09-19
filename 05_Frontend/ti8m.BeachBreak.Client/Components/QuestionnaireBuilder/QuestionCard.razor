@@ -522,14 +522,6 @@
         return competencies.OrderBy(c => c.Order).ToList();
     }
 
-    private void AddCompetency()
-    {
-        var competencies = GetCompetenciesFromConfiguration();
-        var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
-        competencies.Add(new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false, nextOrder));
-        Question.Configuration["Competencies"] = competencies;
-        StateHasChanged();
-    }
 
     private async Task RemoveCompetency(int displayIndex)
     {
@@ -657,14 +649,6 @@
         return categories.OrderBy(c => c.Order).ToList();
     }
 
-    private void AddGoalCategory()
-    {
-        var categories = GetGoalCategoriesFromConfiguration();
-        var nextOrder = categories.Count > 0 ? categories.Max(c => c.Order) + 1 : 0;
-        categories.Add(new GoalCategory { Title = "", Description = "", IsRequired = false, Order = nextOrder });
-        Question.Configuration["GoalCategories"] = categories;
-        StateHasChanged();
-    }
 
     private async Task RemoveGoalCategory(int index)
     {
@@ -805,14 +789,6 @@
         return sections.OrderBy(s => s.Order).ToList();
     }
 
-    private void AddTextSection()
-    {
-        var sections = GetTextSectionsFromConfiguration();
-        var nextOrder = sections.Count > 0 ? sections.Max(s => s.Order) + 1 : 0;
-        sections.Add(new TextSection { Title = "", Description = "", IsRequired = false, Order = nextOrder });
-        Question.Configuration["TextSections"] = sections;
-        StateHasChanged();
-    }
 
     private async Task RemoveTextSection(int index)
     {
@@ -1034,71 +1010,6 @@
         }
     }
 
-    // Rating scale configuration methods for SelfAssessment
-    private int GetRatingScale()
-    {
-        if (Question.Configuration.ContainsKey("RatingScale"))
-        {
-            if (Question.Configuration["RatingScale"] is int scale)
-                return scale;
-            if (int.TryParse(Question.Configuration["RatingScale"]?.ToString(), out var parsedScale))
-                return parsedScale;
-        }
-        return 4; // Default to 1-4 scale
-    }
-
-    private void UpdateRatingScale(int scale)
-    {
-        Question.Configuration["RatingScale"] = scale;
-        StateHasChanged();
-    }
-
-    private string GetScaleLowLabel()
-    {
-        if (Question.Configuration.ContainsKey("ScaleLowLabel"))
-        {
-            return Question.Configuration["ScaleLowLabel"]?.ToString() ?? "";
-        }
-        return "";
-    }
-
-    private void UpdateScaleLowLabel(string label)
-    {
-        Question.Configuration["ScaleLowLabel"] = label ?? "";
-        StateHasChanged();
-    }
-
-    private string GetScaleHighLabel()
-    {
-        if (Question.Configuration.ContainsKey("ScaleHighLabel"))
-        {
-            return Question.Configuration["ScaleHighLabel"]?.ToString() ?? "";
-        }
-        return "";
-    }
-
-    private void UpdateScaleHighLabel(string label)
-    {
-        Question.Configuration["ScaleHighLabel"] = label ?? "";
-        StateHasChanged();
-    }
-
-    private List<RatingScaleOption> GetAvailableRatingScales()
-    {
-        return new List<RatingScaleOption>
-        {
-            new RatingScaleOption { Value = 4, Text = "1-4 Stars (Traditional)" },
-            new RatingScaleOption { Value = 5, Text = "1-5 Stars" },
-            new RatingScaleOption { Value = 10, Text = "1-10 Scale (Detailed)" }
-        };
-    }
-
-    // Helper classes for configuration
-    public class RatingScaleOption
-    {
-        public int Value { get; set; }
-        public string Text { get; set; } = "";
-    }
 
     public class GoalCategory
     {

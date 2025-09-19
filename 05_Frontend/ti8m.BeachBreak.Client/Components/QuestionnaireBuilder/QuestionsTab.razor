@@ -133,7 +133,6 @@
     [Parameter, EditorRequired] public int SelectedSectionIndex { get; set; }
     [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
 
-    [Parameter] public EventCallback OnAddSection { get; set; }
     [Parameter] public EventCallback<QuestionType> OnAddSectionWithType { get; set; }
     [Parameter] public EventCallback<int> OnMoveSectionUp { get; set; }
     [Parameter] public EventCallback<int> OnMoveSectionDown { get; set; }

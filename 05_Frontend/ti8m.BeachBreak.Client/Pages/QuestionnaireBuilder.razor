@@ -147,7 +147,6 @@
 								  ShowQuestionTypeSelection="@showQuestionTypeSelection"
 								  SelectedSectionIndex="@selectedSectionIndex"
 								  QuestionTypeLabels="@questionTypeLabels"
-								  OnAddSection="@AddSection"
 								  OnAddSectionWithType="@AddSectionWithType"
 								  OnMoveSectionUp="@MoveSectionUp"
 								  OnMoveSectionDown="@MoveSectionDown"
@@ -345,16 +344,6 @@
 		return editingQuestion?.Title ?? "Untitled Question";
 	}
 
-	private void AddSection()
-	{
-		var newSection = new QuestionSection
-		{
-			Title = $"Section {template.Sections.Count + 1}",
-			Order = template.Sections.Count,
-			IsRequired = true
-		};
-		template.Sections.Add(newSection);
-	}
 
 	private void AddSectionWithType(QuestionType questionType)
 	{
@@ -558,8 +547,6 @@
 	}
 
 
-	// These dialog-based editing methods are no longer needed as editing is now inline
-	// Keeping the helper methods for configuration management
 
 	private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
 	{
@@ -612,8 +599,6 @@
 		question.Configuration["Competencies"] = competencies;
 	}
 
-	// These helper methods are no longer needed since editing is now handled inline in QuestionCard.razor
-	// Keeping them for potential future use, but with proper type safety
 
 	private async Task RemoveQuestion(int sectionIndex, int questionIndex)
 	{
@@ -670,7 +655,6 @@
 		};
 	}
 
-	// Question preview is now handled inline within the QuestionCard component
 
 private async Task PreviewQuestionnaire()
 {

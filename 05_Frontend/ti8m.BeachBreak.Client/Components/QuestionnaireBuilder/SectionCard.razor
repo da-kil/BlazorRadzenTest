@@ -132,26 +132,6 @@
             </div>
         </div>
 
-        @* Existing Questions Display *@
-        @if (Section.Questions.Any())
-        {
-            <div class="questions-list mb-3">
-                @for (int questionIndex = 0; questionIndex < Section.Questions.Count; questionIndex++)
-                {
-                    var question = Section.Questions[questionIndex];
-                    var currentQuestionIndex = questionIndex;
-
-                    <QuestionCard Question="@question"
-                                 CanMoveUp="@(currentQuestionIndex > 0)"
-                                 CanMoveDown="@(currentQuestionIndex < Section.Questions.Count - 1)"
-                                 QuestionTypeLabels="@QuestionTypeLabels"
-                                 OnEdit="@(() => OnEditQuestionInternal(currentQuestionIndex))"
-                                 OnMoveUp="@(() => OnMoveQuestionUpInternal(currentQuestionIndex))"
-                                 OnMoveDown="@(() => OnMoveQuestionDownInternal(currentQuestionIndex))"
-                                 OnDelete="@(() => OnDeleteQuestionInternal(currentQuestionIndex))" />
-                }
-            </div>
-        }
 
         @* Question Type Selection - Only show if section has no questions yet *@
         @if (ShowQuestionTypeSelection && !Section.Questions.Any())
