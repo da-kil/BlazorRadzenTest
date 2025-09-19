@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inject IQuestionnaireApiService QuestionnaireApiService
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
+@inject IAuthenticationService AuthenticationService
 @inject NavigationManager NavigationManager
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -127,7 +128,8 @@
     private List<QuestionnaireTemplate> templates = new();
     private bool isLoading = true;
     private int selectedTabIndex = 0;
-    private string currentEmployeeId = "current-user"; // TODO: Get from auth context
+    private string currentEmployeeId = "";
+    private CurrentUser? currentUser;
 
     // Filter properties
     private string questionnaireCategoryFilter = "";
@@ -135,6 +137,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        currentUser = await AuthenticationService.GetCurrentUserAsync();
+        currentEmployeeId = currentUser.EmployeeId;
         await LoadQuestionnaires();
     }
 
@@ -453,7 +457,7 @@
 
     private async Task StartQuestionnaire(QuestionnaireAssignment assignment)
     {
-        NavigationManager.NavigateTo($"/questionnaire/{assignment.TemplateId}/{assignment.Id}");
+        NavigationManager.NavigateTo($"/my-questionnaires/{assignment.TemplateId}");
     }
 
     private async Task ViewResults(QuestionnaireAssignment assignment)

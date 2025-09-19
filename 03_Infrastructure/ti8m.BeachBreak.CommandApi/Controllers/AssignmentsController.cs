@@ -53,4 +53,91 @@ public class AssignmentsController : BaseController
             return StatusCode(500, "An error occurred while creating assignments");
         }
     }
+
+    [HttpPost("reminder")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SendReminder([FromBody] AssignmentReminderDto reminderDto)
+    {
+        logger.LogInformation("Received SendReminder request for Assignment: {AssignmentId}", reminderDto.AssignmentId);
+
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                logger.LogWarning("SendReminder request failed validation");
+                return BadRequest(ModelState);
+            }
+
+            var command = new SendAssignmentReminderCommand(
+                reminderDto.AssignmentId,
+                reminderDto.Message,
+                reminderDto.SentBy);
+
+            var result = await commandDispatcher.SendAsync(command);
+
+            if (result.Succeeded)
+            {
+                logger.LogInformation("SendReminder completed successfully for Assignment: {AssignmentId}", reminderDto.AssignmentId);
+                return Ok();
+            }
+            else
+            {
+                logger.LogWarning("SendReminder failed for Assignment: {AssignmentId}, Error: {ErrorMessage}", reminderDto.AssignmentId, result.Message);
+                return BadRequest(result.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error sending reminder for Assignment: {AssignmentId}", reminderDto.AssignmentId);
+            return StatusCode(500, "An error occurred while sending the reminder");
+        }
+    }
+
+    [HttpPost("bulk-reminder")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> SendBulkReminder([FromBody] BulkAssignmentReminderDto bulkReminderDto)
+    {
+        var assignmentCount = bulkReminderDto.AssignmentIds?.Count() ?? 0;
+        logger.LogInformation("Received SendBulkReminder request for {AssignmentCount} assignments", assignmentCount);
+
+        try
+        {
+            if (!ModelState.IsValid)
+            {
+                logger.LogWarning("SendBulkReminder request failed validation");
+                return BadRequest(ModelState);
+            }
+
+            if (bulkReminderDto.AssignmentIds == null || !bulkReminderDto.AssignmentIds.Any())
+            {
+                logger.LogWarning("SendBulkReminder request received with no assignment IDs");
+                return BadRequest("No assignment IDs provided");
+            }
+
+            var command = new SendBulkAssignmentReminderCommand(
+                bulkReminderDto.AssignmentIds,
+                bulkReminderDto.Message,
+                bulkReminderDto.SentBy);
+
+            var result = await commandDispatcher.SendAsync(command);
+
+            if (result.Succeeded)
+            {
+                logger.LogInformation("SendBulkReminder completed successfully for {AssignmentCount} assignments", assignmentCount);
+                return Ok();
+            }
+            else
+            {
+                logger.LogWarning("SendBulkReminder failed for {AssignmentCount} assignments, Error: {ErrorMessage}", assignmentCount, result.Message);
+                return BadRequest(result.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error sending bulk reminder for {AssignmentCount} assignments", assignmentCount);
+            return StatusCode(500, "An error occurred while sending bulk reminders");
+        }
+    }
 }

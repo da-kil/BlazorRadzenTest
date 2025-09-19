@@ -3,7 +3,10 @@ using Npgsql;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
-public class QuestionnaireAssignmentCommandHandler : ICommandHandler<CreateQuestionnaireAssignmentCommand, Result>
+public class QuestionnaireAssignmentCommandHandler :
+    ICommandHandler<CreateQuestionnaireAssignmentCommand, Result>,
+    ICommandHandler<SendAssignmentReminderCommand, Result>,
+    ICommandHandler<SendBulkAssignmentReminderCommand, Result>
 {
     private readonly ILogger<QuestionnaireAssignmentCommandHandler> logger;
     private readonly NpgsqlDataSource dataSource;
@@ -104,6 +107,137 @@ public class QuestionnaireAssignmentCommandHandler : ICommandHandler<CreateQuest
         }
 
         return null;
+    }
+
+    public async Task<Result> HandleAsync(SendAssignmentReminderCommand command, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Sending reminder for AssignmentId: {AssignmentId}", command.AssignmentId);
+
+        try
+        {
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+            try
+            {
+                await using var cmd = connection.CreateCommand();
+                cmd.Transaction = transaction;
+
+                cmd.CommandText = """
+                    INSERT INTO assignment_reminders (
+                        id, assignment_id, message, sent_by, sent_date, reminder_type
+                    ) VALUES (
+                        @id, @assignmentId, @message, @sentBy, @sentDate, @reminderType
+                    )
+                    """;
+
+                cmd.Parameters.AddWithValue("@id", Guid.NewGuid());
+                cmd.Parameters.AddWithValue("@assignmentId", command.AssignmentId);
+                cmd.Parameters.AddWithValue("@message", command.Message);
+                cmd.Parameters.AddWithValue("@sentBy", command.SentBy);
+                cmd.Parameters.AddWithValue("@sentDate", DateTime.UtcNow);
+                cmd.Parameters.AddWithValue("@reminderType", "Individual");
+
+                await cmd.ExecuteNonQueryAsync(cancellationToken);
+
+                await using var updateCmd = connection.CreateCommand();
+                updateCmd.Transaction = transaction;
+                updateCmd.CommandText = """
+                    UPDATE questionnaire_assignments
+                    SET last_reminder_date = @lastReminderDate
+                    WHERE id = @assignmentId
+                    """;
+
+                updateCmd.Parameters.AddWithValue("@lastReminderDate", DateTime.UtcNow);
+                updateCmd.Parameters.AddWithValue("@assignmentId", command.AssignmentId);
+
+                await updateCmd.ExecuteNonQueryAsync(cancellationToken);
+
+                await transaction.CommitAsync(cancellationToken);
+                logger.LogInformation("Reminder sent successfully for AssignmentId: {AssignmentId}", command.AssignmentId);
+
+                return Result.Success("Reminder sent successfully");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred during send reminder transaction, rolling back");
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send reminder for AssignmentId: {AssignmentId}", command.AssignmentId);
+            return Result.Fail($"Failed to send reminder: {ex.Message}", 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(SendBulkAssignmentReminderCommand command, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Sending bulk reminders for {AssignmentCount} assignments", command.AssignmentIds.Count());
+
+        try
+        {
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+            try
+            {
+                var reminderId = Guid.NewGuid();
+                var sentDate = DateTime.UtcNow;
+
+                foreach (var assignmentId in command.AssignmentIds)
+                {
+                    await using var insertCmd = connection.CreateCommand();
+                    insertCmd.Transaction = transaction;
+                    insertCmd.CommandText = """
+                        INSERT INTO assignment_reminders (
+                            id, assignment_id, message, sent_by, sent_date, reminder_type
+                        ) VALUES (
+                            @id, @assignmentId, @message, @sentBy, @sentDate, @reminderType
+                        )
+                        """;
+
+                    insertCmd.Parameters.AddWithValue("@id", Guid.NewGuid());
+                    insertCmd.Parameters.AddWithValue("@assignmentId", assignmentId);
+                    insertCmd.Parameters.AddWithValue("@message", command.Message);
+                    insertCmd.Parameters.AddWithValue("@sentBy", command.SentBy);
+                    insertCmd.Parameters.AddWithValue("@sentDate", sentDate);
+                    insertCmd.Parameters.AddWithValue("@reminderType", "Bulk");
+
+                    await insertCmd.ExecuteNonQueryAsync(cancellationToken);
+
+                    await using var updateCmd = connection.CreateCommand();
+                    updateCmd.Transaction = transaction;
+                    updateCmd.CommandText = """
+                        UPDATE questionnaire_assignments
+                        SET last_reminder_date = @lastReminderDate
+                        WHERE id = @assignmentId
+                        """;
+
+                    updateCmd.Parameters.AddWithValue("@lastReminderDate", sentDate);
+                    updateCmd.Parameters.AddWithValue("@assignmentId", assignmentId);
+
+                    await updateCmd.ExecuteNonQueryAsync(cancellationToken);
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+                logger.LogInformation("Bulk reminders sent successfully for {AssignmentCount} assignments", command.AssignmentIds.Count());
+
+                return Result.Success($"Bulk reminders sent successfully for {command.AssignmentIds.Count()} assignments");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error occurred during send bulk reminder transaction, rolling back");
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to send bulk reminders for {AssignmentCount} assignments", command.AssignmentIds.Count());
+            return Result.Fail($"Failed to send bulk reminders: {ex.Message}", 500);
+        }
     }
 
     private class EmployeeDetails

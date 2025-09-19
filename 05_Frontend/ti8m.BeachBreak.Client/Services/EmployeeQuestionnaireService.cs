@@ -14,7 +14,7 @@ public class EmployeeQuestionnaireService : IEmployeeQuestionnaireService
         httpQueryClient = factory.CreateClient("QueryClient");
         httpCommandClient = factory.CreateClient("CommandClient");
         // TODO: Get current employee ID from authentication context
-        currentEmployeeId = "current-user";
+        currentEmployeeId = "b0f388c2-6294-4116-a8b2-eccafa29b3fb";
     }
 
     public async Task<List<QuestionnaireAssignment>> GetMyAssignmentsAsync()

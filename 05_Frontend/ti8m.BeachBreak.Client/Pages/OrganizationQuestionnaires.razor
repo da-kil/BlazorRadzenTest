@@ -1,4 +1,4 @@
-@page "/organization-questionnaires"
+@page "/organization/questionnaires"
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
@@ -7,6 +7,8 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @inject IQuestionnaireApiService QuestionnaireApiService
 @inject IEmployeeApiService EmployeeApiService
+@inject IHRQuestionnaireService HRQuestionnaireService
+@inject IAuthenticationService AuthenticationService
 @inject NavigationManager NavigationManager
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -252,9 +254,9 @@
 
         try
         {
-            // Load all data in parallel
-            var employeesTask = EmployeeApiService.GetAllEmployeesAsync();
-            var assignmentsTask = QuestionnaireApiService.GetAllAssignmentsAsync();
+            // Load organization data using targeted HR service methods
+            var employeesTask = HRQuestionnaireService.GetAllEmployeesAsync();
+            var assignmentsTask = HRQuestionnaireService.GetAllAssignmentsAsync();
             var templatesTask = QuestionnaireApiService.GetAllTemplatesAsync();
 
             await Task.WhenAll(employeesTask, assignmentsTask, templatesTask);

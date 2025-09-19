@@ -10,7 +10,7 @@ internal class Program
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
         builder.Services.AddRadzenComponents();
-        
+
         await builder.Build().RunAsync();
     }
 }

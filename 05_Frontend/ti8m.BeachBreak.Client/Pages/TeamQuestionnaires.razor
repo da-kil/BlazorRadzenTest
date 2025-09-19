@@ -1,4 +1,4 @@
-@page "/team-questionnaires"
+@page "/team/questionnaires"
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
@@ -7,6 +7,8 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @inject IQuestionnaireApiService QuestionnaireApiService
 @inject IEmployeeApiService EmployeeApiService
+@inject IManagerQuestionnaireService ManagerQuestionnaireService
+@inject IAuthenticationService AuthenticationService
 @inject NavigationManager NavigationManager
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -167,7 +169,8 @@
     private string searchFilter = "";
     private string statusFilter = "";
     private string categoryFilter = "";
-    private string currentManagerId = "current-manager"; // TODO: Get from auth context
+    private string currentManagerId = "";
+    private CurrentUser? currentUser;
 
     private List<dynamic> statusFilterOptions = new()
     {
@@ -182,6 +185,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        currentUser = await AuthenticationService.GetCurrentUserAsync();
+        currentManagerId = currentUser.EmployeeId;
         await LoadTeamData();
     }
 
@@ -192,9 +197,9 @@
 
         try
         {
-            // Load team members, assignments, and templates in parallel
-            var teamMembersTask = EmployeeApiService.GetEmployeesByDepartmentAsync("Engineering"); // TODO: Get manager's department
-            var assignmentsTask = QuestionnaireApiService.GetAllAssignmentsAsync();
+            // Load team data using targeted manager service methods
+            var teamMembersTask = ManagerQuestionnaireService.GetTeamMembersAsync();
+            var assignmentsTask = ManagerQuestionnaireService.GetTeamAssignmentsAsync();
             var templatesTask = QuestionnaireApiService.GetAllTemplatesAsync();
 
             await Task.WhenAll(teamMembersTask, assignmentsTask, templatesTask);
@@ -202,10 +207,6 @@
             teamMembers = await teamMembersTask;
             allAssignments = await assignmentsTask;
             templates = await templatesTask;
-
-            // Filter assignments to only include team members
-            var teamMemberIds = teamMembers.Select(tm => tm.Id.ToString()).ToHashSet();
-            allAssignments = allAssignments.Where(a => teamMemberIds.Contains(a.EmployeeId)).ToList();
 
             // Group assignments by employee
             employeeAssignments = allAssignments.GroupBy(a => a.EmployeeId)

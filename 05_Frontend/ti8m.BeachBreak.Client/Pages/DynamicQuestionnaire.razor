@@ -1,5 +1,4 @@
-@page "/questionnaire/{TemplateId:guid}"
-@page "/questionnaire/{TemplateId:guid}/{AssignmentId:guid?}"
+@page "/my-questionnaires/{TemplateId:guid}"
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Components
@@ -135,12 +134,13 @@
 
 @code {
     [Parameter] public Guid TemplateId { get; set; }
-    [Parameter] public Guid? AssignmentId { get; set; }
+    private Guid? assignmentId;
     [Inject] protected DialogService DialogService { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
     [Inject] protected IQuestionnaireApiService QuestionnaireApiService { get; set; } = default!;
     [Inject] protected IEmployeeQuestionnaireService EmployeeQuestionnaireService { get; set; } = default!;
+    [Inject] protected IAuthenticationService AuthenticationService { get; set; } = default!;
 
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse response = new();
@@ -150,6 +150,7 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadTemplate();
+        await LoadAssignmentForCurrentEmployee();
         await LoadExistingResponse();
         InitializeResponse();
         UpdateProgress();
@@ -239,13 +240,39 @@
         }
     }
 
+    private async Task LoadAssignmentForCurrentEmployee()
+    {
+        try
+        {
+            // Load the current employee's assignment for this template
+            var assignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
+            var assignment = assignments.FirstOrDefault(a => a.TemplateId == TemplateId &&
+                                                           (a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress));
+
+            if (assignment != null)
+            {
+                assignmentId = assignment.Id;
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Not Assigned", "This questionnaire has not been assigned to you.");
+                NavigationManager.NavigateTo("/my-questionnaires");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load assignment: {ex.Message}");
+            NavigationManager.NavigateTo("/my-questionnaires");
+        }
+    }
+
     private async Task LoadExistingResponse()
     {
-        if (!AssignmentId.HasValue) return;
+        if (!assignmentId.HasValue) return;
 
         try
         {
-            var existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(AssignmentId.Value);
+            var existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
             if (existingResponse != null)
             {
                 response = existingResponse;
@@ -268,8 +295,8 @@
         response = new QuestionnaireResponse
         {
             TemplateId = TemplateId,
-            AssignmentId = AssignmentId ?? Guid.Empty,
-            EmployeeId = "current-user", // Get from auth context
+            AssignmentId = assignmentId ?? Guid.Empty,
+            EmployeeId = AuthenticationService.GetCurrentEmployeeId(),
             Status = ResponseStatus.InProgress
         };
 
@@ -884,7 +911,7 @@
 
     private async Task SaveProgress()
     {
-        if (!AssignmentId.HasValue)
+        if (!assignmentId.HasValue)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Cannot Save", "No assignment ID available");
             return;
@@ -892,7 +919,7 @@
 
         try
         {
-            await EmployeeQuestionnaireService.SaveMyResponseAsync(AssignmentId.Value, response.SectionResponses);
+            await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
             NotificationService.Notify(NotificationSeverity.Success, "Saved", "Your progress has been saved successfully");
         }
         catch (Exception ex)
@@ -915,7 +942,7 @@
             return;
         }
 
-        if (!AssignmentId.HasValue)
+        if (!assignmentId.HasValue)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Cannot Submit", "No assignment ID available");
             return;
@@ -924,10 +951,10 @@
         try
         {
             // First save the current responses
-            await EmployeeQuestionnaireService.SaveMyResponseAsync(AssignmentId.Value, response.SectionResponses);
+            await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
 
             // Then submit the questionnaire
-            var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(AssignmentId.Value);
+            var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
 
             if (submittedResponse != null)
             {
