@@ -2,6 +2,85 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
+<style>
+    .competency-input-row,
+    .goal-category-input-row,
+    .text-section-input-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: start;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .input-field-container {
+        position: relative;
+        min-height: 60px; /* Reserve space for validation message */
+    }
+
+    .input-field-container .rz-textbox {
+        width: 100%;
+    }
+
+    .validation-message {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        display: flex;
+        align-items: center;
+    }
+
+    .required-checkbox-container {
+        display: flex;
+        align-items: center;
+        white-space: nowrap;
+        padding-top: 0.375rem; /* Align with input field top */
+        height: 38px; /* Match input height for consistent alignment */
+    }
+
+    .required-checkbox-container label {
+        margin-bottom: 0;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .competency-input-row,
+        .goal-category-input-row,
+        .text-section-input-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+        }
+
+        .required-checkbox-container {
+            padding-top: 0;
+            height: auto;
+        }
+
+        .input-field-container {
+            min-height: 50px;
+        }
+    }
+
+    /* Ensure consistent spacing for all question items */
+    .competency-item,
+    .goal-category-item,
+    .text-section-item {
+        position: relative;
+    }
+
+    .competency-item .validation-message,
+    .goal-category-item .validation-message,
+    .text-section-item .validation-message {
+        z-index: 1;
+    }
+</style>
+
 <div class="competencies-container">
         <!-- Self-Assessment Configuration -->
         @if (Question.Type == QuestionType.SelfAssessment)
@@ -54,30 +133,26 @@
                                                  Title="Delete competency" />
                                 </div>
                             </div>
-                            <div class="row g-2 mb-2">
-                                <div class="col-md-8">
-                                    <div class="position-relative">
-                                        <RadzenTextBox Value="@competency.Title"
-                                                      ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
-                                                      Placeholder="Enter competency title..."
-                                                      Class="@GetCompetencyTitleValidationClass(competencyIndex)"
-                                                      @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
-                                        @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
-                                        {
-                                            <div class="validation-message text-danger small mt-1">
-                                                <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
-                                                Competency title is required
-                                            </div>
-                                        }
-                                    </div>
+                            <div class="competency-input-row">
+                                <div class="input-field-container">
+                                    <RadzenTextBox Value="@competency.Title"
+                                                  ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
+                                                  Placeholder="Enter competency title..."
+                                                  Class="@GetCompetencyTitleValidationClass(competencyIndex)"
+                                                  @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
+                                    @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
+                                    {
+                                        <div class="validation-message">
+                                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
+                                            Competency title is required
+                                        </div>
+                                    }
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="d-flex align-items-center h-100">
-                                        <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
-                                                       ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
-                                                       Name="@($"comp_req_{Question.Id}_{competencyIndex}")" />
-                                        <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-2 small" />
-                                    </div>
+                                <div class="required-checkbox-container">
+                                    <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
+                                                   ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
+                                                   Name="@($"comp_req_{Question.Id}_{competencyIndex}")" />
+                                    <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-2" />
                                 </div>
                             </div>
                             <div class="mb-0">
@@ -137,8 +212,8 @@
                                                  Title="Delete" />
                                 </div>
                             </div>
-                            <div class="mb-2">
-                                <div class="position-relative">
+                            <div class="goal-category-input-row">
+                                <div class="input-field-container">
                                     <RadzenTextBox Value="@category.Title"
                                                   ValueChanged="@((string value) => UpdateGoalCategoryTitle(categoryIndex, value))"
                                                   Placeholder="Enter goal category title..."
@@ -146,11 +221,17 @@
                                                   @onblur="@(() => ValidateGoalCategoryTitle(categoryIndex))" />
                                     @if (!GetGoalCategoryTitleValid(categoryIndex) && GetGoalCategoryTitleValidated(categoryIndex))
                                     {
-                                        <div class="validation-message text-danger small mt-1">
+                                        <div class="validation-message">
                                             <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
                                             Goal category title is required
                                         </div>
                                     }
+                                </div>
+                                <div class="required-checkbox-container">
+                                    <RadzenCheckBox Value="@GetGoalCategoryRequired(categoryIndex)"
+                                                   ValueChanged="@((bool value) => UpdateGoalCategoryRequired(categoryIndex, value))"
+                                                   Name="@($"goal_req_{Question.Id}_{categoryIndex}")" />
+                                    <RadzenLabel Text="Required" Component="@($"goal_req_{Question.Id}_{categoryIndex}")" Class="ms-2" />
                                 </div>
                             </div>
                             <div class="mb-2">
@@ -159,12 +240,6 @@
                                                Placeholder="Describe this goal category..."
                                                Rows="2"
                                                Class="w-100" />
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <RadzenCheckBox Value="@GetGoalCategoryRequired(categoryIndex)"
-                                               ValueChanged="@((bool value) => UpdateGoalCategoryRequired(categoryIndex, value))"
-                                               Name="@($"goal_req_{Question.Id}_{categoryIndex}")" />
-                                <RadzenLabel Text="This goal category is required" Component="@($"goal_req_{Question.Id}_{categoryIndex}")" Class="ms-2" />
                             </div>
                         </RadzenCard>
                     }
@@ -216,8 +291,8 @@
                                                  Title="Delete" />
                                 </div>
                             </div>
-                            <div class="mb-2">
-                                <div class="position-relative">
+                            <div class="text-section-input-row">
+                                <div class="input-field-container">
                                     <RadzenTextBox Value="@textSection.Title"
                                                   ValueChanged="@((string value) => UpdateTextSectionTitle(sectionIndex, value))"
                                                   Placeholder="Enter section title..."
@@ -225,11 +300,17 @@
                                                   @onblur="@(() => ValidateTextSectionTitle(sectionIndex))" />
                                     @if (!GetTextSectionTitleValid(sectionIndex) && GetTextSectionTitleValidated(sectionIndex))
                                     {
-                                        <div class="validation-message text-danger small mt-1">
+                                        <div class="validation-message">
                                             <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
                                             Text section title is required
                                         </div>
                                     }
+                                </div>
+                                <div class="required-checkbox-container">
+                                    <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
+                                                   ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
+                                                   Name="@($"text_req_{Question.Id}_{sectionIndex}")" />
+                                    <RadzenLabel Text="Required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-2" />
                                 </div>
                             </div>
                             <div class="mb-2">
@@ -238,12 +319,6 @@
                                                Placeholder="Describe this text section..."
                                                Rows="2"
                                                Class="w-100" />
-                            </div>
-                            <div class="d-flex align-items-center">
-                                <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
-                                               ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
-                                               Name="@($"text_req_{Question.Id}_{sectionIndex}")" />
-                                <RadzenLabel Text="This text section is required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-2" />
                             </div>
                         </RadzenCard>
                     }
