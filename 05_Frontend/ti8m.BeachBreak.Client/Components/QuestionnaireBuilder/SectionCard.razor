@@ -32,12 +32,28 @@
 
             <!-- Section Type Indicator -->
             <div class="mb-3" style="padding-right: 6.5rem;">
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-3 mb-2">
                     <div class="section-type-badge d-flex align-items-center gap-2 px-2 py-1 rounded-pill"
                          style="@($"background-color: {GetSectionTypeColor()}15; border: 1px solid {GetSectionTypeColor()}30;")">
                         <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"color: {GetSectionTypeColor()};")" Class="fs-6" />
                         <span class="small fw-medium" style="@($"color: {GetSectionTypeColor()};")">@GetSectionTypeName()</span>
                     </div>
+                    <div class="completion-role-badge d-flex align-items-center gap-1 px-2 py-1 rounded-pill"
+                         style="@($"background-color: {Section.GetRoleColor()}15; border: 1px solid {Section.GetRoleColor()}30;")">
+                        <RadzenIcon Icon="@Section.GetRoleIcon()" Style="@($"color: {Section.GetRoleColor()};")" Class="fs-6" />
+                        <span class="small fw-medium" style="@($"color: {Section.GetRoleColor()};")">@GetCompletionRoleText()</span>
+                    </div>
+                </div>
+
+                <!-- Role Assignment Selector -->
+                <div class="role-selector mb-2">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1 text-muted">Who completes this section?</RadzenText>
+                    <RadzenRadioButtonList @bind-Value="@Section.AssignedTo"
+                                           Data="@roleOptions"
+                                           TextProperty="Text"
+                                           ValueProperty="Value"
+                                           Orientation="Radzen.Orientation.Horizontal"
+                                           Class="role-select-list" />
                 </div>
             </div>
 
@@ -326,6 +342,23 @@
     background: #f8f9fa;
     border: 2px dashed #dee2e6;
     border-radius: 6px;
+}
+
+.completion-role-badge {
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.role-select-list {
+    font-size: 0.85rem;
+}
+
+.role-select-list .rz-radiobutton-item {
+    margin-right: 1rem;
+}
+
+.role-selector {
+    max-width: 350px;
 }
 </style>
 
@@ -662,4 +695,29 @@
         StateHasChanged();
     }
 
+    // Role selection support
+    private List<RoleOption> roleOptions = new()
+    {
+        new() { Value = CompletionRole.Employee, Text = "Employee", Icon = "person" },
+        new() { Value = CompletionRole.Manager, Text = "Manager", Icon = "supervisor_account" },
+        new() { Value = CompletionRole.Both, Text = "Both", Icon = "groups" }
+    };
+
+    private string GetCompletionRoleText()
+    {
+        return Section.AssignedTo switch
+        {
+            CompletionRole.Employee => "Employee",
+            CompletionRole.Manager => "Manager",
+            CompletionRole.Both => "Both",
+            _ => "Unknown"
+        };
+    }
+
+    public class RoleOption
+    {
+        public CompletionRole Value { get; set; }
+        public string Text { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+    }
 }

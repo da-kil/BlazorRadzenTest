@@ -42,6 +42,13 @@ public class QuestionSection
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
 
+    // Role assignment for dual completion workflow
+    public CompletionRole AssignedTo { get; set; } = CompletionRole.Employee;
+    public bool IsEmployeeCompleted { get; set; } = false;
+    public bool IsManagerCompleted { get; set; } = false;
+    public DateTime? EmployeeCompletedDate { get; set; }
+    public DateTime? ManagerCompletedDate { get; set; }
+
     // New simplified structure - each section has one question type
     public QuestionType QuestionType { get; set; }
     public Dictionary<string, object> Configuration { get; set; } = new();
@@ -150,6 +157,67 @@ public class QuestionSection
             _ => "#6c757d"
         };
     }
+
+    // Completion role helper methods
+    public bool IsCompletedForRole(string userRole)
+    {
+        return userRole.ToLower() switch
+        {
+            "employee" => IsEmployeeCompleted,
+            "manager" => IsManagerCompleted,
+            _ => false
+        };
+    }
+
+    public bool IsFullyCompleted()
+    {
+        return AssignedTo switch
+        {
+            CompletionRole.Employee => IsEmployeeCompleted,
+            CompletionRole.Manager => IsManagerCompleted,
+            CompletionRole.Both => IsEmployeeCompleted && IsManagerCompleted,
+            _ => false
+        };
+    }
+
+    public string GetCompletionStatusText()
+    {
+        return AssignedTo switch
+        {
+            CompletionRole.Employee => IsEmployeeCompleted ? "Completed by Employee" : "Pending Employee",
+            CompletionRole.Manager => IsManagerCompleted ? "Completed by Manager" : "Pending Manager",
+            CompletionRole.Both => (IsEmployeeCompleted, IsManagerCompleted) switch
+            {
+                (true, true) => "Completed by Both",
+                (true, false) => "Employee ✓, Manager Pending",
+                (false, true) => "Manager ✓, Employee Pending",
+                (false, false) => "Pending Both"
+            },
+            _ => "Unknown"
+        };
+    }
+
+    public string GetRoleIcon()
+    {
+        return AssignedTo switch
+        {
+            CompletionRole.Employee => "person",
+            CompletionRole.Manager => "supervisor_account",
+            CompletionRole.Both => "groups",
+            _ => "help"
+        };
+    }
+
+    public string GetRoleColor()
+    {
+        return AssignedTo switch
+        {
+            CompletionRole.Employee => "#0F60FF", // Blue
+            CompletionRole.Manager => "#00E6C8", // Green
+            CompletionRole.Both => "#935BA9", // Purple
+            _ => "#6c757d"
+        };
+    }
 }
 
 public class QuestionItem
@@ -169,6 +237,13 @@ public enum QuestionType
     SelfAssessment,      // 1-4 scale with comments like SelfAssessmentStep.razor
     GoalAchievement,     // Goal achievement evaluation like GoalReviewStep.razor
     TextQuestion         // Text area questions like CareerPlanningStep.razor
+}
+
+public enum CompletionRole
+{
+    Employee,   // Only the employee completes this section
+    Manager,    // Only the line manager completes this section
+    Both        // Both employee and manager provide input
 }
 
 public enum TemplateStatus
