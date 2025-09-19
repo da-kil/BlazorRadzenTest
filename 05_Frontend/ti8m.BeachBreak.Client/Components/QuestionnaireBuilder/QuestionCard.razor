@@ -15,7 +15,8 @@
 
     .input-field-container {
         position: relative;
-        min-height: 60px; /* Reserve space for validation message */
+        min-height: 38px; /* Height of input field */
+        margin-bottom: 1.5rem; /* Reserve space for validation message */
     }
 
     .input-field-container .rz-textbox {
@@ -28,10 +29,12 @@
         left: 0;
         right: 0;
         color: #dc3545;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
         margin-top: 0.25rem;
         display: flex;
         align-items: center;
+        line-height: 1.2;
+        z-index: 10;
     }
 
     .required-checkbox-container {
@@ -63,7 +66,8 @@
         }
 
         .input-field-container {
-            min-height: 50px;
+            min-height: 38px;
+            margin-bottom: 1rem;
         }
     }
 
