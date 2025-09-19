@@ -98,23 +98,12 @@
         {
             var goalCategories = GetOrderedGoalCategories();
             <div class="goal-categories-config">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-goal-achievement">
-                        <RadzenIcon Icon="track_changes" Class="me-2" />
-                        Goal Categories (@goalCategories.Count)
-                    </RadzenText>
-                    <RadzenButton Text="Add Goal Category"
-                                 ButtonStyle="ButtonStyle.Warning"
-                                 Icon="add"
-                                 Size="ButtonSize.Small"
-                                 Click="@AddGoalCategory" />
-                </div>
-
                 @if (goalCategories.Count == 0)
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
-                        Click "Add Goal Category" to start adding goal categories for this assessment.
-                    </RadzenAlert>
+                    <div class="text-center p-3 text-muted">
+                        <RadzenIcon Icon="track_changes" Style="font-size: 1.5rem; opacity: 0.5; color: var(--success-color);" />
+                        <div class="mt-2 small">No goal categories configured</div>
+                    </div>
                 }
                 else
                 {
@@ -188,23 +177,12 @@
         {
             var textSections = GetOrderedTextSections();
             <div class="text-sections-config">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-text-response">
-                        <RadzenIcon Icon="psychology" Class="me-2" />
-                        Text Sections (@textSections.Count)
-                    </RadzenText>
-                    <RadzenButton Text="Add Text Section"
-                                 ButtonStyle="ButtonStyle.Info"
-                                 Icon="add"
-                                 Size="ButtonSize.Small"
-                                 Click="@AddTextSection" />
-                </div>
-
                 @if (textSections.Count == 0)
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true" Class="mb-3">
-                        Click "Add Text Section" to start adding text sections for this question.
-                    </RadzenAlert>
+                    <div class="text-center p-3 text-muted">
+                        <RadzenIcon Icon="psychology" Style="font-size: 1.5rem; opacity: 0.5; color: var(--info-color);" />
+                        <div class="mt-2 small">No text sections configured</div>
+                    </div>
                 }
                 else
                 {

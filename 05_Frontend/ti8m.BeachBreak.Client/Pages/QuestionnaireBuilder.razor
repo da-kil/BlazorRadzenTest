@@ -388,11 +388,11 @@
 		{
 			var section = template.Sections[sectionIndex];
 
-			// If section already has questions, add another question of the same type
+			// If section already has questions, add an item to the existing question
 			if (section.Questions.Any())
 			{
-				var existingType = section.Questions.First().Type;
-				AddQuestionOfExistingType(sectionIndex, existingType);
+				var existingQuestion = section.Questions.First();
+				AddItemToExistingQuestion(existingQuestion);
 			}
 			else
 			{
@@ -400,6 +400,61 @@
 				ShowAddQuestionDialog(sectionIndex);
 			}
 		}
+	}
+
+	private void AddItemToExistingQuestion(QuestionItem question)
+	{
+		if (question.Type == QuestionType.SelfAssessment)
+		{
+			var competencies = GetCompetenciesFromQuestion(question);
+			var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
+			competencies.Add(new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false, nextOrder));
+			question.Configuration["Competencies"] = competencies;
+		}
+		else if (question.Type == QuestionType.GoalAchievement)
+		{
+			var goalCategories = GetGoalCategoriesFromQuestion(question);
+			var nextOrder = goalCategories.Count > 0 ? goalCategories.Max(g => g.Order) + 1 : 0;
+			goalCategories.Add(new QuestionCard.GoalCategory { Title = "", Description = "", IsRequired = false, Order = nextOrder });
+			question.Configuration["GoalCategories"] = goalCategories;
+		}
+		else if (question.Type == QuestionType.TextQuestion)
+		{
+			var textSections = GetTextSectionsFromQuestion(question);
+			var nextOrder = textSections.Count > 0 ? textSections.Max(t => t.Order) + 1 : 0;
+			textSections.Add(new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = nextOrder });
+			question.Configuration["TextSections"] = textSections;
+		}
+	}
+
+	private List<CompetencyDefinition> GetCompetenciesFromQuestion(QuestionItem question)
+	{
+		if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
+		{
+			if (competenciesObj is List<CompetencyDefinition> competencies)
+				return competencies;
+		}
+		return new List<CompetencyDefinition>();
+	}
+
+	private List<QuestionCard.GoalCategory> GetGoalCategoriesFromQuestion(QuestionItem question)
+	{
+		if (question.Configuration.TryGetValue("GoalCategories", out var categoriesObj))
+		{
+			if (categoriesObj is List<QuestionCard.GoalCategory> categories)
+				return categories;
+		}
+		return new List<QuestionCard.GoalCategory>();
+	}
+
+	private List<QuestionCard.TextSection> GetTextSectionsFromQuestion(QuestionItem question)
+	{
+		if (question.Configuration.TryGetValue("TextSections", out var sectionsObj))
+		{
+			if (sectionsObj is List<QuestionCard.TextSection> sections)
+				return sections;
+		}
+		return new List<QuestionCard.TextSection>();
 	}
 
 	private void AddQuestionOfExistingType(int sectionIndex, QuestionType questionType)
