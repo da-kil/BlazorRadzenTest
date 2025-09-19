@@ -40,4 +40,9 @@ public class AnnualGoal
     public string Description { get; set; } = string.Empty;
     public string MeasurementCriteria { get; set; } = string.Empty;
     public decimal WeightingPercentage { get; set; }
+    public string CustomTitle { get; set; } = string.Empty;
+    public bool? IsExpanded { get; set; } = false;
+    public bool IsEditingTitle { get; set; } = false;
+    public bool IsSelected { get; set; } = false;
+    public bool ShowAutoSave { get; set; } = false;
 }
