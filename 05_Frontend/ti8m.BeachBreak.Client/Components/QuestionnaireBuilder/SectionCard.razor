@@ -103,13 +103,10 @@
                             <RadzenIcon Icon="quiz" Class="fs-6" />
                             <strong>@GetItemCount()</strong> items
                         </span>
-                        @if (GetRequiredItemCount() > 0)
-                        {
-                            <span class="d-flex align-items-center gap-1">
-                                <RadzenIcon Icon="star" Class="fs-6" />
-                                <strong>@GetRequiredItemCount()</strong> required
-                            </span>
-                        }
+                        <span class="d-flex align-items-center gap-1">
+                            <RadzenIcon Icon="star" Class="fs-6" />
+                            <strong>@GetRequiredItemCount()</strong> required
+                        </span>
                     </div>
                 </div>
             }
@@ -274,7 +271,8 @@
                             OnEdit="@(() => OnEditQuestionInternal(currentQuestionIndex))"
                             OnMoveUp="@(() => OnMoveQuestionUpInternal(currentQuestionIndex))"
                             OnMoveDown="@(() => OnMoveQuestionDownInternal(currentQuestionIndex))"
-                            OnDelete="@(() => OnDeleteQuestionInternal(currentQuestionIndex))" />
+                            OnDelete="@(() => OnDeleteQuestionInternal(currentQuestionIndex))"
+                            OnRequiredChanged="@OnRequiredItemsChanged" />
             }
         }
     </div>
@@ -388,6 +386,12 @@
     private async Task OnMoveQuestionUpInternal(int questionIndex) => await OnMoveQuestionUp.InvokeAsync(questionIndex);
     private async Task OnMoveQuestionDownInternal(int questionIndex) => await OnMoveQuestionDown.InvokeAsync(questionIndex);
     private async Task OnDeleteQuestionInternal(int questionIndex) => await OnDeleteQuestion.InvokeAsync(questionIndex);
+
+    private async Task OnRequiredItemsChanged()
+    {
+        // Force a refresh of the component to update the required count display
+        StateHasChanged();
+    }
 
 
     private string GetSectionNumber()
@@ -504,7 +508,99 @@
 
     private int GetRequiredItemCount()
     {
-        return Section.Questions.Count(q => q.IsRequired);
+        int requiredItems = 0;
+
+        foreach (var question in Section.Questions)
+        {
+            switch (question.Type)
+            {
+                case QuestionType.SelfAssessment:
+                    if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
+                    {
+                        if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            try
+                            {
+                                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
+                                requiredItems += competencies.Count(c => c.IsRequired);
+                            }
+                            catch { }
+                        }
+                        else if (competenciesObj is List<CompetencyDefinition> competenciesList)
+                        {
+                            requiredItems += competenciesList.Count(c => c.IsRequired);
+                        }
+                    }
+                    break;
+                case QuestionType.GoalAchievement:
+                    if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
+                    {
+                        if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            try
+                            {
+                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
+                                requiredItems += categories.Count(c => c.IsRequired);
+                            }
+                            catch { }
+                        }
+                        else if (goalCategoriesObj is List<QuestionCard.GoalCategory> categoriesList)
+                        {
+                            requiredItems += categoriesList.Count(c => c.IsRequired);
+                        }
+                        else if (goalCategoriesObj is List<object> objectList)
+                        {
+                            try
+                            {
+                                var json = System.Text.Json.JsonSerializer.Serialize(objectList);
+                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
+                                requiredItems += categories.Count(c => c.IsRequired);
+                            }
+                            catch { }
+                        }
+                    }
+                    break;
+                case QuestionType.TextQuestion:
+                    if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
+                    {
+                        if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                        {
+                            try
+                            {
+                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
+                                requiredItems += sections.Count(s => s.IsRequired);
+                            }
+                            catch { }
+                        }
+                        else if (textSectionsObj is List<QuestionCard.TextSection> sectionsList)
+                        {
+                            requiredItems += sectionsList.Count(s => s.IsRequired);
+                        }
+                        else if (textSectionsObj is List<object> objectList)
+                        {
+                            try
+                            {
+                                var json = System.Text.Json.JsonSerializer.Serialize(objectList);
+                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
+                                requiredItems += sections.Count(s => s.IsRequired);
+                            }
+                            catch { }
+                        }
+                    }
+                    // Check for legacy format
+                    else if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
+                    {
+                        // Legacy text questions don't have individual required flags, so count as 0
+                    }
+                    break;
+                default:
+                    // For unknown question types, fall back to the question-level required flag
+                    if (question.IsRequired) requiredItems += 1;
+                    break;
+            }
+        }
+
+        return requiredItems;
     }
 
     // Rating scale configuration methods for Self-Assessment sections

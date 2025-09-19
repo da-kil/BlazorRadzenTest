@@ -345,6 +345,7 @@
     [Parameter] public EventCallback OnMoveUp { get; set; }
     [Parameter] public EventCallback OnMoveDown { get; set; }
     [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public EventCallback OnRequiredChanged { get; set; }
 
     // Validation state
     private bool isTitleValid = true;
@@ -958,7 +959,7 @@
         return false;
     }
 
-    private void UpdateCompetencyRequired(int displayIndex, bool value)
+    private async Task UpdateCompetencyRequired(int displayIndex, bool value)
     {
         var orderedCompetencies = GetOrderedCompetencies();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
@@ -966,6 +967,7 @@
             orderedCompetencies[displayIndex].IsRequired = value;
             Question.Configuration["Competencies"] = GetCompetenciesFromConfiguration();
             StateHasChanged();
+            await OnRequiredChanged.InvokeAsync();
         }
     }
 
@@ -1018,7 +1020,7 @@
         return false;
     }
 
-    private void UpdateGoalCategoryRequired(int index, bool value)
+    private async Task UpdateGoalCategoryRequired(int index, bool value)
     {
         var categories = GetGoalCategoriesFromConfiguration();
         if (index >= 0 && index < categories.Count)
@@ -1026,6 +1028,7 @@
             categories[index].IsRequired = value;
             Question.Configuration["GoalCategories"] = categories;
             StateHasChanged();
+            await OnRequiredChanged.InvokeAsync();
         }
     }
 
@@ -1078,7 +1081,7 @@
         return false;
     }
 
-    private void UpdateTextSectionRequired(int index, bool value)
+    private async Task UpdateTextSectionRequired(int index, bool value)
     {
         var sections = GetTextSectionsFromConfiguration();
         if (index >= 0 && index < sections.Count)
@@ -1086,6 +1089,7 @@
             sections[index].IsRequired = value;
             Question.Configuration["TextSections"] = sections;
             StateHasChanged();
+            await OnRequiredChanged.InvokeAsync();
         }
     }
 
