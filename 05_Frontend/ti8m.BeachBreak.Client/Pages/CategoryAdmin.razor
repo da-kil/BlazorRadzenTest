@@ -37,39 +37,55 @@
         </div>
 
         <RadzenDataGrid @ref="categoriesGrid" Data="@filteredCategories" TItem="Category"
-                       AllowFiltering="true" AllowColumnResize="true" AllowSorting="true">
+                       AllowFiltering="true" AllowColumnResize="true" AllowSorting="true"
+                       EditMode="DataGridEditMode.Single" AllowAlternatingRows="false">
             <Columns>
-                <RadzenDataGridColumn TItem="Category" Property="NameEn" Title="Name (EN/DE)" Width="300px">
+                <RadzenDataGridColumn TItem="Category" Property="NameEn" Title="Name EN" Width="200px">
                     <Template Context="category">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">🇬🇧 @category.NameEn</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">🇩🇪 @category.NameDe</RadzenText>
-                        </div>
+                        <RadzenText TextStyle="TextStyle.Body1">@category.NameEn</RadzenText>
                     </Template>
+                    <EditTemplate Context="category">
+                        <RadzenTextBox @bind-Value="category.NameEn" Class="w-100" />
+                    </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Category" Property="DescriptionEn" Title="Description (EN/DE)">
+                <RadzenDataGridColumn TItem="Category" Property="NameDe" Title="Name DE" Width="200px">
                     <Template Context="category">
-                        <div>
-                            @if (!string.IsNullOrWhiteSpace(category.DescriptionEn))
-                            {
-                                <RadzenText TextStyle="TextStyle.Body2">🇬🇧 @category.DescriptionEn</RadzenText>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(category.DescriptionDe))
-                            {
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">🇩🇪 @category.DescriptionDe</RadzenText>
-                            }
-                        </div>
+                        <RadzenText TextStyle="TextStyle.Body1">@category.NameDe</RadzenText>
                     </Template>
+                    <EditTemplate Context="category">
+                        <RadzenTextBox @bind-Value="category.NameDe" Class="w-100" />
+                    </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Category" Property="SortOrder" Title="Sort Order" Width="100px">
+                <RadzenDataGridColumn TItem="Category" Property="DescriptionEn" Title="Description EN" Width="250px">
+                    <Template Context="category">
+                        <RadzenText TextStyle="TextStyle.Body2">@category.DescriptionEn</RadzenText>
+                    </Template>
+                    <EditTemplate Context="category">
+                        <RadzenTextArea @bind-Value="category.DescriptionEn" Rows="2" Class="w-100" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Category" Property="DescriptionDe" Title="Description DE" Width="250px">
+                    <Template Context="category">
+                        <RadzenText TextStyle="TextStyle.Body2">@category.DescriptionDe</RadzenText>
+                    </Template>
+                    <EditTemplate Context="category">
+                        <RadzenTextArea @bind-Value="category.DescriptionDe" Rows="2" Class="w-100" />
+                    </EditTemplate>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="Category" Property="SortOrder" Title="Sort Order" Width="120px">
                     <Template Context="category">
                         <RadzenBadge Text="@category.SortOrder.ToString()" Variant="Variant.Outlined" />
                     </Template>
+                    <EditTemplate Context="category">
+                        <RadzenNumeric @bind-Value="category.SortOrder" TValue="int" Class="w-100" Min="0" Max="1000" />
+                    </EditTemplate>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Category" Property="IsActive" Title="Status" Width="100px">
+                <RadzenDataGridColumn TItem="Category" Property="IsActive" Title="Status" Width="120px">
                     <Template Context="category">
                         @if (category.IsActive)
                         {
@@ -80,6 +96,9 @@
                             <RadzenBadge Text="Inactive" BadgeStyle="BadgeStyle.Secondary" />
                         }
                     </Template>
+                    <EditTemplate Context="category">
+                        <RadzenSwitch @bind-Value="category.IsActive" />
+                    </EditTemplate>
                 </RadzenDataGridColumn>
 
                 <RadzenDataGridColumn TItem="Category" Property="CreatedDate" Title="Created" Width="150px">
@@ -88,13 +107,13 @@
                     </Template>
                 </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="Category" Filterable="false" Sortable="false" Width="150px" Title="Actions">
+                <RadzenDataGridColumn TItem="Category" Filterable="false" Sortable="false" Width="180px" Title="Actions">
                     <Template Context="category">
                         <div class="d-flex gap-1">
                             <RadzenButton ButtonStyle="ButtonStyle.Light"
                                          Icon="edit"
                                          Size="ButtonSize.ExtraSmall"
-                                         Click="@(() => ShowEditCategoryDialog(category))"
+                                         Click="@(() => EditRow(category))"
                                          Tooltip="Edit Category" />
                             <RadzenButton ButtonStyle="ButtonStyle.Danger"
                                          Icon="delete"
@@ -103,6 +122,20 @@
                                          Tooltip="Delete Category" />
                         </div>
                     </Template>
+                    <EditTemplate Context="category">
+                        <div class="d-flex gap-1">
+                            <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                         Icon="save"
+                                         Size="ButtonSize.ExtraSmall"
+                                         Click="@(() => SaveRow(category))"
+                                         Tooltip="Save Changes" />
+                            <RadzenButton ButtonStyle="ButtonStyle.Secondary"
+                                         Icon="cancel"
+                                         Size="ButtonSize.ExtraSmall"
+                                         Click="@(() => CancelEdit(category))"
+                                         Tooltip="Cancel Edit" />
+                        </div>
+                    </EditTemplate>
                 </RadzenDataGridColumn>
             </Columns>
         </RadzenDataGrid>
@@ -119,6 +152,7 @@
     private RadzenDataGrid<Category>? categoriesGrid;
     private string searchText = "";
     private bool showInactiveCategories = false;
+    private Category? categoryBeingEdited;
 
     protected override async Task OnInitializedAsync()
     {
@@ -162,30 +196,39 @@
 
     private async Task ShowAddCategoryDialog()
     {
-        var newCategory = new Category();
-
-        var result = await DialogService.OpenAsync<CategoryDialog>("Add New Category",
-            new Dictionary<string, object> { { "Category", newCategory }, { "IsEditMode", false } },
-            new DialogOptions() { Width = "600px", Height = "400px", Resizable = true, Draggable = true });
-
-        if (result is Category savedCategory)
+        var newCategory = new Category
         {
-            try
+            NameEn = "New Category",
+            NameDe = "Neue Kategorie",
+            DescriptionEn = "",
+            DescriptionDe = "",
+            IsActive = true,
+            SortOrder = categories.Count > 0 ? categories.Max(c => c.SortOrder) + 10 : 10
+        };
+
+        try
+        {
+            await CategoryService.CreateCategoryAsync(newCategory);
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Category created successfully");
+            await LoadCategories();
+
+            // Auto-edit the new category
+            var addedCategory = filteredCategories.FirstOrDefault(c => c.NameEn == newCategory.NameEn && c.NameDe == newCategory.NameDe);
+            if (addedCategory != null)
             {
-                await CategoryService.CreateCategoryAsync(savedCategory);
-                NotificationService.Notify(NotificationSeverity.Success, "Success", "Category created successfully");
-                await LoadCategories();
+                await EditRow(addedCategory);
             }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to create category: {ex.Message}");
-            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to create category: {ex.Message}");
         }
     }
 
-    private async Task ShowEditCategoryDialog(Category category)
+    private async Task EditRow(Category category)
     {
-        var editCategory = new Category
+        // Store original values for cancel functionality
+        categoryBeingEdited = new Category
         {
             Id = category.Id,
             NameEn = category.NameEn,
@@ -198,23 +241,42 @@
             LastModified = category.LastModified
         };
 
-        var result = await DialogService.OpenAsync<CategoryDialog>("Edit Category",
-            new Dictionary<string, object> { { "Category", editCategory }, { "IsEditMode", true } },
-            new DialogOptions() { Width = "600px", Height = "400px", Resizable = true, Draggable = true });
+        categoriesGrid!.EditRow(category);
+        await Task.CompletedTask;
+    }
 
-        if (result is Category savedCategory)
+    private async Task SaveRow(Category category)
+    {
+        try
         {
-            try
-            {
-                await CategoryService.UpdateCategoryAsync(savedCategory);
-                NotificationService.Notify(NotificationSeverity.Success, "Success", "Category updated successfully");
-                await LoadCategories();
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update category: {ex.Message}");
-            }
+            category.LastModified = DateTime.Now;
+            await CategoryService.UpdateCategoryAsync(category);
+            NotificationService.Notify(NotificationSeverity.Success, "Success", "Category updated successfully");
+            categoriesGrid!.UpdateRow(category);
+            categoryBeingEdited = null;
         }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update category: {ex.Message}");
+        }
+    }
+
+    private async Task CancelEdit(Category category)
+    {
+        if (categoryBeingEdited != null)
+        {
+            // Restore original values
+            category.NameEn = categoryBeingEdited.NameEn;
+            category.NameDe = categoryBeingEdited.NameDe;
+            category.DescriptionEn = categoryBeingEdited.DescriptionEn;
+            category.DescriptionDe = categoryBeingEdited.DescriptionDe;
+            category.IsActive = categoryBeingEdited.IsActive;
+            category.SortOrder = categoryBeingEdited.SortOrder;
+        }
+
+        categoriesGrid!.CancelEditRow(category);
+        categoryBeingEdited = null;
+        await Task.CompletedTask;
     }
 
     private async Task DeleteCategory(Category category)
