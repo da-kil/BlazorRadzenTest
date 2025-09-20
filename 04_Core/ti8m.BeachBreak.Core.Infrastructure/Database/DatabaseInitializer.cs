@@ -38,6 +38,7 @@ public class DatabaseInitializer
         await CreateQuestionnaireTemplatesTableAsync(connection);
         await CreateEmployeesTableAsync(connection);
         await CreateAssignmentsTableAsync(connection);
+        await CreateQuestionnaireResponsesTableAsync(connection);
     }
 
     private async Task CreateQuestionnaireTemplatesTableAsync(NpgsqlConnection connection)
@@ -104,6 +105,75 @@ public class DatabaseInitializer
             -- Create composite indexes for status queries
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_status ON questionnaire_templates(is_active, is_published);
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_assignable ON questionnaire_templates(is_active, is_published) WHERE is_active = true AND is_published = true;
+
+            -- Insert sample template for testing
+            INSERT INTO questionnaire_templates (id, name, description, category, is_active, is_published, published_date, last_published_date, published_by, sections, settings, created_at, updated_at)
+            SELECT * FROM (VALUES
+                ('12345678-1234-1234-1234-123456789abc'::uuid,
+                 '3. Rückblick 2023: Selbsteinschätzung für Mitarbeitende',
+                 'In diesem Abschnitt werden die beruflichen Kompetenzen und Fähigkeiten im Jahr 2023 reflektiert. Bewertungsskala: 1 (gar nicht zufrieden) - 2 (nicht zufrieden) - 3 (zufrieden) - 4 (sehr zufrieden) Im Textfeld kann optional ein Kommentar hinterlegt werden.',
+                 'Performance Review',
+                 true,
+                 true,
+                 NOW(),
+                 NOW(),
+                 'System',
+                 '[
+                   {
+                     "Id": "550e8400-e29b-41d4-a716-446655440001",
+                     "Title": "Professional Knowledge",
+                     "Description": "Assessment of your expertise in relation to job responsibilities",
+                     "Order": 0,
+                     "IsRequired": true,
+                     "Questions": [
+                       {
+                         "Id": "550e8400-e29b-41d4-a716-446655440011",
+                         "Title": "Professional Knowledge",
+                         "Type": "SelfAssessment",
+                         "Order": 0,
+                         "IsRequired": true
+                       }
+                     ]
+                   },
+                   {
+                     "Id": "550e8400-e29b-41d4-a716-446655440002",
+                     "Title": "Career Development & Planning",
+                     "Description": "Dieser Abschnitt ermöglicht eine Beurteilung der Zusammenarbeit mit dem/r Vorgesetzten",
+                     "Order": 1,
+                     "IsRequired": true,
+                     "Questions": [
+                       {
+                         "Id": "550e8400-e29b-41d4-a716-446655440022",
+                         "Title": "Rückblick: Mein/e Vorgesetzte",
+                         "Type": "TextQuestion",
+                         "Order": 0,
+                         "IsRequired": true
+                       }
+                     ]
+                   },
+                   {
+                     "Id": "550e8400-e29b-41d4-a716-446655440003",
+                     "Title": "Goal Achievement Review",
+                     "Description": "Review your goals and achievements from 2023",
+                     "Order": 2,
+                     "IsRequired": true,
+                     "Questions": [
+                       {
+                         "Id": "550e8400-e29b-41d4-a716-446655440033",
+                         "Title": "Goal 1",
+                         "Type": "GoalAchievement",
+                         "Order": 0,
+                         "IsRequired": true
+                       }
+                     ]
+                   }
+                 ]'::jsonb,
+                 '{"ShowProgressBar": true, "AllowSaveProgress": true, "AllowReviewBeforeSubmit": true}'::jsonb,
+                 NOW(),
+                 NOW()
+                )
+            ) AS sample_template(id, name, description, category, is_active, is_published, published_date, last_published_date, published_by, sections, settings, created_at, updated_at)
+            WHERE NOT EXISTS (SELECT 1 FROM questionnaire_templates WHERE id = sample_template.id);
             """;
 
         await using var command = connection.CreateCommand();
@@ -253,6 +323,15 @@ public class DatabaseInitializer
             CREATE INDEX IF NOT EXISTS idx_assignments_status ON questionnaire_assignments(status);
             CREATE INDEX IF NOT EXISTS idx_assignments_assigned_date ON questionnaire_assignments(assigned_date);
             CREATE INDEX IF NOT EXISTS idx_assignments_due_date ON questionnaire_assignments(due_date);
+
+            -- Insert sample assignments for testing
+            INSERT INTO questionnaire_assignments (id, template_id, employee_id, employee_name, employee_email, assigned_date, due_date, status, assigned_by, notes)
+            SELECT * FROM (VALUES
+                ('bf469bd2-44d3-419f-9d26-b753318553f7'::uuid, '12345678-1234-1234-1234-123456789abc'::uuid, 'b0f388c2-6294-4116-a8b2-eccafa29b3fb'::uuid, 'John Smith', 'john.smith@company.com', NOW(), NOW() + INTERVAL '30 days', 'Assigned', 'HR System', 'Annual performance review'),
+                ('c1234567-8901-2345-6789-012345678901'::uuid, '12345678-1234-1234-1234-123456789abc'::uuid, '5c438c77-9f19-4ecb-9d1a-e9d8a09b4dcb'::uuid, 'Emily Davis', 'emily.davis@company.com', NOW(), NOW() + INTERVAL '30 days', 'Assigned', 'HR System', 'Annual performance review'),
+                ('d2345678-9012-3456-7890-123456789012'::uuid, '12345678-1234-1234-1234-123456789abc'::uuid, '5ef0ebe1-3745-4066-a902-a0edac23da33'::uuid, 'David Wilson', 'david.wilson@company.com', NOW(), NOW() + INTERVAL '30 days', 'InProgress', 'HR System', 'Annual performance review - partially completed')
+            ) AS sample_assignments(id, template_id, employee_id, employee_name, employee_email, assigned_date, due_date, status, assigned_by, notes)
+            WHERE NOT EXISTS (SELECT 1 FROM questionnaire_assignments WHERE id = sample_assignments.id);
             """;
 
         await using var command = connection.CreateCommand();
@@ -261,5 +340,47 @@ public class DatabaseInitializer
         _logger.LogInformation("Creating questionnaire_assignments table...");
         await command.ExecuteNonQueryAsync();
         _logger.LogInformation("Questionnaire assignments table created successfully with sample data.");
+    }
+
+    private async Task CreateQuestionnaireResponsesTableAsync(NpgsqlConnection connection)
+    {
+        const string sql = """
+            CREATE TABLE IF NOT EXISTS questionnaire_responses (
+                id UUID PRIMARY KEY,
+                template_id UUID NOT NULL,
+                assignment_id UUID NOT NULL,
+                employee_id UUID NOT NULL,
+                started_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                completed_date TIMESTAMP WITH TIME ZONE,
+                submitted_date TIMESTAMP WITH TIME ZONE,
+                last_modified TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                status VARCHAR(50) NOT NULL DEFAULT 'NotStarted',
+                section_responses JSONB NOT NULL DEFAULT '{}',
+                progress_percentage INTEGER NOT NULL DEFAULT 0,
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            );
+
+            -- Create indexes for better performance
+            CREATE INDEX IF NOT EXISTS idx_responses_template_id ON questionnaire_responses(template_id);
+            CREATE INDEX IF NOT EXISTS idx_responses_assignment_id ON questionnaire_responses(assignment_id);
+            CREATE INDEX IF NOT EXISTS idx_responses_employee_id ON questionnaire_responses(employee_id);
+            CREATE INDEX IF NOT EXISTS idx_responses_status ON questionnaire_responses(status);
+            CREATE INDEX IF NOT EXISTS idx_responses_started_date ON questionnaire_responses(started_date);
+            CREATE INDEX IF NOT EXISTS idx_responses_completed_date ON questionnaire_responses(completed_date);
+            CREATE INDEX IF NOT EXISTS idx_responses_submitted_date ON questionnaire_responses(submitted_date);
+            CREATE INDEX IF NOT EXISTS idx_responses_last_modified ON questionnaire_responses(last_modified);
+
+            -- Create composite indexes for common queries
+            CREATE INDEX IF NOT EXISTS idx_responses_employee_template ON questionnaire_responses(employee_id, template_id);
+            CREATE INDEX IF NOT EXISTS idx_responses_assignment_status ON questionnaire_responses(assignment_id, status);
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+
+        _logger.LogInformation("Creating questionnaire_responses table...");
+        await command.ExecuteNonQueryAsync();
+        _logger.LogInformation("Questionnaire responses table created successfully.");
     }
 }

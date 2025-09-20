@@ -8,7 +8,8 @@
       "Bash(del \"C:\\projects\\BlazorRadzenTest\\BlazorRadzenTest\\BlazorRadzenTest.Client\\Components\\QuestionTypeDialog.razor\")",
       "Bash(curl:*)",
       "Bash(python -m http.server:*)",
-      "Bash(npx http-server:*)"
+      "Bash(npx http-server:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

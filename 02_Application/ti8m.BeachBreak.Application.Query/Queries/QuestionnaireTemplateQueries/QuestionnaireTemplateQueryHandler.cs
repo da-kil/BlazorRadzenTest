@@ -2,6 +2,7 @@
 using Npgsql;
 using System.Data;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 
@@ -188,6 +189,12 @@ public class QuestionnaireTemplateQueryHandler :
 
     private static QuestionnaireTemplate MapQuestionnaireTemplate(NpgsqlDataReader reader)
     {
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            Converters = { new JsonStringEnumConverter() }
+        };
+
         return new QuestionnaireTemplate
         {
             Id = reader.GetGuid("id"),
@@ -201,8 +208,8 @@ public class QuestionnaireTemplateQueryHandler :
             PublishedDate = reader.IsDBNull("published_date") ? null : reader.GetDateTime("published_date"),
             LastPublishedDate = reader.IsDBNull("last_published_date") ? null : reader.GetDateTime("last_published_date"),
             PublishedBy = reader.IsDBNull("published_by") ? string.Empty : reader.GetString("published_by"),
-            Sections = JsonSerializer.Deserialize<List<QuestionSection>>(reader.GetString("sections")) ?? new(),
-            Settings = JsonSerializer.Deserialize<QuestionnaireSettings>(reader.GetString("settings")) ?? new()
+            Sections = JsonSerializer.Deserialize<List<QuestionSection>>(reader.GetString("sections"), jsonOptions) ?? new(),
+            Settings = JsonSerializer.Deserialize<QuestionnaireSettings>(reader.GetString("settings"), jsonOptions) ?? new()
         };
     }
 }

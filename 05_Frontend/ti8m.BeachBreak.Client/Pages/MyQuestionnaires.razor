@@ -158,6 +158,14 @@
             allAssignments = await assignmentsTask;
             templates = await templatesTask;
 
+            // Debug: Log what we received
+            Console.WriteLine($"Loaded {allAssignments.Count} assignments and {templates.Count} templates");
+            foreach (var assignment in allAssignments)
+            {
+                var template = templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
+                Console.WriteLine($"Assignment: {assignment.Id}, Template: {template?.Name}, Status: {assignment.Status}, AssignedDate: {assignment.AssignedDate}, DueDate: {assignment.DueDate}");
+            }
+
             CategorizeQuestionnaires();
         }
         catch (Exception ex)
@@ -194,6 +202,7 @@
 
         currentQuestionnaires = filteredAssignments.Where(a =>
             (a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress) &&
+            a.AssignedDate <= now &&
             (!a.DueDate.HasValue || a.DueDate >= now)).ToList();
 
         upcomingQuestionnaires = filteredAssignments.Where(a =>
@@ -208,6 +217,16 @@
             a.DueDate < now &&
             a.Status != AssignmentStatus.Completed &&
             a.Status != AssignmentStatus.Cancelled).ToList();
+
+        // Debug: Log categorization results
+        Console.WriteLine($"Categorization results:");
+        Console.WriteLine($"Current: {currentQuestionnaires.Count}, Upcoming: {upcomingQuestionnaires.Count}, Completed: {completedQuestionnaires.Count}, Overdue: {overdueQuestionnaires.Count}");
+        Console.WriteLine($"Current questionnaires:");
+        foreach (var assignment in currentQuestionnaires)
+        {
+            var template = templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
+            Console.WriteLine($"  - {template?.Name} (Status: {assignment.Status}, AssignedDate: {assignment.AssignedDate}, DueDate: {assignment.DueDate})");
+        }
     }
 
     private void ClearCategoryFilter()

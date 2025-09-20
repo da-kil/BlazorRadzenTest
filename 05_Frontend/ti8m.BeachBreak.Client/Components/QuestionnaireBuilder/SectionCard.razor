@@ -2,6 +2,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 @using System.Collections
+@using System.Text.Json
 
 <div class="section-card mb-4">
     <!-- Section Header -->
@@ -641,6 +642,10 @@
     {
         if (question.Configuration.TryGetValue("RatingScale", out var scale))
         {
+            if (scale is JsonElement jsonElement)
+            {
+                return jsonElement.GetInt32();
+            }
             return Convert.ToInt32(scale);
         }
         return 4; // Default
