@@ -138,9 +138,7 @@
     [Inject] protected DialogService DialogService { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
-    [Inject] protected IQuestionnaireApiService QuestionnaireApiService { get; set; } = default!;
-    [Inject] protected IEmployeeQuestionnaireService EmployeeQuestionnaireService { get; set; } = default!;
-    [Inject] protected IAuthenticationService AuthenticationService { get; set; } = default!;
+    [Inject] protected IQuestionnaireService QuestionnaireService { get; set; } = default!;
 
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse response = new();
@@ -160,7 +158,7 @@
     {
         try
         {
-            template = await QuestionnaireApiService.GetTemplateByIdAsync(TemplateId);
+            template = await QuestionnaireService.GetTemplateByIdAsync(TemplateId);
             if (template == null)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Error", "Questionnaire template not found");
@@ -245,7 +243,12 @@
         try
         {
             // Load the current employee's assignment for this template
-            var assignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
+            var filter = new AssignmentFilter
+            {
+                Status = null, // Get both Assigned and InProgress
+                IncludeAccessibleOnly = true
+            };
+            var assignments = await QuestionnaireService.GetAssignmentsAsync(filter);
             var assignment = assignments.FirstOrDefault(a => a.TemplateId == TemplateId &&
                                                            (a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress));
 
@@ -272,7 +275,7 @@
 
         try
         {
-            var existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
+            var existingResponse = await QuestionnaireService.GetResponseAsync(assignmentId.Value);
             if (existingResponse != null)
             {
                 response = existingResponse;
@@ -296,7 +299,7 @@
         {
             TemplateId = TemplateId,
             AssignmentId = assignmentId ?? Guid.Empty,
-            EmployeeId = AuthenticationService.GetCurrentEmployeeId(),
+            EmployeeId = "current-employee", // Will be handled by unified service
             Status = ResponseStatus.InProgress
         };
 
@@ -919,7 +922,7 @@
 
         try
         {
-            await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+            await QuestionnaireService.SaveResponseAsync(assignmentId.Value, response.SectionResponses);
             NotificationService.Notify(NotificationSeverity.Success, "Saved", "Your progress has been saved successfully");
         }
         catch (Exception ex)
@@ -951,10 +954,10 @@
         try
         {
             // First save the current responses
-            await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+            await QuestionnaireService.SaveResponseAsync(assignmentId.Value, response.SectionResponses);
 
             // Then submit the questionnaire
-            var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
+            var submittedResponse = await QuestionnaireService.SubmitResponseAsync(assignmentId.Value);
 
             if (submittedResponse != null)
             {

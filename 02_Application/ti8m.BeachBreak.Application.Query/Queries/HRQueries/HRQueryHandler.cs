@@ -4,18 +4,25 @@ using Microsoft.Extensions.Logging;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.HRQueries;
 
-public class HRQueryHandler :
+// CONSOLIDATED: This handler now supports all roles through dynamic filtering
+public class UnifiedAnalyticsQueryHandler :
     IQueryHandler<HROrganizationAnalyticsQuery, Result<AnalyticsQueries.OrganizationAnalytics>>,
     IQueryHandler<HRDepartmentAnalyticsQuery, Result<DepartmentAnalytics>>,
     IQueryHandler<HRComplianceReportQuery, Result<ComplianceReport>>,
     IQueryHandler<HROrganizationReportQuery, Result<OrganizationReport>>,
     IQueryHandler<HRQuestionnaireUsageStatsQuery, Result<IEnumerable<QuestionnaireUsageStats>>>,
-    IQueryHandler<HRTrendDataQuery, Result<IEnumerable<TrendData>>>
+    IQueryHandler<HRTrendDataQuery, Result<IEnumerable<TrendData>>>,
+    // NEW: Supporting Manager queries through dynamic filtering
+    IQueryHandler<ManagerQueries.ManagerTeamAnalyticsQuery, Result<AnalyticsQueries.TeamAnalytics>>,
+    IQueryHandler<ManagerQueries.ManagerTeamAssignmentsQuery, Result<IEnumerable<QuestionnaireAssignmentQueries.QuestionnaireAssignment>>>,
+    // NEW: Supporting Employee queries through dynamic filtering
+    IQueryHandler<EmployeeQueries.EmployeeAssignmentListQuery, Result<IEnumerable<QuestionnaireAssignmentQueries.QuestionnaireAssignment>>>,
+    IQueryHandler<EmployeeQueries.EmployeeListQuery, Result<IEnumerable<EmployeeQueries.Employee>>>
 {
     private readonly NpgsqlDataSource dataSource;
-    private readonly ILogger<HRQueryHandler> logger;
+    private readonly ILogger<UnifiedAnalyticsQueryHandler> logger;
 
-    public HRQueryHandler(NpgsqlDataSource dataSource, ILogger<HRQueryHandler> logger)
+    public UnifiedAnalyticsQueryHandler(NpgsqlDataSource dataSource, ILogger<UnifiedAnalyticsQueryHandler> logger)
     {
         this.dataSource = dataSource;
         this.logger = logger;
@@ -29,6 +36,9 @@ public class HRQueryHandler :
         {
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
+
+            // Set timeout to prevent cancellation issues
+            cmd.CommandTimeout = 120;
 
             cmd.CommandText = """
                 SELECT
@@ -87,6 +97,9 @@ public class HRQueryHandler :
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
 
+            // Set timeout to prevent cancellation issues
+            cmd.CommandTimeout = 120;
+
             cmd.CommandText = """
                 SELECT
                     @departmentName as department_name,
@@ -144,6 +157,9 @@ public class HRQueryHandler :
         {
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
+
+            // Set timeout to prevent cancellation issues
+            cmd.CommandTimeout = 120;
 
             cmd.CommandText = """
                 SELECT
@@ -227,6 +243,9 @@ public class HRQueryHandler :
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
 
+            // Set timeout to prevent cancellation issues
+            cmd.CommandTimeout = 120;
+
             cmd.CommandText = """
                 SELECT
                     t.id as template_id,
@@ -288,6 +307,9 @@ public class HRQueryHandler :
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
 
+            // Set timeout to prevent cancellation issues
+            cmd.CommandTimeout = 120;
+
             cmd.CommandText = """
                 SELECT
                     DATE(a.assigned_date) as date,
@@ -336,6 +358,267 @@ public class HRQueryHandler :
         {
             logger.LogError(ex, "Failed to execute HR trend data query for OrganizationNumber: {OrganizationNumber}", query.OrganizationNumber);
             return Result<IEnumerable<TrendData>>.Fail($"Failed to retrieve trend data: {ex.Message}", StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    // CONSOLIDATED: Manager queries now handled through dynamic filtering
+    public async Task<Result<AnalyticsQueries.TeamAnalytics>> HandleAsync(ManagerQueries.ManagerTeamAnalyticsQuery query, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Starting team analytics query (unified) for ManagerId: {ManagerId}", query.ManagerId);
+
+        try
+        {
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+
+            // Set timeout to prevent cancellation issues
+            cmd.CommandTimeout = 120;
+
+            // SAME SQL as HRQueryHandler but with manager-specific filtering
+            cmd.CommandText = """
+                SELECT
+                    COUNT(DISTINCT e.id) as total_team_members,
+                    COUNT(CASE WHEN a.status = 'Assigned' OR a.status = 'InProgress' THEN 1 END) as active_assignments,
+                    COUNT(CASE WHEN a.status = 'Completed' THEN 1 END) as completed_assignments,
+                    COUNT(CASE WHEN a.due_date < CURRENT_DATE AND a.status != 'Completed' THEN 1 END) as overdue_assignments,
+                    CASE
+                        WHEN COUNT(a.id) > 0
+                        THEN ROUND((COUNT(CASE WHEN a.status = 'Completed' THEN 1 END)::decimal / COUNT(a.id) * 100), 2)
+                        ELSE 0
+                    END as team_completion_rate
+                FROM employees e
+                LEFT JOIN questionnaire_assignments a ON e.id = a.employee_id
+                WHERE e.manager_id = @managerId AND e.is_deleted = false
+                """;
+
+            cmd.Parameters.AddWithValue("@managerId", query.ManagerId);
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+
+            if (await reader.ReadAsync(cancellationToken))
+            {
+                var analytics = new AnalyticsQueries.TeamAnalytics
+                {
+                    TotalTeamMembers = reader.GetInt32(0),
+                    ActiveAssignments = reader.GetInt32(1),
+                    CompletedAssignments = reader.GetInt32(2),
+                    OverdueAssignments = reader.GetInt32(3),
+                    CompletionRate = reader.GetDecimal(4)
+                };
+
+                logger.LogInformation("Team analytics query (unified) completed successfully");
+                return Result<AnalyticsQueries.TeamAnalytics>.Success(analytics);
+            }
+
+            return Result<AnalyticsQueries.TeamAnalytics>.Fail("No team analytics data found", StatusCodes.Status404NotFound);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to execute team analytics query (unified) for ManagerId: {ManagerId}", query.ManagerId);
+            return Result<AnalyticsQueries.TeamAnalytics>.Fail($"Failed to retrieve team analytics: {ex.Message}", StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    // CONSOLIDATED: Manager assignment queries now handled through dynamic filtering
+    public async Task<Result<IEnumerable<QuestionnaireAssignmentQueries.QuestionnaireAssignment>>> HandleAsync(ManagerQueries.ManagerTeamAssignmentsQuery query, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Starting team assignments query (unified) for ManagerId: {ManagerId}", query.ManagerId);
+
+        try
+        {
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+
+            // Set timeout to prevent cancellation issues
+            cmd.CommandTimeout = 120;
+
+            // SAME SQL pattern as other handlers but with manager-specific filtering
+            cmd.CommandText = """
+                SELECT a.id, a.template_id, a.employee_id, a.employee_name, a.employee_email,
+                       a.assigned_date, a.due_date, a.completed_date, a.status, a.assigned_by, a.notes
+                FROM questionnaire_assignments a
+                INNER JOIN employees e ON a.employee_id = e.id
+                WHERE e.manager_id = @managerId
+                ORDER BY a.assigned_date DESC
+                """;
+
+            cmd.Parameters.AddWithValue("@managerId", query.ManagerId);
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            var assignments = new List<QuestionnaireAssignmentQueries.QuestionnaireAssignment>();
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                assignments.Add(new QuestionnaireAssignmentQueries.QuestionnaireAssignment
+                {
+                    Id = reader.GetGuid(0),
+                    TemplateId = reader.GetGuid(1),
+                    EmployeeId = reader.GetGuid(2).ToString(),
+                    EmployeeName = reader.GetString(3),
+                    EmployeeEmail = reader.GetString(4),
+                    AssignedDate = reader.GetDateTime(5),
+                    DueDate = reader.IsDBNull(6) ? null : reader.GetDateTime(6),
+                    CompletedDate = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
+                    Status = Enum.Parse<QuestionnaireAssignmentQueries.AssignmentStatus>(reader.GetString(8)),
+                    AssignedBy = reader.GetString(9),
+                    Notes = reader.IsDBNull(10) ? null : reader.GetString(10)
+                });
+            }
+
+            logger.LogInformation("Team assignments query (unified) completed successfully, returned {AssignmentCount} assignments", assignments.Count);
+            return Result<IEnumerable<QuestionnaireAssignmentQueries.QuestionnaireAssignment>>.Success(assignments);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to execute team assignments query (unified) for ManagerId: {ManagerId}", query.ManagerId);
+            return Result<IEnumerable<QuestionnaireAssignmentQueries.QuestionnaireAssignment>>.Fail($"Failed to retrieve team assignments: {ex.Message}", StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    // CONSOLIDATED: Employee queries now handled through dynamic filtering
+    public async Task<Result<IEnumerable<QuestionnaireAssignmentQueries.QuestionnaireAssignment>>> HandleAsync(EmployeeQueries.EmployeeAssignmentListQuery query, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Starting employee assignment query (unified) for EmployeeId: {EmployeeId}", query.EmployeeId);
+
+        try
+        {
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+
+            // Set timeout to prevent cancellation issues
+            cmd.CommandTimeout = 120;
+
+            // SAME SQL pattern as other handlers but with employee-specific filtering
+            cmd.CommandText = """
+                SELECT a.id, a.template_id, a.employee_id, a.employee_name, a.employee_email,
+                       a.assigned_date, a.due_date, a.completed_date, a.status, a.assigned_by, a.notes
+                FROM questionnaire_assignments a
+                WHERE a.employee_id = @employeeId
+                ORDER BY a.assigned_date DESC
+                """;
+
+            cmd.Parameters.AddWithValue("@employeeId", query.EmployeeId);
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            var assignments = new List<QuestionnaireAssignmentQueries.QuestionnaireAssignment>();
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                assignments.Add(new QuestionnaireAssignmentQueries.QuestionnaireAssignment
+                {
+                    Id = reader.GetGuid(0),
+                    TemplateId = reader.GetGuid(1),
+                    EmployeeId = reader.GetGuid(2).ToString(),
+                    EmployeeName = reader.GetString(3),
+                    EmployeeEmail = reader.GetString(4),
+                    AssignedDate = reader.GetDateTime(5),
+                    DueDate = reader.IsDBNull(6) ? null : reader.GetDateTime(6),
+                    CompletedDate = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
+                    Status = Enum.Parse<QuestionnaireAssignmentQueries.AssignmentStatus>(reader.GetString(8)),
+                    AssignedBy = reader.GetString(9),
+                    Notes = reader.IsDBNull(10) ? null : reader.GetString(10)
+                });
+            }
+
+            logger.LogInformation("Employee assignment query (unified) completed successfully, returned {AssignmentCount} assignments", assignments.Count);
+            return Result<IEnumerable<QuestionnaireAssignmentQueries.QuestionnaireAssignment>>.Success(assignments);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to execute employee assignment query (unified) for EmployeeId: {EmployeeId}", query.EmployeeId);
+            return Result<IEnumerable<QuestionnaireAssignmentQueries.QuestionnaireAssignment>>.Fail($"Failed to retrieve employee assignments: {ex.Message}", StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    // CONSOLIDATED: Employee list queries now handled through dynamic filtering
+    public async Task<Result<IEnumerable<EmployeeQueries.Employee>>> HandleAsync(EmployeeQueries.EmployeeListQuery query, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Starting employee list query (unified) with filters: IncludeDeleted={IncludeDeleted}, OrganizationNumber={OrganizationNumber}, Role={Role}, ManagerId={ManagerId}",
+            query.IncludeDeleted, query.OrganizationNumber, query.Role, query.ManagerId);
+
+        try
+        {
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+
+            // Set timeout to prevent cancellation issues
+            cmd.CommandTimeout = 120;
+
+            // Build dynamic SQL based on query filters
+            var whereConditions = new List<string>();
+            var parameterIndex = 1;
+
+            if (!query.IncludeDeleted)
+            {
+                whereConditions.Add("e.is_deleted = false");
+            }
+
+            if (query.OrganizationNumber.HasValue)
+            {
+                whereConditions.Add($"e.organization_number = @param{parameterIndex}");
+                cmd.Parameters.AddWithValue($"@param{parameterIndex}", query.OrganizationNumber.Value);
+                parameterIndex++;
+            }
+
+            if (!string.IsNullOrEmpty(query.Role))
+            {
+                whereConditions.Add($"e.role = @param{parameterIndex}");
+                cmd.Parameters.AddWithValue($"@param{parameterIndex}", query.Role);
+                parameterIndex++;
+            }
+
+            if (query.ManagerId.HasValue)
+            {
+                whereConditions.Add($"e.manager_id = @param{parameterIndex}");
+                cmd.Parameters.AddWithValue($"@param{parameterIndex}", query.ManagerId.Value);
+                parameterIndex++;
+            }
+
+            var whereClause = whereConditions.Count > 0 ? "WHERE " + string.Join(" AND ", whereConditions) : "";
+
+            cmd.CommandText = $"""
+                SELECT e.id, e.first_name, e.last_name, e.role, e.email, e.start_date, e.end_date,
+                       e.last_start_date, e.manager_id,
+                       COALESCE(m.first_name || ' ' || m.last_name, '') as manager_name,
+                       e.login_name, e.employee_number, e.organization_number, e.organization, e.is_deleted
+                FROM employees e
+                LEFT JOIN employees m ON e.manager_id = m.id
+                {whereClause}
+                ORDER BY e.first_name, e.last_name
+                """;
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            var employees = new List<EmployeeQueries.Employee>();
+
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                employees.Add(new EmployeeQueries.Employee
+                {
+                    Id = reader.GetGuid(0),
+                    FirstName = reader.GetString(1),
+                    LastName = reader.GetString(2),
+                    Role = reader.GetString(3),
+                    EMail = reader.GetString(4),
+                    StartDate = DateOnly.FromDateTime(reader.GetDateTime(5)),
+                    EndDate = reader.IsDBNull(6) ? null : DateOnly.FromDateTime(reader.GetDateTime(6)),
+                    LastStartDate = reader.IsDBNull(7) ? null : DateOnly.FromDateTime(reader.GetDateTime(7)),
+                    ManagerId = reader.IsDBNull(8) ? null : reader.GetGuid(8),
+                    Manager = reader.GetString(9),
+                    LoginName = reader.GetString(10),
+                    EmployeeNumber = reader.GetString(11),
+                    OrganizationNumber = reader.GetInt32(12),
+                    Organization = reader.GetString(13),
+                    IsDeleted = reader.GetBoolean(14)
+                });
+            }
+
+            logger.LogInformation("Employee list query (unified) completed successfully, returned {EmployeeCount} employees", employees.Count);
+            return Result<IEnumerable<EmployeeQueries.Employee>>.Success(employees);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to execute employee list query (unified)");
+            return Result<IEnumerable<EmployeeQueries.Employee>>.Fail($"Failed to retrieve employees: {ex.Message}", StatusCodes.Status500InternalServerError);
         }
     }
 }

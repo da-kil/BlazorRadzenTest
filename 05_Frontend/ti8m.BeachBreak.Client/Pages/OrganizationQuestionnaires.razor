@@ -7,8 +7,7 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @inject IQuestionnaireApiService QuestionnaireApiService
 @inject IEmployeeApiService EmployeeApiService
-@inject IHRQuestionnaireService HRQuestionnaireService
-@inject IAuthenticationService AuthenticationService
+@inject IQuestionnaireService QuestionnaireService
 @inject NavigationManager NavigationManager
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -255,8 +254,8 @@
         try
         {
             // Load organization data using targeted HR service methods
-            var employeesTask = HRQuestionnaireService.GetAllEmployeesAsync();
-            var assignmentsTask = HRQuestionnaireService.GetAllAssignmentsAsync();
+            var employeesTask = QuestionnaireService.GetAccessibleEmployeesAsync();
+            var assignmentsTask = QuestionnaireService.GetAssignmentsAsync();
             var templatesTask = QuestionnaireApiService.GetAllTemplatesAsync();
 
             await Task.WhenAll(employeesTask, assignmentsTask, templatesTask);

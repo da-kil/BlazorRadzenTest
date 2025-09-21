@@ -7,13 +7,12 @@ public class FakeAuthenticationService : IAuthenticationService
 {
     private readonly CurrentUser _fakeUser = new()
     {
+        UserId = "user-001",
         EmployeeId = "b0f388c2-6294-4116-a8b2-eccafa29b3fb",
-        Name = "John Smith",
+        UserName = "John Smith",
         Email = "john.smith@company.com",
         Department = "Executive Management",
-        Role = "Manager", // Can be "Employee", "Manager", "HR"
-        Title = "CEO",
-        Permissions = new List<string> { "ViewOwnQuestionnaires", "CompleteQuestionnaires" }
+        Role = UserRole.Manager
     };
 
     public Task<CurrentUser> GetCurrentUserAsync()
@@ -28,51 +27,39 @@ public class FakeAuthenticationService : IAuthenticationService
 
     public string GetCurrentUserRole()
     {
-        return _fakeUser.Role;
+        return _fakeUser.Role.ToString();
     }
 
     public bool IsInRole(string role)
     {
-        return string.Equals(_fakeUser.Role, role, StringComparison.OrdinalIgnoreCase);
+        return string.Equals(_fakeUser.Role.ToString(), role, StringComparison.OrdinalIgnoreCase);
     }
 
     // Helper method to simulate different user types for testing
-    public void SetFakeUserRole(string role, List<string> permissions)
+    public void SetFakeUserRole(UserRole role)
     {
         _fakeUser.Role = role;
-        _fakeUser.Permissions = permissions;
 
-        // Adjust permissions based on role
-        switch (role.ToLower())
+        // Adjust user properties based on role
+        switch (role)
         {
-            case "manager":
+            case UserRole.Manager:
                 _fakeUser.EmployeeId = "MGR001";
-                _fakeUser.Name = "Jane Smith";
+                _fakeUser.UserName = "Jane Smith";
                 _fakeUser.Email = "jane.smith@company.com";
-                _fakeUser.Title = "Engineering Manager";
-                _fakeUser.Permissions = new List<string>
-                {
-                    "ViewOwnQuestionnaires", "CompleteQuestionnaires",
-                    "ViewTeamQuestionnaires", "ManageTeamAssignments",
-                    "SendReminders", "ViewTeamAnalytics"
-                };
+                _fakeUser.Department = "Engineering";
                 break;
-            case "hr":
+            case UserRole.HR:
                 _fakeUser.EmployeeId = "HR001";
-                _fakeUser.Name = "Alice Johnson";
+                _fakeUser.UserName = "Alice Johnson";
                 _fakeUser.Email = "alice.johnson@company.com";
                 _fakeUser.Department = "Human Resources";
-                _fakeUser.Title = "HR Manager";
-                _fakeUser.Permissions = new List<string>
-                {
-                    "ViewOwnQuestionnaires", "CompleteQuestionnaires",
-                    "ViewAllQuestionnaires", "ManageQuestionnaires",
-                    "CreateQuestionnaires", "ViewOrganizationAnalytics",
-                    "ManageAssignments", "GenerateReports"
-                };
                 break;
             default: // Employee
-                _fakeUser.Permissions = new List<string> { "ViewOwnQuestionnaires", "CompleteQuestionnaires" };
+                _fakeUser.EmployeeId = "EMP001";
+                _fakeUser.UserName = "Bob Brown";
+                _fakeUser.Email = "bob.brown@company.com";
+                _fakeUser.Department = "IT";
                 break;
         }
     }

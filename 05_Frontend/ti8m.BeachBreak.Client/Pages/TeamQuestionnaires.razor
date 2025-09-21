@@ -7,7 +7,7 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @inject IQuestionnaireApiService QuestionnaireApiService
 @inject IEmployeeApiService EmployeeApiService
-@inject IManagerQuestionnaireService ManagerQuestionnaireService
+@inject IQuestionnaireService QuestionnaireService
 @inject IAuthenticationService AuthenticationService
 @inject NavigationManager NavigationManager
 @inject DialogService DialogService
@@ -198,8 +198,8 @@
         try
         {
             // Load team data using targeted manager service methods
-            var teamMembersTask = ManagerQuestionnaireService.GetTeamMembersAsync();
-            var assignmentsTask = ManagerQuestionnaireService.GetTeamAssignmentsAsync();
+            var teamMembersTask = QuestionnaireService.GetTeamMembersAsync();
+            var assignmentsTask = QuestionnaireService.GetAssignmentsAsync(new AssignmentFilter { IncludeTeamOnly = true });
             var templatesTask = QuestionnaireApiService.GetAllTemplatesAsync();
 
             await Task.WhenAll(teamMembersTask, assignmentsTask, templatesTask);

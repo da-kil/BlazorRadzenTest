@@ -40,9 +40,10 @@ public class Program
         builder.Services.AddScoped<IQuestionnaireApiService, QuestionnaireApiService>();
         builder.Services.AddScoped<ICategoryApiService, CategoryApiService>();
         builder.Services.AddScoped<IEmployeeApiService, EmployeeApiService>();
-        builder.Services.AddScoped<IEmployeeQuestionnaireService, EmployeeQuestionnaireService>();
-        builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
-        builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
+        // Unified questionnaire service replaces the role-specific services
+        builder.Services.AddScoped<IQuestionnaireService, QuestionnaireService>();
+        builder.Services.AddScoped<IUserContextService, UserContextService>();
+        builder.Services.AddScoped<IApiClientService, ApiClientService>();
         builder.Services.AddScoped<IAuthenticationService, Services.FakeAuthenticationService>();
 
         // Add services to the container.
