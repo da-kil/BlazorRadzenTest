@@ -4,12 +4,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
-@inject IQuestionnaireApiService QuestionnaireApiService
-@inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
-@inject IAuthenticationService AuthenticationService
-@inject NavigationManager NavigationManager
-@inject DialogService DialogService
-@inject NotificationService NotificationService
+@inherits BasePageComponent
 
 <PageTitle>My Questionnaires</PageTitle>
 
@@ -38,36 +33,7 @@
                 </div>
 
                 <!-- Quick Stats -->
-                <div class="row mb-4">
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <RadzenCard Class="text-center stats-card stats-current">
-                            <RadzenIcon Icon="pending_actions" Size="2rem" Class="text-info mb-2" />
-                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@currentQuestionnaires.Count</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Current</RadzenText>
-                        </RadzenCard>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <RadzenCard Class="text-center stats-card stats-upcoming">
-                            <RadzenIcon Icon="schedule" Size="2rem" Class="text-primary mb-2" />
-                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@upcomingQuestionnaires.Count</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Upcoming</RadzenText>
-                        </RadzenCard>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <RadzenCard Class="text-center stats-card stats-completed">
-                            <RadzenIcon Icon="task_alt" Size="2rem" Class="text-success mb-2" />
-                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@completedQuestionnaires.Count</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Completed</RadzenText>
-                        </RadzenCard>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
-                        <RadzenCard Class="text-center stats-card stats-overdue">
-                            <RadzenIcon Icon="warning" Size="2rem" Class="text-danger mb-2" />
-                            <RadzenText TextStyle="TextStyle.H4" Class="mb-1">@overdueQuestionnaires.Count</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Overdue</RadzenText>
-                        </RadzenCard>
-                    </div>
-                </div>
+                <StatsCardGrid Stats="@GetStatsCards()" Columns="4" />
 
                 <!-- Questionnaire Category Filter -->
                 @if (availableCategories.Count > 1)
@@ -126,7 +92,7 @@
     private List<QuestionnaireAssignment> completedQuestionnaires = new();
     private List<QuestionnaireAssignment> overdueQuestionnaires = new();
     private List<QuestionnaireTemplate> templates = new();
-    private bool isLoading = true;
+    // isLoading is now inherited from BasePageComponent
     private int selectedTabIndex = 0;
     private string currentEmployeeId = "";
     private CurrentUser? currentUser;
@@ -465,91 +431,44 @@
         // TODO: Navigate to results view
         NotificationService.Notify(NotificationSeverity.Info, "Results", "Results view would open here");
     }
+
+    private List<StatsCardGrid.StatCard> GetStatsCards()
+    {
+        return new List<StatsCardGrid.StatCard>
+        {
+            new()
+            {
+                Label = "Current",
+                Value = currentQuestionnaires.Count.ToString(),
+                Icon = "pending_actions",
+                IconClass = "text-info",
+                CssClass = "stats-current"
+            },
+            new()
+            {
+                Label = "Upcoming",
+                Value = upcomingQuestionnaires.Count.ToString(),
+                Icon = "schedule",
+                IconClass = "text-primary",
+                CssClass = "stats-upcoming"
+            },
+            new()
+            {
+                Label = "Completed",
+                Value = completedQuestionnaires.Count.ToString(),
+                Icon = "task_alt",
+                IconClass = "text-success",
+                CssClass = "stats-completed"
+            },
+            new()
+            {
+                Label = "Overdue",
+                Value = overdueQuestionnaires.Count.ToString(),
+                Icon = "warning",
+                IconClass = "text-danger",
+                CssClass = "stats-overdue"
+            }
+        };
+    }
 }
 
-<style>
-    .questionnaire-card {
-        border: 1px solid #e9ecef;
-        transition: all 0.3s ease;
-        border-radius: 12px;
-    }
-
-    .questionnaire-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    }
-
-    .assigned-card {
-        border-left: 4px solid var(--primary-color);
-    }
-
-    .inprogress-card {
-        border-left: 4px solid var(--info-color);
-        background: linear-gradient(135deg, rgba(15, 105, 255, 0.02), rgba(15, 105, 255, 0.05));
-    }
-
-    .completed-card {
-        border-left: 4px solid var(--success-color);
-        background: linear-gradient(135deg, rgba(0, 230, 200, 0.02), rgba(0, 230, 200, 0.05));
-    }
-
-    .overdue-card {
-        border-left: 4px solid var(--danger-color);
-        background: linear-gradient(135deg, rgba(240, 128, 128, 0.02), rgba(240, 128, 128, 0.05));
-    }
-
-    .stats-card {
-        border: 1px solid #e9ecef;
-        transition: all 0.3s ease;
-        border-radius: 12px;
-        padding: 1.5rem;
-    }
-
-    .stats-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    .stats-current {
-        border-left: 4px solid var(--info-color);
-    }
-
-    .stats-upcoming {
-        border-left: 4px solid var(--primary-color);
-    }
-
-    .stats-completed {
-        border-left: 4px solid var(--success-color);
-    }
-
-    .stats-overdue {
-        border-left: 4px solid var(--danger-color);
-    }
-
-    .questionnaire-meta {
-        background: rgba(248, 249, 250, 0.5);
-        border-radius: 8px;
-        padding: 1rem;
-    }
-
-    .questionnaire-progress {
-        flex-grow: 1;
-        margin-right: 1rem;
-    }
-
-    @@media (max-width: 768px) {
-        .questionnaire-card {
-            margin-bottom: 1rem;
-        }
-
-        .d-flex.justify-content-between.align-items-center {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .questionnaire-actions {
-            margin-top: 1rem;
-            text-align: center;
-        }
-    }
-</style>

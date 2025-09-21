@@ -1,0 +1,57 @@
+@using Radzen.Blazor
+
+<div class="row mb-4">
+    @foreach (var stat in Stats)
+    {
+        <div class="col-md-@GetColumnSize() col-sm-6 mb-3">
+            <RadzenCard Class="@($"text-center stats-card {stat.CssClass}")"
+                        Click="@(() => OnStatCardClick.InvokeAsync(stat))">
+                <RadzenIcon Icon="@stat.Icon"
+                           Size="@IconSize"
+                           Class="@($"{stat.IconClass} mb-2")" />
+                <RadzenText TextStyle="TextStyle.H4" Class="mb-1">
+                    @stat.Value
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    @stat.Label
+                </RadzenText>
+                @if (!string.IsNullOrEmpty(stat.SubLabel))
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                        @stat.SubLabel
+                    </RadzenText>
+                }
+            </RadzenCard>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<StatCard> Stats { get; set; } = new();
+    [Parameter] public int Columns { get; set; } = 4;
+    [Parameter] public string IconSize { get; set; } = "2rem";
+    [Parameter] public EventCallback<StatCard> OnStatCardClick { get; set; }
+
+    private int GetColumnSize()
+    {
+        return Columns switch
+        {
+            2 => 6,
+            3 => 4,
+            4 => 3,
+            6 => 2,
+            _ => 3
+        };
+    }
+
+    public class StatCard
+    {
+        public string Label { get; set; } = "";
+        public string Value { get; set; } = "";
+        public string SubLabel { get; set; } = "";
+        public string Icon { get; set; } = "";
+        public string IconClass { get; set; } = "";
+        public string CssClass { get; set; } = "";
+        public object? Data { get; set; }
+    }
+}
