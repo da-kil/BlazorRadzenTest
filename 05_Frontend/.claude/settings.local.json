@@ -4,7 +4,10 @@
       "Bash(dotnet build:*)",
       "Bash(cat:*)",
       "Bash(find:*)",
-      "Read(//c/projects/BlazorRadzenTest/**)"
+      "Read(//c/projects/BlazorRadzenTest/**)",
+      "Bash(del BulkAssignQuestionnaireDialogNew.razor)",
+      "WebSearch",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []
