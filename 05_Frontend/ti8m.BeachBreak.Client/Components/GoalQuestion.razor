@@ -1,36 +1,30 @@
 @using Radzen
 @using Radzen.Blazor
-@implements IDisposable
+@inherits ti8m.BeachBreak.Client.Components.Shared.AutoSaveComponentBase
 
 <style>
     .goal-section {
-        --primary-color: #2563eb;
-        --text-color: #374151;
-        --text-muted: #6b7280;
-        --border-light: #f3f4f6;
-        --focus-ring: rgba(37, 99, 235, 0.1);
-
-        margin-bottom: 3rem;
+        margin-bottom: var(--spacing-3xl);
     }
 
     .section-title {
-        font-size: 1.5rem;
-        font-weight: 700;
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
         color: var(--text-color);
-        margin: 0 0 2rem 0;
+        margin: 0 0 var(--spacing-2xl) 0;
         letter-spacing: -0.025em;
     }
 
     .goal-fields {
         display: flex;
         flex-direction: column;
-        gap: 2rem;
+        gap: var(--spacing-2xl);
     }
 
     .field-group {
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
+        gap: var(--spacing-sm);
     }
 
     .field-label {
@@ -42,18 +36,18 @@
     }
 
     .field-input {
-        border: 1px solid var(--border-light);
-        border-radius: 4px;
-        padding: 0.875rem;
-        font-size: 0.95rem;
-        line-height: 1.6;
-        background: white;
-        transition: border-color 0.15s ease;
-        font-family: inherit;
+        border: var(--input-border-width) solid var(--border-light);
+        border-radius: var(--input-border-radius);
+        padding: var(--input-padding);
+        font-size: var(--font-size-sm);
+        line-height: var(--line-height-relaxed);
+        background: var(--background-color);
+        transition: var(--transition-fast);
+        font-family: var(--font-family-base);
     }
 
     .field-input:focus {
-        border-color: var(--primary-color);
+        border-color: var(--focus-border);
         box-shadow: 0 0 0 3px var(--focus-ring);
         outline: none;
     }
@@ -74,52 +68,69 @@
     .date-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
+        gap: var(--spacing-lg);
     }
 
-    .auto-save-status {
-        position: fixed;
-        top: 1rem;
-        right: 1rem;
-        background: #059669;
-        color: white;
-        padding: 0.375rem 0.75rem;
-        border-radius: 4px;
-        font-size: 0.875rem;
-        font-weight: 500;
-        opacity: 0;
-        transform: translateY(-8px);
-        transition: all 0.2s ease;
-        z-index: 1000;
-    }
-
-    .auto-save-status.visible {
-        opacity: 1;
-        transform: translateY(0);
-    }
 
     @@media (max-width: 768px) {
         .section-title {
-            font-size: 1.25rem;
-            margin-bottom: 1.5rem;
+            font-size: var(--font-size-xl);
+            margin-bottom: var(--spacing-lg);
         }
 
         .date-row {
             grid-template-columns: 1fr;
-            gap: 2rem;
+            gap: var(--spacing-2xl);
         }
 
         .field-input {
-            padding: 0.75rem;
+            padding: var(--spacing-md);
+        }
+    }
+
+    .auto-save-indicator {
+        position: fixed;
+        top: var(--spacing-md);
+        right: var(--spacing-md);
+        background: var(--success-color);
+        color: white;
+        padding: var(--spacing-sm) var(--spacing-md);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        z-index: var(--z-notification);
+        animation: fadeInOut 2s ease-in-out;
+    }
+
+    @@keyframes fadeInOut {
+        0% {
+            opacity: 0;
+            transform: translateX(100%);
+        }
+        10%, 85% {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        100% {
+            opacity: 0;
+            transform: translateX(100%);
         }
     }
 </style>
 
-<div class="goal-section">
-    <div class="auto-save-status @(ShowAutoSave ? "visible" : "")">
-        Saved
+@if (ShowAutoSave)
+{
+    <div class="auto-save-indicator">
+        <RadzenIcon Icon="cloud_done" />
+        <span>Auto-saved</span>
     </div>
+}
 
+<div class="goal-section">
     <h2 class="section-title">Goal Achievement Review</h2>
 
     <div class="goal-fields">
@@ -127,7 +138,7 @@
             <div class="field-group">
                 <label class="field-label">Start Date</label>
                 <RadzenDatePicker @bind-Value="@TimeFrameFrom"
-                                @bind-Value:after="@(() => { OnTimeFrameFromChanged(); ShowAutoSaveIndicator(); })"
+                                @bind-Value:after="@OnTimeFrameFromChangedWithAutoSave"
                                 ShowTime="false"
                                 DateFormat="dd/MM/yyyy"
                                 Class="field-input"
@@ -137,7 +148,7 @@
             <div class="field-group">
                 <label class="field-label">End Date</label>
                 <RadzenDatePicker @bind-Value="@TimeFrameTo"
-                                @bind-Value:after="@(() => { OnTimeFrameToChanged(); ShowAutoSaveIndicator(); })"
+                                @bind-Value:after="@OnTimeFrameToChangedWithAutoSave"
                                 ShowTime="false"
                                 DateFormat="dd/MM/yyyy"
                                 Class="field-input"
@@ -148,7 +159,7 @@
         <div class="field-group">
             <label class="field-label">Goal Description</label>
             <RadzenTextArea @bind-Value="@GoalDescription"
-                          @bind-Value:after="@(() => { OnGoalDescriptionChanged(); ShowAutoSaveIndicator(); })"
+                          @bind-Value:after="@OnGoalDescriptionChangedWithAutoSave"
                           Placeholder="Describe your goal..."
                           Class="field-input textarea-field" />
         </div>
@@ -156,7 +167,7 @@
         <div class="field-group">
             <label class="field-label">Measurement Criteria</label>
             <RadzenTextBox @bind-Value="@MeasurementVariable"
-                         @bind-Value:after="@(() => { OnMeasurementVariableChanged(); ShowAutoSaveIndicator(); })"
+                         @bind-Value:after="@OnMeasurementVariableChangedWithAutoSave"
                          Placeholder="How will success be measured?"
                          Class="field-input" />
         </div>
@@ -164,7 +175,7 @@
         <div class="field-group">
             <label class="field-label">Achievement Percentage (%)</label>
             <RadzenNumeric @bind-Value="@Weighting"
-                         @bind-Value:after="@(() => { OnWeightingChanged(); ShowAutoSaveIndicator(); })"
+                         @bind-Value:after="@OnWeightingChangedWithAutoSave"
                          Min="0"
                          Max="100"
                          Step="5"
@@ -191,47 +202,29 @@
     [Parameter] public decimal Weighting { get; set; }
     [Parameter] public EventCallback<decimal> WeightingChanged { get; set; }
 
-    private bool ShowAutoSave = false;
-    private Timer? autoSaveTimer;
-
-    private async Task OnTimeFrameFromChanged()
+    private async Task OnTimeFrameFromChangedWithAutoSave()
     {
-        await TimeFrameFromChanged.InvokeAsync(TimeFrameFrom);
+        await UpdateWithAutoSave(TimeFrameFrom, TimeFrameFromChanged);
     }
 
-    private async Task OnTimeFrameToChanged()
+    private async Task OnTimeFrameToChangedWithAutoSave()
     {
-        await TimeFrameToChanged.InvokeAsync(TimeFrameTo);
+        await UpdateWithAutoSave(TimeFrameTo, TimeFrameToChanged);
     }
 
-    private async Task OnGoalDescriptionChanged()
+    private async Task OnGoalDescriptionChangedWithAutoSave()
     {
-        await GoalDescriptionChanged.InvokeAsync(GoalDescription);
+        await UpdateWithAutoSave(GoalDescription, GoalDescriptionChanged);
     }
 
-    private async Task OnMeasurementVariableChanged()
+    private async Task OnMeasurementVariableChangedWithAutoSave()
     {
-        await MeasurementVariableChanged.InvokeAsync(MeasurementVariable);
+        await UpdateWithAutoSave(MeasurementVariable, MeasurementVariableChanged);
     }
 
-    private async Task OnWeightingChanged()
+    private async Task OnWeightingChangedWithAutoSave()
     {
-        await WeightingChanged.InvokeAsync(Weighting);
-    }
-
-    private void ShowAutoSaveIndicator()
-    {
-        ShowAutoSave = true;
-        StateHasChanged();
-
-        // Clear existing timer
-        autoSaveTimer?.Dispose();
-
-        // Set new timer to hide indicator after 2 seconds
-        autoSaveTimer = new Timer(_ => {
-            ShowAutoSave = false;
-            InvokeAsync(StateHasChanged);
-        }, null, 2000, Timeout.Infinite);
+        await UpdateWithAutoSave(Weighting, WeightingChanged);
     }
 
     private int GetCompletionPercentage()
@@ -246,10 +239,5 @@
         if (Weighting > 0) fieldsCompleted++;
 
         return (int)Math.Round((double)fieldsCompleted / totalFields * 100);
-    }
-
-    public void Dispose()
-    {
-        autoSaveTimer?.Dispose();
     }
 }

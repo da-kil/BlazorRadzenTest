@@ -1,0 +1,159 @@
+/*
+ * Shared CSS Variables for ti8m.BeachBreak Frontend
+ * Consolidates color, spacing, and design tokens across all components
+ */
+
+:root {
+    /* Primary Brand Colors */
+    --primary-color: #2563eb;
+    --primary-color-light: #3b82f6;
+    --primary-color-dark: #1d4ed8;
+    --primary-color-alpha: rgba(37, 99, 235, 0.1);
+
+    /* Secondary Colors */
+    --secondary-color: #6366f1;
+    --secondary-color-light: #8b5cf6;
+    --secondary-color-dark: #4c1d95;
+
+    /* Status Colors */
+    --success-color: #059669;
+    --success-color-light: #10b981;
+    --success-color-dark: #047857;
+
+    --warning-color: #d97706;
+    --warning-color-light: #f59e0b;
+    --warning-color-dark: #b45309;
+
+    --danger-color: #dc2626;
+    --danger-color-light: #ef4444;
+    --danger-color-dark: #b91c1c;
+
+    --info-color: #0284c7;
+    --info-color-light: #0ea5e9;
+    --info-color-dark: #0369a1;
+
+    /* Text Colors */
+    --text-color: #374151;
+    --text-color-light: #4b5563;
+    --text-color-dark: #1f2937;
+    --text-muted: #6b7280;
+    --text-secondary: #9ca3af;
+    --text-disabled: #d1d5db;
+
+    /* White text variations */
+    --text-white: #ffffff;
+    --text-white-75: rgba(255, 255, 255, 0.75);
+    --text-white-50: rgba(255, 255, 255, 0.5);
+
+    /* Background Colors */
+    --background-color: #ffffff;
+    --background-light: #f9fafb;
+    --background-muted: #f3f4f6;
+    --background-dark: #e5e7eb;
+
+    /* Border Colors */
+    --border-color: #d1d5db;
+    --border-light: #f3f4f6;
+    --border-muted: #e5e7eb;
+    --border-dark: #9ca3af;
+
+    /* Focus & Interaction States */
+    --focus-ring: rgba(37, 99, 235, 0.1);
+    --focus-border: #2563eb;
+    --hover-background: #f9fafb;
+    --active-background: #f3f4f6;
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    /* Spacing Scale */
+    --spacing-xs: 0.25rem;    /* 4px */
+    --spacing-sm: 0.5rem;     /* 8px */
+    --spacing-md: 1rem;       /* 16px */
+    --spacing-lg: 1.5rem;     /* 24px */
+    --spacing-xl: 2rem;       /* 32px */
+    --spacing-2xl: 2.5rem;    /* 40px */
+    --spacing-3xl: 3rem;      /* 48px */
+
+    /* Typography */
+    --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    --font-family-mono: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+
+    --font-size-xs: 0.75rem;   /* 12px */
+    --font-size-sm: 0.875rem;  /* 14px */
+    --font-size-base: 1rem;    /* 16px */
+    --font-size-lg: 1.125rem;  /* 18px */
+    --font-size-xl: 1.25rem;   /* 20px */
+    --font-size-2xl: 1.5rem;   /* 24px */
+    --font-size-3xl: 1.875rem; /* 30px */
+    --font-size-4xl: 2.25rem;  /* 36px */
+
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-semibold: 600;
+    --font-weight-bold: 700;
+
+    --line-height-tight: 1.25;
+    --line-height-normal: 1.5;
+    --line-height-relaxed: 1.75;
+
+    /* Border Radius */
+    --radius-none: 0;
+    --radius-sm: 0.25rem;    /* 4px */
+    --radius-md: 0.375rem;   /* 6px */
+    --radius-lg: 0.5rem;     /* 8px */
+    --radius-xl: 0.75rem;    /* 12px */
+    --radius-2xl: 1rem;      /* 16px */
+    --radius-full: 9999px;
+
+    /* Z-Index Scale */
+    --z-dropdown: 1000;
+    --z-tooltip: 1010;
+    --z-modal: 1020;
+    --z-overlay: 1030;
+    --z-notification: 1040;
+
+    /* Animation */
+    --transition-fast: 150ms ease-in-out;
+    --transition-normal: 250ms ease-in-out;
+    --transition-slow: 350ms ease-in-out;
+
+    /* Component Specific Variables */
+
+    /* Buttons */
+    --button-padding-sm: var(--spacing-xs) var(--spacing-sm);
+    --button-padding-md: var(--spacing-sm) var(--spacing-md);
+    --button-padding-lg: var(--spacing-md) var(--spacing-lg);
+    --button-border-radius: var(--radius-md);
+
+    /* Forms */
+    --input-padding: var(--spacing-sm) var(--spacing-md);
+    --input-border-radius: var(--radius-md);
+    --input-border-width: 1px;
+
+    /* Cards */
+    --card-padding: var(--spacing-lg);
+    --card-border-radius: var(--radius-lg);
+    --card-border: 1px solid var(--border-light);
+    --card-shadow: var(--shadow-sm);
+
+    /* Modals */
+    --modal-overlay-background: rgba(0, 0, 0, 0.5);
+    --modal-border-radius: var(--radius-lg);
+    --modal-shadow: var(--shadow-xl);
+
+    /* Tables */
+    --table-border: 1px solid var(--border-light);
+    --table-stripe-background: var(--background-light);
+
+    /* Deprecated - Legacy Support */
+    /* These will be removed in future versions */
+    --blue-new: var(--primary-color);
+    --green-new: var(--success-color);
+    --danger-color-dark: var(--danger-color-dark);
+    --warning-color-dark: var(--warning-color-dark);
+    --info-color-dark: var(--info-color-dark);
+}
