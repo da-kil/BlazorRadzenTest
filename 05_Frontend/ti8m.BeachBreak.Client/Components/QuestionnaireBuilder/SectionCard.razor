@@ -641,7 +641,11 @@
     {
         if (question.Configuration.TryGetValue("RatingScale", out var scale))
         {
-            return Convert.ToInt32(scale);
+            // Handle JsonElement properly
+            if (scale is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.GetInt32();
+            }
         }
         return 4; // Default
     }
