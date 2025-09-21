@@ -3,7 +3,8 @@
     "allow": [
       "Bash(dotnet build:*)",
       "Bash(cat:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Read(//c/projects/BlazorRadzenTest/**)"
     ],
     "deny": [],
     "ask": []

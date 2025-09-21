@@ -8,467 +8,97 @@
 
 <PageTitle>My Questionnaires</PageTitle>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <RadzenCard Class="mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
-                            <RadzenIcon Icon="assignment" Class="me-2" />
-                            My Questionnaires
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                            View and complete your assigned questionnaires
-                        </RadzenText>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                        <RadzenBadge BadgeStyle="@GetOverallStatusBadge()" Text="@GetOverallStatusText()" Class="px-3 py-2" />
-                        <RadzenButton Text="Refresh"
-                                     Icon="refresh"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Click="@LoadQuestionnaires"
-                                     Size="ButtonSize.Medium" />
-                    </div>
-                </div>
-
-                <!-- Quick Stats -->
-                <StatsCardGrid Stats="@GetStatsCards()" Columns="4" />
-
-                <!-- Questionnaire Category Filter -->
-                @if (availableCategories.Count > 1)
-                {
-                    <RadzenCard Class="mb-4">
-                        <div class="row align-items-center">
-                            <div class="col-md-3">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Filter by Category</RadzenText>
-                                <RadzenDropDown @bind-Value="questionnaireCategoryFilter"
-                                               Data="@availableCategories"
-                                               Change="@(() => CategorizeQuestionnaires())"
-                                               Placeholder="All Categories"
-                                               Class="w-100" />
-                            </div>
-                            @if (!string.IsNullOrEmpty(questionnaireCategoryFilter) && questionnaireCategoryFilter != "All Categories")
-                            {
-                                <div class="col-md-2">
-                                    <RadzenButton Text="Clear Filter"
-                                                 Icon="clear"
-                                                 ButtonStyle="ButtonStyle.Light"
-                                                 Click="@ClearCategoryFilter"
-                                                 Size="ButtonSize.Medium"
-                                                 Style="margin-top: 1.5rem;" />
-                                </div>
-                            }
-                        </div>
-                    </RadzenCard>
-                }
-
-                <!-- Filter Tabs -->
-                <RadzenTabs @bind-SelectedIndex="selectedTabIndex" Class="mb-4">
-                    <Tabs>
-                        <RadzenTabsItem Text="@($"Current ({currentQuestionnaires.Count})")">
-                            @RenderQuestionnaireList(currentQuestionnaires, "No current questionnaires assigned.", "You're all caught up! Check back later for new assignments.")
-                        </RadzenTabsItem>
-                        <RadzenTabsItem Text="@($"Upcoming ({upcomingQuestionnaires.Count})")">
-                            @RenderQuestionnaireList(upcomingQuestionnaires, "No upcoming questionnaires.", "No questionnaires are scheduled to start in the future.")
-                        </RadzenTabsItem>
-                        <RadzenTabsItem Text="@($"Completed ({completedQuestionnaires.Count})")">
-                            @RenderQuestionnaireList(completedQuestionnaires, "No completed questionnaires.", "Complete some questionnaires to see them here!")
-                        </RadzenTabsItem>
-                        <RadzenTabsItem Text="@($"Overdue ({overdueQuestionnaires.Count})")">
-                            @RenderQuestionnaireList(overdueQuestionnaires, "No overdue questionnaires.", "Great! You're staying on top of your deadlines.")
-                        </RadzenTabsItem>
-                    </Tabs>
-                </RadzenTabs>
-            </RadzenCard>
-        </div>
+@if (configuration != null && dataService != null)
+{
+    <GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
+}
+else if (isLoading)
+{
+    <div class="text-center p-5">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading...</RadzenText>
     </div>
-</div>
+}
 
 @code {
+    private QuestionnairePageConfiguration? configuration;
+    private IQuestionnaireDataService? dataService;
+
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<QuestionnaireAssignment> currentQuestionnaires = new();
     private List<QuestionnaireAssignment> upcomingQuestionnaires = new();
     private List<QuestionnaireAssignment> completedQuestionnaires = new();
     private List<QuestionnaireAssignment> overdueQuestionnaires = new();
-    private List<QuestionnaireTemplate> templates = new();
-    // isLoading is now inherited from BasePageComponent
-    private int selectedTabIndex = 0;
-    private string currentEmployeeId = "";
-    private CurrentUser? currentUser;
-
-    // Filter properties
-    private string questionnaireCategoryFilter = "";
     private List<string> availableCategories = new();
 
     protected override async Task OnInitializedAsync()
     {
-        currentUser = await AuthenticationService.GetCurrentUserAsync();
-        currentEmployeeId = currentUser.EmployeeId;
-        await LoadQuestionnaires();
+        await LoadInitialData();
+        SetupConfiguration();
     }
 
-    private async Task LoadQuestionnaires()
+    private async Task LoadInitialData()
     {
-        isLoading = true;
-        StateHasChanged();
+        SetLoading(true);
 
         try
         {
-            // Load assignments and templates in parallel
-            var assignmentsTask = EmployeeQuestionnaireService.GetMyAssignmentsAsync();
-            var templatesTask = QuestionnaireApiService.GetAllTemplatesAsync();
+            // Create the data service
+            dataService = new EmployeeQuestionnaireDataService(EmployeeQuestionnaireService, QuestionnaireApiService);
 
-            await Task.WhenAll(assignmentsTask, templatesTask);
+            // Load data to setup configuration
+            allAssignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
+            var templates = await QuestionnaireApiService.GetAllTemplatesAsync();
 
-            allAssignments = await assignmentsTask;
-            templates = await templatesTask;
-
+            // Categorize assignments
             CategorizeQuestionnaires();
+
+            // Get available categories
+            availableCategories = new List<string> { "All Categories" };
+            availableCategories.AddRange(
+                templates.Where(t => !string.IsNullOrEmpty(t.Category))
+                        .Select(t => t.Category!)
+                        .Distinct()
+                        .OrderBy(c => c));
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load questionnaires: {ex.Message}");
+            await HandleError(ex, "loading questionnaire data");
         }
         finally
         {
-            isLoading = false;
-            StateHasChanged();
+            SetLoading(false);
         }
+    }
+
+    private void SetupConfiguration()
+    {
+        configuration = QuestionnairePageConfigurationFactory.CreateEmployeeConfiguration(
+            allAssignments,
+            currentQuestionnaires,
+            upcomingQuestionnaires,
+            completedQuestionnaires,
+            overdueQuestionnaires,
+            availableCategories);
     }
 
     private void CategorizeQuestionnaires()
     {
         var now = DateTime.Now;
 
-        // Populate available categories from templates
-        availableCategories = templates.Where(t => !string.IsNullOrEmpty(t.Category))
-                                     .Select(t => t.Category)
-                                     .Distinct()
-                                     .OrderBy(c => c)
-                                     .ToList();
-        availableCategories.Insert(0, "All Categories");
+        currentQuestionnaires = allAssignments.Where(a =>
+            a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress).ToList();
 
-        // Apply category filter if selected
-        var filteredAssignments = string.IsNullOrEmpty(questionnaireCategoryFilter) || questionnaireCategoryFilter == "All Categories"
-            ? allAssignments
-            : allAssignments.Where(a =>
-            {
-                var template = templates.FirstOrDefault(t => t.Id == a.TemplateId);
-                return template?.Category == questionnaireCategoryFilter;
-            }).ToList();
-
-        currentQuestionnaires = filteredAssignments.Where(a =>
-            (a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress) &&
-            (!a.DueDate.HasValue || a.DueDate >= now)).ToList();
-
-        upcomingQuestionnaires = filteredAssignments.Where(a =>
+        upcomingQuestionnaires = allAssignments.Where(a =>
             a.Status == AssignmentStatus.Assigned &&
-            a.AssignedDate > now).ToList();
+            a.AssignedDate > now.AddDays(-1)).ToList();
 
-        completedQuestionnaires = filteredAssignments.Where(a =>
+        completedQuestionnaires = allAssignments.Where(a =>
             a.Status == AssignmentStatus.Completed).ToList();
 
-        overdueQuestionnaires = filteredAssignments.Where(a =>
+        overdueQuestionnaires = allAssignments.Where(a =>
             a.DueDate.HasValue &&
-            a.DueDate < now &&
-            a.Status != AssignmentStatus.Completed &&
-            a.Status != AssignmentStatus.Cancelled).ToList();
-    }
-
-    private void ClearCategoryFilter()
-    {
-        questionnaireCategoryFilter = "All Categories";
-        CategorizeQuestionnaires();
-        StateHasChanged();
-    }
-
-    private RenderFragment RenderQuestionnaireList(List<QuestionnaireAssignment> questionnaires, string emptyTitle, string emptyMessage)
-    {
-        return @<div>
-            @if (isLoading)
-            {
-                <div class="text-center p-5">
-                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
-                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Loading questionnaires...</RadzenText>
-                </div>
-            }
-            else if (!questionnaires.Any())
-            {
-                <div class="text-center p-5">
-                    <RadzenIcon Icon="assignment_turned_in" Size="4rem" Class="text-muted mb-3" />
-                    <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">@emptyTitle</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@emptyMessage</RadzenText>
-                </div>
-            }
-            else
-            {
-                <div class="row">
-                    @foreach (var assignment in questionnaires.OrderBy(GetSortOrder))
-                    {
-                        var template = GetTemplate(assignment.TemplateId);
-                        <div class="col-lg-6 col-12 mb-4">
-                            @RenderQuestionnaireCard(assignment, template)
-                        </div>
-                    }
-                </div>
-            }
-        </div>;
-    }
-
-    private RenderFragment RenderQuestionnaireCard(QuestionnaireAssignment assignment, QuestionnaireTemplate? template)
-    {
-        var cardClass = GetCardClass(assignment);
-        var categoryInfo = GetCategoryInfo(template?.Category ?? "General");
-
-        return @<RadzenCard Class="@($"questionnaire-card {cardClass} h-100")">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div class="flex-grow-1">
-                    <div class="d-flex align-items-center mb-2">
-                        <RadzenIcon Icon="@categoryInfo.Icon" Class="@($"me-2 {categoryInfo.ColorClass}")" Size="1.2rem" />
-                        <RadzenText TextStyle="TextStyle.H6" Class="mb-0 fw-bold">
-                            @(template?.Name ?? "Questionnaire")
-                        </RadzenText>
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(template?.Description))
-                    {
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                            @template.Description
-                        </RadzenText>
-                    }
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <RadzenBadge BadgeStyle="@categoryInfo.BadgeStyle" Text="@(template?.Category ?? "General")" />
-                        <AssignmentStatusBadge Status="@assignment.Status" DueDate="@assignment.DueDate" />
-                    </div>
-                </div>
-            </div>
-
-            <div class="questionnaire-meta mb-3">
-                <div class="row">
-                    <div class="col-6">
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Assigned</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
-                            @assignment.AssignedDate.ToString("MMM dd, yyyy")
-                        </RadzenText>
-                    </div>
-                    @if (assignment.DueDate.HasValue)
-                    {
-                        <div class="col-6">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Due Date</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="@GetDueDateClass(assignment)">
-                                @assignment.DueDate.Value.ToString("MMM dd, yyyy")
-                            </RadzenText>
-                        </div>
-                    }
-                </div>
-                @if (assignment.CompletedDate.HasValue)
-                {
-                    <div class="mt-2">
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Completed</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-success fw-bold">
-                            @assignment.CompletedDate.Value.ToString("MMM dd, yyyy HH:mm")
-                        </RadzenText>
-                    </div>
-                }
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center">
-                <div class="questionnaire-progress">
-                    @if (assignment.Status == AssignmentStatus.InProgress)
-                    {
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">Progress</RadzenText>
-                        <RadzenProgressBar Value="@GetProgressValue(assignment)" Max="100" ProgressBarStyle="ProgressBarStyle.Info" />
-                    }
-                </div>
-                <div class="questionnaire-actions">
-                    @if (assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress)
-                    {
-                        <RadzenButton Text="@GetActionText(assignment.Status)"
-                                     Icon="@GetActionIcon(assignment.Status)"
-                                     ButtonStyle="@GetActionButtonStyle(assignment)"
-                                     Click="@(() => StartQuestionnaire(assignment))"
-                                     Size="ButtonSize.Medium" />
-                    }
-                    else if (assignment.Status == AssignmentStatus.Completed)
-                    {
-                        <RadzenButton Text="View Results"
-                                     Icon="visibility"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Click="@(() => ViewResults(assignment))"
-                                     Size="ButtonSize.Medium" />
-                    }
-                </div>
-            </div>
-        </RadzenCard>;
-    }
-
-    private QuestionnaireTemplate? GetTemplate(Guid templateId)
-    {
-        return templates.FirstOrDefault(t => t.Id == templateId);
-    }
-
-    private string GetCardClass(QuestionnaireAssignment assignment)
-    {
-        return assignment.Status switch
-        {
-            AssignmentStatus.Completed => "completed-card",
-            AssignmentStatus.InProgress => "inprogress-card",
-            AssignmentStatus.Overdue => "overdue-card",
-            _ when IsOverdue(assignment) => "overdue-card",
-            _ => "assigned-card"
-        };
-    }
-
-    private (string Icon, string ColorClass, BadgeStyle BadgeStyle) GetCategoryInfo(string category)
-    {
-        return category.ToLower() switch
-        {
-            "performance" => ("trending_up", "text-info", BadgeStyle.Info),
-            "annual review" => ("event_note", "text-primary", BadgeStyle.Primary),
-            "onboarding" => ("person_add", "text-success", BadgeStyle.Success),
-            "training" => ("school", "text-warning", BadgeStyle.Warning),
-            "feedback" => ("feedback", "text-secondary", BadgeStyle.Secondary),
-            _ => ("assignment", "text-muted", BadgeStyle.Light)
-        };
-    }
-
-    private string GetDueDateClass(QuestionnaireAssignment assignment)
-    {
-        if (IsOverdue(assignment))
-            return "text-danger fw-bold";
-        else if (IsDueSoon(assignment))
-            return "text-warning fw-bold";
-        return "fw-bold";
-    }
-
-    private bool IsOverdue(QuestionnaireAssignment assignment)
-    {
-        return assignment.DueDate.HasValue &&
-               assignment.DueDate < DateTime.Now &&
-               assignment.Status != AssignmentStatus.Completed &&
-               assignment.Status != AssignmentStatus.Cancelled;
-    }
-
-    private bool IsDueSoon(QuestionnaireAssignment assignment)
-    {
-        return assignment.DueDate.HasValue &&
-               assignment.DueDate < DateTime.Now.AddDays(3) &&
-               assignment.DueDate >= DateTime.Now;
-    }
-
-    private string GetActionText(AssignmentStatus status)
-    {
-        return status switch
-        {
-            AssignmentStatus.Assigned => "Start",
-            AssignmentStatus.InProgress => "Continue",
-            _ => "Start"
-        };
-    }
-
-    private string GetActionIcon(AssignmentStatus status)
-    {
-        return status switch
-        {
-            AssignmentStatus.Assigned => "play_arrow",
-            AssignmentStatus.InProgress => "play_arrow",
-            _ => "play_arrow"
-        };
-    }
-
-    private ButtonStyle GetActionButtonStyle(QuestionnaireAssignment assignment)
-    {
-        if (IsOverdue(assignment))
-            return ButtonStyle.Danger;
-        else if (assignment.Status == AssignmentStatus.InProgress)
-            return ButtonStyle.Info;
-        return ButtonStyle.Primary;
-    }
-
-    private int GetProgressValue(QuestionnaireAssignment assignment)
-    {
-        // TODO: Get actual progress from response API
-        return 45; // Placeholder
-    }
-
-    private BadgeStyle GetOverallStatusBadge()
-    {
-        if (overdueQuestionnaires.Any())
-            return BadgeStyle.Danger;
-        else if (currentQuestionnaires.Any())
-            return BadgeStyle.Info;
-        else if (upcomingQuestionnaires.Any())
-            return BadgeStyle.Primary;
-        return BadgeStyle.Success;
-    }
-
-    private string GetOverallStatusText()
-    {
-        if (overdueQuestionnaires.Any())
-            return $"{overdueQuestionnaires.Count} Overdue";
-        else if (currentQuestionnaires.Any())
-            return $"{currentQuestionnaires.Count} Pending";
-        else if (upcomingQuestionnaires.Any())
-            return $"{upcomingQuestionnaires.Count} Upcoming";
-        return "All Caught Up!";
-    }
-
-    private DateTime GetSortOrder(QuestionnaireAssignment assignment)
-    {
-        // Sort by priority: overdue first, then by due date, then by assigned date
-        if (IsOverdue(assignment))
-            return assignment.DueDate ?? assignment.AssignedDate;
-        return assignment.DueDate ?? assignment.AssignedDate;
-    }
-
-    private async Task StartQuestionnaire(QuestionnaireAssignment assignment)
-    {
-        NavigationManager.NavigateTo($"/my-questionnaires/{assignment.TemplateId}");
-    }
-
-    private async Task ViewResults(QuestionnaireAssignment assignment)
-    {
-        // TODO: Navigate to results view
-        NotificationService.Notify(NotificationSeverity.Info, "Results", "Results view would open here");
-    }
-
-    private List<StatsCardGrid.StatCard> GetStatsCards()
-    {
-        return new List<StatsCardGrid.StatCard>
-        {
-            new()
-            {
-                Label = "Current",
-                Value = currentQuestionnaires.Count.ToString(),
-                Icon = "pending_actions",
-                IconClass = "text-info",
-                CssClass = "stats-current"
-            },
-            new()
-            {
-                Label = "Upcoming",
-                Value = upcomingQuestionnaires.Count.ToString(),
-                Icon = "schedule",
-                IconClass = "text-primary",
-                CssClass = "stats-upcoming"
-            },
-            new()
-            {
-                Label = "Completed",
-                Value = completedQuestionnaires.Count.ToString(),
-                Icon = "task_alt",
-                IconClass = "text-success",
-                CssClass = "stats-completed"
-            },
-            new()
-            {
-                Label = "Overdue",
-                Value = overdueQuestionnaires.Count.ToString(),
-                Icon = "warning",
-                IconClass = "text-danger",
-                CssClass = "stats-overdue"
-            }
-        };
+            a.DueDate.Value < now &&
+            a.Status != AssignmentStatus.Completed).ToList();
     }
 }
-

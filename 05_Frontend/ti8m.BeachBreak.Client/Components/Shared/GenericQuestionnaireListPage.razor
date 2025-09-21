@@ -1,0 +1,438 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@inherits BasePageComponent
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <RadzenCard Class="mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
+                            <RadzenIcon Icon="@Configuration.PageIcon" Class="me-2" />
+                            @Configuration.PageTitle
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                            @Configuration.PageDescription
+                        </RadzenText>
+                    </div>
+                    <div class="d-flex align-items-center gap-3">
+                        <RadzenBadge BadgeStyle="@GetOverallStatusBadge()" Text="@GetOverallStatusText()" Class="px-3 py-2" />
+                        @foreach (var action in Configuration.Actions)
+                        {
+                            @if (action.IsVisible)
+                            {
+                                <RadzenButton Text="@action.Text"
+                                             Icon="@action.Icon"
+                                             ButtonStyle="@GetButtonStyle(action.ButtonStyle)"
+                                             Click="@(() => HandleActionClick(action))"
+                                             Size="ButtonSize.Medium" />
+                            }
+                        }
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <StatsCardGrid Stats="@GetStatsCards()" Columns="@Configuration.StatsConfig.Columns" />
+
+                <!-- Filters -->
+                @if (Configuration.Filters.Any(f => f.IsVisible))
+                {
+                    <RadzenCard Class="mb-4">
+                        <div class="row align-items-center">
+                            @foreach (var filter in Configuration.Filters.Where(f => f.IsVisible))
+                            {
+                                <div class="col-md-3">
+                                    @RenderFilter(filter)
+                                </div>
+                            }
+                        </div>
+                    </RadzenCard>
+                }
+
+                <!-- Tab Content -->
+                <RadzenTabs @bind-SelectedIndex="selectedTabIndex">
+                    <Tabs>
+                        @foreach (var tab in Configuration.Tabs.Where(t => t.IsVisible))
+                        {
+                            <RadzenTabsItem Text="@tab.Title">
+                                @RenderTabContent(tab)
+                            </RadzenTabsItem>
+                        }
+                    </Tabs>
+                </RadzenTabs>
+            </RadzenCard>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
+    [Parameter, EditorRequired] public IQuestionnaireDataService DataService { get; set; } = default!;
+
+    private List<QuestionnaireAssignment> allAssignments = new();
+    private List<EmployeeDto> employees = new();
+    private List<QuestionnaireTemplate> templates = new();
+    private object? additionalData = null;
+
+    // Filter values
+    private string searchFilter = "";
+    private string categoryFilter = "";
+    private string statusFilter = "";
+    private string departmentFilter = "";
+
+    private int selectedTabIndex = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        SetLoading(true);
+
+        try
+        {
+            var assignmentsTask = DataService.GetAssignmentsAsync();
+            var employeesTask = DataService.GetEmployeesAsync();
+            var templatesTask = DataService.GetTemplatesAsync();
+            var additionalDataTask = DataService.GetAdditionalDataAsync();
+
+            await Task.WhenAll(assignmentsTask, employeesTask, templatesTask, additionalDataTask);
+
+            allAssignments = assignmentsTask.Result;
+            employees = employeesTask.Result;
+            templates = templatesTask.Result;
+            additionalData = additionalDataTask.Result;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            await HandleError(ex, "loading questionnaire data");
+        }
+        finally
+        {
+            SetLoading(false);
+        }
+    }
+
+    private List<StatsCardGrid.StatCard> GetStatsCards()
+    {
+        return Configuration.StatsConfig.StatCards.Select(config => new StatsCardGrid.StatCard
+        {
+            Label = config.Label,
+            Value = config.ValueCalculator().ToString() ?? "0",
+            Icon = config.Icon,
+            IconClass = config.IconClass,
+            CssClass = config.CssClass
+        }).ToList();
+    }
+
+    private RenderFragment RenderFilter(QuestionnairePageFilter filter) => __builder =>
+    {
+        <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">@filter.Label</RadzenText>
+
+        @switch (filter.Type)
+        {
+            case QuestionnaireFilterType.Search:
+                <RadzenTextBox @bind-Value="searchFilter"
+                              Placeholder="Search..."
+                              Class="w-100"
+                              oninput="@(() => ApplyFilters())" />
+                break;
+
+            case QuestionnaireFilterType.Category:
+                <RadzenDropDown @bind-Value="categoryFilter"
+                               Data="@filter.Options"
+                               Change="@ApplyFilters"
+                               Placeholder="All Categories"
+                               Class="w-100" />
+                break;
+
+            case QuestionnaireFilterType.Status:
+                <RadzenDropDown @bind-Value="statusFilter"
+                               Data="@filter.Options"
+                               Change="@ApplyFilters"
+                               Placeholder="All Status"
+                               Class="w-100" />
+                break;
+
+            case QuestionnaireFilterType.Department:
+                <RadzenDropDown @bind-Value="departmentFilter"
+                               Data="@filter.Options"
+                               Change="@ApplyFilters"
+                               Placeholder="All Departments"
+                               Class="w-100" />
+                break;
+
+            case QuestionnaireFilterType.DateRange:
+                <div class="d-flex gap-2">
+                    <RadzenDatePicker TValue="DateTime?" Class="w-50" Placeholder="From" />
+                    <RadzenDatePicker TValue="DateTime?" Class="w-50" Placeholder="To" />
+                </div>
+                break;
+        }
+    };
+
+    private RenderFragment RenderTabContent(QuestionnairePageTab tab) => __builder =>
+    {
+        @switch (tab.Type)
+        {
+            case QuestionnaireTabType.Current:
+                @RenderQuestionnaireList(GetCurrentAssignments())
+                break;
+
+            case QuestionnaireTabType.Upcoming:
+                @RenderQuestionnaireList(GetUpcomingAssignments())
+                break;
+
+            case QuestionnaireTabType.Completed:
+                @RenderQuestionnaireList(GetCompletedAssignments())
+                break;
+
+            case QuestionnaireTabType.Overdue:
+                @RenderQuestionnaireList(GetOverdueAssignments())
+                break;
+
+            case QuestionnaireTabType.TeamView:
+                @RenderTeamView()
+                break;
+
+            case QuestionnaireTabType.Analytics:
+                @RenderAnalyticsView()
+                break;
+
+            default:
+                <div class="text-center p-5">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Content for @tab.Title is not yet implemented.</RadzenText>
+                </div>
+                break;
+        }
+    };
+
+    private RenderFragment RenderQuestionnaireList(List<QuestionnaireAssignment> assignments) => __builder =>
+    {
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading questionnaires...</RadzenText>
+            </div>
+        }
+        else if (!assignments.Any())
+        {
+            <div class="text-center p-5">
+                <RadzenIcon Icon="quiz" Size="4rem" Class="text-muted mb-3" />
+                <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No questionnaires found</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No questionnaires match your current filters.</RadzenText>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var assignment in assignments)
+                {
+                    <div class="col-lg-6 col-xl-4 mb-4">
+                        @RenderQuestionnaireCard(assignment)
+                    </div>
+                }
+            </div>
+        }
+    };
+
+    private RenderFragment RenderQuestionnaireCard(QuestionnaireAssignment assignment) => __builder =>
+    {
+        <RadzenCard Class="@($"questionnaire-card {GetCardCssClass(assignment)}")">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="flex-grow-1">
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-1">@GetTemplateName(assignment)</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@assignment.AssignedBy</RadzenText>
+                </div>
+                <RadzenBadge Text="@assignment.Status.ToString()"
+                            BadgeStyle="@GetStatusBadgeStyle(assignment.Status)" />
+            </div>
+
+            @if (assignment.DueDate.HasValue)
+            {
+                <div class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                        <RadzenIcon Icon="event" Class="me-1" />
+                        Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
+                    </RadzenText>
+                </div>
+            }
+
+            <div class="questionnaire-actions">
+                @if (Configuration.PageType == QuestionnairePageType.Employee)
+                {
+                    @if (assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress)
+                    {
+                        <RadzenButton Text="@(assignment.Status == AssignmentStatus.InProgress ? "Continue" : "Start")"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => NavigateToQuestionnaire(assignment))" />
+                    }
+                    else if (assignment.Status == AssignmentStatus.Completed)
+                    {
+                        <RadzenButton Text="View Results"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => ViewResults(assignment))" />
+                    }
+                }
+                else
+                {
+                    <RadzenButton Text="View Details"
+                                 ButtonStyle="ButtonStyle.Light"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => ViewAssignmentDetails(assignment))" />
+                }
+            </div>
+        </RadzenCard>
+    };
+
+    private RenderFragment RenderTeamView() => __builder =>
+    {
+        <div class="text-center p-5">
+            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Team view implementation would go here.</RadzenText>
+        </div>
+    };
+
+    private RenderFragment RenderAnalyticsView() => __builder =>
+    {
+        <div class="text-center p-5">
+            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Analytics view implementation would go here.</RadzenText>
+        </div>
+    };
+
+    // Filter and data manipulation methods
+    private List<QuestionnaireAssignment> GetCurrentAssignments()
+    {
+        return allAssignments.Where(a =>
+            a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress).ToList();
+    }
+
+    private List<QuestionnaireAssignment> GetUpcomingAssignments()
+    {
+        return allAssignments.Where(a =>
+            a.Status == AssignmentStatus.Assigned &&
+            a.AssignedDate > DateTime.Now.AddDays(-1)).ToList();
+    }
+
+    private List<QuestionnaireAssignment> GetCompletedAssignments()
+    {
+        return allAssignments.Where(a => a.Status == AssignmentStatus.Completed).ToList();
+    }
+
+    private List<QuestionnaireAssignment> GetOverdueAssignments()
+    {
+        return allAssignments.Where(a =>
+            a.DueDate.HasValue &&
+            a.DueDate.Value < DateTime.Now &&
+            a.Status != AssignmentStatus.Completed).ToList();
+    }
+
+    // UI Helper methods
+    private string GetCardCssClass(QuestionnaireAssignment assignment)
+    {
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+            return "overdue-card";
+
+        return assignment.Status switch
+        {
+            AssignmentStatus.InProgress => "inprogress-card",
+            AssignmentStatus.Completed => "completed-card",
+            _ => "assigned-card"
+        };
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => BadgeStyle.Secondary,
+            AssignmentStatus.InProgress => BadgeStyle.Info,
+            AssignmentStatus.Completed => BadgeStyle.Success,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private ButtonStyle GetButtonStyle(string buttonStyle)
+    {
+        return buttonStyle switch
+        {
+            "ButtonStyle.Primary" => ButtonStyle.Primary,
+            "ButtonStyle.Info" => ButtonStyle.Info,
+            "ButtonStyle.Light" => ButtonStyle.Light,
+            _ => ButtonStyle.Light
+        };
+    }
+
+    private BadgeStyle GetOverallStatusBadge()
+    {
+        var overdueCount = GetOverdueAssignments().Count;
+        return overdueCount > 0 ? BadgeStyle.Danger : BadgeStyle.Success;
+    }
+
+    private string GetOverallStatusText()
+    {
+        var overdueCount = GetOverdueAssignments().Count;
+        return overdueCount > 0 ? $"{overdueCount} Overdue" : "On Track";
+    }
+
+    // Event handlers
+    private async Task HandleActionClick(QuestionnairePageAction action)
+    {
+        if (action.OnClick != null)
+        {
+            await action.OnClick.Invoke();
+        }
+        else
+        {
+            // Default implementations
+            switch (action.Id)
+            {
+                case "refresh":
+                    await LoadData();
+                    break;
+                case "export":
+                    ShowInfo("Export functionality would be implemented here");
+                    break;
+                case "analytics":
+                    ShowInfo("Analytics dashboard would be implemented here");
+                    break;
+            }
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        // Filter logic would be implemented here
+        StateHasChanged();
+    }
+
+    private async Task NavigateToQuestionnaire(QuestionnaireAssignment assignment)
+    {
+        NavigateToPage($"/my-questionnaires/{assignment.TemplateId}");
+    }
+
+    private async Task ViewResults(QuestionnaireAssignment assignment)
+    {
+        ShowInfo("Results view would be implemented here");
+    }
+
+    private async Task ViewAssignmentDetails(QuestionnaireAssignment assignment)
+    {
+        ShowInfo("Assignment details would be implemented here");
+    }
+
+    private string GetTemplateName(QuestionnaireAssignment assignment)
+    {
+        var template = templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
+        return template?.Name ?? "Unknown Template";
+    }
+}
