@@ -3,132 +3,66 @@ using ti8m.BeachBreak.Client.Models;
 
 namespace ti8m.BeachBreak.Client.Services;
 
-public class EmployeeQuestionnaireService : IEmployeeQuestionnaireService
+public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnaireService
 {
-    private readonly HttpClient httpQueryClient;
-    private readonly HttpClient httpCommandClient;
+    private const string EmployeeQueryEndpoint = "q/api/v1/employees";
+    private const string EmployeeCommandEndpoint = "c/api/v1/employees";
     private readonly string currentEmployeeId;
 
-    public EmployeeQuestionnaireService(IHttpClientFactory factory)
+    public EmployeeQuestionnaireService(IHttpClientFactory factory) : base(factory)
     {
-        httpQueryClient = factory.CreateClient("QueryClient");
-        httpCommandClient = factory.CreateClient("CommandClient");
         // TODO: Get current employee ID from authentication context
         currentEmployeeId = "b0f388c2-6294-4116-a8b2-eccafa29b3fb";
     }
 
     public async Task<List<QuestionnaireAssignment>> GetMyAssignmentsAsync()
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireAssignment>>($"q/api/v1/employees/{currentEmployeeId}/assignments");
-            return response ?? new List<QuestionnaireAssignment>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching my assignments: {ex.Message}");
-            return new List<QuestionnaireAssignment>();
-        }
+        return await GetEmployeeResourceAsync<QuestionnaireAssignment>(EmployeeQueryEndpoint, currentEmployeeId, "assignments");
     }
 
     public async Task<QuestionnaireAssignment?> GetMyAssignmentByIdAsync(Guid assignmentId)
     {
-        try
-        {
-            return await httpQueryClient.GetFromJsonAsync<QuestionnaireAssignment>($"q/api/v1/employees/{currentEmployeeId}/assignments/{assignmentId}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching assignment {assignmentId}: {ex.Message}");
-            return null;
-        }
+        return await GetEmployeeSubResourceAsync<QuestionnaireAssignment>(EmployeeQueryEndpoint, currentEmployeeId, "assignments", assignmentId);
     }
 
     public async Task<QuestionnaireResponse?> GetMyResponseAsync(Guid assignmentId)
     {
-        try
-        {
-            return await httpQueryClient.GetFromJsonAsync<QuestionnaireResponse>($"q/api/v1/employees/{currentEmployeeId}/responses/assignment/{assignmentId}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching my response for assignment {assignmentId}: {ex.Message}");
-            return null;
-        }
+        return await GetEmployeeSubResourceAsync<QuestionnaireResponse>(EmployeeQueryEndpoint, currentEmployeeId, "responses/assignment", assignmentId);
     }
 
     public async Task<QuestionnaireResponse> SaveMyResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
     {
-        try
-        {
-            var response = await httpCommandClient.PostAsJsonAsync($"c/api/v1/employees/{currentEmployeeId}/responses/assignment/{assignmentId}", sectionResponses);
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
-            return result ?? throw new Exception("Failed to save response");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error saving my response for assignment {assignmentId}: {ex.Message}");
-            throw;
-        }
+        var result = await PostEmployeeResourceAsync<Dictionary<Guid, SectionResponse>, QuestionnaireResponse>(EmployeeCommandEndpoint, currentEmployeeId, "responses/assignment", assignmentId, sectionResponses);
+        return result ?? throw new Exception("Failed to save response");
     }
 
     public async Task<QuestionnaireResponse?> SubmitMyResponseAsync(Guid assignmentId)
     {
-        try
-        {
-            var response = await httpCommandClient.PostAsync($"c/api/v1/employees/{currentEmployeeId}/responses/assignment/{assignmentId}/submit", null);
-            response.EnsureSuccessStatusCode();
-
-            return await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error submitting my response for assignment {assignmentId}: {ex.Message}");
-            return null;
-        }
+        return await PostEmployeeActionAsync<QuestionnaireResponse>(EmployeeCommandEndpoint, currentEmployeeId, "responses/assignment", assignmentId, "submit");
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsByStatusAsync(AssignmentStatus status)
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireAssignment>>($"q/api/v1/employees/{currentEmployeeId}/assignments?status={status}");
-            return response ?? new List<QuestionnaireAssignment>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching assignments by status {status}: {ex.Message}");
-            return new List<QuestionnaireAssignment>();
-        }
+        var queryString = $"status={status}";
+        return await GetAllAsync<QuestionnaireAssignment>($"{EmployeeQueryEndpoint}/{currentEmployeeId}/assignments", queryString);
     }
 
     public async Task<AssignmentProgress> GetAssignmentProgressAsync(Guid assignmentId)
     {
         try
         {
-            var response = await httpQueryClient.GetFromJsonAsync<AssignmentProgress>($"q/api/v1/employees/{currentEmployeeId}/assignments/{assignmentId}/progress");
+            var response = await HttpQueryClient.GetFromJsonAsync<AssignmentProgress>($"{EmployeeQueryEndpoint}/{currentEmployeeId}/assignments/{assignmentId}/progress");
             return response ?? new AssignmentProgress { AssignmentId = assignmentId };
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching assignment progress {assignmentId}: {ex.Message}");
+            LogError($"Error fetching assignment progress {assignmentId}", ex);
             return new AssignmentProgress { AssignmentId = assignmentId };
         }
     }
 
     public async Task<List<AssignmentProgress>> GetAllAssignmentProgressAsync()
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<AssignmentProgress>>($"q/api/v1/employees/{currentEmployeeId}/assignments/progress");
-            return response ?? new List<AssignmentProgress>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching all assignment progress: {ex.Message}");
-            return new List<AssignmentProgress>();
-        }
+        return await GetEmployeeResourceAsync<AssignmentProgress>(EmployeeQueryEndpoint, currentEmployeeId, "assignments/progress");
     }
 }

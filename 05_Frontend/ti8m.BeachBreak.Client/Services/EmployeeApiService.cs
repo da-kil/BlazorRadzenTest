@@ -10,68 +10,33 @@ public interface IEmployeeApiService
     Task<List<EmployeeDto>> SearchEmployeesAsync(string searchTerm);
 }
 
-public class EmployeeApiService : IEmployeeApiService
+public class EmployeeApiService : BaseApiService, IEmployeeApiService
 {
-    private readonly HttpClient httpQueryClient;
+    private const string BaseEndpoint = "q/api/v1/employees";
 
-    public EmployeeApiService(IHttpClientFactory factory)
+    public EmployeeApiService(IHttpClientFactory factory) : base(factory)
     {
-        httpQueryClient = factory.CreateClient("QueryClient");
     }
 
     public async Task<List<EmployeeDto>> GetAllEmployeesAsync()
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<EmployeeDto>>("q/api/v1/employees");
-            return response ?? new List<EmployeeDto>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching employees: {ex.Message}");
-            return new List<EmployeeDto>();
-        }
+        return await GetAllAsync<EmployeeDto>(BaseEndpoint);
     }
 
     public async Task<EmployeeDto?> GetEmployeeByIdAsync(Guid id)
     {
-        try
-        {
-            return await httpQueryClient.GetFromJsonAsync<EmployeeDto>($"q/api/v1/employees/{id}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching employee {id}: {ex.Message}");
-            return null;
-        }
+        return await GetByIdAsync<EmployeeDto>(BaseEndpoint, id);
     }
 
     public async Task<List<EmployeeDto>> GetEmployeesByDepartmentAsync(string department)
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<EmployeeDto>>($"q/api/v1/employees?department={Uri.EscapeDataString(department)}");
-            return response ?? new List<EmployeeDto>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching employees by department {department}: {ex.Message}");
-            return new List<EmployeeDto>();
-        }
+        var queryString = $"department={Uri.EscapeDataString(department)}";
+        return await GetAllAsync<EmployeeDto>(BaseEndpoint, queryString);
     }
 
     public async Task<List<EmployeeDto>> SearchEmployeesAsync(string searchTerm)
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<EmployeeDto>>($"q/api/v1/employees?search={Uri.EscapeDataString(searchTerm)}");
-            return response ?? new List<EmployeeDto>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error searching employees with term {searchTerm}: {ex.Message}");
-            return new List<EmployeeDto>();
-        }
+        return await SearchAsync<EmployeeDto>(BaseEndpoint, searchTerm);
     }
 }
 

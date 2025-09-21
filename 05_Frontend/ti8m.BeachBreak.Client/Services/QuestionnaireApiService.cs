@@ -3,388 +3,185 @@ using ti8m.BeachBreak.Client.Models;
 
 namespace ti8m.BeachBreak.Client.Services;
 
-public class QuestionnaireApiService : IQuestionnaireApiService
+public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
 {
-    private readonly HttpClient httpCommandClient;
-    private readonly HttpClient httpQueryClient;
+    private const string TemplateQueryEndpoint = "q/api/v1/questionnaire-templates";
+    private const string TemplateCommandEndpoint = "c/api/v1/questionnaire-templates";
+    private const string AssignmentQueryEndpoint = "q/api/v1/assignments";
+    private const string AssignmentCommandEndpoint = "c/api/v1/assignments";
+    private const string ResponseQueryEndpoint = "q/api/v1/responses";
+    private const string ResponseCommandEndpoint = "c/api/v1/responses";
+    private const string AnalyticsEndpoint = "q/api/v1/analytics";
 
-    public QuestionnaireApiService(IHttpClientFactory Factory)
+    public QuestionnaireApiService(IHttpClientFactory factory) : base(factory)
     {
-        httpCommandClient = Factory.CreateClient("CommandClient");
-        httpQueryClient = Factory.CreateClient("QueryClient");
     }
 
     // Template management
     public async Task<List<QuestionnaireTemplate>> GetAllTemplatesAsync()
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireTemplate>>("q/api/v1/questionnaire-templates");
-            return response ?? new List<QuestionnaireTemplate>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching templates: {ex.Message}");
-            return new List<QuestionnaireTemplate>();
-        }
+        return await GetAllAsync<QuestionnaireTemplate>(TemplateQueryEndpoint);
     }
 
     public async Task<QuestionnaireTemplate?> GetTemplateByIdAsync(Guid id)
     {
-        try
-        {
-            return await httpQueryClient.GetFromJsonAsync<QuestionnaireTemplate>($"q/api/v1/questionnaire-templates/{id}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching template {id}: {ex.Message}");
-            return null;
-        }
+        return await GetByIdAsync<QuestionnaireTemplate>(TemplateQueryEndpoint, id);
     }
 
     public async Task<QuestionnaireTemplate> CreateTemplateAsync(QuestionnaireTemplate template)
     {
-        try
+        var createRequest = new
         {
-            var createRequest = new
-            {
-                template.Name,
-                template.Description,
-                template.Category,
-                template.IsActive,
-                template.IsPublished,
-                template.PublishedDate,
-                template.LastPublishedDate,
-                template.PublishedBy,
-                template.Sections,
-                template.Settings
-            };
+            template.Name,
+            template.Description,
+            template.Category,
+            template.IsActive,
+            template.IsPublished,
+            template.PublishedDate,
+            template.LastPublishedDate,
+            template.PublishedBy,
+            template.Sections,
+            template.Settings
+        };
 
-            var response = await httpCommandClient.PostAsJsonAsync("c/api/v1/questionnaire-templates", createRequest);
-            response.EnsureSuccessStatusCode();
-            
-            var result = await response.Content.ReadFromJsonAsync<QuestionnaireTemplate>();
-            return result ?? throw new Exception("Failed to create template");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error creating template: {ex.Message}");
-            throw;
-        }
+        var result = await CreateWithResponseAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, createRequest);
+        return result ?? throw new Exception("Failed to create template");
     }
 
     public async Task<QuestionnaireTemplate?> UpdateTemplateAsync(QuestionnaireTemplate template)
     {
-        try
+        var updateRequest = new
         {
-            var updateRequest = new
-            {
-                template.Name,
-                template.Description,
-                template.Category,
-                template.IsActive,
-                template.IsPublished,
-                template.PublishedDate,
-                template.LastPublishedDate,
-                template.PublishedBy,
-                template.Sections,
-                template.Settings
-            };
+            template.Name,
+            template.Description,
+            template.Category,
+            template.IsActive,
+            template.IsPublished,
+            template.PublishedDate,
+            template.LastPublishedDate,
+            template.PublishedBy,
+            template.Sections,
+            template.Settings
+        };
 
-            var response = await httpCommandClient.PutAsJsonAsync($"c/api/v1/questionnaire-templates/{template.Id}", updateRequest);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"API Error updating template {template.Id}: {response.StatusCode} - {errorContent}");
-                throw new HttpRequestException($"Failed to update template: {response.StatusCode} - {response.ReasonPhrase}");
-            }
-
-            var result = await response.Content.ReadFromJsonAsync<QuestionnaireTemplate>();
-            return result;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error updating template {template.Id}: {ex.Message}");
-            throw; // Re-throw the exception instead of returning null
-        }
+        return await UpdateWithResponseAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, template.Id, updateRequest);
     }
 
     public async Task<bool> DeleteTemplateAsync(Guid id)
     {
-        try
-        {
-            var response = await httpCommandClient.DeleteAsync($"c/api/v1/questionnaire-templates/{id}");
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error deleting template {id}: {ex.Message}");
-            return false;
-        }
+        return await DeleteAsync(TemplateCommandEndpoint, id);
     }
 
     public async Task<List<QuestionnaireTemplate>> GetTemplatesByCategoryAsync(string category)
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireTemplate>>($"q/api/v1/questionnaire-templates/category/{category}");
-            return response ?? new List<QuestionnaireTemplate>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching templates by category {category}: {ex.Message}");
-            return new List<QuestionnaireTemplate>();
-        }
+        return await GetAllAsync<QuestionnaireTemplate>($"{TemplateQueryEndpoint}/category/{category}");
     }
 
     // Assignment management
     public async Task<List<QuestionnaireAssignment>> GetAllAssignmentsAsync()
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireAssignment>>("q/api/v1/assignments");
-            return response ?? new List<QuestionnaireAssignment>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching assignments: {ex.Message}");
-            return new List<QuestionnaireAssignment>();
-        }
+        return await GetAllAsync<QuestionnaireAssignment>(AssignmentQueryEndpoint);
     }
 
     public async Task<QuestionnaireAssignment?> GetAssignmentByIdAsync(Guid id)
     {
-        try
-        {
-            return await httpQueryClient.GetFromJsonAsync<QuestionnaireAssignment>($"q/api/v1/assignments/{id}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching assignment {id}: {ex.Message}");
-            return null;
-        }
+        return await GetByIdAsync<QuestionnaireAssignment>(AssignmentQueryEndpoint, id);
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsByEmployeeAsync(string employeeId)
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireAssignment>>($"q/api/v1/assignments/employee/{employeeId}");
-            return response ?? new List<QuestionnaireAssignment>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching assignments for employee {employeeId}: {ex.Message}");
-            return new List<QuestionnaireAssignment>();
-        }
+        return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/employee/{employeeId}");
     }
 
     public async Task<List<QuestionnaireAssignment>> CreateAssignmentsAsync(
-        Guid templateId, 
-        List<string> employeeIds, 
-        DateTime? dueDate, 
-        string? notes, 
+        Guid templateId,
+        List<string> employeeIds,
+        DateTime? dueDate,
+        string? notes,
         string assignedBy)
     {
-        try
+        var createRequest = new
         {
-            var createRequest = new
-            {
-                TemplateId = templateId,
-                EmployeeIds = employeeIds,
-                DueDate = dueDate,
-                Notes = notes,
-                AssignedBy = assignedBy
-            };
+            TemplateId = templateId,
+            EmployeeIds = employeeIds,
+            DueDate = dueDate,
+            Notes = notes,
+            AssignedBy = assignedBy
+        };
 
-            var response = await httpCommandClient.PostAsJsonAsync("c/api/v1/assignments", createRequest);
-            response.EnsureSuccessStatusCode();
-            
-            var result = await response.Content.ReadFromJsonAsync<List<QuestionnaireAssignment>>();
-            return result ?? new List<QuestionnaireAssignment>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error creating assignments: {ex.Message}");
-            return new List<QuestionnaireAssignment>();
-        }
+        return await CreateWithListResponseAsync<object, QuestionnaireAssignment>(AssignmentCommandEndpoint, createRequest);
     }
 
     public async Task<QuestionnaireAssignment?> UpdateAssignmentStatusAsync(Guid id, AssignmentStatus status)
     {
-        try
-        {
-            var response = await httpCommandClient.PatchAsJsonAsync($"c/api/v1/assignments/{id}/status", status);
-            response.EnsureSuccessStatusCode();
-            
-            return await response.Content.ReadFromJsonAsync<QuestionnaireAssignment>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error updating assignment status {id}: {ex.Message}");
-            return null;
-        }
+        return await PatchAsync<AssignmentStatus, QuestionnaireAssignment>(AssignmentCommandEndpoint, id, "status", status);
     }
 
     public async Task<bool> DeleteAssignmentAsync(Guid id)
     {
-        try
-        {
-            var response = await httpCommandClient.DeleteAsync($"c/api/v1/assignments/{id}");
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error deleting assignment {id}: {ex.Message}");
-            return false;
-        }
+        return await DeleteAsync(AssignmentCommandEndpoint, id);
     }
 
     // Response management
     public async Task<List<QuestionnaireResponse>> GetAllResponsesAsync()
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireResponse>>("q/api/v1/responses");
-            return response ?? new List<QuestionnaireResponse>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching responses: {ex.Message}");
-            return new List<QuestionnaireResponse>();
-        }
+        return await GetAllAsync<QuestionnaireResponse>(ResponseQueryEndpoint);
     }
 
     public async Task<QuestionnaireResponse?> GetResponseByIdAsync(Guid id)
     {
-        try
-        {
-            return await httpQueryClient.GetFromJsonAsync<QuestionnaireResponse>($"q/api/v1/responses/{id}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching response {id}: {ex.Message}");
-            return null;
-        }
+        return await GetByIdAsync<QuestionnaireResponse>(ResponseQueryEndpoint, id);
     }
 
     public async Task<QuestionnaireResponse?> GetResponseByAssignmentIdAsync(Guid assignmentId)
     {
-        try
-        {
-            return await httpQueryClient.GetFromJsonAsync<QuestionnaireResponse>($"q/api/v1/responses/assignment/{assignmentId}");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching response for assignment {assignmentId}: {ex.Message}");
-            return null;
-        }
+        return await GetBySubPathAsync<QuestionnaireResponse>(ResponseQueryEndpoint, "assignment", assignmentId);
     }
 
     public async Task<QuestionnaireResponse> SaveResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
     {
-        try
-        {
-            var response = await httpCommandClient.PostAsJsonAsync($"c/api/v1/responses/assignment/{assignmentId}", sectionResponses);
-            response.EnsureSuccessStatusCode();
-            
-            var result = await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
-            return result ?? throw new Exception("Failed to save response");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error saving response for assignment {assignmentId}: {ex.Message}");
-            throw;
-        }
+        var result = await PostToSubPathAsync<Dictionary<Guid, SectionResponse>, QuestionnaireResponse>(ResponseCommandEndpoint, "assignment", assignmentId, sectionResponses);
+        return result ?? throw new Exception("Failed to save response");
     }
 
     public async Task<QuestionnaireResponse?> SubmitResponseAsync(Guid assignmentId)
     {
-        try
-        {
-            var response = await httpCommandClient.PostAsync($"c/api/v1/responses/assignment/{assignmentId}/submit", null);
-            response.EnsureSuccessStatusCode();
-            
-            return await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error submitting response for assignment {assignmentId}: {ex.Message}");
-            return null;
-        }
+        return await PostActionAsync<QuestionnaireResponse>(ResponseCommandEndpoint, "assignment", assignmentId, "submit");
     }
 
     // Analytics
     public async Task<Dictionary<string, object>> GetTemplateAnalyticsAsync(Guid templateId)
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<Dictionary<string, object>>($"q/api/v1/analytics/template/{templateId}");
-            return response ?? new Dictionary<string, object>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching template analytics {templateId}: {ex.Message}");
-            return new Dictionary<string, object>();
-        }
+        return await GetBySubPathAsync<Dictionary<string, object>>(AnalyticsEndpoint, "template", templateId) ?? new Dictionary<string, object>();
     }
 
     public async Task<Dictionary<string, object>> GetOverallAnalyticsAsync()
     {
         try
         {
-            var response = await httpQueryClient.GetFromJsonAsync<Dictionary<string, object>>("q/api/v1/analytics/overview");
-            return response ?? new Dictionary<string, object>();
+            return await HttpQueryClient.GetFromJsonAsync<Dictionary<string, object>>($"{AnalyticsEndpoint}/overview") ?? new Dictionary<string, object>();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching overall analytics: {ex.Message}");
+            LogError("Error fetching overall analytics", ex);
             return new Dictionary<string, object>();
         }
     }
 
-    // Enhanced status-specific template queries (placeholder implementations)
+    // Enhanced status-specific template queries
     public async Task<List<QuestionnaireTemplate>> GetPublishedTemplatesAsync()
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireTemplate>>("q/api/v1/questionnaire-templates/published");
-            return response ?? new List<QuestionnaireTemplate>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching published templates: {ex.Message}");
-            return new List<QuestionnaireTemplate>();
-        }
+        return await GetAllAsync<QuestionnaireTemplate>($"{TemplateQueryEndpoint}/published");
     }
 
     public async Task<List<QuestionnaireTemplate>> GetDraftTemplatesAsync()
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireTemplate>>("q/api/v1/questionnaire-templates/drafts");
-            return response ?? new List<QuestionnaireTemplate>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching draft templates: {ex.Message}");
-            return new List<QuestionnaireTemplate>();
-        }
+        return await GetAllAsync<QuestionnaireTemplate>($"{TemplateQueryEndpoint}/drafts");
     }
 
     public async Task<List<QuestionnaireTemplate>> GetAssignableTemplatesAsync()
     {
-        try
-        {
-            var response = await httpQueryClient.GetFromJsonAsync<List<QuestionnaireTemplate>>("q/api/v1/questionnaire-templates/assignable");
-            return response ?? new List<QuestionnaireTemplate>();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching assignable templates: {ex.Message}");
-            return new List<QuestionnaireTemplate>();
-        }
+        return await GetAllAsync<QuestionnaireTemplate>($"{TemplateQueryEndpoint}/assignable");
     }
 
     public async Task<List<QuestionnaireTemplate>> GetActiveTemplatesAsync()
@@ -410,82 +207,30 @@ public class QuestionnaireApiService : IQuestionnaireApiService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching inactive templates: {ex.Message}");
+            LogError("Error fetching inactive templates", ex);
             return new List<QuestionnaireTemplate>();
         }
     }
 
-    // Publishing operations (placeholder implementations)
+    // Publishing operations
     public async Task<QuestionnaireTemplate?> PublishTemplateAsync(Guid templateId, string publishedBy)
     {
-        try
-        {
-            var response = await httpCommandClient.PostAsJsonAsync($"c/api/v1/questionnaire-templates/{templateId}/publish", publishedBy);
-            if (response.IsSuccessStatusCode)
-            {
-                return await GetTemplateByIdAsync(templateId);
-            }
-            return null;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error publishing template: {ex.Message}");
-            return null;
-        }
+        return await PostActionAndRefetchAsync<string, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "publish", publishedBy, TemplateQueryEndpoint);
     }
 
     public async Task<QuestionnaireTemplate?> UnpublishTemplateAsync(Guid templateId)
     {
-        try
-        {
-            var response = await httpCommandClient.PostAsync($"c/api/v1/questionnaire-templates/{templateId}/unpublish", null);
-            if (response.IsSuccessStatusCode)
-            {
-                return await GetTemplateByIdAsync(templateId);
-            }
-            return null;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error unpublishing template: {ex.Message}");
-            return null;
-        }
+        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "unpublish", null, TemplateQueryEndpoint);
     }
 
     public async Task<QuestionnaireTemplate?> ActivateTemplateAsync(Guid templateId)
     {
-        try
-        {
-            var response = await httpCommandClient.PostAsync($"c/api/v1/questionnaire-templates/{templateId}/activate", null);
-            if (response.IsSuccessStatusCode)
-            {
-                return await GetTemplateByIdAsync(templateId);
-            }
-            return null;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error activating template: {ex.Message}");
-            return null;
-        }
+        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "activate", null, TemplateQueryEndpoint);
     }
 
     public async Task<QuestionnaireTemplate?> DeactivateTemplateAsync(Guid templateId)
     {
-        try
-        {
-            var response = await httpCommandClient.PostAsync($"c/api/v1/questionnaire-templates/{templateId}/deactivate", null);
-            if (response.IsSuccessStatusCode)
-            {
-                return await GetTemplateByIdAsync(templateId);
-            }
-            return null;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error deactivating template: {ex.Message}");
-            return null;
-        }
+        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "deactivate", null, TemplateQueryEndpoint);
     }
 
     public async Task<Dictionary<string, object>> GetPublishingAnalyticsAsync()
