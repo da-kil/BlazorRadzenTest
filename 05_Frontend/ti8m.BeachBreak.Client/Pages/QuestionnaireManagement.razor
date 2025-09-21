@@ -5,6 +5,7 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@inherits OptimizedComponentBase
 
 <PageTitle>Questionnaire Management</PageTitle>
 
@@ -413,12 +414,28 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadTemplates();
-        await LoadAssignments();
-        await LoadAnalytics();
-        LoadSettings();
-        FilterTemplates();
-        FilterAssignments();
+        await ExecuteSafelyAsync(async () =>
+        {
+            // Load all data in parallel for better performance
+            var loadTemplatesTask = LoadTemplates();
+            var loadAssignmentsTask = LoadAssignments();
+            var loadAnalyticsTask = LoadAnalytics();
+
+            await Task.WhenAll(loadTemplatesTask, loadAssignmentsTask, loadAnalyticsTask);
+
+            // Load settings synchronously and apply filters
+            LoadSettings();
+            FilterTemplates();
+            FilterAssignments();
+        }, "InitializeQuestionnaireManagement");
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(templates), templates.Count) ||
+               HasParameterChanged(nameof(assignments), assignments.Count) ||
+               HasParameterChanged(nameof(searchText), searchText) ||
+               HasParameterChanged(nameof(categoryFilter), categoryFilter);
     }
 
     private async Task LoadTemplates()

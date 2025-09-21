@@ -1,0 +1,227 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
+
+<RadzenCard Class="self-assessment-question">
+    <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
+        <RadzenIcon Icon="self_improvement" Class="me-2" />
+        @Question.Title
+        @if (Question.IsRequired) { <span class="text-danger">*</span> }
+    </RadzenText>
+
+    @if (!string.IsNullOrWhiteSpace(Question.Description))
+    {
+        <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
+    }
+
+    <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+        <RadzenText TextStyle="TextStyle.Body2">
+            <strong>Rating Scale:</strong> @GetRatingScaleDescription()
+        </RadzenText>
+    </RadzenAlert>
+
+    <div class="competencies-container">
+        @foreach (var competency in competencies)
+        {
+            var competencyKey = competency.Key;
+            <div class="competency-card mb-3 p-3 border rounded" @key="@competencyKey">
+                <RadzenRow>
+                    <RadzenColumn Size="12" SizeMD="8">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                            @competency.Title
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                            @competency.Description
+                        </RadzenText>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4" Class="text-end">
+                        <div class="rating-section">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
+                            <RadzenRating Value="@GetCompetencyRating(competencyKey)"
+                                        ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
+                                        Stars="@ratingScale"
+                                        Disabled="@IsReadOnly"
+                                        Class="mb-2" />
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
+                                @GetRatingText(GetCompetencyRating(competencyKey))
+                            </RadzenText>
+                        </div>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                @if (!IsReadOnly)
+                {
+                    <RadzenTextArea Value="@GetCompetencyComment(competencyKey)"
+                                  ValueChanged="@((string value) => SetCompetencyComment(competencyKey, value))"
+                                  Placeholder="Optional: Add your comments here..."
+                                  Rows="2"
+                                  Class="w-100 mt-2"
+                                  Disabled="@IsReadOnly" />
+                }
+                else if (!string.IsNullOrEmpty(GetCompetencyComment(competencyKey)))
+                {
+                    <div class="mt-2 p-2 bg-light rounded">
+                        <small class="text-muted d-block mb-1">Comment:</small>
+                        <span>@GetCompetencyComment(competencyKey)</span>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
+    [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; } = false;
+
+    private List<CompetencyDefinition> competencies = new();
+    private int ratingScale = 4;
+    private string scaleLowLabel = "Poor";
+    private string scaleHighLabel = "Excellent";
+
+    protected override void OnParametersSet()
+    {
+        if (HasParameterChanged(nameof(Question), Question))
+        {
+            competencies = GetCompetenciesFromConfiguration();
+            ratingScale = GetRatingScaleFromConfiguration();
+            scaleLowLabel = GetScaleLowLabelFromConfiguration();
+            scaleHighLabel = GetScaleHighLabelFromConfiguration();
+        }
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(Response.ComplexValue), Response.ComplexValue?.Count ?? 0) ||
+               HasParameterChanged(nameof(competencies), competencies.Count);
+    }
+
+    private List<CompetencyDefinition> GetCompetenciesFromConfiguration()
+    {
+        if (Question.Configuration?.ContainsKey("Competencies") == true &&
+            Question.Configuration["Competencies"] is List<CompetencyDefinition> comps)
+        {
+            return comps;
+        }
+
+        // Default competency
+        return new List<CompetencyDefinition>
+        {
+            new("professional_knowledge", "Professional Knowledge",
+                "Assessment of your expertise and professional knowledge.", false)
+        };
+    }
+
+    private int GetRatingScaleFromConfiguration()
+    {
+        if (Question.Configuration?.ContainsKey("RatingScale") == true &&
+            int.TryParse(Question.Configuration["RatingScale"].ToString(), out int scale))
+        {
+            return scale;
+        }
+        return 4;
+    }
+
+    private string GetScaleLowLabelFromConfiguration()
+    {
+        return Question.Configuration?.TryGetValue("ScaleLowLabel", out var value) == true
+            ? value.ToString() ?? "Poor"
+            : "Poor";
+    }
+
+    private string GetScaleHighLabelFromConfiguration()
+    {
+        return Question.Configuration?.TryGetValue("ScaleHighLabel", out var value) == true
+            ? value.ToString() ?? "Excellent"
+            : "Excellent";
+    }
+
+    private string GetRatingScaleDescription()
+    {
+        return $"1 ({scaleLowLabel}) - {ratingScale} ({scaleHighLabel})";
+    }
+
+    private int GetCompetencyRating(string competencyKey)
+    {
+        return Response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true
+            ? Convert.ToInt32(value)
+            : 0;
+    }
+
+    private string GetCompetencyComment(string competencyKey)
+    {
+        return Response.ComplexValue?.TryGetValue($"comment_{competencyKey}", out var value) == true
+            ? value.ToString() ?? ""
+            : "";
+    }
+
+    private async Task SetCompetencyRating(string competencyKey, int value)
+    {
+        if (IsReadOnly) return;
+
+        Response.ComplexValue ??= new Dictionary<string, object>();
+        Response.ComplexValue[$"rating_{competencyKey}"] = value;
+        Response.LastModified = DateTime.Now;
+
+        await NotifyResponseChanged();
+    }
+
+    private async Task SetCompetencyComment(string competencyKey, string value)
+    {
+        if (IsReadOnly) return;
+
+        Response.ComplexValue ??= new Dictionary<string, object>();
+        Response.ComplexValue[$"comment_{competencyKey}"] = value ?? "";
+        Response.LastModified = DateTime.Now;
+
+        // Debounce text input changes
+        await NotifyStateChangedDebounced(300);
+        await NotifyResponseChanged();
+    }
+
+    private async Task NotifyResponseChanged()
+    {
+        if (OnResponseChanged.HasDelegate)
+        {
+            await OnResponseChanged.InvokeAsync(Response);
+        }
+    }
+
+    private string GetRatingText(int rating)
+    {
+        if (rating == 0) return "Not rated";
+
+        var percentage = (double)rating / ratingScale;
+        return percentage switch
+        {
+            >= 0.75 => scaleHighLabel,
+            >= 0.5 => "Good",
+            >= 0.25 => "Fair",
+            _ => scaleLowLabel
+        };
+    }
+}
+
+<style>
+.competency-card {
+    transition: all 0.2s ease;
+    border-color: var(--border-light, #e2e8f0) !important;
+}
+
+.competency-card:hover {
+    border-color: var(--primary-color, #2563eb) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.rating-section {
+    min-width: 200px;
+}
+
+/* Optimize re-renders by hiding rating animations */
+.competency-card[data-updating="true"] .rating-section {
+    opacity: 0.7;
+}
+</style>

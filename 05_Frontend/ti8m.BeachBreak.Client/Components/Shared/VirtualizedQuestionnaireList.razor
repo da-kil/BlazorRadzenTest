@@ -1,0 +1,221 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services.Enhanced
+@inherits OptimizedComponentBase
+
+<div class="virtualized-list" style="height: @ContainerHeight; overflow-y: auto;" @onscroll="HandleScroll">
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <span class="ms-2">Loading questionnaires...</span>
+        </div>
+    }
+    else
+    {
+        <!-- Virtual scrolling container -->
+        <div style="height: @(totalHeight)px; position: relative;">
+            <!-- Visible items container -->
+            <div style="position: absolute; top: @(scrollOffset)px; width: 100%;">
+                @foreach (var assignment in visibleItems)
+                {
+                    <div class="mb-3" style="height: @ItemHeight;">
+                        @RenderQuestionnaireCard(assignment)
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (hasMoreData && !isLoadingMore)
+        {
+            <!-- Load more trigger (invisible, triggers on scroll) -->
+            <div id="load-more-trigger" style="height: 1px;"></div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public List<QuestionnaireAssignment> AllAssignments { get; set; } = new();
+    [Parameter] public string ContainerHeight { get; set; } = "600px";
+    [Parameter] public RenderFragment<QuestionnaireAssignment> ItemTemplate { get; set; } = default!;
+    [Parameter] public EventCallback<QuestionnaireAssignment> OnItemClick { get; set; }
+    [Parameter] public Func<int, int, Task<List<QuestionnaireAssignment>>>? DataLoader { get; set; }
+
+    // Virtual scrolling parameters
+    private const int ItemHeight = 180; // Height of each questionnaire card
+    private const int OverscanCount = 5; // Extra items to render for smooth scrolling
+
+    private int scrollTop = 0;
+    private int visibleStartIndex = 0;
+    private int visibleEndIndex = 0;
+    private List<QuestionnaireAssignment> visibleItems = new();
+    private int totalHeight = 0;
+    private int scrollOffset = 0;
+
+    // Lazy loading state
+    private int currentPage = 1;
+    private const int pageSize = 50;
+    private bool hasMoreData = true;
+    private bool isLoadingMore = false;
+    private bool isLoading = false;
+
+    protected override void OnParametersSet()
+    {
+        if (HasParameterChanged(nameof(AllAssignments), AllAssignments))
+        {
+            UpdateVirtualization();
+        }
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(visibleItems), visibleItems.Count) ||
+               HasParameterChanged(nameof(isLoading), isLoading) ||
+               HasParameterChanged(nameof(isLoadingMore), isLoadingMore);
+    }
+
+    private void UpdateVirtualization()
+    {
+        if (!AllAssignments.Any()) return;
+
+        totalHeight = AllAssignments.Count * ItemHeight;
+
+        var containerHeight = int.Parse(ContainerHeight.Replace("px", ""));
+        var visibleCount = (containerHeight / ItemHeight) + (OverscanCount * 2);
+
+        visibleStartIndex = Math.Max(0, (scrollTop / ItemHeight) - OverscanCount);
+        visibleEndIndex = Math.Min(AllAssignments.Count - 1, visibleStartIndex + visibleCount);
+
+        scrollOffset = visibleStartIndex * ItemHeight;
+
+        visibleItems = AllAssignments
+            .Skip(visibleStartIndex)
+            .Take(visibleEndIndex - visibleStartIndex + 1)
+            .ToList();
+    }
+
+    private async Task HandleScroll(object e)
+    {
+        await ExecuteSafelyAsync(async () =>
+        {
+            // Throttle scroll events to avoid excessive re-renders
+            if (await TryNotifyStateChangedThrottled(16)) // ~60fps
+            {
+                // scrollTop = (int)e.ScrollTop; // Placeholder for now
+                UpdateVirtualization();
+
+                // Check if we need to load more data
+                var bottomThreshold = totalHeight - (int.Parse(ContainerHeight.Replace("px", "")) * 2);
+                if (scrollTop >= bottomThreshold && hasMoreData && !isLoadingMore && DataLoader != null)
+                {
+                    await LoadMoreData();
+                }
+            }
+        }, "HandleScroll");
+    }
+
+    private async Task LoadMoreData()
+    {
+        if (isLoadingMore || !hasMoreData || DataLoader == null) return;
+
+        isLoadingMore = true;
+        NotifyStateChanged();
+
+        try
+        {
+            await ExecuteSafelyAsync(async () =>
+            {
+                var result = await PerformanceOptimizer.LazyLoader.LoadVirtualScrollDataAsync(
+                    DataLoader,
+                    AllAssignments.Count,
+                    pageSize
+                );
+
+                if (result.IsSuccess && result.Data.Any())
+                {
+                    AllAssignments.AddRange(result.Data);
+                    hasMoreData = result.Data.Count == pageSize;
+                    UpdateVirtualization();
+                }
+                else
+                {
+                    hasMoreData = false;
+                }
+            }, "LoadMoreData");
+        }
+        finally
+        {
+            isLoadingMore = false;
+            NotifyStateChanged();
+        }
+    }
+
+    private RenderFragment RenderQuestionnaireCard(QuestionnaireAssignment assignment)
+    {
+        if (ItemTemplate != null)
+        {
+            return ItemTemplate(assignment);
+        }
+
+        return @<div class="card questionnaire-card h-100" @onclick="@(() => OnItemClick.InvokeAsync(assignment))" style="cursor: pointer;">
+            <div class="card-body">
+                <h6 class="card-title">@(assignment.TemplateId.ToString())</h6>
+                <p class="card-text text-muted">Assigned by: @assignment.AssignedBy</p>
+                @if (assignment.DueDate.HasValue)
+                {
+                    <small class="text-muted">Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")</small>
+                }
+                <div class="mt-2">
+                    <span class="badge @GetStatusBadgeClass(assignment.Status)">@assignment.Status</span>
+                </div>
+            </div>
+        </div>;
+    }
+
+    private string GetStatusBadgeClass(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "bg-secondary",
+            AssignmentStatus.InProgress => "bg-info",
+            AssignmentStatus.Completed => "bg-success",
+            _ => "bg-light text-dark"
+        };
+    }
+}
+
+<style>
+.virtualized-list {
+    position: relative;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 transparent;
+}
+
+.virtualized-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.virtualized-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.virtualized-list::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+}
+
+.virtualized-list::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+
+.questionnaire-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 1px solid #e2e8f0;
+}
+
+.questionnaire-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+</style>

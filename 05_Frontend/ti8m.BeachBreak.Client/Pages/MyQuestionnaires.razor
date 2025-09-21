@@ -4,7 +4,10 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
-@inherits BasePageComponent
+@inherits OptimizedComponentBase
+@inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
+@inject IQuestionnaireApiService QuestionnaireApiService
+@inject NotificationService NotificationService
 
 <PageTitle>My Questionnaires</PageTitle>
 
@@ -30,25 +33,43 @@ else if (isLoading)
     private List<QuestionnaireAssignment> completedQuestionnaires = new();
     private List<QuestionnaireAssignment> overdueQuestionnaires = new();
     private List<string> availableCategories = new();
+    private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadInitialData();
-        SetupConfiguration();
+        await ExecuteSafelyAsync(async () =>
+        {
+            await LoadInitialData();
+            SetupConfiguration();
+        }, "InitializeMyQuestionnaires");
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
+               HasParameterChanged(nameof(configuration), configuration) ||
+               HasParameterChanged(nameof(isLoading), isLoading);
     }
 
     private async Task LoadInitialData()
     {
-        SetLoading(true);
+        isLoading = true;
+        NotifyStateChanged();
 
         try
         {
             // Create the data service
             dataService = new EmployeeQuestionnaireDataService(EmployeeQuestionnaireService, QuestionnaireApiService);
 
-            // Load data to setup configuration
-            allAssignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
-            var templates = await QuestionnaireApiService.GetAllTemplatesAsync();
+            // Load data to setup configuration with performance optimization
+            var loadAssignmentsTask = EmployeeQuestionnaireService.GetMyAssignmentsAsync();
+            var loadTemplatesTask = QuestionnaireApiService.GetAllTemplatesAsync();
+
+            // Load in parallel for better performance
+            await Task.WhenAll(loadAssignmentsTask, loadTemplatesTask);
+
+            allAssignments = loadAssignmentsTask.Result;
+            var templates = loadTemplatesTask.Result;
 
             // Categorize assignments
             CategorizeQuestionnaires();
@@ -63,7 +84,7 @@ else if (isLoading)
         }
         catch (Exception ex)
         {
-            await HandleError(ex, "loading questionnaire data");
+            HandleError(ex, "loading questionnaire data");
         }
         finally
         {
@@ -100,5 +121,21 @@ else if (isLoading)
             a.DueDate.HasValue &&
             a.DueDate.Value < now &&
             a.Status != AssignmentStatus.Completed).ToList();
+    }
+
+    private void SetLoading(bool loading)
+    {
+        isLoading = loading;
+        NotifyStateChanged();
+    }
+
+    private void HandleError(Exception ex, string context)
+    {
+        NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed {context}: {ex.Message}");
+    }
+
+    private void ShowInfo(string message)
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Information", message);
     }
 }

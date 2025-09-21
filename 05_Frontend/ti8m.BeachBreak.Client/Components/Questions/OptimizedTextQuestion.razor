@@ -1,0 +1,249 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
+
+<RadzenCard Class="text-question">
+    <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
+        <RadzenIcon Icon="psychology" Class="me-2" />
+        @Question.Title
+        @if (Question.IsRequired) { <span class="text-danger">*</span> }
+    </RadzenText>
+
+    @if (!string.IsNullOrWhiteSpace(Question.Description))
+    {
+        <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
+    }
+
+    <div class="text-sections">
+        @foreach (var section in textSections)
+        {
+            var sectionKey = $"section_{textSections.IndexOf(section)}";
+            <RadzenCard Class="text-section-card mb-4 p-3 border-start border-primary border-3" @key="@sectionKey">
+                @if (!string.IsNullOrWhiteSpace(section.Title))
+                {
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold text-primary mb-3">
+                        <RadzenIcon Icon="timeline" Class="me-2" />
+                        @(section.Title)
+                        @if (section.IsRequired) { <span class="text-danger">*</span> }
+                    </RadzenText>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(section.Description))
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                        @(section.Description)
+                    </RadzenText>
+                }
+
+                @if (!IsReadOnly)
+                {
+                    <RadzenTextArea Value="@GetSectionValue(sectionKey)"
+                                  ValueChanged="@((string value) => SetSectionValue(sectionKey, value))"
+                                  Placeholder="@GetSectionPlaceholder(section)"
+                                  Rows="@GetSectionRows(section)"
+                                  Class="w-100"
+                                  Disabled="@IsReadOnly" />
+                }
+                else if (!string.IsNullOrEmpty(GetSectionValue(sectionKey)))
+                {
+                    <div class="readonly-text p-3 bg-light rounded">
+                        @GetSectionValue(sectionKey)
+                    </div>
+                }
+                else
+                {
+                    <div class="no-response p-3 bg-light rounded text-muted">
+                        <em>No response provided</em>
+                    </div>
+                }
+            </RadzenCard>
+        }
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
+    [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; } = false;
+
+    private List<TextSectionDefinition> textSections = new();
+
+    protected override void OnParametersSet()
+    {
+        if (HasParameterChanged(nameof(Question), Question))
+        {
+            textSections = GetTextSectionsFromConfiguration();
+        }
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(Response.TextValue), Response.TextValue) ||
+               HasParameterChanged(nameof(Response.ComplexValue), Response.ComplexValue?.Count ?? 0);
+    }
+
+    private List<TextSectionDefinition> GetTextSectionsFromConfiguration()
+    {
+        if (Question.Configuration?.ContainsKey("TextSections") == true)
+        {
+            var sectionsObj = Question.Configuration["TextSections"];
+
+            if (sectionsObj is List<TextSectionDefinition> sections)
+            {
+                return sections;
+            }
+
+            // Handle JSON deserialization
+            if (sectionsObj is System.Text.Json.JsonElement jsonElement &&
+                jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<List<TextSectionDefinition>>(
+                        jsonElement.GetRawText(),
+                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    ) ?? new List<TextSectionDefinition>();
+                }
+                catch (Exception)
+                {
+                    // Fallback to legacy format
+                }
+            }
+        }
+
+        // Legacy format or default
+        return new List<TextSectionDefinition>
+        {
+            new TextSectionDefinition
+            {
+                Title = GetLegacySectionTitle(),
+                Description = GetLegacySectionDescription(),
+                IsRequired = Question.IsRequired,
+                Placeholder = "Enter your response here...",
+                Rows = 4
+            }
+        };
+    }
+
+    private string GetLegacySectionTitle()
+    {
+        return Question.Configuration?.TryGetValue("SectionTitle", out var value) == true
+            ? value.ToString() ?? "Response"
+            : "Response";
+    }
+
+    private string GetLegacySectionDescription()
+    {
+        return Question.Configuration?.TryGetValue("SectionDescription", out var value) == true
+            ? value.ToString() ?? ""
+            : "";
+    }
+
+    private string GetSectionValue(string sectionKey)
+    {
+        if (textSections.Count == 1)
+        {
+            // Single section uses TextValue directly
+            return Response.TextValue ?? "";
+        }
+
+        // Multiple sections use ComplexValue
+        return Response.ComplexValue?.TryGetValue(sectionKey, out var value) == true
+            ? value.ToString() ?? ""
+            : "";
+    }
+
+    private async Task SetSectionValue(string sectionKey, string value)
+    {
+        if (IsReadOnly) return;
+
+        if (textSections.Count == 1)
+        {
+            // Single section uses TextValue directly
+            Response.TextValue = value;
+        }
+        else
+        {
+            // Multiple sections use ComplexValue
+            Response.ComplexValue ??= new Dictionary<string, object>();
+            Response.ComplexValue[sectionKey] = value ?? "";
+        }
+
+        Response.LastModified = DateTime.Now;
+
+        // Debounce text input changes to avoid excessive API calls
+        await NotifyStateChangedDebounced(500);
+        await NotifyResponseChanged();
+    }
+
+    private async Task NotifyResponseChanged()
+    {
+        if (OnResponseChanged.HasDelegate)
+        {
+            await OnResponseChanged.InvokeAsync(Response);
+        }
+    }
+
+    private string GetSectionPlaceholder(TextSectionDefinition section)
+    {
+        return !string.IsNullOrWhiteSpace(section.Placeholder)
+            ? section.Placeholder
+            : "Enter your thoughts, plans, and goals...";
+    }
+
+    private int GetSectionRows(TextSectionDefinition section)
+    {
+        return section.Rows > 0 ? section.Rows : 4;
+    }
+
+    public class TextSectionDefinition
+    {
+        public string Title { get; set; } = "";
+        public string Description { get; set; } = "";
+        public bool IsRequired { get; set; } = false;
+        public string Placeholder { get; set; } = "";
+        public int Rows { get; set; } = 4;
+    }
+}
+
+<style>
+.text-section-card {
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.text-section-card:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.text-section-card:focus-within {
+    box-shadow: 0 0 0 2px var(--focus-ring, rgba(37, 99, 235, 0.1));
+}
+
+.readonly-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.6;
+    min-height: 60px;
+}
+
+.no-response {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Performance optimization: reduce layout thrashing */
+.text-section-card textarea {
+    resize: vertical;
+    transition: none; /* Disable transitions on input for better performance */
+}
+
+/* Visual indicator during updates */
+.text-section-card[data-updating="true"] {
+    opacity: 0.8;
+}
+</style>

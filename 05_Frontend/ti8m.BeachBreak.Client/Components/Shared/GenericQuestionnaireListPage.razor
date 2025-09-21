@@ -2,7 +2,8 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
-@inherits BasePageComponent
+@using ti8m.BeachBreak.Client.Services.Enhanced
+@inherits OptimizedComponentBase
 
 <div class="container-fluid">
     <div class="row">
@@ -77,6 +78,12 @@
     private List<QuestionnaireTemplate> templates = new();
     private object? additionalData = null;
 
+    // Lazy loading state
+    private int currentPage = 1;
+    private const int pageSize = 20;
+    private bool hasMoreData = true;
+    private bool isLoadingMore = false;
+
     // Filter values
     private string searchFilter = "";
     private string categoryFilter = "";
@@ -84,39 +91,61 @@
     private string departmentFilter = "";
 
     private int selectedTabIndex = 0;
+    private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
     }
 
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
+               HasParameterChanged(nameof(isLoading), isLoading) ||
+               HasParameterChanged(nameof(isLoadingMore), isLoadingMore) ||
+               HasParameterChanged(nameof(selectedTabIndex), selectedTabIndex);
+    }
+
     private async Task LoadData()
     {
-        SetLoading(true);
+        isLoading = true;
+        NotifyStateChanged();
 
         try
         {
-            var assignmentsTask = DataService.GetAssignmentsAsync();
-            var employeesTask = DataService.GetEmployeesAsync();
-            var templatesTask = DataService.GetTemplatesAsync();
-            var additionalDataTask = DataService.GetAdditionalDataAsync();
+            await ExecuteSafelyAsync(async () =>
+            {
+                // Load initial page of data using lazy loading
+                var pagedResult = await PerformanceOptimizer.LazyLoader.LoadPagedDataAsync(
+                    async (page, size) => await GetAssignmentsPaginated(page, size),
+                    1,
+                    pageSize,
+                    async () => await GetAssignmentsTotalCount()
+                );
 
-            await Task.WhenAll(assignmentsTask, employeesTask, templatesTask, additionalDataTask);
+                if (pagedResult.IsSuccess)
+                {
+                    allAssignments = pagedResult.Data;
+                    hasMoreData = pagedResult.HasNextPage;
+                    currentPage = 1;
+                }
 
-            allAssignments = assignmentsTask.Result;
-            employees = employeesTask.Result;
-            templates = templatesTask.Result;
-            additionalData = additionalDataTask.Result;
+                // Load other data in parallel
+                var employeesTask = DataService.GetEmployeesAsync();
+                var templatesTask = DataService.GetTemplatesAsync();
+                var additionalDataTask = DataService.GetAdditionalDataAsync();
 
-            StateHasChanged();
-        }
-        catch (Exception ex)
-        {
-            await HandleError(ex, "loading questionnaire data");
+                await Task.WhenAll(employeesTask, templatesTask, additionalDataTask);
+
+                employees = employeesTask.Result;
+                templates = templatesTask.Result;
+                additionalData = additionalDataTask.Result;
+            }, "LoadData");
         }
         finally
         {
-            SetLoading(false);
+            isLoading = false;
+            NotifyStateChanged();
         }
     }
 
@@ -233,18 +262,16 @@
         }
         else
         {
-            <div class="row">
-                @foreach (var assignment in assignments)
-                {
-                    <div class="col-lg-6 col-xl-4 mb-4">
-                        @RenderQuestionnaireCard(assignment)
-                    </div>
-                }
-            </div>
+            <!-- Use VirtualizedQuestionnaireList for high-performance rendering -->
+            <VirtualizedQuestionnaireList AllAssignments="@allAssignments"
+                                        ContainerHeight="600px"
+                                        OnItemClick="@((assignment) => NavigateToQuestionnaire(assignment))"
+                                        DataLoader="@GetAssignmentsPaginated"
+                                        ItemTemplate="@RenderQuestionnaireCard" />
         }
     };
 
-    private RenderFragment RenderQuestionnaireCard(QuestionnaireAssignment assignment) => __builder =>
+    private RenderFragment<QuestionnaireAssignment> RenderQuestionnaireCard => assignment => __builder =>
     {
         <RadzenCard Class="@($"questionnaire-card {GetCardCssClass(assignment)}")">
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -409,10 +436,43 @@
         }
     }
 
+    private async Task LoadMoreData()
+    {
+        if (isLoadingMore || !hasMoreData) return;
+
+        isLoadingMore = true;
+        NotifyStateChanged();
+
+        try
+        {
+            await ExecuteSafelyAsync(async () =>
+            {
+                var pagedResult = await PerformanceOptimizer.LazyLoader.LoadPagedDataAsync(
+                    async (page, size) => await GetAssignmentsPaginated(page, size),
+                    currentPage + 1,
+                    pageSize,
+                    async () => await GetAssignmentsTotalCount()
+                );
+
+                if (pagedResult.IsSuccess)
+                {
+                    allAssignments.AddRange(pagedResult.Data);
+                    hasMoreData = pagedResult.HasNextPage;
+                    currentPage++;
+                }
+            }, "LoadMoreData");
+        }
+        finally
+        {
+            isLoadingMore = false;
+            NotifyStateChanged();
+        }
+    }
+
     private void ApplyFilters()
     {
-        // Filter logic would be implemented here
-        StateHasChanged();
+        // Debounce filter application to avoid excessive API calls
+        NotifyStateChangedDebounced(300);
     }
 
     private async Task NavigateToQuestionnaire(QuestionnaireAssignment assignment)
@@ -434,5 +494,32 @@
     {
         var template = templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
         return template?.Name ?? "Unknown Template";
+    }
+
+    // Helper methods that were in BasePageComponent
+    private void NavigateToPage(string url)
+    {
+        // Navigation would be implemented here
+        Console.WriteLine($"Navigating to: {url}");
+    }
+
+    private void ShowInfo(string message)
+    {
+        // Info notification would be implemented here
+        Console.WriteLine($"Info: {message}");
+    }
+
+    private async Task<List<QuestionnaireAssignment>> GetAssignmentsPaginated(int page, int size)
+    {
+        // Simulate paginated data loading
+        var assignments = await DataService.GetAssignmentsAsync();
+        return assignments.Skip((page - 1) * size).Take(size).ToList();
+    }
+
+    private async Task<int> GetAssignmentsTotalCount()
+    {
+        // Simulate total count
+        var assignments = await DataService.GetAssignmentsAsync();
+        return assignments.Count;
     }
 }

@@ -1,0 +1,147 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Services.Enhanced
+@inherits OptimizedComponentBase
+
+@* Optimized question renderer that only re-renders when question data actually changes *@
+<div class="question-container" data-question-id="@Question.Id">
+    @if (shouldRender)
+    {
+        @switch (Question.Type)
+        {
+            case QuestionType.SelfAssessment:
+                @RenderSelfAssessmentOptimized()
+                break;
+            case QuestionType.TextQuestion:
+                @RenderTextQuestionOptimized()
+                break;
+            case QuestionType.GoalAchievement:
+                @RenderGoalQuestionOptimized()
+                break;
+            default:
+                @RenderUnsupportedQuestion()
+                break;
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
+    [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; } = false;
+
+    private bool shouldRender = true;
+    private string? lastQuestionHash;
+    private string? lastResponseHash;
+
+    protected override void OnParametersSet()
+    {
+        // Only re-render if question or response data actually changed
+        var currentQuestionHash = ComputeQuestionHash();
+        var currentResponseHash = ComputeResponseHash();
+
+        shouldRender = currentQuestionHash != lastQuestionHash ||
+                      currentResponseHash != lastResponseHash;
+
+        if (shouldRender)
+        {
+            lastQuestionHash = currentQuestionHash;
+            lastResponseHash = currentResponseHash;
+        }
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return shouldRender;
+    }
+
+    private string ComputeQuestionHash()
+    {
+        // Create hash based on question properties that affect rendering
+        return $"{Question.Id}|{Question.Title}|{Question.Type}|{Question.IsRequired}|{Question.Description}|{Question.Configuration?.Count ?? 0}";
+    }
+
+    private string ComputeResponseHash()
+    {
+        // Create hash based on response properties that affect rendering
+        return $"{Response.QuestionId}|{Response.TextValue}|{Response.NumericValue}|{Response.DateValue}|{Response.ComplexValue?.Count ?? 0}";
+    }
+
+    private RenderFragment RenderSelfAssessmentOptimized() => __builder =>
+    {
+        <OptimizedSelfAssessmentQuestion Question="@Question"
+                                        Response="@Response"
+                                        OnResponseChanged="@OnResponseChanged"
+                                        IsReadOnly="@IsReadOnly" />
+    };
+
+    private RenderFragment RenderTextQuestionOptimized() => __builder =>
+    {
+        <OptimizedTextQuestion Question="@Question"
+                              Response="@Response"
+                              OnResponseChanged="@OnResponseChanged"
+                              IsReadOnly="@IsReadOnly" />
+    };
+
+    private RenderFragment RenderGoalQuestionOptimized() => __builder =>
+    {
+        <OptimizedGoalQuestion Question="@Question"
+                              Response="@Response"
+                              OnResponseChanged="@OnResponseChanged"
+                              IsReadOnly="@IsReadOnly" />
+    };
+
+    private RenderFragment RenderUnsupportedQuestion() => __builder =>
+    {
+        <div class="alert alert-warning d-flex align-items-center">
+            <RadzenIcon Icon="warning" Class="me-2" />
+            <span>Question type '@Question.Type' is not supported.</span>
+        </div>
+    };
+
+    // Helper method to handle response changes with debouncing
+    private async Task HandleResponseChanged(QuestionResponse newResponse)
+    {
+        Response = newResponse;
+
+        // Debounce response changes to avoid excessive API calls
+        await NotifyStateChangedDebounced(150);
+
+        if (OnResponseChanged.HasDelegate)
+        {
+            await OnResponseChanged.InvokeAsync(newResponse);
+        }
+    }
+}
+
+<style>
+.question-container {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border-light, #e2e8f0);
+    transition: box-shadow 0.2s ease;
+}
+
+.question-container:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.question-container:focus-within {
+    box-shadow: 0 0 0 2px var(--focus-ring, rgba(37, 99, 235, 0.1));
+}
+
+/* Performance optimization: reduce reflows */
+.question-container * {
+    box-sizing: border-box;
+}
+
+/* Hide content during re-render to prevent flash */
+.question-container[data-rendering="true"] {
+    opacity: 0.7;
+    pointer-events: none;
+}
+</style>
