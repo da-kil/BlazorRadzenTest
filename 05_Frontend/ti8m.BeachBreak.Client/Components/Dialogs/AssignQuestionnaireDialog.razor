@@ -4,6 +4,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.ValidationHelpers
+@using ti8m.BeachBreak.Client.Components.Shared
 
 <style>
     .assignment-dialog {
@@ -170,10 +171,20 @@
     }
 </style>
 
-<EditForm Model="@assignmentModel" OnValidSubmit="@HandleValidSubmit">
-    <DataAnnotationsValidator />
-
-    <div class="assignment-dialog" role="dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
+<BaseDialog TModel="AssignmentModel"
+            @bind-IsVisible="@isVisible"
+            Title="Assign Questionnaire"
+            Model="@assignmentModel"
+            ShowForm="true"
+            OnValidSubmit="@HandleValidSubmit"
+            OnCancel="@Close"
+            SubmitText="@(isLoading ? "Creating Assignment..." : "Create Assignment")"
+            CancelText="Cancel"
+            IsProcessing="@isLoading"
+            Width="800px"
+            Height="auto">
+    <Content>
+        <div class="assignment-dialog" role="dialog" aria-labelledby="dialog-title" aria-describedby="dialog-description">
         <div class="assignment-header">
             <div class="d-flex align-items-center">
                 <RadzenIcon Icon="assignment_ind" Style="font-size: 2.5rem; margin-right: 1rem;" />
@@ -367,26 +378,30 @@
             </div>
         }
 
-        <!-- Form Actions -->
-        <div class="form-actions">
-            <RadzenButton Text="Cancel"
-                         ButtonStyle="ButtonStyle.Light"
-                         Icon="close"
-                         Click="@Close" />
-
-            <RadzenButton Text="@(isLoading ? "Creating Assignment..." : "Create Assignment")"
-                         ButtonStyle="ButtonStyle.Primary"
-                         Icon="@(isLoading ? "hourglass_empty" : "assignment_turned_in")"
-                         ButtonType="ButtonType.Submit"
-                         Disabled="@(!IsReadyToAssign() || isLoading)"
-                         Style="min-width: 180px;" />
         </div>
-    </div>
-</EditForm>
+    </Content>
+    <ActionsContent>
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Icon="close"
+                     Click="@Close" />
+
+        <RadzenButton Text="@(isLoading ? "Creating Assignment..." : "Create Assignment")"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="@(isLoading ? "hourglass_empty" : "assignment_turned_in")"
+                     ButtonType="ButtonType.Submit"
+                     Disabled="@(!IsReadyToAssign() || isLoading)"
+                     Style="min-width: 180px;" />
+    </ActionsContent>
+</BaseDialog>
 
 @code {
     [Parameter] public EventCallback<AssignmentModel> OnAssignmentCreated { get; set; }
     [Parameter] public EventCallback OnClosed { get; set; }
+    [Parameter] public bool IsVisible { get; set; } = false;
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    private bool isVisible = false;
 
     [Inject] protected DialogService DialogService { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
@@ -403,6 +418,12 @@
     {
         await LoadData();
         FilterEmployees();
+        isVisible = IsVisible;
+    }
+
+    protected override void OnParametersSet()
+    {
+        isVisible = IsVisible;
     }
 
     private async Task LoadData()
@@ -503,12 +524,12 @@
         return availableQuestionnaires.FirstOrDefault(q => q.Id == assignmentModel.SelectedQuestionnaireId)?.Title ?? "";
     }
 
-    private async Task HandleValidSubmit()
+    private async Task HandleValidSubmit(AssignmentModel model)
     {
         if (!IsReadyToAssign()) return;
 
         // Perform custom validation
-        var validationErrors = assignmentModel.ValidateAssignment();
+        var validationErrors = model.ValidateAssignment();
         if (validationErrors.Any())
         {
             foreach (var error in validationErrors)
@@ -532,7 +553,7 @@
                 throw new InvalidOperationException("Network error occurred");
             }
 
-            await OnAssignmentCreated.InvokeAsync(assignmentModel);
+            await OnAssignmentCreated.InvokeAsync(model);
 
             NotificationService.Notify(NotificationSeverity.Success,
                 "Assignment Created Successfully",
@@ -569,6 +590,8 @@
     private async Task Close()
     {
         await OnClosed.InvokeAsync();
+        isVisible = false;
+        await IsVisibleChanged.InvokeAsync(false);
         DialogService.Close();
     }
 

@@ -1,5 +1,6 @@
 @using Radzen
 @using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
 
 <style>
     .confirmation-dialog {
@@ -13,7 +14,7 @@
         color: white;
         padding: 1.5rem;
         border-radius: 12px 12px 0 0;
-        margin: -1rem -1rem 0 -1rem;
+        margin: -1.5rem -1.5rem 1rem -1.5rem;
     }
 
     .dialog-header.warning {
@@ -22,18 +23,6 @@
 
     .dialog-header.info {
         background: linear-gradient(135deg, var(--info-color), var(--info-color-dark));
-    }
-
-    .dialog-content {
-        padding: 1.5rem 0;
-    }
-
-    .dialog-actions {
-        padding-top: 1rem;
-        border-top: 1px solid #e9ecef;
-        display: flex;
-        gap: 0.75rem;
-        justify-content: flex-end;
     }
 
     .warning-icon {
@@ -52,16 +41,22 @@
     }
 </style>
 
-<RadzenDialog>
-    <div class="confirmation-dialog">
-        <div class="dialog-header @GetHeaderClass()">
-            <div class="text-center">
-                <RadzenIcon Icon="@GetHeaderIcon()" Class="warning-icon" />
-                <RadzenText TextStyle="TextStyle.H5" Class="mb-0">@Title</RadzenText>
+<BaseDialog TModel="object"
+            @bind-IsVisible="@isVisible"
+            Title=""
+            ShowForm="false"
+            OnCancel="@HandleCancel"
+            Width="450px"
+            ShowCloseIcon="false">
+    <Content>
+        <div class="confirmation-dialog">
+            <div class="dialog-header @GetHeaderClass()">
+                <div class="text-center">
+                    <RadzenIcon Icon="@GetHeaderIcon()" Class="warning-icon" />
+                    <RadzenText TextStyle="TextStyle.H5" Class="mb-0">@Title</RadzenText>
+                </div>
             </div>
-        </div>
 
-        <div class="dialog-content">
             <div class="text-center">
                 <RadzenText TextStyle="TextStyle.Body1" Class="mb-3">@Message</RadzenText>
 
@@ -71,21 +66,20 @@
                 }
             </div>
         </div>
+    </Content>
+    <ActionsContent>
+        <RadzenButton Text="@CancelText"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@HandleCancel"
+                     Size="ButtonSize.Medium" />
 
-        <div class="dialog-actions">
-            <RadzenButton Text="@CancelText"
-                         ButtonStyle="ButtonStyle.Light"
-                         Click="@OnCancel"
-                         Size="ButtonSize.Medium" />
-
-            <RadzenButton Text="@ConfirmText"
-                         ButtonStyle="@GetConfirmButtonStyle()"
-                         Click="@OnConfirm"
-                         Size="ButtonSize.Medium"
-                         Icon="@ConfirmIcon" />
-        </div>
-    </div>
-</RadzenDialog>
+        <RadzenButton Text="@ConfirmText"
+                     ButtonStyle="@GetConfirmButtonStyle()"
+                     Click="@HandleConfirm"
+                     Size="ButtonSize.Medium"
+                     Icon="@ConfirmIcon" />
+    </ActionsContent>
+</BaseDialog>
 
 @code {
     [Parameter] public string Title { get; set; } = "Confirm Action";
@@ -97,6 +91,34 @@
     [Parameter] public ConfirmationType Type { get; set; } = ConfirmationType.Danger;
     [Parameter] public EventCallback OnConfirm { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public bool IsVisible { get; set; } = false;
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    private bool isVisible = false;
+
+    protected override void OnInitialized()
+    {
+        isVisible = IsVisible;
+    }
+
+    protected override void OnParametersSet()
+    {
+        isVisible = IsVisible;
+    }
+
+    private async Task HandleConfirm()
+    {
+        await OnConfirm.InvokeAsync();
+        isVisible = false;
+        await IsVisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task HandleCancel()
+    {
+        await OnCancel.InvokeAsync();
+        isVisible = false;
+        await IsVisibleChanged.InvokeAsync(false);
+    }
 
     private string GetHeaderClass()
     {

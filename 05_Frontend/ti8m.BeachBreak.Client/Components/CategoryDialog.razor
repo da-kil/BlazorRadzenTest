@@ -1,11 +1,20 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
 
-<div class="p-3">
-    <EditForm Model="@Category" OnValidSubmit="@OnValidSubmit">
-        <DataAnnotationsValidator />
-
+<BaseDialog TModel="Category"
+            @bind-IsVisible="@isVisible"
+            Title="@(IsEditMode ? "Edit Category" : "Create Category")"
+            Model="@Category"
+            ShowForm="true"
+            OnValidSubmit="@OnValidSubmit"
+            OnCancel="@OnCancel"
+            SubmitText="@(IsEditMode ? "Update" : "Create")"
+            CancelText="Cancel"
+            IsProcessing="@isSaving"
+            Width="700px">
+    <Content>
         <RadzenTabs>
             <Tabs>
                 <RadzenTabsItem Text="🇬🇧 English">
@@ -74,29 +83,35 @@
                 </div>
             </div>
         </div>
-
-        <div class="d-flex justify-content-end gap-2 mt-4">
-            <RadzenButton Text="Cancel"
-                         ButtonStyle="ButtonStyle.Light"
-                         Click="@(() => DialogService.Close())" />
-            <RadzenButton Text="@(IsEditMode ? "Update" : "Create")"
-                         ButtonType="ButtonType.Submit"
-                         ButtonStyle="ButtonStyle.Primary"
-                         IsBusy="@isSaving" />
-        </div>
-    </EditForm>
-</div>
+    </Content>
+</BaseDialog>
 
 @code {
     [Parameter, EditorRequired] public Category Category { get; set; } = null!;
     [Parameter, EditorRequired] public bool IsEditMode { get; set; }
+    [Parameter] public bool IsVisible { get; set; } = false;
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+    [Parameter] public EventCallback<Category> OnSave { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
     [Inject] protected DialogService DialogService { get; set; } = default!;
 
+    private bool isVisible = false;
     private bool isSaving = false;
 
-    private async Task OnValidSubmit()
+    protected override void OnInitialized()
     {
-        if (string.IsNullOrWhiteSpace(Category.NameEn) || string.IsNullOrWhiteSpace(Category.NameDe))
+        isVisible = IsVisible;
+    }
+
+    protected override void OnParametersSet()
+    {
+        isVisible = IsVisible;
+    }
+
+    private async Task OnValidSubmit(Category model)
+    {
+        if (string.IsNullOrWhiteSpace(model.NameEn) || string.IsNullOrWhiteSpace(model.NameDe))
         {
             return;
         }
@@ -105,17 +120,42 @@
 
         try
         {
-            Category.NameEn = Category.NameEn.Trim();
-            Category.NameDe = Category.NameDe.Trim();
-            Category.DescriptionEn = Category.DescriptionEn?.Trim() ?? string.Empty;
-            Category.DescriptionDe = Category.DescriptionDe?.Trim() ?? string.Empty;
-            Category.LastModified = DateTime.Now;
+            model.NameEn = model.NameEn.Trim();
+            model.NameDe = model.NameDe.Trim();
+            model.DescriptionEn = model.DescriptionEn?.Trim() ?? string.Empty;
+            model.DescriptionDe = model.DescriptionDe?.Trim() ?? string.Empty;
+            model.LastModified = DateTime.Now;
 
-            DialogService.Close(Category);
+            if (OnSave.HasDelegate)
+            {
+                await OnSave.InvokeAsync(model);
+            }
+            else
+            {
+                DialogService.Close(model);
+            }
+
+            isVisible = false;
+            await IsVisibleChanged.InvokeAsync(false);
         }
         finally
         {
             isSaving = false;
         }
+    }
+
+    private async Task OnCancel()
+    {
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+        else
+        {
+            DialogService.Close();
+        }
+
+        isVisible = false;
+        await IsVisibleChanged.InvokeAsync(false);
     }
 }

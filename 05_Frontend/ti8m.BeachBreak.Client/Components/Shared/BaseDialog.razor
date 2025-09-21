@@ -1,0 +1,201 @@
+@typeparam TModel
+@using Microsoft.AspNetCore.Components.Forms
+
+<RadzenDialog @ref="DialogRef"
+              Visible="@IsVisible"
+              Resizable="true"
+              Draggable="true"
+              Style="@($"width: {Width}; height: {Height}; {AdditionalStyle}")"
+              OnClose="HandleCancel"
+              ShowCloseIcon="@ShowCloseIcon">
+        <div class="dialog-container">
+            @if (!string.IsNullOrEmpty(Title))
+            {
+                <div class="dialog-header">
+                    <h3>@Title</h3>
+                </div>
+            }
+
+            <div class="dialog-content">
+                @if (ShowForm && Model != null)
+                {
+                    <EditForm Model="@Model" OnValidSubmit="@HandleValidSubmit" OnInvalidSubmit="@HandleInvalidSubmit">
+                        @if (ValidationComponent != null)
+                        {
+                            @ValidationComponent
+                        }
+                        else
+                        {
+                            <DataAnnotationsValidator />
+                            <ValidationSummary />
+                        }
+
+                        @Content
+
+                        <div class="dialog-actions">
+                            @if (ActionsContent != null)
+                            {
+                                @ActionsContent
+                            }
+                            else
+                            {
+                                <RadzenButton Text="@CancelText"
+                                              Click="@HandleCancel"
+                                              ButtonStyle="@CancelButtonStyle"
+                                              Disabled="@IsProcessing" />
+                                <RadzenButton Text="@SubmitText"
+                                              ButtonType="ButtonType.Submit"
+                                              ButtonStyle="@SubmitButtonStyle"
+                                              Disabled="@IsProcessing"
+                                              IsBusy="@IsProcessing" />
+                            }
+                        </div>
+                    </EditForm>
+                }
+                else
+                {
+                    @Content
+
+                    <div class="dialog-actions">
+                        @if (ActionsContent != null)
+                        {
+                            @ActionsContent
+                        }
+                        else if (ShowDefaultActions)
+                        {
+                            <RadzenButton Text="@CancelText"
+                                          Click="@HandleCancel"
+                                          ButtonStyle="@CancelButtonStyle"
+                                          Disabled="@IsProcessing" />
+                            <RadzenButton Text="@SubmitText"
+                                          Click="@HandleSubmit"
+                                          ButtonStyle="@SubmitButtonStyle"
+                                          Disabled="@IsProcessing"
+                                          IsBusy="@IsProcessing" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+</RadzenDialog>
+
+@code {
+    private RadzenDialog? DialogRef;
+
+    [Parameter] public bool IsVisible { get; set; } = false;
+    [Parameter] public EventCallback<bool> IsVisibleChanged { get; set; }
+
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Width { get; set; } = "600px";
+    [Parameter] public string Height { get; set; } = "auto";
+    [Parameter] public string AdditionalStyle { get; set; } = string.Empty;
+    [Parameter] public bool ShowCloseIcon { get; set; } = true;
+
+    [Parameter] public TModel? Model { get; set; }
+    [Parameter] public bool ShowForm { get; set; } = true;
+    [Parameter] public RenderFragment? ValidationComponent { get; set; }
+    [Parameter] public RenderFragment Content { get; set; } = default!;
+    [Parameter] public RenderFragment? ActionsContent { get; set; }
+
+    [Parameter] public bool ShowDefaultActions { get; set; } = true;
+    [Parameter] public string CancelText { get; set; } = "Cancel";
+    [Parameter] public string SubmitText { get; set; } = "Save";
+    [Parameter] public ButtonStyle CancelButtonStyle { get; set; } = ButtonStyle.Secondary;
+    [Parameter] public ButtonStyle SubmitButtonStyle { get; set; } = ButtonStyle.Primary;
+
+    [Parameter] public bool IsProcessing { get; set; } = false;
+    [Parameter] public EventCallback<bool> IsProcessingChanged { get; set; }
+
+    [Parameter] public EventCallback<TModel> OnSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public EventCallback<TModel> OnValidSubmit { get; set; }
+    [Parameter] public EventCallback<EditContext> OnInvalidSubmit { get; set; }
+
+    public async Task ShowAsync()
+    {
+        IsVisible = true;
+        await IsVisibleChanged.InvokeAsync(IsVisible);
+        StateHasChanged();
+    }
+
+    public async Task HideAsync()
+    {
+        IsVisible = false;
+        await IsVisibleChanged.InvokeAsync(IsVisible);
+        StateHasChanged();
+    }
+
+    private async Task HandleCancel()
+    {
+        await OnCancel.InvokeAsync();
+        await HideAsync();
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (Model != null)
+        {
+            await OnSubmit.InvokeAsync(Model);
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (Model != null)
+        {
+            await OnValidSubmit.InvokeAsync(Model);
+        }
+    }
+
+    private async Task HandleInvalidSubmit(EditContext context)
+    {
+        await OnInvalidSubmit.InvokeAsync(context);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsProcessingChanged.HasDelegate)
+        {
+            await IsProcessingChanged.InvokeAsync(IsProcessing);
+        }
+    }
+}
+
+<style>
+    .dialog-container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .dialog-header {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .dialog-header h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .dialog-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .dialog-actions .rz-button {
+        min-width: 80px;
+    }
+</style>
