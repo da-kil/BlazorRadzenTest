@@ -22,6 +22,12 @@ else if (isLoading)
         <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading...</RadzenText>
     </div>
 }
+else
+{
+    <div class="text-center p-5">
+        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No questionnaire data available.</RadzenText>
+    </div>
+}
 
 @code {
     private QuestionnairePageConfiguration? configuration;
@@ -40,8 +46,9 @@ else if (isLoading)
         await ExecuteSafelyAsync(async () =>
         {
             await LoadInitialData();
-            SetupConfiguration();
         }, "InitializeMyQuestionnaires");
+
+        SetupConfiguration();
     }
 
     protected override bool HasStateChanged()
@@ -53,8 +60,7 @@ else if (isLoading)
 
     private async Task LoadInitialData()
     {
-        isLoading = true;
-        NotifyStateChanged();
+        SetLoading(true);
 
         try
         {

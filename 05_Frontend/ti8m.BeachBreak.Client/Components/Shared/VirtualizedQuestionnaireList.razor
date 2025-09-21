@@ -61,10 +61,17 @@
 
     protected override void OnParametersSet()
     {
-        if (HasParameterChanged(nameof(AllAssignments), AllAssignments))
+        UpdateVirtualization(); // Always update on parameter changes
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
         {
-            UpdateVirtualization();
+            UpdateVirtualization(); // Ensure virtualization runs on first render
+            NotifyStateChanged();
         }
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     protected override bool HasStateChanged()
@@ -76,7 +83,14 @@
 
     private void UpdateVirtualization()
     {
-        if (!AllAssignments.Any()) return;
+        if (!AllAssignments.Any())
+        {
+            // Handle empty case properly
+            totalHeight = 0;
+            visibleItems = new List<QuestionnaireAssignment>();
+            scrollOffset = 0;
+            return;
+        }
 
         totalHeight = AllAssignments.Count * ItemHeight;
 
