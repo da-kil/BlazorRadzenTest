@@ -1,4 +1,5 @@
 using Npgsql;
+using NpgsqlTypes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -270,16 +271,25 @@ public class EmployeeCommandHandler :
                 cmd.Transaction = transaction;
 
                 cmd.CommandText = """
-                    INSERT INTO questionnaire_responses (
-                        id, assignment_id, template_id, employee_id, status, section_responses, last_modified
-                    ) VALUES (
-                        @id, @assignmentId, @templateId, @employeeId, @status, @sectionResponses, @lastModified
+                    WITH upsert AS (
+                        UPDATE questionnaire_responses
+                        SET section_responses = @sectionResponses,
+                            last_modified = @lastModified,
+                            status = @status
+                        WHERE assignment_id = @assignmentId AND employee_id = @employeeId
+                        RETURNING id
+                    ),
+                    insert_attempt AS (
+                        INSERT INTO questionnaire_responses (
+                            id, assignment_id, template_id, employee_id, status, section_responses, last_modified, created_at
+                        )
+                        SELECT @id, @assignmentId, @templateId, @employeeId, @status, @sectionResponses, @lastModified, @lastModified
+                        WHERE NOT EXISTS (SELECT 1 FROM questionnaire_responses WHERE assignment_id = @assignmentId AND employee_id = @employeeId)
+                        RETURNING id
                     )
-                    ON CONFLICT (assignment_id, employee_id) DO UPDATE SET
-                        section_responses = @sectionResponses,
-                        last_modified = @lastModified,
-                        status = @status
-                    RETURNING id
+                    SELECT id FROM upsert
+                    UNION ALL
+                    SELECT id FROM insert_attempt
                     """;
 
                 var responseId = Guid.NewGuid();
@@ -290,7 +300,7 @@ public class EmployeeCommandHandler :
                 cmd.Parameters.AddWithValue("@templateId", command.TemplateId);
                 cmd.Parameters.AddWithValue("@employeeId", command.EmployeeId);
                 cmd.Parameters.AddWithValue("@status", command.Status.ToString());
-                cmd.Parameters.AddWithValue("@sectionResponses", sectionResponsesJson);
+                cmd.Parameters.Add("@sectionResponses", NpgsqlTypes.NpgsqlDbType.Jsonb).Value = sectionResponsesJson;
                 cmd.Parameters.AddWithValue("@lastModified", DateTime.UtcNow);
 
                 var result = await cmd.ExecuteScalarAsync(cancellationToken);

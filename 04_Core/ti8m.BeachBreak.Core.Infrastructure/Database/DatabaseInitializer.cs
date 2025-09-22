@@ -38,6 +38,7 @@ public class DatabaseInitializer
         await CreateQuestionnaireTemplatesTableAsync(connection);
         await CreateEmployeesTableAsync(connection);
         await CreateAssignmentsTableAsync(connection);
+        await CreateResponsesTableAsync(connection);
     }
 
     private async Task CreateQuestionnaireTemplatesTableAsync(NpgsqlConnection connection)
@@ -122,11 +123,28 @@ public class DatabaseInitializer
             -- Create composite indexes for status queries
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_status ON questionnaire_templates(is_active, is_published);
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_assignable ON questionnaire_templates(is_active, is_published) WHERE is_active = true AND is_published = true;
+
+            -- Insert a sample questionnaire template if it doesn't exist
+            INSERT INTO questionnaire_templates (id, name, description, category, is_active, is_published, status, sections, settings, created_at, updated_at)
+            SELECT * FROM (VALUES (
+                'a84f5d93-edc4-4f8e-bb30-f03dc7a983c2'::uuid,
+                'Annual Performance Review 2024',
+                'Comprehensive annual performance review questionnaire',
+                'Performance Review',
+                true,
+                true,
+                1, -- Published
+                '[{"id":"section1","title":"Self-Assessment","description":"Rate your performance in key competencies","order":0,"isRequired":true,"questionType":"SelfAssessment","configuration":{"competencies":[{"key":"communication","name":"Communication"},{"key":"teamwork","name":"Teamwork"}]}},{"id":"section2","title":"Goal Setting","description":"Set your goals for the upcoming year","order":1,"isRequired":true,"questionType":"GoalAchievement","configuration":{"maxGoals":3}}]'::jsonb,
+                '{"allowSaveProgress":true,"showProgressBar":true,"requireAllSections":true,"successMessage":"Thank you for completing your annual review!","allowReviewBeforeSubmit":true}'::jsonb,
+                NOW(),
+                NOW()
+            )) AS sample_template(id, name, description, category, is_active, is_published, status, sections, settings, created_at, updated_at)
+            WHERE NOT EXISTS (SELECT 1 FROM questionnaire_templates WHERE id = 'a84f5d93-edc4-4f8e-bb30-f03dc7a983c2'::uuid);
             """;
 
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        
+
         _logger.LogInformation("Creating questionnaire_templates table...");
         await command.ExecuteNonQueryAsync();
         _logger.LogInformation("questionnaire_templates table created successfully.");
@@ -271,6 +289,15 @@ public class DatabaseInitializer
             CREATE INDEX IF NOT EXISTS idx_assignments_status ON questionnaire_assignments(status);
             CREATE INDEX IF NOT EXISTS idx_assignments_assigned_date ON questionnaire_assignments(assigned_date);
             CREATE INDEX IF NOT EXISTS idx_assignments_due_date ON questionnaire_assignments(due_date);
+
+            -- Insert some sample assignments
+            INSERT INTO questionnaire_assignments (id, template_id, employee_id, employee_name, employee_email, assigned_date, due_date, status, assigned_by, notes)
+            SELECT * FROM (VALUES
+                ('ea47f927-bbfc-4d31-8dc6-7e1186c896eb'::uuid, 'a84f5d93-edc4-4f8e-bb30-f03dc7a983c2'::uuid, '5c438c77-9f19-4ecb-9d1a-e9d8a09b4dcb'::uuid, 'Emily Davis', 'emily.davis@company.com', NOW() - INTERVAL '7 days', NOW() + INTERVAL '7 days', 'Assigned', 'HR Manager', 'Please complete by the due date'),
+                ('12345678-1234-1234-1234-123456789012'::uuid, 'a84f5d93-edc4-4f8e-bb30-f03dc7a983c2'::uuid, '5ef0ebe1-3745-4066-a902-a0edac23da33'::uuid, 'David Wilson', 'david.wilson@company.com', NOW() - INTERVAL '5 days', NOW() + INTERVAL '9 days', 'Assigned', 'HR Manager', 'Annual review assignment'),
+                ('23456789-2345-2345-2345-234567890123'::uuid, 'a84f5d93-edc4-4f8e-bb30-f03dc7a983c2'::uuid, '2ee3dee7-b580-4dd2-98e1-6dd4a148ec7f'::uuid, 'Lisa Miller', 'lisa.miller@company.com', NOW() - INTERVAL '3 days', NOW() + INTERVAL '11 days', 'InProgress', 'HR Manager', 'Performance review in progress')
+            ) AS sample_assignments(id, template_id, employee_id, employee_name, employee_email, assigned_date, due_date, status, assigned_by, notes)
+            WHERE NOT EXISTS (SELECT 1 FROM questionnaire_assignments WHERE id = sample_assignments.id);
             """;
 
         await using var command = connection.CreateCommand();
@@ -279,5 +306,41 @@ public class DatabaseInitializer
         _logger.LogInformation("Creating questionnaire_assignments table...");
         await command.ExecuteNonQueryAsync();
         _logger.LogInformation("Questionnaire assignments table created successfully with sample data.");
+    }
+
+    private async Task CreateResponsesTableAsync(NpgsqlConnection connection)
+    {
+        const string sql = """
+            CREATE TABLE IF NOT EXISTS questionnaire_responses (
+                id UUID PRIMARY KEY,
+                assignment_id UUID NOT NULL,
+                template_id UUID NOT NULL,
+                employee_id UUID NOT NULL,
+                status VARCHAR(50) NOT NULL DEFAULT 'InProgress',
+                section_responses JSONB NOT NULL,
+                submitted_date TIMESTAMP WITH TIME ZONE,
+                last_modified TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+            );
+
+            -- Create unique index for upsert operations
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_responses_assignment_employee
+            ON questionnaire_responses(assignment_id, employee_id);
+
+            -- Create indexes for better performance
+            CREATE INDEX IF NOT EXISTS idx_responses_assignment_id ON questionnaire_responses(assignment_id);
+            CREATE INDEX IF NOT EXISTS idx_responses_template_id ON questionnaire_responses(template_id);
+            CREATE INDEX IF NOT EXISTS idx_responses_employee_id ON questionnaire_responses(employee_id);
+            CREATE INDEX IF NOT EXISTS idx_responses_status ON questionnaire_responses(status);
+            CREATE INDEX IF NOT EXISTS idx_responses_submitted_date ON questionnaire_responses(submitted_date);
+            CREATE INDEX IF NOT EXISTS idx_responses_last_modified ON questionnaire_responses(last_modified);
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+
+        _logger.LogInformation("Creating questionnaire_responses table...");
+        await command.ExecuteNonQueryAsync();
+        _logger.LogInformation("Questionnaire responses table created successfully.");
     }
 }

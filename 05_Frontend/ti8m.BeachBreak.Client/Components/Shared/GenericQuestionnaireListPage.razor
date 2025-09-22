@@ -72,6 +72,7 @@
 @code {
     [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
     [Parameter, EditorRequired] public IQuestionnaireDataService DataService { get; set; } = default!;
+    [Parameter] public EventCallback<QuestionnaireAssignment> OnStartQuestionnaire { get; set; }
 
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> employees = new();
@@ -477,7 +478,14 @@
 
     private async Task NavigateToQuestionnaire(QuestionnaireAssignment assignment)
     {
-        NavigateToPage($"/my-questionnaires/{assignment.TemplateId}");
+        if (OnStartQuestionnaire.HasDelegate)
+        {
+            await OnStartQuestionnaire.InvokeAsync(assignment);
+        }
+        else
+        {
+            NavigateToPage($"/my-questionnaires/{assignment.TemplateId}");
+        }
     }
 
     private async Task ViewResults(QuestionnaireAssignment assignment)

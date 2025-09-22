@@ -11,9 +11,18 @@
 
 <PageTitle>My Questionnaires</PageTitle>
 
-@if (configuration != null && dataService != null)
+@if (currentAssignment != null)
 {
-    <GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
+    <!-- Questionnaire Completion Mode -->
+    <QuestionnaireCompletion Assignment="@currentAssignment"
+                            QuestionTypeLabels="@questionTypeLabels"
+                            OnCompleted="@OnQuestionnaireCompleted"
+                            OnSave="@OnQuestionnaireSaved" />
+}
+else if (configuration != null && dataService != null)
+{
+    <!-- List View Mode -->
+    <GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" OnStartQuestionnaire="@StartQuestionnaire" />
 }
 else if (isLoading)
 {
@@ -41,6 +50,15 @@ else
     private List<string> availableCategories = new();
     private bool isLoading = false;
 
+    // Questionnaire completion state
+    private QuestionnaireAssignment? currentAssignment;
+    private Dictionary<QuestionType, string> questionTypeLabels = new()
+    {
+        { QuestionType.SelfAssessment, "Self-Assessment" },
+        { QuestionType.GoalAchievement, "Goal Achievement" },
+        { QuestionType.TextQuestion, "Text Question" }
+    };
+
     protected override async Task OnInitializedAsync()
     {
         await ExecuteSafelyAsync(async () =>
@@ -55,7 +73,8 @@ else
     {
         return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
                HasParameterChanged(nameof(configuration), configuration) ||
-               HasParameterChanged(nameof(isLoading), isLoading);
+               HasParameterChanged(nameof(isLoading), isLoading) ||
+               HasParameterChanged(nameof(currentAssignment), currentAssignment?.Id);
     }
 
     private async Task LoadInitialData()
@@ -143,5 +162,70 @@ else
     private void ShowInfo(string message)
     {
         NotificationService.Notify(NotificationSeverity.Info, "Information", message);
+    }
+
+    private async Task StartQuestionnaire(QuestionnaireAssignment assignment)
+    {
+        if (assignment == null) return;
+
+        try
+        {
+            currentAssignment = assignment;
+            NotifyStateChanged();
+            ShowInfo($"Starting questionnaire: {assignment.TemplateId}");
+        }
+        catch (Exception ex)
+        {
+            HandleError(ex, "starting questionnaire");
+        }
+    }
+
+    private async Task OnQuestionnaireCompleted()
+    {
+        try
+        {
+            if (currentAssignment != null)
+            {
+                // Update assignment status to completed
+                currentAssignment.Status = AssignmentStatus.Completed;
+                currentAssignment.CompletedDate = DateTime.Now;
+
+                // Refresh the data
+                await LoadInitialData();
+                SetupConfiguration();
+
+                // Return to list view
+                currentAssignment = null;
+                NotifyStateChanged();
+
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Questionnaire completed successfully!");
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleError(ex, "completing questionnaire");
+        }
+    }
+
+    private async Task OnQuestionnaireSaved(Dictionary<Guid, SectionResponse> responses)
+    {
+        try
+        {
+            if (currentAssignment != null)
+            {
+                // Update assignment status to in progress
+                if (currentAssignment.Status == AssignmentStatus.Assigned)
+                {
+                    currentAssignment.Status = AssignmentStatus.InProgress;
+                }
+
+                // Show save confirmation
+                NotificationService.Notify(NotificationSeverity.Info, "Saved", "Your progress has been saved.");
+            }
+        }
+        catch (Exception ex)
+        {
+            HandleError(ex, "saving questionnaire progress");
+        }
     }
 }
