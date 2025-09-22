@@ -8,7 +8,10 @@ public class QuestionnaireTemplate
     public string Category { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; } = DateTime.Now;
     public DateTime? LastModified { get; set; }
-    public bool IsActive { get; set; } = true;
+    public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
+    public DateTime? PublishedDate { get; set; }
+    public DateTime? LastPublishedDate { get; set; }
+    public string PublishedBy { get; set; } = string.Empty;
     public List<QuestionSection> Sections { get; set; } = new();
     public QuestionnaireSettings Settings { get; set; } = new();
 }
@@ -148,4 +151,11 @@ public class SubmitResponseRequest
 {
     public Guid AssignmentId { get; set; }
     public Dictionary<Guid, SectionResponse> SectionResponses { get; set; } = new();
+}
+
+public enum TemplateStatus
+{
+    Draft = 0,      // Template can be edited, not assignable
+    Published = 1,  // Template is read-only, can be assigned
+    Archived = 2    // Template is inactive, cannot be assigned or edited
 }

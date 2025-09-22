@@ -35,8 +35,7 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
             template.Name,
             template.Description,
             template.Category,
-            template.IsActive,
-            template.IsPublished,
+            template.Status,
             template.PublishedDate,
             template.LastPublishedDate,
             template.PublishedBy,
@@ -55,8 +54,7 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
             template.Name,
             template.Description,
             template.Category,
-            template.IsActive,
-            template.IsPublished,
+            template.Status,
             template.PublishedDate,
             template.LastPublishedDate,
             template.PublishedBy,
@@ -189,7 +187,7 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
         try
         {
             var templates = await GetAllTemplatesAsync();
-            return templates.Where(t => t.IsActive).ToList();
+            return templates.Where(t => t.Status != TemplateStatus.Archived).ToList();
         }
         catch (Exception ex)
         {
@@ -203,7 +201,7 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
         try
         {
             var templates = await GetAllTemplatesAsync();
-            return templates.Where(t => !t.IsActive).ToList();
+            return templates.Where(t => t.Status == TemplateStatus.Archived).ToList();
         }
         catch (Exception ex)
         {
@@ -241,11 +239,11 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
             var analytics = new Dictionary<string, object>
             {
                 ["TotalTemplates"] = templates.Count,
-                ["PublishedTemplates"] = templates.Count(t => t.IsPublished),
+                ["PublishedTemplates"] = templates.Count(t => t.Status == TemplateStatus.Published),
                 ["DraftTemplates"] = templates.Count(t => t.Status == TemplateStatus.Draft),
-                ["InactiveTemplates"] = templates.Count(t => !t.IsActive),
+                ["ArchivedTemplates"] = templates.Count(t => t.Status == TemplateStatus.Archived),
                 ["AssignableTemplates"] = templates.Count(t => t.CanBeAssigned),
-                ["PublishingRate"] = templates.Count > 0 ? (double)templates.Count(t => t.IsPublished) / templates.Count : 0.0
+                ["PublishingRate"] = templates.Count > 0 ? (double)templates.Count(t => t.Status == TemplateStatus.Published) / templates.Count : 0.0
             };
             return analytics;
         }

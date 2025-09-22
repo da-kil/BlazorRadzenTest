@@ -29,7 +29,7 @@ public class QuestionnaireTemplateQueryHandler :
             await using var cmd = connection.CreateCommand();
 
             cmd.CommandText = """
-                SELECT id, name, description, category, is_active, is_published, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
+                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
                 FROM questionnaire_templates
                 ORDER BY created_at DESC
                 """;
@@ -61,7 +61,7 @@ public class QuestionnaireTemplateQueryHandler :
             await using var cmd = connection.CreateCommand();
 
             cmd.CommandText = """
-                SELECT id, name, description, category, is_active, is_published, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
+                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
                 FROM questionnaire_templates
                 WHERE id = @id
                 """;
@@ -95,9 +95,9 @@ public class QuestionnaireTemplateQueryHandler :
             await using var cmd = connection.CreateCommand();
 
             cmd.CommandText = """
-                SELECT id, name, description, category, is_active, is_published, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
+                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
                 FROM questionnaire_templates
-                WHERE is_published = true
+                WHERE status = 1
                 ORDER BY last_published_date DESC, created_at DESC
                 """;
 
@@ -128,9 +128,9 @@ public class QuestionnaireTemplateQueryHandler :
             await using var cmd = connection.CreateCommand();
 
             cmd.CommandText = """
-                SELECT id, name, description, category, is_active, is_published, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
+                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
                 FROM questionnaire_templates
-                WHERE is_active = true AND is_published = false
+                WHERE status = 0
                 ORDER BY updated_at DESC, created_at DESC
                 """;
 
@@ -161,9 +161,9 @@ public class QuestionnaireTemplateQueryHandler :
             await using var cmd = connection.CreateCommand();
 
             cmd.CommandText = """
-                SELECT id, name, description, category, is_active, is_published, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
+                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
                 FROM questionnaire_templates
-                WHERE is_active = true AND is_published = true
+                WHERE status = 1
                 ORDER BY last_published_date DESC, created_at DESC
                 """;
 
@@ -188,6 +188,8 @@ public class QuestionnaireTemplateQueryHandler :
 
     private static QuestionnaireTemplate MapQuestionnaireTemplate(NpgsqlDataReader reader)
     {
+        var statusValue = reader.GetInt32("status");
+
         return new QuestionnaireTemplate
         {
             Id = reader.GetGuid("id"),
@@ -196,8 +198,7 @@ public class QuestionnaireTemplateQueryHandler :
             Category = reader.IsDBNull("category") ? string.Empty : reader.GetString("category"),
             CreatedDate = reader.GetDateTime("created_at"),
             LastModified = reader.GetDateTime("updated_at"),
-            IsActive = reader.IsDBNull("is_active") ? true : reader.GetBoolean("is_active"),
-            IsPublished = reader.IsDBNull("is_published") ? false : reader.GetBoolean("is_published"),
+            Status = (TemplateStatus)statusValue,
             PublishedDate = reader.IsDBNull("published_date") ? null : reader.GetDateTime("published_date"),
             LastPublishedDate = reader.IsDBNull("last_published_date") ? null : reader.GetDateTime("last_published_date"),
             PublishedBy = reader.IsDBNull("published_by") ? string.Empty : reader.GetString("published_by"),

@@ -29,6 +29,15 @@ public class QuestionnaireAssignmentCommandHandler :
 
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
+            // CRITICAL: Validate that template can be assigned before creating assignments
+            var templateValidation = await ValidateTemplateCanBeAssignedAsync(connection, questionnaireAssignment.TemplateId, cancellationToken);
+            if (!templateValidation.IsValid)
+            {
+                logger.LogWarning("Template {TemplateId} cannot be assigned: {Reason}",
+                    questionnaireAssignment.TemplateId, templateValidation.Reason);
+                return Result.Fail(templateValidation.Reason, 400);
+            }
+
             var createdAssignments = new List<Guid>();
 
             foreach (var employeeId in questionnaireAssignment.EmployeeIds)
@@ -238,6 +247,44 @@ public class QuestionnaireAssignmentCommandHandler :
             logger.LogError(ex, "Failed to send bulk reminders for {AssignmentCount} assignments", command.AssignmentIds.Count());
             return Result.Fail($"Failed to send bulk reminders: {ex.Message}", 500);
         }
+    }
+
+    private async Task<(bool IsValid, string Reason)> ValidateTemplateCanBeAssignedAsync(NpgsqlConnection connection, Guid templateId, CancellationToken cancellationToken)
+    {
+        const string sql = """
+            SELECT name, status
+            FROM questionnaire_templates
+            WHERE id = @templateId
+            """;
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Parameters.AddWithValue("@templateId", templateId);
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return (false, $"Questionnaire template with ID {templateId} not found");
+        }
+
+        var templateName = reader.GetString(0);
+        var status = reader.GetInt32(1);
+
+        // Business rule: Template must be Published (status = 1) to be assignable
+        // 0=Draft, 1=Published, 2=Archived
+        if (status != 1)
+        {
+            var statusName = status switch
+            {
+                0 => "draft",
+                2 => "archived",
+                _ => "inactive"
+            };
+
+            return (false, $"Template '{templateName}' is {statusName} and cannot be assigned. Only published templates can be assigned to employees.");
+        }
+
+        return (true, string.Empty);
     }
 
     private class EmployeeDetails

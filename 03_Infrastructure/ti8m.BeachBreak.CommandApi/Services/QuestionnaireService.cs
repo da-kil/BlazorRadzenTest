@@ -24,7 +24,7 @@ public class QuestionnaireService : IQuestionnaireService
             Category = "Performance Review",
             CreatedDate = DateTime.Now.AddDays(-30),
             LastModified = DateTime.Now.AddDays(-5),
-            IsActive = true,
+            Status = TemplateStatus.Published,
             Sections = new List<QuestionSection>
             {
                 new QuestionSection
@@ -107,12 +107,12 @@ public class QuestionnaireService : IQuestionnaireService
     // Template management
     public Task<List<QuestionnaireTemplate>> GetAllTemplatesAsync()
     {
-        return Task.FromResult(_templates.Where(t => t.IsActive).ToList());
+        return Task.FromResult(_templates.Where(t => t.Status != TemplateStatus.Archived).ToList());
     }
 
     public Task<QuestionnaireTemplate?> GetTemplateByIdAsync(Guid id)
     {
-        return Task.FromResult(_templates.FirstOrDefault(t => t.Id == id && t.IsActive));
+        return Task.FromResult(_templates.FirstOrDefault(t => t.Id == id && t.Status != TemplateStatus.Archived));
     }
 
     public Task<QuestionnaireTemplate> CreateTemplateAsync(CreateQuestionnaireTemplateRequest request)
@@ -125,7 +125,7 @@ public class QuestionnaireService : IQuestionnaireService
             Category = request.Category,
             CreatedDate = DateTime.Now,
             LastModified = DateTime.Now,
-            IsActive = true,
+            Status = TemplateStatus.Draft,
             Sections = request.Sections,
             Settings = request.Settings
         };
@@ -154,14 +154,14 @@ public class QuestionnaireService : IQuestionnaireService
         var template = _templates.FirstOrDefault(t => t.Id == id);
         if (template == null) return Task.FromResult(false);
 
-        template.IsActive = false;
+        template.Status = TemplateStatus.Archived;
         template.LastModified = DateTime.Now;
         return Task.FromResult(true);
     }
 
     public Task<List<QuestionnaireTemplate>> GetTemplatesByCategoryAsync(string category)
     {
-        return Task.FromResult(_templates.Where(t => t.IsActive && t.Category == category).ToList());
+        return Task.FromResult(_templates.Where(t => t.Status != TemplateStatus.Archived && t.Category == category).ToList());
     }
 
     // Assignment management
@@ -182,7 +182,7 @@ public class QuestionnaireService : IQuestionnaireService
 
     public Task<List<QuestionnaireAssignment>> CreateAssignmentsAsync(CreateAssignmentRequest request)
     {
-        var template = _templates.FirstOrDefault(t => t.Id == request.TemplateId && t.IsActive);
+        var template = _templates.FirstOrDefault(t => t.Id == request.TemplateId && t.Status == TemplateStatus.Published);
         if (template == null) return Task.FromResult(new List<QuestionnaireAssignment>());
 
         var assignments = new List<QuestionnaireAssignment>();
@@ -330,14 +330,14 @@ public class QuestionnaireService : IQuestionnaireService
     {
         var analytics = new Dictionary<string, object>
         {
-            ["TotalTemplates"] = _templates.Count(t => t.IsActive),
+            ["TotalTemplates"] = _templates.Count(t => t.Status != TemplateStatus.Archived),
             ["TotalAssignments"] = _assignments.Count,
             ["TotalResponses"] = _responses.Count,
             ["CompletedResponses"] = _responses.Count(r => r.Status == ResponseStatus.Submitted),
             ["OverallCompletionRate"] = _assignments.Count > 0 ?
                 (double)_assignments.Count(a => a.Status == AssignmentStatus.Completed) / _assignments.Count * 100 : 0,
             ["TemplatesByCategory"] = _templates
-                .Where(t => t.IsActive)
+                .Where(t => t.Status != TemplateStatus.Archived)
                 .GroupBy(t => t.Category)
                 .ToDictionary(g => g.Key, g => g.Count())
         };

@@ -91,6 +91,24 @@ public class DatabaseInitializer
                               WHERE table_name = 'questionnaire_templates' AND column_name = 'published_by') THEN
                     ALTER TABLE questionnaire_templates ADD COLUMN published_by VARCHAR(255);
                 END IF;
+
+                -- Add status column (new enum-based approach)
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns
+                              WHERE table_name = 'questionnaire_templates' AND column_name = 'status') THEN
+                    ALTER TABLE questionnaire_templates ADD COLUMN status INTEGER NOT NULL DEFAULT 0;
+
+                    -- Migrate existing data from boolean flags to status enum
+                    -- 0=Draft, 1=Published, 2=Archived
+                    UPDATE questionnaire_templates
+                    SET status = CASE
+                        WHEN COALESCE(is_active, true) = true AND COALESCE(is_published, false) = true THEN 1  -- Published
+                        WHEN COALESCE(is_active, true) = true AND COALESCE(is_published, false) = false THEN 0 -- Draft
+                        ELSE 2  -- Archived (inactive templates)
+                    END;
+
+                    -- Create index for better performance
+                    CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_status ON questionnaire_templates(status);
+                END IF;
             END $$;
 
             -- Create indexes for better performance

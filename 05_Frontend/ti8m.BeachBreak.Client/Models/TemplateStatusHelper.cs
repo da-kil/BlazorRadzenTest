@@ -6,8 +6,7 @@ public static class TemplateStatusHelper
     {
         TemplateStatus.Published => "badge bg-success",
         TemplateStatus.Draft => "badge bg-warning text-dark",
-        TemplateStatus.PublishedInactive => "badge bg-secondary",
-        TemplateStatus.Inactive => "badge bg-danger",
+        TemplateStatus.Archived => "badge bg-danger",
         _ => "badge bg-info"
     };
 
@@ -15,8 +14,7 @@ public static class TemplateStatusHelper
     {
         TemplateStatus.Published => "PUBLISHED",
         TemplateStatus.Draft => "DRAFT",
-        TemplateStatus.PublishedInactive => "DISABLED",
-        TemplateStatus.Inactive => "INACTIVE",
+        TemplateStatus.Archived => "ARCHIVED",
         _ => "UNKNOWN"
     };
 
@@ -24,8 +22,7 @@ public static class TemplateStatusHelper
     {
         TemplateStatus.Published => "publish",
         TemplateStatus.Draft => "edit",
-        TemplateStatus.PublishedInactive => "block",
-        TemplateStatus.Inactive => "disabled_by_default",
+        TemplateStatus.Archived => "archive",
         _ => "help"
     };
 
@@ -33,29 +30,26 @@ public static class TemplateStatusHelper
     {
         TemplateStatus.Published => "Available for assignments and visible in catalog",
         TemplateStatus.Draft => "In development - not yet available for assignments",
-        TemplateStatus.PublishedInactive => "Published but temporarily disabled",
-        TemplateStatus.Inactive => "Not available for use",
+        TemplateStatus.Archived => "Archived - not available for use",
         _ => "Status unknown"
     };
 
     public static List<string> GetAvailableActions(TemplateStatus status) => status switch
     {
-        TemplateStatus.Draft => new List<string> { "Save", "Publish" },
-        TemplateStatus.Published => new List<string> { "Save", "Unpublish", "Disable" },
-        TemplateStatus.PublishedInactive => new List<string> { "Enable", "Edit" },
-        TemplateStatus.Inactive => new List<string> { "Activate" },
+        TemplateStatus.Draft => new List<string> { "Save", "Publish", "Archive" },
+        TemplateStatus.Published => new List<string> { "Unpublish", "Archive" },
+        TemplateStatus.Archived => new List<string> { "Restore" },
         _ => new List<string>()
     };
 
     public static bool CanPerformAction(TemplateStatus status, string action) => action.ToLower() switch
     {
-        "save" => status == TemplateStatus.Draft || status == TemplateStatus.Published,
+        "save" => status == TemplateStatus.Draft,
         "publish" => status == TemplateStatus.Draft,
         "unpublish" => status == TemplateStatus.Published,
-        "disable" => status == TemplateStatus.Published,
-        "enable" => status == TemplateStatus.PublishedInactive,
-        "activate" => status == TemplateStatus.Inactive,
-        "edit" => status != TemplateStatus.Inactive,
+        "archive" => status != TemplateStatus.Archived,
+        "restore" => status == TemplateStatus.Archived,
+        "edit" => status == TemplateStatus.Draft,
         _ => false
     };
 }

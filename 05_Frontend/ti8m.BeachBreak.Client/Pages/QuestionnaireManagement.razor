@@ -86,10 +86,10 @@
                                     </Template>
                                 </RadzenDataGridColumn>
                                 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.IsActive)" Title="Status" Width="120px">
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.Status)" Title="Status" Width="120px">
                                     <Template Context="template">
-                                        <RadzenBadge BadgeStyle="@(template.IsActive ? BadgeStyle.Success : BadgeStyle.Light)" 
-                                                   Text="@(template.IsActive ? "Active" : "Inactive")" />
+                                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(template.Status)"
+                                                   Text="@TemplateStatusHelper.GetStatusText(template.Status)" />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 
@@ -131,10 +131,10 @@
                                                          Size="ButtonSize.Small"
                                                          Title="Assign"
                                                          Click="@(() => AssignTemplate(template))" />
-                                            <RadzenButton ButtonStyle="@(template.IsActive ? ButtonStyle.Warning : ButtonStyle.Success)"
-                                                         Icon="@(template.IsActive ? "pause_circle" : "play_circle")"
+                                            <RadzenButton ButtonStyle="@GetToggleButtonStyle(template.Status)"
+                                                         Icon="@GetToggleButtonIcon(template.Status)"
                                                          Size="ButtonSize.Small"
-                                                         Title="@(template.IsActive ? "Deactivate" : "Activate")"
+                                                         Title="@GetToggleButtonTitle(template.Status)"
                                                          Click="@(() => ToggleTemplateStatus(template))" />
                                         </div>
                                     </Template>
@@ -472,7 +472,7 @@
     private void FilterTemplates()
     {
         filteredTemplates = templates.Where(t =>
-            (showInactiveTemplates || t.IsActive) &&
+            (showInactiveTemplates || t.Status != TemplateStatus.Archived) &&
             (string.IsNullOrWhiteSpace(categoryFilter) || t.Category == categoryFilter) &&
             (string.IsNullOrWhiteSpace(searchText) ||
              t.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
@@ -506,27 +506,33 @@
     {
         try
         {
-            template.IsActive = !template.IsActive;
+            var originalStatus = template.Status;
+            var newStatus = template.Status switch
+            {
+                TemplateStatus.Draft => TemplateStatus.Archived,
+                TemplateStatus.Published => TemplateStatus.Archived,
+                TemplateStatus.Archived => TemplateStatus.Draft,
+                _ => TemplateStatus.Draft
+            };
+
+            template.Status = newStatus;
             template.LastModified = DateTime.Now;
-            
+
             var updatedTemplate = await ApiService.UpdateTemplateAsync(template);
             if (updatedTemplate != null)
             {
-                var status = template.IsActive ? "activated" : "deactivated";
-                NotificationService.Notify(NotificationSeverity.Success, "Status Updated", $"Template '{template.Name}' has been {status}");
+                var statusAction = newStatus == TemplateStatus.Archived ? "archived" : "restored";
+                NotificationService.Notify(NotificationSeverity.Success, "Status Updated", $"Template '{template.Name}' has been {statusAction}");
                 FilterTemplates();
             }
             else
             {
-                // Revert the change if API call failed
-                template.IsActive = !template.IsActive;
+                template.Status = originalStatus;
                 NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update template status");
             }
         }
         catch (Exception ex)
         {
-            // Revert the change if API call failed
-            template.IsActive = !template.IsActive;
             NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update template: {ex.Message}");
         }
     }
@@ -881,4 +887,31 @@
         public string Text { get; set; }
         public AssignmentStatus? Value { get; set; }
     }
+
+    // Status helper methods
+    private BadgeStyle GetStatusBadgeStyle(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Published => BadgeStyle.Success,
+        TemplateStatus.Draft => BadgeStyle.Warning,
+        TemplateStatus.Archived => BadgeStyle.Danger,
+        _ => BadgeStyle.Secondary
+    };
+
+    private ButtonStyle GetToggleButtonStyle(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Archived => ButtonStyle.Success,
+        _ => ButtonStyle.Warning
+    };
+
+    private string GetToggleButtonIcon(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Archived => "restore",
+        _ => "archive"
+    };
+
+    private string GetToggleButtonTitle(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Archived => "Restore",
+        _ => "Archive"
+    };
 }

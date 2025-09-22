@@ -28,53 +28,7 @@ public class QuestionnaireTemplatesController : BaseController
         try
         {
             var result = await queryDispatcher.QueryAsync(new QuestionnaireTemplateListQuery());
-            return CreateResponse(result, templates =>
-            {
-                return templates.Select(template => new QuestionnaireTemplateDto
-                {
-
-                    Id = template.Id,
-                    Name = template.Name,
-                    Description = template.Description,
-                    Category = template.Category,
-                    CreatedDate = template.CreatedDate,
-                    LastModified = template.LastModified,
-                    IsActive = template.IsActive,
-                    IsPublished = template.IsPublished,
-                    PublishedDate = template.PublishedDate,
-                    LastPublishedDate = template.LastPublishedDate,
-                    PublishedBy = template.PublishedBy,
-                    Sections = template.Sections.Select(section => new QuestionSectionDto
-                    {
-                        Id = section.Id,
-                        Title = section.Title,
-                        Description = section.Description,
-                        Order = section.Order,
-                        IsRequired = section.IsRequired,
-                        Questions = section.Questions.Select(question => new QuestionItemDto
-                        {
-                            Id = question.Id,
-                            Title = question.Title,
-                            Description = question.Description,
-                            Type = MapQuestionTypeToDto[question.Type],
-                            Order = question.Order,
-                            IsRequired = question.IsRequired,
-                            Configuration = question.Configuration,
-                            Options = question.Options
-                        }).ToList()
-                    }).ToList(),
-                    Settings = new QuestionnaireSettingsDto
-                    {
-                        AllowSaveProgress = template.Settings.AllowSaveProgress,
-                        ShowProgressBar = template.Settings.ShowProgressBar,
-                        RequireAllSections = template.Settings.RequireAllSections,
-                        SuccessMessage = template.Settings.SuccessMessage,
-                        IncompleteMessage = template.Settings.IncompleteMessage,
-                        TimeLimit = template.Settings.TimeLimit,
-                        AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
-                    }
-                });
-            });
+            return CreateResponse(result, templates => templates.Select(MapToDto));
         }
         catch (Exception ex)
         {
@@ -93,49 +47,7 @@ public class QuestionnaireTemplatesController : BaseController
             if (result == null)
                 return NotFound($"Template with ID {id} not found");
 
-            return CreateResponse(result, template => new QuestionnaireTemplateDto
-            {
-                Id = template.Id,
-                Name = template.Name,
-                Description = template.Description,
-                Category = template.Category,
-                CreatedDate = template.CreatedDate,
-                LastModified = template.LastModified,
-                IsActive = template.IsActive,
-                IsPublished = template.IsPublished,
-                PublishedDate = template.PublishedDate,
-                LastPublishedDate = template.LastPublishedDate,
-                PublishedBy = template.PublishedBy,
-                Sections = template.Sections.Select(section => new QuestionSectionDto
-                {
-                    Id = section.Id,
-                    Title = section.Title,
-                    Description = section.Description,
-                    Order = section.Order,
-                    IsRequired = section.IsRequired,
-                    Questions = section.Questions.Select(question => new QuestionItemDto
-                    {
-                        Id = question.Id,
-                        Title = question.Title,
-                        Description = question.Description,
-                        Type = MapQuestionTypeToDto[question.Type],
-                        Order = question.Order,
-                        IsRequired = question.IsRequired,
-                        Configuration = question.Configuration,
-                        Options = question.Options
-                    }).ToList()
-                }).ToList(),
-                Settings = new QuestionnaireSettingsDto
-                {
-                    AllowSaveProgress = template.Settings.AllowSaveProgress,
-                    ShowProgressBar = template.Settings.ShowProgressBar,
-                    RequireAllSections = template.Settings.RequireAllSections,
-                    SuccessMessage = template.Settings.SuccessMessage,
-                    IncompleteMessage = template.Settings.IncompleteMessage,
-                    TimeLimit = template.Settings.TimeLimit,
-                    AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
-                }
-            });
+            return CreateResponse(result, MapToDto);
         }
         catch (Exception ex)
         {
@@ -166,52 +78,7 @@ public class QuestionnaireTemplatesController : BaseController
         try
         {
             var result = await queryDispatcher.QueryAsync(new PublishedQuestionnaireTemplatesQuery());
-            return CreateResponse(result, templates =>
-            {
-                return templates.Select(template => new QuestionnaireTemplateDto
-                {
-                    Id = template.Id,
-                    Name = template.Name,
-                    Description = template.Description,
-                    Category = template.Category,
-                    CreatedDate = template.CreatedDate,
-                    LastModified = template.LastModified,
-                    IsActive = template.IsActive,
-                    IsPublished = template.IsPublished,
-                    PublishedDate = template.PublishedDate,
-                    LastPublishedDate = template.LastPublishedDate,
-                    PublishedBy = template.PublishedBy,
-                    Sections = template.Sections.Select(section => new QuestionSectionDto
-                    {
-                        Id = section.Id,
-                        Title = section.Title,
-                        Description = section.Description,
-                        Order = section.Order,
-                        IsRequired = section.IsRequired,
-                        Questions = section.Questions.Select(question => new QuestionItemDto
-                        {
-                            Id = question.Id,
-                            Title = question.Title,
-                            Description = question.Description,
-                            Type = MapQuestionTypeToDto[question.Type],
-                            Order = question.Order,
-                            IsRequired = question.IsRequired,
-                            Configuration = question.Configuration,
-                            Options = question.Options
-                        }).ToList()
-                    }).ToList(),
-                    Settings = new QuestionnaireSettingsDto
-                    {
-                        AllowSaveProgress = template.Settings.AllowSaveProgress,
-                        ShowProgressBar = template.Settings.ShowProgressBar,
-                        RequireAllSections = template.Settings.RequireAllSections,
-                        SuccessMessage = template.Settings.SuccessMessage,
-                        IncompleteMessage = template.Settings.IncompleteMessage,
-                        TimeLimit = template.Settings.TimeLimit,
-                        AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
-                    }
-                });
-            });
+            return CreateResponse(result, templates => templates.Select(MapToDto));
         }
         catch (Exception ex)
         {
@@ -227,52 +94,7 @@ public class QuestionnaireTemplatesController : BaseController
         try
         {
             var result = await queryDispatcher.QueryAsync(new DraftQuestionnaireTemplatesQuery());
-            return CreateResponse(result, templates =>
-            {
-                return templates.Select(template => new QuestionnaireTemplateDto
-                {
-                    Id = template.Id,
-                    Name = template.Name,
-                    Description = template.Description,
-                    Category = template.Category,
-                    CreatedDate = template.CreatedDate,
-                    LastModified = template.LastModified,
-                    IsActive = template.IsActive,
-                    IsPublished = template.IsPublished,
-                    PublishedDate = template.PublishedDate,
-                    LastPublishedDate = template.LastPublishedDate,
-                    PublishedBy = template.PublishedBy,
-                    Sections = template.Sections.Select(section => new QuestionSectionDto
-                    {
-                        Id = section.Id,
-                        Title = section.Title,
-                        Description = section.Description,
-                        Order = section.Order,
-                        IsRequired = section.IsRequired,
-                        Questions = section.Questions.Select(question => new QuestionItemDto
-                        {
-                            Id = question.Id,
-                            Title = question.Title,
-                            Description = question.Description,
-                            Type = MapQuestionTypeToDto[question.Type],
-                            Order = question.Order,
-                            IsRequired = question.IsRequired,
-                            Configuration = question.Configuration,
-                            Options = question.Options
-                        }).ToList()
-                    }).ToList(),
-                    Settings = new QuestionnaireSettingsDto
-                    {
-                        AllowSaveProgress = template.Settings.AllowSaveProgress,
-                        ShowProgressBar = template.Settings.ShowProgressBar,
-                        RequireAllSections = template.Settings.RequireAllSections,
-                        SuccessMessage = template.Settings.SuccessMessage,
-                        IncompleteMessage = template.Settings.IncompleteMessage,
-                        TimeLimit = template.Settings.TimeLimit,
-                        AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
-                    }
-                });
-            });
+            return CreateResponse(result, templates => templates.Select(MapToDto));
         }
         catch (Exception ex)
         {
@@ -288,52 +110,7 @@ public class QuestionnaireTemplatesController : BaseController
         try
         {
             var result = await queryDispatcher.QueryAsync(new AssignableQuestionnaireTemplatesQuery());
-            return CreateResponse(result, templates =>
-            {
-                return templates.Select(template => new QuestionnaireTemplateDto
-                {
-                    Id = template.Id,
-                    Name = template.Name,
-                    Description = template.Description,
-                    Category = template.Category,
-                    CreatedDate = template.CreatedDate,
-                    LastModified = template.LastModified,
-                    IsActive = template.IsActive,
-                    IsPublished = template.IsPublished,
-                    PublishedDate = template.PublishedDate,
-                    LastPublishedDate = template.LastPublishedDate,
-                    PublishedBy = template.PublishedBy,
-                    Sections = template.Sections.Select(section => new QuestionSectionDto
-                    {
-                        Id = section.Id,
-                        Title = section.Title,
-                        Description = section.Description,
-                        Order = section.Order,
-                        IsRequired = section.IsRequired,
-                        Questions = section.Questions.Select(question => new QuestionItemDto
-                        {
-                            Id = question.Id,
-                            Title = question.Title,
-                            Description = question.Description,
-                            Type = MapQuestionTypeToDto[question.Type],
-                            Order = question.Order,
-                            IsRequired = question.IsRequired,
-                            Configuration = question.Configuration,
-                            Options = question.Options
-                        }).ToList()
-                    }).ToList(),
-                    Settings = new QuestionnaireSettingsDto
-                    {
-                        AllowSaveProgress = template.Settings.AllowSaveProgress,
-                        ShowProgressBar = template.Settings.ShowProgressBar,
-                        RequireAllSections = template.Settings.RequireAllSections,
-                        SuccessMessage = template.Settings.SuccessMessage,
-                        IncompleteMessage = template.Settings.IncompleteMessage,
-                        TimeLimit = template.Settings.TimeLimit,
-                        AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
-                    }
-                });
-            });
+            return CreateResponse(result, templates => templates.Select(MapToDto));
         }
         catch (Exception ex)
         {
@@ -360,6 +137,63 @@ public class QuestionnaireTemplatesController : BaseController
     //        return StatusCode(500, "An error occurred while retrieving analytics");
     //    }
     //}
+
+    private static QuestionnaireTemplateDto MapToDto(Application.Query.Queries.QuestionnaireTemplateQueries.QuestionnaireTemplate template)
+    {
+        return new QuestionnaireTemplateDto
+        {
+            Id = template.Id,
+            Name = template.Name,
+            Description = template.Description,
+            Category = template.Category,
+            CreatedDate = template.CreatedDate,
+            LastModified = template.LastModified,
+            Status = MapToStatusDto(template.Status),
+            PublishedDate = template.PublishedDate,
+            LastPublishedDate = template.LastPublishedDate,
+            PublishedBy = template.PublishedBy,
+            Sections = template.Sections.Select(section => new QuestionSectionDto
+            {
+                Id = section.Id,
+                Title = section.Title,
+                Description = section.Description,
+                Order = section.Order,
+                IsRequired = section.IsRequired,
+                Questions = section.Questions.Select(question => new QuestionItemDto
+                {
+                    Id = question.Id,
+                    Title = question.Title,
+                    Description = question.Description,
+                    Type = MapQuestionTypeToDto[question.Type],
+                    Order = question.Order,
+                    IsRequired = question.IsRequired,
+                    Configuration = question.Configuration,
+                    Options = question.Options
+                }).ToList()
+            }).ToList(),
+            Settings = new QuestionnaireSettingsDto
+            {
+                AllowSaveProgress = template.Settings.AllowSaveProgress,
+                ShowProgressBar = template.Settings.ShowProgressBar,
+                RequireAllSections = template.Settings.RequireAllSections,
+                SuccessMessage = template.Settings.SuccessMessage,
+                IncompleteMessage = template.Settings.IncompleteMessage,
+                TimeLimit = template.Settings.TimeLimit,
+                AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
+            }
+        };
+    }
+
+    private static ti8m.BeachBreak.QueryApi.Dto.TemplateStatus MapToStatusDto(Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus queryStatus)
+    {
+        return queryStatus switch
+        {
+            Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Draft => ti8m.BeachBreak.QueryApi.Dto.TemplateStatus.Draft,
+            Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Published => ti8m.BeachBreak.QueryApi.Dto.TemplateStatus.Published,
+            Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Archived => ti8m.BeachBreak.QueryApi.Dto.TemplateStatus.Archived,
+            _ => ti8m.BeachBreak.QueryApi.Dto.TemplateStatus.Draft
+        };
+    }
 
     private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType, QueryApi.Dto.QuestionType> MapQuestionTypeToDto =>
         new Dictionary<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType, QueryApi.Dto.QuestionType>

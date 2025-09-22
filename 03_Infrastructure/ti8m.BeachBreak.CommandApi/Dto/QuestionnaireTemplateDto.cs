@@ -6,13 +6,18 @@ public class QuestionnaireTemplateDto
     public string Description { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
 
-    // Semantic status properties
-    public bool IsActive { get; set; } = true;           // System availability
-    public bool IsPublished { get; set; } = false;      // Ready for assignments
+    public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }        // First publish timestamp
     public DateTime? LastPublishedDate { get; set; }    // Most recent publish
     public string PublishedBy { get; set; } = string.Empty; // Who published it
 
     public List<QuestionSectionDto> Sections { get; set; } = new();
     public QuestionnaireSettingsDto Settings { get; set; } = new();
+}
+
+public enum TemplateStatus
+{
+    Draft = 0,      // Template can be edited, not assignable
+    Published = 1,  // Template is read-only, can be assigned
+    Archived = 2    // Template is inactive, cannot be assigned or edited
 }

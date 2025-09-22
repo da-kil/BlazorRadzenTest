@@ -491,7 +491,7 @@
 
             // Set up initial filtered data
             filteredEmployees = allEmployees.Where(e => !e.IsDeleted).ToList();
-            filteredQuestionnaires = allQuestionnaires.Where(q => q.IsActive).ToList();
+            filteredQuestionnaires = allQuestionnaires.Where(q => q.Status != TemplateStatus.Archived).ToList();
             filteredAssignments = assignments.ToList();
 
             // Extract available categories
@@ -538,12 +538,12 @@
     {
         if (string.IsNullOrWhiteSpace(selectedCategory))
         {
-            filteredQuestionnaires = allQuestionnaires.Where(q => q.IsActive).ToList();
+            filteredQuestionnaires = allQuestionnaires.Where(q => q.Status != TemplateStatus.Archived).ToList();
         }
         else
         {
             filteredQuestionnaires = allQuestionnaires.Where(q =>
-                q.IsActive && q.Category == selectedCategory
+                q.Status != TemplateStatus.Archived && q.Category == selectedCategory
             ).ToList();
         }
         StateHasChanged();

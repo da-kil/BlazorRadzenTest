@@ -6,13 +6,53 @@ public class QuestionnaireTemplate
     public string Description { get; set; } = string.Empty;
     public string Category { get; set; } = string.Empty;
 
-    // Semantic status properties
-    public bool IsActive { get; set; } = true;           // System availability
-    public bool IsPublished { get; set; } = false;      // Ready for assignments
-    public DateTime? PublishedDate { get; set; }        // First publish timestamp
-    public DateTime? LastPublishedDate { get; set; }    // Most recent publish
-    public string PublishedBy { get; set; } = string.Empty; // Who published it
+    public TemplateStatus Status { get; private set; } = TemplateStatus.Draft;
+    public DateTime? PublishedDate { get; private set; }
+    public DateTime? LastPublishedDate { get; private set; }
+    public string PublishedBy { get; private set; } = string.Empty;
 
     public List<QuestionSection> Sections { get; set; } = new();
     public QuestionnaireSettings Settings { get; set; } = new();
+
+    public bool CanBeAssignedToEmployee() => Status == TemplateStatus.Published;
+
+    public bool CanBeEdited() => Status == TemplateStatus.Draft;
+
+    public void Publish(string publishedBy)
+    {
+        if (string.IsNullOrWhiteSpace(publishedBy))
+            throw new ArgumentException("Publisher name is required", nameof(publishedBy));
+
+        if (Status == TemplateStatus.Archived)
+            throw new InvalidOperationException("Cannot publish an archived template");
+
+        var now = DateTime.UtcNow;
+        Status = TemplateStatus.Published;
+        PublishedBy = publishedBy;
+        LastPublishedDate = now;
+
+        if (PublishedDate == null)
+            PublishedDate = now;
+    }
+
+    public void UnpublishToDraft()
+    {
+        if (Status != TemplateStatus.Published)
+            throw new InvalidOperationException("Only published templates can be unpublished to draft");
+
+        Status = TemplateStatus.Draft;
+    }
+
+    public void Archive()
+    {
+        Status = TemplateStatus.Archived;
+    }
+
+    public void RestoreFromArchive()
+    {
+        if (Status != TemplateStatus.Archived)
+            throw new InvalidOperationException("Only archived templates can be restored");
+
+        Status = TemplateStatus.Draft;
+    }
 }

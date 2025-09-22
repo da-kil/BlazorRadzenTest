@@ -31,16 +31,11 @@ public class QuestionnaireTemplatesController : BaseController
             if (string.IsNullOrWhiteSpace(questionnaireTemplate.Name))
                 return BadRequest("Template name is required");
 
-            Result result = await commandDispatcher.SendAsync(new CreateQuestionnaireTemplateCommand(new QuestionnaireTemplate
+            var template = new QuestionnaireTemplate
             {
                 Category = questionnaireTemplate.Category,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
-                IsActive = questionnaireTemplate.IsActive,
-                IsPublished = questionnaireTemplate.IsPublished,
-                PublishedDate = questionnaireTemplate.PublishedDate,
-                LastPublishedDate = questionnaireTemplate.LastPublishedDate,
-                PublishedBy = questionnaireTemplate.PublishedBy,
                 Sections = questionnaireTemplate.Sections.Select(section => new QuestionSection
                 {
                     Description = section.Description,
@@ -70,7 +65,9 @@ public class QuestionnaireTemplatesController : BaseController
                     SuccessMessage = questionnaireTemplate.Settings.SuccessMessage,
                     TimeLimit = questionnaireTemplate.Settings.TimeLimit
                 }
-            }));
+            };
+
+            Result result = await commandDispatcher.SendAsync(new CreateQuestionnaireTemplateCommand(template));
 
             return CreateResponse(result);
         }
@@ -94,11 +91,6 @@ public class QuestionnaireTemplatesController : BaseController
                 Category = questionnaireTemplate.Category,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
-                IsActive = questionnaireTemplate.IsActive,
-                IsPublished = questionnaireTemplate.IsPublished,
-                PublishedDate = questionnaireTemplate.PublishedDate,
-                LastPublishedDate = questionnaireTemplate.LastPublishedDate,
-                PublishedBy = questionnaireTemplate.PublishedBy,
                 Sections = questionnaireTemplate.Sections.Select(section => new QuestionSection
                 {
                     Description = section.Description,

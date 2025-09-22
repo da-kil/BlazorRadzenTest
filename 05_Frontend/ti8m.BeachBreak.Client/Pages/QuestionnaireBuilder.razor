@@ -48,11 +48,8 @@
 						<RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveQuestionnaire" />
 						<RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@UnpublishQuestionnaire" />
 						break;
-					case TemplateStatus.PublishedInactive:
-						<RadzenButton Text="Enable" ButtonStyle="ButtonStyle.Success" Icon="check_circle" Click="@EnableQuestionnaire" />
-						break;
-					case TemplateStatus.Inactive:
-						<RadzenButton Text="Activate" ButtonStyle="ButtonStyle.Primary" Icon="play_arrow" Click="@ActivateQuestionnaire" />
+					case TemplateStatus.Archived:
+						<RadzenButton Text="Restore" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" />
 						break;
 				}
 			</div>
@@ -743,8 +740,7 @@ private async Task PublishQuestionnaire()
 		await SaveQuestionnaire();
 
 		// Set as published
-		template.IsPublished = true;
-		template.IsActive = true; // Ensure it's also active
+		template.Status = TemplateStatus.Published;
 		template.LastModified = DateTime.Now;
 		template.LastPublishedDate = DateTime.Now;
 
@@ -769,7 +765,7 @@ private async Task PublishQuestionnaire()
 			{
 				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
 				// Revert on failure
-				template.IsPublished = false;
+				template.Status = TemplateStatus.Draft;
 				template.LastPublishedDate = null;
 			}
 		}
@@ -783,7 +779,7 @@ private async Task PublishQuestionnaire()
 	{
 		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
 		// Revert on failure
-		template.IsPublished = false;
+		template.Status = TemplateStatus.Draft;
 		template.LastPublishedDate = null;
 	}
 }
@@ -793,7 +789,7 @@ private async Task UnpublishQuestionnaire()
 	try
 	{
 		// Set as unpublished (back to draft)
-		template.IsPublished = false;
+		template.Status = TemplateStatus.Draft;
 		template.LastModified = DateTime.Now;
 
 		// Update the template with unpublished status
@@ -805,13 +801,13 @@ private async Task UnpublishQuestionnaire()
 		else
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unpublish template");
-			template.IsPublished = true; // Revert on failure
+			template.Status = TemplateStatus.Published; // Revert on failure
 		}
 	}
 	catch (Exception ex)
 	{
 		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
-		template.IsPublished = true; // Revert on failure
+		template.Status = TemplateStatus.Published; // Revert on failure
 	}
 }
 
@@ -820,7 +816,7 @@ private async Task DisableQuestionnaire()
 	try
 	{
 		// Set as inactive while keeping published status
-		template.IsActive = false;
+		template.Status = TemplateStatus.Archived;
 		template.LastModified = DateTime.Now;
 
 		var updated = await ApiService.UpdateTemplateAsync(template);
@@ -831,22 +827,22 @@ private async Task DisableQuestionnaire()
 		else
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to disable template");
-			template.IsActive = true; // Revert on failure
+			template.Status = TemplateStatus.Draft; // Revert on failure
 		}
 	}
 	catch (Exception ex)
 	{
 		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to disable template: {ex.Message}");
-		template.IsActive = true; // Revert on failure
+		template.Status = TemplateStatus.Draft; // Revert on failure
 	}
 }
 
-private async Task EnableQuestionnaire()
+private async Task RestoreQuestionnaire()
 {
 	try
 	{
 		// Re-activate while keeping published status
-		template.IsActive = true;
+		template.Status = TemplateStatus.Draft;
 		template.LastModified = DateTime.Now;
 
 		var updated = await ApiService.UpdateTemplateAsync(template);
@@ -857,46 +853,20 @@ private async Task EnableQuestionnaire()
 		else
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to enable template");
-			template.IsActive = false; // Revert on failure
+			template.Status = TemplateStatus.Archived; // Revert on failure
 		}
 	}
 	catch (Exception ex)
 	{
 		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to enable template: {ex.Message}");
-		template.IsActive = false; // Revert on failure
-	}
-}
-
-private async Task ActivateQuestionnaire()
-{
-	try
-	{
-		// Activate but keep as draft (unpublished)
-		template.IsActive = true;
-		template.LastModified = DateTime.Now;
-
-		var updated = await ApiService.UpdateTemplateAsync(template);
-		if (updated != null)
-		{
-			NotificationService.Notify(NotificationSeverity.Success, "Activated", "Questionnaire template is now active and ready for editing");
-		}
-		else
-		{
-			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to activate template");
-			template.IsActive = false; // Revert on failure
-		}
-	}
-	catch (Exception ex)
-	{
-		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to activate template: {ex.Message}");
-		template.IsActive = false; // Revert on failure
+		template.Status = TemplateStatus.Archived; // Revert on failure
 	}
 }
 
 private async Task EditInactiveQuestionnaire()
 {
 	// Simply enable and allow editing
-	await EnableQuestionnaire();
+	await RestoreQuestionnaire();
 }
 
 private bool ValidateQuestionnaire()

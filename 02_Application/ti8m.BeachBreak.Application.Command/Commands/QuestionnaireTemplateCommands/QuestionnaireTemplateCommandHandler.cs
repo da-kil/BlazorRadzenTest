@@ -32,16 +32,15 @@ public class QuestionnaireTemplateCommandHandler :
             await using var cmd = connection.CreateCommand();
 
             cmd.CommandText = """
-                INSERT INTO questionnaire_templates (id, name, description, category, is_active, is_published, published_date, last_published_date, published_by, sections, settings, created_at, updated_at)
-                VALUES (@id, @name, @description, @category, @is_active, @is_published, @published_date, @last_published_date, @published_by, @sections, @settings, @created_at, @updated_at)
+                INSERT INTO questionnaire_templates (id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at)
+                VALUES (@id, @name, @description, @category, @status, @published_date, @last_published_date, @published_by, @sections, @settings, @created_at, @updated_at)
                 """;
 
             cmd.Parameters.AddWithValue("@id", id);
             cmd.Parameters.AddWithValue("@name", command.QuestionnaireTemplate.Name);
             cmd.Parameters.AddWithValue("@description", command.QuestionnaireTemplate.Description);
             cmd.Parameters.AddWithValue("@category", command.QuestionnaireTemplate.Category);
-            cmd.Parameters.AddWithValue("@is_active", command.QuestionnaireTemplate.IsActive);
-            cmd.Parameters.AddWithValue("@is_published", command.QuestionnaireTemplate.IsPublished);
+            cmd.Parameters.AddWithValue("@status", (int)command.QuestionnaireTemplate.Status);
             cmd.Parameters.AddWithValue("@published_date", (object?)command.QuestionnaireTemplate.PublishedDate ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@last_published_date", (object?)command.QuestionnaireTemplate.LastPublishedDate ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@published_by", command.QuestionnaireTemplate.PublishedBy);
@@ -69,13 +68,18 @@ public class QuestionnaireTemplateCommandHandler :
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
             await using var cmd = connection.CreateCommand();
 
+            // Check if template can be edited before updating
+            if (!command.QuestionnaireTemplate.CanBeEdited())
+            {
+                return Result.Fail($"Cannot edit template - template must be in draft status", 400);
+            }
+
             cmd.CommandText = """
                 UPDATE questionnaire_templates
                 SET name = @name,
                     description = @description,
                     category = @category,
-                    is_active = @is_active,
-                    is_published = @is_published,
+                    status = @status,
                     published_date = @published_date,
                     last_published_date = @last_published_date,
                     published_by = @published_by,
@@ -89,8 +93,7 @@ public class QuestionnaireTemplateCommandHandler :
             cmd.Parameters.AddWithValue("@name", command.QuestionnaireTemplate.Name);
             cmd.Parameters.AddWithValue("@description", command.QuestionnaireTemplate.Description);
             cmd.Parameters.AddWithValue("@category", command.QuestionnaireTemplate.Category);
-            cmd.Parameters.AddWithValue("@is_active", command.QuestionnaireTemplate.IsActive);
-            cmd.Parameters.AddWithValue("@is_published", command.QuestionnaireTemplate.IsPublished);
+            cmd.Parameters.AddWithValue("@status", (int)command.QuestionnaireTemplate.Status);
             cmd.Parameters.AddWithValue("@published_date", (object?)command.QuestionnaireTemplate.PublishedDate ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@last_published_date", (object?)command.QuestionnaireTemplate.LastPublishedDate ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@published_by", command.QuestionnaireTemplate.PublishedBy);
@@ -151,16 +154,18 @@ public class QuestionnaireTemplateCommandHandler :
 
             cmd.CommandText = """
                 UPDATE questionnaire_templates
-                SET is_published = true,
+                SET status = @status,
                     published_date = COALESCE(published_date, @publish_date),
                     last_published_date = @publish_date,
                     published_by = @published_by,
                     updated_at = @updated_at
-                WHERE id = @id AND is_active = true
+                WHERE id = @id AND status = @draft_status
                 """;
 
             var publishDate = DateTime.UtcNow;
             cmd.Parameters.AddWithValue("@id", command.Id);
+            cmd.Parameters.AddWithValue("@status", (int)TemplateStatus.Published);
+            cmd.Parameters.AddWithValue("@draft_status", (int)TemplateStatus.Draft);
             cmd.Parameters.AddWithValue("@publish_date", publishDate);
             cmd.Parameters.AddWithValue("@published_by", command.PublishedBy);
             cmd.Parameters.AddWithValue("@updated_at", publishDate);
@@ -169,7 +174,7 @@ public class QuestionnaireTemplateCommandHandler :
 
             if (rowsAffected == 0)
             {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found or not active", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found or not in draft status", 400);
             }
 
             return Result.Success();
@@ -189,19 +194,21 @@ public class QuestionnaireTemplateCommandHandler :
 
             cmd.CommandText = """
                 UPDATE questionnaire_templates
-                SET is_published = false,
+                SET status = @status,
                     updated_at = @updated_at
-                WHERE id = @id
+                WHERE id = @id AND status = @published_status
                 """;
 
             cmd.Parameters.AddWithValue("@id", command.Id);
+            cmd.Parameters.AddWithValue("@status", (int)TemplateStatus.Draft);
+            cmd.Parameters.AddWithValue("@published_status", (int)TemplateStatus.Published);
             cmd.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
 
             var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
 
             if (rowsAffected == 0)
             {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found or not published", 400);
             }
 
             return Result.Success();
@@ -221,19 +228,21 @@ public class QuestionnaireTemplateCommandHandler :
 
             cmd.CommandText = """
                 UPDATE questionnaire_templates
-                SET is_active = true,
+                SET status = @status,
                     updated_at = @updated_at
-                WHERE id = @id
+                WHERE id = @id AND status = @archived_status
                 """;
 
             cmd.Parameters.AddWithValue("@id", command.Id);
+            cmd.Parameters.AddWithValue("@status", (int)TemplateStatus.Draft);
+            cmd.Parameters.AddWithValue("@archived_status", (int)TemplateStatus.Archived);
             cmd.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
 
             var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
 
             if (rowsAffected == 0)
             {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found or not archived", 400);
             }
 
             return Result.Success();
@@ -253,19 +262,21 @@ public class QuestionnaireTemplateCommandHandler :
 
             cmd.CommandText = """
                 UPDATE questionnaire_templates
-                SET is_active = false,
+                SET status = @status,
                     updated_at = @updated_at
-                WHERE id = @id
+                WHERE id = @id AND status != @archived_status
                 """;
 
             cmd.Parameters.AddWithValue("@id", command.Id);
+            cmd.Parameters.AddWithValue("@status", (int)TemplateStatus.Archived);
+            cmd.Parameters.AddWithValue("@archived_status", (int)TemplateStatus.Archived);
             cmd.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
 
             var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
 
             if (rowsAffected == 0)
             {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found or already archived", 400);
             }
 
             return Result.Success();
