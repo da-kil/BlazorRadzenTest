@@ -6,6 +6,7 @@ public interface IQuestionnaireApiService
 {
     // Template management
     Task<List<QuestionnaireTemplate>> GetAllTemplatesAsync();
+    Task<List<QuestionnaireTemplate>> GetAllPublishedTemplatesAsync();
     Task<QuestionnaireTemplate?> GetTemplateByIdAsync(Guid id);
     Task<QuestionnaireTemplate> CreateTemplateAsync(QuestionnaireTemplate template);
     Task<QuestionnaireTemplate?> UpdateTemplateAsync(QuestionnaireTemplate template);

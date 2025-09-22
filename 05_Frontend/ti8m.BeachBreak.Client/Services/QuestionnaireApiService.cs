@@ -12,6 +12,7 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
     private const string ResponseQueryEndpoint = "q/api/v1/responses";
     private const string ResponseCommandEndpoint = "c/api/v1/responses";
     private const string AnalyticsEndpoint = "q/api/v1/analytics";
+    private const string PublishedTemplateQueryEndpoint = "q/api/v1/questionnaire-templates/published";
 
     public QuestionnaireApiService(IHttpClientFactory factory) : base(factory)
     {
@@ -21,6 +22,11 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
     public async Task<List<QuestionnaireTemplate>> GetAllTemplatesAsync()
     {
         return await GetAllAsync<QuestionnaireTemplate>(TemplateQueryEndpoint);
+    }
+
+    public async Task<List<QuestionnaireTemplate>> GetAllPublishedTemplatesAsync()
+    {
+        return await GetAllAsync<QuestionnaireTemplate>(PublishedTemplateQueryEndpoint);
     }
 
     public async Task<QuestionnaireTemplate?> GetTemplateByIdAsync(Guid id)

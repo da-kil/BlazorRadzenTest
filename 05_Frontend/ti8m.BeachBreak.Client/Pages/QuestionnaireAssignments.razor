@@ -480,7 +480,7 @@
         {
             // Load employees and questionnaires in parallel
             var employeesTask = EmployeeApiService.GetAllEmployeesAsync();
-            var questionnairesTask = QuestionnaireApiService.GetAllTemplatesAsync();
+            var questionnairesTask = QuestionnaireApiService.GetAllPublishedTemplatesAsync();
             var assignmentsTask = QuestionnaireApiService.GetAllAssignmentsAsync();
 
             await Task.WhenAll(employeesTask, questionnairesTask, assignmentsTask);
