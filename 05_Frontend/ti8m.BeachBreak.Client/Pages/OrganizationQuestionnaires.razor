@@ -5,7 +5,10 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
-@inherits BasePageComponent
+@inherits OptimizedComponentBase
+@inject IHRQuestionnaireService HRQuestionnaireService
+@inject IQuestionnaireApiService QuestionnaireApiService
+@inject NotificationService NotificationService
 
 <PageTitle>Organization Questionnaires</PageTitle>
 
@@ -28,6 +31,7 @@ else if (isLoading)
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> allEmployees = new();
     private List<QuestionnaireTemplate> allTemplates = new();
+    private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -57,7 +61,7 @@ else if (isLoading)
         }
         catch (Exception ex)
         {
-            await HandleError(ex, "loading organization data");
+            HandleError(ex, "loading organization data");
         }
         finally
         {
@@ -94,5 +98,21 @@ else if (isLoading)
     private async Task OpenAnalyticsDashboard()
     {
         ShowInfo("Analytics dashboard functionality would be implemented here");
+    }
+
+    private void SetLoading(bool loading)
+    {
+        isLoading = loading;
+        NotifyStateChanged();
+    }
+
+    private void HandleError(Exception ex, string context)
+    {
+        NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed {context}: {ex.Message}");
+    }
+
+    private void ShowInfo(string message)
+    {
+        NotificationService.Notify(NotificationSeverity.Info, "Information", message);
     }
 }

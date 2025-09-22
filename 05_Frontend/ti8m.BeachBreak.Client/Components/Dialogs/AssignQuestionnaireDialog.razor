@@ -5,6 +5,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.ValidationHelpers
 @using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
 
 <style>
     .assignment-dialog {
@@ -416,14 +417,30 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadData();
-        FilterEmployees();
-        isVisible = IsVisible;
+        await ExecuteSafelyAsync(async () =>
+        {
+            await LoadData();
+            FilterEmployees();
+            isVisible = IsVisible;
+        }, "InitializeAssignQuestionnaireDialog");
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(availableEmployees), availableEmployees.Count) ||
+               HasParameterChanged(nameof(availableQuestionnaires), availableQuestionnaires.Count) ||
+               HasParameterChanged(nameof(employeeSearch), employeeSearch) ||
+               HasParameterChanged(nameof(currentStep), currentStep) ||
+               HasParameterChanged(nameof(isVisible), isVisible);
     }
 
     protected override void OnParametersSet()
     {
-        isVisible = IsVisible;
+        if (HasParameterChanged(nameof(IsVisible), IsVisible))
+        {
+            isVisible = IsVisible;
+            NotifyStateChanged();
+        }
     }
 
     private async Task LoadData()

@@ -4,6 +4,8 @@
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
 
 <PageTitle>@(template?.Name ?? "Questionnaire")</PageTitle>
 
@@ -154,6 +156,13 @@
         await LoadExistingResponse();
         InitializeResponse();
         UpdateProgress();
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(currentSectionIndex), currentSectionIndex) ||
+               HasParameterChanged(nameof(response.ProgressPercentage), response.ProgressPercentage) ||
+               HasParameterChanged(nameof(template), template);
     }
 
     private async Task LoadTemplate()
@@ -581,6 +590,7 @@
         questionResponse.NumericValue = value;
         questionResponse.LastModified = DateTime.Now;
         UpdateProgress();
+        NotifyStateChanged();
     }
 
     private void UpdateQuestionResponseText(Guid questionId, string value)
@@ -589,6 +599,7 @@
         questionResponse.TextValue = value;
         questionResponse.LastModified = DateTime.Now;
         UpdateProgress();
+        NotifyStateChangedDebounced(200);
     }
 
     // Goal question helpers
@@ -804,13 +815,16 @@
     {
         if (newIndex < currentSectionIndex || CanProceedFromCurrentSection())
         {
-            currentSectionIndex = newIndex;
-            StateHasChanged();
+            if (HasParameterChanged(nameof(currentSectionIndex), newIndex))
+            {
+                currentSectionIndex = newIndex;
+                NotifyStateChanged();
+            }
         }
         else
         {
-            NotificationService.Notify(NotificationSeverity.Warning, 
-                "Complete Section", 
+            NotificationService.Notify(NotificationSeverity.Warning,
+                "Complete Section",
                 "Please complete all required questions in the current section.");
         }
     }
@@ -820,7 +834,7 @@
         if (currentSectionIndex > 0)
         {
             currentSectionIndex--;
-            StateHasChanged();
+            NotifyStateChanged();
         }
     }
 
@@ -830,7 +844,7 @@
         {
             currentSectionIndex++;
             UpdateProgress();
-            StateHasChanged();
+            NotifyStateChanged();
         }
     }
 

@@ -4,6 +4,8 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
 
 <PageTitle>Category Administration</PageTitle>
 
@@ -156,7 +158,17 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadCategories();
+        await ExecuteSafelyAsync(async () =>
+        {
+            await LoadCategories();
+        }, "InitializeCategoryAdmin");
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(categories), categories.Count) ||
+               HasParameterChanged(nameof(searchText), searchText) ||
+               HasParameterChanged(nameof(showInactiveCategories), showInactiveCategories);
     }
 
     private async Task LoadCategories()
@@ -165,7 +177,7 @@
         {
             categories = await CategoryService.GetAllCategoriesAsync(showInactiveCategories);
             FilterCategories();
-            await InvokeAsync(StateHasChanged);
+            NotifyStateChanged();
         }
         catch (Exception ex)
         {

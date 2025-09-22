@@ -6,6 +6,8 @@
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
 
 <PageTitle>Questionnaire Builder</PageTitle>
 
@@ -223,24 +225,39 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		// Load categories first
-		await LoadCategories();
-
-		if (IsEditMode && TemplateId.HasValue)
+		await ExecuteSafelyAsync(async () =>
 		{
-			await LoadTemplate(TemplateId.Value);
-		}
-		else
-		{
-			// Initialize empty template with default values
-			template = new QuestionnaireTemplate
+			if (IsEditMode && TemplateId.HasValue)
 			{
-				Name = "",
-				Description = "",
-				Category = "",
-				Settings = new QuestionnaireSettings()
-			};
-		}
+				// Load categories and template in parallel for better performance
+				var loadCategoriesTask = LoadCategories();
+				var loadTemplateTask = LoadTemplate(TemplateId.Value);
+
+				await Task.WhenAll(loadCategoriesTask, loadTemplateTask);
+			}
+			else
+			{
+				// Load categories and initialize template
+				await LoadCategories();
+
+				// Initialize empty template with default values
+				template = new QuestionnaireTemplate
+				{
+					Name = "",
+					Description = "",
+					Category = "",
+					Settings = new QuestionnaireSettings()
+				};
+			}
+		}, "InitializeQuestionnaireBuilder");
+	}
+
+	protected override bool HasStateChanged()
+	{
+		return HasParameterChanged(nameof(template), template?.Id) ||
+			   HasParameterChanged(nameof(currentStep), currentStep) ||
+			   HasParameterChanged(nameof(showQuestionEditor), showQuestionEditor) ||
+			   HasParameterChanged(nameof(showQuestionTypeSelection), showQuestionTypeSelection);
 	}
 
 	private async Task LoadCategories()
@@ -291,8 +308,11 @@
 
 	private void SetCurrentStep(int step)
 	{
-		currentStep = step;
-		StateHasChanged();
+		if (HasParameterChanged(nameof(currentStep), step))
+		{
+			currentStep = step;
+			NotifyStateChanged();
+		}
 	}
 
 	private async Task OpenQuestionEditor((int sectionIndex, int questionIndex) indices)
@@ -315,7 +335,7 @@
 				Configuration = new Dictionary<string, object>(originalQuestion.Configuration)
 			};
 			showQuestionEditor = true;
-			StateHasChanged();
+			NotifyStateChanged();
 		}
 	}
 
@@ -325,7 +345,7 @@
 		editingQuestion = null;
 		editingSectionIndex = -1;
 		editingQuestionIndex = -1;
-		StateHasChanged();
+		NotifyStateChanged();
 	}
 
 	private async Task SaveCurrentQuestion()

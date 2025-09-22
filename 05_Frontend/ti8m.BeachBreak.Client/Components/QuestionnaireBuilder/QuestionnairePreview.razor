@@ -2,6 +2,8 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
 
 <div class="questionnaire-preview">
 	<!-- Header -->
@@ -142,8 +144,11 @@
 	{
 		if (currentSectionIndex < Template.Sections.Count - 1)
 		{
-			currentSectionIndex++;
-			StateHasChanged();
+			if (HasParameterChanged(nameof(currentSectionIndex), currentSectionIndex + 1))
+			{
+				currentSectionIndex++;
+				NotifyStateChanged();
+			}
 		}
 	}
 
@@ -151,8 +156,11 @@
 	{
 		if (currentSectionIndex > 0)
 		{
-			currentSectionIndex--;
-			StateHasChanged();
+			if (HasParameterChanged(nameof(currentSectionIndex), currentSectionIndex - 1))
+			{
+				currentSectionIndex--;
+				NotifyStateChanged();
+			}
 		}
 	}
 
@@ -160,9 +168,18 @@
 	{
 		if (index >= 0 && index < Template.Sections.Count)
 		{
-			currentSectionIndex = index;
-			StateHasChanged();
+			if (HasParameterChanged(nameof(currentSectionIndex), index))
+			{
+				currentSectionIndex = index;
+				NotifyStateChanged();
+			}
 		}
+	}
+
+	protected override bool HasStateChanged()
+	{
+		return HasParameterChanged(nameof(Template), Template) ||
+			   HasParameterChanged(nameof(currentSectionIndex), currentSectionIndex);
 	}
 
 	private double GetProgressPercentage()
