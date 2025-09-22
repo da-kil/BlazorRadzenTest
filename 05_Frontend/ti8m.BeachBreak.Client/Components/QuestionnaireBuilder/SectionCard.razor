@@ -3,130 +3,133 @@
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 @using System.Collections
 
-<div class="section-card mb-4">
-    <!-- Section Header -->
-    <div class="section-header">
-        <div class="section-content p-3 position-relative">
-            <!-- Action Buttons -->
-            <div class="position-absolute" style="top: 0.75rem; right: 0.75rem;">
-                <div class="d-flex gap-1">
-                    <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                 Icon="keyboard_arrow_up"
-                                 Size="ButtonSize.ExtraSmall"
-                                 Click="@(() => OnMoveUpClick())"
-                                 Disabled="@(!CanMoveUp)"
-                                 Title="Move section up" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                 Icon="keyboard_arrow_down"
-                                 Size="ButtonSize.ExtraSmall"
-                                 Click="@(() => OnMoveDownClick())"
-                                 Disabled="@(!CanMoveDown)"
-                                 Title="Move section down" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                 Icon="delete_outline"
-                                 Size="ButtonSize.ExtraSmall"
-                                 Click="@(() => OnDeleteClick())"
-                                 Title="Delete section" />
+<div class="modern-section-card mb-4">
+    <!-- Enhanced Section Header with proper action button placement -->
+    <div class="section-header-modern">
+        <!-- Header Top Row: Type indicators and Action Buttons -->
+        <div class="header-top-row">
+            <div class="section-badges">
+                <div class="section-type-badge">
+                    <RadzenIcon Icon="@GetSectionTypeIcon()" Class="badge-icon" />
+                    <span class="badge-text">@GetSectionTypeName()</span>
+                </div>
+                <div class="completion-role-badge">
+                    <RadzenIcon Icon="@Section.GetRoleIcon()" Class="badge-icon" />
+                    <span class="badge-text">@GetCompletionRoleText()</span>
                 </div>
             </div>
 
-            <!-- Section Type Indicator -->
-            <div class="mb-3" style="padding-right: 6.5rem;">
-                <div class="d-flex align-items-center gap-3 mb-2">
-                    <div class="section-type-badge d-flex align-items-center gap-2 px-2 py-1 rounded-pill"
-                         style="@($"background-color: {GetSectionTypeColor()}15; border: 1px solid {GetSectionTypeColor()}30;")">
-                        <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"color: {GetSectionTypeColor()};")" Class="fs-6" />
-                        <span class="small fw-medium" style="@($"color: {GetSectionTypeColor()};")">@GetSectionTypeName()</span>
-                    </div>
-                    <div class="completion-role-badge d-flex align-items-center gap-1 px-2 py-1 rounded-pill"
-                         style="@($"background-color: {Section.GetRoleColor()}15; border: 1px solid {Section.GetRoleColor()}30;")">
-                        <RadzenIcon Icon="@Section.GetRoleIcon()" Style="@($"color: {Section.GetRoleColor()};")" Class="fs-6" />
-                        <span class="small fw-medium" style="@($"color: {Section.GetRoleColor()};")">@GetCompletionRoleText()</span>
-                    </div>
-                </div>
-
-                <!-- Role Assignment Selector -->
-                <div class="role-selector mb-2">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1 text-muted">Who completes this section?</RadzenText>
-                    <RadzenRadioButtonList @bind-Value="@Section.AssignedTo"
-                                           Data="@roleOptions"
-                                           TextProperty="Text"
-                                           ValueProperty="Value"
-                                           Orientation="Radzen.Orientation.Horizontal"
-                                           Class="role-select-list" />
-                </div>
+            <!-- Action Buttons - moved to dedicated area -->
+            <div class="section-actions">
+                <RadzenButton ButtonStyle="ButtonStyle.Light"
+                             Icon="keyboard_arrow_up"
+                             Size="ButtonSize.Small"
+                             Click="@(() => OnMoveUpClick())"
+                             Disabled="@(!CanMoveUp)"
+                             Title="Move section up"
+                             Class="action-btn" />
+                <RadzenButton ButtonStyle="ButtonStyle.Light"
+                             Icon="keyboard_arrow_down"
+                             Size="ButtonSize.Small"
+                             Click="@(() => OnMoveDownClick())"
+                             Disabled="@(!CanMoveDown)"
+                             Title="Move section down"
+                             Class="action-btn" />
+                <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                             Icon="delete_outline"
+                             Size="ButtonSize.Small"
+                             Click="@(() => OnDeleteClick())"
+                             Title="Delete section"
+                             Class="action-btn action-btn-danger" />
             </div>
-
-            <!-- Title Input -->
-            <div class="mb-3" style="padding-right: 6.5rem;">
-                <RadzenTextBox Value="@Section.Title"
-                             ValueChanged="@(value => OnSectionTitleChanged(value))"
-                             Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
-                             Class="section-title-input"
-                             Style="font-size: 1.1rem; font-weight: 600;" />
-            </div>
-
-            <!-- Description Input -->
-            <div class="mb-3" style="padding-right: 6.5rem;">
-                <RadzenTextArea Value="@Section.Description"
-                              ValueChanged="@(value => OnSectionDescriptionChanged(value))"
-                              Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
-                              Class="section-description-input"
-                              Rows="2" />
-            </div>
-
-            <!-- Rating Scale Configuration - only for Self-Assessment sections -->
-            @if (Section.Questions.Any() && Section.Questions.First().Type == QuestionType.SelfAssessment)
-            {
-                var firstQuestion = Section.Questions.First();
-                <div class="rating-scale-config mb-3 p-3 bg-light rounded">
-                    <div class="d-flex align-items-center mb-3">
-                        <RadzenIcon Icon="tune" Style="color: var(--primary-color);" Class="me-2" />
-                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-0">Rating Scale</RadzenText>
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-md-3">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1 text-muted">Scale</RadzenText>
-                            <RadzenDropDown Value="@GetRatingScale(firstQuestion)"
-                                           ValueChanged="@((int value) => SetRatingScale(firstQuestion, value))"
-                                           Data="@(new List<int> { 3, 4, 5, 7, 10 })"
-                                           Class="w-100" />
-                        </div>
-                        <div class="col-md-4">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1 text-muted">Low Label</RadzenText>
-                            <RadzenTextBox Value="@GetScaleLowLabel(firstQuestion)"
-                                          ValueChanged="@((string value) => SetScaleLowLabel(firstQuestion, value))"
-                                          Placeholder="e.g., Poor, Beginner"
-                                          Class="w-100" />
-                        </div>
-                        <div class="col-md-4">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1 text-muted">High Label</RadzenText>
-                            <RadzenTextBox Value="@GetScaleHighLabel(firstQuestion)"
-                                          ValueChanged="@((string value) => SetScaleHighLabel(firstQuestion, value))"
-                                          Placeholder="e.g., Excellent, Expert"
-                                          Class="w-100" />
-                        </div>
-                    </div>
-                </div>
-            }
-
-            <!-- Simplified Section Stats -->
-            @if (GetItemCount() > 0)
-            {
-                <div class="section-stats mb-2">
-                    <div class="d-flex align-items-center gap-3 text-muted small">
-                        <span class="d-flex align-items-center gap-1">
-                            <RadzenIcon Icon="quiz" Class="fs-6" />
-                            <strong>@GetItemCount()</strong> items
-                        </span>
-                        <span class="d-flex align-items-center gap-1">
-                            <RadzenIcon Icon="star" Class="fs-6" />
-                            <strong>@GetRequiredItemCount()</strong> required
-                        </span>
-                    </div>
-                </div>
-            }
         </div>
+
+        <!-- Header Content Row: Role selector -->
+        <div class="header-content-row">
+            <div class="role-assignment-section">
+                <RadzenText TextStyle="TextStyle.Caption" Class="role-label">Who completes this section?</RadzenText>
+                <RadzenRadioButtonList @bind-Value="@Section.AssignedTo"
+                                       Data="@roleOptions"
+                                       TextProperty="Text"
+                                       ValueProperty="Value"
+                                       Orientation="Radzen.Orientation.Horizontal"
+                                       Class="role-select-modern" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Section Content Area -->
+    <div class="section-content-modern">
+
+        <!-- Title Input -->
+        <div class="input-group-modern">
+            <RadzenTextBox Value="@Section.Title"
+                         ValueChanged="@(value => OnSectionTitleChanged(value))"
+                         Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
+                         Class="title-input-modern" />
+        </div>
+
+        <!-- Description Input -->
+        <div class="input-group-modern">
+            <RadzenTextArea Value="@Section.Description"
+                          ValueChanged="@(value => OnSectionDescriptionChanged(value))"
+                          Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
+                          Class="description-input-modern"
+                          Rows="3" />
+        </div>
+
+        <!-- Rating Scale Configuration - only for Self-Assessment sections -->
+        @if (Section.Questions.Any() && Section.Questions.First().Type == QuestionType.SelfAssessment)
+        {
+            var firstQuestion = Section.Questions.First();
+            <div class="rating-scale-config-modern">
+                <div class="config-header">
+                    <RadzenIcon Icon="tune" Class="config-icon" />
+                    <RadzenText TextStyle="TextStyle.Body1" Class="config-title">Rating Scale Configuration</RadzenText>
+                </div>
+                <div class="rating-scale-grid">
+                    <div class="scale-input">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="input-label">Scale</RadzenText>
+                        <RadzenDropDown Value="@GetRatingScale(firstQuestion)"
+                                       ValueChanged="@((int value) => SetRatingScale(firstQuestion, value))"
+                                       Data="@(new List<int> { 3, 4, 5, 7, 10 })"
+                                       Class="modern-dropdown" />
+                    </div>
+                    <div class="scale-input">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="input-label">Low Label</RadzenText>
+                        <RadzenTextBox Value="@GetScaleLowLabel(firstQuestion)"
+                                      ValueChanged="@((string value) => SetScaleLowLabel(firstQuestion, value))"
+                                      Placeholder="e.g., Poor, Beginner"
+                                      Class="modern-textbox" />
+                    </div>
+                    <div class="scale-input">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="input-label">High Label</RadzenText>
+                        <RadzenTextBox Value="@GetScaleHighLabel(firstQuestion)"
+                                      ValueChanged="@((string value) => SetScaleHighLabel(firstQuestion, value))"
+                                      Placeholder="e.g., Excellent, Expert"
+                                      Class="modern-textbox" />
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Enhanced Section Stats -->
+        @if (GetItemCount() > 0)
+        {
+            <div class="section-stats-modern">
+                <div class="stat-item">
+                    <RadzenIcon Icon="quiz" Class="stat-icon" />
+                    <span class="stat-number">@GetItemCount()</span>
+                    <span class="stat-label">items</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-item">
+                    <RadzenIcon Icon="star" Class="stat-icon" />
+                    <span class="stat-number">@GetRequiredItemCount()</span>
+                    <span class="stat-label">required</span>
+                </div>
+            </div>
+        }
     </div>
 
     <!-- Items Area -->
@@ -295,70 +298,317 @@
 </div>
 
 <style>
-.section-card {
+/* Modern Section Card Design */
+.modern-section-card {
     background: white;
     border: 1px solid #e9ecef;
-    border-radius: 8px;
+    border-radius: 12px;
     overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease-in-out;
 }
 
-.section-header {
-    background: #f8f9fa;
+.modern-section-card:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Enhanced Header Layout */
+.section-header-modern {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-bottom: 1px solid #e9ecef;
+    padding: 1.25rem;
 }
 
-.section-title-input {
-    width: 100%;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    padding: 0.5rem 0.75rem;
-    background: white;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+.header-top-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
 }
 
-.section-title-input:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(15, 96, 255, 0.25);
+.section-badges {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
 }
 
-.section-description-input {
-    width: 100%;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    padding: 0.5rem 0.75rem;
-    background: white;
-    resize: vertical;
-    min-height: 60px;
-    line-height: 1.4;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+.section-type-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    background: rgba(15, 96, 255, 0.08);
+    border: 1px solid rgba(15, 96, 255, 0.2);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
 }
 
-.section-description-input:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(15, 96, 255, 0.25);
+.section-type-badge .badge-icon {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.section-type-badge .badge-text {
+    color: var(--primary-color);
+}
+
+.completion-role-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    background: rgba(0, 230, 200, 0.08);
+    border: 1px solid rgba(0, 230, 200, 0.2);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.completion-role-badge .badge-icon {
+    color: var(--success-color);
+    font-size: 1rem;
+}
+
+.completion-role-badge .badge-text {
+    color: var(--success-color);
+}
+
+/* Action Buttons - Properly Positioned */
+.section-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.action-btn {
+    min-width: 40px;
+    height: 40px;
+    border-radius: 8px !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.action-btn-danger {
+    background: rgba(220, 53, 69, 0.1) !important;
+    border-color: rgba(220, 53, 69, 0.3) !important;
+    color: #dc3545 !important;
+}
+
+.action-btn-danger:hover {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.header-content-row {
+    margin-top: 1rem;
+}
+
+.role-assignment-section {
+    max-width: 100%;
+}
+
+.role-label {
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.role-select-modern {
+    font-size: 0.875rem;
+}
+
+.role-select-modern .rz-radiobutton-item {
+    margin-right: 1.5rem;
+    padding: 0.25rem 0;
+}
+
+/* Section Content Area */
+.section-content-modern {
+    padding: 1.25rem;
+}
+
+.input-group-modern {
+    margin-bottom: 1rem;
+}
+
+.title-input-modern {
+    width: 100% !important;
+    border: 2px solid #e9ecef !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1rem !important;
+    background: white !important;
+    font-size: 1.125rem !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.title-input-modern:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(15, 96, 255, 0.15) !important;
+    transform: translateY(-1px);
+}
+
+.description-input-modern {
+    width: 100% !important;
+    border: 2px solid #e9ecef !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1rem !important;
+    background: white !important;
+    resize: vertical !important;
+    min-height: 80px !important;
+    line-height: 1.5 !important;
+    font-size: 0.9375rem !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.description-input-modern:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(15, 96, 255, 0.15) !important;
+    transform: translateY(-1px);
+}
+
+/* Rating Scale Configuration */
+.rating-scale-config-modern {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 1px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.config-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.875rem;
+}
+
+.config-icon {
+    color: var(--primary-color);
+    font-size: 1.25rem;
+}
+
+.config-title {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin: 0;
+}
+
+.rating-scale-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr;
+    gap: 1rem;
+    align-items: end;
+}
+
+@@media (max-width: 768px) {
+    .rating-scale-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
+
+.scale-input {
+    display: flex;
+    flex-direction: column;
+}
+
+.input-label {
+    color: #6c757d;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+    font-size: 0.8125rem;
+}
+
+.modern-dropdown,
+.modern-textbox {
+    border: 1px solid #ced4da !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 0.75rem !important;
+    transition: all 0.2s ease-in-out !important;
+}
+
+.modern-dropdown:focus,
+.modern-textbox:focus {
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 0.15rem rgba(15, 96, 255, 0.1) !important;
+}
+
+/* Enhanced Section Stats */
+.section-stats-modern {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem;
+    background: rgba(15, 96, 255, 0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(15, 96, 255, 0.1);
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.stat-icon {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.stat-number {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 0.9375rem;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 16px;
+    background: #e9ecef;
 }
 
 .empty-questions {
     background: #f8f9fa;
     border: 2px dashed #dee2e6;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
-.completion-role-badge {
-    font-size: 0.8rem;
-    white-space: nowrap;
-}
+/* Responsive Design */
+@@media (max-width: 768px) {
+    .header-top-row {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
 
-.role-select-list {
-    font-size: 0.85rem;
-}
+    .section-actions {
+        justify-content: center;
+    }
 
-.role-select-list .rz-radiobutton-item {
-    margin-right: 1rem;
-}
+    .section-badges {
+        justify-content: center;
+    }
 
-.role-selector {
-    max-width: 350px;
+    .section-header-modern {
+        padding: 1rem;
+    }
+
+    .section-content-modern {
+        padding: 1rem;
+    }
 }
 </style>
 
