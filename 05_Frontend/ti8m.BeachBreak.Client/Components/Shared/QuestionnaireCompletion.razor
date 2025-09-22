@@ -1,0 +1,1053 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@inject IQuestionnaireApiService ApiService
+@inject NotificationService NotificationService
+
+<style>
+    .questionnaire-completion {
+        --primary-color: #2563eb;
+        --success-color: #059669;
+        --warning-color: #d97706;
+        --text-color: #374151;
+        --text-muted: #6b7280;
+        --border-light: #f3f4f6;
+        --border-color: #d1d5db;
+        --bg-light: #f9fafb;
+
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .completion-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid var(--border-light);
+    }
+
+    .questionnaire-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.025em;
+    }
+
+    .questionnaire-description {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .section-progress {
+        flex: 1;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .progress-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .section-container {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-header {
+        margin-bottom: 2.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-color);
+        margin-bottom: 0.75rem;
+        letter-spacing: -0.025em;
+    }
+
+    .section-description {
+        font-size: 1rem;
+        color: var(--text-muted);
+        line-height: 1.6;
+    }
+
+    .question-container {
+        margin-bottom: 3rem;
+        padding: 1.5rem;
+        background: var(--bg-light);
+        border-radius: 6px;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .question-header {
+        margin-bottom: 1.5rem;
+    }
+
+    .question-label {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+        line-height: 1.5;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .required-indicator {
+        color: #dc2626;
+        font-weight: 700;
+    }
+
+    .question-description {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .competency-item {
+        background: white;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .competency-header {
+        margin-bottom: 1rem;
+    }
+
+    .competency-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .competency-description {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        line-height: 1.5;
+    }
+
+    .rating-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .rating-labels {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .goal-field {
+        margin-bottom: 1.5rem;
+    }
+
+    .goal-field-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-color);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .goal-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .text-input {
+        width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.875rem;
+        font-size: 0.95rem;
+        font-family: inherit;
+        resize: vertical;
+        min-height: 100px;
+        transition: border-color 0.2s ease;
+    }
+
+    .text-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-input {
+        width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+        padding: 0.75rem;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: border-color 0.2s ease;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .navigation-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-light);
+        margin-top: 3rem;
+    }
+
+    .nav-button {
+        min-width: 120px;
+    }
+
+    .save-status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.875rem;
+        color: var(--text-muted);
+    }
+
+    .auto-save-indicator {
+        color: var(--success-color);
+        animation: pulse 2s infinite;
+    }
+
+    @@keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .completion-summary {
+        text-align: center;
+        padding: 3rem;
+        background: var(--bg-light);
+        border-radius: 8px;
+        border: 2px solid var(--success-color);
+    }
+
+    .completion-icon {
+        font-size: 4rem;
+        color: var(--success-color);
+        margin-bottom: 1rem;
+    }
+
+    .validation-error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+        padding: 0.75rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        margin-bottom: 1rem;
+    }
+
+    @@media (max-width: 768px) {
+        .questionnaire-completion {
+            padding: 1rem;
+        }
+
+        .questionnaire-title {
+            font-size: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+        }
+
+        .goal-row {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .progress-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.5rem;
+        }
+
+        .rating-container {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+
+<div class="questionnaire-completion">
+    @if (isCompleted)
+    {
+        <div class="completion-summary">
+            <div class="completion-icon">✅</div>
+            <h2>Questionnaire Completed!</h2>
+            <p>Thank you for completing this questionnaire. Your responses have been submitted successfully.</p>
+            @if (OnCompleted.HasDelegate)
+            {
+                <RadzenButton Text="Continue" ButtonStyle="ButtonStyle.Primary"
+                              Click="@(() => OnCompleted.InvokeAsync())" Class="mt-3" />
+            }
+        </div>
+    }
+    else
+    {
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading questionnaire...</RadzenText>
+            </div>
+        }
+        else if (template == null)
+        {
+            <div class="text-center p-5">
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Could not load questionnaire template.</RadzenText>
+            </div>
+        }
+        else
+        {
+            <div class="completion-header">
+                <h1 class="questionnaire-title">@template.Name</h1>
+                @if (!string.IsNullOrWhiteSpace(template.Description))
+                {
+                    <p class="questionnaire-description">@template.Description</p>
+                }
+            </div>
+
+            <div class="progress-header">
+                <div class="section-progress">
+                    Section @(currentSectionIndex + 1) of @template.Sections.Count:
+                    <strong>@currentSection.Title</strong>
+                </div>
+            <div class="progress-info">
+                <RadzenProgressBar Value="@progressPercentage" Max="100" ShowValue="true" />
+                @if (lastSavedTime.HasValue)
+                {
+                    <div class="save-status">
+                        <RadzenIcon Icon="cloud_done" Class="auto-save-indicator" />
+                        Last saved @lastSavedTime.Value.ToString("HH:mm")
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (validationErrors.Any())
+        {
+            <div class="validation-error">
+                <strong>Please fix the following issues:</strong>
+                <ul class="mt-2 mb-0">
+                    @foreach (var error in validationErrors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="section-container">
+            <div class="section-header">
+                <h2 class="section-title">@currentSection.Title</h2>
+                @if (!string.IsNullOrWhiteSpace(currentSection.Description))
+                {
+                    <p class="section-description">@currentSection.Description</p>
+                }
+            </div>
+
+            @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
+            {
+                <div class="question-container">
+                    <div class="question-header">
+                        <div class="question-label">
+                            @GetQuestionTypeLabel(question)
+                            @if (question.IsRequired)
+                            {
+                                <span class="required-indicator">*</span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(question.Description))
+                        {
+                            <p class="question-description">@question.Description</p>
+                        }
+                    </div>
+                    <div class="question-content">
+                        @GetQuestionInput(question)
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="navigation-container">
+            <div>
+                @if (currentSectionIndex > 0)
+                {
+                    <RadzenButton Text="Previous" ButtonStyle="ButtonStyle.Light"
+                                  Icon="arrow_back" Click="@PreviousSection" Class="nav-button" />
+                }
+            </div>
+
+            <div class="save-status" style="text-align: center;">
+                @if (isSaving)
+                {
+                    <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
+                    <span>Saving...</span>
+                }
+                else if (lastSavedTime.HasValue)
+                {
+                    <RadzenIcon Icon="cloud_done" />
+                    <span>All changes saved</span>
+                }
+            </div>
+
+            <div>
+                @if (template != null && currentSectionIndex < template.Sections.Count - 1)
+                {
+                    <RadzenButton Text="Next" ButtonStyle="ButtonStyle.Primary"
+                                  Icon="arrow_forward" Click="@NextSection" Class="nav-button" />
+                }
+                else
+                {
+                    <RadzenButton Text="Submit" ButtonStyle="ButtonStyle.Success"
+                                  Icon="send" Click="@SubmitQuestionnaire" Class="nav-button"
+                                  Disabled="@isSaving" />
+                }
+            </div>
+        </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
+    [Parameter] public Dictionary<QuestionType, string>? QuestionTypeLabels { get; set; }
+    [Parameter] public EventCallback OnCompleted { get; set; }
+    [Parameter] public EventCallback<Dictionary<Guid, SectionResponse>> OnSave { get; set; }
+
+    private QuestionnaireTemplate? template;
+    private int currentSectionIndex = 0;
+    private Dictionary<Guid, SectionResponse> responses = new();
+    private List<string> validationErrors = new();
+    private bool isCompleted = false;
+    private bool isSaving = false;
+    private bool isLoading = true;
+    private DateTime? lastSavedTime;
+
+    // Auto-save timer
+    private Timer? autoSaveTimer;
+    private bool hasUnsavedChanges = false;
+
+    private QuestionSection currentSection => template?.Sections.OrderBy(s => s.Order).Skip(currentSectionIndex).First() ?? new QuestionSection();
+    private double progressPercentage => template != null ? ((double)(currentSectionIndex + 1) / template.Sections.Count) * 100 : 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTemplate();
+        await LoadExistingResponses();
+        InitializeResponses();
+        SetupAutoSave();
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task LoadTemplate()
+    {
+        try
+        {
+            template = await ApiService.GetTemplateByIdAsync(Assignment.TemplateId);
+            if (template == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Could not load questionnaire template");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load template: {ex.Message}");
+        }
+    }
+
+    private async Task LoadExistingResponses()
+    {
+        try
+        {
+            var existingResponse = await ApiService.GetResponseByAssignmentIdAsync(Assignment.Id);
+            if (existingResponse?.SectionResponses != null)
+            {
+                responses = existingResponse.SectionResponses;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading existing responses: {ex.Message}");
+        }
+    }
+
+    private void InitializeResponses()
+    {
+        if (template == null) return;
+
+        foreach (var section in template.Sections)
+        {
+            if (!responses.ContainsKey(section.Id))
+            {
+                responses[section.Id] = new SectionResponse
+                {
+                    SectionId = section.Id,
+                    QuestionResponses = new Dictionary<Guid, QuestionResponse>()
+                };
+            }
+
+            // Initialize question responses
+            foreach (var question in section.Questions)
+            {
+                if (!responses[section.Id].QuestionResponses.ContainsKey(question.Id))
+                {
+                    responses[section.Id].QuestionResponses[question.Id] = new QuestionResponse
+                    {
+                        QuestionId = question.Id,
+                        QuestionType = question.Type,
+                        ComplexValue = new Dictionary<string, object>()
+                    };
+                }
+            }
+        }
+    }
+
+    private void SetupAutoSave()
+    {
+        autoSaveTimer = new Timer(async _ =>
+        {
+            if (hasUnsavedChanges && !isSaving)
+            {
+                await InvokeAsync(async () => await SaveProgress());
+            }
+        }, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(30));
+    }
+
+    private async Task SaveProgress()
+    {
+        if (isSaving) return;
+
+        isSaving = true;
+        hasUnsavedChanges = false;
+        StateHasChanged();
+
+        try
+        {
+            await ApiService.SaveResponseAsync(Assignment.Id, responses);
+            lastSavedTime = DateTime.Now;
+
+            if (OnSave.HasDelegate)
+            {
+                await OnSave.InvokeAsync(responses);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Save Failed", $"Could not save progress: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private void MarkChanged()
+    {
+        hasUnsavedChanges = true;
+        StateHasChanged();
+    }
+
+    private async Task NextSection()
+    {
+        if (ValidateCurrentSection())
+        {
+            await SaveProgress();
+
+            if (template != null && currentSectionIndex < template.Sections.Count - 1)
+            {
+                currentSectionIndex++;
+                validationErrors.Clear();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task PreviousSection()
+    {
+        await SaveProgress();
+
+        if (currentSectionIndex > 0)
+        {
+            currentSectionIndex--;
+            validationErrors.Clear();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SubmitQuestionnaire()
+    {
+        if (ValidateAllSections())
+        {
+            await SaveProgress();
+
+            try
+            {
+                await ApiService.SubmitResponseAsync(Assignment.Id);
+                isCompleted = true;
+                NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", $"Could not submit questionnaire: {ex.Message}");
+            }
+        }
+    }
+
+    private bool ValidateCurrentSection()
+    {
+        validationErrors.Clear();
+        var section = currentSection;
+
+        foreach (var question in section.Questions.Where(q => q.IsRequired))
+        {
+            var response = responses[section.Id].QuestionResponses[question.Id];
+            if (!IsQuestionAnswered(question, response))
+            {
+                validationErrors.Add($"'{GetQuestionTypeLabel(question)}' is required");
+            }
+        }
+
+        return !validationErrors.Any();
+    }
+
+    private bool ValidateAllSections()
+    {
+        validationErrors.Clear();
+
+        if (template == null) return !validationErrors.Any();
+
+        foreach (var section in template.Sections)
+        {
+            foreach (var question in section.Questions.Where(q => q.IsRequired))
+            {
+                var response = responses[section.Id].QuestionResponses[question.Id];
+                if (!IsQuestionAnswered(question, response))
+                {
+                    validationErrors.Add($"'{GetQuestionTypeLabel(question)}' in section '{section.Title}' is required");
+                }
+            }
+        }
+
+        return !validationErrors.Any();
+    }
+
+    private bool IsQuestionAnswered(QuestionItem question, QuestionResponse response)
+    {
+        return question.Type switch
+        {
+            QuestionType.SelfAssessment => IsCompetencyAssessmentComplete(question, response),
+            QuestionType.GoalAchievement => IsGoalAchievementComplete(response),
+            QuestionType.TextQuestion => !string.IsNullOrWhiteSpace(response.TextValue),
+            _ => false
+        };
+    }
+
+    private bool IsCompetencyAssessmentComplete(QuestionItem question, QuestionResponse response)
+    {
+        var competencies = GetCompetenciesFromConfiguration(question);
+        foreach (var competency in competencies.Where(c => c.IsRequired))
+        {
+            var ratingKey = $"competency_{competency.Key}_rating";
+            if (response.ComplexValue == null ||
+                !response.ComplexValue.ContainsKey(ratingKey) ||
+                response.ComplexValue[ratingKey]?.ToString() == "0")
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private bool IsGoalAchievementComplete(QuestionResponse response)
+    {
+        return response.ComplexValue?.ContainsKey("GoalDescription") == true &&
+               !string.IsNullOrWhiteSpace(response.ComplexValue["GoalDescription"]?.ToString());
+    }
+
+    private string GetQuestionTypeLabel(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("QuestionTitle"))
+        {
+            var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
+            if (!string.IsNullOrWhiteSpace(customTitle))
+            {
+                return customTitle;
+            }
+        }
+
+        if (QuestionTypeLabels != null && QuestionTypeLabels.TryGetValue(question.Type, out var label))
+        {
+            return label;
+        }
+
+        return question.Type.ToString();
+    }
+
+    private RenderFragment GetQuestionInput(QuestionItem question)
+    {
+        return question.Type switch
+        {
+            QuestionType.SelfAssessment => GetSelfAssessmentInput(question),
+            QuestionType.GoalAchievement => GetGoalAchievementInput(question),
+            QuestionType.TextQuestion => GetTextQuestionInput(question),
+            _ => @<div>Unsupported question type</div>
+        };
+    }
+
+    private RenderFragment GetSelfAssessmentInput(QuestionItem question)
+    {
+        var competencies = GetCompetenciesFromConfiguration(question);
+        var ratingScale = GetRatingScaleFromQuestion(question);
+        var scaleLowLabel = GetScaleLowLabelFromQuestion(question);
+        var scaleHighLabel = GetScaleHighLabelFromQuestion(question);
+        var sectionResponse = responses[currentSection.Id];
+        var questionResponse = sectionResponse.QuestionResponses[question.Id];
+
+        return @<div class="self-assessment-input">
+            @foreach (var competency in competencies)
+            {
+                <div class="competency-item">
+                    <div class="competency-header">
+                        <div class="competency-title">
+                            @competency.Title
+                            @if (competency.IsRequired)
+                            {
+                                <span class="required-indicator">*</span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(competency.Description))
+                        {
+                            <div class="competency-description">@competency.Description</div>
+                        }
+                    </div>
+
+                    <div class="rating-container">
+                        @{
+                            var ratingValue = GetCompetencyRating(questionResponse, competency.Key);
+                        }
+                        @if (ratingScale <= 5)
+                        {
+                            <RadzenRating @bind-Value="ratingValue"
+                                          Stars="@ratingScale"
+                                          Change="@(async () => await OnCompetencyRatingChange(questionResponse, competency.Key, ratingValue))" />
+                        }
+                        else
+                        {
+                            <input type="number" value="@ratingValue"
+                                   @onchange="@(async (ChangeEventArgs e) => await OnCompetencyRatingChange(questionResponse, competency.Key, int.TryParse(e.Value?.ToString(), out var r) ? r : 0))"
+                                   class="form-input" style="width: 100px;"
+                                   min="1" max="@ratingScale" />
+                            <span>/ @ratingScale</span>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(scaleLowLabel) && !string.IsNullOrWhiteSpace(scaleHighLabel))
+                        {
+                            <div class="rating-labels">
+                                <span>@scaleLowLabel</span>
+                                <span>→</span>
+                                <span>@scaleHighLabel</span>
+                            </div>
+                        }
+                    </div>
+
+                    @{
+                        var commentsValue = GetCompetencyComments(questionResponse, competency.Key);
+                    }
+                    <textarea value="@commentsValue"
+                              @onchange="@(async (ChangeEventArgs e) => await OnCompetencyCommentsChange(questionResponse, competency.Key, e.Value?.ToString() ?? ""))"
+                              class="text-input" placeholder="Optional comments..."
+                              style="min-height: 80px;"></textarea>
+                </div>
+            }
+        </div>;
+    }
+
+    private RenderFragment GetGoalAchievementInput(QuestionItem question)
+    {
+        var sectionResponse = responses[currentSection.Id];
+        var questionResponse = sectionResponse.QuestionResponses[question.Id];
+
+        return @<div class="goal-achievement-input">
+            @{
+                var goalDescription = GetGoalField(questionResponse, "GoalDescription");
+                var startDate = GetGoalDateField(questionResponse, "StartDate");
+                var endDate = GetGoalDateField(questionResponse, "EndDate");
+                var successCriteria = GetGoalField(questionResponse, "SuccessCriteria");
+                var achievementPercentage = GetGoalNumberField(questionResponse, "AchievementPercentage");
+            }
+
+            <div class="goal-field">
+                <label class="goal-field-label">Goal Description *</label>
+                <textarea value="@goalDescription"
+                          @onchange="@(async (ChangeEventArgs e) => await OnGoalFieldChange(questionResponse, "GoalDescription", e.Value?.ToString() ?? ""))"
+                          class="text-input"
+                          placeholder="Describe your goal in detail..."
+                          required></textarea>
+            </div>
+
+            <div class="goal-row">
+                <div class="goal-field">
+                    <label class="goal-field-label">Start Date</label>
+                    <input type="date" value="@(startDate?.ToString("yyyy-MM-dd"))"
+                           @onchange="@(async (ChangeEventArgs e) => await OnGoalDateChange(questionResponse, "StartDate", DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null))"
+                           class="form-input" />
+                </div>
+                <div class="goal-field">
+                    <label class="goal-field-label">Target End Date</label>
+                    <input type="date" value="@(endDate?.ToString("yyyy-MM-dd"))"
+                           @onchange="@(async (ChangeEventArgs e) => await OnGoalDateChange(questionResponse, "EndDate", DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null))"
+                           class="form-input" />
+                </div>
+            </div>
+
+            <div class="goal-field">
+                <label class="goal-field-label">Success Criteria</label>
+                <input type="text" value="@successCriteria"
+                       @onchange="@(async (ChangeEventArgs e) => await OnGoalFieldChange(questionResponse, "SuccessCriteria", e.Value?.ToString() ?? ""))"
+                       class="form-input"
+                       placeholder="How will you measure success?" />
+            </div>
+
+            <div class="goal-field">
+                <label class="goal-field-label">Current Achievement (%)</label>
+                <input type="number" value="@achievementPercentage"
+                       @onchange="@(async (ChangeEventArgs e) => await OnGoalNumberChange(questionResponse, "AchievementPercentage", int.TryParse(e.Value?.ToString(), out var n) ? n : 0))"
+                       class="form-input"
+                       min="0" max="100" placeholder="0" />
+            </div>
+        </div>;
+    }
+
+    private RenderFragment GetTextQuestionInput(QuestionItem question)
+    {
+        var sectionResponse = responses[currentSection.Id];
+        var questionResponse = sectionResponse.QuestionResponses[question.Id];
+
+        return @<div class="text-question-input">
+            @{
+                var textValue = questionResponse.TextValue ?? "";
+            }
+            <textarea value="@textValue"
+                      @onchange="@(async (ChangeEventArgs e) => await OnTextResponseChange(questionResponse, e.Value?.ToString() ?? ""))"
+                      class="text-input"
+                      placeholder="Enter your response here..."
+                      rows="8"></textarea>
+        </div>;
+    }
+
+    // Helper methods for data binding and change handling
+    private int GetCompetencyRating(QuestionResponse response, string competencyId)
+    {
+        var key = $"competency_{competencyId}_rating";
+        if (response.ComplexValue?.TryGetValue(key, out var value) == true)
+        {
+            if (int.TryParse(value.ToString(), out var rating))
+                return rating;
+        }
+        return 0;
+    }
+
+    private string GetCompetencyComments(QuestionResponse response, string competencyId)
+    {
+        var key = $"competency_{competencyId}_comments";
+        return response.ComplexValue?.GetValueOrDefault(key)?.ToString() ?? "";
+    }
+
+    private async Task OnCompetencyRatingChange(QuestionResponse response, string competencyId, int rating)
+    {
+        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
+        response.ComplexValue[$"competency_{competencyId}_rating"] = rating;
+        response.LastModified = DateTime.Now;
+        MarkChanged();
+    }
+
+    private async Task OnCompetencyCommentsChange(QuestionResponse response, string competencyId, string comments)
+    {
+        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
+        response.ComplexValue[$"competency_{competencyId}_comments"] = comments;
+        response.LastModified = DateTime.Now;
+        MarkChanged();
+    }
+
+    private string GetGoalField(QuestionResponse response, string fieldName)
+    {
+        return response.ComplexValue?.GetValueOrDefault(fieldName)?.ToString() ?? "";
+    }
+
+    private DateTime? GetGoalDateField(QuestionResponse response, string fieldName)
+    {
+        if (response.ComplexValue?.TryGetValue(fieldName, out var value) == true &&
+            DateTime.TryParse(value.ToString(), out var date))
+        {
+            return date;
+        }
+        return null;
+    }
+
+    private int GetGoalNumberField(QuestionResponse response, string fieldName)
+    {
+        if (response.ComplexValue?.TryGetValue(fieldName, out var value) == true &&
+            int.TryParse(value.ToString(), out var number))
+        {
+            return number;
+        }
+        return 0;
+    }
+
+    private async Task OnGoalFieldChange(QuestionResponse response, string fieldName, string value)
+    {
+        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
+        response.ComplexValue[fieldName] = value;
+        response.LastModified = DateTime.Now;
+        MarkChanged();
+    }
+
+    private async Task OnGoalDateChange(QuestionResponse response, string fieldName, DateTime? value)
+    {
+        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
+        response.ComplexValue[fieldName] = value?.ToString("yyyy-MM-dd") ?? "";
+        response.LastModified = DateTime.Now;
+        MarkChanged();
+    }
+
+    private async Task OnGoalNumberChange(QuestionResponse response, string fieldName, int value)
+    {
+        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
+        response.ComplexValue[fieldName] = value;
+        response.LastModified = DateTime.Now;
+        MarkChanged();
+    }
+
+    private async Task OnTextResponseChange(QuestionResponse response, string value)
+    {
+        response.TextValue = value;
+        response.Value = value;
+        response.LastModified = DateTime.Now;
+        MarkChanged();
+    }
+
+    // Configuration helpers (copied from PreviewTab)
+    private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("Competencies"))
+        {
+            var competenciesObj = question.Configuration["Competencies"];
+
+            if (competenciesObj is List<CompetencyDefinition> competencies)
+            {
+                return competencies;
+            }
+
+            if (competenciesObj is System.Text.Json.JsonElement jsonElement)
+            {
+                try
+                {
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+                    {
+                        return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(),
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing competencies: {ex.Message}");
+                }
+            }
+
+            if (competenciesObj is string jsonString)
+            {
+                try
+                {
+                    return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonString) ?? new List<CompetencyDefinition>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error deserializing competencies from string: {ex.Message}");
+                }
+            }
+        }
+
+        return new List<CompetencyDefinition>();
+    }
+
+    private int GetRatingScaleFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("RatingScale"))
+        {
+            if (question.Configuration["RatingScale"] is int scale)
+                return scale;
+            if (int.TryParse(question.Configuration["RatingScale"]?.ToString(), out var parsedScale))
+                return parsedScale;
+        }
+        return 4;
+    }
+
+    private string GetScaleLowLabelFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("ScaleLowLabel"))
+        {
+            return question.Configuration["ScaleLowLabel"]?.ToString() ?? "";
+        }
+        return "";
+    }
+
+    private string GetScaleHighLabelFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration.ContainsKey("ScaleHighLabel"))
+        {
+            return question.Configuration["ScaleHighLabel"]?.ToString() ?? "";
+        }
+        return "";
+    }
+
+    public void Dispose()
+    {
+        autoSaveTimer?.Dispose();
+    }
+}
