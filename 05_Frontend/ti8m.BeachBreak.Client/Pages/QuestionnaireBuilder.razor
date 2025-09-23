@@ -304,7 +304,7 @@
 
 	private void SetCurrentStep(int step)
 	{
-		if (HasParameterChanged(nameof(currentStep), step))
+		if (currentStep != step)
 		{
 			currentStep = step;
 			NotifyStateChanged();
