@@ -11,18 +11,249 @@
 
 <PageTitle>My Questionnaires</PageTitle>
 
+<style>
+    .enhanced-questionnaire-list {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+
+    .questionnaire-tabs .rz-tabview-nav-link {
+        font-weight: 500;
+        position: relative;
+    }
+
+    .questionnaire-tabs .rz-tabview-nav-link.rz-state-active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--rz-primary);
+        border-radius: 2px;
+    }
+
+    .enhanced-questionnaire-card {
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .enhanced-questionnaire-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .enhanced-questionnaire-card.new-questionnaire {
+        border-left: 4px solid #3b82f6;
+        background: linear-gradient(to right, #eff6ff, #ffffff);
+    }
+
+    .enhanced-questionnaire-card.in-progress-questionnaire {
+        border-left: 4px solid #f59e0b;
+        background: linear-gradient(to right, #fefce8, #ffffff);
+    }
+
+    .enhanced-questionnaire-card.completed-questionnaire {
+        border-left: 4px solid #10b981;
+        background: linear-gradient(to right, #ecfdf5, #ffffff);
+    }
+
+    .enhanced-questionnaire-card.overdue-questionnaire {
+        border-left: 4px solid #ef4444;
+        background: linear-gradient(to right, #fef2f2, #ffffff);
+        animation: pulse-overdue 2s infinite;
+    }
+
+    @@keyframes pulse-overdue {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.95; }
+    }
+
+    .questionnaire-card-header {
+        display: flex;
+        justify-content: between;
+        align-items: start;
+        margin-bottom: 1rem;
+        gap: 1rem;
+    }
+
+    .questionnaire-card-content {
+        flex: 1;
+    }
+
+    .questionnaire-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+        line-height: 1.3;
+    }
+
+    .questionnaire-subtitle {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+
+    .questionnaire-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-bottom: 1rem;
+    }
+
+    .questionnaire-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .progress-container {
+        margin: 0.75rem 0;
+    }
+
+    .progress-info {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        color: #374151;
+    }
+
+    .progress-bar-container {
+        width: 100%;
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+        border-radius: 3px;
+    }
+
+    .progress-bar-fill.new { background: #3b82f6; }
+    .progress-bar-fill.in-progress { background: #f59e0b; }
+    .progress-bar-fill.completed { background: #10b981; }
+
+    .questionnaire-actions {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border-radius: 9999px;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+    }
+
+    .status-badge.new {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .status-badge.in-progress {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.overdue {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .time-indicator {
+        font-size: 0.75rem;
+        color: #6b7280;
+        font-style: italic;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 2px solid #f3f4f6;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .section-count {
+        background: #f3f4f6;
+        color: #374151;
+        padding: 0.25rem 0.5rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 500;
+    }
+
+    @@media (max-width: 768px) {
+        .enhanced-questionnaire-list {
+            padding: 0.5rem;
+        }
+
+        .questionnaire-card-header {
+            flex-direction: column;
+            align-items: start;
+        }
+
+        .questionnaire-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+
 @if (currentAssignment != null)
 {
     <!-- Questionnaire Completion Mode -->
     <QuestionnaireCompletion Assignment="@currentAssignment"
                             QuestionTypeLabels="@questionTypeLabels"
+                            ExistingResponses="@GetExistingResponsesForAssignment(currentAssignment)"
                             OnCompleted="@OnQuestionnaireCompleted"
                             OnSave="@OnQuestionnaireSaved" />
 }
 else if (configuration != null && dataService != null)
 {
-    <!-- List View Mode -->
-    <GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" OnStartQuestionnaire="@StartQuestionnaire" />
+    <!-- Enhanced List View Mode -->
+    <div class="enhanced-questionnaire-list">
+        @RenderEnhancedQuestionnairesList()
+    </div>
 }
 else if (isLoading)
 {
@@ -43,11 +274,12 @@ else
     private IQuestionnaireDataService? dataService;
 
     private List<QuestionnaireAssignment> allAssignments = new();
-    private List<QuestionnaireAssignment> currentQuestionnaires = new();
-    private List<QuestionnaireAssignment> upcomingQuestionnaires = new();
+    private List<QuestionnaireAssignment> newQuestionnaires = new();
+    private List<QuestionnaireAssignment> inProgressQuestionnaires = new();
     private List<QuestionnaireAssignment> completedQuestionnaires = new();
     private List<QuestionnaireAssignment> overdueQuestionnaires = new();
     private List<string> availableCategories = new();
+    private Dictionary<Guid, Dictionary<Guid, SectionResponse>> questionnaireResponses = new();
     private bool isLoading = false;
 
     // Questionnaire completion state
@@ -74,7 +306,8 @@ else
         return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
                HasParameterChanged(nameof(configuration), configuration) ||
                HasParameterChanged(nameof(isLoading), isLoading) ||
-               HasParameterChanged(nameof(currentAssignment), currentAssignment?.Id);
+               HasParameterChanged(nameof(currentAssignment), currentAssignment?.Id) ||
+               HasParameterChanged(nameof(questionnaireResponses), questionnaireResponses.Count);
     }
 
     private async Task LoadInitialData()
@@ -96,8 +329,8 @@ else
             allAssignments = loadAssignmentsTask.Result;
             var templates = loadTemplatesTask.Result;
 
-            // Categorize assignments
-            CategorizeQuestionnaires();
+            // Categorize assignments with improved logic
+            await CategorizeQuestionnaires();
 
             // Get available categories
             availableCategories = new List<string> { "All Categories" };
@@ -121,23 +354,23 @@ else
     {
         configuration = QuestionnairePageConfigurationFactory.CreateEmployeeConfiguration(
             allAssignments,
-            currentQuestionnaires,
-            upcomingQuestionnaires,
+            newQuestionnaires,
+            inProgressQuestionnaires,
             completedQuestionnaires,
             overdueQuestionnaires,
             availableCategories);
     }
 
-    private void CategorizeQuestionnaires()
+    private async Task CategorizeQuestionnaires()
     {
         var now = DateTime.Now;
 
-        currentQuestionnaires = allAssignments.Where(a =>
-            a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress).ToList();
+        // Separate new assignments from in-progress ones
+        newQuestionnaires = allAssignments.Where(a =>
+            a.Status == AssignmentStatus.Assigned).ToList();
 
-        upcomingQuestionnaires = allAssignments.Where(a =>
-            a.Status == AssignmentStatus.Assigned &&
-            a.AssignedDate > now.AddDays(-1)).ToList();
+        inProgressQuestionnaires = allAssignments.Where(a =>
+            a.Status == AssignmentStatus.InProgress).ToList();
 
         completedQuestionnaires = allAssignments.Where(a =>
             a.Status == AssignmentStatus.Completed).ToList();
@@ -146,6 +379,77 @@ else
             a.DueDate.HasValue &&
             a.DueDate.Value < now &&
             a.Status != AssignmentStatus.Completed).ToList();
+
+        // Load existing responses for in-progress questionnaires
+        await LoadExistingResponses();
+    }
+
+    private async Task LoadExistingResponses()
+    {
+        try
+        {
+            foreach (var assignment in inProgressQuestionnaires)
+            {
+                try
+                {
+                    var existingResponse = await QuestionnaireApiService.GetResponseByAssignmentIdAsync(assignment.Id);
+                    if (existingResponse?.SectionResponses != null)
+                    {
+                        questionnaireResponses[assignment.Id] = existingResponse.SectionResponses;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error loading responses for assignment {assignment.Id}: {ex.Message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading existing responses: {ex.Message}");
+        }
+    }
+
+    private int GetQuestionnaireProgress(QuestionnaireAssignment assignment)
+    {
+        if (!questionnaireResponses.ContainsKey(assignment.Id))
+            return 0;
+
+        var responses = questionnaireResponses[assignment.Id];
+        if (!responses.Any()) return 0;
+
+        var totalQuestions = 0;
+        var answeredQuestions = 0;
+
+        foreach (var sectionResponse in responses.Values)
+        {
+            totalQuestions += sectionResponse.QuestionResponses.Count;
+            answeredQuestions += sectionResponse.QuestionResponses.Count(qr => IsResponseComplete(qr.Value));
+        }
+
+        return totalQuestions > 0 ? (int)((double)answeredQuestions / totalQuestions * 100) : 0;
+    }
+
+    private bool IsResponseComplete(QuestionResponse response)
+    {
+        return !string.IsNullOrEmpty(response.TextValue) ||
+               (response.ComplexValue?.Any() == true);
+    }
+
+    private DateTime GetLastModifiedTime(QuestionnaireAssignment assignment)
+    {
+        if (!questionnaireResponses.ContainsKey(assignment.Id))
+            return assignment.Status == AssignmentStatus.InProgress ? assignment.AssignedDate : assignment.AssignedDate;
+
+        var responses = questionnaireResponses[assignment.Id];
+        var modifiedDates = responses.Values
+            .SelectMany(s => s.QuestionResponses.Values)
+            .Where(r => r.LastModified > DateTime.MinValue)
+            .Select(r => r.LastModified);
+
+        var lastModified = modifiedDates.Any() ? modifiedDates.Max() : (DateTime?)null;
+
+        return lastModified ?? assignment.AssignedDate;
     }
 
     private void SetLoading(bool loading)
@@ -172,7 +476,11 @@ else
         {
             currentAssignment = assignment;
             NotifyStateChanged();
-            ShowInfo($"Starting questionnaire: {assignment.TemplateId}");
+
+            var message = assignment.Status == AssignmentStatus.InProgress
+                ? $"Resuming questionnaire: {assignment.TemplateId}"
+                : $"Starting questionnaire: {assignment.TemplateId}";
+            ShowInfo(message);
         }
         catch (Exception ex)
         {
@@ -227,5 +535,251 @@ else
         {
             HandleError(ex, "saving questionnaire progress");
         }
+    }
+
+    private RenderFragment RenderEnhancedQuestionnairesList() => __builder =>
+    {
+        <div class="questionnaire-tabs">
+            <RadzenTabs>
+                <Tabs>
+                    <RadzenTabsItem Text="@($"New ({newQuestionnaires.Count})")">
+                        @RenderQuestionnaireSection("new", newQuestionnaires, "assignment", "Ready to Start")
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="@($"In Progress ({inProgressQuestionnaires.Count})")">
+                        @RenderQuestionnaireSection("in-progress", inProgressQuestionnaires, "hourglass_empty", "Continue Working")
+                    </RadzenTabsItem>
+                    <RadzenTabsItem Text="@($"Completed ({completedQuestionnaires.Count})")">
+                        @RenderQuestionnaireSection("completed", completedQuestionnaires, "check_circle", "All Done")
+                    </RadzenTabsItem>
+                    @if (overdueQuestionnaires.Any())
+                    {
+                        <RadzenTabsItem Text="@($"Overdue ({overdueQuestionnaires.Count})")">
+                            @RenderQuestionnaireSection("overdue", overdueQuestionnaires, "schedule", "Needs Attention")
+                        </RadzenTabsItem>
+                    }
+                </Tabs>
+            </RadzenTabs>
+        </div>
+    };
+
+    private RenderFragment RenderQuestionnaireSection(string sectionType, List<QuestionnaireAssignment> assignments, string icon, string emptyStateText) => __builder =>
+    {
+        <div class="questionnaire-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <RadzenIcon Icon="@icon" />
+                    @(sectionType == "new" ? "New Questionnaires" :
+                      sectionType == "in-progress" ? "In Progress" :
+                      sectionType == "completed" ? "Completed" : "Overdue")
+                </div>
+                <div class="section-count">@assignments.Count</div>
+            </div>
+
+            @if (!assignments.Any())
+            {
+                <div class="text-center p-5">
+                    <RadzenIcon Icon="@icon" Size="3rem" Class="text-muted mb-3" />
+                    <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">@emptyStateText</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">
+                        @(sectionType == "new" ? "No new questionnaires assigned." :
+                          sectionType == "in-progress" ? "You haven't started any questionnaires yet." :
+                          sectionType == "completed" ? "No completed questionnaires." :
+                          "No overdue questionnaires.")
+                    </RadzenText>
+                </div>
+            }
+            else
+            {
+                @foreach (var assignment in assignments.OrderBy(a => a.DueDate ?? DateTime.MaxValue))
+                {
+                    @RenderEnhancedQuestionnaireCard(assignment, sectionType)
+                }
+            }
+        </div>
+    };
+
+    private RenderFragment RenderEnhancedQuestionnaireCard(QuestionnaireAssignment assignment, string sectionType) => __builder =>
+    {
+        var cardClass = $"enhanced-questionnaire-card {sectionType}-questionnaire";
+        var isOverdue = assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed;
+        if (isOverdue) cardClass += " overdue-questionnaire";
+
+        <RadzenCard Class="@cardClass">
+            <div class="questionnaire-card-header">
+                <div class="questionnaire-card-content">
+                    <div class="questionnaire-title">@GetTemplateName(assignment)</div>
+                    <div class="questionnaire-subtitle">Assigned by @assignment.AssignedBy</div>
+
+                    <div class="questionnaire-meta">
+                        <div class="questionnaire-meta-item">
+                            <RadzenIcon Icon="event" Style="font-size: 1rem;" />
+                            <span>Assigned: @assignment.AssignedDate.ToString("MMM dd, yyyy")</span>
+                        </div>
+
+                        @if (assignment.DueDate.HasValue)
+                        {
+                            <div class="questionnaire-meta-item">
+                                <RadzenIcon Icon="schedule" Style="font-size: 1rem;" />
+                                <span>Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")</span>
+                                @if (isOverdue)
+                                {
+                                    <span class="status-badge overdue">Overdue</span>
+                                }
+                            </div>
+                        }
+
+                        @if (assignment.Status == AssignmentStatus.InProgress)
+                        {
+                            var lastModified = GetLastModifiedTime(assignment);
+                            <div class="questionnaire-meta-item">
+                                <RadzenIcon Icon="update" Style="font-size: 1rem;" />
+                                <span>Last updated: @lastModified.ToString("MMM dd, yyyy HH:mm")</span>
+                            </div>
+                        }
+
+                        @if (assignment.CompletedDate.HasValue)
+                        {
+                            <div class="questionnaire-meta-item">
+                                <RadzenIcon Icon="check_circle" Style="font-size: 1rem;" />
+                                <span>Completed: @assignment.CompletedDate.Value.ToString("MMM dd, yyyy")</span>
+                            </div>
+                        }
+                    </div>
+
+                    @if (assignment.Status == AssignmentStatus.InProgress)
+                    {
+                        var progress = GetQuestionnaireProgress(assignment);
+                        <div class="progress-container">
+                            <div class="progress-info">
+                                <span>Progress: @progress% complete</span>
+                                <span class="time-indicator">@GetProgressTimeText(assignment)</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill in-progress" style="width: @(progress)%"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="status-badge @GetStatusCssClass(assignment.Status)">
+                    <RadzenIcon Icon="@GetStatusIcon(assignment.Status)" Style="font-size: 0.75rem;" />
+                    @GetStatusText(assignment.Status)
+                </div>
+            </div>
+
+            <div class="questionnaire-actions">
+                <div class="time-indicator">
+                    @GetActionTimeText(assignment)
+                </div>
+
+                <div>
+                    @if (assignment.Status == AssignmentStatus.Assigned)
+                    {
+                        <RadzenButton Text="Start Questionnaire"
+                                     Icon="play_arrow"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => StartQuestionnaire(assignment))" />
+                    }
+                    else if (assignment.Status == AssignmentStatus.InProgress)
+                    {
+                        <RadzenButton Text="Continue"
+                                     Icon="play_arrow"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => StartQuestionnaire(assignment))" />
+                    }
+                    else if (assignment.Status == AssignmentStatus.Completed)
+                    {
+                        <RadzenButton Text="View Results"
+                                     Icon="visibility"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => ViewResults(assignment))" />
+                    }
+                </div>
+            </div>
+        </RadzenCard>
+    };
+
+    private string GetTemplateName(QuestionnaireAssignment assignment)
+    {
+        return "Sample Questionnaire Template"; // This would come from the loaded templates
+    }
+
+    private string GetStatusCssClass(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "new",
+            AssignmentStatus.InProgress => "in-progress",
+            AssignmentStatus.Completed => "completed",
+            _ => "new"
+        };
+    }
+
+    private string GetStatusIcon(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "assignment",
+            AssignmentStatus.InProgress => "hourglass_empty",
+            AssignmentStatus.Completed => "check_circle",
+            _ => "assignment"
+        };
+    }
+
+    private string GetStatusText(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "New",
+            AssignmentStatus.InProgress => "In Progress",
+            AssignmentStatus.Completed => "Completed",
+            _ => "Unknown"
+        };
+    }
+
+    private string GetProgressTimeText(QuestionnaireAssignment assignment)
+    {
+        var lastModified = GetLastModifiedTime(assignment);
+        if (lastModified == DateTime.MinValue) return "Not started";
+
+        var timeSinceLastUpdate = DateTime.Now - lastModified;
+        if (timeSinceLastUpdate.TotalDays >= 1)
+            return $"Last updated {(int)timeSinceLastUpdate.TotalDays} days ago";
+        else if (timeSinceLastUpdate.TotalHours >= 1)
+            return $"Last updated {(int)timeSinceLastUpdate.TotalHours} hours ago";
+        else
+            return "Recently updated";
+    }
+
+    private string GetActionTimeText(QuestionnaireAssignment assignment)
+    {
+        if (assignment.DueDate.HasValue)
+        {
+            var timeUntilDue = assignment.DueDate.Value - DateTime.Now;
+            if (timeUntilDue.TotalDays < 0)
+                return $"Overdue by {Math.Abs((int)timeUntilDue.TotalDays)} days";
+            else if (timeUntilDue.TotalDays <= 1)
+                return "Due today";
+            else if (timeUntilDue.TotalDays <= 7)
+                return $"Due in {(int)timeUntilDue.TotalDays} days";
+        }
+        return "";
+    }
+
+    private async Task ViewResults(QuestionnaireAssignment assignment)
+    {
+        ShowInfo("Results view would be implemented here");
+    }
+
+    private Dictionary<Guid, SectionResponse>? GetExistingResponsesForAssignment(QuestionnaireAssignment assignment)
+    {
+        if (assignment != null && questionnaireResponses.ContainsKey(assignment.Id))
+        {
+            return questionnaireResponses[assignment.Id];
+        }
+        return null;
     }
 }
