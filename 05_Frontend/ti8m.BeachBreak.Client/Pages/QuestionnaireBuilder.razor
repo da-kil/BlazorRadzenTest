@@ -34,7 +34,6 @@
 				</div>
 			</div>
 			<div class="d-flex gap-2">
-				<RadzenButton Text="Preview" ButtonStyle="ButtonStyle.Light" Icon="preview" Click="@PreviewQuestionnaire" />
 				@{
 					var currentStatus = IsEditMode ? template.Status : TemplateStatus.Draft;
 				}
@@ -673,23 +672,6 @@
 	}
 
 
-private async Task PreviewQuestionnaire()
-{
-	var result = await DialogService.OpenAsync<QuestionnairePreview>("Questionnaire Preview",
-		new Dictionary<string, object>()
-		{
-			{ "Template", template },
-			{ "QuestionTypeLabels", questionTypeLabels }
-		},
-		new DialogOptions()
-		{
-			Width = "95vw",
-			Height = "95vh",
-			Resizable = false,
-			ShowClose = true,
-			CloseDialogOnOverlayClick = false
-		});
-}
 
 private async Task SaveQuestionnaire()
 {
