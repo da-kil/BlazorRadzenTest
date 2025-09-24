@@ -1,20 +1,20 @@
-using Marten;
 using Microsoft.AspNetCore.Http;
-using ti8m.BeachBreak.Domain.CategoryAggregate;
+using ti8m.BeachBreak.Application.Command.Repositories;
 using ti8m.BeachBreak.Domain;
+using ti8m.BeachBreak.Domain.CategoryAggregate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.CategoryCommands;
 
 public class CategoryCommandHandler :
     ICommandHandler<CreateCategoryCommand, Result>,
     ICommandHandler<UpdateCategoryCommand, Result>,
-    ICommandHandler<DeleteCategoryCommand, Result>
+    ICommandHandler<DeactivateCategoryCommand, Result>
 {
-    private readonly IDocumentSession session;
+    private readonly ICategoryAggregateRepository repository;
 
-    public CategoryCommandHandler(IDocumentSession session)
+    public CategoryCommandHandler(ICategoryAggregateRepository repository)
     {
-        this.session = session;
+        this.repository = repository;
     }
 
     public async Task<Result> HandleAsync(CreateCategoryCommand command, CancellationToken cancellationToken = default)
@@ -33,10 +33,7 @@ public class CategoryCommandHandler :
                 command.Category.SortOrder
             );
 
-            // Store using event sourcing
-            session.Events.StartStream<Category>(categoryId, category.UncommittedEvents);
-
-            await session.SaveChangesAsync(cancellationToken);
+            await repository.StoreAsync(category, cancellationToken);
 
             return Result.Success();
         }
@@ -50,20 +47,18 @@ public class CategoryCommandHandler :
     {
         try
         {
-            // Load the existing category from event stream
-            var category = await session.Events.AggregateStreamAsync<Category>(command.Category.Id, token: cancellationToken);
+            var category = await repository.LoadAsync<Category>(command.Category.Id, cancellationToken: cancellationToken);
 
             if (category == null)
             {
                 return Result.Fail($"Category with ID {command.Category.Id} not found", StatusCodes.Status404NotFound);
             }
 
-            // For now, since we only have CategoryAdded event, we'll need to implement Update/Activate/Deactivate methods
-            // This is a simplified approach until proper domain events are added
-
-            // Store the updated category state as a new event stream
-            // This is not the ideal event sourcing pattern but works for current domain model constraints
-            await session.SaveChangesAsync(cancellationToken);
+            category.ChangeName(new Translation(command.Category.NameDe, command.Category.NameEn));
+            category.ChangeDescription(new Translation(command.Category.DescriptionDe, command.Category.DescriptionEn));
+            category.ChangeSortOrder(command.Category.SortOrder);
+            
+            await repository.StoreAsync(category, cancellationToken);
 
             return Result.Success();
         }
@@ -73,27 +68,26 @@ public class CategoryCommandHandler :
         }
     }
 
-    public async Task<Result> HandleAsync(DeleteCategoryCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result> HandleAsync(DeactivateCategoryCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
-            // Check if category exists in event stream
-            var category = await session.Events.AggregateStreamAsync<Category>(command.CategoryId, token: cancellationToken);
+            var category = await repository.LoadAsync<Category>(command.CategoryId, cancellationToken: cancellationToken);
 
             if (category == null)
             {
                 return Result.Fail($"Category with ID {command.CategoryId} not found", StatusCodes.Status404NotFound);
             }
 
-            // For now, we'll archive/soft delete by stopping updates to the stream
-            // A proper implementation would add a CategoryDeleted/CategoryArchived event
-            await session.SaveChangesAsync(cancellationToken);
+            category.Deactivate();
+
+            await repository.StoreAsync(category, cancellationToken);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to delete category: {ex.Message}", StatusCodes.Status400BadRequest);
+            return Result.Fail($"Failed to deactivate category: {ex.Message}", StatusCodes.Status400BadRequest);
         }
     }
 }

@@ -32,13 +32,12 @@ public class CategoriesController : BaseController
                 return categories.Select(category => new CategoryDto
                 {
                     Id = category.Id,
-                    NameEn = category.NameEn,
-                    NameDe = category.NameDe,
-                    DescriptionEn = category.DescriptionEn,
-                    DescriptionDe = category.DescriptionDe,
-                    IsActive = category.IsActive,
+                    NameEn = category.NameEnglish,
+                    NameDe = category.NameGerman,
+                    DescriptionEn = category.DescriptionEnglish,
+                    DescriptionDe = category.DescriptionGerman,
                     CreatedDate = category.CreatedDate,
-                    LastModified = category.LastModified,
+                    IsActive = category.IsActive,
                     SortOrder = category.SortOrder
                 });
             });
@@ -64,13 +63,12 @@ public class CategoriesController : BaseController
             return CreateResponse(result, category => new CategoryDto
             {
                 Id = category.Id,
-                NameEn = category.NameEn,
-                NameDe = category.NameDe,
-                DescriptionEn = category.DescriptionEn,
-                DescriptionDe = category.DescriptionDe,
-                IsActive = category.IsActive,
+                NameEn = category.NameEnglish,
+                NameDe = category.NameGerman,
+                DescriptionEn = category.DescriptionEnglish,
+                DescriptionDe = category.DescriptionGerman,
                 CreatedDate = category.CreatedDate,
-                LastModified = category.LastModified,
+                IsActive = category.IsActive,
                 SortOrder = category.SortOrder
             });
         }

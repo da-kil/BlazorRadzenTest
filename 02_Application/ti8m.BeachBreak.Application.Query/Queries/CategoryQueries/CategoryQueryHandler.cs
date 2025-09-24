@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Logging;
-using Marten;
-using ti8m.BeachBreak.Domain.CategoryAggregate;
+using ti8m.BeachBreak.Application.Query.Repositories;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.CategoryQueries;
 
@@ -8,12 +7,12 @@ public class CategoryQueryHandler :
     IQueryHandler<CategoryListQuery, Result<IEnumerable<Category>>>,
     IQueryHandler<CategoryQuery, Result<Category>>
 {
-    private readonly IQuerySession session;
+    private readonly ICategoryRepository categoryRepository;
     private readonly ILogger<CategoryQueryHandler> logger;
 
-    public CategoryQueryHandler(IQuerySession session, ILogger<CategoryQueryHandler> logger)
+    public CategoryQueryHandler(ICategoryRepository categoryRepository, ILogger<CategoryQueryHandler> logger)
     {
-        this.session = session;
+        this.categoryRepository = categoryRepository;
         this.logger = logger;
     }
 
@@ -21,44 +20,27 @@ public class CategoryQueryHandler :
     {
         try
         {
-            // For event sourcing, we need to load aggregates from event streams
-            // For now, this is a simplified approach - in a real scenario, we'd have projections for read models
-            var categories = new List<Category>();
+            var categories = await categoryRepository.GetAllCategoriesAsync(cancellationToken);
 
-            // This approach loads all category streams - not efficient for large datasets
-            // In practice, you'd want read model projections
-            var streamIds = await session.Events.QueryAllRawEvents()
-                .Where(e => e.StreamKey.StartsWith("Category"))
-                .Select(e => e.StreamId)
-                .Distinct()
-                .ToListAsync(cancellationToken);
-
-            foreach (var streamId in streamIds)
+            return Result<IEnumerable<Category>>.Success(categories.Select(o=>
             {
-                var category = await session.Events.AggregateStreamAsync<Category>(streamId, token: cancellationToken);
-                if (category != null)
+                return new Category
                 {
-                    // Filter by active status if needed
-                    if (!query.IncludeInactive && !category.IsActive)
-                        continue;
-
-                    categories.Add(category);
-                }
-            }
-
-            // Order by sort order and name
-            var orderedCategories = categories
-                .OrderBy(c => c.SortOrder)
-                .ThenBy(c => c.Name.English)
-                .ToList();
-
-            logger.LogInformation("Retrieved {Count} categories", orderedCategories.Count);
-            return Result<IEnumerable<Category>>.Success(orderedCategories);
+                    Id = o.Id,
+                    NameEnglish = o.Name.English,
+                    NameGerman = o.Name.German,
+                    DescriptionEnglish = o.Description.English,
+                    DescriptionGerman = o.Description.German,
+                    CreatedDate = o.CreatedDate,
+                    SortOrder = o.SortOrder,
+                    IsActive = o.IsActive
+                };
+            }));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to retrieve categories");
-            return Result<IEnumerable<Category>>.Fail($"Failed to retrieve categories: {ex.Message}", 500);
+            throw;
         }
     }
 
@@ -66,22 +48,24 @@ public class CategoryQueryHandler :
     {
         try
         {
-            // Load the category from event stream
-            var category = await session.Events.AggregateStreamAsync<Category>(query.CategoryId, token: cancellationToken);
+            var category = await categoryRepository.GetCategoryByIdAsync(query.CategoryId, cancellationToken);
 
-            if (category != null)
+            return Result<Category>.Success(new Category
             {
-                logger.LogInformation("Retrieved category with ID {Id}", query.CategoryId);
-                return Result<Category>.Success(category);
-            }
-
-            logger.LogWarning("Category with ID {Id} not found", query.CategoryId);
-            return Result<Category>.Fail($"Category with ID {query.CategoryId} not found", 404);
+                Id = category.Id,
+                NameEnglish = category.Name.English,
+                NameGerman = category.Name.German,
+                DescriptionEnglish = category.Description.English,
+                DescriptionGerman = category.Description.German,
+                CreatedDate = category.CreatedDate,
+                SortOrder = category.SortOrder,
+                IsActive = category.IsActive
+            });
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to retrieve category with ID {Id}", query.CategoryId);
-            return Result<Category>.Fail($"Failed to retrieve category: {ex.Message}", 500);
+            throw;
         }
     }
 }

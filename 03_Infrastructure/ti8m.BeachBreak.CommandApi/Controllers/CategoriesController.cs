@@ -34,7 +34,7 @@ public class CategoriesController : BaseController
             if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
                 return BadRequest("Category German name is required");
 
-            var category = new Category
+            var category = new CommandCategory
             {
                 NameEn = categoryDto.NameEn.Trim(),
                 NameDe = categoryDto.NameDe.Trim(),
@@ -69,7 +69,7 @@ public class CategoriesController : BaseController
             if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
                 return BadRequest("Category German name is required");
 
-            var category = new Category
+            var category = new CommandCategory
             {
                 Id = id,
                 NameEn = categoryDto.NameEn.Trim(),
@@ -77,8 +77,7 @@ public class CategoriesController : BaseController
                 DescriptionEn = categoryDto.DescriptionEn?.Trim() ?? string.Empty,
                 DescriptionDe = categoryDto.DescriptionDe?.Trim() ?? string.Empty,
                 IsActive = categoryDto.IsActive,
-                SortOrder = categoryDto.SortOrder,
-                LastModified = DateTime.UtcNow
+                SortOrder = categoryDto.SortOrder
             };
 
             Result result = await commandDispatcher.SendAsync(new UpdateCategoryCommand(category));
@@ -93,18 +92,18 @@ public class CategoriesController : BaseController
     }
 
     [HttpDelete("{id:guid}")]
-    public async Task<IActionResult> DeleteCategory(Guid id)
+    public async Task<IActionResult> DeactivateCategory(Guid id)
     {
         try
         {
-            Result result = await commandDispatcher.SendAsync(new DeleteCategoryCommand(id));
+            Result result = await commandDispatcher.SendAsync(new DeactivateCategoryCommand(id));
 
             return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error deleting category {CategoryId}", id);
-            return StatusCode(500, "An error occurred while deleting the category");
+            logger.LogError(ex, "Error deactivating category {CategoryId}", id);
+            return StatusCode(500, "An error occurred while deactivating the category");
         }
     }
 }

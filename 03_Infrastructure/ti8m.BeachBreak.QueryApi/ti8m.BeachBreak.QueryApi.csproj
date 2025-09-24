@@ -9,8 +9,8 @@
 	<ItemGroup>
 		<PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
 		<PackageReference Include="Aspire.Npgsql" Version="9.4.2" />
-		<PackageReference Include="Marten" Version="7.34.3" />
-		<PackageReference Include="Marten.AspNetCore" Version="7.34.3" />
+		<PackageReference Include="Marten" Version="8.11.0" />
+		<PackageReference Include="Marten.AspNetCore" Version="8.11.0" />
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
 	</ItemGroup>
@@ -19,6 +19,7 @@
     <ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Query\ti8m.BeachBreak.Application.Query.csproj" />
     <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Infrastructure\ti8m.BeachBreak.Core.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Aspire\ti8m.BeachBreak.ServiceDefaults\ti8m.BeachBreak.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\ti8m.BeachBreak.Infrastructure.Marten\ti8m.BeachBreak.Infrastructure.Marten.csproj" />
   </ItemGroup>
 
 </Project>

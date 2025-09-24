@@ -1,24 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
     <PackageReference Include="Aspire.Npgsql" Version="9.4.2" />
     <PackageReference Include="Marten" Version="8.11.0" />
-    <PackageReference Include="Marten.AspNetCore" Version="8.11.0" />
-    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Command\ti8m.BeachBreak.Application.Command.csproj" />
+    <ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Query\ti8m.BeachBreak.Application.Query.csproj" />
     <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Infrastructure\ti8m.BeachBreak.Core.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\Aspire\ti8m.BeachBreak.ServiceDefaults\ti8m.BeachBreak.ServiceDefaults.csproj" />
-    <ProjectReference Include="..\ti8m.BeachBreak.Infrastructure.Marten\ti8m.BeachBreak.Infrastructure.Marten.csproj" />
   </ItemGroup>
-
 </Project>

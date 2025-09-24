@@ -1,10 +1,10 @@
 namespace ti8m.BeachBreak.Application.Command.Commands.CategoryCommands;
 
-public class DeleteCategoryCommand : ICommand<Result>
+public class DeactivateCategoryCommand : ICommand<Result>
 {
     public Guid CategoryId { get; init; }
 
-    public DeleteCategoryCommand(Guid categoryId)
+    public DeactivateCategoryCommand(Guid categoryId)
     {
         CategoryId = categoryId;
     }

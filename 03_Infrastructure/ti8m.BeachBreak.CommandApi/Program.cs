@@ -1,9 +1,9 @@
 using Asp.Versioning;
 using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.Application.Command;
-using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Core.Infrastructure.Database;
+using ti8m.BeachBreak.Infrastructure.Marten;
 
 namespace ti8m.BeachBreak.CommandApi
 {
@@ -93,9 +93,7 @@ namespace ti8m.BeachBreak.CommandApi
             builder.AddNpgsqlDataSource(connectionName: "beachbreakdb");
             builder.MigrateDatabase();
 
-            // Configure MartenDB
-            var connectionString = builder.Configuration.GetConnectionString("beachbreakdb");
-            builder.Services.AddMarten(connectionString ?? throw new InvalidOperationException("Connection string 'beachbreakdb' not found"));
+            builder.AddMartenInfrastructure();
 
             builder.Services.AddScoped<UserContext>();
             builder.Services.AddApplication(builder.Configuration);
