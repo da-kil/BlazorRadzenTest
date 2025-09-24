@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.14.36414.22
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11012.119 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "05_Frontend", "05_Frontend", "{6A42808D-F380-42A1-86F8-595046217F8F}"
 EndProject
@@ -30,6 +30,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "04_Core", "04_Core", "{3598F0A4-BC2E-44DF-BCAE-0A184F66183B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ti8m.BeachBreak.Core.Infrastructure", "04_Core\ti8m.BeachBreak.Core.Infrastructure\ti8m.BeachBreak.Core.Infrastructure.csproj", "{905054D9-C687-4BEC-9BE5-88A8DFB21A73}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "01_Domain", "01_Domain", "{648F5B63-1EBA-4A45-A1BF-A0F7CF975F60}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ti8m.BeachBreak.Domain", "01_Domain\ti8m.BeachBreak.Domain\ti8m.BeachBreak.Domain.csproj", "{3D181202-2F1B-4EDD-9A9D-45D1DC47D981}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ti8m.BeachBreak.Core.Domain", "04_Core\ti8m.BeachBreak.Core.Domain\ti8m.BeachBreak.Core.Domain.csproj", "{EFC422BB-8055-4B74-9DE2-5BD6C623FA23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -73,6 +79,14 @@ Global
 		{905054D9-C687-4BEC-9BE5-88A8DFB21A73}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{905054D9-C687-4BEC-9BE5-88A8DFB21A73}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{905054D9-C687-4BEC-9BE5-88A8DFB21A73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D181202-2F1B-4EDD-9A9D-45D1DC47D981}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D181202-2F1B-4EDD-9A9D-45D1DC47D981}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D181202-2F1B-4EDD-9A9D-45D1DC47D981}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D181202-2F1B-4EDD-9A9D-45D1DC47D981}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EFC422BB-8055-4B74-9DE2-5BD6C623FA23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EFC422BB-8055-4B74-9DE2-5BD6C623FA23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EFC422BB-8055-4B74-9DE2-5BD6C623FA23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EFC422BB-8055-4B74-9DE2-5BD6C623FA23}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -87,6 +101,8 @@ Global
 		{871C7297-601D-4B04-AEC1-F85CE4A05647} = {B1397279-8E68-4B29-807C-C52097857D96}
 		{98E75359-DA0B-480D-8762-64C88EAAF428} = {B1397279-8E68-4B29-807C-C52097857D96}
 		{905054D9-C687-4BEC-9BE5-88A8DFB21A73} = {3598F0A4-BC2E-44DF-BCAE-0A184F66183B}
+		{3D181202-2F1B-4EDD-9A9D-45D1DC47D981} = {648F5B63-1EBA-4A45-A1BF-A0F7CF975F60}
+		{EFC422BB-8055-4B74-9DE2-5BD6C623FA23} = {3598F0A4-BC2E-44DF-BCAE-0A184F66183B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {90EBA677-548F-4090-A7AE-01B7489B6FF2}
