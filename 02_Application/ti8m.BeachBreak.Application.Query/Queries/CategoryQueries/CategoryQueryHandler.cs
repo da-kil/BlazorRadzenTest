@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
-using Npgsql;
+using Marten;
+using ti8m.BeachBreak.Domain.CategoryAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.CategoryQueries;
 
@@ -7,12 +8,12 @@ public class CategoryQueryHandler :
     IQueryHandler<CategoryListQuery, Result<IEnumerable<Category>>>,
     IQueryHandler<CategoryQuery, Result<Category>>
 {
-    private readonly NpgsqlDataSource dataSource;
+    private readonly IQuerySession session;
     private readonly ILogger<CategoryQueryHandler> logger;
 
-    public CategoryQueryHandler(NpgsqlDataSource dataSource, ILogger<CategoryQueryHandler> logger)
+    public CategoryQueryHandler(IQuerySession session, ILogger<CategoryQueryHandler> logger)
     {
-        this.dataSource = dataSource;
+        this.session = session;
         this.logger = logger;
     }
 
@@ -20,41 +21,39 @@ public class CategoryQueryHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
-
-            var whereClause = query.IncludeInactive ? "" : "WHERE is_active = true";
-
-            cmd.CommandText = $"""
-                SELECT id, name_en, name_de, description_en, description_de, is_active, created_date, last_modified, sort_order
-                FROM categories
-                {whereClause}
-                ORDER BY sort_order ASC, name_en ASC
-                """;
-
+            // For event sourcing, we need to load aggregates from event streams
+            // For now, this is a simplified approach - in a real scenario, we'd have projections for read models
             var categories = new List<Category>();
 
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var category = new Category
-                {
-                    Id = reader.GetGuid(0),
-                    NameEn = reader.GetString(1),
-                    NameDe = reader.GetString(2),
-                    DescriptionEn = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                    DescriptionDe = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                    IsActive = reader.GetBoolean(5),
-                    CreatedDate = reader.GetDateTime(6),
-                    LastModified = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
-                    SortOrder = reader.GetInt32(8)
-                };
+            // This approach loads all category streams - not efficient for large datasets
+            // In practice, you'd want read model projections
+            var streamIds = await session.Events.QueryAllRawEvents()
+                .Where(e => e.StreamKey.StartsWith("Category"))
+                .Select(e => e.StreamId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
 
-                categories.Add(category);
+            foreach (var streamId in streamIds)
+            {
+                var category = await session.Events.AggregateStreamAsync<Category>(streamId, token: cancellationToken);
+                if (category != null)
+                {
+                    // Filter by active status if needed
+                    if (!query.IncludeInactive && !category.IsActive)
+                        continue;
+
+                    categories.Add(category);
+                }
             }
 
-            logger.LogInformation("Retrieved {Count} categories", categories.Count);
-            return Result<IEnumerable<Category>>.Success(categories);
+            // Order by sort order and name
+            var orderedCategories = categories
+                .OrderBy(c => c.SortOrder)
+                .ThenBy(c => c.Name.English)
+                .ToList();
+
+            logger.LogInformation("Retrieved {Count} categories", orderedCategories.Count);
+            return Result<IEnumerable<Category>>.Success(orderedCategories);
         }
         catch (Exception ex)
         {
@@ -67,33 +66,11 @@ public class CategoryQueryHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            // Load the category from event stream
+            var category = await session.Events.AggregateStreamAsync<Category>(query.CategoryId, token: cancellationToken);
 
-            cmd.CommandText = """
-                SELECT id, name_en, name_de, description_en, description_de, is_active, created_date, last_modified, sort_order
-                FROM categories
-                WHERE id = @id
-                """;
-
-            cmd.Parameters.AddWithValue("@id", query.CategoryId);
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            if (await reader.ReadAsync(cancellationToken))
+            if (category != null)
             {
-                var category = new Category
-                {
-                    Id = reader.GetGuid(0),
-                    NameEn = reader.GetString(1),
-                    NameDe = reader.GetString(2),
-                    DescriptionEn = reader.IsDBNull(3) ? string.Empty : reader.GetString(3),
-                    DescriptionDe = reader.IsDBNull(4) ? string.Empty : reader.GetString(4),
-                    IsActive = reader.GetBoolean(5),
-                    CreatedDate = reader.GetDateTime(6),
-                    LastModified = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
-                    SortOrder = reader.GetInt32(8)
-                };
-
                 logger.LogInformation("Retrieved category with ID {Id}", query.CategoryId);
                 return Result<Category>.Success(category);
             }

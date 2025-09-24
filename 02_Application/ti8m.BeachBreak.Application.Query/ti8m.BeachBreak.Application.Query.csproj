@@ -8,11 +8,17 @@
 
   <ItemGroup>
 	  <PackageReference Include="Aspire.Npgsql" Version="9.4.2" />
+	  <PackageReference Include="Marten" Version="7.34.3" />
 	  <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
 	  <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.9" />
 	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
 	  <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
 	  <PackageReference Include="Scrutor" Version="6.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ti8m.BeachBreak.Application.Command\ti8m.BeachBreak.Application.Command.csproj" />
+    <ProjectReference Include="..\..\01_Domain\ti8m.BeachBreak.Domain\ti8m.BeachBreak.Domain.csproj" />
   </ItemGroup>
 	
 </Project>

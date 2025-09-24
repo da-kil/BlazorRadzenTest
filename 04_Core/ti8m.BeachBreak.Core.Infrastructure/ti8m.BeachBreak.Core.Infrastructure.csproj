@@ -8,9 +8,15 @@
 
   <ItemGroup>
 	<PackageReference Include="Aspire.Npgsql" Version="9.4.2" />
+	<PackageReference Include="Marten" Version="7.34.3" />
 	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Command\ti8m.BeachBreak.Application.Command.csproj" />
+    <ProjectReference Include="..\..\01_Domain\ti8m.BeachBreak.Domain\ti8m.BeachBreak.Domain.csproj" />
   </ItemGroup>
 
 </Project>
