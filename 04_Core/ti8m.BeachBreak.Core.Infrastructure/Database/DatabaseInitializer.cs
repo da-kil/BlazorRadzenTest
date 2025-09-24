@@ -123,23 +123,6 @@ public class DatabaseInitializer
             -- Create composite indexes for status queries
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_status ON questionnaire_templates(is_active, is_published);
             CREATE INDEX IF NOT EXISTS idx_questionnaire_templates_assignable ON questionnaire_templates(is_active, is_published) WHERE is_active = true AND is_published = true;
-
-            -- Insert a sample questionnaire template if it doesn't exist
-            INSERT INTO questionnaire_templates (id, name, description, category, is_active, is_published, status, sections, settings, created_at, updated_at)
-            SELECT * FROM (VALUES (
-                'a84f5d93-edc4-4f8e-bb30-f03dc7a983c2'::uuid,
-                'Annual Performance Review 2024',
-                'Comprehensive annual performance review questionnaire',
-                'Performance Review',
-                true,
-                true,
-                1, -- Published
-                '[{"id":"section1","title":"Self-Assessment","description":"Rate your performance in key competencies","order":0,"isRequired":true,"questionType":"SelfAssessment","configuration":{"competencies":[{"key":"communication","name":"Communication"},{"key":"teamwork","name":"Teamwork"}]}},{"id":"section2","title":"Goal Setting","description":"Set your goals for the upcoming year","order":1,"isRequired":true,"questionType":"GoalAchievement","configuration":{"maxGoals":3}}]'::jsonb,
-                '{"allowSaveProgress":true,"showProgressBar":true,"requireAllSections":true,"successMessage":"Thank you for completing your annual review!","allowReviewBeforeSubmit":true}'::jsonb,
-                NOW(),
-                NOW()
-            )) AS sample_template(id, name, description, category, is_active, is_published, status, sections, settings, created_at, updated_at)
-            WHERE NOT EXISTS (SELECT 1 FROM questionnaire_templates WHERE id = 'a84f5d93-edc4-4f8e-bb30-f03dc7a983c2'::uuid);
             """;
 
         await using var command = connection.CreateCommand();

@@ -103,6 +103,22 @@ public class QuestionnaireTemplatesController : BaseController
         }
     }
 
+    [HttpGet("archived")]
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetArchivedTemplates()
+    {
+        try
+        {
+            var result = await queryDispatcher.QueryAsync(new ArchivedQuestionnaireTemplatesQuery());
+            return CreateResponse(result, templates => templates.Select(MapToDto));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving archived questionnaire templates");
+            return StatusCode(500, "An error occurred while retrieving archived templates");
+        }
+    }
+
     [HttpGet("assignable")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAssignableTemplates()

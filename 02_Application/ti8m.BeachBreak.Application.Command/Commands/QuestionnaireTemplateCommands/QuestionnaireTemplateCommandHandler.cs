@@ -190,8 +190,30 @@ public class QuestionnaireTemplateCommandHandler :
         try
         {
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
 
+            // First, check if there are any active assignments for this template
+            await using var checkCmd = connection.CreateCommand();
+            checkCmd.CommandText = """
+                SELECT COUNT(*)
+                FROM questionnaire_assignments
+                WHERE template_id = @template_id
+                AND status IN (@assigned_status, @in_progress_status, @overdue_status)
+                """;
+
+            checkCmd.Parameters.AddWithValue("@template_id", command.Id);
+            checkCmd.Parameters.AddWithValue("@assigned_status", 0); // Assigned
+            checkCmd.Parameters.AddWithValue("@in_progress_status", 1); // InProgress
+            checkCmd.Parameters.AddWithValue("@overdue_status", 3); // Overdue
+
+            var activeAssignmentsCount = (long)await checkCmd.ExecuteScalarAsync(cancellationToken);
+
+            if (activeAssignmentsCount > 0)
+            {
+                return Result.Fail($"Cannot unpublish questionnaire template: {activeAssignmentsCount} active assignment(s) exist. Complete or cancel these assignments first.", 400);
+            }
+
+            // If no active assignments, proceed with unpublishing
+            await using var cmd = connection.CreateCommand();
             cmd.CommandText = """
                 UPDATE questionnaire_templates
                 SET status = @status,
@@ -258,8 +280,30 @@ public class QuestionnaireTemplateCommandHandler :
         try
         {
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
 
+            // Check if there are any active assignments for this template before archiving
+            await using var checkCmd = connection.CreateCommand();
+            checkCmd.CommandText = """
+                SELECT COUNT(*)
+                FROM questionnaire_assignments
+                WHERE template_id = @template_id
+                AND status IN (@assigned_status, @in_progress_status, @overdue_status)
+                """;
+
+            checkCmd.Parameters.AddWithValue("@template_id", command.Id);
+            checkCmd.Parameters.AddWithValue("@assigned_status", 0); // Assigned
+            checkCmd.Parameters.AddWithValue("@in_progress_status", 1); // InProgress
+            checkCmd.Parameters.AddWithValue("@overdue_status", 3); // Overdue
+
+            var activeAssignmentsCount = (long)await checkCmd.ExecuteScalarAsync(cancellationToken);
+
+            if (activeAssignmentsCount > 0)
+            {
+                return Result.Fail($"Cannot archive questionnaire template: {activeAssignmentsCount} active assignment(s) exist. Complete or cancel these assignments first.", 400);
+            }
+
+            // If no active assignments, proceed with archiving
+            await using var cmd = connection.CreateCommand();
             cmd.CommandText = """
                 UPDATE questionnaire_templates
                 SET status = @status,

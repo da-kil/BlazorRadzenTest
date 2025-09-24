@@ -25,14 +25,14 @@
                              Icon="keyboard_arrow_up"
                              Size="ButtonSize.Small"
                              Click="@(() => OnMoveUpClick())"
-                             Disabled="@(!CanMoveUp)"
+                             Disabled="@(!CanMoveUp || !Template.IsAvailableForEditing)"
                              Title="Move section up"
                              Class="action-btn" />
                 <RadzenButton ButtonStyle="ButtonStyle.Light"
                              Icon="keyboard_arrow_down"
                              Size="ButtonSize.Small"
                              Click="@(() => OnMoveDownClick())"
-                             Disabled="@(!CanMoveDown)"
+                             Disabled="@(!CanMoveDown || !Template.IsAvailableForEditing)"
                              Title="Move section down"
                              Class="action-btn" />
                 <RadzenButton ButtonStyle="ButtonStyle.Danger"
@@ -40,7 +40,8 @@
                              Size="ButtonSize.Small"
                              Click="@(() => OnDeleteClick())"
                              Title="Delete section"
-                             Class="action-btn action-btn-danger" />
+                             Class="action-btn action-btn-danger"
+                             Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </div>
 
@@ -53,7 +54,8 @@
                                        TextProperty="Text"
                                        ValueProperty="Value"
                                        Orientation="Radzen.Orientation.Horizontal"
-                                       Class="role-select-modern" />
+                                       Class="role-select-modern"
+                                       Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </div>
     </div>
@@ -66,7 +68,8 @@
             <RadzenTextBox Value="@Section.Title"
                          ValueChanged="@(value => OnSectionTitleChanged(value))"
                          Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
-                         Class="title-input-modern" />
+                         Class="title-input-modern"
+                         Disabled="@(!Template.IsAvailableForEditing)" />
         </div>
 
         <!-- Description Input -->
@@ -75,6 +78,7 @@
                           ValueChanged="@(value => OnSectionDescriptionChanged(value))"
                           Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
                           Class="description-input-modern"
+                          Disabled="@(!Template.IsAvailableForEditing)"
                           Rows="3" />
         </div>
 
@@ -93,21 +97,24 @@
                         <RadzenDropDown Value="@GetRatingScale(firstQuestion)"
                                        ValueChanged="@((int value) => SetRatingScale(firstQuestion, value))"
                                        Data="@(new List<int> { 3, 4, 5, 7, 10 })"
-                                       Class="modern-dropdown" />
+                                       Class="modern-dropdown"
+                                       Disabled="@(!Template.IsAvailableForEditing)" />
                     </div>
                     <div class="scale-input">
                         <RadzenText TextStyle="TextStyle.Caption" Class="input-label">Low Label</RadzenText>
                         <RadzenTextBox Value="@GetScaleLowLabel(firstQuestion)"
                                       ValueChanged="@((string value) => SetScaleLowLabel(firstQuestion, value))"
                                       Placeholder="e.g., Poor, Beginner"
-                                      Class="modern-textbox" />
+                                      Class="modern-textbox"
+                                      Disabled="@(!Template.IsAvailableForEditing)" />
                     </div>
                     <div class="scale-input">
                         <RadzenText TextStyle="TextStyle.Caption" Class="input-label">High Label</RadzenText>
                         <RadzenTextBox Value="@GetScaleHighLabel(firstQuestion)"
                                       ValueChanged="@((string value) => SetScaleHighLabel(firstQuestion, value))"
                                       Placeholder="e.g., Excellent, Expert"
-                                      Class="modern-textbox" />
+                                      Class="modern-textbox"
+                                      Disabled="@(!Template.IsAvailableForEditing)" />
                     </div>
                 </div>
             </div>
@@ -144,7 +151,8 @@
                              ButtonStyle="ButtonStyle.Primary"
                              Icon="add_circle_outline"
                              Size="ButtonSize.Small"
-                             Click="@(() => OnAddItemClick())" />
+                             Click="@(() => OnAddItemClick())"
+                             Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </div>
 
@@ -284,6 +292,7 @@
                 var currentQuestionIndex = questionIndex;
 
                 <QuestionCard Question="@question"
+                            Template="@Template"
                             CanMoveUp="@(currentQuestionIndex > 0)"
                             CanMoveDown="@(currentQuestionIndex < Section.Questions.Count - 1)"
                             QuestionTypeLabels="@QuestionTypeLabels"
@@ -614,6 +623,7 @@
 
 @code {
     [Parameter, EditorRequired] public QuestionSection Section { get; set; } = null!;
+    [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
     [Parameter, EditorRequired] public bool CanMoveUp { get; set; }
     [Parameter, EditorRequired] public bool CanMoveDown { get; set; }
     [Parameter, EditorRequired] public bool ShowQuestionTypeSelection { get; set; }

@@ -26,6 +26,9 @@ public class QuestionnaireTemplate
         if (Status == TemplateStatus.Archived)
             throw new InvalidOperationException("Cannot publish an archived template");
 
+        if (Status == TemplateStatus.Published)
+            throw new InvalidOperationException("Template is already published");
+
         var now = DateTime.UtcNow;
         Status = TemplateStatus.Published;
         PublishedBy = publishedBy;
@@ -41,10 +44,14 @@ public class QuestionnaireTemplate
             throw new InvalidOperationException("Only published templates can be unpublished to draft");
 
         Status = TemplateStatus.Draft;
+        PublishedBy = string.Empty;
     }
 
     public void Archive()
     {
+        if (Status == TemplateStatus.Archived)
+            throw new InvalidOperationException("Template is already archived");
+
         Status = TemplateStatus.Archived;
     }
 

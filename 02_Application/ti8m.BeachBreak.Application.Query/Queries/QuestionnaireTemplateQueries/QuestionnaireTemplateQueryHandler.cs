@@ -10,6 +10,7 @@ public class QuestionnaireTemplateQueryHandler :
     IQueryHandler<QuestionnaireTemplateQuery, Result<QuestionnaireTemplate>>,
     IQueryHandler<PublishedQuestionnaireTemplatesQuery, Result<IEnumerable<QuestionnaireTemplate>>>,
     IQueryHandler<DraftQuestionnaireTemplatesQuery, Result<IEnumerable<QuestionnaireTemplate>>>,
+    IQueryHandler<ArchivedQuestionnaireTemplatesQuery, Result<IEnumerable<QuestionnaireTemplate>>>,
     IQueryHandler<AssignableQuestionnaireTemplatesQuery, Result<IEnumerable<QuestionnaireTemplate>>>
 {
     private readonly NpgsqlDataSource dataSource;
@@ -150,6 +151,39 @@ public class QuestionnaireTemplateQueryHandler :
         {
             logger.LogError(ex, "Failed to retrieve draft questionnaire templates");
             return Result<IEnumerable<QuestionnaireTemplate>>.Fail($"Failed to retrieve draft questionnaire templates: {ex.Message}", 500);
+        }
+    }
+
+    public async Task<Result<IEnumerable<QuestionnaireTemplate>>> HandleAsync(ArchivedQuestionnaireTemplatesQuery query, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            await using var cmd = connection.CreateCommand();
+
+            cmd.CommandText = """
+                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
+                FROM questionnaire_templates
+                WHERE status = 2
+                ORDER BY updated_at DESC, created_at DESC
+                """;
+
+            var templates = new List<QuestionnaireTemplate>();
+
+            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var template = MapQuestionnaireTemplate(reader);
+                templates.Add(template);
+            }
+
+            logger.LogInformation("Retrieved {Count} archived questionnaire templates", templates.Count);
+            return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to retrieve archived questionnaire templates");
+            return Result<IEnumerable<QuestionnaireTemplate>>.Fail($"Failed to retrieve archived questionnaire templates: {ex.Message}", 500);
         }
     }
 

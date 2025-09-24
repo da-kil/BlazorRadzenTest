@@ -16,19 +16,22 @@
                              Icon="self_improvement"
                              Size="ButtonSize.Small"
                              Click="@(() => OnAddSectionWithTypeInternal(QuestionType.SelfAssessment))"
-                             Title="Add rating-based competency assessment" />
+                             Title="Add rating-based competency assessment"
+                             Disabled="@(!Template.IsAvailableForEditing)" />
                 <RadzenButton Text="Goal Achievement"
                              ButtonStyle="ButtonStyle.Success"
                              Icon="track_changes"
                              Size="ButtonSize.Small"
                              Click="@(() => OnAddSectionWithTypeInternal(QuestionType.GoalAchievement))"
-                             Title="Add goal and achievement review" />
+                             Title="Add goal and achievement review"
+                             Disabled="@(!Template.IsAvailableForEditing)" />
                 <RadzenButton Text="Text Question"
                              ButtonStyle="ButtonStyle.Secondary"
                              Icon="psychology"
                              Size="ButtonSize.Small"
                              Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
-                             Title="Add open-ended text responses" />
+                             Title="Add open-ended text responses"
+                             Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </div>
 
@@ -85,6 +88,7 @@
                 var currentSectionIndex = sectionIndex;
 
                 <SectionCard Section="@templateSection"
+                           Template="@Template"
                            CanMoveUp="@(currentSectionIndex > 0)"
                            CanMoveDown="@(currentSectionIndex < Template.Sections.Count - 1)"
                            ShowQuestionTypeSelection="@(ShowQuestionTypeSelection && SelectedSectionIndex == currentSectionIndex)"

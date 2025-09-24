@@ -42,10 +42,11 @@
 					case TemplateStatus.Draft:
 						<RadzenButton Text="Save" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" />
 						<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" />
+						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@ArchiveQuestionnaire" />
 						break;
 					case TemplateStatus.Published:
-						<RadzenButton Text="Save" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveQuestionnaire" />
 						<RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@UnpublishQuestionnaire" />
+						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@ArchiveQuestionnaire" />
 						break;
 					case TemplateStatus.Archived:
 						<RadzenButton Text="Restore" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" />
@@ -107,6 +108,7 @@
 					@if (editingQuestion != null)
 					{
 						<QuestionCard Question="@editingQuestion"
+									 Template="@template"
 									 CanMoveUp="false"
 									 CanMoveDown="false"
 									 QuestionTypeLabels="@questionTypeLabels"
@@ -174,8 +176,22 @@
 					<div class="step-navigation mt-4 d-flex justify-content-between">
 						<RadzenButton Text="Previous: Build Sections" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
 						<div class="d-flex gap-2">
-							<RadzenButton Text="Save Draft" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" />
-							<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" />
+							@{
+								var stepNavStatus = IsEditMode ? template.Status : TemplateStatus.Draft;
+							}
+							@switch (stepNavStatus)
+							{
+								case TemplateStatus.Draft:
+									<RadzenButton Text="Save Draft" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" />
+									<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" />
+									break;
+								case TemplateStatus.Published:
+									<RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@UnpublishQuestionnaire" />
+									break;
+								case TemplateStatus.Archived:
+									<RadzenButton Text="Restore" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" />
+									break;
+							}
 						</div>
 					</div>
 				</div>
@@ -842,6 +858,33 @@ private async Task RestoreQuestionnaire()
 	{
 		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to enable template: {ex.Message}");
 		template.Status = TemplateStatus.Archived; // Revert on failure
+	}
+}
+
+private async Task ArchiveQuestionnaire()
+{
+	try
+	{
+		var previousStatus = template.Status;
+		template.Status = TemplateStatus.Archived;
+		template.LastModified = DateTime.Now;
+
+		var updated = await ApiService.UpdateTemplateAsync(template);
+		if (updated != null)
+		{
+			NotificationService.Notify(NotificationSeverity.Success, "Archived", "Questionnaire template has been archived and is no longer available for assignments");
+		}
+		else
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to archive template");
+			template.Status = previousStatus; // Revert on failure
+		}
+	}
+	catch (Exception ex)
+	{
+		var previousStatus = template.Status;
+		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to archive template: {ex.Message}");
+		template.Status = previousStatus; // Revert on failure
 	}
 }
 

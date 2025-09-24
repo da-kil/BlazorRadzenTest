@@ -122,19 +122,20 @@
                                                  Icon="keyboard_arrow_up"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => MoveCompetencyUp(competencyIndex))"
-                                                 Disabled="@(competencyIndex == 0)"
+                                                 Disabled="@(competencyIndex == 0 || !Template.IsAvailableForEditing)"
                                                  Title="Move up" />
                                     <RadzenButton ButtonStyle="ButtonStyle.Light"
                                                  Icon="keyboard_arrow_down"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => MoveCompetencyDown(competencyIndex))"
-                                                 Disabled="@(competencyIndex == competencies.Count - 1)"
+                                                 Disabled="@(competencyIndex == competencies.Count - 1 || !Template.IsAvailableForEditing)"
                                                  Title="Move down" />
                                     <RadzenButton ButtonStyle="ButtonStyle.Danger"
                                                  Icon="delete_outline"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => RemoveCompetency(competencyIndex))"
-                                                 Title="Delete competency" />
+                                                 Title="Delete competency"
+                                                 Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
                             <div class="competency-input-row">
@@ -142,6 +143,7 @@
                                     <RadzenTextBox Value="@competency.Title"
                                                   ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
                                                   Placeholder="Enter competency title..."
+                                                  Disabled="@(!Template.IsAvailableForEditing)"
                                                   Class="@GetCompetencyTitleValidationClass(competencyIndex)"
                                                   @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
                                     @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
@@ -155,7 +157,8 @@
                                 <div class="required-checkbox-container">
                                     <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
                                                    ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
-                                                   Name="@($"comp_req_{Question.Id}_{competencyIndex}")" />
+                                                   Name="@($"comp_req_{Question.Id}_{competencyIndex}")"
+                                                   Disabled="@(!Template.IsAvailableForEditing)" />
                                     <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-2" />
                                 </div>
                             </div>
@@ -201,19 +204,20 @@
                                                  Icon="keyboard_arrow_up"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => MoveGoalCategoryUp(categoryIndex))"
-                                                 Disabled="@(categoryIndex == 0)"
+                                                 Disabled="@(categoryIndex == 0 || !Template.IsAvailableForEditing)"
                                                  Title="Move up" />
                                     <RadzenButton ButtonStyle="ButtonStyle.Light"
                                                  Icon="keyboard_arrow_down"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => MoveGoalCategoryDown(categoryIndex))"
-                                                 Disabled="@(categoryIndex == goalCategories.Count - 1)"
+                                                 Disabled="@(categoryIndex == goalCategories.Count - 1 || !Template.IsAvailableForEditing)"
                                                  Title="Move down" />
                                     <RadzenButton ButtonStyle="ButtonStyle.Danger"
                                                  Icon="delete"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => RemoveGoalCategory(categoryIndex))"
-                                                 Title="Delete" />
+                                                 Title="Delete"
+                                                 Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
                             <div class="goal-category-input-row">
@@ -221,6 +225,7 @@
                                     <RadzenTextBox Value="@category.Title"
                                                   ValueChanged="@((string value) => UpdateGoalCategoryTitle(categoryIndex, value))"
                                                   Placeholder="Enter goal category title..."
+                                                  Disabled="@(!Template.IsAvailableForEditing)"
                                                   Class="@GetGoalCategoryTitleValidationClass(categoryIndex)"
                                                   @onblur="@(() => ValidateGoalCategoryTitle(categoryIndex))" />
                                     @if (!GetGoalCategoryTitleValid(categoryIndex) && GetGoalCategoryTitleValidated(categoryIndex))
@@ -234,7 +239,8 @@
                                 <div class="required-checkbox-container">
                                     <RadzenCheckBox Value="@GetGoalCategoryRequired(categoryIndex)"
                                                    ValueChanged="@((bool value) => UpdateGoalCategoryRequired(categoryIndex, value))"
-                                                   Name="@($"goal_req_{Question.Id}_{categoryIndex}")" />
+                                                   Name="@($"goal_req_{Question.Id}_{categoryIndex}")"
+                                                   Disabled="@(!Template.IsAvailableForEditing)" />
                                     <RadzenLabel Text="Required" Component="@($"goal_req_{Question.Id}_{categoryIndex}")" Class="ms-2" />
                                 </div>
                             </div>
@@ -280,19 +286,20 @@
                                                  Icon="keyboard_arrow_up"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => MoveTextSectionUp(sectionIndex))"
-                                                 Disabled="@(sectionIndex == 0)"
+                                                 Disabled="@(sectionIndex == 0 || !Template.IsAvailableForEditing)"
                                                  Title="Move up" />
                                     <RadzenButton ButtonStyle="ButtonStyle.Light"
                                                  Icon="keyboard_arrow_down"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => MoveTextSectionDown(sectionIndex))"
-                                                 Disabled="@(sectionIndex == textSections.Count - 1)"
+                                                 Disabled="@(sectionIndex == textSections.Count - 1 || !Template.IsAvailableForEditing)"
                                                  Title="Move down" />
                                     <RadzenButton ButtonStyle="ButtonStyle.Danger"
                                                  Icon="delete"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => RemoveTextSection(sectionIndex))"
-                                                 Title="Delete" />
+                                                 Title="Delete"
+                                                 Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
                             <div class="text-section-input-row">
@@ -300,6 +307,7 @@
                                     <RadzenTextBox Value="@textSection.Title"
                                                   ValueChanged="@((string value) => UpdateTextSectionTitle(sectionIndex, value))"
                                                   Placeholder="Enter section title..."
+                                                  Disabled="@(!Template.IsAvailableForEditing)"
                                                   Class="@GetTextSectionTitleValidationClass(sectionIndex)"
                                                   @onblur="@(() => ValidateTextSectionTitle(sectionIndex))" />
                                     @if (!GetTextSectionTitleValid(sectionIndex) && GetTextSectionTitleValidated(sectionIndex))
@@ -313,7 +321,8 @@
                                 <div class="required-checkbox-container">
                                     <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
                                                    ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
-                                                   Name="@($"text_req_{Question.Id}_{sectionIndex}")" />
+                                                   Name="@($"text_req_{Question.Id}_{sectionIndex}")"
+                                                   Disabled="@(!Template.IsAvailableForEditing)" />
                                     <RadzenLabel Text="Required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-2" />
                                 </div>
                             </div>
@@ -335,6 +344,7 @@
 
 @code {
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = null!;
+    [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
     [Parameter, EditorRequired] public bool CanMoveUp { get; set; }
     [Parameter, EditorRequired] public bool CanMoveDown { get; set; }
     [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
