@@ -108,14 +108,14 @@
 					@if (editingQuestion != null)
 					{
 						<QuestionCard Question="@editingQuestion"
-									 Template="@template"
-									 CanMoveUp="false"
-									 CanMoveDown="false"
-									 QuestionTypeLabels="@questionTypeLabels"
-									 OnEdit="@(() => { })"
-									 OnMoveUp="@(() => { })"
-									 OnMoveDown="@(() => { })"
-									 OnDelete="@(() => { })" />
+									  Template="@template"
+									  CanMoveUp="false"
+									  CanMoveDown="false"
+									  QuestionTypeLabels="@questionTypeLabels"
+									  OnEdit="@(() => { })"
+									  OnMoveUp="@(() => { })"
+									  OnMoveDown="@(() => { })"
+									  OnDelete="@(() => { })" />
 					}
 				</div>
 			</div>
@@ -689,492 +689,492 @@
 
 
 
-private async Task SaveQuestionnaire()
-{
-	if (!ValidateQuestionnaire())
+	private async Task SaveQuestionnaire()
 	{
-		return;
-	}
-
-	try
-	{
-		template.LastModified = DateTime.Now;
-
-		if (IsEditMode)
+		if (!ValidateQuestionnaire())
 		{
-			var updated = await ApiService.UpdateTemplateAsync(template);
-			if (updated != null)
+			return;
+		}
+
+		try
+		{
+			template.LastModified = DateTime.Now;
+
+			if (IsEditMode)
 			{
-				NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template updated successfully");
+				var updated = await ApiService.UpdateTemplateAsync(template);
+				if (updated != null)
+				{
+					NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template updated successfully");
+				}
+				else
+				{
+					NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update template - no response from server");
+				}
 			}
 			else
 			{
-				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update template - no response from server");
+				var created = await ApiService.CreateTemplateAsync(template);
+				template.Id = created.Id; // Update with the server-generated ID
+				NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
 			}
 		}
-		else
+		catch (Exception ex)
 		{
-			var created = await ApiService.CreateTemplateAsync(template);
-			template.Id = created.Id; // Update with the server-generated ID
-			NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save template: {ex.Message}");
 		}
 	}
-	catch (Exception ex)
+
+	private async Task PublishQuestionnaire()
 	{
-		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save template: {ex.Message}");
-	}
-}
-
-private async Task PublishQuestionnaire()
-{
-	if (!ValidateQuestionnaire())
-	{
-		return;
-	}
-
-	try
-	{
-		// Save the template first
-		await SaveQuestionnaire();
-
-		// Set as published
-		template.Status = TemplateStatus.Published;
-		template.LastModified = DateTime.Now;
-		template.LastPublishedDate = DateTime.Now;
-
-		// Set PublishedDate only on first publish
-		if (template.PublishedDate == null)
+		if (!ValidateQuestionnaire())
 		{
-			template.PublishedDate = DateTime.Now;
+			return;
 		}
 
-		// TODO: Set PublishedBy when user context is available
-		// template.PublishedBy = currentUser.Name;
-
-		// Update the template with published status
-		if (IsEditMode)
+		try
 		{
-			var updated = await ApiService.UpdateTemplateAsync(template);
-			if (updated != null)
+			// Save the template first
+			await SaveQuestionnaire();
+
+			// Set as published
+			template.Status = TemplateStatus.Published;
+			template.LastModified = DateTime.Now;
+			template.LastPublishedDate = DateTime.Now;
+
+			// Set PublishedDate only on first publish
+			if (template.PublishedDate == null)
 			{
-				NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template is now published and available for assignments");
+				template.PublishedDate = DateTime.Now;
+			}
+
+			// TODO: Set PublishedBy when user context is available
+			// template.PublishedBy = currentUser.Name;
+
+			// Update the template with published status
+			if (IsEditMode)
+			{
+				var updated = await ApiService.PublishTemplateAsync(template.Id, "");
+				if (updated != null)
+				{
+					NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template is now published and available for assignments");
+				}
+				else
+				{
+					NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
+					// Revert on failure
+					template.Status = TemplateStatus.Draft;
+					template.LastPublishedDate = null;
+				}
 			}
 			else
 			{
-				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
-				// Revert on failure
-				template.Status = TemplateStatus.Draft;
-				template.LastPublishedDate = null;
+				// For new templates, properties are already set, just show success
+				NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template created and published successfully");
 			}
 		}
-		else
+		catch (Exception ex)
 		{
-			// For new templates, properties are already set, just show success
-			NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template created and published successfully");
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
+			// Revert on failure
+			template.Status = TemplateStatus.Draft;
+			template.LastPublishedDate = null;
 		}
 	}
-	catch (Exception ex)
-	{
-		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
-		// Revert on failure
-		template.Status = TemplateStatus.Draft;
-		template.LastPublishedDate = null;
-	}
-}
 
-private async Task UnpublishQuestionnaire()
-{
-	try
+	private async Task UnpublishQuestionnaire()
 	{
-		// Set as unpublished (back to draft)
-		template.Status = TemplateStatus.Draft;
-		template.LastModified = DateTime.Now;
-
-		// Update the template with unpublished status
-		var updated = await ApiService.UpdateTemplateAsync(template);
-		if (updated != null)
+		try
 		{
-			NotificationService.Notify(NotificationSeverity.Info, "Unpublished", "Questionnaire template is now in draft mode and unavailable for new assignments");
+			// Set as unpublished (back to draft)
+			template.Status = TemplateStatus.Draft;
+			template.LastModified = DateTime.Now;
+
+			// Update the template with unpublished status
+			var updated = await ApiService.UpdateTemplateAsync(template);
+			if (updated != null)
+			{
+				NotificationService.Notify(NotificationSeverity.Info, "Unpublished", "Questionnaire template is now in draft mode and unavailable for new assignments");
+			}
+			else
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unpublish template");
+				template.Status = TemplateStatus.Published; // Revert on failure
+			}
 		}
-		else
+		catch (Exception ex)
 		{
-			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unpublish template");
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
 			template.Status = TemplateStatus.Published; // Revert on failure
 		}
 	}
-	catch (Exception ex)
-	{
-		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
-		template.Status = TemplateStatus.Published; // Revert on failure
-	}
-}
 
-private async Task DisableQuestionnaire()
-{
-	try
+	private async Task DisableQuestionnaire()
 	{
-		// Set as inactive while keeping published status
-		template.Status = TemplateStatus.Archived;
-		template.LastModified = DateTime.Now;
-
-		var updated = await ApiService.UpdateTemplateAsync(template);
-		if (updated != null)
+		try
 		{
-			NotificationService.Notify(NotificationSeverity.Warning, "Disabled", "Questionnaire template is temporarily disabled but remains published");
+			// Set as inactive while keeping published status
+			template.Status = TemplateStatus.Archived;
+			template.LastModified = DateTime.Now;
+
+			var updated = await ApiService.UpdateTemplateAsync(template);
+			if (updated != null)
+			{
+				NotificationService.Notify(NotificationSeverity.Warning, "Disabled", "Questionnaire template is temporarily disabled but remains published");
+			}
+			else
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to disable template");
+				template.Status = TemplateStatus.Draft; // Revert on failure
+			}
 		}
-		else
+		catch (Exception ex)
 		{
-			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to disable template");
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to disable template: {ex.Message}");
 			template.Status = TemplateStatus.Draft; // Revert on failure
 		}
 	}
-	catch (Exception ex)
-	{
-		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to disable template: {ex.Message}");
-		template.Status = TemplateStatus.Draft; // Revert on failure
-	}
-}
 
-private async Task RestoreQuestionnaire()
-{
-	try
+	private async Task RestoreQuestionnaire()
 	{
-		// Re-activate while keeping published status
-		template.Status = TemplateStatus.Draft;
-		template.LastModified = DateTime.Now;
-
-		var updated = await ApiService.UpdateTemplateAsync(template);
-		if (updated != null)
+		try
 		{
-			NotificationService.Notify(NotificationSeverity.Success, "Enabled", "Questionnaire template is now active and available for assignments");
+			// Re-activate while keeping published status
+			template.Status = TemplateStatus.Draft;
+			template.LastModified = DateTime.Now;
+
+			var updated = await ApiService.UpdateTemplateAsync(template);
+			if (updated != null)
+			{
+				NotificationService.Notify(NotificationSeverity.Success, "Enabled", "Questionnaire template is now active and available for assignments");
+			}
+			else
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to enable template");
+				template.Status = TemplateStatus.Archived; // Revert on failure
+			}
 		}
-		else
+		catch (Exception ex)
 		{
-			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to enable template");
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to enable template: {ex.Message}");
 			template.Status = TemplateStatus.Archived; // Revert on failure
 		}
 	}
-	catch (Exception ex)
-	{
-		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to enable template: {ex.Message}");
-		template.Status = TemplateStatus.Archived; // Revert on failure
-	}
-}
 
-private async Task ArchiveQuestionnaire()
-{
-	try
+	private async Task ArchiveQuestionnaire()
 	{
-		var previousStatus = template.Status;
-		template.Status = TemplateStatus.Archived;
-		template.LastModified = DateTime.Now;
-
-		var updated = await ApiService.UpdateTemplateAsync(template);
-		if (updated != null)
+		try
 		{
-			NotificationService.Notify(NotificationSeverity.Success, "Archived", "Questionnaire template has been archived and is no longer available for assignments");
+			var previousStatus = template.Status;
+			template.Status = TemplateStatus.Archived;
+			template.LastModified = DateTime.Now;
+
+			var updated = await ApiService.UpdateTemplateAsync(template);
+			if (updated != null)
+			{
+				NotificationService.Notify(NotificationSeverity.Success, "Archived", "Questionnaire template has been archived and is no longer available for assignments");
+			}
+			else
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to archive template");
+				template.Status = previousStatus; // Revert on failure
+			}
 		}
-		else
+		catch (Exception ex)
 		{
-			NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to archive template");
+			var previousStatus = template.Status;
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to archive template: {ex.Message}");
 			template.Status = previousStatus; // Revert on failure
 		}
 	}
-	catch (Exception ex)
+
+	private async Task EditInactiveQuestionnaire()
 	{
-		var previousStatus = template.Status;
-		NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to archive template: {ex.Message}");
-		template.Status = previousStatus; // Revert on failure
-	}
-}
-
-private async Task EditInactiveQuestionnaire()
-{
-	// Simply enable and allow editing
-	await RestoreQuestionnaire();
-}
-
-private bool ValidateQuestionnaire()
-{
-	var validationErrors = new List<string>();
-
-	// Validate template name
-	if (string.IsNullOrWhiteSpace(template.Name))
-	{
-		validationErrors.Add("Template name is required");
+		// Simply enable and allow editing
+		await RestoreQuestionnaire();
 	}
 
-	// Validate sections and questions
-	foreach (var section in template.Sections)
+	private bool ValidateQuestionnaire()
 	{
-		// Check if section has any questions
-		if (section.Questions.Count == 0)
+		var validationErrors = new List<string>();
+
+		// Validate template name
+		if (string.IsNullOrWhiteSpace(template.Name))
 		{
-			var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
-			validationErrors.Add($"'{sectionName}' must contain at least one question");
-			continue;
+			validationErrors.Add("Template name is required");
 		}
 
-		// Validate each question in the section
-		foreach (var question in section.Questions)
+		// Validate sections and questions
+		foreach (var section in template.Sections)
 		{
-			var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
-			var questionPos = $"Question {question.Order + 1}";
-
-			// Validate question title
-			if (string.IsNullOrWhiteSpace(question.Title))
+			// Check if section has any questions
+			if (section.Questions.Count == 0)
 			{
-				validationErrors.Add($"{questionPos} in '{sectionName}' requires a title");
+				var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
+				validationErrors.Add($"'{sectionName}' must contain at least one question");
+				continue;
 			}
 
-			// Validate question content based on type
-			if (question.Type == QuestionType.SelfAssessment)
+			// Validate each question in the section
+			foreach (var question in section.Questions)
 			{
-				var competencies = GetCompetenciesFromConfiguration(question);
-				if (competencies.Count == 0)
+				var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
+				var questionPos = $"Question {question.Order + 1}";
+
+				// Validate question title
+				if (string.IsNullOrWhiteSpace(question.Title))
 				{
-					validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one competency");
+					validationErrors.Add($"{questionPos} in '{sectionName}' requires a title");
 				}
-				else
+
+				// Validate question content based on type
+				if (question.Type == QuestionType.SelfAssessment)
 				{
-					for (int i = 0; i < competencies.Count; i++)
+					var competencies = GetCompetenciesFromConfiguration(question);
+					if (competencies.Count == 0)
 					{
-						if (string.IsNullOrWhiteSpace(competencies[i].Title))
+						validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one competency");
+					}
+					else
+					{
+						for (int i = 0; i < competencies.Count; i++)
 						{
-							validationErrors.Add($"Competency {i + 1} in {questionPos} ('{sectionName}') requires a title");
+							if (string.IsNullOrWhiteSpace(competencies[i].Title))
+							{
+								validationErrors.Add($"Competency {i + 1} in {questionPos} ('{sectionName}') requires a title");
+							}
 						}
 					}
 				}
-			}
-			else if (question.Type == QuestionType.GoalAchievement)
-			{
-				var goalCategories = GetGoalCategoriesFromConfiguration(question);
-				if (goalCategories.Count == 0)
+				else if (question.Type == QuestionType.GoalAchievement)
 				{
-					validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one goal category");
-				}
-				else
-				{
-					for (int i = 0; i < goalCategories.Count; i++)
+					var goalCategories = GetGoalCategoriesFromConfiguration(question);
+					if (goalCategories.Count == 0)
 					{
-						if (string.IsNullOrWhiteSpace(goalCategories[i].Title))
+						validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one goal category");
+					}
+					else
+					{
+						for (int i = 0; i < goalCategories.Count; i++)
 						{
-							validationErrors.Add($"Goal category {i + 1} in {questionPos} ('{sectionName}') requires a title");
+							if (string.IsNullOrWhiteSpace(goalCategories[i].Title))
+							{
+								validationErrors.Add($"Goal category {i + 1} in {questionPos} ('{sectionName}') requires a title");
+							}
 						}
 					}
 				}
-			}
-			else if (question.Type == QuestionType.TextQuestion)
-			{
-				var textSections = GetTextSectionsFromConfiguration(question);
-				if (textSections.Count == 0)
+				else if (question.Type == QuestionType.TextQuestion)
 				{
-					validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one text section");
-				}
-				else
-				{
-					for (int i = 0; i < textSections.Count; i++)
+					var textSections = GetTextSectionsFromConfiguration(question);
+					if (textSections.Count == 0)
 					{
-						if (string.IsNullOrWhiteSpace(textSections[i].Title))
+						validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one text section");
+					}
+					else
+					{
+						for (int i = 0; i < textSections.Count; i++)
 						{
-							validationErrors.Add($"Text section {i + 1} in {questionPos} ('{sectionName}') requires a title");
+							if (string.IsNullOrWhiteSpace(textSections[i].Title))
+							{
+								validationErrors.Add($"Text section {i + 1} in {questionPos} ('{sectionName}') requires a title");
+							}
 						}
 					}
 				}
 			}
 		}
+
+		// Show validation errors if any
+		if (validationErrors.Count > 0)
+		{
+			var errorMessage = validationErrors.Count == 1
+				? validationErrors[0]
+				: $"Please fix the following issues:\n• {string.Join("\n• ", validationErrors)}";
+
+			NotificationService.Notify(NotificationSeverity.Warning, "Validation Required", errorMessage);
+			return false;
+		}
+
+		return true;
 	}
 
-	// Show validation errors if any
-	if (validationErrors.Count > 0)
+	// Helper methods to avoid section/question directive conflicts
+	private string GetSectionTitle(QuestionSection section) => section.Title;
+	private void SetSectionTitle(QuestionSection section, string value) => section.Title = value ?? "";
+
+	private string GetSectionDescription(QuestionSection section) => section.Description;
+	private void SetSectionDescription(QuestionSection section, string value) => section.Description = value ?? "";
+
+	private string GetQuestionTitle(QuestionItem question) => question.Title;
+	private void SetQuestionTitle(QuestionItem question, string value) => question.Title = value ?? "";
+
+	private string GetQuestionDescription(QuestionItem question) => question.Description;
+	private void SetQuestionDescription(QuestionItem question, string value) => question.Description = value ?? "";
+
+	private async Task AddQuestionOfType(QuestionType questionType)
 	{
-		var errorMessage = validationErrors.Count == 1
-			? validationErrors[0]
-			: $"Please fix the following issues:\n• {string.Join("\n• ", validationErrors)}";
-
-		NotificationService.Notify(NotificationSeverity.Warning, "Validation Required", errorMessage);
-		return false;
-	}
-
-	return true;
-}
-
-// Helper methods to avoid section/question directive conflicts
-private string GetSectionTitle(QuestionSection section) => section.Title;
-private void SetSectionTitle(QuestionSection section, string value) => section.Title = value ?? "";
-
-private string GetSectionDescription(QuestionSection section) => section.Description;
-private void SetSectionDescription(QuestionSection section, string value) => section.Description = value ?? "";
-
-private string GetQuestionTitle(QuestionItem question) => question.Title;
-private void SetQuestionTitle(QuestionItem question, string value) => question.Title = value ?? "";
-
-private string GetQuestionDescription(QuestionItem question) => question.Description;
-private void SetQuestionDescription(QuestionItem question, string value) => question.Description = value ?? "";
-
-private async Task AddQuestionOfType(QuestionType questionType)
-{
-	if (selectedSectionIndex >= 0 && selectedSectionIndex < template.Sections.Count)
-	{
-		var section = template.Sections[selectedSectionIndex];
-		var newQuestion = new QuestionItem
+		if (selectedSectionIndex >= 0 && selectedSectionIndex < template.Sections.Count)
 		{
-			Id = Guid.NewGuid(),
-			Title = GetDefaultQuestionTitle(questionType),
-			Type = questionType,
-			Order = section.Questions.Count,
-			IsRequired = true
-		};
+			var section = template.Sections[selectedSectionIndex];
+			var newQuestion = new QuestionItem
+			{
+				Id = Guid.NewGuid(),
+				Title = GetDefaultQuestionTitle(questionType),
+				Type = questionType,
+				Order = section.Questions.Count,
+				IsRequired = true
+			};
 
-		// Initialize default configuration for each question type
-		if (questionType == QuestionType.SelfAssessment)
-		{
-			// Initialize with one default competency
-			var competencies = new List<CompetencyDefinition>
+			// Initialize default configuration for each question type
+			if (questionType == QuestionType.SelfAssessment)
+			{
+				// Initialize with one default competency
+				var competencies = new List<CompetencyDefinition>
 			{
 				new CompetencyDefinition("competency_1", "", "", false, 0)
 			};
-			newQuestion.Configuration["Competencies"] = competencies;
+				newQuestion.Configuration["Competencies"] = competencies;
 
-			// Initialize default rating scale settings
-			newQuestion.Configuration["RatingScale"] = 4; // Default to 1-4 scale
-			newQuestion.Configuration["ScaleLowLabel"] = "Poor";
-			newQuestion.Configuration["ScaleHighLabel"] = "Excellent";
-		}
-		else if (questionType == QuestionType.GoalAchievement)
-		{
-			// Initialize with empty goal categories using proper type
-			newQuestion.Configuration["GoalCategories"] = new List<QuestionCard.GoalCategory>();
-		}
-		else if (questionType == QuestionType.TextQuestion)
-		{
-			// Initialize with one default text section using proper type
-			newQuestion.Configuration["TextSections"] = new List<QuestionCard.TextSection>
+				// Initialize default rating scale settings
+				newQuestion.Configuration["RatingScale"] = 4; // Default to 1-4 scale
+				newQuestion.Configuration["ScaleLowLabel"] = "Poor";
+				newQuestion.Configuration["ScaleHighLabel"] = "Excellent";
+			}
+			else if (questionType == QuestionType.GoalAchievement)
+			{
+				// Initialize with empty goal categories using proper type
+				newQuestion.Configuration["GoalCategories"] = new List<QuestionCard.GoalCategory>();
+			}
+			else if (questionType == QuestionType.TextQuestion)
+			{
+				// Initialize with one default text section using proper type
+				newQuestion.Configuration["TextSections"] = new List<QuestionCard.TextSection>
 			{
 				new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = 0 }
 			};
+			}
+
+			// Add the question to the section
+			section.Questions.Add(newQuestion);
 		}
 
-		// Add the question to the section
-		section.Questions.Add(newQuestion);
+		// Reset selection state
+		showQuestionTypeSelection = false;
+		selectedSectionIndex = -1;
+		selectedQuestionType = null;
 	}
 
-	// Reset selection state
-	showQuestionTypeSelection = false;
-	selectedSectionIndex = -1;
-	selectedQuestionType = null;
-}
-
-private void CancelQuestionTypeSelection()
-{
-	showQuestionTypeSelection = false;
-	selectedSectionIndex = -1;
-	selectedQuestionType = null;
-}
-
-private string GetDefaultQuestionTitle(QuestionType type)
-{
-	return type switch
+	private void CancelQuestionTypeSelection()
 	{
-		QuestionType.SelfAssessment => $"{questionTypeLabels[QuestionType.SelfAssessment]} of Competencies",
-		QuestionType.GoalAchievement => $"{questionTypeLabels[QuestionType.GoalAchievement]} Review",
-		QuestionType.TextQuestion => "Career Development & Planning",
-		_ => "New Question"
-	};
-}
-
-private string GetStatusDescription()
-{
-	if (!IsEditMode)
-	{
-		return "Create comprehensive assessments with our visual editor";
+		showQuestionTypeSelection = false;
+		selectedSectionIndex = -1;
+		selectedQuestionType = null;
 	}
 
-	return TemplateStatusHelper.GetStatusDescription(template.Status);
-}
-
-
-private string GetQuestionTypeLabel(QuestionItem question)
-{
-	// Check if question has a custom type label stored in configuration
-	if (question.Configuration.ContainsKey("QuestionTitle"))
+	private string GetDefaultQuestionTitle(QuestionType type)
 	{
-		var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
-		if (!string.IsNullOrWhiteSpace(customTitle))
+		return type switch
 		{
-			return customTitle;
-		}
+			QuestionType.SelfAssessment => $"{questionTypeLabels[QuestionType.SelfAssessment]} of Competencies",
+			QuestionType.GoalAchievement => $"{questionTypeLabels[QuestionType.GoalAchievement]} Review",
+			QuestionType.TextQuestion => "Career Development & Planning",
+			_ => "New Question"
+		};
 	}
 
-	// Fall back to global labels
-	return questionTypeLabels[question.Type];
-}
-
-// Helper methods for validation
-private List<QuestionCard.GoalCategory> GetGoalCategoriesFromConfiguration(QuestionItem question)
-{
-	if (question.Configuration.ContainsKey("GoalCategories"))
+	private string GetStatusDescription()
 	{
-		var goalCategoriesObj = question.Configuration["GoalCategories"];
-
-		// Handle direct cast (when set in editor)
-		if (goalCategoriesObj is List<QuestionCard.GoalCategory> categories)
+		if (!IsEditMode)
 		{
-			return categories;
+			return "Create comprehensive assessments with our visual editor";
 		}
 
-		// Handle JSON deserialization (when loaded from API)
-		if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement)
+		return TemplateStatusHelper.GetStatusDescription(template.Status);
+	}
+
+
+	private string GetQuestionTypeLabel(QuestionItem question)
+	{
+		// Check if question has a custom type label stored in configuration
+		if (question.Configuration.ContainsKey("QuestionTitle"))
 		{
-			try
+			var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
+			if (!string.IsNullOrWhiteSpace(customTitle))
 			{
-				if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+				return customTitle;
+			}
+		}
+
+		// Fall back to global labels
+		return questionTypeLabels[question.Type];
+	}
+
+	// Helper methods for validation
+	private List<QuestionCard.GoalCategory> GetGoalCategoriesFromConfiguration(QuestionItem question)
+	{
+		if (question.Configuration.ContainsKey("GoalCategories"))
+		{
+			var goalCategoriesObj = question.Configuration["GoalCategories"];
+
+			// Handle direct cast (when set in editor)
+			if (goalCategoriesObj is List<QuestionCard.GoalCategory> categories)
+			{
+				return categories;
+			}
+
+			// Handle JSON deserialization (when loaded from API)
+			if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement)
+			{
+				try
 				{
-					return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
+					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+					{
+						return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing goal categories: {ex.Message}");
 				}
 			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Error deserializing goal categories: {ex.Message}");
-			}
 		}
+		return new List<QuestionCard.GoalCategory>();
 	}
-	return new List<QuestionCard.GoalCategory>();
-}
 
-private List<QuestionCard.TextSection> GetTextSectionsFromConfiguration(QuestionItem question)
-{
-	if (question.Configuration.ContainsKey("TextSections"))
+	private List<QuestionCard.TextSection> GetTextSectionsFromConfiguration(QuestionItem question)
 	{
-		var textSectionsObj = question.Configuration["TextSections"];
-
-		// Handle direct cast (when set in editor)
-		if (textSectionsObj is List<QuestionCard.TextSection> sections)
+		if (question.Configuration.ContainsKey("TextSections"))
 		{
-			return sections;
-		}
+			var textSectionsObj = question.Configuration["TextSections"];
 
-		// Handle JSON deserialization (when loaded from API)
-		if (textSectionsObj is System.Text.Json.JsonElement jsonElement)
-		{
-			try
+			// Handle direct cast (when set in editor)
+			if (textSectionsObj is List<QuestionCard.TextSection> sections)
 			{
-				if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+				return sections;
+			}
+
+			// Handle JSON deserialization (when loaded from API)
+			if (textSectionsObj is System.Text.Json.JsonElement jsonElement)
+			{
+				try
 				{
-					return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
+					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+					{
+						return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing text sections: {ex.Message}");
 				}
 			}
-			catch (Exception ex)
-			{
-				Console.WriteLine($"Error deserializing text sections: {ex.Message}");
-			}
 		}
-	}
 
-	// Check for legacy format and convert
-	if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
-	{
-		return new List<QuestionCard.TextSection>
+		// Check for legacy format and convert
+		if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
+		{
+			return new List<QuestionCard.TextSection>
 		{
 			new QuestionCard.TextSection
 			{
@@ -1183,227 +1183,227 @@ private List<QuestionCard.TextSection> GetTextSectionsFromConfiguration(Question
 				IsRequired = false
 			}
 		};
+		}
+
+		return new List<QuestionCard.TextSection>();
 	}
 
-	return new List<QuestionCard.TextSection>();
-}
 
+	// Event handler overloads for the new component structure
+	private async Task RemoveQuestion((int sectionIndex, int questionIndex) indices)
+	{
+		await RemoveQuestion(indices.sectionIndex, indices.questionIndex);
+	}
 
-// Event handler overloads for the new component structure
-private async Task RemoveQuestion((int sectionIndex, int questionIndex) indices)
-{
-	await RemoveQuestion(indices.sectionIndex, indices.questionIndex);
-}
+	private void MoveQuestionUp((int sectionIndex, int questionIndex) indices)
+	{
+		MoveQuestionUp(indices.sectionIndex, indices.questionIndex);
+	}
 
-private void MoveQuestionUp((int sectionIndex, int questionIndex) indices)
-{
-	MoveQuestionUp(indices.sectionIndex, indices.questionIndex);
-}
-
-private void MoveQuestionDown((int sectionIndex, int questionIndex) indices)
-{
-	MoveQuestionDown(indices.sectionIndex, indices.questionIndex);
-}
+	private void MoveQuestionDown((int sectionIndex, int questionIndex) indices)
+	{
+		MoveQuestionDown(indices.sectionIndex, indices.questionIndex);
+	}
 }
 
 <style>
-/* Color Variables from FarbCodes.png */
-:root {
-	--primary-color: #0F60FF; /* Blue new */
-	--dark-blue: #002650; /* Dark Blue */
-	--ice-blue: #7F3AAE; /* Light Blue - using purple rain as accent */
-	--light-gray: #F1F3F4;
-	--success-color: #00E6C8; /* Green new */
-	--warning-color: #E6BF7F; /* Golden Milk */
-	--purple-rain: #935BA9;
-}
+	/* Color Variables from FarbCodes.png */
+	:root {
+		--primary-color: #0F60FF; /* Blue new */
+		--dark-blue: #002650; /* Dark Blue */
+		--ice-blue: #7F3AAE; /* Light Blue - using purple rain as accent */
+		--light-gray: #F1F3F4;
+		--success-color: #00E6C8; /* Green new */
+		--warning-color: #E6BF7F; /* Golden Milk */
+		--purple-rain: #935BA9;
+	}
 
-/* Header Styling */
-.questionnaire-builder-header {
-	background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-color) 100%);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
+	/* Header Styling */
+	.questionnaire-builder-header {
+		background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-color) 100%);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	}
 
-.status-badge .badge {
-	font-size: 0.75rem;
-	font-weight: 600;
-	letter-spacing: 0.5px;
-	border-radius: 1rem;
-	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
+	.status-badge .badge {
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.5px;
+		border-radius: 1rem;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
 
-/* Progress Steps */
-.progress-steps-container {
-	background: white;
-	border-bottom: 1px solid #e9ecef;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
+	/* Progress Steps */
+	.progress-steps-container {
+		background: white;
+		border-bottom: 1px solid #e9ecef;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+	}
 
-.progress-steps {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	max-width: 600px;
-	margin: 0 auto;
-}
+	.progress-steps {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		max-width: 600px;
+		margin: 0 auto;
+	}
 
-.step {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	cursor: pointer;
-	transition: all 0.2s ease-in-out;
-	padding: 0.5rem;
-	border-radius: 0.5rem;
-}
+	.step {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		cursor: pointer;
+		transition: all 0.2s ease-in-out;
+		padding: 0.5rem;
+		border-radius: 0.5rem;
+	}
 
-.step:hover {
-	background: var(--light-gray);
-}
+		.step:hover {
+			background: var(--light-gray);
+		}
 
-.step-circle {
-	width: 40px;
-	height: 40px;
-	border-radius: 50%;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	background: #e9ecef;
-	color: #6c757d;
-	transition: all 0.2s ease-in-out;
-	margin-bottom: 0.5rem;
-}
+	.step-circle {
+		width: 40px;
+		height: 40px;
+		border-radius: 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #e9ecef;
+		color: #6c757d;
+		transition: all 0.2s ease-in-out;
+		margin-bottom: 0.5rem;
+	}
 
-.step.active .step-circle {
-	background: var(--primary-color);
-	color: white;
-	box-shadow: 0 4px 12px rgba(15, 96, 255, 0.3);
-}
+	.step.active .step-circle {
+		background: var(--primary-color);
+		color: white;
+		box-shadow: 0 4px 12px rgba(15, 96, 255, 0.3);
+	}
 
-.step.completed .step-circle {
-	background: var(--success-color);
-	color: white;
-}
+	.step.completed .step-circle {
+		background: var(--success-color);
+		color: white;
+	}
 
-.step-text {
-	font-size: 0.875rem;
-	font-weight: 500;
-	color: #6c757d;
-}
+	.step-text {
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: #6c757d;
+	}
 
-.step.active .step-text {
-	color: var(--primary-color);
-	font-weight: 600;
-}
+	.step.active .step-text {
+		color: var(--primary-color);
+		font-weight: 600;
+	}
 
-.step.completed .step-text {
-	color: var(--success-color);
-}
+	.step.completed .step-text {
+		color: var(--success-color);
+	}
 
-.step-connector {
-	width: 80px;
-	height: 2px;
-	background: #e9ecef;
-	margin: 0 1rem;
-	transition: all 0.2s ease-in-out;
-}
+	.step-connector {
+		width: 80px;
+		height: 2px;
+		background: #e9ecef;
+		margin: 0 1rem;
+		transition: all 0.2s ease-in-out;
+	}
 
-.step-connector.completed {
-	background: var(--success-color);
-}
+		.step-connector.completed {
+			background: var(--success-color);
+		}
 
-/* Main Content */
-.main-content-area {
-	padding: 2rem 0;
-	min-height: calc(100vh - 200px);
-	background: #f8f9fa;
-}
+	/* Main Content */
+	.main-content-area {
+		padding: 2rem 0;
+		min-height: calc(100vh - 200px);
+		background: #f8f9fa;
+	}
 
-.step-content {
-	max-width: 1200px;
-	margin: 0 auto;
-	background: white;
-	padding: 2rem;
-	border-radius: 8px;
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
+	.step-content {
+		max-width: 1200px;
+		margin: 0 auto;
+		background: white;
+		padding: 2rem;
+		border-radius: 8px;
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	}
 
-.step-header {
-	text-align: center;
-	margin-bottom: 2rem;
-}
+	.step-header {
+		text-align: center;
+		margin-bottom: 2rem;
+	}
 
-.step-navigation {
-	border-top: 1px solid #e9ecef;
-	padding-top: 1.5rem;
-}
+	.step-navigation {
+		border-top: 1px solid #e9ecef;
+		padding-top: 1.5rem;
+	}
 
-/* Question Editor Full Screen */
-.question-editor-fullscreen {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: white;
-	z-index: 1050;
-	display: flex;
-	flex-direction: column;
-}
+	/* Question Editor Full Screen */
+	.question-editor-fullscreen {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: white;
+		z-index: 1050;
+		display: flex;
+		flex-direction: column;
+	}
 
-.editor-header {
-	background: var(--light-gray);
-	border-bottom: 1px solid #e9ecef;
-	padding: 0 2rem;
-	flex-shrink: 0;
-}
+	.editor-header {
+		background: var(--light-gray);
+		border-bottom: 1px solid #e9ecef;
+		padding: 0 2rem;
+		flex-shrink: 0;
+	}
 
-.editor-content {
-	flex: 1;
-	overflow-y: auto;
-	max-width: 1000px;
-	margin: 0 auto;
-	width: 100%;
-}
+	.editor-content {
+		flex: 1;
+		overflow-y: auto;
+		max-width: 1000px;
+		margin: 0 auto;
+		width: 100%;
+	}
 
-/* Flat Design Overrides */
-.rz-card {
-	border: none !important;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-}
+	/* Flat Design Overrides */
+	.rz-card {
+		border: none !important;
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+	}
 
-/* Remove nested card styling */
-.step-content .rz-card {
-	box-shadow: none !important;
-	border: 1px solid #e9ecef !important;
-}
+	/* Remove nested card styling */
+	.step-content .rz-card {
+		box-shadow: none !important;
+		border: 1px solid #e9ecef !important;
+	}
 
-/* Button enhancements */
-.rz-button {
-	border-radius: 6px !important;
-	font-weight: 500 !important;
-	transition: all 0.2s ease-in-out !important;
-}
+	/* Button enhancements */
+	.rz-button {
+		border-radius: 6px !important;
+		font-weight: 500 !important;
+		transition: all 0.2s ease-in-out !important;
+	}
 
-.rz-button:hover {
-	transform: translateY(-1px);
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
+		.rz-button:hover {
+			transform: translateY(-1px);
+			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+		}
 
-.rz-button-primary {
-	background: var(--primary-color) !important;
-	border-color: var(--primary-color) !important;
-}
+	.rz-button-primary {
+		background: var(--primary-color) !important;
+		border-color: var(--primary-color) !important;
+	}
 
-.rz-button-success {
-	background: var(--success-color) !important;
-	border-color: var(--success-color) !important;
-	color: var(--dark-blue) !important;
-}
+	.rz-button-success {
+		background: var(--success-color) !important;
+		border-color: var(--success-color) !important;
+		color: var(--dark-blue) !important;
+	}
 
-.rz-button-warning {
-	background: var(--warning-color) !important;
-	border-color: var(--warning-color) !important;
-	color: var(--dark-blue) !important;
-}
+	.rz-button-warning {
+		background: var(--warning-color) !important;
+		border-color: var(--warning-color) !important;
+		color: var(--dark-blue) !important;
+	}
 </style>
