@@ -24,17 +24,7 @@ public class CategoryApiService : BaseApiService, ICategoryApiService
 
     public async Task<Category> CreateCategoryAsync(Category category)
     {
-        var createRequest = new
-        {
-            NameEn = category.NameEn,
-            NameDe = category.NameDe,
-            DescriptionEn = category.DescriptionEn,
-            DescriptionDe = category.DescriptionDe,
-            IsActive = category.IsActive,
-            SortOrder = category.SortOrder
-        };
-
-        return await CreateAsync<object, Category>(CommandEndpoint, createRequest, category);
+        return await CreateAsync<object, Category>(CommandEndpoint, category, category);
     }
 
     public async Task<Category?> UpdateCategoryAsync(Category category)

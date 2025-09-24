@@ -210,31 +210,22 @@
     {
         var newCategory = new Category
         {
+            Id = Guid.NewGuid(),
             NameEn = "New Category",
             NameDe = "Neue Kategorie",
             DescriptionEn = "",
             DescriptionDe = "",
             IsActive = true,
-            SortOrder = categories.Count > 0 ? categories.Max(c => c.SortOrder) + 10 : 10
+            SortOrder = categories.Count > 0 ? categories.Max(c => c.SortOrder) + 10 : 10,
+            CreatedDate = DateTime.Now
         };
 
-        try
-        {
-            await CategoryService.CreateCategoryAsync(newCategory);
-            NotificationService.Notify(NotificationSeverity.Success, "Success", "Category created successfully");
-            await LoadCategories();
+        // Add to local collections without API call
+        categories.Add(newCategory);
+        FilterCategories();
 
-            // Auto-edit the new category
-            var addedCategory = filteredCategories.FirstOrDefault(c => c.NameEn == newCategory.NameEn && c.NameDe == newCategory.NameDe);
-            if (addedCategory != null)
-            {
-                await EditRow(addedCategory);
-            }
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to create category: {ex.Message}");
-        }
+        // Immediately put the new category in edit mode
+        await EditRow(newCategory);
     }
 
     private async Task EditRow(Category category)
@@ -262,14 +253,34 @@
         try
         {
             category.LastModified = DateTime.Now;
-            await CategoryService.UpdateCategoryAsync(category);
-            NotificationService.Notify(NotificationSeverity.Success, "Success", "Category updated successfully");
-            categoriesGrid!.UpdateRow(category);
+
+            // Check if this is a new category (not yet persisted to database)
+            bool isNewCategory = categoryBeingEdited?.CreatedDate == category.CreatedDate &&
+                                categoryBeingEdited?.Id == category.Id &&
+                                !categories.Any(c => c.Id == category.Id && c != category);
+
+            if (isNewCategory)
+            {
+                // Create new category
+                await CategoryService.CreateCategoryAsync(category);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Category created successfully");
+
+                // Reload categories to get the actual data from API
+                await LoadCategories();
+            }
+            else
+            {
+                // Update existing category
+                await CategoryService.UpdateCategoryAsync(category);
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Category updated successfully");
+                await categoriesGrid!.UpdateRow(category);
+            }
+
             categoryBeingEdited = null;
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update category: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save category: {ex.Message}");
         }
     }
 
@@ -277,16 +288,31 @@
     {
         if (categoryBeingEdited != null)
         {
-            // Restore original values
-            category.NameEn = categoryBeingEdited.NameEn;
-            category.NameDe = categoryBeingEdited.NameDe;
-            category.DescriptionEn = categoryBeingEdited.DescriptionEn;
-            category.DescriptionDe = categoryBeingEdited.DescriptionDe;
-            category.IsActive = categoryBeingEdited.IsActive;
-            category.SortOrder = categoryBeingEdited.SortOrder;
+            // Check if this is a new category that was just added to UI
+            bool isNewCategory = categoryBeingEdited.CreatedDate == category.CreatedDate &&
+                                categoryBeingEdited.Id == category.Id &&
+                                categories.Contains(category);
+
+            if (isNewCategory)
+            {
+                // Remove the new category from local collections
+                categories.Remove(category);
+                FilterCategories();
+                categoriesGrid!.CancelEditRow(category);
+            }
+            else
+            {
+                // Restore original values for existing categories
+                category.NameEn = categoryBeingEdited.NameEn;
+                category.NameDe = categoryBeingEdited.NameDe;
+                category.DescriptionEn = categoryBeingEdited.DescriptionEn;
+                category.DescriptionDe = categoryBeingEdited.DescriptionDe;
+                category.IsActive = categoryBeingEdited.IsActive;
+                category.SortOrder = categoryBeingEdited.SortOrder;
+                categoriesGrid!.CancelEditRow(category);
+            }
         }
 
-        categoriesGrid!.CancelEditRow(category);
         categoryBeingEdited = null;
         await Task.CompletedTask;
     }

@@ -11,8 +11,4 @@ public class Category
     public DateTime CreatedDate { get; set; } = DateTime.Now;
     public DateTime? LastModified { get; set; }
     public int SortOrder { get; set; } = 0;
-
-    // Helper properties for display based on current language
-    public string GetName(string language = "en") => language.ToLower() == "de" ? NameDe : NameEn;
-    public string GetDescription(string language = "en") => language.ToLower() == "de" ? DescriptionDe : DescriptionEn;
 }

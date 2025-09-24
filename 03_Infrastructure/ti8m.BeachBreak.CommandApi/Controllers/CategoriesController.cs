@@ -36,6 +36,7 @@ public class CategoriesController : BaseController
 
             var category = new CommandCategory
             {
+                Id = categoryDto.Id,
                 NameEn = categoryDto.NameEn.Trim(),
                 NameDe = categoryDto.NameDe.Trim(),
                 DescriptionEn = categoryDto.DescriptionEn?.Trim() ?? string.Empty,
