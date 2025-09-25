@@ -36,6 +36,27 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - **Employee**: Employee management (referenced in EmployeePrompt.md)
 - **Questionnaire**: Template and assignment management
 
+## Domain Events Guidelines
+
+### Event Characteristics
+- **Past tense naming**: Use past participle forms (e.g., "Order Placed", "Payment Processed", "Customer Registered")
+- **Business significance**: Focus on events that matter to domain experts and stakeholders
+- **Rich semantics**: Prefer events that capture business meaning over technical CRUD operations
+- **Stakeholder relevance**: Consider what different actors in the domain would care about
+
+### Event Quality Principles
+**PREFER Rich Events:**
+- "Order Shipped with Express Delivery"
+- "Customer Loyalty Status Upgraded"
+- "Product Inventory Critically Low"
+- "Payment Failed Due to Insufficient Funds"
+ 
+**AVOID Anemic/CRUD Events:**
+- "Record Created"
+- "Data Updated"
+- "Field Changed"
+- "Status Modified"
+
 ### Value Objects
 - **Translation**: Multilingual text with German and English properties
 
