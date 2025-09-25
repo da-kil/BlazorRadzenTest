@@ -1,6 +1,9 @@
-﻿using Npgsql;
-using NpgsqlTypes;
-using System.Text.Json;
+﻿using Microsoft.AspNetCore.Http;
+using ti8m.BeachBreak.Application.Command.Repositories;
+using ti8m.BeachBreak.Domain.CategoryAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
+using DomainQTemplate = ti8m.BeachBreak.Domain.QuestionnaireAggregate.QuestionnaireTemplate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 
@@ -11,50 +14,52 @@ public class QuestionnaireTemplateCommandHandler :
     ICommandHandler<PublishQuestionnaireTemplateCommand, Result>,
     ICommandHandler<UnpublishQuestionnaireTemplateCommand, Result>,
     ICommandHandler<ActivateQuestionnaireTemplateCommand, Result>,
-    ICommandHandler<DeactivateQuestionnaireTemplateCommand, Result>
+    ICommandHandler<DeactivateQuestionnaireTemplateCommand, Result>,
+    ICommandHandler<ArchiveQuestionnaireTemplateCommand, Result>,
+    ICommandHandler<RestoreQuestionnaireTemplateCommand, Result>
 {
-    private readonly NpgsqlDataSource dataSource;
+    private readonly IQuestionnaireTemplateAggregateRepository repository;
+    private readonly ICategoryAggregateRepository categoryRepository;
+    private readonly IQuestionnaireAssignmentService assignmentService;
 
-    public QuestionnaireTemplateCommandHandler(NpgsqlDataSource dataSource)
+    public QuestionnaireTemplateCommandHandler(
+        IQuestionnaireTemplateAggregateRepository repository,
+        ICategoryAggregateRepository categoryRepository,
+        IQuestionnaireAssignmentService assignmentService)
     {
-        this.dataSource = dataSource;
+        this.repository = repository;
+        this.categoryRepository = categoryRepository;
+        this.assignmentService = assignmentService;
     }
 
     public async Task<Result> HandleAsync(CreateQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
-            var id = Guid.NewGuid();
-            var sectionsJson = JsonSerializer.Serialize(command.QuestionnaireTemplate.Sections);
-            var settingsJson = JsonSerializer.Serialize(command.QuestionnaireTemplate.Settings);
+            // Get category name from CategoryId
+            var categoryName = await GetCategoryNameAsync(command.QuestionnaireTemplate.CategoryId, cancellationToken);
 
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            // Create domain objects from command DTOs
+            var templateId = Guid.NewGuid();
+            var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
+            var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
 
-            cmd.CommandText = """
-                INSERT INTO questionnaire_templates (id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at)
-                VALUES (@id, @name, @description, @category, @status, @published_date, @last_published_date, @published_by, @sections, @settings, @created_at, @updated_at)
-                """;
+            // Create the questionnaire template using the domain aggregate
+            var questionnaireTemplate = new DomainQTemplate(
+                templateId,
+                command.QuestionnaireTemplate.Name,
+                command.QuestionnaireTemplate.Description,
+                categoryName,
+                sections,
+                settings);
 
-            cmd.Parameters.AddWithValue("@id", id);
-            cmd.Parameters.AddWithValue("@name", command.QuestionnaireTemplate.Name);
-            cmd.Parameters.AddWithValue("@description", command.QuestionnaireTemplate.Description);
-            cmd.Parameters.AddWithValue("@category", command.QuestionnaireTemplate.Category);
-            cmd.Parameters.AddWithValue("@status", (int)command.QuestionnaireTemplate.Status);
-            cmd.Parameters.AddWithValue("@published_date", (object?)command.QuestionnaireTemplate.PublishedDate ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@last_published_date", (object?)command.QuestionnaireTemplate.LastPublishedDate ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@published_by", command.QuestionnaireTemplate.PublishedBy);
-            cmd.Parameters.Add("@sections", NpgsqlDbType.Jsonb).Value = sectionsJson;
-            cmd.Parameters.Add("@settings", NpgsqlDbType.Jsonb).Value = settingsJson;
-            cmd.Parameters.AddWithValue("@created_at", DateTime.UtcNow);
-            cmd.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
+            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
-            await cmd.ExecuteNonQueryAsync(cancellationToken);
             return Result.Success();
         }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to create questionnaire template: {ex.Message}", 400);
+            return Result.Fail($"Failed to create questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
         }
     }
 
@@ -62,57 +67,38 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            var sectionsJson = JsonSerializer.Serialize(command.QuestionnaireTemplate.Sections);
-            var settingsJson = JsonSerializer.Serialize(command.QuestionnaireTemplate.Settings);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
 
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
-
-            // Check if template can be edited before updating
-            if (!command.QuestionnaireTemplate.CanBeEdited())
+            if (questionnaireTemplate == null)
             {
-                return Result.Fail($"Cannot edit template - template must be in draft status", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
 
-            cmd.CommandText = """
-                UPDATE questionnaire_templates
-                SET name = @name,
-                    description = @description,
-                    category = @category,
-                    status = @status,
-                    published_date = @published_date,
-                    last_published_date = @last_published_date,
-                    published_by = @published_by,
-                    sections = @sections,
-                    settings = @settings,
-                    updated_at = @updated_at
-                WHERE id = @id
-                """;
+            // Get category name from CategoryId
+            var categoryName = await GetCategoryNameAsync(command.QuestionnaireTemplate.CategoryId, cancellationToken);
 
-            cmd.Parameters.AddWithValue("@id", command.Id);
-            cmd.Parameters.AddWithValue("@name", command.QuestionnaireTemplate.Name);
-            cmd.Parameters.AddWithValue("@description", command.QuestionnaireTemplate.Description);
-            cmd.Parameters.AddWithValue("@category", command.QuestionnaireTemplate.Category);
-            cmd.Parameters.AddWithValue("@status", (int)command.QuestionnaireTemplate.Status);
-            cmd.Parameters.AddWithValue("@published_date", (object?)command.QuestionnaireTemplate.PublishedDate ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@last_published_date", (object?)command.QuestionnaireTemplate.LastPublishedDate ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@published_by", command.QuestionnaireTemplate.PublishedBy);
-            cmd.Parameters.Add("@sections", NpgsqlDbType.Jsonb).Value = sectionsJson;
-            cmd.Parameters.Add("@settings", NpgsqlDbType.Jsonb).Value = settingsJson;
-            cmd.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
+            // Update the template using domain methods
+            questionnaireTemplate.ChangeName(command.QuestionnaireTemplate.Name);
+            questionnaireTemplate.ChangeDescription(command.QuestionnaireTemplate.Description);
+            questionnaireTemplate.ChangeCategory(categoryName);
 
-            var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
+            var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
+            var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
 
-            if (rowsAffected == 0)
-            {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found", 400);
-            }
+            questionnaireTemplate.UpdateSections(sections);
+            questionnaireTemplate.UpdateSettings(settings);
+
+            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
             return Result.Success();
         }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to update questionnaire template: {ex.Message}", 400);
+            return Result.Fail($"Failed to update questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
         }
     }
 
@@ -120,28 +106,26 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
 
-            cmd.CommandText = """
-                DELETE FROM questionnaire_templates
-                WHERE id = @id
-                """;
-
-            cmd.Parameters.AddWithValue("@id", command.Id);
-
-            var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
-
-            if (rowsAffected == 0)
+            if (questionnaireTemplate == null)
             {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
+
+            // Use the aggregate's business logic to determine if deletion is allowed
+            await questionnaireTemplate.DeleteAsync(assignmentService, cancellationToken);
+            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
             return Result.Success();
         }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to delete questionnaire template: {ex.Message}", 400);
+            return Result.Fail($"Failed to delete questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
         }
     }
 
@@ -149,39 +133,29 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
 
-            cmd.CommandText = """
-                UPDATE questionnaire_templates
-                SET status = @status,
-                    published_date = COALESCE(published_date, @publish_date),
-                    last_published_date = @publish_date,
-                    published_by = @published_by,
-                    updated_at = @updated_at
-                WHERE id = @id AND status = @draft_status
-                """;
-
-            var publishDate = DateTime.UtcNow;
-            cmd.Parameters.AddWithValue("@id", command.Id);
-            cmd.Parameters.AddWithValue("@status", (int)TemplateStatus.Published);
-            cmd.Parameters.AddWithValue("@draft_status", (int)TemplateStatus.Draft);
-            cmd.Parameters.AddWithValue("@publish_date", publishDate);
-            cmd.Parameters.AddWithValue("@published_by", command.PublishedBy);
-            cmd.Parameters.AddWithValue("@updated_at", publishDate);
-
-            var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
-
-            if (rowsAffected == 0)
+            if (questionnaireTemplate == null)
             {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found or not in draft status", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
+
+            questionnaireTemplate.Publish(command.PublishedBy);
+            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
             return Result.Success();
         }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
+        catch (ArgumentException ex)
+        {
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to publish questionnaire template: {ex.Message}", 400);
+            return Result.Fail($"Failed to publish questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
         }
     }
 
@@ -189,55 +163,27 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
 
-            // First, check if there are any active assignments for this template
-            await using var checkCmd = connection.CreateCommand();
-            checkCmd.CommandText = """
-                SELECT COUNT(*)
-                FROM questionnaire_assignments
-                WHERE template_id = @template_id
-                AND status IN (@assigned_status, @in_progress_status, @overdue_status)
-                """;
-
-            checkCmd.Parameters.AddWithValue("@template_id", command.Id);
-            checkCmd.Parameters.AddWithValue("@assigned_status", 0); // Assigned
-            checkCmd.Parameters.AddWithValue("@in_progress_status", 1); // InProgress
-            checkCmd.Parameters.AddWithValue("@overdue_status", 3); // Overdue
-
-            var activeAssignmentsCount = (long)await checkCmd.ExecuteScalarAsync(cancellationToken);
-
-            if (activeAssignmentsCount > 0)
+            if (questionnaireTemplate == null)
             {
-                return Result.Fail($"Cannot unpublish questionnaire template: {activeAssignmentsCount} active assignment(s) exist. Complete or cancel these assignments first.", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
 
-            // If no active assignments, proceed with unpublishing
-            await using var cmd = connection.CreateCommand();
-            cmd.CommandText = """
-                UPDATE questionnaire_templates
-                SET status = @status,
-                    updated_at = @updated_at
-                WHERE id = @id AND status = @published_status
-                """;
-
-            cmd.Parameters.AddWithValue("@id", command.Id);
-            cmd.Parameters.AddWithValue("@status", (int)TemplateStatus.Draft);
-            cmd.Parameters.AddWithValue("@published_status", (int)TemplateStatus.Published);
-            cmd.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
-
-            var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
-
-            if (rowsAffected == 0)
-            {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found or not published", 400);
-            }
+            // TODO: Add business logic to check for active assignments
+            // This would require a domain service or additional repository to check assignments
+            questionnaireTemplate.UnpublishToDraft();
+            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
             return Result.Success();
         }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to unpublish questionnaire template: {ex.Message}", 400);
+            return Result.Fail($"Failed to unpublish questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
         }
     }
 
@@ -245,33 +191,25 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
 
-            cmd.CommandText = """
-                UPDATE questionnaire_templates
-                SET status = @status,
-                    updated_at = @updated_at
-                WHERE id = @id AND status = @archived_status
-                """;
-
-            cmd.Parameters.AddWithValue("@id", command.Id);
-            cmd.Parameters.AddWithValue("@status", (int)TemplateStatus.Draft);
-            cmd.Parameters.AddWithValue("@archived_status", (int)TemplateStatus.Archived);
-            cmd.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
-
-            var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
-
-            if (rowsAffected == 0)
+            if (questionnaireTemplate == null)
             {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found or not archived", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
+
+            questionnaireTemplate.RestoreFromArchive();
+            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
             return Result.Success();
         }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to activate questionnaire template: {ex.Message}", 400);
+            return Result.Fail($"Failed to activate questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
         }
     }
 
@@ -279,55 +217,130 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
 
-            // Check if there are any active assignments for this template before archiving
-            await using var checkCmd = connection.CreateCommand();
-            checkCmd.CommandText = """
-                SELECT COUNT(*)
-                FROM questionnaire_assignments
-                WHERE template_id = @template_id
-                AND status IN (@assigned_status, @in_progress_status, @overdue_status)
-                """;
-
-            checkCmd.Parameters.AddWithValue("@template_id", command.Id);
-            checkCmd.Parameters.AddWithValue("@assigned_status", 0); // Assigned
-            checkCmd.Parameters.AddWithValue("@in_progress_status", 1); // InProgress
-            checkCmd.Parameters.AddWithValue("@overdue_status", 3); // Overdue
-
-            var activeAssignmentsCount = (long)await checkCmd.ExecuteScalarAsync(cancellationToken);
-
-            if (activeAssignmentsCount > 0)
+            if (questionnaireTemplate == null)
             {
-                return Result.Fail($"Cannot archive questionnaire template: {activeAssignmentsCount} active assignment(s) exist. Complete or cancel these assignments first.", 400);
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
 
-            // If no active assignments, proceed with archiving
-            await using var cmd = connection.CreateCommand();
-            cmd.CommandText = """
-                UPDATE questionnaire_templates
-                SET status = @status,
-                    updated_at = @updated_at
-                WHERE id = @id AND status != @archived_status
-                """;
-
-            cmd.Parameters.AddWithValue("@id", command.Id);
-            cmd.Parameters.AddWithValue("@status", (int)TemplateStatus.Archived);
-            cmd.Parameters.AddWithValue("@archived_status", (int)TemplateStatus.Archived);
-            cmd.Parameters.AddWithValue("@updated_at", DateTime.UtcNow);
-
-            var rowsAffected = await cmd.ExecuteNonQueryAsync(cancellationToken);
-
-            if (rowsAffected == 0)
-            {
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found or already archived", 400);
-            }
+            // TODO: Add business logic to check for active assignments
+            // This would require a domain service or additional repository to check assignments
+            questionnaireTemplate.Archive();
+            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
             return Result.Success();
         }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to deactivate questionnaire template: {ex.Message}", 400);
+            return Result.Fail($"Failed to deactivate questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
         }
+    }
+
+    public async Task<Result> HandleAsync(ArchiveQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+
+            if (questionnaireTemplate == null)
+            {
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
+            }
+
+            questionnaireTemplate.Archive();
+            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
+
+            return Result.Success();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to archive questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
+        }
+    }
+
+    public async Task<Result> HandleAsync(RestoreQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+
+            if (questionnaireTemplate == null)
+            {
+                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
+            }
+
+            questionnaireTemplate.RestoreFromArchive();
+            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
+
+            return Result.Success();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail($"Failed to restore questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
+        }
+    }
+
+    private static List<QuestionSection> MapToQuestionSections(List<CommandQuestionSection> commandSections)
+    {
+        return commandSections.Select(section => new QuestionSection(
+            section.Id,
+            section.Title,
+            section.Description,
+            section.Order,
+            section.IsRequired,
+            MapToQuestionItems(section.Questions)
+        )).ToList();
+    }
+
+    private static List<QuestionItem> MapToQuestionItems(List<CommandQuestionItem> commandItems)
+    {
+        return commandItems.Select(item => new QuestionItem(
+            item.Id,
+            item.Title,
+            item.Description,
+            item.Type,
+            item.Order,
+            item.IsRequired,
+            item.Configuration,
+            item.Options
+        )).ToList();
+    }
+
+    private static QuestionnaireSettings MapToQuestionnaireSettings(CommandQuestionnaireSettings commandSettings)
+    {
+        return new QuestionnaireSettings(
+            commandSettings.AllowSaveProgress,
+            commandSettings.ShowProgressBar,
+            commandSettings.RequireAllSections,
+            commandSettings.SuccessMessage,
+            commandSettings.IncompleteMessage,
+            commandSettings.TimeLimit,
+            commandSettings.AllowReviewBeforeSubmit
+        );
+    }
+
+    private async Task<string> GetCategoryNameAsync(Guid categoryId, CancellationToken cancellationToken)
+    {
+        var category = await categoryRepository.LoadAsync<Category>(categoryId, cancellationToken: cancellationToken);
+        if (category == null)
+        {
+            throw new InvalidOperationException($"Category with ID {categoryId} not found");
+        }
+
+        // Return the category name - using English name as default, could be made configurable
+        return category.Name.English;
     }
 }

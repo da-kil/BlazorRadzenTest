@@ -142,6 +142,25 @@ public class QuestionnaireTemplate : AggregateRoot
         RaiseEvent(new QuestionnaireTemplateRestoredFromArchive(Id, DateTime.UtcNow));
     }
 
+    public async Task DeleteAsync(Services.IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
+    {
+        if (await assignmentService.HasActiveAssignmentsAsync(Id, cancellationToken))
+        {
+            var assignmentCount = await assignmentService.GetActiveAssignmentCountAsync(Id, cancellationToken);
+            throw new InvalidOperationException(
+                $"Cannot delete questionnaire template: {assignmentCount} active assignment(s) exist. " +
+                "Complete or cancel these assignments first, or archive the template instead.");
+        }
+
+        RaiseEvent(new QuestionnaireTemplateDeleted(Id, DateTime.UtcNow));
+    }
+
+    public bool CanBeDeleted()
+    {
+        // Template can only be deleted if it's not archived (archived templates should stay for audit purposes)
+        return Status != TemplateStatus.Archived;
+    }
+
     // Apply methods for event sourcing
     public void Apply(QuestionnaireTemplateCreated @event)
     {
@@ -214,5 +233,12 @@ public class QuestionnaireTemplate : AggregateRoot
     {
         Status = TemplateStatus.Draft;
         LastModifiedDate = @event.RestoredDate;
+    }
+
+    public void Apply(QuestionnaireTemplateDeleted @event)
+    {
+        // For event sourcing, we don't actually delete the aggregate
+        // This event is mainly for audit purposes and to trigger side effects
+        LastModifiedDate = @event.DeletedDate;
     }
 }

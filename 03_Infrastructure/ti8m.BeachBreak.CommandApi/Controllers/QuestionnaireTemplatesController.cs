@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
+using DomainQuestionType = ti8m.BeachBreak.Domain.QuestionnaireAggregate.QuestionType;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -31,18 +32,20 @@ public class QuestionnaireTemplatesController : BaseController
             if (string.IsNullOrWhiteSpace(questionnaireTemplate.Name))
                 return BadRequest("Template name is required");
 
-            var template = new QuestionnaireTemplate
+            var commandTemplate = new CommandQuestionnaireTemplate
             {
-                Category = questionnaireTemplate.Category,
+                Id = Guid.NewGuid(),
+                CategoryId = Guid.Parse(questionnaireTemplate.Category),
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
-                Sections = questionnaireTemplate.Sections.Select(section => new QuestionSection
+                Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     Description = section.Description,
                     Id = section.Id,
                     IsRequired = section.IsRequired,
                     Order = section.Order,
-                    Questions = section.Questions.Select(question => new QuestionItem
+                    Title = section.Title,
+                    Questions = section.Questions.Select(question => new CommandQuestionItem
                     {
                         Configuration = question.Configuration,
                         Description = question.Description,
@@ -51,11 +54,10 @@ public class QuestionnaireTemplatesController : BaseController
                         Options = question.Options,
                         Order = question.Order,
                         Title = question.Title,
-                        Type = MapQuestionType[question.Type]
-                    }).ToList(),
-                    Title = section.Title
+                        Type = MapQuestionType(question.Type)
+                    }).ToList()
                 }).ToList(),
-                Settings = new QuestionnaireSettings
+                Settings = new CommandQuestionnaireSettings
                 {
                     AllowReviewBeforeSubmit = questionnaireTemplate.Settings.AllowReviewBeforeSubmit,
                     AllowSaveProgress = questionnaireTemplate.Settings.AllowSaveProgress,
@@ -67,7 +69,7 @@ public class QuestionnaireTemplatesController : BaseController
                 }
             };
 
-            Result result = await commandDispatcher.SendAsync(new CreateQuestionnaireTemplateCommand(template));
+            Result result = await commandDispatcher.SendAsync(new CreateQuestionnaireTemplateCommand(commandTemplate));
 
             return CreateResponse(result);
         }
@@ -86,18 +88,20 @@ public class QuestionnaireTemplatesController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var template = new QuestionnaireTemplate
+            var commandTemplate = new CommandQuestionnaireTemplate
             {
-                Category = questionnaireTemplate.Category,
+                Id = id,
+                CategoryId = Guid.Parse(questionnaireTemplate.Category),
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
-                Sections = questionnaireTemplate.Sections.Select(section => new QuestionSection
+                Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     Description = section.Description,
                     Id = section.Id,
                     IsRequired = section.IsRequired,
                     Order = section.Order,
-                    Questions = section.Questions.Select(question => new QuestionItem
+                    Title = section.Title,
+                    Questions = section.Questions.Select(question => new CommandQuestionItem
                     {
                         Configuration = question.Configuration,
                         Description = question.Description,
@@ -106,11 +110,10 @@ public class QuestionnaireTemplatesController : BaseController
                         Options = question.Options,
                         Order = question.Order,
                         Title = question.Title,
-                        Type = MapQuestionType[question.Type]
-                    }).ToList(),
-                    Title = section.Title
+                        Type = MapQuestionType(question.Type)
+                    }).ToList()
                 }).ToList(),
-                Settings = new QuestionnaireSettings
+                Settings = new CommandQuestionnaireSettings
                 {
                     AllowReviewBeforeSubmit = questionnaireTemplate.Settings.AllowReviewBeforeSubmit,
                     AllowSaveProgress = questionnaireTemplate.Settings.AllowSaveProgress,
@@ -122,11 +125,11 @@ public class QuestionnaireTemplatesController : BaseController
                 }
             };
 
-            Result result = await commandDispatcher.SendAsync(new UpdateQuestionnaireTemplateCommand(id, template));
+            Result result = await commandDispatcher.SendAsync(new UpdateQuestionnaireTemplateCommand(id, commandTemplate));
 
             if (result.Succeeded)
             {
-                return Ok(template);
+                return Ok();
             }
             else
             {
@@ -220,11 +223,11 @@ public class QuestionnaireTemplatesController : BaseController
         }
     }
 
-    private static IReadOnlyDictionary<QuestionTypeDto, QuestionType> MapQuestionType =>
-    new Dictionary<QuestionTypeDto, QuestionType>
+    private static DomainQuestionType MapQuestionType(QuestionTypeDto dtoType) => dtoType switch
     {
-        { QuestionTypeDto.TextQuestion, QuestionType.TextQuestion },
-        { QuestionTypeDto.SelfAssessment, QuestionType.SelfAssessment },
-        { QuestionTypeDto.GoalAchievement, QuestionType.GoalAchievement }
+        QuestionTypeDto.TextQuestion => DomainQuestionType.TextQuestion,
+        QuestionTypeDto.SelfAssessment => DomainQuestionType.SelfAssessment,
+        QuestionTypeDto.GoalAchievement => DomainQuestionType.GoalAchievement,
+        _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
     };
 }

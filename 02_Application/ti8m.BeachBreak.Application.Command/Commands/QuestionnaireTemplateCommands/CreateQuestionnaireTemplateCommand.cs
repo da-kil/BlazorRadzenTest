@@ -2,9 +2,9 @@
 
 public class CreateQuestionnaireTemplateCommand : ICommand<Result>
 {
-    public QuestionnaireTemplate QuestionnaireTemplate { get; init; }
+    public CommandQuestionnaireTemplate QuestionnaireTemplate { get; init; }
 
-    public CreateQuestionnaireTemplateCommand(QuestionnaireTemplate questionnaireTemplate)
+    public CreateQuestionnaireTemplateCommand(CommandQuestionnaireTemplate questionnaireTemplate)
     {
         QuestionnaireTemplate = questionnaireTemplate;
     }
