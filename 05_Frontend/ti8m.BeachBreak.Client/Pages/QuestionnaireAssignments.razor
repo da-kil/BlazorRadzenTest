@@ -7,6 +7,11 @@
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Shared
+@inject IQuestionnaireApiService QuestionnaireApiService
+@inject IEmployeeApiService EmployeeApiService
+@inject ICategoryApiService CategoryApiService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
 
 <PageTitle>Questionnaire Assignments</PageTitle>
 
@@ -422,11 +427,6 @@
 </div>
 
 @code {
-    [Inject] protected IQuestionnaireApiService QuestionnaireApiService { get; set; } = default!;
-    [Inject] protected IEmployeeApiService EmployeeApiService { get; set; } = default!;
-    [Inject] protected ICategoryApiService CategoryApiService { get; set; } = default!;
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
-    [Inject] protected DialogService DialogService { get; set; } = default!;
 
     // Data
     private List<EmployeeDto> allEmployees = new();

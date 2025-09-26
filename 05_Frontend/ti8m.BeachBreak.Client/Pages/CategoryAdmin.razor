@@ -5,6 +5,9 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Components.Shared
+@inject ICategoryApiService CategoryService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
 @inherits OptimizedComponentBase
 
 <PageTitle>Category Administration</PageTitle>
@@ -145,9 +148,6 @@
 </div>
 
 @code {
-    [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
-    [Inject] protected DialogService DialogService { get; set; } = default!;
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
 
     private List<Category> categories = new();
     private List<Category> filteredCategories = new();

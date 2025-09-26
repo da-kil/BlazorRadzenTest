@@ -5,6 +5,11 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
+@inject IQuestionnaireApiService ApiService
+@inject ICategoryApiService CategoryService
 @inherits OptimizedComponentBase
 
 <PageTitle>Questionnaire Management</PageTitle>
@@ -192,11 +197,6 @@
 </div>
 
 @code {
-    [Inject] protected DialogService DialogService { get; set; } = default!;
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
-    [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
-    [Inject] protected IQuestionnaireApiService ApiService { get; set; } = default!;
-    [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
 
     private List<QuestionnaireTemplate> templates = new();
     private List<QuestionnaireTemplate> filteredTemplates = new();

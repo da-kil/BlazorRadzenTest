@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@inject DialogService DialogService
 
 <style>
     .competency-input-row,
@@ -349,7 +350,6 @@
     [Parameter, EditorRequired] public bool CanMoveDown { get; set; }
     [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
 
-    [Inject] private DialogService DialogService { get; set; } = default!;
 
     [Parameter] public EventCallback OnEdit { get; set; }
     [Parameter] public EventCallback OnMoveUp { get; set; }

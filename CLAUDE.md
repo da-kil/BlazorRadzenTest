@@ -129,3 +129,7 @@ dotnet run
 - Use Given/When/Then pattern with domain events
 - Test command handlers independently of infrastructure
 - Consider read model projections in integration tests
+
+### Logging
+- use Compile-time logging source generation (https://learn.microsoft.com/en-us/dotnet/core/extensions/logger-message-generator)
+- LoggerMessageAttribute

@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@inject DialogService DialogService
 @implements IDisposable
 
 <style>
@@ -344,7 +345,6 @@
     [Parameter] public QuestionItem Question { get; set; } = default!;
     [Parameter] public List<GoalCategory> GoalCategories { get; set; } = new();
 
-    [Inject] protected DialogService DialogService { get; set; } = default!;
 
     // UI State
     private bool SelectAllChecked = false;

@@ -5,6 +5,8 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.ValidationHelpers
 @using ti8m.BeachBreak.Client.Components.Shared
+@inject DialogService DialogService
+@inject NotificationService NotificationService
 @inherits OptimizedComponentBase
 
 <style>
@@ -404,8 +406,6 @@
 
     private bool isVisible = false;
 
-    [Inject] protected DialogService DialogService { get; set; } = default!;
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
 
     private AssignmentModel assignmentModel = new();
     private List<Employee> availableEmployees = new();

@@ -2,6 +2,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Shared
+@inject DialogService DialogService
 
 <BaseDialog TModel="Category"
             @bind-IsVisible="@isVisible"
@@ -94,7 +95,6 @@
     [Parameter] public EventCallback<Category> OnSave { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
 
-    [Inject] protected DialogService DialogService { get; set; } = default!;
 
     private bool isVisible = false;
     private bool isSaving = false;

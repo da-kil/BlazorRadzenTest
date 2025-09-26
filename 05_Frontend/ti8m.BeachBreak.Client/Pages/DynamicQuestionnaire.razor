@@ -5,6 +5,12 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
+@inject IQuestionnaireApiService QuestionnaireApiService
+@inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
+@inject IAuthenticationService AuthenticationService
 @inherits OptimizedComponentBase
 
 <PageTitle>@(template?.Name ?? "Questionnaire")</PageTitle>
@@ -137,12 +143,6 @@
 @code {
     [Parameter] public Guid TemplateId { get; set; }
     private Guid? assignmentId;
-    [Inject] protected DialogService DialogService { get; set; } = default!;
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
-    [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
-    [Inject] protected IQuestionnaireApiService QuestionnaireApiService { get; set; } = default!;
-    [Inject] protected IEmployeeQuestionnaireService EmployeeQuestionnaireService { get; set; } = default!;
-    [Inject] protected IAuthenticationService AuthenticationService { get; set; } = default!;
 
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse response = new();

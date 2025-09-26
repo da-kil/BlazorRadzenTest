@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@inject DialogService DialogService
 
 <div class="self-assessment-editor">
     
@@ -79,7 +80,6 @@
     [Parameter] public QuestionItem Question { get; set; } = default!;
     [Parameter] public List<CompetencyDefinition> Competencies { get; set; } = new();
     
-    [Inject] protected DialogService DialogService { get; set; } = default!;
 
     protected override void OnInitialized()
     {
