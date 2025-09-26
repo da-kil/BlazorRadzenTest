@@ -1,0 +1,521 @@
+/*
+ * Main Stylesheet for ti8m.BeachBreak Frontend
+ * Consolidated CSS architecture following best practices
+ *
+ * Architecture:
+ * 1. Variables - CSS custom properties and design tokens
+ * 2. Components - Shared UI components (cards, buttons, forms, etc.)
+ * 3. Shared Components - Legacy shared component styles
+ * 4. Layout - Page layouts, grids, and structural components
+ * 5. Utilities - Utility classes for common patterns
+ * 6. Assignment Dialogs - Specialized dialog styles
+ *
+ * This file replaces the distributed inline <style> blocks across components
+ * and provides a maintainable, scalable CSS architecture.
+ */
+
+/* =============================================
+   IMPORT CONSOLIDATED STYLESHEETS
+   ============================================= */
+
+/* 1. Design System Variables */
+@import url('./shared-variables.css');
+
+/* 2. Modern Component Styles */
+@import url('./components.css');
+
+/* 3. Layout & Grid Systems */
+@import url('./layout.css');
+
+/* 4. Utility Classes */
+@import url('./utilities.css');
+
+/* 5. Legacy Shared Components (maintain compatibility) */
+@import url('./shared-components.css');
+
+/* 6. Specialized Dialog Components */
+@import url('./assignment-dialogs.css');
+
+/* =============================================
+   BASE STYLES & RESETS
+   ============================================= */
+
+/* Modern CSS Reset */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    font-family: var(--font-family-base);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-normal);
+    color: var(--text-color);
+    background-color: var(--background-light);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+}
+
+/* =============================================
+   GLOBAL IMPROVEMENTS
+   ============================================= */
+
+/* Focus Management for Better Accessibility */
+:focus {
+    outline: 2px solid var(--focus-border);
+    outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+:focus-visible {
+    outline: 2px solid var(--focus-border);
+    outline-offset: 2px;
+}
+
+/* Improve button focus indicators */
+button:focus-visible,
+.rz-button:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible {
+    outline: 2px solid var(--focus-border);
+    outline-offset: 2px;
+}
+
+/* =============================================
+   RADZEN INTEGRATION & OVERRIDES
+   ============================================= */
+
+/* Ensure Radzen components use our design tokens */
+:root {
+    /* Map our variables to Radzen's expected names */
+    --rz-primary: var(--primary-color);
+    --rz-primary-light: var(--primary-color-light);
+    --rz-primary-dark: var(--primary-color-dark);
+    --rz-secondary: var(--secondary-color);
+    --rz-success: var(--success-color);
+    --rz-warning: var(--warning-color);
+    --rz-danger: var(--danger-color);
+    --rz-info: var(--info-color);
+    --rz-light: var(--background-light);
+    --rz-dark: var(--text-color-dark);
+
+    /* RGB values for alpha transparency */
+    --rz-primary-rgb: 37, 99, 235;
+    --rz-secondary-rgb: 99, 102, 241;
+    --rz-success-rgb: 5, 150, 105;
+    --rz-warning-rgb: 217, 119, 6;
+    --rz-danger-rgb: 220, 38, 38;
+    --rz-info-rgb: 2, 132, 199;
+
+    /* Text color for contrast */
+    --rz-text-color: var(--text-color);
+}
+
+/* Enhance Radzen Cards with modern styling */
+.rz-card {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition-fast);
+}
+
+.rz-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+/* Enhance Radzen Buttons */
+.rz-button {
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-medium);
+    transition: var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.rz-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.rz-button:hover::before {
+    left: 100%;
+}
+
+.rz-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+/* Enhance Radzen Form Controls */
+.rz-textbox,
+.rz-dropdown,
+.rz-datepicker input {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    transition: var(--transition-fast);
+}
+
+.rz-textbox:focus,
+.rz-dropdown:focus,
+.rz-datepicker input:focus {
+    border-color: var(--focus-border);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Enhance Radzen DataGrid */
+.rz-datatable {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.rz-datatable-data tr:hover {
+    background: var(--hover-background);
+}
+
+/* =============================================
+   COMPONENT-SPECIFIC MIGRATIONS
+   ============================================= */
+
+/*
+ * These classes provide migration paths for components currently using inline styles.
+ * They maintain the same visual appearance while using our consolidated CSS architecture.
+ */
+
+/* Questionnaire Builder Migration */
+.questionnaire-builder-header {
+    background: linear-gradient(135deg, var(--primary-color-dark) 0%, var(--primary-color) 100%);
+    color: var(--text-white);
+    padding: var(--spacing-2xl);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    margin-bottom: var(--spacing-2xl);
+}
+
+/* Question Editor Migration */
+.text-question-editor,
+.goal-achievement-editor,
+.self-assessment-editor {
+    background: var(--background-color);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.text-question-editor .section-card,
+.goal-achievement-editor .section-card,
+.self-assessment-editor .section-card {
+    margin-bottom: var(--spacing-md);
+}
+
+/* Assignment Dialog Migration */
+.assignment-dialog,
+.bulk-assignment-dialog {
+    background: var(--background-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--modal-shadow);
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.assignment-header,
+.bulk-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: var(--text-white);
+    padding: var(--spacing-2xl);
+    margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-2xl) calc(-1 * var(--spacing-lg));
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+/* Form Section Migration */
+.form-section-modern {
+    background: var(--background-color);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-section-modern .section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-color);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-light);
+}
+
+/* =============================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================= */
+
+/* GPU Acceleration for animations */
+.questionnaire-card-modern,
+.btn-modern,
+.modal-content-modern {
+    will-change: transform;
+}
+
+/* Optimize repaints */
+.loading-shimmer-modern,
+.progress-bar-animated {
+    will-change: background-position, width;
+}
+
+/* =============================================
+   PRINT STYLES
+   ============================================= */
+
+@media print {
+    /* Hide interactive elements */
+    .btn-modern,
+    .page-actions,
+    .modal-overlay-modern,
+    .transfer-controls {
+        display: none !important;
+    }
+
+    /* Simplify colors for print */
+    .page-header-modern,
+    .questionnaire-builder-header {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        box-shadow: none !important;
+    }
+
+    /* Ensure readability */
+    .questionnaire-card-modern {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+
+    /* Optimize text */
+    body {
+        font-size: 12pt;
+        line-height: 1.4;
+    }
+
+    h1, h2, h3 {
+        page-break-after: avoid;
+    }
+}
+
+/* =============================================
+   PROGRESSIVE ENHANCEMENT
+   ============================================= */
+
+/* Enhance experience when JavaScript is available */
+.js-enabled .questionnaire-card-modern {
+    cursor: pointer;
+}
+
+.js-enabled .hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+/* Fallbacks for older browsers */
+@supports not (backdrop-filter: blur(4px)) {
+    .modal-overlay-modern {
+        background: rgba(0, 0, 0, 0.8);
+    }
+
+    .questionnaire-card-modern {
+        background: var(--background-color);
+    }
+}
+
+@supports not (display: grid) {
+    .card-grid-modern {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-lg);
+    }
+
+    .card-grid-modern > * {
+        flex: 1 1 300px;
+    }
+}
+
+/* =============================================
+   BROWSER-SPECIFIC FIXES
+   ============================================= */
+
+/* Safari-specific fixes */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .questionnaire-card-modern {
+        -webkit-backdrop-filter: blur(20px);
+    }
+}
+
+/* Firefox-specific fixes */
+@-moz-document url-prefix() {
+    .progress-bar-animated::after {
+        display: none; /* Firefox has issues with the shimmer effect */
+    }
+}
+
+/* Edge-specific fixes */
+@supports (-ms-ime-align: auto) {
+    .flex-container-modern {
+        display: -ms-flexbox;
+    }
+}
+
+/* =============================================
+   CUSTOM SCROLLBAR STYLING
+   ============================================= */
+
+/* Webkit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--background-light);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-dark);
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--background-light);
+}
+
+/* =============================================
+   DARK MODE ENHANCEMENTS
+   ============================================= */
+
+@media (prefers-color-scheme: dark) {
+    /* Enhanced dark mode variables */
+    :root {
+        --background-color: #1a1a1a;
+        --background-light: #2a2a2a;
+        --background-muted: #3a3a3a;
+        --text-color: #ffffff;
+        --text-muted: #adb5bd;
+        --border-color: #404040;
+        --border-light: #505050;
+    }
+
+    /* Dark mode specific enhancements */
+    .questionnaire-card-modern {
+        background: rgba(42, 42, 42, 0.95);
+        backdrop-filter: blur(20px);
+    }
+
+    .rz-card {
+        background: var(--background-light);
+        border-color: var(--border-color);
+    }
+
+    .rz-datatable {
+        background: var(--background-light);
+    }
+
+    /* Ensure good contrast in dark mode */
+    .text-muted {
+        color: #adb5bd !important;
+    }
+}
+
+/* =============================================
+   ANIMATION PREFERENCES
+   ============================================= */
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    .questionnaire-card-modern:hover,
+    .btn-modern:hover,
+    .hover-lift:hover,
+    .hover-scale:hover {
+        transform: none !important;
+    }
+}
+
+/* Enhanced animations for users who prefer them */
+@media (prefers-reduced-motion: no-preference) {
+    .questionnaire-card-modern {
+        animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+}
+
+/* =============================================
+   DEBUGGING & DEVELOPMENT HELPERS
+   ============================================= */
+
+/* Development mode helpers (remove in production) */
+.debug-grid {
+    background-image:
+        linear-gradient(rgba(255, 0, 0, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.debug-outline * {
+    outline: 1px solid rgba(255, 0, 0, 0.3) !important;
+}
+
+/* Visual regression testing helpers */
+.visual-test-marker {
+    position: relative;
+}
+
+.visual-test-marker::before {
+    content: attr(data-test-id);
+    position: absolute;
+    top: -20px;
+    left: 0;
+    font-size: 10px;
+    color: #ff0000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2px 4px;
+    border-radius: 2px;
+    z-index: 9999;
+}

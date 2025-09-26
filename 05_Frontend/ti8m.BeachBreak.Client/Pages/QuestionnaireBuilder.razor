@@ -17,7 +17,7 @@
 <PageTitle>Questionnaire Builder</PageTitle>
 
 <!-- Header -->
-<div class="questionnaire-builder-header">
+<div class="page-header-modern">
 	<div class="container-fluid">
 		<div class="d-flex justify-content-between align-items-center py-3">
 			<div class="d-flex align-items-center">
@@ -63,35 +63,33 @@
 </div>
 
 <!-- Progress Steps -->
-<div class="progress-steps-container">
+<div style="background: var(--background-color); border-bottom: 1px solid var(--border-light);">
 	<div class="container-fluid">
-		<div class="progress-steps py-3">
-			<div class="step @(currentStep == 1 ? "active" : currentStep > 1 ? "completed" : "")" @onclick="() => SetCurrentStep(1)">
-				<div class="step-circle">
+		<div class="progress-steps-modern py-3">
+			<div class="step-modern @(currentStep == 1 ? "active" : currentStep > 1 ? "completed" : "")" @onclick="() => SetCurrentStep(1)">
+				<div class="step-number-modern">
 					<RadzenIcon Icon="@(currentStep > 1 ? "check" : "info")" />
 				</div>
-				<span class="step-text">Basic Info</span>
+				<span class="step-text-modern">Basic Info</span>
 			</div>
-			<div class="step-connector @(currentStep > 1 ? "completed" : "")"></div>
-			<div class="step @(currentStep == 2 ? "active" : currentStep > 2 ? "completed" : "")" @onclick="() => SetCurrentStep(2)">
-				<div class="step-circle">
+			<div class="step-modern @(currentStep == 2 ? "active" : currentStep > 2 ? "completed" : "")" @onclick="() => SetCurrentStep(2)">
+				<div class="step-number-modern">
 					<RadzenIcon Icon="@(currentStep > 2 ? "check" : "view_list")" />
 				</div>
-				<span class="step-text">Build Sections</span>
+				<span class="step-text-modern">Build Sections</span>
 			</div>
-			<div class="step-connector @(currentStep > 2 ? "completed" : "")"></div>
-			<div class="step @(currentStep == 3 ? "active" : currentStep > 3 ? "completed" : "")" @onclick="() => SetCurrentStep(3)">
-				<div class="step-circle">
+			<div class="step-modern @(currentStep == 3 ? "active" : currentStep > 3 ? "completed" : "")" @onclick="() => SetCurrentStep(3)">
+				<div class="step-number-modern">
 					<RadzenIcon Icon="@(currentStep > 3 ? "check" : "preview")" />
 				</div>
-				<span class="step-text">Review & Publish</span>
+				<span class="step-text-modern">Review & Publish</span>
 			</div>
 		</div>
 	</div>
 </div>
 
 <!-- Main Content -->
-<div class="main-content-area">
+<div class="main-content-modern">
 	<div class="container-fluid">
 		@if (showQuestionEditor)
 		{
@@ -130,7 +128,7 @@
 			<!-- Step Content -->
 			@if (currentStep == 1)
 			{
-				<div class="step-content">
+				<div class="step-content-modern">
 					<div class="step-header">
 						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Template Information</RadzenText>
 						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">@GetStatusDescription()</RadzenText>
@@ -143,7 +141,7 @@
 			}
 			else if (currentStep == 2)
 			{
-				<div class="step-content">
+				<div class="step-content-modern">
 					<div class="step-header">
 						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Build Sections</RadzenText>
 						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Organize your assessment into logical sections and configure questions</RadzenText>
@@ -172,7 +170,7 @@
 			}
 			else if (currentStep == 3)
 			{
-				<div class="step-content">
+				<div class="step-content-modern">
 					<div class="step-header">
 						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Review & Publish</RadzenText>
 						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Review your questionnaire and make it available for assignments</RadzenText>
@@ -1192,204 +1190,3 @@
 	}
 }
 
-<style>
-	/* Color Variables from FarbCodes.png */
-	:root {
-		--primary-color: #0F60FF; /* Blue new */
-		--dark-blue: #002650; /* Dark Blue */
-		--ice-blue: #7F3AAE; /* Light Blue - using purple rain as accent */
-		--light-gray: #F1F3F4;
-		--success-color: #00E6C8; /* Green new */
-		--warning-color: #E6BF7F; /* Golden Milk */
-		--purple-rain: #935BA9;
-	}
-
-	/* Header Styling */
-	.questionnaire-builder-header {
-		background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-color) 100%);
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-	}
-
-	.status-badge .badge {
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.5px;
-		border-radius: 1rem;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-	}
-
-	/* Progress Steps */
-	.progress-steps-container {
-		background: white;
-		border-bottom: 1px solid #e9ecef;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-	}
-
-	.progress-steps {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		max-width: 600px;
-		margin: 0 auto;
-	}
-
-	.step {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		cursor: pointer;
-		transition: all 0.2s ease-in-out;
-		padding: 0.5rem;
-		border-radius: 0.5rem;
-	}
-
-		.step:hover {
-			background: var(--light-gray);
-		}
-
-	.step-circle {
-		width: 40px;
-		height: 40px;
-		border-radius: 50%;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: #e9ecef;
-		color: #6c757d;
-		transition: all 0.2s ease-in-out;
-		margin-bottom: 0.5rem;
-	}
-
-	.step.active .step-circle {
-		background: var(--primary-color);
-		color: white;
-		box-shadow: 0 4px 12px rgba(15, 96, 255, 0.3);
-	}
-
-	.step.completed .step-circle {
-		background: var(--success-color);
-		color: white;
-	}
-
-	.step-text {
-		font-size: 0.875rem;
-		font-weight: 500;
-		color: #6c757d;
-	}
-
-	.step.active .step-text {
-		color: var(--primary-color);
-		font-weight: 600;
-	}
-
-	.step.completed .step-text {
-		color: var(--success-color);
-	}
-
-	.step-connector {
-		width: 80px;
-		height: 2px;
-		background: #e9ecef;
-		margin: 0 1rem;
-		transition: all 0.2s ease-in-out;
-	}
-
-		.step-connector.completed {
-			background: var(--success-color);
-		}
-
-	/* Main Content */
-	.main-content-area {
-		padding: 2rem 0;
-		min-height: calc(100vh - 200px);
-		background: #f8f9fa;
-	}
-
-	.step-content {
-		max-width: 1200px;
-		margin: 0 auto;
-		background: white;
-		padding: 2rem;
-		border-radius: 8px;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-	}
-
-	.step-header {
-		text-align: center;
-		margin-bottom: 2rem;
-	}
-
-	.step-navigation {
-		border-top: 1px solid #e9ecef;
-		padding-top: 1.5rem;
-	}
-
-	/* Question Editor Full Screen */
-	.question-editor-fullscreen {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: white;
-		z-index: 1050;
-		display: flex;
-		flex-direction: column;
-	}
-
-	.editor-header {
-		background: var(--light-gray);
-		border-bottom: 1px solid #e9ecef;
-		padding: 0 2rem;
-		flex-shrink: 0;
-	}
-
-	.editor-content {
-		flex: 1;
-		overflow-y: auto;
-		max-width: 1000px;
-		margin: 0 auto;
-		width: 100%;
-	}
-
-	/* Flat Design Overrides */
-	.rz-card {
-		border: none !important;
-		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-	}
-
-	/* Remove nested card styling */
-	.step-content .rz-card {
-		box-shadow: none !important;
-		border: 1px solid #e9ecef !important;
-	}
-
-	/* Button enhancements */
-	.rz-button {
-		border-radius: 6px !important;
-		font-weight: 500 !important;
-		transition: all 0.2s ease-in-out !important;
-	}
-
-		.rz-button:hover {
-			transform: translateY(-1px);
-			box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-		}
-
-	.rz-button-primary {
-		background: var(--primary-color) !important;
-		border-color: var(--primary-color) !important;
-	}
-
-	.rz-button-success {
-		background: var(--success-color) !important;
-		border-color: var(--success-color) !important;
-		color: var(--dark-blue) !important;
-	}
-
-	.rz-button-warning {
-		background: var(--warning-color) !important;
-		border-color: var(--warning-color) !important;
-		color: var(--dark-blue) !important;
-	}
-</style>
