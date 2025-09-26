@@ -19,8 +19,7 @@ public class QuestionSection
     public QuestionType QuestionType { get; set; }
     public Dictionary<string, object> Configuration { get; set; } = new();
 
-    // Keep Questions for backward compatibility during migration
-    [Obsolete("Use QuestionType and Configuration instead. This will be removed in future versions.")]
+    // Questions are the core content of each section
     public List<QuestionItem> Questions { get; set; } = new();
 
     // Helper methods for the new simplified structure
