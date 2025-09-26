@@ -6,7 +6,8 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits OptimizedComponentBase
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
-@inject IQuestionnaireApiService QuestionnaireApiService
+@inject IQuestionnaireTemplateService TemplateService
+@inject IQuestionnaireResponseService ResponseService
 @inject NotificationService NotificationService
 
 <PageTitle>My Questionnaires</PageTitle>
@@ -606,11 +607,11 @@ else
         try
         {
             // Create the data service
-            dataService = new EmployeeQuestionnaireDataService(EmployeeQuestionnaireService, QuestionnaireApiService);
+            dataService = new EmployeeQuestionnaireDataService(EmployeeQuestionnaireService, TemplateService);
 
             // Load data to setup configuration with performance optimization
             var loadAssignmentsTask = EmployeeQuestionnaireService.GetMyAssignmentsAsync();
-            var loadTemplatesTask = QuestionnaireApiService.GetAllTemplatesAsync();
+            var loadTemplatesTask = TemplateService.GetAllTemplatesAsync();
 
             // Load in parallel for better performance
             await Task.WhenAll(loadAssignmentsTask, loadTemplatesTask);
@@ -681,7 +682,7 @@ else
             {
                 try
                 {
-                    var existingResponse = await QuestionnaireApiService.GetResponseByAssignmentIdAsync(assignment.Id);
+                    var existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignment.Id);
                     if (existingResponse?.SectionResponses != null)
                     {
                         questionnaireResponses[assignment.Id] = existingResponse.SectionResponses;

@@ -3,9 +3,10 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
-@inject IQuestionnaireApiService QuestionnaireApiService
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject IQuestionnaireTemplateService TemplateService
 
 <RadzenCard Class="team-member-details-dialog">
     <div class="dialog-header mb-4">

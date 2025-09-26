@@ -8,9 +8,10 @@
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
-@inject IQuestionnaireApiService QuestionnaireApiService
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
 @inject IAuthenticationService AuthenticationService
+@inject IQuestionnaireTemplateService TemplateService
+@inject IQuestionnaireResponseService ResponseService
 @inherits OptimizedComponentBase
 
 <PageTitle>@(template?.Name ?? "Questionnaire")</PageTitle>
@@ -169,7 +170,7 @@
     {
         try
         {
-            template = await QuestionnaireApiService.GetTemplateByIdAsync(TemplateId);
+            template = await TemplateService.GetTemplateByIdAsync(TemplateId);
             if (template == null)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Error", "Questionnaire template not found");

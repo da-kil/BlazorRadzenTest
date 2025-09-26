@@ -7,7 +7,7 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @inherits OptimizedComponentBase
 @inject IHRQuestionnaireService HRQuestionnaireService
-@inject IQuestionnaireApiService QuestionnaireApiService
+@inject IQuestionnaireTemplateService TemplateService
 @inject NotificationService NotificationService
 
 <PageTitle>Organization Questionnaires</PageTitle>
@@ -46,12 +46,12 @@ else if (isLoading)
         try
         {
             // Create the data service
-            dataService = new HRQuestionnaireDataService(HRQuestionnaireService, QuestionnaireApiService);
+            dataService = new HRQuestionnaireDataService(HRQuestionnaireService, TemplateService);
 
             // Load data to setup configuration
             var assignmentsTask = HRQuestionnaireService.GetAllAssignmentsAsync();
             var employeesTask = HRQuestionnaireService.GetAllEmployeesAsync();
-            var templatesTask = QuestionnaireApiService.GetAllTemplatesAsync();
+            var templatesTask = TemplateService.GetAllTemplatesAsync();
 
             await Task.WhenAll(assignmentsTask, employeesTask, templatesTask);
 

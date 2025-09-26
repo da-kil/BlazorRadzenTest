@@ -7,9 +7,10 @@
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Shared
-@inject IQuestionnaireApiService QuestionnaireApiService
 @inject IEmployeeApiService EmployeeApiService
 @inject ICategoryApiService CategoryApiService
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject IQuestionnaireTemplateService TemplateService
 @inject NotificationService NotificationService
 @inject DialogService DialogService
 
@@ -480,8 +481,8 @@
         {
             // Load employees and questionnaires in parallel
             var employeesTask = EmployeeApiService.GetAllEmployeesAsync();
-            var questionnairesTask = QuestionnaireApiService.GetAllPublishedTemplatesAsync();
-            var assignmentsTask = QuestionnaireApiService.GetAllAssignmentsAsync();
+            var questionnairesTask = TemplateService.GetAllPublishedTemplatesAsync();
+            var assignmentsTask = AssignmentService.GetAllAssignmentsAsync();
             var categoriesTask = CategoryApiService.GetAllCategoriesAsync();
 
             await Task.WhenAll(employeesTask, questionnairesTask, assignmentsTask);
@@ -617,7 +618,7 @@
         {
             var selectedEmployeeIdsString = selectedEmployeeIds.Select(id => id.ToString()).ToList();
 
-            var newAssignments = await QuestionnaireApiService.CreateAssignmentsAsync(
+            var newAssignments = await AssignmentService.CreateAssignmentsAsync(
                 selectedQuestionnaireId,
                 selectedEmployeeIdsString,
                 assignmentDueDate,
@@ -668,7 +669,7 @@
     {
         try
         {
-            assignments = await QuestionnaireApiService.GetAllAssignmentsAsync();
+            assignments = await AssignmentService.GetAllAssignmentsAsync();
             FilterAssignments();
         }
         catch (Exception ex)
@@ -902,7 +903,7 @@
                 if (newEmployeeIds.Any())
                 {
                     // Create additional assignments for new employees
-                    var newAssignments = await QuestionnaireApiService.CreateAssignmentsAsync(
+                    var newAssignments = await AssignmentService.CreateAssignmentsAsync(
                         assignment.TemplateId,
                         newEmployeeIds,
                         editModel.DueDate,

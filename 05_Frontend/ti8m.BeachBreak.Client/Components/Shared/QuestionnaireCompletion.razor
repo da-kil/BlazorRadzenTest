@@ -1,8 +1,9 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
-@inject IQuestionnaireApiService ApiService
 @inject NotificationService NotificationService
+@inject IQuestionnaireTemplateService TemplateService
+@inject IQuestionnaireResponseService ResponseService
 
 <style>
     .questionnaire-completion {
@@ -488,7 +489,7 @@
     {
         try
         {
-            template = await ApiService.GetTemplateByIdAsync(Assignment.TemplateId);
+            template = await TemplateService.GetTemplateByIdAsync(Assignment.TemplateId);
             if (template == null)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Error", "Could not load questionnaire template");
@@ -512,7 +513,7 @@
             }
 
             // If no existing responses passed, try to load from API
-            var existingResponse = await ApiService.GetResponseByAssignmentIdAsync(Assignment.Id);
+            var existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(Assignment.Id);
             if (existingResponse?.SectionResponses != null)
             {
                 responses = existingResponse.SectionResponses;
@@ -576,7 +577,7 @@
 
         try
         {
-            await ApiService.SaveResponseAsync(Assignment.Id, responses);
+            await ResponseService.SaveResponseAsync(Assignment.Id, responses);
             lastSavedTime = DateTime.Now;
 
             if (OnSave.HasDelegate)
@@ -636,7 +637,7 @@
 
             try
             {
-                await ApiService.SubmitResponseAsync(Assignment.Id);
+                await ResponseService.SubmitResponseAsync(Assignment.Id);
                 isCompleted = true;
                 NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
                 StateHasChanged();

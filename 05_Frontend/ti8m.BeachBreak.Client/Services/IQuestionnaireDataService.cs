@@ -13,14 +13,14 @@ public interface IQuestionnaireDataService
 public class EmployeeQuestionnaireDataService : IQuestionnaireDataService
 {
     private readonly IEmployeeQuestionnaireService _employeeService;
-    private readonly IQuestionnaireApiService _questionnaireService;
+    private readonly IQuestionnaireTemplateService _templateService;
 
     public EmployeeQuestionnaireDataService(
         IEmployeeQuestionnaireService employeeService,
-        IQuestionnaireApiService questionnaireService)
+        IQuestionnaireTemplateService templateService)
     {
         _employeeService = employeeService;
-        _questionnaireService = questionnaireService;
+        _templateService = templateService;
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsAsync()
@@ -35,7 +35,7 @@ public class EmployeeQuestionnaireDataService : IQuestionnaireDataService
 
     public async Task<List<QuestionnaireTemplate>> GetTemplatesAsync()
     {
-        return await _questionnaireService.GetAllTemplatesAsync();
+        return await _templateService.GetAllTemplatesAsync();
     }
 
     public async Task<object?> GetAdditionalDataAsync()
@@ -47,14 +47,14 @@ public class EmployeeQuestionnaireDataService : IQuestionnaireDataService
 public class ManagerQuestionnaireDataService : IQuestionnaireDataService
 {
     private readonly IManagerQuestionnaireService _managerService;
-    private readonly IQuestionnaireApiService _questionnaireService;
+    private readonly IQuestionnaireTemplateService _templateService;
 
     public ManagerQuestionnaireDataService(
         IManagerQuestionnaireService managerService,
-        IQuestionnaireApiService questionnaireService)
+        IQuestionnaireTemplateService templateService)
     {
         _managerService = managerService;
-        _questionnaireService = questionnaireService;
+        _templateService = templateService;
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsAsync()
@@ -69,7 +69,7 @@ public class ManagerQuestionnaireDataService : IQuestionnaireDataService
 
     public async Task<List<QuestionnaireTemplate>> GetTemplatesAsync()
     {
-        return await _questionnaireService.GetAllTemplatesAsync();
+        return await _templateService.GetAllTemplatesAsync();
     }
 
     public async Task<object?> GetAdditionalDataAsync()
@@ -81,14 +81,14 @@ public class ManagerQuestionnaireDataService : IQuestionnaireDataService
 public class HRQuestionnaireDataService : IQuestionnaireDataService
 {
     private readonly IHRQuestionnaireService _hrService;
-    private readonly IQuestionnaireApiService _questionnaireService;
+    private readonly IQuestionnaireTemplateService _templateService;
 
     public HRQuestionnaireDataService(
         IHRQuestionnaireService hrService,
-        IQuestionnaireApiService questionnaireService)
+        IQuestionnaireTemplateService templateService)
     {
         _hrService = hrService;
-        _questionnaireService = questionnaireService;
+        _templateService = templateService;
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsAsync()
@@ -103,7 +103,7 @@ public class HRQuestionnaireDataService : IQuestionnaireDataService
 
     public async Task<List<QuestionnaireTemplate>> GetTemplatesAsync()
     {
-        return await _questionnaireService.GetAllTemplatesAsync();
+        return await _templateService.GetAllTemplatesAsync();
     }
 
     public async Task<object?> GetAdditionalDataAsync()

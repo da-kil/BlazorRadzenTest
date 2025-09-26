@@ -37,7 +37,7 @@ public class Program
             httpClient.BaseAddress = new Uri(uri);
         });
 
-        builder.Services.AddScoped<IQuestionnaireApiService, QuestionnaireApiService>();
+        builder.Services.AddQuestionnaireServices();
         builder.Services.AddScoped<ICategoryApiService, CategoryApiService>();
         builder.Services.AddScoped<IEmployeeApiService, EmployeeApiService>();
         builder.Services.AddScoped<IEmployeeQuestionnaireService, EmployeeQuestionnaireService>();

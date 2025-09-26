@@ -6,7 +6,6 @@ namespace ti8m.BeachBreak.Client.Components.Shared;
 
 public abstract class BasePageComponent : ComponentBase
 {
-    [Inject] protected IQuestionnaireApiService QuestionnaireApiService { get; set; } = default!;
     [Inject] protected IEmployeeQuestionnaireService EmployeeQuestionnaireService { get; set; } = default!;
     [Inject] protected IManagerQuestionnaireService ManagerQuestionnaireService { get; set; } = default!;
     [Inject] protected IHRQuestionnaireService HRQuestionnaireService { get; set; } = default!;

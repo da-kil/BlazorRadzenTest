@@ -1,32 +1,22 @@
-using System.Net.Http.Json;
 using ti8m.BeachBreak.Client.Models;
 
 namespace ti8m.BeachBreak.Client.Services;
 
-public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
+public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTemplateService
 {
     private const string TemplateQueryEndpoint = "q/api/v1/questionnaire-templates";
     private const string TemplateCommandEndpoint = "c/api/v1/questionnaire-templates";
-    private const string AssignmentQueryEndpoint = "q/api/v1/assignments";
-    private const string AssignmentCommandEndpoint = "c/api/v1/assignments";
-    private const string ResponseQueryEndpoint = "q/api/v1/responses";
-    private const string ResponseCommandEndpoint = "c/api/v1/responses";
     private const string AnalyticsEndpoint = "q/api/v1/analytics";
     private const string PublishedTemplateQueryEndpoint = "q/api/v1/questionnaire-templates/published";
 
-    public QuestionnaireApiService(IHttpClientFactory factory) : base(factory)
+    public QuestionnaireTemplateService(IHttpClientFactory factory) : base(factory)
     {
     }
 
-    // Template management
+    // Template CRUD operations
     public async Task<List<QuestionnaireTemplate>> GetAllTemplatesAsync()
     {
         return await GetAllAsync<QuestionnaireTemplate>(TemplateQueryEndpoint);
-    }
-
-    public async Task<List<QuestionnaireTemplate>> GetAllPublishedTemplatesAsync()
-    {
-        return await GetAllAsync<QuestionnaireTemplate>(PublishedTemplateQueryEndpoint);
     }
 
     public async Task<QuestionnaireTemplate?> GetTemplateByIdAsync(Guid id)
@@ -50,103 +40,12 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
         return await DeleteAsync(TemplateCommandEndpoint, id);
     }
 
+    // Template filtering and queries
     public async Task<List<QuestionnaireTemplate>> GetTemplatesByCategoryAsync(string category)
     {
         return await GetAllAsync<QuestionnaireTemplate>($"{TemplateQueryEndpoint}/category/{category}");
     }
 
-    // Assignment management
-    public async Task<List<QuestionnaireAssignment>> GetAllAssignmentsAsync()
-    {
-        return await GetAllAsync<QuestionnaireAssignment>(AssignmentQueryEndpoint);
-    }
-
-    public async Task<QuestionnaireAssignment?> GetAssignmentByIdAsync(Guid id)
-    {
-        return await GetByIdAsync<QuestionnaireAssignment>(AssignmentQueryEndpoint, id);
-    }
-
-    public async Task<List<QuestionnaireAssignment>> GetAssignmentsByEmployeeAsync(string employeeId)
-    {
-        return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/employee/{employeeId}");
-    }
-
-    public async Task<List<QuestionnaireAssignment>> CreateAssignmentsAsync(
-        Guid templateId,
-        List<string> employeeIds,
-        DateTime? dueDate,
-        string? notes,
-        string assignedBy)
-    {
-        var createRequest = new
-        {
-            TemplateId = templateId,
-            EmployeeIds = employeeIds,
-            DueDate = dueDate,
-            Notes = notes,
-            AssignedBy = assignedBy
-        };
-
-        return await CreateWithListResponseAsync<object, QuestionnaireAssignment>(AssignmentCommandEndpoint, createRequest);
-    }
-
-    public async Task<QuestionnaireAssignment?> UpdateAssignmentStatusAsync(Guid id, AssignmentStatus status)
-    {
-        return await PatchAsync<AssignmentStatus, QuestionnaireAssignment>(AssignmentCommandEndpoint, id, "status", status);
-    }
-
-    public async Task<bool> DeleteAssignmentAsync(Guid id)
-    {
-        return await DeleteAsync(AssignmentCommandEndpoint, id);
-    }
-
-    // Response management
-    public async Task<List<QuestionnaireResponse>> GetAllResponsesAsync()
-    {
-        return await GetAllAsync<QuestionnaireResponse>(ResponseQueryEndpoint);
-    }
-
-    public async Task<QuestionnaireResponse?> GetResponseByIdAsync(Guid id)
-    {
-        return await GetByIdAsync<QuestionnaireResponse>(ResponseQueryEndpoint, id);
-    }
-
-    public async Task<QuestionnaireResponse?> GetResponseByAssignmentIdAsync(Guid assignmentId)
-    {
-        return await GetBySubPathAsync<QuestionnaireResponse>(ResponseQueryEndpoint, "assignment", assignmentId);
-    }
-
-    public async Task<QuestionnaireResponse> SaveResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
-    {
-        var result = await PostToSubPathAsync<Dictionary<Guid, SectionResponse>, QuestionnaireResponse>(ResponseCommandEndpoint, "assignment", assignmentId, sectionResponses);
-        return result ?? throw new Exception("Failed to save response");
-    }
-
-    public async Task<QuestionnaireResponse?> SubmitResponseAsync(Guid assignmentId)
-    {
-        return await PostActionAsync<QuestionnaireResponse>(ResponseCommandEndpoint, "assignment", assignmentId, "submit");
-    }
-
-    // Analytics
-    public async Task<Dictionary<string, object>> GetTemplateAnalyticsAsync(Guid templateId)
-    {
-        return await GetBySubPathAsync<Dictionary<string, object>>(AnalyticsEndpoint, "template", templateId) ?? new Dictionary<string, object>();
-    }
-
-    public async Task<Dictionary<string, object>> GetOverallAnalyticsAsync()
-    {
-        try
-        {
-            return await HttpQueryClient.GetFromJsonAsync<Dictionary<string, object>>($"{AnalyticsEndpoint}/overview") ?? new Dictionary<string, object>();
-        }
-        catch (Exception ex)
-        {
-            LogError("Error fetching overall analytics", ex);
-            return new Dictionary<string, object>();
-        }
-    }
-
-    // Enhanced status-specific template queries
     public async Task<List<QuestionnaireTemplate>> GetPublishedTemplatesAsync()
     {
         return await GetAllAsync<QuestionnaireTemplate>($"{TemplateQueryEndpoint}/published");
@@ -171,7 +70,7 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching active templates: {ex.Message}");
+            LogError("Error fetching active templates", ex);
             return new List<QuestionnaireTemplate>();
         }
     }
@@ -190,7 +89,12 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
         }
     }
 
-    // Publishing operations
+    public async Task<List<QuestionnaireTemplate>> GetAllPublishedTemplatesAsync()
+    {
+        return await GetAllAsync<QuestionnaireTemplate>(PublishedTemplateQueryEndpoint);
+    }
+
+    // Template status operations
     public async Task<QuestionnaireTemplate?> PublishTemplateAsync(Guid templateId, string publishedBy)
     {
         return await PostActionAndRefetchAsync<string, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "publish", publishedBy, TemplateQueryEndpoint);
@@ -211,6 +115,12 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
         return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "deactivate", null, TemplateQueryEndpoint);
     }
 
+    // Template analytics
+    public async Task<Dictionary<string, object>> GetTemplateAnalyticsAsync(Guid templateId)
+    {
+        return await GetBySubPathAsync<Dictionary<string, object>>(AnalyticsEndpoint, "template", templateId) ?? new Dictionary<string, object>();
+    }
+
     public async Task<Dictionary<string, object>> GetPublishingAnalyticsAsync()
     {
         try
@@ -229,7 +139,7 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error fetching publishing analytics: {ex.Message}");
+            LogError("Error fetching publishing analytics", ex);
             return new Dictionary<string, object>();
         }
     }
