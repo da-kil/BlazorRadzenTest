@@ -163,7 +163,6 @@ public class QuestionnaireTemplatesController : BaseController
             Description = template.Description,
             Category = template.Category,
             CreatedDate = template.CreatedDate,
-            LastModified = template.LastModified,
             Status = MapToStatusDto(template.Status),
             PublishedDate = template.PublishedDate,
             LastPublishedDate = template.LastPublishedDate,

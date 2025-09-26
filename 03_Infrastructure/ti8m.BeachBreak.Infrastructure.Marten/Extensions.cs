@@ -35,6 +35,7 @@ public static class Extensions
             options.DisableNpgsqlLogging = !builder.Environment.IsDevelopment();
 
             options.Projections.Snapshot<CategoryReadModel>(SnapshotLifecycle.Inline);
+            options.Projections.Snapshot<QuestionnaireTemplateReadModel>(SnapshotLifecycle.Inline);
 
         }).UseLightweightSessions().UseNpgsqlDataSource();
 

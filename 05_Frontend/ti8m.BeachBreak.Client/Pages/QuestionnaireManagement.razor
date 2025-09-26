@@ -94,20 +94,7 @@
                                 </RadzenDataGridColumn>
                                 
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CreatedDate)" Title="Created" Width="120px" FormatString="{0:dd/MM/yyyy}" />
-                                
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.LastModified)" Title="Modified" Width="120px">
-                                    <Template Context="template">
-                                        @if (template.LastModified.HasValue)
-                                        {
-                                            <span>@template.LastModified.Value.ToString("dd/MM/yyyy")</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">Never</span>
-                                        }
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                
+                                                                
                                 <RadzenDataGridColumn Filterable="false" Sortable="false" Width="200px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
                                         <div class="d-flex gap-1">
@@ -315,7 +302,6 @@
             };
 
             template.Status = newStatus;
-            template.LastModified = DateTime.Now;
 
             var updatedTemplate = await ApiService.UpdateTemplateAsync(template);
             if (updatedTemplate != null)

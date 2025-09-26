@@ -698,8 +698,6 @@
 
 		try
 		{
-			template.LastModified = DateTime.Now;
-
 			if (IsEditMode)
 			{
 				var updated = await ApiService.UpdateTemplateAsync(template);
@@ -739,7 +737,6 @@
 
 			// Set as published
 			template.Status = TemplateStatus.Published;
-			template.LastModified = DateTime.Now;
 			template.LastPublishedDate = DateTime.Now;
 
 			// Set PublishedDate only on first publish
@@ -788,7 +785,6 @@
 		{
 			// Set as unpublished (back to draft)
 			template.Status = TemplateStatus.Draft;
-			template.LastModified = DateTime.Now;
 
 			// Update the template with unpublished status
 			var updated = await ApiService.UpdateTemplateAsync(template);
@@ -815,7 +811,6 @@
 		{
 			// Set as inactive while keeping published status
 			template.Status = TemplateStatus.Archived;
-			template.LastModified = DateTime.Now;
 
 			var updated = await ApiService.UpdateTemplateAsync(template);
 			if (updated != null)
@@ -841,7 +836,6 @@
 		{
 			// Re-activate while keeping published status
 			template.Status = TemplateStatus.Draft;
-			template.LastModified = DateTime.Now;
 
 			var updated = await ApiService.UpdateTemplateAsync(template);
 			if (updated != null)
@@ -867,7 +861,6 @@
 		{
 			var previousStatus = template.Status;
 			template.Status = TemplateStatus.Archived;
-			template.LastModified = DateTime.Now;
 
 			var updated = await ApiService.UpdateTemplateAsync(template);
 			if (updated != null)
