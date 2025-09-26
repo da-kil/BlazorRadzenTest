@@ -233,7 +233,7 @@
 		{ QuestionType.TextQuestion, "Text Question" }
 	};
 
-	private List<string> categories = new();
+	private List<Category> categories = new();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -257,7 +257,7 @@
 				{
 					Name = "",
 					Description = "",
-					Category = "",
+					CategoryId = Guid.Empty,
 					Settings = new QuestionnaireSettings()
 				};
 			}
@@ -276,20 +276,13 @@
 	{
 		try
 		{
-			categories = await CategoryService.GetCategoryNamesAsync();
+			categories = await CategoryService.GetAllCategoriesAsync();
 		}
 		catch (Exception ex)
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load categories: {ex.Message}");
 			// Fallback to default categories if API fails
-			categories = new List<string>
-			{
-				"Performance Review",
-				"Employee Feedback",
-				"Training Assessment",
-				"Goal Setting",
-				"Other"
-			};
+			categories = [];
 		}
 	}
 

@@ -7,6 +7,7 @@
 @inject IEmployeeApiService EmployeeApiService
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject ICategoryApiService CategoryApiService
 
 <RadzenCard Class="department-details-dialog">
     <div class="dialog-header mb-4">
@@ -105,12 +106,15 @@
                     Key Insights
                 </RadzenText>
                 <div class="insights-list">
-                    @foreach (var insight in GetDepartmentInsights())
+                    @if (departmentInsights != null)
                     {
-                        <div class="insight-item mb-3">
-                            <RadzenIcon Icon="@insight.Icon" Class="@($"{insight.ColorClass} me-2")" />
-                            <RadzenText TextStyle="TextStyle.Body2">@insight.Message</RadzenText>
-                        </div>
+                        @foreach (var insight in departmentInsights)
+                        {
+                            <div class="insight-item mb-3">
+                                <RadzenIcon Icon="@insight.Icon" Class="@($"{insight.ColorClass} me-2")" />
+                                <RadzenText TextStyle="TextStyle.Body2">@insight.Message</RadzenText>
+                            </div>
+                        }
                     }
                 </div>
             </RadzenCard>
@@ -151,7 +155,7 @@
             <RadzenTabsItem Text="@($"Assignments ({DepartmentAssignments.Count})")">
                 @RenderAssignmentsView()
             </RadzenTabsItem>
-            <RadzenTabsItem Text="@($"Categories ({GetDepartmentCategories().Count})")">
+            <RadzenTabsItem Text="@($"Categories ({(departmentCategories?.Count ?? 0)})")">
                 @RenderCategoriesView()
             </RadzenTabsItem>
             <RadzenTabsItem Text="Trends & Analytics">
@@ -199,6 +203,14 @@
     [Parameter] public List<QuestionnaireTemplate> Templates { get; set; } = new();
 
     private int selectedTabIndex = 0;
+    private List<dynamic>? departmentInsights;
+    private List<Category>? departmentCategories;
+
+    protected override async Task OnInitializedAsync()
+    {
+        departmentInsights = await GetDepartmentInsights();
+        departmentCategories = await GetDepartmentCategories();
+    }
 
     private RenderFragment RenderEmployeesView()
     {
@@ -318,9 +330,9 @@
         </RadzenCard>;
     }
 
-    private RenderFragment RenderCategoriesView()
+    private async Task<RenderFragment> RenderCategoriesView()
     {
-        var categoryStats = GetDepartmentCategoryStats();
+        var categoryStats = await GetDepartmentCategoryStats();
 
         return @<div>
             <div class="row">
@@ -386,7 +398,8 @@
                     </RadzenCard>
                 </div>
             </div>
-        </div>;
+        </div>
+    ;
     }
 
     // Helper methods
@@ -469,17 +482,18 @@
         return GetEmployeesWithStats().Where(x => x.TotalCount > 0).OrderByDescending(x => x.CompletionRate).Take(5).ToList();
     }
 
-    private List<string> GetDepartmentCategories()
+    private async Task<List<Category>> GetDepartmentCategories()
     {
+        var categories = await CategoryApiService.GetAllCategoriesAsync();
         var templateIds = DepartmentAssignments.Select(a => a.TemplateId).Distinct();
-        return Templates.Where(t => templateIds.Contains(t.Id)).Select(t => t.Category).Distinct().ToList();
+        return categories.Where(o => Templates.Where(t => templateIds.Contains(t.Id)).Select(t => t.CategoryId).Distinct().Contains(o.Id)).ToList();
     }
 
-    private List<dynamic> GetDepartmentCategoryStats()
+    private async Task<List<dynamic>> GetDepartmentCategoryStats()
     {
-        return GetDepartmentCategories().Select(category =>
+        return (await GetDepartmentCategories()).Select(category =>
         {
-            var categoryTemplateIds = Templates.Where(t => t.Category == category).Select(t => t.Id).ToHashSet();
+            var categoryTemplateIds = Templates.Where(t => t.CategoryId == category.Id).Select(t => t.Id).ToHashSet();
             var categoryAssignments = DepartmentAssignments.Where(a => categoryTemplateIds.Contains(a.TemplateId)).ToList();
             var completed = categoryAssignments.Count(a => a.Status == AssignmentStatus.Completed);
 
@@ -493,11 +507,11 @@
         }).Cast<dynamic>().ToList();
     }
 
-    private List<dynamic> GetDepartmentInsights()
+    private async Task<List<dynamic>> GetDepartmentInsights()
     {
         var insights = new List<dynamic>();
 
-        var topCategory = GetDepartmentCategoryStats().OrderByDescending(x => x.CompletionRate).FirstOrDefault();
+        var topCategory = (await GetDepartmentCategoryStats()).OrderByDescending(x => x.CompletionRate).FirstOrDefault();
         if (topCategory != null)
         {
             insights.Add(new { Icon = "trending_up", ColorClass = "text-success", Message = $"{topCategory.Category} questionnaires have the highest completion rate ({topCategory.CompletionRate}%)" });

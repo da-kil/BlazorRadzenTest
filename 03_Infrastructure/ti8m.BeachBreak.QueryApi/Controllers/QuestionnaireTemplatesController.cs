@@ -161,7 +161,7 @@ public class QuestionnaireTemplatesController : BaseController
             Id = template.Id,
             Name = template.Name,
             Description = template.Description,
-            Category = template.Category,
+            CategoryId = template.CategoryId,
             CreatedDate = template.CreatedDate,
             Status = MapToStatusDto(template.Status),
             PublishedDate = template.PublishedDate,

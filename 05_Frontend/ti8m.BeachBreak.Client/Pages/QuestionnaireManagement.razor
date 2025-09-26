@@ -38,8 +38,10 @@
                     <div class="p-3">
                         <div class="d-flex justify-content-between mb-3">
                             <div class="d-flex gap-2">
-                                <RadzenDropDown @bind-Value="@categoryFilter" 
-                                               Data="@categories" 
+                                <RadzenDropDown @bind-Value="@categoryFilter"
+                                               Data="@categories"
+                                               TextProperty="NameEn"
+                                               ValueProperty="Id"
                                                Placeholder="Filter by Category"
                                                AllowClear="true"
                                                Change="@FilterTemplates" />
@@ -72,7 +74,14 @@
                                     </Template>
                                 </RadzenDataGridColumn>
                                 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.Category)" Title="Category" Width="150px" />
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CategoryId)" Title="Category" Width="150px">
+                                    <Template Context="template">
+                                        @{
+                                            var category = categories.FirstOrDefault(c => c.Id == template.CategoryId);
+                                        }
+                                        <RadzenText TextStyle="TextStyle.Body2">@(category?.NameEn ?? "Uncategorized")</RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
                                 
                                 <RadzenDataGridColumn Property="SectionCount" Title="Sections" Width="100px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
@@ -187,20 +196,17 @@
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
     [Inject] protected IQuestionnaireApiService ApiService { get; set; } = default!;
+    [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
 
     private List<QuestionnaireTemplate> templates = new();
     private List<QuestionnaireTemplate> filteredTemplates = new();
 
     private string searchText = "";
-    private string categoryFilter = "";
+    private Guid categoryFilter;
     private bool showInactiveTemplates = false;
 
 
-    private readonly List<string> categories = new()
-    {
-        "Performance Review", "Employee Feedback", "Training Assessment",
-        "Customer Satisfaction", "Team Evaluation", "Goal Setting", "Other"
-    };
+    private List<Category> categories = new();
 
 
     private SystemSettings settings = new();
@@ -209,7 +215,11 @@
     {
         await ExecuteSafelyAsync(async () =>
         {
-            await LoadTemplates();
+            // Load templates and categories in parallel
+            var loadTemplatesTask = LoadTemplates();
+            var loadCategoriesTask = LoadCategories();
+
+            await Task.WhenAll(loadTemplatesTask, loadCategoriesTask);
 
             // Load settings synchronously and apply filters
             LoadSettings();
@@ -237,6 +247,19 @@
         }
     }
 
+    private async Task LoadCategories()
+    {
+        try
+        {
+            categories = await CategoryService.GetAllCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load categories: {ex.Message}");
+            categories = new List<Category>();
+        }
+    }
+
     private void LoadSettings()
     {
         settings = new SystemSettings
@@ -259,7 +282,7 @@
     {
         filteredTemplates = templates.Where(t =>
             (showInactiveTemplates || t.Status != TemplateStatus.Archived) &&
-            (string.IsNullOrWhiteSpace(categoryFilter) || t.Category == categoryFilter) &&
+            (categoryFilter == Guid.Empty || t.CategoryId == categoryFilter) &&
             (string.IsNullOrWhiteSpace(searchText) ||
              t.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
              t.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase))

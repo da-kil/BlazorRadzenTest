@@ -204,13 +204,12 @@
     private RenderFragment RenderAssignmentCard(QuestionnaireAssignment assignment)
     {
         var template = Templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
-        var categoryInfo = GetCategoryInfo(template?.Category ?? "General");
 
         return @<RadzenCard Class="@($"assignment-detail-card {GetAssignmentCardClass(assignment)} mb-3")">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div class="flex-grow-1">
                     <div class="d-flex align-items-center mb-2">
-                        <RadzenIcon Icon="@categoryInfo.Icon" Class="@($"me-2 {categoryInfo.ColorClass}")" Size="1.2rem" />
+                        <RadzenIcon Icon="feedback.Icon" Class="@($"me-2 text-primary")" Size="1.2rem" />
                         <RadzenText TextStyle="TextStyle.H6" Class="mb-0 fw-bold">
                             @(template?.Name ?? "Questionnaire")
                         </RadzenText>
@@ -222,7 +221,7 @@
                         </RadzenText>
                     }
                     <div class="d-flex align-items-center gap-2">
-                        <RadzenBadge BadgeStyle="@categoryInfo.BadgeStyle" Text="@(template?.Category ?? "General")" />
+                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@(template?.CategoryId.ToString() ?? string.Empty)" />
                         <AssignmentStatusBadge Status="@assignment.Status" DueDate="@assignment.DueDate" />
                     </div>
                 </div>

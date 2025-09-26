@@ -98,7 +98,7 @@ public class ModernQuestionnaireApiService : ModernBaseApiService
             {
                 template.Name,
                 template.Description,
-                template.Category,
+                template.CategoryId,
                 template.Status,
                 template.PublishedDate,
                 template.LastPublishedDate,

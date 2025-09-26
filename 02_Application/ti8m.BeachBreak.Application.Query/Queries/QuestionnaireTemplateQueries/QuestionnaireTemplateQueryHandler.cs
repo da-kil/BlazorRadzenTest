@@ -135,7 +135,7 @@ public class QuestionnaireTemplateQueryHandler :
             Id = readModel.Id,
             Name = readModel.Name,
             Description = readModel.Description,
-            Category = readModel.CategoryId.ToString(), // TODO: This should be resolved to category name
+            CategoryId = readModel.CategoryId,
             CreatedDate = readModel.CreatedDate,
             Status = readModel.Status,
             PublishedDate = readModel.PublishedDate,

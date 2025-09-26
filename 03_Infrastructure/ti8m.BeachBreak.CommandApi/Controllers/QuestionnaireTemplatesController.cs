@@ -35,7 +35,7 @@ public class QuestionnaireTemplatesController : BaseController
             var commandTemplate = new CommandQuestionnaireTemplate
             {
                 Id = Guid.NewGuid(),
-                CategoryId = Guid.Parse(questionnaireTemplate.Category),
+                CategoryId = questionnaireTemplate.CategoryId,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
@@ -91,7 +91,7 @@ public class QuestionnaireTemplatesController : BaseController
             var commandTemplate = new CommandQuestionnaireTemplate
             {
                 Id = id,
-                CategoryId = Guid.Parse(questionnaireTemplate.Category),
+                CategoryId = questionnaireTemplate.CategoryId,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
