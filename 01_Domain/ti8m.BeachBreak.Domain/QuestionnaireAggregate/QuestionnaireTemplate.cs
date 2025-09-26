@@ -1,5 +1,6 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Events;
+using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAggregate;
 
@@ -7,7 +8,7 @@ public class QuestionnaireTemplate : AggregateRoot
 {
     public string Name { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
-    public string Category { get; private set; } = string.Empty;
+    public Guid CategoryId { get; private set; }
 
     public TemplateStatus Status { get; private set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; private set; }
@@ -18,7 +19,7 @@ public class QuestionnaireTemplate : AggregateRoot
     public QuestionnaireSettings Settings { get; private set; } = new();
 
     public DateTime CreatedDate { get; private set; }
-    public DateTime? LastModifiedDate { get; private set; }
+    public bool IsDeleted { get; private set; }
 
     private QuestionnaireTemplate() { }
 
@@ -26,7 +27,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Guid id,
         string name,
         string description,
-        string category,
+        Guid categoryId,
         List<QuestionSection>? sections = null,
         QuestionnaireSettings? settings = null)
     {
@@ -37,7 +38,7 @@ public class QuestionnaireTemplate : AggregateRoot
             id,
             name,
             description ?? string.Empty,
-            category ?? string.Empty,
+            categoryId,
             sections ?? new(),
             settings ?? new(),
             DateTime.UtcNow));
@@ -57,7 +58,7 @@ public class QuestionnaireTemplate : AggregateRoot
 
         if (!string.Equals(Name, name, StringComparison.Ordinal))
         {
-            RaiseEvent(new QuestionnaireTemplateNameChanged(Id, name, DateTime.UtcNow));
+            RaiseEvent(new QuestionnaireTemplateNameChanged(Id, name));
         }
     }
 
@@ -69,19 +70,18 @@ public class QuestionnaireTemplate : AggregateRoot
         var newDescription = description ?? string.Empty;
         if (!string.Equals(Description, newDescription, StringComparison.Ordinal))
         {
-            RaiseEvent(new QuestionnaireTemplateDescriptionChanged(Id, newDescription, DateTime.UtcNow));
+            RaiseEvent(new QuestionnaireTemplateDescriptionChanged(Id, newDescription));
         }
     }
 
-    public void ChangeCategory(string category)
+    public void ChangeCategory(Guid categoryId)
     {
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
-        var newCategory = category ?? string.Empty;
-        if (!string.Equals(Category, newCategory, StringComparison.Ordinal))
+        if (CategoryId != categoryId)
         {
-            RaiseEvent(new QuestionnaireTemplateCategoryChanged(Id, newCategory, DateTime.UtcNow));
+            RaiseEvent(new QuestionnaireTemplateCategoryChanged(Id, categoryId));
         }
     }
 
@@ -90,7 +90,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
-        RaiseEvent(new QuestionnaireTemplateSectionsChanged(Id, sections ?? new(), DateTime.UtcNow));
+        RaiseEvent(new QuestionnaireTemplateSectionsChanged(Id, sections ?? new()));
     }
 
     public void UpdateSettings(QuestionnaireSettings settings)
@@ -98,7 +98,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
-        RaiseEvent(new QuestionnaireTemplateSettingsChanged(Id, settings ?? new(), DateTime.UtcNow));
+        RaiseEvent(new QuestionnaireTemplateSettingsChanged(Id, settings ?? new()));
     }
 
     public void Publish(string publishedBy)
@@ -118,12 +118,19 @@ public class QuestionnaireTemplate : AggregateRoot
         RaiseEvent(new QuestionnaireTemplatePublished(Id, publishedBy, publishedDate, now));
     }
 
-    public void UnpublishToDraft()
+    public async Task UnpublishToDraftAsync(IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
     {
+        if (await assignmentService.HasActiveAssignmentsAsync(Id, cancellationToken))
+        {
+            var assignmentCount = await assignmentService.GetActiveAssignmentCountAsync(Id, cancellationToken);
+            throw new InvalidOperationException(
+                $"Cannot unpublish questionnaire template to draft: {assignmentCount} active assignment(s) exist.");
+        }
+
         if (Status != TemplateStatus.Published)
             throw new InvalidOperationException("Only published templates can be unpublished to draft");
 
-        RaiseEvent(new QuestionnaireTemplateUnpublishedToDraft(Id, DateTime.UtcNow));
+        RaiseEvent(new QuestionnaireTemplateUnpublishedToDraft(Id));
     }
 
     public void Archive()
@@ -131,7 +138,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (Status == TemplateStatus.Archived)
             throw new InvalidOperationException("Template is already archived");
 
-        RaiseEvent(new QuestionnaireTemplateArchived(Id, DateTime.UtcNow));
+        RaiseEvent(new QuestionnaireTemplateArchived(Id));
     }
 
     public void RestoreFromArchive()
@@ -139,10 +146,10 @@ public class QuestionnaireTemplate : AggregateRoot
         if (Status != TemplateStatus.Archived)
             throw new InvalidOperationException("Only archived templates can be restored");
 
-        RaiseEvent(new QuestionnaireTemplateRestoredFromArchive(Id, DateTime.UtcNow));
+        RaiseEvent(new QuestionnaireTemplateRestoredFromArchive(Id));
     }
 
-    public async Task DeleteAsync(Services.IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
+    public async Task DeleteAsync(IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
     {
         if (await assignmentService.HasActiveAssignmentsAsync(Id, cancellationToken))
         {
@@ -152,7 +159,7 @@ public class QuestionnaireTemplate : AggregateRoot
                 "Complete or cancel these assignments first, or archive the template instead.");
         }
 
-        RaiseEvent(new QuestionnaireTemplateDeleted(Id, DateTime.UtcNow));
+        RaiseEvent(new QuestionnaireTemplateDeleted(Id));
     }
 
     public bool CanBeDeleted()
@@ -167,42 +174,37 @@ public class QuestionnaireTemplate : AggregateRoot
         Id = @event.AggregateId;
         Name = @event.Name;
         Description = @event.Description;
-        Category = @event.Category;
+        CategoryId = @event.CategoryId;
         Sections = @event.Sections;
         Settings = @event.Settings;
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
-        LastModifiedDate = @event.CreatedDate;
+        IsDeleted = false;
     }
 
     public void Apply(QuestionnaireTemplateNameChanged @event)
     {
         Name = @event.Name;
-        LastModifiedDate = @event.ModifiedDate;
     }
 
     public void Apply(QuestionnaireTemplateDescriptionChanged @event)
     {
         Description = @event.Description;
-        LastModifiedDate = @event.ModifiedDate;
     }
 
     public void Apply(QuestionnaireTemplateCategoryChanged @event)
     {
-        Category = @event.Category;
-        LastModifiedDate = @event.ModifiedDate;
+        CategoryId = @event.CategoryId;
     }
 
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
     {
         Sections = @event.Sections;
-        LastModifiedDate = @event.ModifiedDate;
     }
 
     public void Apply(QuestionnaireTemplateSettingsChanged @event)
     {
         Settings = @event.Settings;
-        LastModifiedDate = @event.ModifiedDate;
     }
 
     public void Apply(QuestionnaireTemplatePublished @event)
@@ -210,7 +212,6 @@ public class QuestionnaireTemplate : AggregateRoot
         Status = TemplateStatus.Published;
         PublishedBy = @event.PublishedBy;
         LastPublishedDate = @event.LastPublishedDate;
-        LastModifiedDate = @event.LastPublishedDate;
 
         if (PublishedDate == null)
             PublishedDate = @event.PublishedDate;
@@ -220,25 +221,20 @@ public class QuestionnaireTemplate : AggregateRoot
     {
         Status = TemplateStatus.Draft;
         PublishedBy = string.Empty;
-        LastModifiedDate = @event.ModifiedDate;
     }
 
     public void Apply(QuestionnaireTemplateArchived @event)
     {
         Status = TemplateStatus.Archived;
-        LastModifiedDate = @event.ArchivedDate;
     }
 
     public void Apply(QuestionnaireTemplateRestoredFromArchive @event)
     {
         Status = TemplateStatus.Draft;
-        LastModifiedDate = @event.RestoredDate;
     }
 
     public void Apply(QuestionnaireTemplateDeleted @event)
     {
-        // For event sourcing, we don't actually delete the aggregate
-        // This event is mainly for audit purposes and to trigger side effects
-        LastModifiedDate = @event.DeletedDate;
+        IsDeleted = true;
     }
 }

@@ -4,5 +4,4 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAggregate.Events;
 
 public record QuestionnaireTemplateNameChanged(
     Guid AggregateId,
-    string Name,
-    DateTime ModifiedDate) : IDomainEvent;
+    string Name) : IDomainEvent;

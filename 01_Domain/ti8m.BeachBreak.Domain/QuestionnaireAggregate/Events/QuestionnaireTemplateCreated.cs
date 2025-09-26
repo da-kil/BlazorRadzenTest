@@ -6,7 +6,7 @@ public record QuestionnaireTemplateCreated(
     Guid AggregateId,
     string Name,
     string Description,
-    string Category,
+    Guid CategoryId,
     List<QuestionSection> Sections,
     QuestionnaireSettings Settings,
     DateTime CreatedDate) : IDomainEvent;

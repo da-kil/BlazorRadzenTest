@@ -3,7 +3,7 @@ using ti8m.BeachBreak.Application.Command.Repositories;
 using ti8m.BeachBreak.Domain.CategoryAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
-using DomainQTemplate = ti8m.BeachBreak.Domain.QuestionnaireAggregate.QuestionnaireTemplate;
+using DomainQuestionnaireTemplate = ti8m.BeachBreak.Domain.QuestionnaireAggregate.QuestionnaireTemplate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 
@@ -36,20 +36,15 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            // Get category name from CategoryId
-            var categoryName = await GetCategoryNameAsync(command.QuestionnaireTemplate.CategoryId, cancellationToken);
-
-            // Create domain objects from command DTOs
-            var templateId = Guid.NewGuid();
             var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
             var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
 
             // Create the questionnaire template using the domain aggregate
-            var questionnaireTemplate = new DomainQTemplate(
-                templateId,
+            var questionnaireTemplate = new DomainQuestionnaireTemplate(
+                command.QuestionnaireTemplate.Id,
                 command.QuestionnaireTemplate.Name,
                 command.QuestionnaireTemplate.Description,
-                categoryName,
+                command.QuestionnaireTemplate.CategoryId,
                 sections,
                 settings);
 
@@ -67,20 +62,17 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
 
             if (questionnaireTemplate == null)
             {
                 return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
 
-            // Get category name from CategoryId
-            var categoryName = await GetCategoryNameAsync(command.QuestionnaireTemplate.CategoryId, cancellationToken);
-
             // Update the template using domain methods
             questionnaireTemplate.ChangeName(command.QuestionnaireTemplate.Name);
             questionnaireTemplate.ChangeDescription(command.QuestionnaireTemplate.Description);
-            questionnaireTemplate.ChangeCategory(categoryName);
+            questionnaireTemplate.ChangeCategory(command.QuestionnaireTemplate.CategoryId);
 
             var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
             var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
@@ -106,7 +98,7 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
 
             if (questionnaireTemplate == null)
             {
@@ -133,7 +125,7 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
 
             if (questionnaireTemplate == null)
             {
@@ -163,16 +155,14 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
 
             if (questionnaireTemplate == null)
             {
                 return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
 
-            // TODO: Add business logic to check for active assignments
-            // This would require a domain service or additional repository to check assignments
-            questionnaireTemplate.UnpublishToDraft();
+            await questionnaireTemplate.UnpublishToDraftAsync(assignmentService);
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
             return Result.Success();
@@ -191,7 +181,7 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
 
             if (questionnaireTemplate == null)
             {
@@ -217,15 +207,13 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
 
             if (questionnaireTemplate == null)
             {
                 return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
 
-            // TODO: Add business logic to check for active assignments
-            // This would require a domain service or additional repository to check assignments
             questionnaireTemplate.Archive();
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
@@ -245,7 +233,7 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
 
             if (questionnaireTemplate == null)
             {
@@ -271,7 +259,7 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            var questionnaireTemplate = await repository.LoadAsync<DomainQTemplate>(command.Id, cancellationToken: cancellationToken);
+            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
 
             if (questionnaireTemplate == null)
             {
@@ -330,17 +318,5 @@ public class QuestionnaireTemplateCommandHandler :
             commandSettings.TimeLimit,
             commandSettings.AllowReviewBeforeSubmit
         );
-    }
-
-    private async Task<string> GetCategoryNameAsync(Guid categoryId, CancellationToken cancellationToken)
-    {
-        var category = await categoryRepository.LoadAsync<Category>(categoryId, cancellationToken: cancellationToken);
-        if (category == null)
-        {
-            throw new InvalidOperationException($"Category with ID {categoryId} not found");
-        }
-
-        // Return the category name - using English name as default, could be made configurable
-        return category.Name.English;
     }
 }
