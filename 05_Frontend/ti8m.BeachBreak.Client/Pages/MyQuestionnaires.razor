@@ -624,8 +624,8 @@ else
             // Get available categories
             availableCategories = new List<string> { "All Categories" };
             availableCategories.AddRange(
-                templates.Where(t => !string.IsNullOrEmpty(t.Category))
-                        .Select(t => t.Category!)
+                templates.Where(t => t.CategoryId != Guid.Empty)
+                        .Select(t => t.CategoryId.ToString())
                         .Distinct()
                         .OrderBy(c => c));
         }

@@ -16,8 +16,10 @@
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
                 <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Category</RadzenText>
-                <RadzenDropDown @bind-Value="@Template.Category"
+                <RadzenDropDown @bind-Value="@Template.CategoryId"
                                Data="@Categories"
+                               TextProperty="NameEn"
+                               ValueProperty="Id"
                                Placeholder="Select category"
                                AllowClear="true"
                                Class="w-100"
@@ -70,5 +72,5 @@
 
 @code {
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
-    [Parameter, EditorRequired] public IReadOnlyList<string> Categories { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<Category> Categories { get; set; } = null!;
 }

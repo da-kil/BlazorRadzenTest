@@ -233,7 +233,7 @@
 		{ QuestionType.TextQuestion, "Text Question" }
 	};
 
-	private List<string> categories = new();
+	private List<Category> categories = new();
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -257,7 +257,7 @@
 				{
 					Name = "",
 					Description = "",
-					Category = "",
+					CategoryId = Guid.Empty,
 					Settings = new QuestionnaireSettings()
 				};
 			}
@@ -276,20 +276,13 @@
 	{
 		try
 		{
-			categories = await CategoryService.GetCategoryNamesAsync();
+			categories = await CategoryService.GetAllCategoriesAsync();
 		}
 		catch (Exception ex)
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load categories: {ex.Message}");
 			// Fallback to default categories if API fails
-			categories = new List<string>
-			{
-				"Performance Review",
-				"Employee Feedback",
-				"Training Assessment",
-				"Goal Setting",
-				"Other"
-			};
+			categories = [];
 		}
 	}
 
@@ -698,8 +691,6 @@
 
 		try
 		{
-			template.LastModified = DateTime.Now;
-
 			if (IsEditMode)
 			{
 				var updated = await ApiService.UpdateTemplateAsync(template);
@@ -739,7 +730,6 @@
 
 			// Set as published
 			template.Status = TemplateStatus.Published;
-			template.LastModified = DateTime.Now;
 			template.LastPublishedDate = DateTime.Now;
 
 			// Set PublishedDate only on first publish
@@ -788,7 +778,6 @@
 		{
 			// Set as unpublished (back to draft)
 			template.Status = TemplateStatus.Draft;
-			template.LastModified = DateTime.Now;
 
 			// Update the template with unpublished status
 			var updated = await ApiService.UpdateTemplateAsync(template);
@@ -815,7 +804,6 @@
 		{
 			// Set as inactive while keeping published status
 			template.Status = TemplateStatus.Archived;
-			template.LastModified = DateTime.Now;
 
 			var updated = await ApiService.UpdateTemplateAsync(template);
 			if (updated != null)
@@ -841,7 +829,6 @@
 		{
 			// Re-activate while keeping published status
 			template.Status = TemplateStatus.Draft;
-			template.LastModified = DateTime.Now;
 
 			var updated = await ApiService.UpdateTemplateAsync(template);
 			if (updated != null)
@@ -867,7 +854,6 @@
 		{
 			var previousStatus = template.Status;
 			template.Status = TemplateStatus.Archived;
-			template.LastModified = DateTime.Now;
 
 			var updated = await ApiService.UpdateTemplateAsync(template);
 			if (updated != null)

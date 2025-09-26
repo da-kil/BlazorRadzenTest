@@ -3,9 +3,9 @@
 public class UpdateQuestionnaireTemplateCommand : ICommand<Result>
 {
     public Guid Id { get; init; }
-    public QuestionnaireTemplate QuestionnaireTemplate { get; init; }
+    public CommandQuestionnaireTemplate QuestionnaireTemplate { get; init; }
 
-    public UpdateQuestionnaireTemplateCommand(Guid id, QuestionnaireTemplate questionnaireTemplate)
+    public UpdateQuestionnaireTemplateCommand(Guid id, CommandQuestionnaireTemplate questionnaireTemplate)
     {
         Id = id;
         QuestionnaireTemplate = questionnaireTemplate;

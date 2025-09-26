@@ -157,7 +157,7 @@
                                         </RadzenText>
 
                                         <div class="mb-3">
-                                            <RadzenDropDown @bind-Value="@selectedCategory"
+                                            <RadzenDropDown @bind-Value="@selectedCategoryId"
                                                           Data="@availableCategories"
                                                           AllowClear="true"
                                                           Placeholder="Filter by category"
@@ -173,12 +173,10 @@
                                                     <div class="questionnaire-item @(selectedQuestionnaireId == questionnaire.Id ? "selected" : "")"
                                                          @onclick="() => SelectQuestionnaire(questionnaire.Id)">
                                                         <div class="d-flex align-items-start">
-                                                            <RadzenIcon Icon="@GetCategoryIcon(questionnaire.Category)"
-                                                                      Style="font-size: 1.5rem; margin-right: 0.75rem; color: var(--purple-rain);" />
                                                             <div class="flex-grow-1">
                                                                 <div class="d-flex justify-content-between align-items-start">
                                                                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@questionnaire.Name</RadzenText>
-                                                                    <RadzenBadge Text="@questionnaire.Category" BadgeStyle="BadgeStyle.Info" />
+                                                                    <RadzenBadge Text="questionnaire.CategoryId" BadgeStyle="BadgeStyle.Info" />
                                                                 </div>
                                                                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@questionnaire.Description</RadzenText>
                                                                 <div class="d-flex gap-3 mt-2">
@@ -275,7 +273,7 @@
 
                                     <div class="mt-3">
                                         <RadzenText TextStyle="TextStyle.Body1" Class="fw-semibold">Selected Questionnaire:</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2">@GetSelectedQuestionnaireName()</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body1">@GetSelectedQuestionnaireName()</RadzenText>
                                     </div>
                                 </div>
                             }
@@ -426,6 +424,7 @@
 @code {
     [Inject] protected IQuestionnaireApiService QuestionnaireApiService { get; set; } = default!;
     [Inject] protected IEmployeeApiService EmployeeApiService { get; set; } = default!;
+    [Inject] protected ICategoryApiService CategoryApiService { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected DialogService DialogService { get; set; } = default!;
 
@@ -436,6 +435,7 @@
     private List<QuestionnaireTemplate> filteredQuestionnaires = new();
     private List<QuestionnaireAssignment> assignments = new();
     private List<QuestionnaireAssignment> filteredAssignments = new();
+    private List<Category> categories = new();
 
     // UI State
     private RadzenDataGrid<QuestionnaireAssignment> assignmentsGrid = default!;
@@ -453,8 +453,8 @@
     // Filters
     private string searchText = "";
     private AssignmentStatus? statusFilter;
-    private string selectedCategory = "";
-    private List<string> availableCategories = new();
+    private Guid selectedCategoryId;
+    private List<Category> availableCategories = new();
 
     private readonly List<StatusOption> statusOptions = new()
     {
@@ -482,12 +482,14 @@
             var employeesTask = EmployeeApiService.GetAllEmployeesAsync();
             var questionnairesTask = QuestionnaireApiService.GetAllPublishedTemplatesAsync();
             var assignmentsTask = QuestionnaireApiService.GetAllAssignmentsAsync();
+            var categoriesTask = CategoryApiService.GetAllCategoriesAsync();
 
             await Task.WhenAll(employeesTask, questionnairesTask, assignmentsTask);
 
             allEmployees = await employeesTask;
             allQuestionnaires = await questionnairesTask;
             assignments = await assignmentsTask;
+            categories = await categoriesTask;
 
             // Set up initial filtered data
             filteredEmployees = allEmployees.Where(e => !e.IsDeleted).ToList();
@@ -495,7 +497,7 @@
             filteredAssignments = assignments.ToList();
 
             // Extract available categories
-            availableCategories = allQuestionnaires.Select(q => q.Category).Distinct().ToList();
+            availableCategories = categories.Where(o=> allQuestionnaires.Select(q => q.CategoryId).Distinct().Contains(o.Id)).ToList();
 
             NotificationService.Notify(NotificationSeverity.Success,
                 "Data Loaded",
@@ -536,14 +538,14 @@
 
     private void FilterQuestionnaires()
     {
-        if (string.IsNullOrWhiteSpace(selectedCategory))
+        if (selectedCategoryId == Guid.Empty)
         {
             filteredQuestionnaires = allQuestionnaires.Where(q => q.Status != TemplateStatus.Archived).ToList();
         }
         else
         {
             filteredQuestionnaires = allQuestionnaires.Where(q =>
-                q.Status != TemplateStatus.Archived && q.Category == selectedCategory
+                q.Status != TemplateStatus.Archived && q.CategoryId == selectedCategoryId
             ).ToList();
         }
         StateHasChanged();
@@ -686,9 +688,9 @@
         return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.Name ?? "Unknown Questionnaire";
     }
 
-    private string GetTemplateCategory(Guid templateId)
+    private Guid GetTemplateCategory(Guid templateId)
     {
-        return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.Category ?? "Unknown";
+        return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.CategoryId ?? Guid.Empty;
     }
 
     private int GetEstimatedDuration(QuestionnaireTemplate questionnaire)
@@ -702,23 +704,6 @@
         // Fallback: estimate based on question count (2 minutes per question, minimum 5 minutes)
         var totalQuestions = questionnaire.Sections.Sum(s => s.Questions.Count);
         return Math.Max(5, totalQuestions * 2);
-    }
-
-    private string GetCategoryIcon(string category)
-    {
-        return category switch
-        {
-            "Performance Review" => "trending_up",
-            "Employee Feedback" => "feedback",
-            "Training Assessment" => "school",
-            "Goal Setting" => "flag",
-            "Skills Assessment" => "engineering",
-            "Team Evaluation" => "groups",
-            "Exit Interview" => "exit_to_app",
-            "Onboarding" => "person_add",
-            "Other" => "quiz",
-            _ => "quiz"
-        };
     }
 
     private BadgeStyle GetStatusBadgeStyle(AssignmentStatus status)

@@ -1,6 +1,8 @@
-﻿namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
+using ti8m.BeachBreak.Domain.QuestionnaireAggregate;
 
-public class QuestionItem
+namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
+
+public class CommandQuestionItem
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Title { get; set; } = string.Empty;
@@ -9,5 +11,5 @@ public class QuestionItem
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
     public Dictionary<string, object> Configuration { get; set; } = new();
-    public List<string> Options { get; set; } = new(); // For choice-based questions
+    public List<string> Options { get; set; } = new();
 }

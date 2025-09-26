@@ -1,6 +1,6 @@
-﻿namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
+namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 
-public class QuestionnaireSettings
+public class CommandQuestionnaireSettings
 {
     public bool AllowSaveProgress { get; set; } = true;
     public bool ShowProgressBar { get; set; } = true;

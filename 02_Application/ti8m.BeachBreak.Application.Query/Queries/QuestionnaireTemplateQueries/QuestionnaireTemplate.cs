@@ -5,10 +5,8 @@ public class QuestionnaireTemplate
     public Guid Id { get; set; } = Guid.NewGuid();
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string Category { get; set; } = string.Empty;
+    public Guid CategoryId { get; set; }
     public DateTime CreatedDate { get; set; } = DateTime.Now;
-    public DateTime? LastModified { get; set; }
-
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }        // First publish timestamp
     public DateTime? LastPublishedDate { get; set; }    // Most recent publish

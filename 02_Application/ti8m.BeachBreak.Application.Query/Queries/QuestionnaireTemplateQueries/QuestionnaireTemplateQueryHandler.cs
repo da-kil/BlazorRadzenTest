@@ -1,7 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
-using Npgsql;
-using System.Data;
-using System.Text.Json;
+using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Application.Query.Projections;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 
@@ -13,12 +12,12 @@ public class QuestionnaireTemplateQueryHandler :
     IQueryHandler<ArchivedQuestionnaireTemplatesQuery, Result<IEnumerable<QuestionnaireTemplate>>>,
     IQueryHandler<AssignableQuestionnaireTemplatesQuery, Result<IEnumerable<QuestionnaireTemplate>>>
 {
-    private readonly NpgsqlDataSource dataSource;
+    private readonly IQuestionnaireTemplateRepository repository;
     private readonly ILogger<QuestionnaireTemplateQueryHandler> logger;
 
-    public QuestionnaireTemplateQueryHandler(NpgsqlDataSource dataSource, ILogger<QuestionnaireTemplateQueryHandler> logger)
+    public QuestionnaireTemplateQueryHandler(IQuestionnaireTemplateRepository repository, ILogger<QuestionnaireTemplateQueryHandler> logger)
     {
-        this.dataSource = dataSource;
+        this.repository = repository;
         this.logger = logger;
     }
 
@@ -26,25 +25,10 @@ public class QuestionnaireTemplateQueryHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            var readModels = await repository.GetAllAsync(cancellationToken);
+            var templates = readModels.Select(MapToQueryModel);
 
-            cmd.CommandText = """
-                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
-                FROM questionnaire_templates
-                ORDER BY created_at DESC
-                """;
-
-            var templates = new List<QuestionnaireTemplate>();
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var template = MapQuestionnaireTemplate(reader);
-                templates.Add(template);
-            }
-
-            logger.LogInformation("Retrieved {Count} questionnaire templates", templates.Count);
+            logger.LogInformation("Retrieved {Count} questionnaire templates", templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -58,28 +42,16 @@ public class QuestionnaireTemplateQueryHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
-
-            cmd.CommandText = """
-                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
-                FROM questionnaire_templates
-                WHERE id = @id
-                """;
-
-            cmd.Parameters.AddWithValue("@id", query.Id);
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            if (await reader.ReadAsync(cancellationToken))
+            var readModel = await repository.GetByIdAsync(query.Id, cancellationToken);
+            if (readModel == null)
             {
-                var template = MapQuestionnaireTemplate(reader);
-
-                logger.LogInformation("Retrieved questionnaire template with ID {Id}", query.Id);
-                return Result<QuestionnaireTemplate>.Success(template);
+                logger.LogWarning("Questionnaire template with ID {Id} not found", query.Id);
+                return Result<QuestionnaireTemplate>.Fail($"Questionnaire template with ID {query.Id} not found", 404);
             }
 
-            logger.LogWarning("Questionnaire template with ID {Id} not found", query.Id);
-            return Result<QuestionnaireTemplate>.Fail($"Questionnaire template with ID {query.Id} not found", 404);
+            var template = MapToQueryModel(readModel);
+            logger.LogInformation("Retrieved questionnaire template with ID {Id}", query.Id);
+            return Result<QuestionnaireTemplate>.Success(template);
         }
         catch (Exception ex)
         {
@@ -92,26 +64,10 @@ public class QuestionnaireTemplateQueryHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            var readModels = await repository.GetPublishedAsync(cancellationToken);
+            var templates = readModels.Select(MapToQueryModel);
 
-            cmd.CommandText = """
-                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
-                FROM questionnaire_templates
-                WHERE status = 1
-                ORDER BY last_published_date DESC, created_at DESC
-                """;
-
-            var templates = new List<QuestionnaireTemplate>();
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var template = MapQuestionnaireTemplate(reader);
-                templates.Add(template);
-            }
-
-            logger.LogInformation("Retrieved {Count} published questionnaire templates", templates.Count);
+            logger.LogInformation("Retrieved {Count} published questionnaire templates", templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -125,26 +81,10 @@ public class QuestionnaireTemplateQueryHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            var readModels = await repository.GetDraftAsync(cancellationToken);
+            var templates = readModels.Select(MapToQueryModel);
 
-            cmd.CommandText = """
-                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
-                FROM questionnaire_templates
-                WHERE status = 0
-                ORDER BY updated_at DESC, created_at DESC
-                """;
-
-            var templates = new List<QuestionnaireTemplate>();
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var template = MapQuestionnaireTemplate(reader);
-                templates.Add(template);
-            }
-
-            logger.LogInformation("Retrieved {Count} draft questionnaire templates", templates.Count);
+            logger.LogInformation("Retrieved {Count} draft questionnaire templates", templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -158,26 +98,10 @@ public class QuestionnaireTemplateQueryHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            var readModels = await repository.GetArchivedAsync(cancellationToken);
+            var templates = readModels.Select(MapToQueryModel);
 
-            cmd.CommandText = """
-                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
-                FROM questionnaire_templates
-                WHERE status = 2
-                ORDER BY updated_at DESC, created_at DESC
-                """;
-
-            var templates = new List<QuestionnaireTemplate>();
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var template = MapQuestionnaireTemplate(reader);
-                templates.Add(template);
-            }
-
-            logger.LogInformation("Retrieved {Count} archived questionnaire templates", templates.Count);
+            logger.LogInformation("Retrieved {Count} archived questionnaire templates", templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -191,26 +115,10 @@ public class QuestionnaireTemplateQueryHandler :
     {
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var cmd = connection.CreateCommand();
+            var readModels = await repository.GetAssignableAsync(cancellationToken);
+            var templates = readModels.Select(MapToQueryModel);
 
-            cmd.CommandText = """
-                SELECT id, name, description, category, status, published_date, last_published_date, published_by, sections, settings, created_at, updated_at
-                FROM questionnaire_templates
-                WHERE status = 1
-                ORDER BY last_published_date DESC, created_at DESC
-                """;
-
-            var templates = new List<QuestionnaireTemplate>();
-
-            await using var reader = await cmd.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var template = MapQuestionnaireTemplate(reader);
-                templates.Add(template);
-            }
-
-            logger.LogInformation("Retrieved {Count} assignable questionnaire templates", templates.Count);
+            logger.LogInformation("Retrieved {Count} assignable questionnaire templates", templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -220,24 +128,21 @@ public class QuestionnaireTemplateQueryHandler :
         }
     }
 
-    private static QuestionnaireTemplate MapQuestionnaireTemplate(NpgsqlDataReader reader)
+    private static QuestionnaireTemplate MapToQueryModel(QuestionnaireTemplateReadModel readModel)
     {
-        var statusValue = reader.GetInt32("status");
-
         return new QuestionnaireTemplate
         {
-            Id = reader.GetGuid("id"),
-            Name = reader.GetString("name"),
-            Description = reader.IsDBNull("description") ? string.Empty : reader.GetString("description"),
-            Category = reader.IsDBNull("category") ? string.Empty : reader.GetString("category"),
-            CreatedDate = reader.GetDateTime("created_at"),
-            LastModified = reader.GetDateTime("updated_at"),
-            Status = (TemplateStatus)statusValue,
-            PublishedDate = reader.IsDBNull("published_date") ? null : reader.GetDateTime("published_date"),
-            LastPublishedDate = reader.IsDBNull("last_published_date") ? null : reader.GetDateTime("last_published_date"),
-            PublishedBy = reader.IsDBNull("published_by") ? string.Empty : reader.GetString("published_by"),
-            Sections = JsonSerializer.Deserialize<List<QuestionSection>>(reader.GetString("sections")) ?? new(),
-            Settings = JsonSerializer.Deserialize<QuestionnaireSettings>(reader.GetString("settings")) ?? new()
+            Id = readModel.Id,
+            Name = readModel.Name,
+            Description = readModel.Description,
+            CategoryId = readModel.CategoryId,
+            CreatedDate = readModel.CreatedDate,
+            Status = readModel.Status,
+            PublishedDate = readModel.PublishedDate,
+            LastPublishedDate = readModel.LastPublishedDate,
+            PublishedBy = readModel.PublishedBy,
+            Sections = readModel.Sections,
+            Settings = readModel.Settings
         };
     }
 }

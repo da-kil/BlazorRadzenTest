@@ -1,8 +1,11 @@
 ﻿using JasperFx;
 using Marten;
 using Marten.Events.Projections;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
+using ti8m.BeachBreak.Infrastructure.Marten.Services;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten;
 
@@ -32,6 +35,7 @@ public static class Extensions
             options.DisableNpgsqlLogging = !builder.Environment.IsDevelopment();
 
             options.Projections.Snapshot<CategoryReadModel>(SnapshotLifecycle.Inline);
+            options.Projections.Snapshot<QuestionnaireTemplateReadModel>(SnapshotLifecycle.Inline);
 
         }).UseLightweightSessions().UseNpgsqlDataSource();
 
@@ -39,5 +43,8 @@ public static class Extensions
         {
             expr.ApplyAllDatabaseChangesOnStartup();
         }
+
+        // Register domain services
+        builder.Services.AddScoped<IQuestionnaireAssignmentService, QuestionnaireAssignmentService>();
     }
 }

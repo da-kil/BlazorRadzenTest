@@ -1,4 +1,4 @@
-namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
+namespace ti8m.BeachBreak.Domain.QuestionnaireAggregate;
 
 public enum TemplateStatus
 {

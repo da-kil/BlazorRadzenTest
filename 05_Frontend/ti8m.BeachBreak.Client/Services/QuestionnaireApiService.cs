@@ -36,39 +36,13 @@ public class QuestionnaireApiService : BaseApiService, IQuestionnaireApiService
 
     public async Task<QuestionnaireTemplate> CreateTemplateAsync(QuestionnaireTemplate template)
     {
-        var createRequest = new
-        {
-            template.Name,
-            template.Description,
-            template.Category,
-            template.Status,
-            template.PublishedDate,
-            template.LastPublishedDate,
-            template.PublishedBy,
-            template.Sections,
-            template.Settings
-        };
-
-        var result = await CreateWithResponseAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, createRequest);
+        var result = await CreateWithResponseAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, template);
         return result ?? throw new Exception("Failed to create template");
     }
 
     public async Task<QuestionnaireTemplate?> UpdateTemplateAsync(QuestionnaireTemplate template)
     {
-        var updateRequest = new
-        {
-            template.Name,
-            template.Description,
-            template.Category,
-            template.Status,
-            template.PublishedDate,
-            template.LastPublishedDate,
-            template.PublishedBy,
-            template.Sections,
-            template.Settings
-        };
-
-        return await UpdateWithResponseAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, template.Id, updateRequest);
+        return await UpdateWithResponseAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, template.Id, template);
     }
 
     public async Task<bool> DeleteTemplateAsync(Guid id)
