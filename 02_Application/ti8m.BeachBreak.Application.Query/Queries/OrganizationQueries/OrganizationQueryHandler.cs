@@ -21,8 +21,7 @@ public class OrganizationQueryHandler :
 
     public async Task<Result<IEnumerable<Organization>>> HandleAsync(OrganizationListQuery query, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting organization list query with filters - IncludeDeleted: {IncludeDeleted}, IncludeIgnored: {IncludeIgnored}, ParentId: {ParentId}, ManagerId: {ManagerId}",
-            query.IncludeDeleted, query.IncludeIgnored, query.ParentId, query.ManagerId);
+        logger.LogOrganizationListQueryStarting(query.IncludeDeleted, query.IncludeIgnored, query.ParentId, query.ManagerId);
 
         try
         {
@@ -45,20 +44,21 @@ public class OrganizationQueryHandler :
             }
 
             var organizations = organizationReadModels.Select(MapToOrganization);
+            var organizationCount = organizations.Count();
 
-            logger.LogInformation("Successfully retrieved {Count} organizations", organizations.Count());
+            logger.LogOrganizationListQuerySucceeded(organizationCount);
             return Result<IEnumerable<Organization>>.Success(organizations);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error occurred while retrieving organization list");
+            logger.LogOrganizationListQueryFailed(ex);
             return Result<IEnumerable<Organization>>.Fail("An error occurred while retrieving organizations", StatusCodes.Status500InternalServerError);
         }
     }
 
     public async Task<Result<Organization?>> HandleAsync(OrganizationQuery query, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting organization query for Id: {Id}", query.Id);
+        logger.LogOrganizationQueryStarting(query.Id);
 
         try
         {
@@ -66,25 +66,25 @@ public class OrganizationQueryHandler :
 
             if (organizationReadModel == null)
             {
-                logger.LogWarning("Organization with Id {Id} not found", query.Id);
+                logger.LogOrganizationNotFound(query.Id);
                 return Result<Organization?>.Success(null);
             }
 
             var organization = MapToOrganization(organizationReadModel);
 
-            logger.LogInformation("Successfully retrieved organization with Id: {Id}", query.Id);
+            logger.LogOrganizationQuerySucceeded(query.Id);
             return Result<Organization?>.Success(organization);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error occurred while retrieving organization with Id: {Id}", query.Id);
+            logger.LogOrganizationQueryFailed(query.Id, ex);
             return Result<Organization?>.Fail($"An error occurred while retrieving organization with Id: {query.Id}", StatusCodes.Status500InternalServerError);
         }
     }
 
     public async Task<Result<Organization?>> HandleAsync(OrganizationByNumberQuery query, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting organization query for Number: {Number}", query.Number);
+        logger.LogOrganizationByNumberQueryStarting(query.Number);
 
         try
         {
@@ -93,18 +93,18 @@ public class OrganizationQueryHandler :
 
             if (organizationReadModel == null)
             {
-                logger.LogWarning("Organization with Number {Number} not found", query.Number);
+                logger.LogOrganizationByNumberNotFound(query.Number);
                 return Result<Organization?>.Success(null);
             }
 
             var organization = MapToOrganization(organizationReadModel);
 
-            logger.LogInformation("Successfully retrieved organization with Number: {Number}", query.Number);
+            logger.LogOrganizationByNumberQuerySucceeded(query.Number);
             return Result<Organization?>.Success(organization);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error occurred while retrieving organization with Number: {Number}", query.Number);
+            logger.LogOrganizationByNumberQueryFailed(query.Number, ex);
             return Result<Organization?>.Fail($"An error occurred while retrieving organization with Number: {query.Number}", StatusCodes.Status500InternalServerError);
         }
     }

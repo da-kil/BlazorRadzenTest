@@ -18,11 +18,13 @@ public class CategoryQueryHandler :
 
     public async Task<Result<IEnumerable<Category>>> HandleAsync(CategoryListQuery query, CancellationToken cancellationToken = default)
     {
+        logger.LogCategoryListQueryStarting();
+
         try
         {
             var categories = await categoryRepository.GetAllCategoriesAsync(cancellationToken);
 
-            return Result<IEnumerable<Category>>.Success(categories.Select(o=>
+            var categoryList = categories.Select(o=>
             {
                 return new Category
                 {
@@ -35,22 +37,27 @@ public class CategoryQueryHandler :
                     SortOrder = o.SortOrder,
                     IsActive = o.IsActive
                 };
-            }));
+            }).ToList();
+
+            logger.LogCategoryListQuerySucceeded(categoryList.Count);
+            return Result<IEnumerable<Category>>.Success(categoryList);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve categories");
+            logger.LogCategoryListQueryFailed(ex);
             throw;
         }
     }
 
     public async Task<Result<Category>> HandleAsync(CategoryQuery query, CancellationToken cancellationToken = default)
     {
+        logger.LogCategoryQueryStarting(query.CategoryId);
+
         try
         {
             var category = await categoryRepository.GetCategoryByIdAsync(query.CategoryId, cancellationToken);
 
-            return Result<Category>.Success(new Category
+            var mappedCategory = new Category
             {
                 Id = category.Id,
                 NameEnglish = category.Name.English,
@@ -60,11 +67,14 @@ public class CategoryQueryHandler :
                 CreatedDate = category.CreatedDate,
                 SortOrder = category.SortOrder,
                 IsActive = category.IsActive
-            });
+            };
+
+            logger.LogCategoryQuerySucceeded(query.CategoryId);
+            return Result<Category>.Success(mappedCategory);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve category with ID {Id}", query.CategoryId);
+            logger.LogCategoryQueryFailed(query.CategoryId, ex);
             throw;
         }
     }

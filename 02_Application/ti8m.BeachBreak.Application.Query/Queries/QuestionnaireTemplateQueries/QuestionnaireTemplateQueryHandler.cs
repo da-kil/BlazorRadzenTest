@@ -23,107 +23,119 @@ public class QuestionnaireTemplateQueryHandler :
 
     public async Task<Result<IEnumerable<QuestionnaireTemplate>>> HandleAsync(QuestionnaireTemplateListQuery query, CancellationToken cancellationToken = default)
     {
+        logger.LogQuestionnaireTemplateListQueryStarting();
+
         try
         {
             var readModels = await repository.GetAllAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel);
+            var templates = readModels.Select(MapToQueryModel).ToList();
 
-            logger.LogInformation("Retrieved {Count} questionnaire templates", templates.Count());
+            logger.LogQuestionnaireTemplateListQuerySucceeded(templates.Count);
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve questionnaire templates");
+            logger.LogQuestionnaireTemplateListQueryFailed(ex);
             return Result<IEnumerable<QuestionnaireTemplate>>.Fail($"Failed to retrieve questionnaire templates: {ex.Message}", 500);
         }
     }
 
     public async Task<Result<QuestionnaireTemplate>> HandleAsync(QuestionnaireTemplateQuery query, CancellationToken cancellationToken = default)
     {
+        logger.LogQuestionnaireTemplateQueryStarting(query.Id);
+
         try
         {
             var readModel = await repository.GetByIdAsync(query.Id, cancellationToken);
             if (readModel == null)
             {
-                logger.LogWarning("Questionnaire template with ID {Id} not found", query.Id);
+                logger.LogQuestionnaireTemplateNotFound(query.Id);
                 return Result<QuestionnaireTemplate>.Fail($"Questionnaire template with ID {query.Id} not found", 404);
             }
 
             var template = MapToQueryModel(readModel);
-            logger.LogInformation("Retrieved questionnaire template with ID {Id}", query.Id);
+            logger.LogQuestionnaireTemplateQuerySucceeded(query.Id);
             return Result<QuestionnaireTemplate>.Success(template);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve questionnaire template with ID {Id}", query.Id);
+            logger.LogQuestionnaireTemplateQueryFailed(query.Id, ex);
             return Result<QuestionnaireTemplate>.Fail($"Failed to retrieve questionnaire template: {ex.Message}", 500);
         }
     }
 
     public async Task<Result<IEnumerable<QuestionnaireTemplate>>> HandleAsync(PublishedQuestionnaireTemplatesQuery query, CancellationToken cancellationToken = default)
     {
+        logger.LogPublishedQuestionnaireTemplatesQueryStarting();
+
         try
         {
             var readModels = await repository.GetPublishedAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel);
+            var templates = readModels.Select(MapToQueryModel).ToList();
 
-            logger.LogInformation("Retrieved {Count} published questionnaire templates", templates.Count());
+            logger.LogPublishedQuestionnaireTemplatesQuerySucceeded(templates.Count);
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve published questionnaire templates");
+            logger.LogPublishedQuestionnaireTemplatesQueryFailed(ex);
             return Result<IEnumerable<QuestionnaireTemplate>>.Fail($"Failed to retrieve published questionnaire templates: {ex.Message}", 500);
         }
     }
 
     public async Task<Result<IEnumerable<QuestionnaireTemplate>>> HandleAsync(DraftQuestionnaireTemplatesQuery query, CancellationToken cancellationToken = default)
     {
+        logger.LogDraftQuestionnaireTemplatesQueryStarting();
+
         try
         {
             var readModels = await repository.GetDraftAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel);
+            var templates = readModels.Select(MapToQueryModel).ToList();
 
-            logger.LogInformation("Retrieved {Count} draft questionnaire templates", templates.Count());
+            logger.LogDraftQuestionnaireTemplatesQuerySucceeded(templates.Count);
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve draft questionnaire templates");
+            logger.LogDraftQuestionnaireTemplatesQueryFailed(ex);
             return Result<IEnumerable<QuestionnaireTemplate>>.Fail($"Failed to retrieve draft questionnaire templates: {ex.Message}", 500);
         }
     }
 
     public async Task<Result<IEnumerable<QuestionnaireTemplate>>> HandleAsync(ArchivedQuestionnaireTemplatesQuery query, CancellationToken cancellationToken = default)
     {
+        logger.LogArchivedQuestionnaireTemplatesQueryStarting();
+
         try
         {
             var readModels = await repository.GetArchivedAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel);
+            var templates = readModels.Select(MapToQueryModel).ToList();
 
-            logger.LogInformation("Retrieved {Count} archived questionnaire templates", templates.Count());
+            logger.LogArchivedQuestionnaireTemplatesQuerySucceeded(templates.Count);
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve archived questionnaire templates");
+            logger.LogArchivedQuestionnaireTemplatesQueryFailed(ex);
             return Result<IEnumerable<QuestionnaireTemplate>>.Fail($"Failed to retrieve archived questionnaire templates: {ex.Message}", 500);
         }
     }
 
     public async Task<Result<IEnumerable<QuestionnaireTemplate>>> HandleAsync(AssignableQuestionnaireTemplatesQuery query, CancellationToken cancellationToken = default)
     {
+        logger.LogAssignableQuestionnaireTemplatesQueryStarting();
+
         try
         {
             var readModels = await repository.GetAssignableAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel);
+            var templates = readModels.Select(MapToQueryModel).ToList();
 
-            logger.LogInformation("Retrieved {Count} assignable questionnaire templates", templates.Count());
+            logger.LogAssignableQuestionnaireTemplatesQuerySucceeded(templates.Count);
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to retrieve assignable questionnaire templates");
+            logger.LogAssignableQuestionnaireTemplatesQueryFailed(ex);
             return Result<IEnumerable<QuestionnaireTemplate>>.Fail($"Failed to retrieve assignable questionnaire templates: {ex.Message}", 500);
         }
     }

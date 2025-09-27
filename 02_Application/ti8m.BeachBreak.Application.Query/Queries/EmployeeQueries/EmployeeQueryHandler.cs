@@ -19,8 +19,7 @@ public class EmployeeQueryHandler :
 
     public async Task<Result<IEnumerable<Employee>>> HandleAsync(EmployeeListQuery query, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting employee list query with filters - IncludeDeleted: {IncludeDeleted}, OrganizationNumber: {OrganizationNumber}, Role: {Role}, ManagerId: {ManagerId}",
-            query.IncludeDeleted, query.OrganizationNumber, query.Role, query.ManagerId);
+        logger.LogEmployeeListQueryStarting(query.IncludeDeleted, query.OrganizationNumber, query.Role, query.ManagerId);
 
         try
         {
@@ -50,19 +49,19 @@ public class EmployeeQueryHandler :
                 IsDeleted = e.IsDeleted
             }).ToList();
 
-            logger.LogInformation("Employee list query completed successfully, returned {EmployeeCount} employees", employees.Count);
+            logger.LogEmployeeListQuerySucceeded(employees.Count);
             return Result<IEnumerable<Employee>>.Success(employees);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to execute employee list query");
+            logger.LogEmployeeListQueryFailed(ex);
             return Result<IEnumerable<Employee>>.Fail($"Failed to retrieve employees: {ex.Message}", StatusCodes.Status500InternalServerError);
         }
     }
 
     public async Task<Result<Employee?>> HandleAsync(EmployeeQuery query, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting single employee query for EmployeeId: {EmployeeId}", query.EmployeeId);
+        logger.LogEmployeeQueryStarting(query.EmployeeId);
 
         try
         {
@@ -89,16 +88,16 @@ public class EmployeeQueryHandler :
                     IsDeleted = employeeReadModel.IsDeleted
                 };
 
-                logger.LogInformation("Single employee query completed successfully for EmployeeId: {EmployeeId}", query.EmployeeId);
+                logger.LogEmployeeQuerySucceeded(query.EmployeeId);
                 return Result<Employee?>.Success(employee);
             }
 
-            logger.LogInformation("Employee not found for EmployeeId: {EmployeeId}", query.EmployeeId);
+            logger.LogEmployeeNotFound(query.EmployeeId);
             return Result<Employee?>.Success(null);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to execute single employee query for EmployeeId: {EmployeeId}", query.EmployeeId);
+            logger.LogEmployeeQueryFailed(query.EmployeeId, ex);
             return Result<Employee?>.Fail($"Failed to retrieve employee: {ex.Message}", StatusCodes.Status500InternalServerError);
         }
     }
