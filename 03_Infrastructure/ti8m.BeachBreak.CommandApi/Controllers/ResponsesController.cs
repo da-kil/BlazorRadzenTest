@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.CommandApi.Models;
 using ti8m.BeachBreak.Application.Command.Commands;
-using ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
+using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -40,7 +40,7 @@ public class ResponsesController : ControllerBase
                 employeeId: new Guid("b0f388c2-6294-4116-a8b2-eccafa29b3fb"), // TODO: Get from user context
                 assignmentId: assignmentId,
                 sectionResponses: responsesAsObjects,
-                status: ti8m.BeachBreak.Application.Command.Commands.ResponseStatus.InProgress
+                status: ResponseStatus.InProgress
             );
 
             var result = await _commandDispatcher.SendAsync(command);
