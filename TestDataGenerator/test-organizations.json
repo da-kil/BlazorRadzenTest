@@ -1,0 +1,152 @@
+[
+  {
+    "number": "1000",
+    "parentNumber": null,
+    "name": "Engineering",
+    "managerUserId": null
+  },
+  {
+    "number": "1001",
+    "parentNumber": null,
+    "name": "Product",
+    "managerUserId": null
+  },
+  {
+    "number": "1002",
+    "parentNumber": null,
+    "name": "Marketing",
+    "managerUserId": null
+  },
+  {
+    "number": "1003",
+    "parentNumber": null,
+    "name": "Sales",
+    "managerUserId": null
+  },
+  {
+    "number": "1004",
+    "parentNumber": null,
+    "name": "HR",
+    "managerUserId": null
+  },
+  {
+    "number": "1005",
+    "parentNumber": "1000",
+    "name": "Engineering Team 7",
+    "managerUserId": null
+  },
+  {
+    "number": "1006",
+    "parentNumber": "1000",
+    "name": "Engineering Team 2",
+    "managerUserId": null
+  },
+  {
+    "number": "1007",
+    "parentNumber": "1000",
+    "name": "Engineering Team 2",
+    "managerUserId": null
+  },
+  {
+    "number": "1008",
+    "parentNumber": "1000",
+    "name": "Engineering Team 5",
+    "managerUserId": null
+  },
+  {
+    "number": "1009",
+    "parentNumber": "1001",
+    "name": "Product Team 2",
+    "managerUserId": null
+  },
+  {
+    "number": "1010",
+    "parentNumber": "1001",
+    "name": "Product Team 3",
+    "managerUserId": null
+  },
+  {
+    "number": "1011",
+    "parentNumber": "1001",
+    "name": "Product Team 7",
+    "managerUserId": null
+  },
+  {
+    "number": "1012",
+    "parentNumber": "1001",
+    "name": "Product Team 5",
+    "managerUserId": null
+  },
+  {
+    "number": "1013",
+    "parentNumber": "1002",
+    "name": "Marketing Team 2",
+    "managerUserId": null
+  },
+  {
+    "number": "1014",
+    "parentNumber": "1002",
+    "name": "Marketing Team 7",
+    "managerUserId": null
+  },
+  {
+    "number": "1015",
+    "parentNumber": "1002",
+    "name": "Marketing Team 3",
+    "managerUserId": null
+  },
+  {
+    "number": "1016",
+    "parentNumber": "1002",
+    "name": "Marketing Team 3",
+    "managerUserId": null
+  },
+  {
+    "number": "1017",
+    "parentNumber": "1003",
+    "name": "Sales Team 5",
+    "managerUserId": null
+  },
+  {
+    "number": "1018",
+    "parentNumber": "1003",
+    "name": "Sales Team 3",
+    "managerUserId": null
+  },
+  {
+    "number": "1019",
+    "parentNumber": "1003",
+    "name": "Sales Team 4",
+    "managerUserId": null
+  },
+  {
+    "number": "1020",
+    "parentNumber": "1003",
+    "name": "Sales Team 3",
+    "managerUserId": null
+  },
+  {
+    "number": "1021",
+    "parentNumber": "1004",
+    "name": "HR Team 5",
+    "managerUserId": null
+  },
+  {
+    "number": "1022",
+    "parentNumber": "1004",
+    "name": "HR Team 1",
+    "managerUserId": null
+  },
+  {
+    "number": "1023",
+    "parentNumber": "1004",
+    "name": "HR Team 8",
+    "managerUserId": null
+  },
+  {
+    "number": "1024",
+    "parentNumber": "1004",
+    "name": "HR Team 6",
+    "managerUserId": null
+  }
+]
