@@ -1,4 +1,4 @@
-namespace ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
+namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
 
 public class SubmitEmployeeResponseCommand : ICommand<Result>
 {
