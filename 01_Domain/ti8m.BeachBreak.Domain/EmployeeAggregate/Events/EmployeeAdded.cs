@@ -4,6 +4,7 @@ namespace ti8m.BeachBreak.Domain.EmployeeAggregate.Events;
 
 public record EmployeeAdded(
     Guid AggregateId,
+    string EmployeeId,
     string FirstName,
     string LastName,
     string Role,
@@ -11,10 +12,6 @@ public record EmployeeAdded(
     DateOnly StartDate,
     DateOnly? EndDate,
     DateOnly? LastStartDate,
-    Guid? ManagerId,
-    string Manager,
+    string ManagerId,
     string LoginName,
-    string EmployeeNumber,
-    int OrganizationNumber,
-    string Organization,
-    DateTime CreatedDate) : IDomainEvent;
+    int OrganizationNumber) : IDomainEvent;

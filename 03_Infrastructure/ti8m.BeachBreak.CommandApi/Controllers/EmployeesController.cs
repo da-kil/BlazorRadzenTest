@@ -23,125 +23,53 @@ public class EmployeesController : BaseController
     [HttpPost("bulk-insert")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> BulkInsertEmployees([FromBody] IEnumerable<EmployeeDto> employeeDtos)
+    public async Task<IActionResult> BulkInsertEmployees([FromBody] IEnumerable<EmployeeDto> employees)
     {
-        var employeeCount = employeeDtos?.Count() ?? 0;
-        logger.LogInformation("Received bulk insert request for {EmployeeCount} employees", employeeCount);
-
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                logger.LogWarning("Bulk insert request failed validation: {ValidationErrors}",
-                    string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
-                return BadRequest(ModelState);
-            }
-
-            if (employeeDtos == null || !employeeDtos.Any())
-            {
-                logger.LogWarning("Bulk insert request received with no employees");
-                return BadRequest("No employees provided for bulk insert");
-            }
-
-            var employees = employeeDtos.Select(dto => new Employee
+        Result result = await commandDispatcher.SendAsync(new BulkInsertEmployeesCommand(
+            employees.Select(dto => new SyncEmployee
             {
                 Id = dto.Id,
-                FirstName = dto.FirstName.Trim(),
-                LastName = dto.LastName.Trim(),
-                Role = dto.Role.Trim(),
-                EMail = dto.EMail.Trim(),
+                EmployeeId = dto.EmployeeId,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Role = dto.Role,
+                EMail = dto.EMail,
                 StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
                 LastStartDate = dto.LastStartDate,
+                EndDate = dto.EndDate,
                 ManagerId = dto.ManagerId,
-                Manager = dto.Manager.Trim(),
-                LoginName = dto.LoginName.Trim(),
-                EmployeeNumber = dto.EmployeeNumber.Trim(),
-                OrganizationNumber = dto.OrganizationNumber,
-                Organization = dto.Organization.Trim(),
-                IsDeleted = dto.IsDeleted
-            });
+                LoginName = dto.LoginName,
+                OrganizationNumber = dto.OrganizationNumber
 
-            Result result = await commandDispatcher.SendAsync(new BulkInsertEmployeesCommand(employees));
+            })));
 
-            if (result.Succeeded)
-            {
-                logger.LogInformation("Bulk insert completed successfully for {EmployeeCount} employees", employeeCount);
-            }
-            else
-            {
-                logger.LogWarning("Bulk insert failed for {EmployeeCount} employees: {ErrorMessage}", employeeCount, result.Message);
-            }
-
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error bulk inserting employees");
-            return StatusCode(500, "An error occurred while bulk inserting employees");
-        }
+        return CreateResponse(result);
     }
 
     [HttpPut("bulk-update")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> BulkUpdateEmployees([FromBody] IEnumerable<EmployeeDto> employeeDtos)
+    public async Task<IActionResult> BulkUpdateEmployees([FromBody] IEnumerable<EmployeeDto> employees)
     {
-        var employeeCount = employeeDtos?.Count() ?? 0;
-        logger.LogInformation("Received bulk update request for {EmployeeCount} employees", employeeCount);
-
-        try
-        {
-            if (!ModelState.IsValid)
-            {
-                logger.LogWarning("Bulk update request failed validation: {ValidationErrors}",
-                    string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
-                return BadRequest(ModelState);
-            }
-
-            if (employeeDtos == null || !employeeDtos.Any())
-            {
-                logger.LogWarning("Bulk update request received with no employees");
-                return BadRequest("No employees provided for bulk update");
-            }
-
-            var employees = employeeDtos.Select(dto => new Employee
+        Result result = await commandDispatcher.SendAsync(new BulkUpdateEmployeesCommand(
+            employees.Select(dto => new SyncEmployee
             {
                 Id = dto.Id,
-                FirstName = dto.FirstName.Trim(),
-                LastName = dto.LastName.Trim(),
-                Role = dto.Role.Trim(),
-                EMail = dto.EMail.Trim(),
+                EmployeeId = dto.EmployeeId,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Role = dto.Role,
+                EMail = dto.EMail,
                 StartDate = dto.StartDate,
-                EndDate = dto.EndDate,
                 LastStartDate = dto.LastStartDate,
+                EndDate = dto.EndDate,
                 ManagerId = dto.ManagerId,
-                Manager = dto.Manager.Trim(),
-                LoginName = dto.LoginName.Trim(),
-                EmployeeNumber = dto.EmployeeNumber.Trim(),
-                OrganizationNumber = dto.OrganizationNumber,
-                Organization = dto.Organization.Trim(),
-                IsDeleted = dto.IsDeleted
-            });
+                LoginName = dto.LoginName,
+                OrganizationNumber = dto.OrganizationNumber
 
-            Result result = await commandDispatcher.SendAsync(new BulkUpdateEmployeesCommand(employees));
+            })));
 
-            if (result.Succeeded)
-            {
-                logger.LogInformation("Bulk update completed successfully for {EmployeeCount} employees", employeeCount);
-            }
-            else
-            {
-                logger.LogWarning("Bulk update failed for {EmployeeCount} employees: {ErrorMessage}", employeeCount, result.Message);
-            }
-
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error bulk updating employees");
-            return StatusCode(500, "An error occurred while bulk updating employees");
-        }
+        return CreateResponse(result);
     }
 
     [HttpDelete("bulk-delete")]
@@ -149,35 +77,9 @@ public class EmployeesController : BaseController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> BulkDeleteEmployees([FromBody] IEnumerable<Guid> employeeIds)
     {
-        var employeeIdCount = employeeIds?.Count() ?? 0;
-        logger.LogInformation("Received bulk delete request for {EmployeeIdCount} employee IDs", employeeIdCount);
+        Result result = await commandDispatcher.SendAsync(new BulkDeleteEmployeesCommand(employeeIds));
 
-        try
-        {
-            if (employeeIds == null || !employeeIds.Any())
-            {
-                logger.LogWarning("Bulk delete request received with no employee IDs");
-                return BadRequest("No employee IDs provided for bulk delete");
-            }
-
-            Result result = await commandDispatcher.SendAsync(new BulkDeleteEmployeesCommand(employeeIds));
-
-            if (result.Succeeded)
-            {
-                logger.LogInformation("Bulk delete completed successfully for {EmployeeIdCount} employee IDs", employeeIdCount);
-            }
-            else
-            {
-                logger.LogWarning("Bulk delete failed for {EmployeeIdCount} employee IDs: {ErrorMessage}", employeeIdCount, result.Message);
-            }
-
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error bulk deleting employees");
-            return StatusCode(500, "An error occurred while bulk deleting employees");
-        }
+        return CreateResponse(result);
     }
 
     // Employee-specific response management endpoints

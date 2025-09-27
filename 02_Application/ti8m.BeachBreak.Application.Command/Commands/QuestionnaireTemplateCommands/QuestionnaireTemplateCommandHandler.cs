@@ -19,18 +19,15 @@ public class QuestionnaireTemplateCommandHandler :
     ICommandHandler<RestoreQuestionnaireTemplateCommand, Result>
 {
     private readonly IQuestionnaireTemplateAggregateRepository repository;
-    private readonly ICategoryAggregateRepository categoryRepository;
     private readonly IQuestionnaireAssignmentService assignmentService;
     private readonly ILogger<QuestionnaireTemplateCommandHandler> logger;
 
     public QuestionnaireTemplateCommandHandler(
         IQuestionnaireTemplateAggregateRepository repository,
-        ICategoryAggregateRepository categoryRepository,
         IQuestionnaireAssignmentService assignmentService,
         ILogger<QuestionnaireTemplateCommandHandler> logger)
     {
         this.repository = repository;
-        this.categoryRepository = categoryRepository;
         this.assignmentService = assignmentService;
         this.logger = logger;
     }

@@ -5,25 +5,24 @@ namespace ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 public class Employee : AggregateRoot
 {
-    public string FirstName { get; private set;}
-    public string LastName { get; private set;}
-    public string Role { get; private set;}
-    public string EMail { get; private set;}
-    public DateOnly StartDate { get; private set;}
-    public DateOnly? EndDate { get; private set;}
-    public DateOnly? LastStartDate { get; private set;}
-    public Guid? ManagerId { get; private set;}
-    public string Manager { get; private set;}
-    public string LoginName { get; private set;}
-    public string EmployeeNumber { get; private set;}
-    public int OrganizationNumber { get; private set;}
-    public string Organization { get; private set;}
-    public bool IsDeleted { get; private set;}
+    public string EmployeeId { get; private set; }
+    public string FirstName { get; private set; }
+    public string LastName { get; private set; }
+    public string Role { get; private set; }
+    public string EMail { get; private set; }
+    public DateOnly StartDate { get; private set; }
+    public DateOnly? EndDate { get; private set; }
+    public DateOnly? LastStartDate { get; private set; }
+    public string ManagerId { get; private set; }
+    public string LoginName { get; private set; }
+    public int OrganizationNumber { get; private set; }
+    public bool IsDeleted { get; private set; }
 
     private Employee() { }
 
     public Employee(
         Guid id,
+        string employeeId,
         string firstName,
         string lastName,
         string role,
@@ -31,32 +30,120 @@ public class Employee : AggregateRoot
         DateOnly startDate,
         DateOnly? endDate,
         DateOnly? lastStartDate,
-        Guid? managerId,
-        string manager,
+        string managerId,
         string loginName,
-        string employeeNumber,
-        int organizationNumber,
-        string organization)
+        int organizationNumber)
     {
-        Id = id;
-        FirstName = firstName;
-        LastName = lastName;
-        Role = role;
-        EMail = email;
-        StartDate = startDate;
-        EndDate = endDate;
-        LastStartDate = lastStartDate;
-        ManagerId = managerId;
-        Manager = manager;
-        LoginName = loginName;
-        EmployeeNumber = employeeNumber;
-        OrganizationNumber = organizationNumber;
-        Organization = organization;
+        RaiseEvent(new EmployeeAdded(
+            id,
+            employeeId,
+            firstName,
+            lastName,
+            role,
+            email,
+            startDate,
+            endDate,
+            lastStartDate,
+            managerId,
+            loginName,
+            organizationNumber));
+    }
+
+    public void Delete()
+    {
+        if (!IsDeleted)
+        {
+            RaiseEvent(new EmployeeDeleted());
+        }
+    }
+
+    public void Undelete()
+    {
+        if (IsDeleted)
+        {
+            RaiseEvent(new EmployeeUndeleted(
+                EmployeeId,
+                FirstName,
+                LastName,
+                Role,
+                EMail,
+                StartDate,
+                EndDate,
+                LastStartDate,
+                ManagerId,
+                LoginName,
+                OrganizationNumber));
+        }
+    }
+
+    public void ChangeDepartment(int organizationNumber)
+    {
+        if (OrganizationNumber != organizationNumber)
+        {
+            RaiseEvent(new EmployeeDepartmentChanged(organizationNumber));
+        }
+    }
+
+    public void ChangeEmail(string email)
+    {
+        if (EMail != email)
+        {
+            RaiseEvent(new EmployeeEmailChanged(email));
+        }
+    }
+
+    public void ChangeLoginName(string loginName)
+    {
+        if (LoginName != loginName)
+        {
+            RaiseEvent(new EmployeeLoginNameChanged(loginName));
+        }
+    }
+
+    public void ChangeManager(string managerId)
+    {
+        if (ManagerId != managerId)
+        {
+            RaiseEvent(new EmployeeManagerChanged(managerId));
+        }
+    }
+
+    public void ChangeName(string firstName, string lastName)
+    {
+        if (FirstName != firstName || LastName != lastName)
+        {
+            RaiseEvent(new EmployeeNameChanged(firstName, lastName));
+        }
+    }
+
+    public void ChangeRole(string role)
+    {
+        if (Role != role)
+        {
+            RaiseEvent(new EmployeeRoleChanged(role));
+        }
+    }
+
+    public void ChangeEndDate(DateOnly? endDate)
+    {
+        if (EndDate != endDate)
+        {
+            RaiseEvent(new EmployeeEndDateChanged(endDate));
+        }
+    }
+
+    public void ChangeStartDate(DateOnly startDate)
+    {
+        if (StartDate != startDate)
+        {
+            RaiseEvent(new EmployeeStartDateChanged(startDate));
+        }
     }
 
     public void Apply(EmployeeAdded @event)
     {
         Id = @event.AggregateId;
+        EmployeeId = @event.EmployeeId;
         FirstName = @event.FirstName;
         LastName = @event.LastName;
         Role = @event.Role;
@@ -66,9 +153,7 @@ public class Employee : AggregateRoot
         LastStartDate = @event.LastStartDate;
         ManagerId = @event.ManagerId;
         LoginName = @event.LoginName;
-        EmployeeNumber = @event.EmployeeNumber;
         OrganizationNumber = @event.OrganizationNumber;
-        Organization = @event.Organization;
         IsDeleted = false;
     }
 
@@ -85,7 +170,6 @@ public class Employee : AggregateRoot
     public void Apply(EmployeeDepartmentChanged @event)
     {
         OrganizationNumber = @event.OrganizationNumber;
-        Organization = @event.Organization;
     }
 
     public void Apply(EmployeeEmailChanged @event)
