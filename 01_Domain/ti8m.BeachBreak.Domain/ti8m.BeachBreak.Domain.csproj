@@ -10,4 +10,8 @@
     <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Domain\ti8m.BeachBreak.Core.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="OrganizationAggregate\Events\" />
+  </ItemGroup>
+
 </Project>
