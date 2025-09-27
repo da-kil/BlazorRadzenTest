@@ -40,7 +40,7 @@ public class ResponsesController : ControllerBase
                 employeeId: new Guid("b0f388c2-6294-4116-a8b2-eccafa29b3fb"), // TODO: Get from user context
                 assignmentId: assignmentId,
                 sectionResponses: responsesAsObjects,
-                status: ResponseStatus.InProgress
+                status: ti8m.BeachBreak.Application.Command.Commands.ResponseStatus.InProgress
             );
 
             var result = await _commandDispatcher.SendAsync(command);
