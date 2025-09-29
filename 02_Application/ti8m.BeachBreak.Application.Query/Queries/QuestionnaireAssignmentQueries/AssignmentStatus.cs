@@ -6,5 +6,6 @@ public enum AssignmentStatus
     InProgress,
     Completed,
     Overdue,
-    Cancelled
+    Cancelled,
+    Withdrawn
 }

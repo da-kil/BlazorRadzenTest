@@ -1,295 +1,180 @@
-﻿using Microsoft.Extensions.Logging;
-using Npgsql;
+using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Command.Repositories;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
 public class QuestionnaireAssignmentCommandHandler :
-    ICommandHandler<CreateQuestionnaireAssignmentCommand, Result>,
-    ICommandHandler<SendAssignmentReminderCommand, Result>,
-    ICommandHandler<SendBulkAssignmentReminderCommand, Result>
+    ICommandHandler<CreateAssignmentCommand, Result>,
+    ICommandHandler<CreateBulkAssignmentsCommand, Result>,
+    ICommandHandler<StartAssignmentWorkCommand, Result>,
+    ICommandHandler<CompleteAssignmentWorkCommand, Result>,
+    ICommandHandler<ExtendAssignmentDueDateCommand, Result>,
+    ICommandHandler<WithdrawAssignmentCommand, Result>
 {
+    private readonly IQuestionnaireAssignmentAggregateRepository repository;
     private readonly ILogger<QuestionnaireAssignmentCommandHandler> logger;
-    private readonly NpgsqlDataSource dataSource;
 
-    public QuestionnaireAssignmentCommandHandler(ILogger<QuestionnaireAssignmentCommandHandler> logger, NpgsqlDataSource dataSource)
+    public QuestionnaireAssignmentCommandHandler(
+        IQuestionnaireAssignmentAggregateRepository repository,
+        ILogger<QuestionnaireAssignmentCommandHandler> logger)
     {
+        this.repository = repository;
         this.logger = logger;
-        this.dataSource = dataSource;
     }
 
-    public async Task<Result> HandleAsync(CreateQuestionnaireAssignmentCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result> HandleAsync(CreateAssignmentCommand command, CancellationToken cancellationToken = default)
     {
         try
         {
-            var questionnaireAssignment = command.QuestionnaireAssignment;
+            var assignmentId = Guid.NewGuid();
 
-            logger.LogInformation("Creating assignments for {EmployeeCount} employees with template {TemplateId}",
-                questionnaireAssignment.EmployeeIds.Count,
-                questionnaireAssignment.TemplateId);
+            logger.LogInformation("Creating assignment {AssignmentId} for employee {EmployeeId} with template {TemplateId}",
+                assignmentId, command.EmployeeId, command.TemplateId);
 
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+            var assignment = new Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment(
+                assignmentId,
+                command.TemplateId,
+                command.EmployeeId,
+                command.EmployeeName,
+                command.EmployeeEmail,
+                DateTime.UtcNow,
+                command.DueDate,
+                command.AssignedBy,
+                command.Notes);
 
-            // CRITICAL: Validate that template can be assigned before creating assignments
-            var templateValidation = await ValidateTemplateCanBeAssignedAsync(connection, questionnaireAssignment.TemplateId, cancellationToken);
-            if (!templateValidation.IsValid)
-            {
-                logger.LogWarning("Template {TemplateId} cannot be assigned: {Reason}",
-                    questionnaireAssignment.TemplateId, templateValidation.Reason);
-                return Result.Fail(templateValidation.Reason, 400);
-            }
+            await repository.StoreAsync(assignment, cancellationToken);
 
-            var createdAssignments = new List<Guid>();
-
-            foreach (var employeeId in questionnaireAssignment.EmployeeIds)
-            {
-                // First, get employee details
-                var employeeDetails = await GetEmployeeDetailsAsync(connection, employeeId, cancellationToken);
-
-                if (employeeDetails == null)
-                {
-                    logger.LogWarning("Employee {EmployeeId} not found, skipping assignment creation", employeeId);
-                    continue;
-                }
-
-                var assignmentId = Guid.NewGuid();
-
-                const string insertSql = """
-                    INSERT INTO questionnaire_assignments (
-                        id, template_id, employee_id, employee_name, employee_email,
-                        assigned_date, due_date, status, assigned_by, notes
-                    ) VALUES (
-                        @id, @templateId, @employeeId, @employeeName, @employeeEmail,
-                        @assignedDate, @dueDate, @status, @assignedBy, @notes
-                    )
-                    """;
-
-                await using var insertCommand = connection.CreateCommand();
-                insertCommand.CommandText = insertSql;
-
-                insertCommand.Parameters.AddWithValue("@id", assignmentId);
-                insertCommand.Parameters.AddWithValue("@templateId", questionnaireAssignment.TemplateId);
-                insertCommand.Parameters.AddWithValue("@employeeId", Guid.Parse(employeeId));
-                insertCommand.Parameters.AddWithValue("@employeeName", employeeDetails.FullName);
-                insertCommand.Parameters.AddWithValue("@employeeEmail", employeeDetails.Email);
-                insertCommand.Parameters.AddWithValue("@assignedDate", DateTime.UtcNow);
-                insertCommand.Parameters.AddWithValue("@dueDate", questionnaireAssignment.DueDate.HasValue ? questionnaireAssignment.DueDate.Value : DBNull.Value);
-                insertCommand.Parameters.AddWithValue("@status", "Assigned");
-                insertCommand.Parameters.AddWithValue("@assignedBy", questionnaireAssignment.AssignedBy ?? "System");
-                insertCommand.Parameters.AddWithValue("@notes", questionnaireAssignment.Notes ?? (object)DBNull.Value);
-
-                await insertCommand.ExecuteNonQueryAsync(cancellationToken);
-                createdAssignments.Add(assignmentId);
-
-                logger.LogInformation("Created assignment {AssignmentId} for employee {EmployeeId}", assignmentId, employeeId);
-            }
-
-            logger.LogInformation("Successfully created {AssignmentCount} assignments", createdAssignments.Count);
-            return Result.Success($"Successfully created {createdAssignments.Count} assignments");
+            logger.LogInformation("Successfully created assignment {AssignmentId}", assignmentId);
+            return Result.Success();
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error creating questionnaire assignments");
+            logger.LogError(ex, "Error creating questionnaire assignment");
+            return Result.Fail("Failed to create assignment: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(CreateBulkAssignmentsCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Creating {EmployeeCount} assignments with template {TemplateId}",
+                command.EmployeeAssignments.Count, command.TemplateId);
+
+            var createdAssignmentIds = new List<Guid>();
+            var assignedDate = DateTime.UtcNow;
+
+            foreach (var employeeData in command.EmployeeAssignments)
+            {
+                var assignmentId = Guid.NewGuid();
+
+                var assignment = new Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment(
+                    assignmentId,
+                    command.TemplateId,
+                    employeeData.EmployeeId,
+                    employeeData.EmployeeName,
+                    employeeData.EmployeeEmail,
+                    assignedDate,
+                    command.DueDate,
+                    command.AssignedBy,
+                    command.Notes);
+
+                await repository.StoreAsync(assignment, cancellationToken);
+                createdAssignmentIds.Add(assignmentId);
+
+                logger.LogInformation("Created assignment {AssignmentId} for employee {EmployeeId}",
+                    assignmentId, employeeData.EmployeeId);
+            }
+
+            logger.LogInformation("Successfully created {AssignmentCount} assignments", createdAssignmentIds.Count);
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error creating bulk assignments");
             return Result.Fail("Failed to create assignments: " + ex.Message, 500);
         }
     }
 
-    private async Task<EmployeeDetails?> GetEmployeeDetailsAsync(NpgsqlConnection connection, string employeeId, CancellationToken cancellationToken)
+    public async Task<Result> HandleAsync(StartAssignmentWorkCommand command, CancellationToken cancellationToken = default)
     {
-        const string sql = """
-            SELECT first_name, last_name, email
-            FROM employees
-            WHERE id = @employeeId AND is_deleted = false
-            """;
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = sql;
-        command.Parameters.AddWithValue("@employeeId", Guid.Parse(employeeId));
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (await reader.ReadAsync(cancellationToken))
-        {
-            return new EmployeeDetails
-            {
-                FullName = $"{reader.GetString(0)} {reader.GetString(1)}",
-                Email = reader.GetString(2)
-            };
-        }
-
-        return null;
-    }
-
-    public async Task<Result> HandleAsync(SendAssignmentReminderCommand command, CancellationToken cancellationToken = default)
-    {
-        logger.LogInformation("Sending reminder for AssignmentId: {AssignmentId}", command.AssignmentId);
-
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            logger.LogInformation("Starting work on assignment {AssignmentId}", command.AssignmentId);
 
-            try
-            {
-                await using var cmd = connection.CreateCommand();
-                cmd.Transaction = transaction;
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.StartWork();
+            await repository.StoreAsync(assignment, cancellationToken);
 
-                cmd.CommandText = """
-                    INSERT INTO assignment_reminders (
-                        id, assignment_id, message, sent_by, sent_date, reminder_type
-                    ) VALUES (
-                        @id, @assignmentId, @message, @sentBy, @sentDate, @reminderType
-                    )
-                    """;
-
-                cmd.Parameters.AddWithValue("@id", Guid.NewGuid());
-                cmd.Parameters.AddWithValue("@assignmentId", command.AssignmentId);
-                cmd.Parameters.AddWithValue("@message", command.Message);
-                cmd.Parameters.AddWithValue("@sentBy", command.SentBy);
-                cmd.Parameters.AddWithValue("@sentDate", DateTime.UtcNow);
-                cmd.Parameters.AddWithValue("@reminderType", "Individual");
-
-                await cmd.ExecuteNonQueryAsync(cancellationToken);
-
-                await using var updateCmd = connection.CreateCommand();
-                updateCmd.Transaction = transaction;
-                updateCmd.CommandText = """
-                    UPDATE questionnaire_assignments
-                    SET last_reminder_date = @lastReminderDate
-                    WHERE id = @assignmentId
-                    """;
-
-                updateCmd.Parameters.AddWithValue("@lastReminderDate", DateTime.UtcNow);
-                updateCmd.Parameters.AddWithValue("@assignmentId", command.AssignmentId);
-
-                await updateCmd.ExecuteNonQueryAsync(cancellationToken);
-
-                await transaction.CommitAsync(cancellationToken);
-                logger.LogInformation("Reminder sent successfully for AssignmentId: {AssignmentId}", command.AssignmentId);
-
-                return Result.Success("Reminder sent successfully");
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred during send reminder transaction, rolling back");
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
+            logger.LogInformation("Successfully started work on assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Assignment work started");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to send reminder for AssignmentId: {AssignmentId}", command.AssignmentId);
-            return Result.Fail($"Failed to send reminder: {ex.Message}", 500);
+            logger.LogError(ex, "Error starting work on assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to start assignment work: " + ex.Message, 500);
         }
     }
 
-    public async Task<Result> HandleAsync(SendBulkAssignmentReminderCommand command, CancellationToken cancellationToken = default)
+    public async Task<Result> HandleAsync(CompleteAssignmentWorkCommand command, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Sending bulk reminders for {AssignmentCount} assignments", command.AssignmentIds.Count());
-
         try
         {
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            logger.LogInformation("Completing work on assignment {AssignmentId}", command.AssignmentId);
 
-            try
-            {
-                var reminderId = Guid.NewGuid();
-                var sentDate = DateTime.UtcNow;
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.CompleteWork();
+            await repository.StoreAsync(assignment, cancellationToken);
 
-                foreach (var assignmentId in command.AssignmentIds)
-                {
-                    await using var insertCmd = connection.CreateCommand();
-                    insertCmd.Transaction = transaction;
-                    insertCmd.CommandText = """
-                        INSERT INTO assignment_reminders (
-                            id, assignment_id, message, sent_by, sent_date, reminder_type
-                        ) VALUES (
-                            @id, @assignmentId, @message, @sentBy, @sentDate, @reminderType
-                        )
-                        """;
-
-                    insertCmd.Parameters.AddWithValue("@id", Guid.NewGuid());
-                    insertCmd.Parameters.AddWithValue("@assignmentId", assignmentId);
-                    insertCmd.Parameters.AddWithValue("@message", command.Message);
-                    insertCmd.Parameters.AddWithValue("@sentBy", command.SentBy);
-                    insertCmd.Parameters.AddWithValue("@sentDate", sentDate);
-                    insertCmd.Parameters.AddWithValue("@reminderType", "Bulk");
-
-                    await insertCmd.ExecuteNonQueryAsync(cancellationToken);
-
-                    await using var updateCmd = connection.CreateCommand();
-                    updateCmd.Transaction = transaction;
-                    updateCmd.CommandText = """
-                        UPDATE questionnaire_assignments
-                        SET last_reminder_date = @lastReminderDate
-                        WHERE id = @assignmentId
-                        """;
-
-                    updateCmd.Parameters.AddWithValue("@lastReminderDate", sentDate);
-                    updateCmd.Parameters.AddWithValue("@assignmentId", assignmentId);
-
-                    await updateCmd.ExecuteNonQueryAsync(cancellationToken);
-                }
-
-                await transaction.CommitAsync(cancellationToken);
-                logger.LogInformation("Bulk reminders sent successfully for {AssignmentCount} assignments", command.AssignmentIds.Count());
-
-                return Result.Success($"Bulk reminders sent successfully for {command.AssignmentIds.Count()} assignments");
-            }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Error occurred during send bulk reminder transaction, rolling back");
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
+            logger.LogInformation("Successfully completed work on assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Assignment work completed");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to send bulk reminders for {AssignmentCount} assignments", command.AssignmentIds.Count());
-            return Result.Fail($"Failed to send bulk reminders: {ex.Message}", 500);
+            logger.LogError(ex, "Error completing work on assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to complete assignment work: " + ex.Message, 500);
         }
     }
 
-    private async Task<(bool IsValid, string Reason)> ValidateTemplateCanBeAssignedAsync(NpgsqlConnection connection, Guid templateId, CancellationToken cancellationToken)
+    public async Task<Result> HandleAsync(ExtendAssignmentDueDateCommand command, CancellationToken cancellationToken = default)
     {
-        const string sql = """
-            SELECT name, status
-            FROM questionnaire_templates
-            WHERE id = @templateId
-            """;
-
-        await using var command = connection.CreateCommand();
-        command.CommandText = sql;
-        command.Parameters.AddWithValue("@templateId", templateId);
-
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
+        try
         {
-            return (false, $"Questionnaire template with ID {templateId} not found");
+            logger.LogInformation("Extending due date for assignment {AssignmentId} to {NewDueDate}",
+                command.AssignmentId, command.NewDueDate);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.ExtendDueDate(command.NewDueDate, command.ExtensionReason);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully extended due date for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Assignment due date extended");
         }
-
-        var templateName = reader.GetString(0);
-        var status = reader.GetInt32(1);
-
-        // Business rule: Template must be Published (status = 1) to be assignable
-        // 0=Draft, 1=Published, 2=Archived
-        if (status != 1)
+        catch (Exception ex)
         {
-            var statusName = status switch
-            {
-                0 => "draft",
-                2 => "archived",
-                _ => "inactive"
-            };
-
-            return (false, $"Template '{templateName}' is {statusName} and cannot be assigned. Only published templates can be assigned to employees.");
+            logger.LogError(ex, "Error extending due date for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to extend assignment due date: " + ex.Message, 500);
         }
-
-        return (true, string.Empty);
     }
 
-    private class EmployeeDetails
+    public async Task<Result> HandleAsync(WithdrawAssignmentCommand command, CancellationToken cancellationToken = default)
     {
-        public string FullName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
+        try
+        {
+            logger.LogInformation("Withdrawing assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.Withdraw(command.WithdrawnBy, command.WithdrawalReason);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully withdrew assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Assignment withdrawn");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error withdrawing assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to withdraw assignment: " + ex.Message, 500);
+        }
     }
+
 }

@@ -507,7 +507,7 @@
                 // Get employee IDs that belong to the selected organization
                 var employeeIdsInOrganization = employees
                     .Where(e => e.OrganizationNumber == selectedOrgNumber.Value)
-                    .Select(e => e.Id.ToString())
+                    .Select(e => e.Id)
                     .ToHashSet();
 
                 filteredAssignments = filteredAssignments.Where(a =>

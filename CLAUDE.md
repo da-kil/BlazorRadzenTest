@@ -130,9 +130,20 @@ dotnet run
 - Test command handlers independently of infrastructure
 - Consider read model projections in integration tests
 
-### Logging
-- use Compile-time logging source generation (https://learn.microsoft.com/en-us/dotnet/core/extensions/logger-message-generator)
-- LoggerMessageAttribute
+## Critical Development Patterns (ALWAYS FOLLOW)
 
-### File per class, interface, enum etc.
-- always add new a file for every class, interface, enum etc.
+### 1. Controller Response Pattern
+- **ALWAYS** use `CreateResponse(result)` in API controllers
+- **NEVER** use direct HTTP responses like `Ok()`, `BadRequest()`, `NotFound()`, etc.
+- All controllers inherit base functionality that handles response formatting consistently
+
+### 2. Logging Pattern
+- **ALWAYS** use compile-time logging with `LoggerMessageAttribute`
+- **NEVER** use direct `logger.LogInformation()`, `logger.LogError()`, etc.
+- Add new logging definitions to `LoggerMessageDefinitions.cs` with unique event IDs
+- Follow existing event ID ranges: QuestionnaireTemplate (5001-5022), QuestionnaireAssignment (6001-6018)
+
+### 3. File Organization Pattern
+- **EVERY** class, record, interface, and enum must be in its own separate file
+- **NO** multiple types per file (except for very small nested types)
+- File names must match the type name exactly

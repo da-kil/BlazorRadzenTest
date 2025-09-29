@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
-using Npgsql;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -12,132 +11,153 @@ public class AssignmentsController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
     private readonly ILogger<AssignmentsController> logger;
-    private readonly NpgsqlDataSource dataSource;
 
     public AssignmentsController(
         ICommandDispatcher commandDispatcher,
-        ILogger<AssignmentsController> logger,
-        NpgsqlDataSource dataSource)
+        ILogger<AssignmentsController> logger)
     {
         this.commandDispatcher = commandDispatcher;
         this.logger = logger;
-        this.dataSource = dataSource;
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateAssignments(QuestionnaireAssignmentDto questionnaireAssignment)
+    public async Task<IActionResult> CreateAssignment([FromBody] CreateAssignmentDto assignmentDto)
     {
         try
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (questionnaireAssignment.EmployeeIds == null || !questionnaireAssignment.EmployeeIds.Any())
-                return BadRequest("At least one employee ID is required");
+            var command = new CreateAssignmentCommand(
+                assignmentDto.TemplateId,
+                assignmentDto.EmployeeId,
+                assignmentDto.EmployeeName,
+                assignmentDto.EmployeeEmail,
+                assignmentDto.DueDate,
+                assignmentDto.AssignedBy,
+                assignmentDto.Notes);
 
-            var result = await commandDispatcher.SendAsync(new CreateQuestionnaireAssignmentCommand(
-                new QuestionnaireAssignment
-                {
-                    AssignedBy = questionnaireAssignment.AssignedBy,
-                    DueDate = questionnaireAssignment.DueDate,
-                    EmployeeIds = questionnaireAssignment.EmployeeIds,
-                    Notes = questionnaireAssignment.Notes,
-                    TemplateId = questionnaireAssignment.TemplateId
-                }));
-
+            var result = await commandDispatcher.SendAsync(command);
             return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error creating assignments");
-            return StatusCode(500, "An error occurred while creating assignments");
+            logger.LogError(ex, "Error creating assignment");
+            return StatusCode(500, "An error occurred while creating assignment");
         }
     }
 
-    [HttpPost("reminder")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> SendReminder([FromBody] AssignmentReminderDto reminderDto)
+    [HttpPost("bulk")]
+    public async Task<IActionResult> CreateBulkAssignments([FromBody] CreateBulkAssignmentsDto bulkAssignmentDto)
     {
-        logger.LogInformation("Received SendReminder request for Assignment: {AssignmentId}", reminderDto.AssignmentId);
-
         try
         {
             if (!ModelState.IsValid)
-            {
-                logger.LogWarning("SendReminder request failed validation");
                 return BadRequest(ModelState);
-            }
 
-            var command = new SendAssignmentReminderCommand(
-                reminderDto.AssignmentId,
-                reminderDto.Message,
-                reminderDto.SentBy);
+            if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
+                return BadRequest("At least one employee assignment is required");
+
+            var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
+                .Select(e => new EmployeeAssignmentData(
+                    e.EmployeeId,
+                    e.EmployeeName,
+                    e.EmployeeEmail))
+                .ToList();
+
+            var command = new CreateBulkAssignmentsCommand(
+                bulkAssignmentDto.TemplateId,
+                employeeAssignments,
+                bulkAssignmentDto.DueDate,
+                bulkAssignmentDto.AssignedBy,
+                bulkAssignmentDto.Notes);
 
             var result = await commandDispatcher.SendAsync(command);
-
-            if (result.Succeeded)
-            {
-                logger.LogInformation("SendReminder completed successfully for Assignment: {AssignmentId}", reminderDto.AssignmentId);
-                return Ok();
-            }
-            else
-            {
-                logger.LogWarning("SendReminder failed for Assignment: {AssignmentId}, Error: {ErrorMessage}", reminderDto.AssignmentId, result.Message);
-                return BadRequest(result.Message);
-            }
+            return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error sending reminder for Assignment: {AssignmentId}", reminderDto.AssignmentId);
-            return StatusCode(500, "An error occurred while sending the reminder");
+            logger.LogError(ex, "Error creating bulk assignments");
+            return StatusCode(500, "An error occurred while creating bulk assignments");
         }
     }
 
-    [HttpPost("bulk-reminder")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> SendBulkReminder([FromBody] BulkAssignmentReminderDto bulkReminderDto)
+    [HttpPost("{assignmentId}/start")]
+    public async Task<IActionResult> StartAssignmentWork(Guid assignmentId)
     {
-        var assignmentCount = bulkReminderDto.AssignmentIds?.Count() ?? 0;
-        logger.LogInformation("Received SendBulkReminder request for {AssignmentCount} assignments", assignmentCount);
+        try
+        {
+            var command = new StartAssignmentWorkCommand(assignmentId);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error starting assignment work");
+            return StatusCode(500, "An error occurred while starting assignment work");
+        }
+    }
 
+    [HttpPost("{assignmentId}/complete")]
+    public async Task<IActionResult> CompleteAssignmentWork(Guid assignmentId)
+    {
+        try
+        {
+            var command = new CompleteAssignmentWorkCommand(assignmentId);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing assignment work");
+            return StatusCode(500, "An error occurred while completing assignment work");
+        }
+    }
+
+    [HttpPost("extend-due-date")]
+    public async Task<IActionResult> ExtendAssignmentDueDate([FromBody] ExtendAssignmentDueDateDto extendDto)
+    {
         try
         {
             if (!ModelState.IsValid)
-            {
-                logger.LogWarning("SendBulkReminder request failed validation");
                 return BadRequest(ModelState);
-            }
 
-            if (bulkReminderDto.AssignmentIds == null || !bulkReminderDto.AssignmentIds.Any())
-            {
-                logger.LogWarning("SendBulkReminder request received with no assignment IDs");
-                return BadRequest("No assignment IDs provided");
-            }
-
-            var command = new SendBulkAssignmentReminderCommand(
-                bulkReminderDto.AssignmentIds,
-                bulkReminderDto.Message,
-                bulkReminderDto.SentBy);
+            var command = new ExtendAssignmentDueDateCommand(
+                extendDto.AssignmentId,
+                extendDto.NewDueDate,
+                extendDto.ExtensionReason);
 
             var result = await commandDispatcher.SendAsync(command);
-
-            if (result.Succeeded)
-            {
-                logger.LogInformation("SendBulkReminder completed successfully for {AssignmentCount} assignments", assignmentCount);
-                return Ok();
-            }
-            else
-            {
-                logger.LogWarning("SendBulkReminder failed for {AssignmentCount} assignments, Error: {ErrorMessage}", assignmentCount, result.Message);
-                return BadRequest(result.Message);
-            }
+            return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error sending bulk reminder for {AssignmentCount} assignments", assignmentCount);
-            return StatusCode(500, "An error occurred while sending bulk reminders");
+            logger.LogError(ex, "Error extending assignment due date");
+            return StatusCode(500, "An error occurred while extending due date");
         }
     }
+
+    [HttpPost("withdraw")]
+    public async Task<IActionResult> WithdrawAssignment([FromBody] WithdrawAssignmentDto withdrawDto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new WithdrawAssignmentCommand(
+                withdrawDto.AssignmentId,
+                withdrawDto.WithdrawnBy,
+                withdrawDto.WithdrawalReason);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error withdrawing assignment");
+            return StatusCode(500, "An error occurred while withdrawing assignment");
+        }
+    }
+
 }

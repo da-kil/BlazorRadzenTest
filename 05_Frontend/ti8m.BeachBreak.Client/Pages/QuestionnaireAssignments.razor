@@ -483,11 +483,11 @@
         {
             // Load employees and questionnaires in parallel
             var employeesTask = EmployeeApiService.GetAllEmployeesAsync();
-            var questionnairesTask = TemplateService.GetAllPublishedTemplatesAsync();
+            var questionnairesTask = TemplateService.GetAllTemplatesAsync();
             var assignmentsTask = AssignmentService.GetAllAssignmentsAsync();
             var categoriesTask = CategoryApiService.GetAllCategoriesAsync();
 
-            await Task.WhenAll(employeesTask, questionnairesTask, assignmentsTask);
+            await Task.WhenAll(employeesTask, questionnairesTask, assignmentsTask, categoriesTask);
 
             allEmployees = await employeesTask;
             allQuestionnaires = await questionnairesTask;
@@ -495,8 +495,10 @@
             categories = await categoriesTask;
 
             // Set up initial filtered data
-            filteredEmployees = allEmployees.Where(e => !e.IsDeleted).ToList();
-            filteredQuestionnaires = allQuestionnaires.Where(q => q.Status != TemplateStatus.Archived).ToList();
+            filteredEmployees = allEmployees.ToList();
+            // Filter for published templates that aren't archived
+            filteredQuestionnaires = allQuestionnaires.Where(q =>
+                q.Status == TemplateStatus.Published).ToList();
             filteredAssignments = assignments.ToList();
 
             // Extract available categories
@@ -504,7 +506,7 @@
 
             NotificationService.Notify(NotificationSeverity.Success,
                 "Data Loaded",
-                $"Loaded {allEmployees.Count} employees and {allQuestionnaires.Count} questionnaires");
+                $"Loaded {allEmployees.Count} employees ({filteredEmployees.Count} available), {allQuestionnaires.Count} questionnaires ({filteredQuestionnaires.Count} published)");
         }
         catch (Exception ex)
         {
@@ -524,12 +526,11 @@
     {
         if (string.IsNullOrWhiteSpace(employeeSearchText))
         {
-            filteredEmployees = allEmployees.Where(e => !e.IsDeleted).ToList();
+            filteredEmployees = allEmployees.ToList();
         }
         else
         {
             filteredEmployees = allEmployees.Where(e =>
-                !e.IsDeleted &&
                 (e.FullName.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
                  e.EMail.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
                  e.Department.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
@@ -543,12 +544,12 @@
     {
         if (selectedCategoryId == Guid.Empty)
         {
-            filteredQuestionnaires = allQuestionnaires.Where(q => q.Status != TemplateStatus.Archived).ToList();
+            filteredQuestionnaires = allQuestionnaires.Where(q => q.Status == TemplateStatus.Published).ToList();
         }
         else
         {
             filteredQuestionnaires = allQuestionnaires.Where(q =>
-                q.Status != TemplateStatus.Archived && q.CategoryId == selectedCategoryId
+                q.Status == TemplateStatus.Published && q.CategoryId == selectedCategoryId
             ).ToList();
         }
         StateHasChanged();
@@ -618,11 +619,12 @@
 
         try
         {
-            var selectedEmployeeIdsString = selectedEmployeeIds.Select(id => id.ToString()).ToList();
+            // Get the selected employees with full data
+            var selectedEmployees = allEmployees.Where(e => selectedEmployeeIds.Contains(e.Id)).ToList();
 
             var newAssignments = await AssignmentService.CreateAssignmentsAsync(
                 selectedQuestionnaireId!.Value,
-                selectedEmployeeIdsString,
+                selectedEmployees,
                 assignmentDueDate,
                 assignmentNotes,
                 await GetCurrentUserAsync()
@@ -908,14 +910,17 @@
             // Handle employee changes - create new assignments for additional employees
             if (editModel.SelectedEmployeeIds.Count > 1)
             {
-                var newEmployeeIds = editModel.SelectedEmployeeIds.Where(id => id != assignment.EmployeeId).ToList();
+                var newEmployeeGuids = editModel.SelectedEmployeeIds.Select(Guid.Parse).Where(id => id != assignment.EmployeeId).ToList();
 
-                if (newEmployeeIds.Any())
+                if (newEmployeeGuids.Any())
                 {
+                    // Get the selected employees with full data
+                    var newEmployees = allEmployees.Where(e => newEmployeeGuids.Contains(e.Id)).ToList();
+
                     // Create additional assignments for new employees
                     var newAssignments = await AssignmentService.CreateAssignmentsAsync(
                         assignment.TemplateId,
-                        newEmployeeIds,
+                        newEmployees,
                         editModel.DueDate,
                         editModel.Notes,
                         editModel.AssignedBy ?? await GetCurrentUserAsync()

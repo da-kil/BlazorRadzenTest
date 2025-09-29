@@ -49,7 +49,7 @@ public class QuestionnaireResponseQueryHandler :
                 {
                     Id = reader.GetGuid(0),
                     TemplateId = reader.GetGuid(1),
-                    EmployeeId = reader.GetGuid(2).ToString(),
+                    EmployeeId = reader.GetGuid(2),
                     EmployeeName = reader.GetString(3),
                     EmployeeEmail = reader.GetString(4),
                     AssignedDate = reader.GetDateTime(5),

@@ -263,7 +263,7 @@
 
     private RenderFragment RenderAssignmentCard(QuestionnaireAssignment assignment, string type)
     {
-        var employee = Employees.FirstOrDefault(e => e.Id.ToString() == assignment.EmployeeId);
+        var employee = Employees.FirstOrDefault(e => e.Id == assignment.EmployeeId);
 
         return @<RadzenCard Class="@($"assignment-analytics-card assignment-{type}")">
             <div class="d-flex justify-content-between align-items-start mb-3">
@@ -406,7 +406,7 @@
 
     private List<dynamic> GetDepartmentStats()
     {
-        var employeeDict = Employees.ToDictionary(e => e.Id.ToString(), e => e);
+        var employeeDict = Employees.ToDictionary(e => e.Id, e => e);
 
         return Assignments
             .Where(a => employeeDict.ContainsKey(a.EmployeeId))

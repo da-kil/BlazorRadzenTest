@@ -1,4 +1,3 @@
-using Be.Vlaanderen.Basisregisters.Generators.Guid;
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using ti8m.BeachBreak.Application.Command.Repositories;
@@ -27,14 +26,16 @@ public class EmployeeCommandHandler :
         int countUpdated = 0;
         int countUndeleted = 0;
         int countDeleted = 0;
+        IList<Guid> employeeIds = [];
+
         foreach (var e in command.Employees)
         {
-            Guid employeeId = Deterministic.Create(namespaceGuid, e.EmployeeId);
-            var employee = await repository.LoadAsync<Employee>(employeeId, cancellationToken: cancellationToken);
+            var employee = await repository.LoadAsync<Employee>(e.Id, cancellationToken: cancellationToken);
+            employeeIds.Add(e.Id);
 
             if (employee is not null && employee.IsDeleted)
             {
-                logger.LogInformation("Undeleting employee {EmployeeId}", employee.EmployeeId);
+                logger.LogInformation("Undeleting employee {Id} - {EmployeeId}", employee.Id, employee.EmployeeId);
 
                 employee.Undelete();
                 UpdateEmployee(e, employee);
@@ -47,7 +48,7 @@ public class EmployeeCommandHandler :
             }
             else if (employee is not null)
             {
-                logger.LogInformation("Update employee {EmployeeId}", employee.EmployeeId);
+                logger.LogInformation("Update employee {Id} - {EmployeeId}", employee.Id, employee.EmployeeId);
 
                 UpdateEmployee(e, employee);
 
@@ -59,7 +60,7 @@ public class EmployeeCommandHandler :
             }
             else
             {
-                logger.LogInformation("Insert employee {EmployeeId}", e.EmployeeId);
+                logger.LogInformation("Insert employee {Id} - {EmployeeId}", e.Id, e.EmployeeId);
 
                 var startDate = ParseStartDate(e.StartDate);
                 var lastStartDate = ParseLastStartDate(e.LastStartDate);
@@ -84,8 +85,7 @@ public class EmployeeCommandHandler :
             }
         }
 
-        var ids = command.Employees.Select(o => Deterministic.Create(namespaceGuid, o.EmployeeId)).ToArray();
-        var employeesToDelete = await repository.FindEntriesToDeleteAsync<Employee>(ids, cancellationToken: cancellationToken);
+        var employeesToDelete = await repository.FindEntriesToDeleteAsync<Employee>(employeeIds.ToArray(), cancellationToken: cancellationToken);
 
         if (employeesToDelete is not null)
         {

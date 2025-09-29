@@ -310,7 +310,7 @@
     private RenderFragment RenderAssignmentSummaryCard(QuestionnaireAssignment assignment)
     {
         var template = Templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
-        var employee = DepartmentEmployees.FirstOrDefault(e => e.Id.ToString() == assignment.EmployeeId);
+        var employee = DepartmentEmployees.FirstOrDefault(e => e.Id == assignment.EmployeeId);
 
         return @<RadzenCard Class="assignment-summary-card">
             <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-1">
@@ -458,7 +458,7 @@
     {
         return DepartmentEmployees.Select(employee =>
         {
-            var employeeAssignments = DepartmentAssignments.Where(a => a.EmployeeId == employee.Id.ToString()).ToList();
+            var employeeAssignments = DepartmentAssignments.Where(a => a.EmployeeId == employee.Id).ToList();
             var completed = employeeAssignments.Count(a => a.Status == AssignmentStatus.Completed);
             var overdue = employeeAssignments.Count(IsOverdue);
             var inProgress = employeeAssignments.Count(a => a.Status == AssignmentStatus.InProgress);

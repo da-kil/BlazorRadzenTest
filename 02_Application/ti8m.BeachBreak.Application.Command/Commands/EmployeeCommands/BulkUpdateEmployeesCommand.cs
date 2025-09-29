@@ -1,5 +1,6 @@
 namespace ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
 
+// Todo: check if really necessary, Bulk insert should handle all scenarios
 public class BulkUpdateEmployeesCommand : ICommand<Result>
 {
     public IEnumerable<SyncEmployee> Employees { get; init; }
