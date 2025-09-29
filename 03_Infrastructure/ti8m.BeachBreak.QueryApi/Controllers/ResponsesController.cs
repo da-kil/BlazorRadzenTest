@@ -108,7 +108,7 @@ public class ResponsesController : BaseController
                 {
                     Id = assignment.Id,
                     TemplateId = assignment.TemplateId,
-                    EmployeeId = assignment.EmployeeId,
+                    EmployeeId = assignment.EmployeeId.ToString(),
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
                     AssignedDate = assignment.AssignedDate,

@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
-using Npgsql;
+using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Query.Repositories;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
@@ -8,13 +8,15 @@ public class QuestionnaireAssignmentQueryHandler :
     IQueryHandler<QuestionnaireAssignmentQuery, Result<QuestionnaireAssignment>>,
     IQueryHandler<QuestionnaireEmployeeAssignmentListQuery, Result<IEnumerable<QuestionnaireAssignment>>>
 {
+    private readonly IQuestionnaireAssignmentRepository repository;
     private readonly ILogger<QuestionnaireAssignmentQueryHandler> logger;
-    private readonly NpgsqlDataSource dataSource;
 
-    public QuestionnaireAssignmentQueryHandler(ILogger<QuestionnaireAssignmentQueryHandler> logger, NpgsqlDataSource dataSource)
+    public QuestionnaireAssignmentQueryHandler(
+        IQuestionnaireAssignmentRepository repository,
+        ILogger<QuestionnaireAssignmentQueryHandler> logger)
     {
+        this.repository = repository;
         this.logger = logger;
-        this.dataSource = dataSource;
     }
 
     public async Task<Result<IEnumerable<QuestionnaireAssignment>>> HandleAsync(QuestionnaireAssignmentListQuery query, CancellationToken cancellationToken = default)
@@ -23,24 +25,8 @@ public class QuestionnaireAssignmentQueryHandler :
         {
             logger.LogInformation("Retrieving all questionnaire assignments");
 
-            const string sql = """
-                SELECT id, template_id, employee_id, employee_name, employee_email,
-                       assigned_date, due_date, completed_date, status, assigned_by, notes
-                FROM questionnaire_assignments
-                ORDER BY assigned_date DESC
-                """;
-
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var command = connection.CreateCommand();
-            command.CommandText = sql;
-
-            var assignments = new List<QuestionnaireAssignment>();
-
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                assignments.Add(MapToQuestionnaireAssignment(reader));
-            }
+            var assignmentReadModels = await repository.GetAllAssignmentsAsync(cancellationToken);
+            var assignments = assignmentReadModels.Select(MapToQuestionnaireAssignment).ToList();
 
             logger.LogInformation("Retrieved {AssignmentCount} assignments", assignments.Count);
             return Result<IEnumerable<QuestionnaireAssignment>>.Success(assignments);
@@ -58,22 +44,10 @@ public class QuestionnaireAssignmentQueryHandler :
         {
             logger.LogInformation("Retrieving assignment {AssignmentId}", query.Id);
 
-            const string sql = """
-                SELECT id, template_id, employee_id, employee_name, employee_email,
-                       assigned_date, due_date, completed_date, status, assigned_by, notes
-                FROM questionnaire_assignments
-                WHERE id = @id
-                """;
-
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            command.Parameters.AddWithValue("@id", query.Id);
-
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            if (await reader.ReadAsync(cancellationToken))
+            var assignmentReadModel = await repository.GetAssignmentByIdAsync(query.Id, cancellationToken);
+            if (assignmentReadModel != null)
             {
-                var assignment = MapToQuestionnaireAssignment(reader);
+                var assignment = MapToQuestionnaireAssignment(assignmentReadModel);
                 logger.LogInformation("Retrieved assignment {AssignmentId}", assignment.Id);
                 return Result<QuestionnaireAssignment>.Success(assignment);
             }
@@ -94,26 +68,8 @@ public class QuestionnaireAssignmentQueryHandler :
         {
             logger.LogInformation("Retrieving assignments for employee {EmployeeId}", query.EmployeeId);
 
-            const string sql = """
-                SELECT id, template_id, employee_id, employee_name, employee_email,
-                       assigned_date, due_date, completed_date, status, assigned_by, notes
-                FROM questionnaire_assignments
-                WHERE employee_id = @employeeId
-                ORDER BY assigned_date DESC
-                """;
-
-            await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            await using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            command.Parameters.AddWithValue("@employeeId", query.EmployeeId);
-
-            var assignments = new List<QuestionnaireAssignment>();
-
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                assignments.Add(MapToQuestionnaireAssignment(reader));
-            }
+            var assignmentReadModels = await repository.GetAssignmentsByEmployeeIdAsync(query.EmployeeId, cancellationToken);
+            var assignments = assignmentReadModels.Select(MapToQuestionnaireAssignment).ToList();
 
             logger.LogInformation("Retrieved {AssignmentCount} assignments for employee {EmployeeId}", assignments.Count, query.EmployeeId);
             return Result<IEnumerable<QuestionnaireAssignment>>.Success(assignments);
@@ -125,21 +81,26 @@ public class QuestionnaireAssignmentQueryHandler :
         }
     }
 
-    private static QuestionnaireAssignment MapToQuestionnaireAssignment(NpgsqlDataReader reader)
+    private static QuestionnaireAssignment MapToQuestionnaireAssignment(Projections.QuestionnaireAssignmentReadModel readModel)
     {
         return new QuestionnaireAssignment
         {
-            Id = reader.GetGuid(0),
-            TemplateId = reader.GetGuid(1),
-            EmployeeId = reader.GetGuid(2).ToString(),
-            EmployeeName = reader.GetString(3),
-            EmployeeEmail = reader.GetString(4),
-            AssignedDate = reader.GetDateTime(5),
-            DueDate = reader.IsDBNull(6) ? null : reader.GetDateTime(6),
-            CompletedDate = reader.IsDBNull(7) ? null : reader.GetDateTime(7),
-            Status = Enum.Parse<AssignmentStatus>(reader.GetString(8)),
-            AssignedBy = reader.IsDBNull(9) ? null : reader.GetString(9),
-            Notes = reader.IsDBNull(10) ? null : reader.GetString(10)
+            Id = readModel.Id,
+            TemplateId = readModel.TemplateId,
+            EmployeeId = readModel.EmployeeId,
+            EmployeeName = readModel.EmployeeName,
+            EmployeeEmail = readModel.EmployeeEmail,
+            AssignedDate = readModel.AssignedDate,
+            DueDate = readModel.DueDate,
+            StartedDate = readModel.StartedDate,
+            CompletedDate = readModel.CompletedDate,
+            IsWithdrawn = readModel.IsWithdrawn,
+            WithdrawnDate = readModel.WithdrawnDate,
+            WithdrawnBy = readModel.WithdrawnBy,
+            WithdrawalReason = readModel.WithdrawalReason,
+            Status = readModel.Status,
+            AssignedBy = readModel.AssignedBy,
+            Notes = readModel.Notes
         };
     }
 }
