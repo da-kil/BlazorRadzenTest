@@ -78,7 +78,7 @@
         };
 
         // Initialize with current assignee
-        selectedEmployeeIds = new List<string> { Assignment.EmployeeId };
+        selectedEmployeeIds = new List<string> { Assignment.EmployeeId.ToString() };
 
         await FilterEmployees();
         validationErrors.Clear();
@@ -144,7 +144,7 @@
 
         <EmployeeSelectionGrid Employees="@filteredEmployees"
                               SelectedEmployeeIds="@selectedEmployeeIds"
-                              CurrentAssigneeId="@Assignment.EmployeeId"
+                              CurrentAssigneeId="@Assignment.EmployeeId.ToString()"
                               OnEmployeeToggle="@ToggleEmployeeSelection"
                               ShowSelectionSummary="false" />
 
@@ -158,11 +158,11 @@
                         <div class="summary-label">Selected Employees</div>
                     </div>
                     <div class="summary-item">
-                        <span class="summary-number">@(selectedEmployeeIds.Contains(Assignment.EmployeeId) ? "Yes" : "No")</span>
+                        <span class="summary-number">@(selectedEmployeeIds.Contains(Assignment.EmployeeId.ToString()) ? "Yes" : "No")</span>
                         <div class="summary-label">Includes Current Assignee</div>
                     </div>
                     <div class="summary-item">
-                        <span class="summary-number">@(selectedEmployeeIds.Count - (selectedEmployeeIds.Contains(Assignment.EmployeeId) ? 1 : 0))</span>
+                        <span class="summary-number">@(selectedEmployeeIds.Count - (selectedEmployeeIds.Contains(Assignment.EmployeeId.ToString()) ? 1 : 0))</span>
                         <div class="summary-label">New Assignments</div>
                     </div>
                 </div>
@@ -415,7 +415,7 @@
                                editModel.Notes != (Assignment.Notes ?? string.Empty) ||
                                editModel.AssignedBy != (Assignment.AssignedBy ?? string.Empty);
 
-        var hasEmployeeChanges = selectedEmployeeIds.Count != 1 || !selectedEmployeeIds.Contains(Assignment.EmployeeId);
+        var hasEmployeeChanges = selectedEmployeeIds.Count != 1 || !selectedEmployeeIds.Contains(Assignment.EmployeeId.ToString());
 
         return hasDetailChanges || hasEmployeeChanges;
     }
@@ -425,9 +425,9 @@
         var changes = new List<string>();
 
         // Employee changes
-        if (selectedEmployeeIds.Count != 1 || !selectedEmployeeIds.Contains(Assignment.EmployeeId))
+        if (selectedEmployeeIds.Count != 1 || !selectedEmployeeIds.Contains(Assignment.EmployeeId.ToString()))
         {
-            if (selectedEmployeeIds.Count == 1 && !selectedEmployeeIds.Contains(Assignment.EmployeeId))
+            if (selectedEmployeeIds.Count == 1 && !selectedEmployeeIds.Contains(Assignment.EmployeeId.ToString()))
             {
                 var newEmployee = AllEmployees.FirstOrDefault(e => e.Id.ToString() == selectedEmployeeIds.First());
                 changes.Add($"Assignment transferred to: {newEmployee?.FullName ?? "Unknown Employee"}");
@@ -435,7 +435,7 @@
             else if (selectedEmployeeIds.Count > 1)
             {
                 changes.Add($"Assignment will be duplicated to {selectedEmployeeIds.Count} employees");
-                if (!selectedEmployeeIds.Contains(Assignment.EmployeeId))
+                if (!selectedEmployeeIds.Contains(Assignment.EmployeeId.ToString()))
                 {
                     changes.Add("Original assignment will be removed");
                 }

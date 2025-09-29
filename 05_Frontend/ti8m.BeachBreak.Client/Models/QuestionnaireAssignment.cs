@@ -4,7 +4,7 @@ public class QuestionnaireAssignment
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid TemplateId { get; set; }
-    public string EmployeeId { get; set; } = string.Empty;
+    public Guid EmployeeId { get; set; }
     public string EmployeeName { get; set; } = string.Empty;
     public string EmployeeEmail { get; set; } = string.Empty;
     public DateTime AssignedDate { get; set; } = DateTime.Now;

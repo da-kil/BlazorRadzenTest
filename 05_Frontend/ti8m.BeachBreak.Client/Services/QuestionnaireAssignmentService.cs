@@ -32,18 +32,25 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     // Assignment creation and management
     public async Task<List<QuestionnaireAssignment>> CreateAssignmentsAsync(
         Guid templateId,
-        List<string> employeeIds,
+        List<EmployeeDto> employees,
         DateTime? dueDate,
         string? notes,
         string assignedBy)
     {
+        var employeeAssignments = employees.Select(emp => new
+        {
+            EmployeeId = emp.Id,
+            EmployeeName = emp.FullName,
+            EmployeeEmail = emp.EMail
+        }).ToList();
+
         var createRequest = new
         {
             TemplateId = templateId,
-            EmployeeIds = employeeIds,
+            EmployeeAssignments = employeeAssignments,
             DueDate = dueDate,
-            Notes = notes,
-            AssignedBy = assignedBy
+            AssignedBy = assignedBy,
+            Notes = notes
         };
 
         return await CreateWithListResponseAsync<object, QuestionnaireAssignment>(AssignmentCommandEndpoint, createRequest);
@@ -55,7 +62,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     }
 
     // Assignment queries
-    public async Task<List<QuestionnaireAssignment>> GetAssignmentsByEmployeeAsync(string employeeId)
+    public async Task<List<QuestionnaireAssignment>> GetAssignmentsByEmployeeAsync(Guid employeeId)
     {
         return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/employee/{employeeId}");
     }
@@ -89,7 +96,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
-    public async Task<Dictionary<string, object>> GetEmployeeAssignmentStatsAsync(string employeeId)
+    public async Task<Dictionary<string, object>> GetEmployeeAssignmentStatsAsync(Guid employeeId)
     {
         try
         {
