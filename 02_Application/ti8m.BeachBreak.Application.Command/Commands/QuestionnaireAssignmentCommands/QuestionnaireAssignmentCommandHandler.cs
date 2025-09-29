@@ -4,7 +4,6 @@ using ti8m.BeachBreak.Application.Command.Repositories;
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
 public class QuestionnaireAssignmentCommandHandler :
-    ICommandHandler<CreateAssignmentCommand, Result>,
     ICommandHandler<CreateBulkAssignmentsCommand, Result>,
     ICommandHandler<StartAssignmentWorkCommand, Result>,
     ICommandHandler<CompleteAssignmentWorkCommand, Result>,
@@ -22,37 +21,6 @@ public class QuestionnaireAssignmentCommandHandler :
         this.logger = logger;
     }
 
-    public async Task<Result> HandleAsync(CreateAssignmentCommand command, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var assignmentId = Guid.NewGuid();
-
-            logger.LogInformation("Creating assignment {AssignmentId} for employee {EmployeeId} with template {TemplateId}",
-                assignmentId, command.EmployeeId, command.TemplateId);
-
-            var assignment = new Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment(
-                assignmentId,
-                command.TemplateId,
-                command.EmployeeId,
-                command.EmployeeName,
-                command.EmployeeEmail,
-                DateTime.UtcNow,
-                command.DueDate,
-                command.AssignedBy,
-                command.Notes);
-
-            await repository.StoreAsync(assignment, cancellationToken);
-
-            logger.LogInformation("Successfully created assignment {AssignmentId}", assignmentId);
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error creating questionnaire assignment");
-            return Result.Fail("Failed to create assignment: " + ex.Message, 500);
-        }
-    }
 
     public async Task<Result> HandleAsync(CreateBulkAssignmentsCommand command, CancellationToken cancellationToken = default)
     {

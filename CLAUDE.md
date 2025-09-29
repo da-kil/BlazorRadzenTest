@@ -154,6 +154,4 @@ dotnet run
 - **FRONTEND DTOs**: Create matching DTOs in `05_Frontend/ti8m.BeachBreak.Client/Models/Dto/`
 - **API DTOs**: Located in `03_Infrastructure/ti8m.BeachBreak.CommandApi/Dto/`
 - **ENDPOINT MATCHING**: Ensure client calls correct endpoints:
-  - Single assignment: `POST /c/api/v1/assignments` → `CreateAssignmentDto`
-  - Bulk assignments: `POST /c/api/v1/assignments/bulk` → `CreateBulkAssignmentsDto`
 - **TYPE SAFETY**: Replace all `object`, `var`, and anonymous types with proper strongly-typed DTOs

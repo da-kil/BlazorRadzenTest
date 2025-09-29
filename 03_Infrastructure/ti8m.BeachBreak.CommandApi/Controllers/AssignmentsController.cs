@@ -20,33 +20,6 @@ public class AssignmentsController : BaseController
         this.logger = logger;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> CreateAssignment([FromBody] CreateAssignmentDto assignmentDto)
-    {
-        try
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var command = new CreateAssignmentCommand(
-                assignmentDto.TemplateId,
-                assignmentDto.EmployeeId,
-                assignmentDto.EmployeeName,
-                assignmentDto.EmployeeEmail,
-                assignmentDto.DueDate,
-                assignmentDto.AssignedBy,
-                assignmentDto.Notes);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error creating assignment");
-            return StatusCode(500, "An error occurred while creating assignment");
-        }
-    }
-
     [HttpPost("bulk")]
     public async Task<IActionResult> CreateBulkAssignments([FromBody] CreateBulkAssignmentsDto bulkAssignmentDto)
     {
