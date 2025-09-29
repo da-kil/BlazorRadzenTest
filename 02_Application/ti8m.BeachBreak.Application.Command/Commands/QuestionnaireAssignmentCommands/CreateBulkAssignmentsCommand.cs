@@ -22,8 +22,3 @@ public class CreateBulkAssignmentsCommand : ICommand<Result>
         Notes = notes;
     }
 }
-
-public record EmployeeAssignmentData(
-    Guid EmployeeId,
-    string EmployeeName,
-    string EmployeeEmail);

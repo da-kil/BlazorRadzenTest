@@ -38,12 +38,6 @@ public class AssignmentsController : BaseController
                 assignmentDto.Notes);
 
             var result = await commandDispatcher.SendAsync(command);
-
-            if (result.Succeeded)
-            {
-                return Ok();
-            }
-
             return CreateResponse(result);
         }
         catch (Exception ex)
@@ -79,12 +73,6 @@ public class AssignmentsController : BaseController
                 bulkAssignmentDto.Notes);
 
             var result = await commandDispatcher.SendAsync(command);
-
-            if (result.Succeeded)
-            {
-                return Ok();
-            }
-
             return CreateResponse(result);
         }
         catch (Exception ex)
