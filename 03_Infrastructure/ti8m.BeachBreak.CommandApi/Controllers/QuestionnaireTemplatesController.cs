@@ -164,6 +164,12 @@ public class QuestionnaireTemplatesController : BaseController
     {
         try
         {
+            //Todo: replace
+            if (string.IsNullOrWhiteSpace(publishedBy))
+            {
+                publishedBy = "Test";
+            }
+
             Result result = await commandDispatcher.SendAsync(new PublishQuestionnaireTemplateCommand(id, publishedBy));
 
             return CreateResponse(result);

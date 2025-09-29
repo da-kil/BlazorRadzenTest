@@ -147,3 +147,13 @@ dotnet run
 - **EVERY** class, record, interface, and enum must be in its own separate file
 - **NO** multiple types per file (except for very small nested types)
 - File names must match the type name exactly
+
+### 4. DTO and Type Safety Pattern
+- **NEVER** use anonymous types for API requests/responses
+- **ALWAYS** create proper DTOs that match between client and server
+- **FRONTEND DTOs**: Create matching DTOs in `05_Frontend/ti8m.BeachBreak.Client/Models/Dto/`
+- **API DTOs**: Located in `03_Infrastructure/ti8m.BeachBreak.CommandApi/Dto/`
+- **ENDPOINT MATCHING**: Ensure client calls correct endpoints:
+  - Single assignment: `POST /c/api/v1/assignments` → `CreateAssignmentDto`
+  - Bulk assignments: `POST /c/api/v1/assignments/bulk` → `CreateBulkAssignmentsDto`
+- **TYPE SAFETY**: Replace all `object`, `var`, and anonymous types with proper strongly-typed DTOs

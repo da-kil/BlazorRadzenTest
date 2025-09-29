@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.Dto;
 using System.Net.Http.Json;
 
 namespace ti8m.BeachBreak.Client.Services;
@@ -37,14 +38,14 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         string? notes,
         string assignedBy)
     {
-        var employeeAssignments = employees.Select(emp => new
+        var employeeAssignments = employees.Select(emp => new EmployeeAssignmentDto
         {
             EmployeeId = emp.Id,
             EmployeeName = emp.FullName,
             EmployeeEmail = emp.EMail
         }).ToList();
 
-        var createRequest = new
+        var createRequest = new CreateBulkAssignmentsDto
         {
             TemplateId = templateId,
             EmployeeAssignments = employeeAssignments,
@@ -53,7 +54,26 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             Notes = notes
         };
 
-        return await CreateWithListResponseAsync<object, QuestionnaireAssignment>(AssignmentCommandEndpoint, createRequest);
+        // Create the bulk assignments
+        var result = await CreateWithResponseAsync<CreateBulkAssignmentsDto, object>($"{AssignmentCommandEndpoint}/bulk", createRequest);
+
+        if (result == null)
+        {
+            return new List<QuestionnaireAssignment>();
+        }
+
+        // Query back the assignments for this template to get the newly created ones
+        // This is necessary because the command API only returns Result, not the created assignments
+        var allAssignments = await GetAssignmentsByTemplateAsync(templateId);
+
+        // Filter to assignments created for the specific employees (best effort to return the new ones)
+        var employeeIds = employees.Select(e => e.Id).ToList();
+        var newAssignments = allAssignments.Where(a =>
+            employeeIds.Contains(a.EmployeeId) &&
+            a.AssignedDate >= DateTime.UtcNow.AddMinutes(-1) // Recently created
+        ).ToList();
+
+        return newAssignments.Any() ? newAssignments : allAssignments.Where(a => employeeIds.Contains(a.EmployeeId)).ToList();
     }
 
     public async Task<QuestionnaireAssignment?> UpdateAssignmentStatusAsync(Guid id, AssignmentStatus status)
