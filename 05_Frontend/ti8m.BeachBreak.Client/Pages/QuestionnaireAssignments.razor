@@ -165,6 +165,8 @@
                                         <div class="mb-3">
                                             <RadzenDropDown @bind-Value="@selectedCategoryId"
                                                           Data="@availableCategories"
+                                                          TextProperty="NameEn"
+                                                          ValueProperty="Id"
                                                           AllowClear="true"
                                                           Placeholder="Filter by category"
                                                           Change="@FilterQuestionnaires"
@@ -176,13 +178,13 @@
                                             {
                                                 @foreach (var questionnaire in filteredQuestionnaires)
                                                 {
-                                                    <div class="questionnaire-item @(selectedQuestionnaireId == questionnaire.Id ? "selected" : "")"
+                                                    <div class="questionnaire-item @(selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id ? "selected" : "")"
                                                          @onclick="() => SelectQuestionnaire(questionnaire.Id)">
                                                         <div class="d-flex align-items-start">
                                                             <div class="flex-grow-1">
                                                                 <div class="d-flex justify-content-between align-items-start">
                                                                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@questionnaire.Name</RadzenText>
-                                                                    <RadzenBadge Text="questionnaire.CategoryId" BadgeStyle="BadgeStyle.Info" />
+                                                                    <RadzenBadge Text="@GetCategoryName(questionnaire.CategoryId)" BadgeStyle="BadgeStyle.Info" />
                                                                 </div>
                                                                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@questionnaire.Description</RadzenText>
                                                                 <div class="d-flex gap-3 mt-2">
@@ -196,7 +198,7 @@
                                                                     </RadzenText>
                                                                 </div>
                                                             </div>
-                                                            @if (selectedQuestionnaireId == questionnaire.Id)
+                                                            @if (selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id)
                                                             {
                                                                 <RadzenIcon Icon="check_circle" Style="color: var(--green-new); font-size: 1.5rem;" />
                                                             }
@@ -447,7 +449,7 @@
     // Form State
     private string employeeSearchText = "";
     private List<Guid> selectedEmployeeIds = new();
-    private Guid selectedQuestionnaireId = Guid.Empty;
+    private Guid? selectedQuestionnaireId = null;
     private DateTime? assignmentDueDate;
     private string assignmentNotes = "";
 
@@ -604,7 +606,7 @@
 
     private bool CanCreateAssignment()
     {
-        return selectedEmployeeIds.Any() && selectedQuestionnaireId != Guid.Empty;
+        return selectedEmployeeIds.Any() && selectedQuestionnaireId.HasValue;
     }
 
     private async Task CreateAssignment()
@@ -619,7 +621,7 @@
             var selectedEmployeeIdsString = selectedEmployeeIds.Select(id => id.ToString()).ToList();
 
             var newAssignments = await AssignmentService.CreateAssignmentsAsync(
-                selectedQuestionnaireId,
+                selectedQuestionnaireId!.Value,
                 selectedEmployeeIdsString,
                 assignmentDueDate,
                 assignmentNotes,
@@ -638,7 +640,7 @@
 
                 // Reset form
                 selectedEmployeeIds.Clear();
-                selectedQuestionnaireId = Guid.Empty;
+                selectedQuestionnaireId = null;
                 assignmentDueDate = null;
                 assignmentNotes = "";
                 employeeSearchText = "";
@@ -681,12 +683,20 @@
 
     private string GetSelectedQuestionnaireName()
     {
-        return allQuestionnaires.FirstOrDefault(q => q.Id == selectedQuestionnaireId)?.Name ?? "";
+        return selectedQuestionnaireId.HasValue
+            ? allQuestionnaires.FirstOrDefault(q => q.Id == selectedQuestionnaireId.Value)?.Name ?? ""
+            : "";
     }
 
     private string GetTemplateName(Guid templateId)
     {
         return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.Name ?? "Unknown Questionnaire";
+    }
+
+    private string GetCategoryName(Guid categoryId)
+    {
+        var category = categories.FirstOrDefault(c => c.Id == categoryId);
+        return category?.NameEn ?? "Uncategorized";
     }
 
     private Guid GetTemplateCategory(Guid templateId)
