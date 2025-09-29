@@ -196,6 +196,8 @@
                                Data="@filter.Options"
                                Change="@ApplyFilters"
                                Placeholder="All Departments"
+                               AllowClear="true"
+                               AllowFiltering="true"
                                Class="w-100" />
                 break;
 
@@ -340,28 +342,32 @@
     // Filter and data manipulation methods
     private List<QuestionnaireAssignment> GetCurrentAssignments()
     {
-        return allAssignments.Where(a =>
+        var baseAssignments = allAssignments.Where(a =>
             a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress).ToList();
+        return ApplyFilteringToAssignments(baseAssignments);
     }
 
     private List<QuestionnaireAssignment> GetUpcomingAssignments()
     {
-        return allAssignments.Where(a =>
+        var baseAssignments = allAssignments.Where(a =>
             a.Status == AssignmentStatus.Assigned &&
             a.AssignedDate > DateTime.Now.AddDays(-1)).ToList();
+        return ApplyFilteringToAssignments(baseAssignments);
     }
 
     private List<QuestionnaireAssignment> GetCompletedAssignments()
     {
-        return allAssignments.Where(a => a.Status == AssignmentStatus.Completed).ToList();
+        var baseAssignments = allAssignments.Where(a => a.Status == AssignmentStatus.Completed).ToList();
+        return ApplyFilteringToAssignments(baseAssignments);
     }
 
     private List<QuestionnaireAssignment> GetOverdueAssignments()
     {
-        return allAssignments.Where(a =>
+        var baseAssignments = allAssignments.Where(a =>
             a.DueDate.HasValue &&
             a.DueDate.Value < DateTime.Now &&
             a.Status != AssignmentStatus.Completed).ToList();
+        return ApplyFilteringToAssignments(baseAssignments);
     }
 
     // UI Helper methods
@@ -475,6 +481,81 @@
         // Debounce filter application to avoid excessive API calls
         NotifyStateChangedDebounced(300);
     }
+
+    private List<QuestionnaireAssignment> ApplyFilteringToAssignments(List<QuestionnaireAssignment> assignments)
+    {
+        var filteredAssignments = assignments.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(searchFilter))
+        {
+            filteredAssignments = filteredAssignments.Where(a =>
+                a.EmployeeName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ||
+                GetTemplateName(a).Contains(searchFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply department filter (organization-based)
+        if (!string.IsNullOrEmpty(departmentFilter))
+        {
+            // Parse the selected organization from "Number - Name" format
+            var selectedOrgNumber = ExtractOrganizationNumber(departmentFilter);
+            if (selectedOrgNumber.HasValue)
+            {
+                // Get employee IDs that belong to the selected organization
+                var employeeIdsInOrganization = employees
+                    .Where(e => e.OrganizationNumber == selectedOrgNumber.Value)
+                    .Select(e => e.Id.ToString())
+                    .ToHashSet();
+
+                filteredAssignments = filteredAssignments.Where(a =>
+                    employeeIdsInOrganization.Contains(a.EmployeeId));
+            }
+        }
+
+        // Apply status filter
+        if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All")
+        {
+            if (Enum.TryParse<AssignmentStatus>(statusFilter.Replace(" ", ""), out var status))
+            {
+                filteredAssignments = filteredAssignments.Where(a => a.Status == status);
+            }
+            else if (statusFilter == "Pending")
+            {
+                filteredAssignments = filteredAssignments.Where(a =>
+                    a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress);
+            }
+            else if (statusFilter == "Overdue")
+            {
+                filteredAssignments = filteredAssignments.Where(a =>
+                    a.DueDate.HasValue && a.DueDate.Value < DateTime.Now && a.Status != AssignmentStatus.Completed);
+            }
+        }
+
+        // Apply category filter
+        if (!string.IsNullOrEmpty(categoryFilter))
+        {
+            // This would need template-category mapping if available
+            // For now, we'll skip this as it requires additional data structure
+        }
+
+        return filteredAssignments.ToList();
+    }
+
+    private int? ExtractOrganizationNumber(string organizationFilter)
+    {
+        // Parse organization number from "Number - Name" format
+        var dashIndex = organizationFilter.IndexOf(" - ");
+        if (dashIndex > 0)
+        {
+            var numberPart = organizationFilter.Substring(0, dashIndex);
+            if (int.TryParse(numberPart, out var orgNumber))
+            {
+                return orgNumber;
+            }
+        }
+        return null;
+    }
+
 
     private async Task NavigateToQuestionnaire(QuestionnaireAssignment assignment)
     {

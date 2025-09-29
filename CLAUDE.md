@@ -133,3 +133,6 @@ dotnet run
 ### Logging
 - use Compile-time logging source generation (https://learn.microsoft.com/en-us/dotnet/core/extensions/logger-message-generator)
 - LoggerMessageAttribute
+
+### File per class, interface, enum etc.
+- always add new a file for every class, interface, enum etc.

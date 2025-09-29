@@ -40,6 +40,7 @@ public class Program
         builder.Services.AddQuestionnaireServices();
         builder.Services.AddScoped<ICategoryApiService, CategoryApiService>();
         builder.Services.AddScoped<IEmployeeApiService, EmployeeApiService>();
+        builder.Services.AddScoped<IOrganizationApiService, OrganizationApiService>();
         builder.Services.AddScoped<IEmployeeQuestionnaireService, EmployeeQuestionnaireService>();
         builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();

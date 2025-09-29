@@ -1,5 +1,4 @@
 using ti8m.BeachBreak.Client.Models;
-using ti8m.BeachBreak.Client.Components.Shared;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -210,6 +209,7 @@ public static class QuestionnairePageConfigurationFactory
     public static QuestionnairePageConfiguration CreateHRConfiguration(
         List<QuestionnaireAssignment> allAssignments,
         List<EmployeeDto> allEmployees,
+        List<Organization> allOrganizations,
         List<QuestionnaireTemplate> allTemplates)
     {
         return new QuestionnairePageConfiguration
@@ -240,10 +240,14 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "department",
-                    Label = "Department Filter",
+                    Label = "Organization Filter",
                     Type = QuestionnaireFilterType.Department,
                     IsVisible = true,
-                    Options = allEmployees.Select(e => e.Department).Distinct().ToList()
+                    Options = allOrganizations
+                        .Where(org => !org.IsDeleted && !org.IsIgnored)
+                        .OrderBy(org => org.Number)
+                        .Select(org => $"{org.Number} - {org.Name}")
+                        .ToList()
                 },
                 new()
                 {

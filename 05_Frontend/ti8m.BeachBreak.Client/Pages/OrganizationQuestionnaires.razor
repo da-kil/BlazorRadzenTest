@@ -7,6 +7,7 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @inherits OptimizedComponentBase
 @inject IHRQuestionnaireService HRQuestionnaireService
+@inject IOrganizationApiService OrganizationService
 @inject IQuestionnaireTemplateService TemplateService
 @inject NotificationService NotificationService
 
@@ -30,6 +31,7 @@ else if (isLoading)
 
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> allEmployees = new();
+    private List<Organization> allOrganizations = new();
     private List<QuestionnaireTemplate> allTemplates = new();
     private bool isLoading = false;
 
@@ -51,12 +53,14 @@ else if (isLoading)
             // Load data to setup configuration
             var assignmentsTask = HRQuestionnaireService.GetAllAssignmentsAsync();
             var employeesTask = HRQuestionnaireService.GetAllEmployeesAsync();
+            var organizationsTask = OrganizationService.GetAllOrganizationsAsync(includeDeleted: false, includeIgnored: false);
             var templatesTask = TemplateService.GetAllTemplatesAsync();
 
-            await Task.WhenAll(assignmentsTask, employeesTask, templatesTask);
+            await Task.WhenAll(assignmentsTask, employeesTask, organizationsTask, templatesTask);
 
             allAssignments = assignmentsTask.Result;
             allEmployees = employeesTask.Result;
+            allOrganizations = organizationsTask.Result;
             allTemplates = templatesTask.Result;
         }
         catch (Exception ex)
@@ -74,6 +78,7 @@ else if (isLoading)
         configuration = QuestionnairePageConfigurationFactory.CreateHRConfiguration(
             allAssignments,
             allEmployees,
+            allOrganizations,
             allTemplates);
 
         // Add custom action handlers
