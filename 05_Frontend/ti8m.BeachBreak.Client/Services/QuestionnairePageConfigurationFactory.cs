@@ -10,7 +10,7 @@ public static class QuestionnairePageConfigurationFactory
         List<QuestionnaireAssignment> upcomingAssignments,
         List<QuestionnaireAssignment> completedAssignments,
         List<QuestionnaireAssignment> overdueAssignments,
-        List<string> availableCategories)
+        List<Category> categories)
     {
         return new QuestionnairePageConfiguration
         {
@@ -35,8 +35,9 @@ public static class QuestionnairePageConfigurationFactory
                     Id = "category",
                     Label = "Filter by Category",
                     Type = QuestionnaireFilterType.Category,
-                    IsVisible = availableCategories.Count > 1,
-                    Options = availableCategories
+                    IsVisible = categories.Count > 0,
+                    Options = categories.Select(c => c.NameEn).ToList(),
+                    CategoryOptions = categories
                 }
             },
 
@@ -99,7 +100,8 @@ public static class QuestionnairePageConfigurationFactory
 
     public static QuestionnairePageConfiguration CreateManagerConfiguration(
         List<QuestionnaireAssignment> allAssignments,
-        List<EmployeeDto> teamMembers)
+        List<EmployeeDto> teamMembers,
+        List<Category> categories)
     {
         return new QuestionnairePageConfiguration
         {
@@ -138,7 +140,9 @@ public static class QuestionnairePageConfigurationFactory
                     Id = "category",
                     Label = "Category Filter",
                     Type = QuestionnaireFilterType.Category,
-                    IsVisible = true
+                    IsVisible = categories.Count > 0,
+                    Options = categories.Select(c => c.NameEn).ToList(),
+                    CategoryOptions = categories
                 }
             },
 

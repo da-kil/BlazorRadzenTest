@@ -8,4 +8,5 @@ public class QuestionnairePageFilter
     public bool IsVisible { get; set; } = true;
     public object? DefaultValue { get; set; }
     public List<string> Options { get; set; } = new();
+    public List<Category> CategoryOptions { get; set; } = new();
 }

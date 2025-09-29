@@ -8,6 +8,7 @@
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
+@inject ICategoryApiService CategoryService
 @inject NotificationService NotificationService
 
 <PageTitle>My Questionnaires</PageTitle>
@@ -48,7 +49,7 @@ else
     private List<QuestionnaireAssignment> inProgressQuestionnaires = new();
     private List<QuestionnaireAssignment> completedQuestionnaires = new();
     private List<QuestionnaireAssignment> overdueQuestionnaires = new();
-    private List<string> availableCategories = new();
+    private List<Category> categories = new();
     private Dictionary<Guid, Dictionary<Guid, SectionResponse>> questionnaireResponses = new();
     private bool isLoading = false;
 
@@ -92,23 +93,17 @@ else
             // Load data to setup configuration with performance optimization
             var loadAssignmentsTask = EmployeeQuestionnaireService.GetMyAssignmentsAsync();
             var loadTemplatesTask = TemplateService.GetAllTemplatesAsync();
+            var loadCategoriesTask = CategoryService.GetAllCategoriesAsync();
 
             // Load in parallel for better performance
-            await Task.WhenAll(loadAssignmentsTask, loadTemplatesTask);
+            await Task.WhenAll(loadAssignmentsTask, loadTemplatesTask, loadCategoriesTask);
 
             allAssignments = loadAssignmentsTask.Result;
             var templates = loadTemplatesTask.Result;
+            categories = loadCategoriesTask.Result;
 
             // Categorize assignments with improved logic
             await CategorizeQuestionnaires();
-
-            // Get available categories
-            availableCategories = new List<string> { "All Categories" };
-            availableCategories.AddRange(
-                templates.Where(t => t.CategoryId != Guid.Empty)
-                        .Select(t => t.CategoryId.ToString())
-                        .Distinct()
-                        .OrderBy(c => c));
         }
         catch (Exception ex)
         {
@@ -128,7 +123,7 @@ else
             inProgressQuestionnaires,
             completedQuestionnaires,
             overdueQuestionnaires,
-            availableCategories);
+            categories);
 
         // Add custom action handlers for completing questionnaires
         if (configuration.Actions != null)

@@ -87,7 +87,7 @@
 
     // Filter values
     private string searchFilter = "";
-    private string categoryFilter = "";
+    private Guid? categoryFilter = null;
     private string statusFilter = "";
     private string departmentFilter = "";
 
@@ -177,9 +177,12 @@
 
             case QuestionnaireFilterType.Category:
                 <RadzenDropDown @bind-Value="categoryFilter"
-                               Data="@filter.Options"
+                               Data="@filter.CategoryOptions"
+                               TextProperty="NameEn"
+                               ValueProperty="Id"
                                Change="@ApplyFilters"
                                Placeholder="All Categories"
+                               AllowClear="true"
                                Class="w-100" />
                 break;
 
@@ -532,10 +535,14 @@
         }
 
         // Apply category filter
-        if (!string.IsNullOrEmpty(categoryFilter))
+        if (categoryFilter.HasValue)
         {
-            // This would need template-category mapping if available
-            // For now, we'll skip this as it requires additional data structure
+            // Filter by questionnaire template category
+            filteredAssignments = filteredAssignments.Where(a =>
+            {
+                var template = templates.FirstOrDefault(t => t.Id == a.TemplateId);
+                return template?.CategoryId == categoryFilter.Value;
+            });
         }
 
         return filteredAssignments.ToList();

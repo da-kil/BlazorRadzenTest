@@ -8,6 +8,7 @@
 @inherits OptimizedComponentBase
 @inject IManagerQuestionnaireService ManagerQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
+@inject ICategoryApiService CategoryService
 @inject NotificationService NotificationService
 
 <PageTitle>Team Questionnaires</PageTitle>
@@ -30,6 +31,7 @@ else if (isLoading)
 
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> teamMembers = new();
+    private List<Category> categories = new();
     private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
@@ -50,11 +52,13 @@ else if (isLoading)
             // Load data to setup configuration
             var assignmentsTask = ManagerQuestionnaireService.GetTeamAssignmentsAsync();
             var teamMembersTask = ManagerQuestionnaireService.GetTeamMembersAsync();
+            var categoriesTask = CategoryService.GetAllCategoriesAsync();
 
-            await Task.WhenAll(assignmentsTask, teamMembersTask);
+            await Task.WhenAll(assignmentsTask, teamMembersTask, categoriesTask);
 
             allAssignments = assignmentsTask.Result;
             teamMembers = teamMembersTask.Result;
+            categories = categoriesTask.Result;
         }
         catch (Exception ex)
         {
@@ -70,7 +74,8 @@ else if (isLoading)
     {
         configuration = QuestionnairePageConfigurationFactory.CreateManagerConfiguration(
             allAssignments,
-            teamMembers);
+            teamMembers,
+            categories);
 
         // Add custom action handlers
         var exportAction = configuration.Actions.FirstOrDefault(a => a.Id == "export");
