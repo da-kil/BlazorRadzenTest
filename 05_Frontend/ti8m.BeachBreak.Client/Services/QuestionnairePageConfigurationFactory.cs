@@ -214,7 +214,8 @@ public static class QuestionnairePageConfigurationFactory
         List<QuestionnaireAssignment> allAssignments,
         List<EmployeeDto> allEmployees,
         List<Organization> allOrganizations,
-        List<QuestionnaireTemplate> allTemplates)
+        List<QuestionnaireTemplate> allTemplates,
+        List<Category> categories)
     {
         return new QuestionnairePageConfiguration
         {
@@ -260,6 +261,15 @@ public static class QuestionnairePageConfigurationFactory
                     Type = QuestionnaireFilterType.Status,
                     IsVisible = true,
                     Options = new List<string> { "All", "Assigned", "In Progress", "Completed", "Overdue" }
+                },
+                new()
+                {
+                    Id = "category",
+                    Label = "Category Filter",
+                    Type = QuestionnaireFilterType.Category,
+                    IsVisible = categories.Count > 0,
+                    Options = categories.Select(c => c.NameEn).ToList(),
+                    CategoryOptions = categories
                 },
                 new()
                 {

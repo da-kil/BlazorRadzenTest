@@ -9,6 +9,7 @@
 @inject IHRQuestionnaireService HRQuestionnaireService
 @inject IOrganizationApiService OrganizationService
 @inject IQuestionnaireTemplateService TemplateService
+@inject ICategoryApiService CategoryService
 @inject NotificationService NotificationService
 
 <PageTitle>Organization Questionnaires</PageTitle>
@@ -33,6 +34,7 @@ else if (isLoading)
     private List<EmployeeDto> allEmployees = new();
     private List<Organization> allOrganizations = new();
     private List<QuestionnaireTemplate> allTemplates = new();
+    private List<Category> categories = new();
     private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
@@ -55,13 +57,15 @@ else if (isLoading)
             var employeesTask = HRQuestionnaireService.GetAllEmployeesAsync();
             var organizationsTask = OrganizationService.GetAllOrganizationsAsync(includeDeleted: false, includeIgnored: false);
             var templatesTask = TemplateService.GetAllTemplatesAsync();
+            var categoriesTask = CategoryService.GetAllCategoriesAsync();
 
-            await Task.WhenAll(assignmentsTask, employeesTask, organizationsTask, templatesTask);
+            await Task.WhenAll(assignmentsTask, employeesTask, organizationsTask, templatesTask, categoriesTask);
 
             allAssignments = assignmentsTask.Result;
             allEmployees = employeesTask.Result;
             allOrganizations = organizationsTask.Result;
             allTemplates = templatesTask.Result;
+            categories = categoriesTask.Result;
         }
         catch (Exception ex)
         {
@@ -79,7 +83,8 @@ else if (isLoading)
             allAssignments,
             allEmployees,
             allOrganizations,
-            allTemplates);
+            allTemplates,
+            categories);
 
         // Add custom action handlers
         var exportAction = configuration.Actions.FirstOrDefault(a => a.Id == "export");
