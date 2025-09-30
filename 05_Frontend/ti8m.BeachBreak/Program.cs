@@ -1,6 +1,9 @@
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.Identity.Web;
+using Microsoft.Identity.Web.TokenCacheProviders.Distributed;
 using Radzen;
 using ti8m.BeachBreak.Client.Services;
-using ti8m.BeachBreak.Services;
 using ti8m.BeachBreak.Components;
 using Yarp.ReverseProxy.Transforms;
 
@@ -12,6 +15,23 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
         builder.AddServiceDefaults();
+
+        // Add Microsoft Entra ID Authentication
+        builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
+            .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"))
+            .EnableTokenAcquisitionToCallDownstreamApi()
+            .AddDownstreamApi("CommandApi", builder.Configuration.GetSection("DownstreamApis:CommandApi"))
+            .AddDownstreamApi("QueryApi", builder.Configuration.GetSection("DownstreamApis:QueryApi"))
+            .AddDistributedTokenCaches();
+
+        builder.Services.AddDistributedMemoryCache();
+        builder.Services.Configure<MsalDistributedTokenCacheAdapterOptions>(options =>
+        {
+            options.Encrypt = true;
+        });
+
+        builder.Services.AddAuthorization();
+        builder.Services.AddCascadingAuthenticationState();
 
         builder.Services.AddRadzenComponents();
 
@@ -44,7 +64,7 @@ public class Program
         builder.Services.AddScoped<IEmployeeQuestionnaireService, EmployeeQuestionnaireService>();
         builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
-        builder.Services.AddScoped<IAuthenticationService, Services.FakeAuthenticationService>();
+        builder.Services.AddScoped<Client.Services.IAuthenticationService, Services.FakeAuthenticationService>();
 
         // Add services to the container.
         builder.Services.AddRazorComponents()
@@ -71,6 +91,9 @@ public class Program
 
         app.UseHttpsRedirection();
 
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         app.UseAntiforgery();
 
         app.MapStaticAssets();
@@ -83,8 +106,11 @@ public class Program
         {
             transformBuilder.AddRequestTransform(async transformContext =>
             {
-                //var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
-                //transformContext.ProxyRequest.Headers.Authorization = new("Bearer", accessToken);
+                var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    transformContext.ProxyRequest.Headers.Authorization = new("Bearer", accessToken);
+                }
             });
         }).RequireAuthorization();
 
@@ -92,10 +118,26 @@ public class Program
         {
             transformBuilder.AddRequestTransform(async transformContext =>
             {
-                //var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
-                //transformContext.ProxyRequest.Headers.Authorization = new("Bearer", accessToken);
+                var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
+                if (!string.IsNullOrEmpty(accessToken))
+                {
+                    transformContext.ProxyRequest.Headers.Authorization = new("Bearer", accessToken);
+                }
             });
         }).RequireAuthorization();
+
+        // Map authentication endpoints
+        app.MapGet("/authentication/login", async (HttpContext context, string returnUrl = "/") =>
+        {
+            await context.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme,
+                new AuthenticationProperties { RedirectUri = returnUrl });
+        });
+
+        app.MapPost("/authentication/logout", async (HttpContext context, string returnUrl = "/") =>
+        {
+            await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme,
+                new AuthenticationProperties { RedirectUri = returnUrl });
+        });
 
         app.Run();
     }

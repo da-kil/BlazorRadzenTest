@@ -1,4 +1,6 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.Application.Query;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
@@ -29,6 +31,12 @@ public class Program
             options.DefaultApiVersion = new ApiVersion(1, 0);
             options.ApiVersionReader = new UrlSegmentApiVersionReader();
         });
+
+        // Add Microsoft Entra ID Authentication
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
+
+        builder.Services.AddAuthorization();
 
         builder.Services.AddControllers();
 
@@ -85,7 +93,8 @@ public class Program
 
         app.UseHttpsRedirection();
 
-        //app.UseAuthorization();
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         app.MapControllers();
 

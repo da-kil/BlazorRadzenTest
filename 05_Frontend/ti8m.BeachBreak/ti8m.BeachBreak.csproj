@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Web" Version="3.14.1" />
+    <PackageReference Include="Microsoft.Identity.Web.DownstreamApi" Version="3.14.1" />
     <ProjectReference Include="..\..\Aspire\ti8m.BeachBreak.ServiceDefaults\ti8m.BeachBreak.ServiceDefaults.csproj" />
     <ProjectReference Include="..\ti8m.BeachBreak.Client\ti8m.BeachBreak.Client.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="9.0.9" />

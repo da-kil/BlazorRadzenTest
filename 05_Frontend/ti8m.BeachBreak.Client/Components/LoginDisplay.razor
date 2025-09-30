@@ -1,0 +1,19 @@
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView>
+    <Authorized>
+        <div class="user-menu">
+            <span class="user-avatar">👤</span>
+            <span class="user-name">@context.User.Identity?.Name</span>
+            <a href="/authentication/logout" class="logout-link">Logout</a>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="user-menu">
+            <a href="/authentication/login" class="login-link">
+                <span class="user-avatar">🔓</span>
+                <span>Login</span>
+            </a>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
