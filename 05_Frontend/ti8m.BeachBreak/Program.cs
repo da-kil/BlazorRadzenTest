@@ -127,16 +127,22 @@ public class Program
         }).RequireAuthorization();
 
         // Map authentication endpoints
-        app.MapGet("/authentication/login", async (HttpContext context, string returnUrl = "/") =>
+        app.MapGet("/authentication/login", async (HttpContext context, string? returnUrl) =>
         {
+            // Use the provided returnUrl or default to "/"
+            var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
+
             await context.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme,
-                new AuthenticationProperties { RedirectUri = returnUrl });
+                new AuthenticationProperties { RedirectUri = redirectUri });
         });
 
-        app.MapPost("/authentication/logout", async (HttpContext context, string returnUrl = "/") =>
+        app.MapPost("/authentication/logout", async (HttpContext context, string? returnUrl) =>
         {
+            // Use the provided returnUrl or default to "/"
+            var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
+
             await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme,
-                new AuthenticationProperties { RedirectUri = returnUrl });
+                new AuthenticationProperties { RedirectUri = redirectUri });
         });
 
         app.Run();
