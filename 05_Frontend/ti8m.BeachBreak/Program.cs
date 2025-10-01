@@ -56,6 +56,10 @@ public class Program
 
         builder.Services.AddCascadingAuthenticationState();
 
+        // Register ClaimsTransformation for frontend authentication
+        builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation,
+            Authentication.FrontendClaimsTransformation>();
+
         builder.Services.AddRadzenComponents();
 
         builder.Services.AddHttpClient("CommandClient", httpClient =>
@@ -87,7 +91,7 @@ public class Program
         builder.Services.AddScoped<IEmployeeQuestionnaireService, EmployeeQuestionnaireService>();
         builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
-        builder.Services.AddScoped<Client.Services.IAuthenticationService, Services.FakeAuthenticationService>();
+        builder.Services.AddScoped<Client.Services.IAuthenticationService, Services.AuthenticationService>();
 
         // Add services to the container.
         builder.Services.AddRazorComponents()

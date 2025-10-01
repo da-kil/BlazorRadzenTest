@@ -5,9 +5,6 @@ namespace ti8m.BeachBreak.Client.Services;
 public interface IAuthenticationService
 {
     Task<CurrentUser> GetCurrentUserAsync();
-    string GetCurrentEmployeeId();
-    string GetCurrentUserRole();
-    bool IsInRole(string role);
 }
 
 public class CurrentUser

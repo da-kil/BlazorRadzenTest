@@ -1,26 +1,26 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Logging;
-using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Application.Command.Repositories;
 
-namespace ti8m.BeachBreak.Application.Query.Services;
+namespace ti8m.BeachBreak.Application.Command.Services;
 
 /// <summary>
-/// Transforms user claims by loading Employee data and adding ApplicationRole claim.
+/// Transforms user claims by loading Employee aggregate and adding ApplicationRole claim.
 /// This runs automatically after authentication to enrich the ClaimsPrincipal.
 /// </summary>
 public class EmployeeClaimsTransformation(
-    IEmployeeRepository employeeRepository,
+    IEmployeeAggregateRepository employeeRepository,
     ILogger<EmployeeClaimsTransformation> logger) : IClaimsTransformation
 {
     public async Task<ClaimsPrincipal> TransformAsync(ClaimsPrincipal principal)
     {
-        logger.LogInformation("[QueryApi] EmployeeClaimsTransformation.TransformAsync called");
+        logger.LogInformation("[CommandApi] EmployeeClaimsTransformation.TransformAsync called");
 
         // Check if we've already transformed (avoid duplicate processing)
         if (principal.HasClaim(c => c.Type == "ApplicationRole"))
         {
-            logger.LogDebug("[QueryApi] Claims already transformed, skipping");
+            logger.LogDebug("[CommandApi] Claims already transformed, skipping");
             return principal;
         }
 
@@ -32,20 +32,20 @@ public class EmployeeClaimsTransformation(
 
         if (string.IsNullOrEmpty(loginName))
         {
-            logger.LogWarning("[QueryApi] No login name found in claims, cannot load employee data");
+            logger.LogWarning("[CommandApi] No login name found in claims, cannot load employee data");
             return principal;
         }
 
-        logger.LogInformation("[QueryApi] Loading employee data for LoginName: {LoginName}", loginName);
+        logger.LogInformation("[CommandApi] Loading employee data for LoginName: {LoginName}", loginName);
 
         try
         {
-            // Load employee from database
-            var employee = await employeeRepository.GetEmployeeByLoginNameAsync(loginName);
+            // Load employee aggregate from event store
+            var employee = await employeeRepository.GetByLoginNameAsync(loginName);
 
             if (employee != null)
             {
-                logger.LogInformation("[QueryApi] Employee found: {EmployeeId}, Role: {Role}",
+                logger.LogInformation("[CommandApi] Employee found: {EmployeeId}, Role: {Role}",
                     employee.EmployeeId, employee.ApplicationRole);
 
                 var identity = principal.Identity as ClaimsIdentity;
@@ -66,18 +66,18 @@ public class EmployeeClaimsTransformation(
                         identity.AddClaim(new Claim("ManagerId", employee.ManagerId));
                     }
 
-                    logger.LogInformation("[QueryApi] Successfully added {ClaimCount} claims for employee {EmployeeId}",
+                    logger.LogInformation("[CommandApi] Successfully added {ClaimCount} claims for employee {EmployeeId}",
                         5 + (string.IsNullOrEmpty(employee.ManagerId) ? 0 : 1), employee.EmployeeId);
                 }
             }
             else
             {
-                logger.LogWarning("[QueryApi] Employee not found for LoginName: {LoginName}", loginName);
+                logger.LogWarning("[CommandApi] Employee not found for LoginName: {LoginName}", loginName);
             }
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "[QueryApi] Error loading employee data for LoginName: {LoginName}", loginName);
+            logger.LogError(ex, "[CommandApi] Error loading employee data for LoginName: {LoginName}", loginName);
             // If employee lookup fails, continue without adding claims
             // This allows the user to still be authenticated but with limited access
         }

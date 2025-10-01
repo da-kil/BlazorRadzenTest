@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
+@using Microsoft.AspNetCore.Components.Authorization
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
@@ -13,6 +14,7 @@
 @inject IAuthenticationService AuthenticationService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inherits OptimizedComponentBase
 
 <PageTitle>@(template?.Name ?? "Questionnaire")</PageTitle>
@@ -156,7 +158,7 @@
         await LoadTemplate();
         await LoadAssignmentForCurrentEmployee();
         await LoadExistingResponse();
-        InitializeResponse();
+        await InitializeResponseAsync();
         UpdateProgress();
     }
 
@@ -299,15 +301,19 @@
         }
     }
 
-    private void InitializeResponse()
+    private async Task InitializeResponseAsync()
     {
         if (template == null) return;
-        
+
+        // Get current user's EmployeeGuid from claims
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var employeeGuid = authState.User.FindFirst("EmployeeGuid")?.Value ?? string.Empty;
+
         response = new QuestionnaireResponse
         {
             TemplateId = TemplateId,
             AssignmentId = assignmentId ?? Guid.Empty,
-            EmployeeId = AuthenticationService.GetCurrentEmployeeId(),
+            EmployeeId = employeeGuid,
             Status = ResponseStatus.InProgress
         };
 

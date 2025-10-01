@@ -10,4 +10,6 @@ public interface IEmployeeAggregateRepository : IAggregateRepository
     int? version = null,
     CancellationToken cancellationToken = default)
     where TAggregate : AggregateRoot;
+
+    Task<Employee?> GetByLoginNameAsync(string loginName, CancellationToken cancellationToken = default);
 }

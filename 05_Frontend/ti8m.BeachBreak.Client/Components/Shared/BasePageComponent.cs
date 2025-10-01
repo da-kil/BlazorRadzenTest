@@ -9,7 +9,6 @@ public abstract class BasePageComponent : ComponentBase
     [Inject] protected IEmployeeQuestionnaireService EmployeeQuestionnaireService { get; set; } = default!;
     [Inject] protected IManagerQuestionnaireService ManagerQuestionnaireService { get; set; } = default!;
     [Inject] protected IHRQuestionnaireService HRQuestionnaireService { get; set; } = default!;
-    [Inject] protected IAuthenticationService AuthenticationService { get; set; } = default!;
     [Inject] protected ICategoryApiService CategoryApiService { get; set; } = default!;
     [Inject] protected IEmployeeApiService EmployeeApiService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;

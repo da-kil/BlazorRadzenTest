@@ -13,6 +13,10 @@ public static class Extensions
         services.AddRepositories();
         services.AddTransient<ICommandDispatcher, CommandDispatcher>();
 
+        // Register ClaimsTransformation to enrich user claims with Employee data
+        services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation,
+            Services.EmployeeClaimsTransformation>();
+
         return services;
     }
 

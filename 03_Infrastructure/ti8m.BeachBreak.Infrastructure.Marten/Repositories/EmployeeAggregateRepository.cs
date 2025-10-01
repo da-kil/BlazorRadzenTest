@@ -31,4 +31,17 @@ public class EmployeeAggregateRepository : EventSourcedAggregateRepository, IEmp
 
         return employees;
     }
+
+    public async Task<Employee?> GetByLoginNameAsync(string loginName, CancellationToken cancellationToken = default)
+    {
+        using var session = store.LightweightSession();
+        var employeeReadModel = await session.Query<EmployeeReadModel>()
+            .Where(e => e.LoginName == loginName && !e.IsDeleted)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (employeeReadModel == null)
+            return null;
+
+        return await LoadAsync<Employee>(employeeReadModel.Id, cancellationToken: cancellationToken);
+    }
 }
