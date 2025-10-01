@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
@@ -7,6 +8,7 @@ namespace ti8m.BeachBreak.QueryApi.Controllers;
 
 [ApiController]
 [Route("q/api/v{version:apiVersion}/employees")]
+[Authorize] // All endpoints require authentication
 public class EmployeesController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;
@@ -85,6 +87,7 @@ public class EmployeesController : BaseController
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(EmployeeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetEmployee(Guid id)
     {
         logger.LogInformation("Received GetEmployee request for EmployeeId: {EmployeeId}", id);

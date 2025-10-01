@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Repositories;
@@ -12,6 +13,10 @@ public static class Extensions
         services.AddQueryHandlers();
         services.AddReadModelRepositories();
         services.AddTransient<IQueryDispatcher, QueryDispatcher>();
+
+        // Register authorization services
+        services.AddScoped<Services.EmployeeVisibilityService>();
+        services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation, Services.EmployeeClaimsTransformation>();
 
         return services;
     }

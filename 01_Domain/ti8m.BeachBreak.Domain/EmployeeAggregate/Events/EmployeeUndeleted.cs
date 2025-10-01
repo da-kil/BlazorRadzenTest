@@ -13,4 +13,5 @@ public record EmployeeUndeleted(
     DateOnly? LastStartDate,
     string ManagerId,
     string LoginName,
-    int OrganizationNumber) : IDomainEvent;
+    int OrganizationNumber,
+    ApplicationRole ApplicationRole) : IDomainEvent;

@@ -36,7 +36,23 @@ public class Program
         builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
-        builder.Services.AddAuthorization();
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("AdminOnly", policy =>
+                policy.RequireRole("Admin"));
+
+            options.AddPolicy("HRAccess", policy =>
+                policy.RequireRole("HR", "HRLead", "Admin"));
+
+            options.AddPolicy("HRLeadOnly", policy =>
+                policy.RequireRole("HRLead", "Admin"));
+
+            options.AddPolicy("TeamLeadOrHigher", policy =>
+                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+
+            options.AddPolicy("ManagerAccess", policy =>
+                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+        });
 
         builder.Services.AddControllers();
 

@@ -14,4 +14,5 @@ public record EmployeeAdded(
     DateOnly? LastStartDate,
     string ManagerId,
     string LoginName,
-    int OrganizationNumber) : IDomainEvent;
+    int OrganizationNumber,
+    ApplicationRole ApplicationRole) : IDomainEvent;

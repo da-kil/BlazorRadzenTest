@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
@@ -8,6 +9,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("q/api/v{version:apiVersion}/questionnaire-templates")]
+[Authorize] // All endpoints require authentication - all roles can view templates/responses
 public class QuestionnaireTemplatesController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
@@ -7,6 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/assignments")]
+[Authorize] // All endpoints require authentication
 public class AssignmentsController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
@@ -21,6 +23,8 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("bulk")]
+    [Authorize(Policy = "HRAccess")] // Only Admin, HRLead, HR can create assignments
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateBulkAssignments([FromBody] CreateBulkAssignmentsDto bulkAssignmentDto)
     {
         try

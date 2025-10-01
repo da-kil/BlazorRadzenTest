@@ -17,6 +17,7 @@ public class EmployeeReadModel
     public string LoginName { get; set; } = string.Empty;
     public int OrganizationNumber { get; set; }
     public bool IsDeleted { get; set; }
+    public Domain.EmployeeAggregate.ApplicationRole ApplicationRole { get; set; }
 
     // Apply methods for all Employee domain events
     public void Apply(EmployeeAdded @event)
@@ -33,6 +34,7 @@ public class EmployeeReadModel
         ManagerId = @event.ManagerId;
         LoginName = @event.LoginName;
         OrganizationNumber = @event.OrganizationNumber;
+        ApplicationRole = @event.ApplicationRole;
         IsDeleted = false;
     }
 
@@ -54,6 +56,7 @@ public class EmployeeReadModel
         ManagerId = @event.ManagerId;
         LoginName = @event.LoginName;
         OrganizationNumber = @event.OrganizationNumber;
+        ApplicationRole = @event.ApplicationRole;
         IsDeleted = false;
     }
 
@@ -96,5 +99,10 @@ public class EmployeeReadModel
     public void Apply(EmployeeStartDateChanged @event)
     {
         StartDate = @event.StartDate;
+    }
+
+    public void Apply(EmployeeApplicationRoleChanged @event)
+    {
+        ApplicationRole = @event.ApplicationRole;
     }
 }

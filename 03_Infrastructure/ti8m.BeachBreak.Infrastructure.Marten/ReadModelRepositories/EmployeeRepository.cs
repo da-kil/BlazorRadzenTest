@@ -164,4 +164,12 @@ internal class EmployeeRepository(IDocumentStore store) : IEmployeeRepository
         return await session.Query<EmployeeReadModel>()
             .SingleOrDefaultAsync(e => e.Id == id, cancellationToken);
     }
+
+    public async Task<EmployeeReadModel?> GetEmployeeByLoginNameAsync(string loginName, CancellationToken cancellationToken = default)
+    {
+        using var session = await store.LightweightSerializableSessionAsync();
+        return await session.Query<EmployeeReadModel>()
+            .Where(e => e.LoginName == loginName && !e.IsDeleted)
+            .SingleOrDefaultAsync(cancellationToken);
+    }
 }

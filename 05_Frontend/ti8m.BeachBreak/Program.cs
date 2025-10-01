@@ -30,7 +30,30 @@ public class Program
             options.Encrypt = true;
         });
 
-        builder.Services.AddAuthorization();
+        // Configure authorization with role-based policies
+        builder.Services.AddAuthorization(options =>
+        {
+            // Admin-only policy
+            options.AddPolicy("AdminOnly", policy =>
+                policy.RequireRole("Admin"));
+
+            // HR Access (HR, HRLead, Admin)
+            options.AddPolicy("HRAccess", policy =>
+                policy.RequireRole("HR", "HRLead", "Admin"));
+
+            // HRLead-only policy
+            options.AddPolicy("HRLeadOnly", policy =>
+                policy.RequireRole("HRLead", "Admin"));
+
+            // Team Lead or higher (TeamLead, HR, HRLead, Admin)
+            options.AddPolicy("TeamLeadOrHigher", policy =>
+                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+
+            // Manager Access (can manage team members)
+            options.AddPolicy("ManagerAccess", policy =>
+                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+        });
+
         builder.Services.AddCascadingAuthenticationState();
 
         builder.Services.AddRadzenComponents();

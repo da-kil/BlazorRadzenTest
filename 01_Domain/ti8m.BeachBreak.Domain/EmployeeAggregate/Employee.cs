@@ -17,6 +17,7 @@ public class Employee : AggregateRoot
     public string LoginName { get; private set; }
     public int OrganizationNumber { get; private set; }
     public bool IsDeleted { get; private set; }
+    public ApplicationRole ApplicationRole { get; private set; }
 
     private Employee() { }
 
@@ -32,7 +33,8 @@ public class Employee : AggregateRoot
         DateOnly? lastStartDate,
         string managerId,
         string loginName,
-        int organizationNumber)
+        int organizationNumber,
+        ApplicationRole applicationRole = ApplicationRole.Employee)
     {
         RaiseEvent(new EmployeeAdded(
             id,
@@ -46,7 +48,8 @@ public class Employee : AggregateRoot
             lastStartDate,
             managerId,
             loginName,
-            organizationNumber));
+            organizationNumber,
+            applicationRole));
     }
 
     public void Delete()
@@ -72,7 +75,8 @@ public class Employee : AggregateRoot
                 LastStartDate,
                 ManagerId,
                 LoginName,
-                OrganizationNumber));
+                OrganizationNumber,
+                ApplicationRole));
         }
     }
 
@@ -124,6 +128,14 @@ public class Employee : AggregateRoot
         }
     }
 
+    public void ChangeApplicationRole(ApplicationRole applicationRole)
+    {
+        if (ApplicationRole != applicationRole)
+        {
+            RaiseEvent(new EmployeeApplicationRoleChanged(applicationRole));
+        }
+    }
+
     public void ChangeEndDate(DateOnly? endDate)
     {
         if (EndDate != endDate)
@@ -154,6 +166,7 @@ public class Employee : AggregateRoot
         ManagerId = @event.ManagerId;
         LoginName = @event.LoginName;
         OrganizationNumber = @event.OrganizationNumber;
+        ApplicationRole = @event.ApplicationRole;
         IsDeleted = false;
     }
 
@@ -206,5 +219,10 @@ public class Employee : AggregateRoot
     public void Apply(EmployeeStartDateChanged @event)
     {
         StartDate = @event.StartDate;
+    }
+
+    public void Apply(EmployeeApplicationRoleChanged @event)
+    {
+        ApplicationRole = @event.ApplicationRole;
     }
 }

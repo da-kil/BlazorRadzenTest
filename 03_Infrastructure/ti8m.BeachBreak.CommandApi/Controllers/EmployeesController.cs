@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
@@ -7,6 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/employees")]
+[Authorize] // All endpoints require authentication
 public class EmployeesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
@@ -21,8 +23,10 @@ public class EmployeesController : BaseController
     }
 
     [HttpPost("bulk-insert")]
+    [Authorize(Policy = "HRAccess")] // Only Admin, HRLead, HR can create employees
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> BulkInsertEmployees([FromBody] IEnumerable<EmployeeDto> employees)
     {
         Result result = await commandDispatcher.SendAsync(new BulkInsertEmployeesCommand(
@@ -47,8 +51,10 @@ public class EmployeesController : BaseController
     }
 
     [HttpPut("bulk-update")]
+    [Authorize(Policy = "HRAccess")] // Only Admin, HRLead, HR can update employees
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> BulkUpdateEmployees([FromBody] IEnumerable<EmployeeDto> employees)
     {
         Result result = await commandDispatcher.SendAsync(new BulkUpdateEmployeesCommand(
@@ -73,8 +79,10 @@ public class EmployeesController : BaseController
     }
 
     [HttpDelete("bulk-delete")]
+    [Authorize(Policy = "HRLeadOnly")] // Only Admin, HRLead can delete employees
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> BulkDeleteEmployees([FromBody] IEnumerable<Guid> employeeIds)
     {
         Result result = await commandDispatcher.SendAsync(new BulkDeleteEmployeesCommand(employeeIds));
