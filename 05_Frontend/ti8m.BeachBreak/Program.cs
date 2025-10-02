@@ -24,45 +24,59 @@ public class Program
 
                 // Save tokens so they can be retrieved with GetTokenAsync
                 options.SaveTokens = true;
-            })
-            .EnableTokenAcquisitionToCallDownstreamApi()
-            .AddDownstreamApi("CommandApi", builder.Configuration.GetSection("DownstreamApis:CommandApi"))
-            .AddDownstreamApi("QueryApi", builder.Configuration.GetSection("DownstreamApis:QueryApi"))
-            .AddDistributedTokenCaches();
+            });
+        //.EnableTokenAcquisitionToCallDownstreamApi()
+        //.AddDownstreamApi("CommandApi", builder.Configuration.GetSection("DownstreamApis:CommandApi"))
+        //.AddDownstreamApi("QueryApi", builder.Configuration.GetSection("DownstreamApis:QueryApi"))
+        //.AddDistributedTokenCaches();
 
-        builder.Services.AddDistributedMemoryCache();
-        builder.Services.Configure<MsalDistributedTokenCacheAdapterOptions>(options =>
-        {
-            options.Encrypt = true;
-        });
+        //builder.Services.AddDistributedMemoryCache();
+        //builder.Services.Configure<MsalDistributedTokenCacheAdapterOptions>(options =>
+        //{
+        //    options.Encrypt = true;
+        //});
 
         // Configure authorization with role-based policies
-        builder.Services.AddAuthorization(options =>
-        {
-            // Admin-only policy
-            options.AddPolicy("AdminOnly", policy =>
-                policy.RequireRole("Admin"));
+        //builder.Services.AddAuthorization(options =>
+        //{
+        //    // Admin-only policy
+        //    options.AddPolicy("AdminOnly", policy =>
+        //        policy.RequireRole("Admin"));
 
-            // HR Access (HR, HRLead, Admin)
-            options.AddPolicy("HRAccess", policy =>
-                policy.RequireRole("HR", "HRLead", "Admin"));
+        //    // HR Access (HR, HRLead, Admin)
+        //    options.AddPolicy("HRAccess", policy =>
+        //        policy.RequireRole("HR", "HRLead", "Admin"));
 
-            // HRLead-only policy
-            options.AddPolicy("HRLeadOnly", policy =>
-                policy.RequireRole("HRLead", "Admin"));
+        //    // HRLead-only policy
+        //    options.AddPolicy("HRLeadOnly", policy =>
+        //        policy.RequireRole("HRLead", "Admin"));
 
-            // Team Lead or higher (TeamLead, HR, HRLead, Admin)
-            options.AddPolicy("TeamLeadOrHigher", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+        //    // Team Lead or higher (TeamLead, HR, HRLead, Admin)
+        //    options.AddPolicy("TeamLeadOrHigher", policy =>
+        //        policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
 
-            // Manager Access (can manage team members)
-            options.AddPolicy("ManagerAccess", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
-        });
+        //    // Manager Access (can manage team members)
+        //    options.AddPolicy("ManagerAccess", policy =>
+        //        policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+        //});
+
+        builder.Services.AddAuthorization();
 
         builder.Services.AddCascadingAuthenticationState();
 
         builder.Services.AddRadzenComponents();
+
+        builder.Services.AddRazorComponents()
+            .AddInteractiveServerComponents()
+            .AddInteractiveWebAssemblyComponents()
+            .AddAuthenticationStateSerialization();
+
+        builder.Services.AddHttpForwarderWithServiceDiscovery();
+        builder.Services.AddHttpContextAccessor();
+
+
+
+
 
         builder.Services.AddHttpClient("CommandClient", httpClient =>
         {
@@ -95,16 +109,8 @@ public class Program
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
         builder.Services.AddScoped<Client.Services.IAuthenticationService, Services.AuthenticationService>();
 
-        // Add services to the container.
-        builder.Services.AddRazorComponents()
-            .AddInteractiveServerComponents()
-            .AddInteractiveWebAssemblyComponents();
-
-        builder.Services.AddHttpForwarderWithServiceDiscovery();
 
         var app = builder.Build();
-
-        app.MapDefaultEndpoints();
 
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
@@ -123,16 +129,15 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        // Add employee claims after authentication
-        app.UseMiddleware<Authentication.EmployeeClaimsMiddleware>();
-
+        app.MapStaticAssets();
         app.UseAntiforgery();
 
-        app.MapStaticAssets();
+        app.MapDefaultEndpoints();
+
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode()
             .AddInteractiveWebAssemblyRenderMode()
-            .AddAdditionalAssemblies(typeof(Client._Imports).Assembly);
+            .AddAdditionalAssemblies(typeof(Client._Imports).Assembly);      
 
         app.MapForwarder("/q/{**catch-all}", "https://QueryApi", transformBuilder =>
         {
@@ -158,24 +163,28 @@ public class Program
             });
         }).RequireAuthorization();
 
-        // Map authentication endpoints
-        app.MapGet("/authentication/login", async (HttpContext context, string? returnUrl) =>
-        {
-            // Use the provided returnUrl or default to "/"
-            var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
+        app.MapGroup("/authentication").MapLoginAndLogout();
+        //// Map authentication endpoints
+        //app.MapGet("/authentication/login", async (HttpContext context, string? returnUrl) =>
+        //{
+        //    // Use the provided returnUrl or default to "/"
+        //    var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
 
-            await context.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme,
-                new AuthenticationProperties { RedirectUri = redirectUri });
-        });
+        //    await context.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme,
+        //        new AuthenticationProperties { RedirectUri = redirectUri });
+        //});
 
-        app.MapPost("/authentication/logout", async (HttpContext context, string? returnUrl) =>
-        {
-            // Use the provided returnUrl or default to "/"
-            var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
+        //app.MapPost("/authentication/logout", async (HttpContext context, string? returnUrl) =>
+        //{
+        //    // Use the provided returnUrl or default to "/"
+        //    var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
 
-            await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme,
-                new AuthenticationProperties { RedirectUri = redirectUri });
-        });
+        //    await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme,
+        //        new AuthenticationProperties { RedirectUri = redirectUri });
+        //});
+
+        // Add employee claims after authentication
+        app.UseMiddleware<Authentication.EmployeeClaimsMiddleware>();
 
         app.Run();
     }

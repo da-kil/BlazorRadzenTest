@@ -14,6 +14,7 @@ internal class Program
         // Add authentication state management for WebAssembly
         builder.Services.AddAuthorizationCore();
         builder.Services.AddCascadingAuthenticationState();
+        builder.Services.AddAuthenticationStateDeserialization();
 
         await builder.Build().RunAsync();
     }

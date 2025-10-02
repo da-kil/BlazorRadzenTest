@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.Application.Query;
@@ -89,6 +90,9 @@ public class Program
 
         builder.AddMartenInfrastructure();
 
+        builder.Services.AddSingleton<
+            IAuthorizationMiddlewareResultHandler, SampleAuthorizationMiddlewareResultHandler>();
+
         builder.Services.AddScoped<UserContext>();
         builder.Services.AddApplication(builder.Configuration);
 
@@ -109,10 +113,16 @@ public class Program
 
         app.UseHttpsRedirection();
 
-        app.UseAuthentication();
-        app.UseAuthorization();
 
-        app.MapControllers();
+        app.UseRouting()
+                .UseAuthentication()
+                .UseAuthorization()
+                .UseDefaultContextMiddlewares()
+                .UseEndpoints(endpoints =>
+                {
+                    endpoints
+                        .MapControllers();
+                });
 
         app.Run();
     }
