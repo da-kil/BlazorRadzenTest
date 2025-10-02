@@ -18,7 +18,13 @@ public class Program
 
         // Add Microsoft Entra ID Authentication
         builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-            .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"))
+            .AddMicrosoftIdentityWebApp(options =>
+            {
+                builder.Configuration.GetSection("AzureAd").Bind(options);
+
+                // Save tokens so they can be retrieved with GetTokenAsync
+                options.SaveTokens = true;
+            })
             .EnableTokenAcquisitionToCallDownstreamApi()
             .AddDownstreamApi("CommandApi", builder.Configuration.GetSection("DownstreamApis:CommandApi"))
             .AddDownstreamApi("QueryApi", builder.Configuration.GetSection("DownstreamApis:QueryApi"))
@@ -55,10 +61,6 @@ public class Program
         });
 
         builder.Services.AddCascadingAuthenticationState();
-
-        // Register ClaimsTransformation for frontend authentication
-        builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation,
-            Authentication.FrontendClaimsTransformation>();
 
         builder.Services.AddRadzenComponents();
 
@@ -120,6 +122,9 @@ public class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // Add employee claims after authentication
+        app.UseMiddleware<Authentication.EmployeeClaimsMiddleware>();
 
         app.UseAntiforgery();
 

@@ -16,7 +16,6 @@ public static class Extensions
 
         // Register authorization services
         services.AddScoped<Services.EmployeeVisibilityService>();
-        services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation, Services.EmployeeClaimsTransformation>();
 
         return services;
     }
