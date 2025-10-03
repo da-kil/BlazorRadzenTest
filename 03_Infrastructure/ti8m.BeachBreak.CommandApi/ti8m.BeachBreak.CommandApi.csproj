@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Command\ti8m.BeachBreak.Application.Command.csproj" />
+    <ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Query\ti8m.BeachBreak.Application.Query.csproj" />
     <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Infrastructure\ti8m.BeachBreak.Core.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Aspire\ti8m.BeachBreak.ServiceDefaults\ti8m.BeachBreak.ServiceDefaults.csproj" />
     <ProjectReference Include="..\ti8m.BeachBreak.Infrastructure.Marten\ti8m.BeachBreak.Infrastructure.Marten.csproj" />

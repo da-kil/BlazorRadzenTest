@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.Application.Query;
+using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Core.Infrastructure.Database;
 using ti8m.BeachBreak.Infrastructure.Marten;
@@ -39,21 +40,30 @@ public class Program
 
         builder.Services.AddAuthorization(options =>
         {
+            options.AddPolicy("EmployeeAccess", policy =>
+                policy.RequireRole("EmployeeAccess"));
+
             options.AddPolicy("AdminOnly", policy =>
-                policy.RequireRole("Admin"));
+                policy.RequireRole("AdminOnly"));
 
             options.AddPolicy("HRAccess", policy =>
-                policy.RequireRole("HR", "HRLead", "Admin"));
+                policy.RequireRole("HRAccess"));
 
             options.AddPolicy("HRLeadOnly", policy =>
-                policy.RequireRole("HRLead", "Admin"));
+                policy.RequireRole("HRLeadOnly"));
 
             options.AddPolicy("TeamLeadOrHigher", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+                policy.RequireRole("TeamLeadOrHigher"));
 
             options.AddPolicy("ManagerAccess", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+                policy.RequireRole("ManagerAccess"));
         });
+
+        // Register custom authorization middleware result handler
+        builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, RoleBasedAuthorizationMiddlewareResultHandler>();
+
+        // Add distributed cache (using in-memory for now, can be replaced with Redis)
+        builder.Services.AddDistributedMemoryCache();
 
         builder.Services.AddControllers();
 
@@ -89,9 +99,6 @@ public class Program
         builder.MigrateDatabase();
 
         builder.AddMartenInfrastructure();
-
-        builder.Services.AddSingleton<
-            IAuthorizationMiddlewareResultHandler, SampleAuthorizationMiddlewareResultHandler>();
 
         builder.Services.AddScoped<UserContext>();
         builder.Services.AddApplication(builder.Configuration);

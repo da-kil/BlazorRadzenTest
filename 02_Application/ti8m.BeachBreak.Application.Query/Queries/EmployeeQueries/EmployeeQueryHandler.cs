@@ -152,5 +152,4 @@ public class EmployeeQueryHandler :
             return Result<Employee?>.Fail($"Failed to retrieve employee: {ex.Message}", StatusCodes.Status500InternalServerError);
         }
     }
-
 }
