@@ -137,4 +137,143 @@ public class AssignmentsController : BaseController
         }
     }
 
+    // Workflow endpoints
+
+    [HttpPost("{assignmentId}/sections/{sectionId}/complete-employee")]
+    public async Task<IActionResult> CompleteSectionAsEmployee(Guid assignmentId, Guid sectionId)
+    {
+        try
+        {
+            var command = new CompleteSectionAsEmployeeCommand(assignmentId, sectionId);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing section as employee");
+            return StatusCode(500, "An error occurred while completing section");
+        }
+    }
+
+    [HttpPost("{assignmentId}/sections/{sectionId}/complete-manager")]
+    [Authorize(Policy = "ManagerAccess")] // Only managers
+    public async Task<IActionResult> CompleteSectionAsManager(Guid assignmentId, Guid sectionId)
+    {
+        try
+        {
+            var command = new CompleteSectionAsManagerCommand(assignmentId, sectionId);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing section as manager");
+            return StatusCode(500, "An error occurred while completing section");
+        }
+    }
+
+    [HttpPost("{assignmentId}/confirm-employee")]
+    public async Task<IActionResult> ConfirmEmployeeCompletion(Guid assignmentId, [FromBody] ConfirmCompletionDto confirmDto)
+    {
+        try
+        {
+            var command = new ConfirmEmployeeCompletionCommand(assignmentId, confirmDto.ConfirmedBy);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error confirming employee completion");
+            return StatusCode(500, "An error occurred while confirming employee completion");
+        }
+    }
+
+    [HttpPost("{assignmentId}/confirm-manager")]
+    [Authorize(Policy = "ManagerAccess")] // Only managers
+    public async Task<IActionResult> ConfirmManagerCompletion(Guid assignmentId, [FromBody] ConfirmCompletionDto confirmDto)
+    {
+        try
+        {
+            var command = new ConfirmManagerCompletionCommand(assignmentId, confirmDto.ConfirmedBy);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error confirming manager completion");
+            return StatusCode(500, "An error occurred while confirming manager completion");
+        }
+    }
+
+    [HttpPost("{assignmentId}/initiate-review")]
+    [Authorize(Policy = "ManagerAccess")] // Only managers can initiate review
+    public async Task<IActionResult> InitiateReview(Guid assignmentId, [FromBody] InitiateReviewDto initiateDto)
+    {
+        try
+        {
+            var command = new InitiateReviewCommand(assignmentId, initiateDto.InitiatedBy);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error initiating review");
+            return StatusCode(500, "An error occurred while initiating review");
+        }
+    }
+
+    [HttpPost("{assignmentId}/edit-answer")]
+    public async Task<IActionResult> EditAnswerDuringReview(Guid assignmentId, [FromBody] EditAnswerDto editDto)
+    {
+        try
+        {
+            var command = new EditAnswerDuringReviewCommand(
+                assignmentId,
+                editDto.SectionId,
+                editDto.QuestionId,
+                editDto.Answer,
+                editDto.EditedBy);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error editing answer during review");
+            return StatusCode(500, "An error occurred while editing answer");
+        }
+    }
+
+    [HttpPost("{assignmentId}/confirm-employee-review")]
+    public async Task<IActionResult> ConfirmEmployeeReview(Guid assignmentId, [FromBody] ConfirmCompletionDto confirmDto)
+    {
+        try
+        {
+            var command = new ConfirmEmployeeReviewCommand(assignmentId, confirmDto.ConfirmedBy);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error confirming employee review");
+            return StatusCode(500, "An error occurred while confirming employee review");
+        }
+    }
+
+    [HttpPost("{assignmentId}/finalize")]
+    [Authorize(Policy = "ManagerAccess")] // Only managers can finalize
+    public async Task<IActionResult> FinalizeQuestionnaire(Guid assignmentId, [FromBody] FinalizeQuestionnaireDto finalizeDto)
+    {
+        try
+        {
+            var command = new FinalizeQuestionnaireCommand(assignmentId, finalizeDto.FinalizedBy);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error finalizing questionnaire");
+            return StatusCode(500, "An error occurred while finalizing questionnaire");
+        }
+    }
+
 }

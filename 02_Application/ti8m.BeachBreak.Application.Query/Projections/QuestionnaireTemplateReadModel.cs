@@ -100,6 +100,7 @@ public class QuestionnaireTemplateReadModel
             Description = ds.Description,
             Order = ds.Order,
             IsRequired = ds.IsRequired,
+            CompletionRole = ds.CompletionRole.ToString(),
             Questions = ds.Questions.Select(dq => new QuestionItem
             {
                 Id = dq.Id,
