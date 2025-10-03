@@ -24,12 +24,11 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
     // All roles inherit Employee's basic access and can access additional policy-protected endpoints as defined below
     private static readonly Dictionary<string, ApplicationRole[]> PolicyRoleMappings = new()
     {
-        ["EmployeeAccess"] = [ApplicationRole.Employee, ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
-        ["AdminOnly"] = [ApplicationRole.Admin],
-        ["HRAccess"] = [ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
-        ["HRLeadOnly"] = [ApplicationRole.HRLead, ApplicationRole.Admin],
-        ["TeamLeadOrHigher"] = [ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
-        ["ManagerAccess"] = [ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin]
+        ["Employee"] = [ApplicationRole.Employee, ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
+        ["Admin"] = [ApplicationRole.Admin],
+        ["HR"] = [ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
+        ["HRLead"] = [ApplicationRole.HRLead, ApplicationRole.Admin],
+        ["TeamLead"] = [ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin]
     };
 
     public RoleBasedAuthorizationMiddlewareResultHandler(
