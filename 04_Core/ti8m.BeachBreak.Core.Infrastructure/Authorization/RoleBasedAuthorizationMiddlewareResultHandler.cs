@@ -1,11 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
@@ -19,14 +16,9 @@ namespace ti8m.BeachBreak.Core.Infrastructure.Authorization;
 public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddlewareResultHandler
 {
     private readonly IAuthorizationMiddlewareResultHandler defaultHandler = new AuthorizationMiddlewareResultHandler();
-    private readonly IDistributedCache cache;
+    private readonly IAuthorizationCacheService cacheService;
     private readonly IQueryDispatcher queryDispatcher;
     private readonly ILogger<RoleBasedAuthorizationMiddlewareResultHandler> logger;
-
-    private static readonly DistributedCacheEntryOptions CacheOptions = new()
-    {
-        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
-    };
 
     // Policy to ApplicationRole mappings
     // All roles inherit Employee's basic access and can access additional policy-protected endpoints as defined below
@@ -41,11 +33,11 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
     };
 
     public RoleBasedAuthorizationMiddlewareResultHandler(
-        IDistributedCache cache,
+        IAuthorizationCacheService cacheService,
         IQueryDispatcher queryDispatcher,
         ILogger<RoleBasedAuthorizationMiddlewareResultHandler> logger)
     {
-        this.cache = cache;
+        this.cacheService = cacheService;
         this.queryDispatcher = queryDispatcher;
         this.logger = logger;
     }
@@ -162,21 +154,13 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
 
     private async Task<EmployeeRoleResult?> GetEmployeeRoleAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var cacheKey = $"employee-role:{userId}";
-
         try
         {
             // Try to get from cache
-            var cachedBytes = await cache.GetAsync(cacheKey, cancellationToken);
-            if (cachedBytes != null)
+            var cached = await cacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, cancellationToken);
+            if (cached != null)
             {
-                var cachedJson = Encoding.UTF8.GetString(cachedBytes);
-                var cached = JsonSerializer.Deserialize<EmployeeRoleResult>(cachedJson);
-                if (cached != null)
-                {
-                    logger.LogDebug("Employee role retrieved from cache for user ID: {UserId}", userId);
-                    return cached;
-                }
+                return cached;
             }
 
             // Not in cache, query database
@@ -187,9 +171,7 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
             }
 
             // Store in cache
-            var json = JsonSerializer.Serialize(result);
-            var bytes = Encoding.UTF8.GetBytes(json);
-            await cache.SetAsync(cacheKey, bytes, CacheOptions, cancellationToken);
+            await cacheService.SetEmployeeRoleCacheAsync(userId, result, cancellationToken);
 
             logger.LogDebug("Employee role retrieved from database and cached for user ID: {UserId}", userId);
             return result;
@@ -201,13 +183,4 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
         }
     }
 
-    /// <summary>
-    /// Invalidates the cached role for a specific user
-    /// </summary>
-    public async Task InvalidateCacheAsync(Guid userId)
-    {
-        var cacheKey = $"employee-role:{userId}";
-        await cache.RemoveAsync(cacheKey);
-        logger.LogDebug("Invalidated cached role for user ID: {UserId}", userId);
-    }
 }

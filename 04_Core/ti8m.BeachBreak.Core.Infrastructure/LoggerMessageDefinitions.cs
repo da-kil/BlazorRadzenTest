@@ -40,4 +40,10 @@ public static partial class LoggerMessageDefinitions
     Level = LogLevel.Information,
     Message = "Authorization succeeded: User {UserId} with role {UserRole} accessed path {Path}")]
     public static partial void LogAuthorizationSucceeded(this ILogger logger, Guid userId, string userRole, string path);
+
+    [LoggerMessage(
+    EventId = 4104,
+    Level = LogLevel.Information,
+    Message = "Authorization cache manually invalidated for employee {EmployeeId} by admin {AdminId}")]
+    public static partial void LogAuthorizationCacheInvalidated(this ILogger logger, Guid employeeId, string adminId);
 }

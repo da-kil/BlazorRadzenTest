@@ -76,6 +76,9 @@ namespace ti8m.BeachBreak.CommandApi
             // Add distributed cache (using in-memory for now, can be replaced with Redis)
             builder.Services.AddDistributedMemoryCache();
 
+            // Register authorization cache service
+            builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
+
             builder.Services.AddControllers();
 
             // Configure CORS for frontend connection
