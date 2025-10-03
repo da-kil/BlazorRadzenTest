@@ -1,0 +1,151 @@
+@using ti8m.BeachBreak.Client.Models
+
+<div class="section-completion-indicator">
+    <div class="completion-badges">
+        @if (Section != null)
+        {
+            @if (Section.AssignedTo == CompletionRole.Employee || Section.AssignedTo == CompletionRole.Both)
+            {
+                <div class="completion-badge @(Section.IsEmployeeCompleted ? "completed" : "pending")">
+                    <i class="material-icons">@(Section.IsEmployeeCompleted ? "check_circle" : "radio_button_unchecked")</i>
+                    <span>Employee</span>
+                    @if (Section.EmployeeCompletedDate != null)
+                    {
+                        <small>@Section.EmployeeCompletedDate.Value.ToString("MMM dd")</small>
+                    }
+                </div>
+            }
+
+            @if (Section.AssignedTo == CompletionRole.Manager || Section.AssignedTo == CompletionRole.Both)
+            {
+                <div class="completion-badge @(Section.IsManagerCompleted ? "completed" : "pending")">
+                    <i class="material-icons">@(Section.IsManagerCompleted ? "check_circle" : "radio_button_unchecked")</i>
+                    <span>Manager</span>
+                    @if (Section.ManagerCompletedDate != null)
+                    {
+                        <small>@Section.ManagerCompletedDate.Value.ToString("MMM dd")</small>
+                    }
+                </div>
+            }
+        }
+    </div>
+
+    @if (ShowProgress && Section != null)
+    {
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: @GetCompletionPercentage()%"></div>
+        </div>
+        <div class="progress-text">@GetCompletionText()</div>
+    }
+</div>
+
+<style>
+    .section-completion-indicator {
+        padding: 12px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+
+    .completion-badges {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+
+    .completion-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        font-size: 13px;
+        transition: all 0.3s ease;
+    }
+
+    .completion-badge.completed {
+        border-color: #00E6C8;
+        background: #e8f9f7;
+    }
+
+    .completion-badge.completed i {
+        color: #00E6C8;
+    }
+
+    .completion-badge.pending i {
+        color: #bdbdbd;
+    }
+
+    .completion-badge small {
+        margin-left: 4px;
+        color: #666;
+        font-size: 11px;
+    }
+
+    .progress-bar {
+        height: 6px;
+        background: #e0e0e0;
+        border-radius: 3px;
+        overflow: hidden;
+        margin-bottom: 4px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #0F60FF, #00E6C8);
+        transition: width 0.3s ease;
+    }
+
+    .progress-text {
+        text-align: center;
+        font-size: 12px;
+        color: #666;
+        font-weight: 500;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public QuestionSection? Section { get; set; }
+
+    [Parameter]
+    public bool ShowProgress { get; set; } = true;
+
+    private int GetCompletionPercentage()
+    {
+        if (Section == null) return 0;
+
+        int total = 0;
+        int completed = 0;
+
+        if (Section.AssignedTo == CompletionRole.Employee)
+        {
+            total = 1;
+            completed = Section.IsEmployeeCompleted ? 1 : 0;
+        }
+        else if (Section.AssignedTo == CompletionRole.Manager)
+        {
+            total = 1;
+            completed = Section.IsManagerCompleted ? 1 : 0;
+        }
+        else if (Section.AssignedTo == CompletionRole.Both)
+        {
+            total = 2;
+            completed = (Section.IsEmployeeCompleted ? 1 : 0) + (Section.IsManagerCompleted ? 1 : 0);
+        }
+
+        return total > 0 ? (completed * 100 / total) : 0;
+    }
+
+    private string GetCompletionText()
+    {
+        if (Section == null) return "0% Complete";
+
+        var percentage = GetCompletionPercentage();
+        if (percentage == 100)
+            return "✓ Fully Completed";
+
+        return $"{percentage}% Complete";
+    }
+}

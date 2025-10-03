@@ -40,20 +40,11 @@ public class Program
 
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("Employee", policy =>
-                policy.RequireRole("Employee"));
-
-            options.AddPolicy("Admin", policy =>
-                policy.RequireRole("Admin"));
-
-            options.AddPolicy("HR", policy =>
-                policy.RequireRole("HR"));
-
-            options.AddPolicy("HRLead", policy =>
-                policy.RequireRole("HRLead"));
-
-            options.AddPolicy("TeamLead", policy =>
-                policy.RequireRole("TeamLead"));
+            options.AddPolicy("Employee", policy => policy.RequireRole("Employee"));
+            options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+            options.AddPolicy("HR", policy => policy.RequireRole("HR"));
+            options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead"));
+            options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead"));
         });
 
         // Register custom authorization middleware result handler

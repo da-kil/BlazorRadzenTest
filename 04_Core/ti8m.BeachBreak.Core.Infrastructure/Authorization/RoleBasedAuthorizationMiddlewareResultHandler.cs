@@ -81,16 +81,25 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
             return;
         }
 
-        // Check if user has required role for the policy
-        var requiredPolicies = policy.Requirements
-            .OfType<Microsoft.AspNetCore.Authorization.Infrastructure.RolesAuthorizationRequirement>()
-            .SelectMany(r => r.AllowedRoles)
+        // Extract policy names from endpoint metadata
+        var endpoint = context.GetEndpoint();
+        var authorizeData = endpoint?.Metadata.GetOrderedMetadata<IAuthorizeData>() ?? Array.Empty<IAuthorizeData>();
+
+        var requiredPolicyNames = authorizeData
+            .Where(a => !string.IsNullOrEmpty(a.Policy))
+            .Select(a => a.Policy!)
+            .Distinct()
             .ToList();
 
-        if (requiredPolicies.Count == 0)
+        var requiredRoleNames = authorizeData
+            .Where(a => !string.IsNullOrEmpty(a.Roles))
+            .SelectMany(a => a.Roles!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Distinct()
+            .ToList();
+
+        // If no policies or roles are required, any authenticated employee can access
+        if (requiredPolicyNames.Count == 0 && requiredRoleNames.Count == 0)
         {
-            // No specific role requirements - any authenticated employee can access
-            // This includes ApplicationRole.Employee (basic access level)
             logger.LogAuthorizationSucceeded(userId.Value, employeeRole.ApplicationRole.ToString(), context.Request.Path);
             await next(context);
             return;
@@ -98,7 +107,9 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
 
         // Check each policy to see if user's role satisfies it
         var hasAccess = false;
-        foreach (var policyName in requiredPolicies)
+
+        // Check policy-based authorization
+        foreach (var policyName in requiredPolicyNames)
         {
             if (PolicyRoleMappings.TryGetValue(policyName, out var allowedRoles))
             {
@@ -108,10 +119,22 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
                     break;
                 }
             }
-            else
+        }
+
+        // Check role-based authorization (from [Authorize(Roles = "...")])
+        if (!hasAccess)
+        {
+            foreach (var roleName in requiredRoleNames)
             {
-                // Policy not in our mappings, check if role name matches directly
-                if (Enum.TryParse<ApplicationRole>(policyName, out var role) && role == employeeRole.ApplicationRole)
+                if (PolicyRoleMappings.TryGetValue(roleName, out var allowedRoles))
+                {
+                    if (allowedRoles.Contains(employeeRole.ApplicationRole))
+                    {
+                        hasAccess = true;
+                        break;
+                    }
+                }
+                else if (Enum.TryParse<ApplicationRole>(roleName, out var role) && role == employeeRole.ApplicationRole)
                 {
                     hasAccess = true;
                     break;
@@ -121,17 +144,19 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
 
         if (!hasAccess)
         {
+            var allRequirements = requiredPolicyNames.Concat(requiredRoleNames).ToList();
             logger.LogAuthorizationFailedInsufficientPermissions(
                 userId.Value,
                 employeeRole.ApplicationRole.ToString(),
-                string.Join(", ", requiredPolicies),
+                string.Join(", ", allRequirements),
                 context.Request.Path);
 
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
             await context.Response.WriteAsJsonAsync(new
             {
                 error = "Insufficient permissions",
-                requiredPolicies = requiredPolicies
+                requiredPolicies = requiredPolicyNames,
+                requiredRoles = requiredRoleNames
             });
             return;
         }

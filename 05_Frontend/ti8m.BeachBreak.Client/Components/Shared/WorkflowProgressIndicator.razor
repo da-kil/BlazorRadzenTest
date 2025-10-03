@@ -1,0 +1,229 @@
+@using ti8m.BeachBreak.Client.Models
+
+<div class="workflow-progress-indicator">
+    <div class="progress-steps">
+        @foreach (var step in GetWorkflowSteps())
+        {
+            <div class="progress-step @(step.IsActive ? "active" : "") @(step.IsCompleted ? "completed" : "")">
+                <div class="step-circle">
+                    @if (step.IsCompleted)
+                    {
+                        <i class="material-icons">check</i>
+                    }
+                    else if (step.IsActive)
+                    {
+                        <i class="material-icons">radio_button_checked</i>
+                    }
+                    else
+                    {
+                        <i class="material-icons">radio_button_unchecked</i>
+                    }
+                </div>
+                <div class="step-label">@step.Label</div>
+                @if (step.SubLabel != null)
+                {
+                    <div class="step-sublabel">@step.SubLabel</div>
+                }
+            </div>
+            @if (step != GetWorkflowSteps().Last())
+            {
+                <div class="progress-connector @(step.IsCompleted ? "completed" : "")"></div>
+            }
+        }
+    </div>
+</div>
+
+<style>
+    .workflow-progress-indicator {
+        padding: 20px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .progress-steps {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: relative;
+    }
+
+    .progress-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        position: relative;
+        z-index: 1;
+    }
+
+    .step-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: #e0e0e0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .progress-step.completed .step-circle {
+        background: #00E6C8;
+        color: white;
+    }
+
+    .progress-step.active .step-circle {
+        background: #0F60FF;
+        color: white;
+        box-shadow: 0 0 0 4px rgba(15, 96, 255, 0.2);
+    }
+
+    .step-label {
+        font-size: 12px;
+        font-weight: 600;
+        text-align: center;
+        color: #333;
+    }
+
+    .step-sublabel {
+        font-size: 10px;
+        color: #666;
+        text-align: center;
+        margin-top: 2px;
+    }
+
+    .progress-connector {
+        flex: 1;
+        height: 2px;
+        background: #e0e0e0;
+        margin: 0 10px;
+        position: relative;
+        top: -30px;
+    }
+
+    .progress-connector.completed {
+        background: #00E6C8;
+    }
+
+    .step-circle i {
+        font-size: 20px;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public QuestionnaireAssignment? Assignment { get; set; }
+
+    private class WorkflowStep
+    {
+        public string Label { get; set; } = string.Empty;
+        public string? SubLabel { get; set; }
+        public bool IsActive { get; set; }
+        public bool IsCompleted { get; set; }
+    }
+
+    private List<WorkflowStep> GetWorkflowSteps()
+    {
+        if (Assignment == null)
+            return new List<WorkflowStep>();
+
+        var currentState = Assignment.WorkflowState;
+
+        return new List<WorkflowStep>
+        {
+            new WorkflowStep
+            {
+                Label = "Assigned",
+                SubLabel = Assignment.AssignedDate.ToString("MMM dd"),
+                IsCompleted = currentState != "Assigned",
+                IsActive = currentState == "Assigned"
+            },
+            new WorkflowStep
+            {
+                Label = "In Progress",
+                SubLabel = GetProgressSubLabel(),
+                IsCompleted = IsStateAfter(currentState, "BothInProgress"),
+                IsActive = currentState.Contains("InProgress")
+            },
+            new WorkflowStep
+            {
+                Label = "Confirmed",
+                SubLabel = GetConfirmedSubLabel(),
+                IsCompleted = IsStateAfter(currentState, "BothConfirmed"),
+                IsActive = currentState.Contains("Confirmed") && currentState != "BothConfirmed"
+            },
+            new WorkflowStep
+            {
+                Label = "Review",
+                SubLabel = Assignment.ReviewInitiatedDate?.ToString("MMM dd"),
+                IsCompleted = IsStateAfter(currentState, "InReview"),
+                IsActive = currentState == "InReview"
+            },
+            new WorkflowStep
+            {
+                Label = "Review Confirmed",
+                SubLabel = Assignment.EmployeeReviewConfirmedDate?.ToString("MMM dd"),
+                IsCompleted = currentState == "Finalized",
+                IsActive = currentState == "EmployeeReviewConfirmed"
+            },
+            new WorkflowStep
+            {
+                Label = "Finalized",
+                SubLabel = Assignment.FinalizedDate?.ToString("MMM dd"),
+                IsCompleted = currentState == "Finalized",
+                IsActive = false
+            }
+        };
+    }
+
+    private string? GetProgressSubLabel()
+    {
+        if (Assignment == null) return null;
+
+        var employeeDone = Assignment.EmployeeConfirmedDate != null;
+        var managerDone = Assignment.ManagerConfirmedDate != null;
+
+        if (employeeDone && managerDone) return "Both working";
+        if (employeeDone) return "Employee done";
+        if (managerDone) return "Manager done";
+        return "Starting";
+    }
+
+    private string? GetConfirmedSubLabel()
+    {
+        if (Assignment == null) return null;
+
+        var employeeDone = Assignment.EmployeeConfirmedDate != null;
+        var managerDone = Assignment.ManagerConfirmedDate != null;
+
+        if (employeeDone && managerDone) return "Both confirmed";
+        if (employeeDone) return "Employee ✓";
+        if (managerDone) return "Manager ✓";
+        return null;
+    }
+
+    private bool IsStateAfter(string currentState, string referenceState)
+    {
+        var stateOrder = new List<string>
+        {
+            "Assigned",
+            "EmployeeInProgress",
+            "ManagerInProgress",
+            "BothInProgress",
+            "EmployeeConfirmed",
+            "ManagerConfirmed",
+            "BothConfirmed",
+            "InReview",
+            "EmployeeReviewConfirmed",
+            "Finalized"
+        };
+
+        var currentIndex = stateOrder.IndexOf(currentState);
+        var referenceIndex = stateOrder.IndexOf(referenceState);
+
+        return currentIndex > referenceIndex;
+    }
+}

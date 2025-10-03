@@ -23,7 +23,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("bulk")]
-    [Authorize(Policy = "HRAccess")] // Only Admin, HRLead, HR can create assignments
+    [Authorize(Roles = "HRAccess")] // Only Admin, HRLead, HR can create assignments
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateBulkAssignments([FromBody] CreateBulkAssignmentsDto bulkAssignmentDto)
     {
@@ -156,7 +156,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/sections/{sectionId}/complete-manager")]
-    [Authorize(Policy = "ManagerAccess")] // Only managers
+    [Authorize(Roles = "ManagerAccess")] // Only managers
     public async Task<IActionResult> CompleteSectionAsManager(Guid assignmentId, Guid sectionId)
     {
         try
@@ -189,7 +189,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/confirm-manager")]
-    [Authorize(Policy = "ManagerAccess")] // Only managers
+    [Authorize(Roles = "ManagerAccess")] // Only managers
     public async Task<IActionResult> ConfirmManagerCompletion(Guid assignmentId, [FromBody] ConfirmCompletionDto confirmDto)
     {
         try
@@ -206,7 +206,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/initiate-review")]
-    [Authorize(Policy = "ManagerAccess")] // Only managers can initiate review
+    [Authorize(Roles = "ManagerAccess")] // Only managers can initiate review
     public async Task<IActionResult> InitiateReview(Guid assignmentId, [FromBody] InitiateReviewDto initiateDto)
     {
         try
@@ -260,7 +260,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/finalize")]
-    [Authorize(Policy = "ManagerAccess")] // Only managers can finalize
+    [Authorize(Roles = "ManagerAccess")] // Only managers can finalize
     public async Task<IActionResult> FinalizeQuestionnaire(Guid assignmentId, [FromBody] FinalizeQuestionnaireDto finalizeDto)
     {
         try

@@ -1,0 +1,309 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject NotificationService NotificationService
+
+<div class="workflow-action-buttons">
+    @if (Assignment != null)
+    {
+        <div class="action-info">
+            <i class="material-icons">info</i>
+            <span>@GetActionMessage()</span>
+        </div>
+
+        <div class="button-group">
+            @if (IsEmployee && WorkflowStateHelper.CanEmployeeConfirm(Assignment))
+            {
+                <RadzenButton Text="Confirm Completion"
+                              Icon="check_circle"
+                              ButtonStyle="ButtonStyle.Success"
+                              Click="@ConfirmEmployeeCompletion"
+                              Disabled="@isProcessing" />
+            }
+
+            @if (IsManager && WorkflowStateHelper.CanManagerConfirm(Assignment))
+            {
+                <RadzenButton Text="Confirm Completion"
+                              Icon="check_circle"
+                              ButtonStyle="ButtonStyle.Success"
+                              Click="@ConfirmManagerCompletion"
+                              Disabled="@isProcessing" />
+            }
+
+            @if (IsManager && WorkflowStateHelper.CanInitiateReview(Assignment))
+            {
+                <RadzenButton Text="Initiate Review"
+                              Icon="rate_review"
+                              ButtonStyle="ButtonStyle.Primary"
+                              Click="@InitiateReview"
+                              Disabled="@isProcessing" />
+            }
+
+            @if (IsEmployee && WorkflowStateHelper.CanEmployeeConfirmReview(Assignment))
+            {
+                <RadzenButton Text="Confirm Review"
+                              Icon="verified"
+                              ButtonStyle="ButtonStyle.Success"
+                              Click="@ConfirmEmployeeReview"
+                              Disabled="@isProcessing" />
+            }
+
+            @if (IsManager && WorkflowStateHelper.CanManagerFinalize(Assignment))
+            {
+                <RadzenButton Text="Finalize Questionnaire"
+                              Icon="lock"
+                              ButtonStyle="ButtonStyle.Warning"
+                              Click="@FinalizeQuestionnaire"
+                              Disabled="@isProcessing" />
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .workflow-action-buttons {
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        margin: 16px 0;
+    }
+
+    .action-info {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        padding: 12px;
+        background: white;
+        border-radius: 6px;
+        border-left: 4px solid #0F60FF;
+    }
+
+    .action-info i {
+        color: #0F60FF;
+        font-size: 20px;
+    }
+
+    .action-info span {
+        font-size: 14px;
+        color: #333;
+        font-weight: 500;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public QuestionnaireAssignment? Assignment { get; set; }
+
+    [Parameter]
+    public bool IsEmployee { get; set; }
+
+    [Parameter]
+    public bool IsManager { get; set; }
+
+    [Parameter]
+    public string UserName { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback OnActionCompleted { get; set; }
+
+    private bool isProcessing = false;
+
+    private string GetActionMessage()
+    {
+        if (Assignment == null) return string.Empty;
+
+        if (IsEmployee)
+            return WorkflowStateHelper.GetNextActionForEmployee(Assignment);
+        else if (IsManager)
+            return WorkflowStateHelper.GetNextActionForManager(Assignment);
+
+        return "No action required";
+    }
+
+    private async Task ConfirmEmployeeCompletion()
+    {
+        if (Assignment == null) return;
+
+        isProcessing = true;
+        try
+        {
+            var success = await AssignmentService.ConfirmEmployeeCompletionAsync(Assignment.Id, UserName);
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Employee completion confirmed",
+                    Duration = 4000
+                });
+                await OnActionCompleted.InvokeAsync();
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to confirm completion",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task ConfirmManagerCompletion()
+    {
+        if (Assignment == null) return;
+
+        isProcessing = true;
+        try
+        {
+            var success = await AssignmentService.ConfirmManagerCompletionAsync(Assignment.Id, UserName);
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Manager completion confirmed",
+                    Duration = 4000
+                });
+                await OnActionCompleted.InvokeAsync();
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to confirm completion",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task InitiateReview()
+    {
+        if (Assignment == null) return;
+
+        isProcessing = true;
+        try
+        {
+            var success = await AssignmentService.InitiateReviewAsync(Assignment.Id, UserName);
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Performance review initiated",
+                    Duration = 4000
+                });
+                await OnActionCompleted.InvokeAsync();
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to initiate review",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task ConfirmEmployeeReview()
+    {
+        if (Assignment == null) return;
+
+        isProcessing = true;
+        try
+        {
+            var success = await AssignmentService.ConfirmEmployeeReviewAsync(Assignment.Id, UserName);
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Review confirmed by employee",
+                    Duration = 4000
+                });
+                await OnActionCompleted.InvokeAsync();
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to confirm review",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task FinalizeQuestionnaire()
+    {
+        if (Assignment == null) return;
+
+        isProcessing = true;
+        try
+        {
+            var success = await AssignmentService.FinalizeQuestionnaireAsync(Assignment.Id, UserName);
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Questionnaire finalized and locked",
+                    Duration = 4000
+                });
+                await OnActionCompleted.InvokeAsync();
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to finalize questionnaire",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+}
