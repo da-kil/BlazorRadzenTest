@@ -1,11 +1,9 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.Identity.Web;
-using Microsoft.Identity.Web.TokenCacheProviders.Distributed;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Radzen;
+using ti8m.BeachBreak.Authentication;
 using ti8m.BeachBreak.Client.Services;
 using ti8m.BeachBreak.Components;
-using Yarp.ReverseProxy.Transforms;
 
 namespace ti8m.BeachBreak;
 
@@ -13,52 +11,163 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        const string MS_OIDC_SCHEME = "MicrosoftOidc";
+
         var builder = WebApplication.CreateBuilder(args);
         builder.AddServiceDefaults();
 
-        // Add Microsoft Entra ID Authentication
-        builder.Services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-            .AddMicrosoftIdentityWebApp(options =>
+        AzureEntraSettings azureEntraSettings = new();
+        builder.Configuration.Bind("AzureAd", azureEntraSettings);
+
+        // Add services to the container.
+        builder.Services.AddAuthentication(MS_OIDC_SCHEME)
+            .AddOpenIdConnect(MS_OIDC_SCHEME, oidcOptions =>
             {
-                builder.Configuration.GetSection("AzureAd").Bind(options);
+                // For the following OIDC settings, any line that's commented out
+                // represents a DEFAULT setting. If you adopt the default, you can
+                // remove the line if you wish.
 
-                // Save tokens so they can be retrieved with GetTokenAsync
-                options.SaveTokens = true;
-            });
-        //.EnableTokenAcquisitionToCallDownstreamApi()
-        //.AddDownstreamApi("CommandApi", builder.Configuration.GetSection("DownstreamApis:CommandApi"))
-        //.AddDownstreamApi("QueryApi", builder.Configuration.GetSection("DownstreamApis:QueryApi"))
-        //.AddDistributedTokenCaches();
+                // ........................................................................
+                // The OIDC handler must use a sign-in scheme capable of persisting 
+                // user credentials across requests.
 
-        //builder.Services.AddDistributedMemoryCache();
-        //builder.Services.Configure<MsalDistributedTokenCacheAdapterOptions>(options =>
-        //{
-        //    options.Encrypt = true;
-        //});
+                oidcOptions.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                // ........................................................................
+
+                // ........................................................................
+                // The "openid" and "profile" scopes are required for the OIDC handler 
+                // and included by default. You should enable these scopes here if scopes 
+                // are provided by "Authentication:Schemes:MicrosoftOidc:Scope" 
+                // configuration because configuration may overwrite the scopes collection.
+
+                //oidcOptions.Scope.Add(OpenIdConnectScope.OpenIdProfile);
+                // ........................................................................
+
+                // ........................................................................
+                // The following paths must match the redirect and post logout redirect 
+                // paths configured when registering the application with the OIDC provider. 
+                // The default values are "/signin-oidc" and "/signout-callback-oidc".
+
+                //oidcOptions.CallbackPath = new PathString("/signin-oidc");
+                //oidcOptions.SignedOutCallbackPath = new PathString("/signout-callback-oidc");
+                // ........................................................................
+
+                // ........................................................................
+                // The RemoteSignOutPath is the "Front-channel logout URL" for remote single 
+                // sign-out. The default value is "/signout-oidc".
+
+                //oidcOptions.RemoteSignOutPath = new PathString("/signout-oidc");
+                // ........................................................................
+
+                // ........................................................................
+                // The scope is configured in the Azure or Entra portal under 
+                // "Expose an API". This is necessary for backend web API (MinimalApiJwt)
+                // to validate the access token with AddBearerJwt. The following code example
+                // uses a scope format of the App ID URI for an AAD B2C tenant type. If your
+                // tenant is an ME-ID tenant, the App ID URI format is different:
+                // The {CLIENT ID} is the application (client) ID of the MinimalApiJwt app 
+                // registration.
+
+                oidcOptions.Scope.Add($"api://{azureEntraSettings.ClientId}/{azureEntraSettings.Scope}");
+                // ........................................................................
+
+                // ........................................................................
+                // The following example Authority is configured for Microsoft Entra ID
+                // and a single-tenant application registration. Set the {TENANT ID} 
+                // placeholder to the Tenant ID. The "common" Authority 
+                // https://login.microsoftonline.com/common/v2.0/ should be used 
+                // for multi-tenant apps. You can also use the "common" Authority for 
+                // single-tenant apps, but it requires a custom IssuerValidator as shown 
+                // in the comments below. 
+
+                oidcOptions.Authority = $"{azureEntraSettings.Instance}/{azureEntraSettings.TenantId}/v2.0/";
+                // ........................................................................
+
+                // ........................................................................
+                // Set the Client ID for the app. Set the {CLIENT ID} placeholder to
+                // the Client ID.
+
+                oidcOptions.ClientId = azureEntraSettings.ClientId;
+                oidcOptions.ClientSecret = azureEntraSettings.ClientSecret;
+                // ........................................................................
+
+                // ........................................................................
+                // Setting ResponseType to "code" configures the OIDC handler to use 
+                // authorization code flow. Implicit grants and hybrid flows are unnecessary
+                // in this mode. In a Microsoft Entra ID app registration, you don't need to 
+                // select either box for the authorization endpoint to return access tokens 
+                // or ID tokens. The OIDC handler automatically requests the appropriate 
+                // tokens using the code returned from the authorization endpoint.
+
+                oidcOptions.ResponseType = OpenIdConnectResponseType.Code;
+                // ........................................................................
+
+                // ........................................................................
+                // // Set MapInboundClaims to "false" to obtain the original claim types from   
+                // the token. Many OIDC servers use "name" and "role"/"roles" rather than 
+                // the SOAP/WS-Fed defaults in ClaimTypes. Adjust these values if your 
+                // identity provider uses different claim types.
+
+                oidcOptions.MapInboundClaims = false;
+                oidcOptions.TokenValidationParameters.NameClaimType = "name";
+                oidcOptions.TokenValidationParameters.RoleClaimType = "roles";
+                // ........................................................................
+
+                // ........................................................................
+                // Many OIDC providers work with the default issuer validator, but the
+                // configuration must account for the issuer parameterized with "{TENANT ID}" 
+                // returned by the "common" endpoint's /.well-known/openid-configuration
+                // For more information, see
+                // https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1731
+
+                //var microsoftIssuerValidator = AadIssuerValidator.GetAadIssuerValidator(oidcOptions.Authority);
+                //oidcOptions.TokenValidationParameters.IssuerValidator = microsoftIssuerValidator.Validate;
+                // ........................................................................
+
+                // ........................................................................
+                // OIDC connect options set later via ConfigureCookieOidcRefresh
+                //
+                // (1) The "offline_access" scope is required for the refresh token.
+                //
+                // (2) SaveTokens is set to true, which saves the access and refresh tokens
+                // in the cookie, so the app can authenticate requests and
+                // cookie, so the app can authenticate requests and
+                // use the refresh token to obtain a new access token on access token
+                // expiration.
+                // ........................................................................
+            })
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        // ConfigureCookieOidcRefresh attaches a cookie OnValidatePrincipal callback to get
+        // a new access token when the current one expires, and reissue a cookie with the
+        // new access token saved inside. If the refresh fails, the user will be signed
+        // out. OIDC connect options are set for saving tokens and the offline access
+        // scope.
+        builder.Services.ConfigureCookieOidcRefresh(CookieAuthenticationDefaults.AuthenticationScheme, MS_OIDC_SCHEME);
 
         // Configure authorization with role-based policies
-        //builder.Services.AddAuthorization(options =>
-        //{
-        //    // Admin-only policy
-        //    options.AddPolicy("AdminOnly", policy =>
-        //        policy.RequireRole("Admin"));
+        builder.Services.AddAuthorization(options =>
+        {
+            // Admin-only policy
+            options.AddPolicy("AdminOnly", policy =>
+                policy.RequireRole("Admin"));
 
-        //    // HR Access (HR, HRLead, Admin)
-        //    options.AddPolicy("HRAccess", policy =>
-        //        policy.RequireRole("HR", "HRLead", "Admin"));
+            // HR Access (HR, HRLead, Admin)
+            options.AddPolicy("HRAccess", policy =>
+                policy.RequireRole("HR", "HRLead", "Admin"));
 
-        //    // HRLead-only policy
-        //    options.AddPolicy("HRLeadOnly", policy =>
-        //        policy.RequireRole("HRLead", "Admin"));
+            // HRLead-only policy
+            options.AddPolicy("HRLeadOnly", policy =>
+                policy.RequireRole("HRLead", "Admin"));
 
-        //    // Team Lead or higher (TeamLead, HR, HRLead, Admin)
-        //    options.AddPolicy("TeamLeadOrHigher", policy =>
-        //        policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+            // Team Lead or higher (TeamLead, HR, HRLead, Admin)
+            options.AddPolicy("TeamLeadOrHigher", policy =>
+                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
 
-        //    // Manager Access (can manage team members)
-        //    options.AddPolicy("ManagerAccess", policy =>
-        //        policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
-        //});
+            // Manager Access (can manage team members)
+            options.AddPolicy("ManagerAccess", policy =>
+                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+        });
 
         builder.Services.AddAuthorization();
 
@@ -71,12 +180,10 @@ public class Program
             .AddInteractiveWebAssemblyComponents()
             .AddAuthenticationStateSerialization();
 
-        builder.Services.AddHttpForwarderWithServiceDiscovery();
         builder.Services.AddHttpContextAccessor();
 
-
-
-
+        // Register the bearer token handler
+        builder.Services.AddScoped<BearerTokenHandler>();
 
         builder.Services.AddHttpClient("CommandClient", httpClient =>
         {
@@ -85,9 +192,8 @@ public class Program
             {
                 throw new Exception("Command-API URI not found");
             }
-
             httpClient.BaseAddress = new Uri(uri);
-        });
+        }).AddHttpMessageHandler<BearerTokenHandler>();
 
         builder.Services.AddHttpClient("QueryClient", httpClient =>
         {
@@ -96,9 +202,8 @@ public class Program
             {
                 throw new Exception("Query-API URI not found");
             }
-
             httpClient.BaseAddress = new Uri(uri);
-        });
+        }).AddHttpMessageHandler<BearerTokenHandler>();
 
         builder.Services.AddQuestionnaireServices();
         builder.Services.AddScoped<ICategoryApiService, CategoryApiService>();
@@ -107,8 +212,6 @@ public class Program
         builder.Services.AddScoped<IEmployeeQuestionnaireService, EmployeeQuestionnaireService>();
         builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
-        builder.Services.AddScoped<Client.Services.IAuthenticationService, Services.AuthenticationService>();
-
 
         var app = builder.Build();
 
@@ -137,54 +240,9 @@ public class Program
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode()
             .AddInteractiveWebAssemblyRenderMode()
-            .AddAdditionalAssemblies(typeof(Client._Imports).Assembly);      
-
-        app.MapForwarder("/q/{**catch-all}", "https://QueryApi", transformBuilder =>
-        {
-            transformBuilder.AddRequestTransform(async transformContext =>
-            {
-                var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
-                if (!string.IsNullOrEmpty(accessToken))
-                {
-                    transformContext.ProxyRequest.Headers.Authorization = new("Bearer", accessToken);
-                }
-            });
-        }).RequireAuthorization();
-
-        app.MapForwarder("c/{**catch-all}", "https://CommandApi", transformBuilder =>
-        {
-            transformBuilder.AddRequestTransform(async transformContext =>
-            {
-                var accessToken = await transformContext.HttpContext.GetTokenAsync("access_token");
-                if (!string.IsNullOrEmpty(accessToken))
-                {
-                    transformContext.ProxyRequest.Headers.Authorization = new("Bearer", accessToken);
-                }
-            });
-        }).RequireAuthorization();
+            .AddAdditionalAssemblies(typeof(Client._Imports).Assembly);
 
         app.MapGroup("/authentication").MapLoginAndLogout();
-        //// Map authentication endpoints
-        //app.MapGet("/authentication/login", async (HttpContext context, string? returnUrl) =>
-        //{
-        //    // Use the provided returnUrl or default to "/"
-        //    var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
-
-        //    await context.ChallengeAsync(OpenIdConnectDefaults.AuthenticationScheme,
-        //        new AuthenticationProperties { RedirectUri = redirectUri });
-        //});
-
-        //app.MapPost("/authentication/logout", async (HttpContext context, string? returnUrl) =>
-        //{
-        //    // Use the provided returnUrl or default to "/"
-        //    var redirectUri = string.IsNullOrEmpty(returnUrl) ? "/" : returnUrl;
-
-        //    await context.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme,
-        //        new AuthenticationProperties { RedirectUri = redirectUri });
-        //});
-
-        // Add employee claims after authentication
-        app.UseMiddleware<Authentication.EmployeeClaimsMiddleware>();
 
         app.Run();
     }

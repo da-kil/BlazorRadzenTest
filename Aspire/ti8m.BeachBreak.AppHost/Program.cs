@@ -16,7 +16,8 @@ var commandApi = builder.AddProject<Projects.ti8m_BeachBreak_CommandApi>("Comman
     .WithEnvironment("AzureAd__TenantId", builder.Configuration["AzureAd:TenantId"] ?? "{TENANT_ID}")
     .WithEnvironment("AzureAd__ClientId", builder.Configuration["AzureAd:CommandApi:ClientId"] ?? "{CLIENT_ID}")
     .WithEnvironment("AzureAd__Audience", builder.Configuration["AzureAd:CommandApi:Audience"] ?? "api://{CLIENT_ID}")
-    .WithEnvironment("AzureAd__ClientSecret", builder.Configuration["AzureAd:CommandApi:ClientSecret"] ?? string.Empty);
+    .WithEnvironment("AzureAd__ClientSecret", builder.Configuration["AzureAd:CommandApi:ClientSecret"] ?? string.Empty)
+    .WithEnvironment("AzureAd__Scope", builder.Configuration["AzureAd:Scope"] ?? string.Empty);
 
 var queryApi = builder.AddProject<Projects.ti8m_BeachBreak_QueryApi>("QueryApi")
     .WithReference(postgresdb)
@@ -25,7 +26,8 @@ var queryApi = builder.AddProject<Projects.ti8m_BeachBreak_QueryApi>("QueryApi")
     .WithEnvironment("AzureAd__TenantId", builder.Configuration["AzureAd:TenantId"] ?? "{TENANT_ID}")
     .WithEnvironment("AzureAd__ClientId", builder.Configuration["AzureAd:QueryApi:ClientId"] ?? "{CLIENT_ID}")
     .WithEnvironment("AzureAd__Audience", builder.Configuration["AzureAd:QueryApi:Audience"] ?? "api://{CLIENT_ID}")
-    .WithEnvironment("AzureAd__ClientSecret", builder.Configuration["AzureAd:QueryApi:ClientSecret"] ?? string.Empty);
+    .WithEnvironment("AzureAd__ClientSecret", builder.Configuration["AzureAd:QueryApi:ClientSecret"] ?? string.Empty)
+    .WithEnvironment("AzureAd__Scope", builder.Configuration["AzureAd:Scope"] ?? string.Empty);
 
 builder.AddProject<Projects.ti8m_BeachBreak>("ti8mBeachBreak")
     .WithExternalHttpEndpoints()
@@ -39,6 +41,7 @@ builder.AddProject<Projects.ti8m_BeachBreak>("ti8mBeachBreak")
     .WithEnvironment("AzureAd__ClientId", builder.Configuration["AzureAd:Frontend:ClientId"] ?? "{CLIENT_ID}")
     .WithEnvironment("AzureAd__ClientSecret", builder.Configuration["AzureAd:Frontend:ClientSecret"] ?? string.Empty)
     .WithEnvironment("AzureAd__CallbackPath", "/signin-oidc")
-    .WithEnvironment("AzureAd__SignedOutCallbackPath", "/signout-callback-oidc");
+    .WithEnvironment("AzureAd__SignedOutCallbackPath", "/signout-callback-oidc")
+    .WithEnvironment("AzureAd__Scope", builder.Configuration["AzureAd:Scope"] ?? string.Empty);
 
 builder.Build().Run();
