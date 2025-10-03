@@ -342,6 +342,7 @@ public class QuestionnaireTemplateCommandHandler :
             section.Description,
             section.Order,
             section.IsRequired,
+            section.CompletionRole,
             MapToQuestionItems(section.Questions)
         )).ToList();
     }
