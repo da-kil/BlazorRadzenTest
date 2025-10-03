@@ -1,8 +1,10 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.Application.Query;
+using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Core.Infrastructure.Database;
 using ti8m.BeachBreak.Infrastructure.Marten;
@@ -38,21 +40,30 @@ public class Program
 
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("AdminOnly", policy =>
+            options.AddPolicy("Employee", policy =>
+                policy.RequireRole("Employee"));
+
+            options.AddPolicy("Admin", policy =>
                 policy.RequireRole("Admin"));
 
-            options.AddPolicy("HRAccess", policy =>
-                policy.RequireRole("HR", "HRLead", "Admin"));
+            options.AddPolicy("HR", policy =>
+                policy.RequireRole("HR"));
 
-            options.AddPolicy("HRLeadOnly", policy =>
-                policy.RequireRole("HRLead", "Admin"));
+            options.AddPolicy("HRLead", policy =>
+                policy.RequireRole("HRLead"));
 
-            options.AddPolicy("TeamLeadOrHigher", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
-
-            options.AddPolicy("ManagerAccess", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+            options.AddPolicy("TeamLead", policy =>
+                policy.RequireRole("TeamLead"));
         });
+
+        // Register custom authorization middleware result handler
+        builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, RoleBasedAuthorizationMiddlewareResultHandler>();
+
+        // Add distributed cache (using in-memory for now, can be replaced with Redis)
+        builder.Services.AddDistributedMemoryCache();
+
+        // Register authorization cache service
+        builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
 
         builder.Services.AddControllers();
 
@@ -109,10 +120,16 @@ public class Program
 
         app.UseHttpsRedirection();
 
-        app.UseAuthentication();
-        app.UseAuthorization();
 
-        app.MapControllers();
+        app.UseRouting()
+                .UseAuthentication()
+                .UseAuthorization()
+                .UseDefaultContextMiddlewares()
+                .UseEndpoints(endpoints =>
+                {
+                    endpoints
+                        .MapControllers();
+                });
 
         app.Run();
     }

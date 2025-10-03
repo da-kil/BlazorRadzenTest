@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.CategoryQueries;
@@ -7,6 +8,7 @@ namespace ti8m.BeachBreak.QueryApi.Controllers;
 
 [ApiController]
 [Route("q/api/v{version:apiVersion}/categories")]
+[Authorize]
 public class CategoriesController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;

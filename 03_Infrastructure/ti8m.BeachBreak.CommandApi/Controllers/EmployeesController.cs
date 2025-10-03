@@ -8,7 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/employees")]
-[Authorize] // All endpoints require authentication
+//[Authorize] // All endpoints require authentication
 public class EmployeesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
@@ -23,7 +23,7 @@ public class EmployeesController : BaseController
     }
 
     [HttpPost("bulk-insert")]
-    [Authorize(Policy = "HRAccess")] // Only Admin, HRLead, HR can create employees
+    //[Authorize(Policy = "HRAccess")] // Only Admin, HRLead, HR can create employees
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

@@ -1,4 +1,4 @@
-﻿using JasperFx;
+using JasperFx;
 using Marten;
 using Marten.Events.Projections;
 using Microsoft.Extensions.DependencyInjection;

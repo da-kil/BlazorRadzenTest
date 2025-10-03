@@ -11,9 +11,9 @@ internal class Program
 
         builder.Services.AddRadzenComponents();
 
-        // Add authentication state management for WebAssembly
         builder.Services.AddAuthorizationCore();
         builder.Services.AddCascadingAuthenticationState();
+        builder.Services.AddAuthenticationStateDeserialization();
 
         await builder.Build().RunAsync();
     }
