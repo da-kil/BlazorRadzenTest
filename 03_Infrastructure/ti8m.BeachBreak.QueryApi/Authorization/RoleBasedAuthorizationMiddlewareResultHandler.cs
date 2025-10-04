@@ -5,9 +5,11 @@ using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
+using ti8m.BeachBreak.Core.Infrastructure;
+using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
-namespace ti8m.BeachBreak.Core.Infrastructure.Authorization;
+namespace ti8m.BeachBreak.QueryApi.Authorization;
 
 /// <summary>
 /// Authorization middleware result handler that validates user roles against controller policies.

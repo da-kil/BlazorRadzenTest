@@ -90,4 +90,25 @@ public class EmployeesController : BaseController
         return CreateResponse(result);
     }
 
+    /// <summary>
+    /// Changes the application role of an employee.
+    /// Only Admin, HRLead, and HR can access this endpoint.
+    /// Users can only assign roles at their level or below.
+    /// </summary>
+    [HttpPut("{employeeId:guid}/application-role")]
+    [Authorize(Policy = "HR")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ChangeApplicationRole(
+        Guid employeeId,
+        [FromBody] ChangeApplicationRoleDto dto)
+    {
+        Result result = await commandDispatcher.SendAsync(
+            new ChangeEmployeeApplicationRoleCommand(employeeId, (Domain.EmployeeAggregate.ApplicationRole)dto.NewRole));
+
+        return CreateResponse(result);
+    }
+
 }

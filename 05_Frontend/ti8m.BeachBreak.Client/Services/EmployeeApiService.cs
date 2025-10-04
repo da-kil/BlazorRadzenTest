@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using ti8m.BeachBreak.Client.Models;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -8,6 +9,7 @@ public interface IEmployeeApiService
     Task<EmployeeDto?> GetEmployeeByIdAsync(Guid id);
     Task<List<EmployeeDto>> GetEmployeesByDepartmentAsync(string department);
     Task<List<EmployeeDto>> SearchEmployeesAsync(string searchTerm);
+    Task<bool> ChangeApplicationRoleAsync(Guid employeeId, ApplicationRole newRole);
 }
 
 public class EmployeeApiService : BaseApiService, IEmployeeApiService
@@ -38,6 +40,20 @@ public class EmployeeApiService : BaseApiService, IEmployeeApiService
     {
         return await SearchAsync<EmployeeDto>(BaseEndpoint, searchTerm);
     }
+
+    public async Task<bool> ChangeApplicationRoleAsync(Guid employeeId, ApplicationRole newRole)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PutAsJsonAsync($"api/v1/employees/{employeeId}/application-role", new { NewRole = newRole });
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error changing application role for employee {employeeId}", ex);
+            return false;
+        }
+    }
 }
 
 public class EmployeeDto
@@ -57,6 +73,7 @@ public class EmployeeDto
     public int OrganizationNumber { get; set; }
     public string Organization { get; set; } = string.Empty;
     public bool IsDeleted { get; set; } = false;
+    public ApplicationRole ApplicationRole { get; set; } = ApplicationRole.Employee;
 
     public string FullName => $"{FirstName} {LastName}".Trim();
     public string Department => Organization;

@@ -245,4 +245,29 @@ public static partial class LoggerMessageDefinitions
     Level = LogLevel.Error,
     Message = "Failed to withdraw assignment `{AssignmentId}`: {ErrorMessage}")]
     public static partial void LogWithdrawAssignmentFailed(this ILogger logger, Guid assignmentId, string errorMessage, Exception exception);
+
+    // Employee Role Management Operations (7001-7099)
+    [LoggerMessage(
+    EventId = 7001,
+    Level = LogLevel.Information,
+    Message = "Changing application role for employee `{EmployeeId}` to `{NewRole}`.")]
+    public static partial void LogChangeEmployeeApplicationRole(this ILogger logger, Guid employeeId, string newRole);
+
+    [LoggerMessage(
+    EventId = 7002,
+    Level = LogLevel.Information,
+    Message = "Successfully changed application role for employee `{EmployeeId}` to `{NewRole}`.")]
+    public static partial void LogEmployeeApplicationRoleChanged(this ILogger logger, Guid employeeId, string newRole);
+
+    [LoggerMessage(
+    EventId = 7003,
+    Level = LogLevel.Error,
+    Message = "Failed to change application role for employee `{EmployeeId}`: {ErrorMessage}")]
+    public static partial void LogChangeEmployeeApplicationRoleFailed(this ILogger logger, Guid employeeId, string errorMessage, Exception exception);
+
+    [LoggerMessage(
+    EventId = 7004,
+    Level = LogLevel.Warning,
+    Message = "Attempted to change application role for deleted employee `{EmployeeId}`.")]
+    public static partial void LogChangeRoleForDeletedEmployee(this ILogger logger, Guid employeeId);
 }

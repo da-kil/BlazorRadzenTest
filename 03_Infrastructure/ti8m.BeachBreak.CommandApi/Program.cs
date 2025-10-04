@@ -59,13 +59,16 @@ namespace ti8m.BeachBreak.CommandApi
             });
 
             // Register custom authorization middleware result handler
-            builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, RoleBasedAuthorizationMiddlewareResultHandler>();
+            builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, CommandApi.Authorization.RoleBasedAuthorizationMiddlewareResultHandler>();
 
             // Add distributed cache (using in-memory for now, can be replaced with Redis)
             builder.Services.AddDistributedMemoryCache();
 
             // Register authorization cache service
             builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
+
+            // Register authorization cache invalidation service
+            builder.Services.AddScoped<IAuthorizationCacheInvalidationService, AuthorizationCacheInvalidationService>();
 
             builder.Services.AddControllers();
 

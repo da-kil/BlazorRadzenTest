@@ -73,7 +73,8 @@ public class EmployeesController : BaseController
                     EmployeeNumber = employee.EmployeeNumber,
                     OrganizationNumber = employee.OrganizationNumber,
                     Organization = employee.Organization,
-                    IsDeleted = employee.IsDeleted
+                    IsDeleted = employee.IsDeleted,
+                    ApplicationRole = employee.ApplicationRole
                 });
             });
         }
@@ -127,7 +128,8 @@ public class EmployeesController : BaseController
                 EmployeeNumber = employee.EmployeeNumber,
                 OrganizationNumber = employee.OrganizationNumber,
                 Organization = employee.Organization,
-                IsDeleted = employee.IsDeleted
+                IsDeleted = employee.IsDeleted,
+                ApplicationRole = employee.ApplicationRole
             });
         }
         catch (Exception ex)

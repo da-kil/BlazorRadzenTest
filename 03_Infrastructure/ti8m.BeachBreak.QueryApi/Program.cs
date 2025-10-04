@@ -48,7 +48,7 @@ public class Program
         });
 
         // Register custom authorization middleware result handler
-        builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, RoleBasedAuthorizationMiddlewareResultHandler>();
+        builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, QueryApi.Authorization.RoleBasedAuthorizationMiddlewareResultHandler>();
 
         // Add distributed cache (using in-memory for now, can be replaced with Redis)
         builder.Services.AddDistributedMemoryCache();

@@ -128,11 +128,16 @@ public class Employee : AggregateRoot
         }
     }
 
-    public void ChangeApplicationRole(ApplicationRole applicationRole)
+    public void ChangeApplicationRole(ApplicationRole newRole, Guid changedByUserId, string changedByUserName)
     {
-        if (ApplicationRole != applicationRole)
+        if (ApplicationRole != newRole)
         {
-            RaiseEvent(new EmployeeApplicationRoleChanged(applicationRole));
+            RaiseEvent(new EmployeeApplicationRoleChanged(
+                ApplicationRole,
+                newRole,
+                changedByUserId,
+                changedByUserName,
+                DateTime.UtcNow));
         }
     }
 
@@ -223,6 +228,6 @@ public class Employee : AggregateRoot
 
     public void Apply(EmployeeApplicationRoleChanged @event)
     {
-        ApplicationRole = @event.ApplicationRole;
+        ApplicationRole = @event.NewRole;
     }
 }
