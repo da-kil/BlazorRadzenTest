@@ -1,5 +1,6 @@
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Events;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+using QuestionnaireTemplateDomain = ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -91,7 +92,7 @@ public class QuestionnaireTemplateReadModel
         IsDeleted = true;
     }
 
-    private static List<QuestionSection> MapDomainSectionsToQuerySections(List<Domain.QuestionnaireAggregate.QuestionSection> domainSections)
+    private static List<QuestionSection> MapDomainSectionsToQuerySections(List<Domain.QuestionnaireTemplateAggregate.QuestionSection> domainSections)
     {
         return domainSections.Select(ds => new QuestionSection
         {
@@ -115,7 +116,7 @@ public class QuestionnaireTemplateReadModel
         }).ToList();
     }
 
-    private static QuestionnaireSettings MapDomainSettingsToQuerySettings(Domain.QuestionnaireAggregate.QuestionnaireSettings domainSettings)
+    private static QuestionnaireSettings MapDomainSettingsToQuerySettings(QuestionnaireTemplateDomain.QuestionnaireSettings domainSettings)
     {
         return new QuestionnaireSettings
         {

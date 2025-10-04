@@ -4,7 +4,7 @@ using Marten.Events.Projections;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ti8m.BeachBreak.Application.Query.Projections;
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
 using ti8m.BeachBreak.Infrastructure.Marten.Services;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten;

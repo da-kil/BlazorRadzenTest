@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
-using DomainQuestionType = ti8m.BeachBreak.Domain.QuestionnaireAggregate.QuestionType;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -237,11 +236,11 @@ public class QuestionnaireTemplatesController : BaseController
         }
     }
 
-    private static DomainQuestionType MapQuestionType(QuestionTypeDto dtoType) => dtoType switch
+    private static QuestionType MapQuestionType(QuestionTypeDto dtoType) => dtoType switch
     {
-        QuestionTypeDto.TextQuestion => DomainQuestionType.TextQuestion,
-        QuestionTypeDto.SelfAssessment => DomainQuestionType.SelfAssessment,
-        QuestionTypeDto.GoalAchievement => DomainQuestionType.GoalAchievement,
+        QuestionTypeDto.TextQuestion => QuestionType.TextQuestion,
+        QuestionTypeDto.SelfAssessment => QuestionType.SelfAssessment,
+        QuestionTypeDto.GoalAchievement => QuestionType.GoalAchievement,
         _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
     };
 }

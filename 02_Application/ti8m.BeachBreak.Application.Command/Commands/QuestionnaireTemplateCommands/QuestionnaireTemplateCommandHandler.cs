@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Repositories;
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate;
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
-using DomainQuestionnaireTemplate = ti8m.BeachBreak.Domain.QuestionnaireAggregate.QuestionnaireTemplate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
+using DomainQuestionnaireTemplate = ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.QuestionnaireTemplate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 
@@ -353,7 +353,7 @@ public class QuestionnaireTemplateCommandHandler :
             item.Id,
             item.Title,
             item.Description,
-            item.Type,
+            MapQuestionType(item.Type),
             item.Order,
             item.IsRequired,
             item.Configuration,
@@ -373,4 +373,12 @@ public class QuestionnaireTemplateCommandHandler :
             commandSettings.AllowReviewBeforeSubmit
         );
     }
+
+    private static Domain.QuestionnaireTemplateAggregate.QuestionType MapQuestionType(QuestionType dtoType) => dtoType switch
+    {
+        QuestionType.TextQuestion => Domain.QuestionnaireTemplateAggregate.QuestionType.TextQuestion,
+        QuestionType.SelfAssessment => Domain.QuestionnaireTemplateAggregate.QuestionType.SelfAssessment,
+        QuestionType.GoalAchievement => Domain.QuestionnaireTemplateAggregate.QuestionType.GoalAchievement,
+        _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
+    };
 }

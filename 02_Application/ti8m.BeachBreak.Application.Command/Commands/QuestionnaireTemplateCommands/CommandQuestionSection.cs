@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 
