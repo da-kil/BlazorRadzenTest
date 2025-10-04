@@ -1,8 +1,8 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Events;
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
 
-namespace ti8m.BeachBreak.Domain.QuestionnaireAggregate;
+namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 public class QuestionnaireTemplate : AggregateRoot
 {

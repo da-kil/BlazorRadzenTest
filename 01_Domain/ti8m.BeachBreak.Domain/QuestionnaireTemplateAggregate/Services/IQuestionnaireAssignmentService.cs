@@ -1,4 +1,4 @@
-namespace ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
+namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
 
 public interface IQuestionnaireAssignmentService
 {
