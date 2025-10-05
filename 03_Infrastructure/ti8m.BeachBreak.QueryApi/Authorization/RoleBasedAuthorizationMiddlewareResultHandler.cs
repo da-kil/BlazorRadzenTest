@@ -49,6 +49,17 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
         AuthorizationPolicy policy,
         PolicyAuthorizationResult authorizeResult)
     {
+        // Allow /api/v1/auth/me/role endpoint to bypass role checking (for initial role fetch)
+        if (context.Request.Path.StartsWithSegments("/api/v1/auth/me/role", StringComparison.OrdinalIgnoreCase))
+        {
+            // Still require authentication, but skip role check
+            if (context.User.Identity?.IsAuthenticated ?? false)
+            {
+                await next(context);
+                return;
+            }
+        }
+
         // If authorization succeeded without our intervention, continue
         if (authorizeResult.Succeeded)
         {
@@ -172,8 +183,8 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
     {
         // Try various claim types for user ID (Entra ID object ID)
         var userIdClaim = user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value
-                         ?? user.FindFirst("sub")?.Value
-                         ?? user.FindFirst("oid")?.Value;
+                         ?? user.FindFirst("oid")?.Value
+                         ?? user.FindFirst("sub")?.Value;
 
         return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
     }

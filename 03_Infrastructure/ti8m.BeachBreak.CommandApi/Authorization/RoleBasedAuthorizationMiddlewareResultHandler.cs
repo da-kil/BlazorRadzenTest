@@ -170,8 +170,8 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
     {
         // Try various claim types for user ID (Entra ID object ID)
         var userIdClaim = user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value
-                         ?? user.FindFirst("sub")?.Value
-                         ?? user.FindFirst("oid")?.Value;
+                         ?? user.FindFirst("oid")?.Value
+                         ?? user.FindFirst("sub")?.Value;
 
         return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
     }

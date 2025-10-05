@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Radzen;
 using ti8m.BeachBreak.Authentication;
@@ -145,31 +146,18 @@ public class Program
         // scope.
         builder.Services.ConfigureCookieOidcRefresh(CookieAuthenticationDefaults.AuthenticationScheme, MS_OIDC_SCHEME);
 
-        // Configure authorization with role-based policies
+        // Configure authorization with role-based policies (matching backend)
         builder.Services.AddAuthorization(options =>
         {
-            // Admin-only policy
-            options.AddPolicy("AdminOnly", policy =>
-                policy.RequireRole("Admin"));
-
-            // HR Access (HR, HRLead, Admin)
-            options.AddPolicy("HRAccess", policy =>
-                policy.RequireRole("HR", "HRLead", "Admin"));
-
-            // HRLead-only policy
-            options.AddPolicy("HRLeadOnly", policy =>
-                policy.RequireRole("HRLead", "Admin"));
-
-            // Team Lead or higher (TeamLead, HR, HRLead, Admin)
-            options.AddPolicy("TeamLeadOrHigher", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
-
-            // Manager Access (can manage team members)
-            options.AddPolicy("ManagerAccess", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+            options.AddPolicy("Employee", policy => policy.RequireRole("Employee"));
+            options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+            options.AddPolicy("HR", policy => policy.RequireRole("HR"));
+            options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead"));
+            options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead"));
         });
 
-        builder.Services.AddAuthorization();
+        // Register custom authorization middleware result handler
+        builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, ti8m.BeachBreak.Authorization.FrontendRoleBasedAuthorizationMiddlewareResultHandler>();
 
         builder.Services.AddCascadingAuthenticationState();
 
@@ -230,6 +218,10 @@ public class Program
         app.UseHttpsRedirection();
 
         app.UseAuthentication();
+
+        // Add middleware to enrich user claims with ApplicationRole from backend
+        app.UseMiddleware<Authorization.ApplicationRoleClaimsMiddleware>();
+
         app.UseAuthorization();
 
         app.MapStaticAssets();
