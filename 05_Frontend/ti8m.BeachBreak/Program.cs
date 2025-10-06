@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Radzen;
 using ti8m.BeachBreak.Authentication;
+using ti8m.BeachBreak.Authorization;
 using ti8m.BeachBreak.Client.Services;
 using ti8m.BeachBreak.Components;
 
@@ -116,7 +117,7 @@ public class Program
 
                 // ........................................................................
                 // Many OIDC providers work with the default issuer validator, but the
-                // configuration must account for the issuer parameterized with "{TENANT ID}" 
+                // configuration must account for the issuer parameterized with "{TENANT ID}"
                 // returned by the "common" endpoint's /.well-known/openid-configuration
                 // For more information, see
                 // https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1731
@@ -156,8 +157,8 @@ public class Program
             options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead"));
         });
 
-        // Register custom authorization middleware result handler
-        builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, ti8m.BeachBreak.Authorization.FrontendRoleBasedAuthorizationMiddlewareResultHandler>();
+        // Register custom AuthenticationStateProvider that enriches claims with ApplicationRole
+        builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 
         builder.Services.AddCascadingAuthenticationState();
 
@@ -220,7 +221,7 @@ public class Program
         app.UseAuthentication();
 
         // Add middleware to enrich user claims with ApplicationRole from backend
-        app.UseMiddleware<Authorization.ApplicationRoleClaimsMiddleware>();
+        //app.UseMiddleware<Authorization.ApplicationRoleClaimsMiddleware>();
 
         app.UseAuthorization();
 

@@ -1,5 +1,5 @@
 @page "/admin/roles"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Admin")]
+@using Microsoft.AspNetCore.Components.Authorization
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
@@ -12,8 +12,10 @@
 
 <PageTitle>Role Management</PageTitle>
 
-<div class="container-fluid">
-    <RadzenCard Class="p-4">
+<AuthorizeView Policy="Admin">
+    <Authorized>
+        <div class="container-fluid">
+            <RadzenCard Class="p-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
@@ -117,7 +119,24 @@
             </Columns>
         </RadzenDataGrid>
     </RadzenCard>
-</div>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="container-fluid">
+            <RadzenCard Class="p-4">
+                <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
+                    <RadzenIcon Icon="block" Style="font-size: 4rem; color: var(--rz-danger);" Class="mb-3" />
+                    <RadzenText TextStyle="TextStyle.H4" Class="mb-2">Access Denied</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted text-center">
+                        You do not have permission to access the Role Management page.
+                        <br />
+                        This page is restricted to administrators only.
+                    </RadzenText>
+                </div>
+            </RadzenCard>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     RadzenDataGrid<EmployeeDto> employeesGrid = null!;

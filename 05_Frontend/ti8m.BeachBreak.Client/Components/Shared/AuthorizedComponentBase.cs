@@ -5,29 +5,52 @@ namespace ti8m.BeachBreak.Client.Components.Shared;
 
 /// <summary>
 /// Base component that provides role-based authorization helpers for UI visibility.
+/// Uses role hierarchy to determine access (e.g., Admin can access everything, HR can access HR+ features).
 /// </summary>
 public class AuthorizedComponentBase : ComponentBase
 {
     [CascadingParameter]
     protected Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
+    private AuthenticationState? _cachedAuthState;
+
+    /// <summary>
+    /// Gets the authentication state, using cached value if available.
+    /// </summary>
+    protected async Task<AuthenticationState?> GetAuthenticationStateAsync()
+    {
+        if (_cachedAuthState != null)
+            return _cachedAuthState;
+
+        if (AuthenticationStateTask == null)
+            return null;
+
+        _cachedAuthState = await AuthenticationStateTask;
+        return _cachedAuthState;
+    }
+
+    /// <summary>
+    /// Checks if user has the specified role or a higher role in the hierarchy.
+    /// Note: This is synchronous for use in rendering. Call GetAuthenticationStateAsync() in OnInitializedAsync to cache.
+    /// </summary>
     protected bool IsInRole(string role)
     {
-        if (AuthenticationStateTask == null)
+        if (AuthenticationStateTask == null || !AuthenticationStateTask.IsCompleted)
             return false;
 
         var authState = AuthenticationStateTask.Result;
         var user = authState.User;
 
-        // Check ApplicationRole claim (set by middleware)
-        var applicationRoleClaim = user.FindFirst("ApplicationRole")?.Value;
-        if (!string.IsNullOrEmpty(applicationRoleClaim))
-        {
-            return CheckRoleAccess(applicationRoleClaim, role);
-        }
+        if (!user.Identity?.IsAuthenticated ?? true)
+            return false;
 
-        // Fallback to standard role claims (from Azure AD)
-        return user.IsInRole(role);
+        // Get user's role from claims (set by CustomAuthenticationStateProvider)
+        var userRole = user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+        if (string.IsNullOrEmpty(userRole))
+            return false;
+
+        return CheckRoleAccess(userRole, role);
     }
 
     protected bool IsInAnyRole(params string[] roles)
@@ -35,18 +58,28 @@ public class AuthorizedComponentBase : ComponentBase
         return roles.Any(IsInRole);
     }
 
+    // Convenient role check properties with hierarchy
     protected bool IsAdmin => IsInRole("Admin");
-    protected bool IsHR => IsInAnyRole("HR", "HRLead", "Admin");
-    protected bool IsHRLead => IsInAnyRole("HRLead", "Admin");
-    protected bool IsTeamLead => IsInAnyRole("TeamLead", "HR", "HRLead", "Admin");
-    protected bool IsEmployee => AuthenticationStateTask?.Result.User.Identity?.IsAuthenticated ?? false;
+    protected bool IsHR => IsInRole("HR"); // HR, HRLead, Admin can access
+    protected bool IsHRLead => IsInRole("HRLead"); // HRLead, Admin can access
+    protected bool IsTeamLead => IsInRole("TeamLead"); // TeamLead, HR, HRLead, Admin can access
+    protected bool IsEmployee
+    {
+        get
+        {
+            if (AuthenticationStateTask == null || !AuthenticationStateTask.IsCompleted)
+                return false;
+            return AuthenticationStateTask.Result.User.Identity?.IsAuthenticated ?? false;
+        }
+    }
 
     /// <summary>
-    /// Checks if a user's ApplicationRole satisfies the required role based on hierarchy.
+    /// Checks if a user's role satisfies the required role based on hierarchy.
+    /// Role hierarchy: Admin > HRLead > HR > TeamLead > Employee
     /// </summary>
     private static bool CheckRoleAccess(string userRole, string requiredRole)
     {
-        // Define role hierarchy mappings
+        // Define role hierarchy: which roles can access each policy
         var roleHierarchy = new Dictionary<string, string[]>
         {
             ["Employee"] = new[] { "Employee", "TeamLead", "HR", "HRLead", "Admin" },
@@ -61,6 +94,7 @@ public class AuthorizedComponentBase : ComponentBase
             return allowedRoles.Contains(userRole, StringComparer.OrdinalIgnoreCase);
         }
 
+        // If no hierarchy defined, do exact match
         return string.Equals(userRole, requiredRole, StringComparison.OrdinalIgnoreCase);
     }
 }
