@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.CategoryCommands;
@@ -7,6 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/categories")]
+[Authorize(Roles = "HR")]
 public class CategoriesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;

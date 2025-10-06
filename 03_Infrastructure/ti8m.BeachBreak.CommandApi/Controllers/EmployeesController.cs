@@ -61,7 +61,7 @@ public class EmployeesController : BaseController
     }
 
     [HttpPut("bulk-update")]
-    [Authorize(Roles = "HRAccess")] // Only Admin, HRLead, HR can update employees
+    [Authorize(Roles = "HR")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

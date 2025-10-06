@@ -8,7 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/assignments")]
-[Authorize] // All endpoints require authentication
+[Authorize] 
 public class AssignmentsController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
@@ -23,7 +23,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("bulk")]
-    [Authorize(Roles = "HRAccess")] // Only Admin, HRLead, HR can create assignments
+    [Authorize(Roles = "HR")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateBulkAssignments([FromBody] CreateBulkAssignmentsDto bulkAssignmentDto)
     {
@@ -60,6 +60,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/start")]
+    [Authorize(Roles = "HR")]
     public async Task<IActionResult> StartAssignmentWork(Guid assignmentId)
     {
         try
@@ -92,6 +93,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("extend-due-date")]
+    [Authorize(Roles = "HR")]
     public async Task<IActionResult> ExtendAssignmentDueDate([FromBody] ExtendAssignmentDueDateDto extendDto)
     {
         try
@@ -115,6 +117,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("withdraw")]
+    [Authorize(Roles = "HR")]
     public async Task<IActionResult> WithdrawAssignment([FromBody] WithdrawAssignmentDto withdrawDto)
     {
         try
@@ -138,7 +141,6 @@ public class AssignmentsController : BaseController
     }
 
     // Workflow endpoints
-
     [HttpPost("{assignmentId}/sections/{sectionId}/complete-employee")]
     public async Task<IActionResult> CompleteSectionAsEmployee(Guid assignmentId, Guid sectionId)
     {
@@ -156,7 +158,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/sections/{sectionId}/complete-manager")]
-    [Authorize(Roles = "ManagerAccess")] // Only managers
+    [Authorize(Roles = "TeamLead")]
     public async Task<IActionResult> CompleteSectionAsManager(Guid assignmentId, Guid sectionId)
     {
         try
@@ -189,7 +191,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/confirm-manager")]
-    [Authorize(Roles = "ManagerAccess")] // Only managers
+    [Authorize(Roles = "TeamLead")]
     public async Task<IActionResult> ConfirmManagerCompletion(Guid assignmentId, [FromBody] ConfirmCompletionDto confirmDto)
     {
         try
@@ -206,7 +208,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/initiate-review")]
-    [Authorize(Roles = "ManagerAccess")] // Only managers can initiate review
+    [Authorize(Roles = "TeamLead")]
     public async Task<IActionResult> InitiateReview(Guid assignmentId, [FromBody] InitiateReviewDto initiateDto)
     {
         try
@@ -260,7 +262,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/finalize")]
-    [Authorize(Roles = "ManagerAccess")] // Only managers can finalize
+    [Authorize(Roles = "TeamLead")]
     public async Task<IActionResult> FinalizeQuestionnaire(Guid assignmentId, [FromBody] FinalizeQuestionnaireDto finalizeDto)
     {
         try

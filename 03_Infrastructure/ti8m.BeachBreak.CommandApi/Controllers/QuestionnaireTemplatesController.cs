@@ -8,7 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/questionnaire-templates")]
-//[Authorize] // All endpoints require authentication
+[Authorize(Roles = "HR")]
 public class QuestionnaireTemplatesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
@@ -23,7 +23,6 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpPost]
-    [Authorize(Roles = "HRAccess")] // Only Admin, HRLead, HR can create questionnaire templates
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateTemplate(QuestionnaireTemplateDto questionnaireTemplate)
     {
@@ -84,7 +83,6 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "HRAccess")] // Only Admin, HRLead, HR can update questionnaire templates
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateTemplate(Guid id, QuestionnaireTemplateDto questionnaireTemplate)
     {
@@ -149,7 +147,6 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "HRAccess")] // Only Admin, HRLead, HR can delete questionnaire templates
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteTemplate(Guid id)
     {
