@@ -9,7 +9,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("q/api/v{version:apiVersion}/assignments")]
-[Authorize] // All endpoints require authentication - all roles can view assignments
+[Authorize(Roles = "HR")]
 public class AssignmentsController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;

@@ -24,6 +24,7 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpGet]
+    [Authorize(Roles = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllTemplates()
     {
@@ -74,6 +75,7 @@ public class QuestionnaireTemplatesController : BaseController
     //}
 
     [HttpGet("published")]
+    [Authorize(Roles = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPublishedTemplates()
     {
@@ -90,6 +92,7 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpGet("drafts")]
+    [Authorize(Roles = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDraftTemplates()
     {
@@ -106,6 +109,7 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpGet("archived")]
+    [Authorize(Roles = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetArchivedTemplates()
     {
@@ -122,6 +126,7 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpGet("assignable")]
+    [Authorize(Roles = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAssignableTemplates()
     {
@@ -201,14 +206,14 @@ public class QuestionnaireTemplatesController : BaseController
         };
     }
 
-    private static ti8m.BeachBreak.QueryApi.Dto.TemplateStatus MapToStatusDto(Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus queryStatus)
+    private static QueryApi.Dto.TemplateStatus MapToStatusDto(Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus queryStatus)
     {
         return queryStatus switch
         {
-            Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Draft => ti8m.BeachBreak.QueryApi.Dto.TemplateStatus.Draft,
-            Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Published => ti8m.BeachBreak.QueryApi.Dto.TemplateStatus.Published,
-            Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Archived => ti8m.BeachBreak.QueryApi.Dto.TemplateStatus.Archived,
-            _ => ti8m.BeachBreak.QueryApi.Dto.TemplateStatus.Draft
+            Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Draft => QueryApi.Dto.TemplateStatus.Draft,
+            Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Published => QueryApi.Dto.TemplateStatus.Published,
+            Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Archived => QueryApi.Dto.TemplateStatus.Archived,
+            _ => QueryApi.Dto.TemplateStatus.Draft
         };
     }
 
