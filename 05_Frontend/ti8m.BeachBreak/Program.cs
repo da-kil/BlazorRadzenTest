@@ -147,14 +147,23 @@ public class Program
         // scope.
         builder.Services.ConfigureCookieOidcRefresh(CookieAuthenticationDefaults.AuthenticationScheme, MS_OIDC_SCHEME);
 
-        // Configure authorization with role-based policies (matching backend)
+        // Configure authorization with role-based policies (matching backend hierarchy)
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("Employee", policy => policy.RequireRole("Employee"));
+            // Employee policy: All authenticated employees can access (Employee, TeamLead, HR, HRLead, Admin)
+            options.AddPolicy("Employee", policy => policy.RequireRole("Employee", "TeamLead", "HR", "HRLead", "Admin"));
+
+            // TeamLead policy: TeamLead and above can access (TeamLead, HR, HRLead, Admin)
+            options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+
+            // HR policy: HR and above can access (HR, HRLead, Admin)
+            options.AddPolicy("HR", policy => policy.RequireRole("HR", "HRLead", "Admin"));
+
+            // HRLead policy: HRLead and above can access (HRLead, Admin)
+            options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead", "Admin"));
+
+            // Admin policy: Only Admin can access
             options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
-            options.AddPolicy("HR", policy => policy.RequireRole("HR"));
-            options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead"));
-            options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead"));
         });
 
         // Register custom AuthenticationStateProvider that enriches claims with ApplicationRole

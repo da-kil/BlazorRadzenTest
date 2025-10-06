@@ -46,7 +46,7 @@ public class CustomAuthenticationStateProvider : RevalidatingServerAuthenticatio
         CancellationToken cancellationToken)
     {
         // Return true to keep the current authentication state valid
-        return true;
+        return await Task.FromResult(true);
     }
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
