@@ -421,31 +421,75 @@
 		{
 			var competencies = GetCompetenciesFromQuestion(question);
 			var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
-			competencies.Add(new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false, nextOrder));
-			question.Configuration["Competencies"] = competencies;
+			var newCompetency = new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false, nextOrder);
+
+			// Create a new list to ensure change detection
+			var updatedCompetencies = new List<CompetencyDefinition>(competencies) { newCompetency };
+			question.Configuration["Competencies"] = updatedCompetencies;
 		}
 		else if (question.Type == QuestionType.GoalAchievement)
 		{
 			var goalCategories = GetGoalCategoriesFromQuestion(question);
 			var nextOrder = goalCategories.Count > 0 ? goalCategories.Max(g => g.Order) + 1 : 0;
-			goalCategories.Add(new QuestionCard.GoalCategory { Title = "", Description = "", IsRequired = false, Order = nextOrder });
-			question.Configuration["GoalCategories"] = goalCategories;
+			var newCategory = new QuestionCard.GoalCategory { Title = "", Description = "", IsRequired = false, Order = nextOrder };
+
+			// Create a new list to ensure change detection
+			var updatedCategories = new List<QuestionCard.GoalCategory>(goalCategories) { newCategory };
+			question.Configuration["GoalCategories"] = updatedCategories;
 		}
 		else if (question.Type == QuestionType.TextQuestion)
 		{
 			var textSections = GetTextSectionsFromQuestion(question);
 			var nextOrder = textSections.Count > 0 ? textSections.Max(t => t.Order) + 1 : 0;
-			textSections.Add(new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = nextOrder });
-			question.Configuration["TextSections"] = textSections;
+			var newSection = new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = nextOrder };
+
+			// Create a new list to ensure change detection
+			var updatedSections = new List<QuestionCard.TextSection>(textSections) { newSection };
+			question.Configuration["TextSections"] = updatedSections;
 		}
+
+		// Force component re-render
+		NotifyStateChanged();
 	}
 
 	private List<CompetencyDefinition> GetCompetenciesFromQuestion(QuestionItem question)
 	{
 		if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
 		{
+			// Handle direct cast (when set in editor)
 			if (competenciesObj is List<CompetencyDefinition> competencies)
+			{
 				return competencies;
+			}
+
+			// Handle JSON deserialization (when loaded from API)
+			if (competenciesObj is System.Text.Json.JsonElement jsonElement)
+			{
+				try
+				{
+					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+					{
+						return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing competencies: {ex.Message}");
+				}
+			}
+
+			// Handle string representation (backup case)
+			if (competenciesObj is string jsonString)
+			{
+				try
+				{
+					return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonString) ?? new List<CompetencyDefinition>();
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing competencies from string: {ex.Message}");
+				}
+			}
 		}
 		return new List<CompetencyDefinition>();
 	}
@@ -454,8 +498,40 @@
 	{
 		if (question.Configuration.TryGetValue("GoalCategories", out var categoriesObj))
 		{
+			// Handle direct cast (when set in editor)
 			if (categoriesObj is List<QuestionCard.GoalCategory> categories)
+			{
 				return categories;
+			}
+
+			// Handle JSON deserialization (when loaded from API)
+			if (categoriesObj is System.Text.Json.JsonElement jsonElement)
+			{
+				try
+				{
+					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+					{
+						return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing goal categories: {ex.Message}");
+				}
+			}
+
+			// Handle string representation (backup case)
+			if (categoriesObj is string jsonString)
+			{
+				try
+				{
+					return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonString) ?? new List<QuestionCard.GoalCategory>();
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing goal categories from string: {ex.Message}");
+				}
+			}
 		}
 		return new List<QuestionCard.GoalCategory>();
 	}
@@ -464,8 +540,40 @@
 	{
 		if (question.Configuration.TryGetValue("TextSections", out var sectionsObj))
 		{
+			// Handle direct cast (when set in editor)
 			if (sectionsObj is List<QuestionCard.TextSection> sections)
+			{
 				return sections;
+			}
+
+			// Handle JSON deserialization (when loaded from API)
+			if (sectionsObj is System.Text.Json.JsonElement jsonElement)
+			{
+				try
+				{
+					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+					{
+						return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing text sections: {ex.Message}");
+				}
+			}
+
+			// Handle string representation (backup case)
+			if (sectionsObj is string jsonString)
+			{
+				try
+				{
+					return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonString) ?? new List<QuestionCard.TextSection>();
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error deserializing text sections from string: {ex.Message}");
+				}
+			}
 		}
 		return new List<QuestionCard.TextSection>();
 	}
