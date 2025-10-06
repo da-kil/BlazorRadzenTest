@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Application.Query.Queries;
+using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
@@ -8,8 +10,11 @@ namespace ti8m.BeachBreak.Application.Query.Services;
 /// <summary>
 /// Service to determine which employees a user can see based on their ApplicationRole.
 /// Implements the data filtering logic for the 5 user types.
+/// Fetches ApplicationRole from database, not from claims.
 /// </summary>
-public class EmployeeVisibilityService(IEmployeeRepository employeeRepository)
+public class EmployeeVisibilityService(
+    IEmployeeRepository employeeRepository,
+    IQueryDispatcher queryDispatcher)
 {
     /// <summary>
     /// Gets all employees visible to the current user based on their role.
@@ -18,7 +23,7 @@ public class EmployeeVisibilityService(IEmployeeRepository employeeRepository)
         ClaimsPrincipal user,
         CancellationToken cancellationToken = default)
     {
-        var role = GetApplicationRole(user);
+        var role = await GetApplicationRoleAsync(user, cancellationToken);
 
         return role switch
         {
@@ -44,21 +49,42 @@ public class EmployeeVisibilityService(IEmployeeRepository employeeRepository)
     }
 
     /// <summary>
-    /// Gets the ApplicationRole from user claims.
+    /// Gets the ApplicationRole from the database (matching authorization middleware approach).
     /// </summary>
-    private ApplicationRole GetApplicationRole(ClaimsPrincipal user)
+    private async Task<ApplicationRole> GetApplicationRoleAsync(
+        ClaimsPrincipal user,
+        CancellationToken cancellationToken)
     {
-        var roleString = user.FindFirst("ApplicationRole")?.Value
-                        ?? user.FindFirst(ClaimTypes.Role)?.Value;
-
-        if (string.IsNullOrEmpty(roleString))
+        var userId = GetUserId(user);
+        if (!userId.HasValue)
         {
             return ApplicationRole.Employee; // Default to most restrictive
         }
 
-        return Enum.TryParse<ApplicationRole>(roleString, out var role)
-            ? role
-            : ApplicationRole.Employee;
+        try
+        {
+            var roleResult = await queryDispatcher.QueryAsync(
+                new GetEmployeeRoleByIdQuery(userId.Value),
+                cancellationToken);
+
+            return roleResult?.ApplicationRole ?? ApplicationRole.Employee;
+        }
+        catch
+        {
+            return ApplicationRole.Employee; // Default to most restrictive on error
+        }
+    }
+
+    /// <summary>
+    /// Gets the user ID from claims (Entra ID object ID).
+    /// </summary>
+    private static Guid? GetUserId(ClaimsPrincipal user)
+    {
+        var userIdClaim = user.FindFirst("oid")?.Value
+                         ?? user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value
+                         ?? user.FindFirst("sub")?.Value;
+
+        return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
     }
 
     /// <summary>
