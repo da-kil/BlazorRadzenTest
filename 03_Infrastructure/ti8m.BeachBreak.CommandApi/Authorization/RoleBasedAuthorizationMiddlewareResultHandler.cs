@@ -20,16 +20,8 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
     private readonly IQueryDispatcher queryDispatcher;
     private readonly ILogger<RoleBasedAuthorizationMiddlewareResultHandler> logger;
 
-    // Policy to ApplicationRole mappings
-    // All roles inherit Employee's basic access and can access additional policy-protected endpoints as defined below
-    private static readonly Dictionary<string, ApplicationRole[]> PolicyRoleMappings = new()
-    {
-        ["Employee"] = [ApplicationRole.Employee, ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
-        ["Admin"] = [ApplicationRole.Admin],
-        ["HR"] = [ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
-        ["HRLead"] = [ApplicationRole.HRLead, ApplicationRole.Admin],
-        ["TeamLead"] = [ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin]
-    };
+    // Policy to ApplicationRole mappings - delegated to shared RoleHierarchyService
+    private static Dictionary<string, ApplicationRole[]> PolicyRoleMappings => RoleHierarchyService.PolicyRoleMappings;
 
     public RoleBasedAuthorizationMiddlewareResultHandler(
         IAuthorizationCacheService cacheService,

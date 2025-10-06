@@ -139,14 +139,39 @@
 </AuthorizeView>
 
 @code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
+
     RadzenDataGrid<EmployeeDto> employeesGrid = null!;
     List<EmployeeDto> employees = new();
     List<EmployeeDto> filteredEmployees = new();
     string searchText = string.Empty;
+    ApplicationRole currentUserRole = ApplicationRole.Employee;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadCurrentUserRole();
         await LoadEmployees();
+    }
+
+    async Task LoadCurrentUserRole()
+    {
+        if (AuthenticationStateTask != null)
+        {
+            var authState = await AuthenticationStateTask;
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                var roleClaim = user.FindFirst("ApplicationRole")?.Value
+                    ?? user.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+                if (!string.IsNullOrEmpty(roleClaim) && Enum.TryParse<ApplicationRole>(roleClaim, out var role))
+                {
+                    currentUserRole = role;
+                }
+            }
+        }
     }
 
     async Task LoadEmployees()
@@ -195,9 +220,28 @@
 
     List<ApplicationRole> GetAvailableRoles()
     {
-        // This would ideally check the current user's role and return appropriate options
-        // For now, return all roles
-        return Enum.GetValues<ApplicationRole>().ToList();
+        // Business rule: Users can only assign roles at their level or below
+        // Admin can assign all roles
+        // HRLead can assign all roles except Admin
+        // HR can assign all roles except Admin and HRLead
+        return currentUserRole switch
+        {
+            ApplicationRole.Admin => Enum.GetValues<ApplicationRole>().ToList(),
+            ApplicationRole.HRLead => new List<ApplicationRole>
+            {
+                ApplicationRole.Employee,
+                ApplicationRole.TeamLead,
+                ApplicationRole.HR,
+                ApplicationRole.HRLead
+            },
+            ApplicationRole.HR => new List<ApplicationRole>
+            {
+                ApplicationRole.Employee,
+                ApplicationRole.TeamLead,
+                ApplicationRole.HR
+            },
+            _ => new List<ApplicationRole>() // Should not happen as page requires HR+ policy
+        };
     }
 
     async Task EditRow(EmployeeDto employee)

@@ -180,13 +180,23 @@ public class EmployeeCommandHandler :
             }
 
             // Change the application role with audit information from UserContext
+            // RequesterRole is provided by infrastructure layer
+            // Domain method validates authorization rules
             var userId = Guid.TryParse(userContext.Id, out var parsedUserId) ? parsedUserId : Guid.Empty;
             var userName = string.IsNullOrEmpty(userContext.Name) ? "System" : userContext.Name;
 
-            employee.ChangeApplicationRole(
+            var domainResult = employee.ChangeApplicationRole(
                 command.NewRole,
+                command.RequesterRole,
                 userId,
                 userName);
+
+            if (!domainResult.IsSuccess)
+            {
+                logger.LogWarning("Failed to change application role for employee {EmployeeId}: {ErrorMessage}",
+                    command.EmployeeId, domainResult.ErrorMessage);
+                return Result.Fail(domainResult.ErrorMessage!, domainResult.StatusCode ?? 403);
+            }
 
             await repository.StoreAsync(employee, cancellationToken);
 

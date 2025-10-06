@@ -128,8 +128,20 @@ public class Employee : AggregateRoot
         }
     }
 
-    public void ChangeApplicationRole(ApplicationRole newRole, Guid changedByUserId, string changedByUserName)
+    public DomainResult ChangeApplicationRole(
+        ApplicationRole newRole,
+        ApplicationRole requesterRole,
+        Guid changedByUserId,
+        string changedByUserName)
     {
+        // Validate authorization using domain service
+        var authResult = ApplicationRoleAuthorizationService.CanAssignRole(requesterRole, newRole);
+
+        if (!authResult.IsSuccess)
+        {
+            return authResult;
+        }
+
         if (ApplicationRole != newRole)
         {
             RaiseEvent(new EmployeeApplicationRoleChanged(
@@ -139,6 +151,8 @@ public class Employee : AggregateRoot
                 changedByUserName,
                 DateTime.UtcNow));
         }
+
+        return DomainResult.Success();
     }
 
     public void ChangeEndDate(DateOnly? endDate)

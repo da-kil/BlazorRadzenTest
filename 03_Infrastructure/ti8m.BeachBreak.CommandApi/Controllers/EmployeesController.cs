@@ -2,7 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
+using ti8m.BeachBreak.Application.Query.Queries;
+using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -12,13 +16,19 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 public class EmployeesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
+    private readonly IQueryDispatcher queryDispatcher;
+    private readonly UserContext userContext;
     private readonly ILogger<EmployeesController> logger;
 
     public EmployeesController(
         ICommandDispatcher commandDispatcher,
+        IQueryDispatcher queryDispatcher,
+        UserContext userContext,
         ILogger<EmployeesController> logger)
     {
         this.commandDispatcher = commandDispatcher;
+        this.queryDispatcher = queryDispatcher;
+        this.userContext = userContext;
         this.logger = logger;
     }
 
@@ -93,7 +103,7 @@ public class EmployeesController : BaseController
     /// <summary>
     /// Changes the application role of an employee.
     /// Only Admin, HRLead, and HR can access this endpoint.
-    /// Users can only assign roles at their level or below.
+    /// Controller fetches requester's role from database using UserContext; business rules enforced in domain layer.
     /// </summary>
     [HttpPut("{employeeId:guid}/application-role")]
     [Authorize(Roles = "HR")]
@@ -105,8 +115,29 @@ public class EmployeesController : BaseController
         Guid employeeId,
         [FromBody] ChangeApplicationRoleDto dto)
     {
+        // Infrastructure responsibility: Fetch requester's role from database using UserContext
+        if (!Guid.TryParse(userContext.Id, out var userId))
+        {
+            logger.LogWarning("Cannot change application role: User ID not found in UserContext");
+            return CreateResponse(Result.Fail("User identification failed", 401));
+        }
+
+        var requesterRoleResult = await queryDispatcher.QueryAsync(
+            new GetEmployeeRoleByIdQuery(userId),
+            HttpContext.RequestAborted);
+
+        if (requesterRoleResult == null)
+        {
+            logger.LogWarning("Cannot change application role: Requester role not found for user {UserId}", userId);
+            return CreateResponse(Result.Fail("Requester role not found", 403));
+        }
+
+        // Dispatch command with requester's role - business rules validated in domain
         Result result = await commandDispatcher.SendAsync(
-            new ChangeEmployeeApplicationRoleCommand(employeeId, (Domain.EmployeeAggregate.ApplicationRole)dto.NewRole));
+            new ChangeEmployeeApplicationRoleCommand(
+                employeeId,
+                (ApplicationRole)dto.NewRole,
+                requesterRoleResult.ApplicationRole));
 
         return CreateResponse(result);
     }
