@@ -33,17 +33,26 @@
                           Placeholder="Search employees..."
                           @oninput="@OnSearchTextChanged"
                           Style="width: 300px;" />
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                Showing @filteredEmployees.Count employees
+            </RadzenText>
         </div>
 
-        <RadzenDataGrid @ref="employeesGrid"
-                       Data="@filteredEmployees"
-                       TItem="EmployeeDto"
-                       AllowFiltering="true"
-                       AllowColumnResize="true"
-                       AllowSorting="true"
-                       EditMode="DataGridEditMode.Single"
-                       RowUpdate="@OnUpdateRow"
-                       AllowAlternatingRows="false">
+        @if (filteredEmployees.Count == 0)
+        {
+            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No employees found.</RadzenText>
+        }
+        else
+        {
+            <RadzenDataGrid @ref="employeesGrid"
+                           Data="@filteredEmployees"
+                           TItem="EmployeeDto"
+                           AllowFiltering="true"
+                           AllowColumnResize="true"
+                           AllowSorting="true"
+                           EditMode="DataGridEditMode.Single"
+                           RowUpdate="@OnUpdateRow"
+                           AllowAlternatingRows="false">
             <Columns>
                 <RadzenDataGridColumn TItem="EmployeeDto" Property="FirstName" Title="First Name" Width="150px" Sortable="true" Filterable="true">
                     <Template Context="employee">
@@ -116,8 +125,9 @@
                         </RadzenButton>
                     </EditTemplate>
                 </RadzenDataGridColumn>
-            </Columns>
-        </RadzenDataGrid>
+                </Columns>
+            </RadzenDataGrid>
+        }
     </RadzenCard>
         </div>
     </Authorized>
@@ -139,6 +149,9 @@
 </AuthorizeView>
 
 @code {
+    // Disable parameter optimization to ensure component re-renders
+    protected override bool EnableParameterOptimization => false;
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
 
@@ -181,6 +194,7 @@
             employees = await EmployeeService.GetAllEmployeesAsync();
             employees = employees.Where(e => !e.IsDeleted).ToList();
             FilterEmployees();
+            NotifyStateChanged();
         }
         catch (Exception ex)
         {
@@ -198,6 +212,7 @@
     {
         searchText = args.Value?.ToString() ?? string.Empty;
         FilterEmployees();
+        NotifyStateChanged(); // Force re-render after filtering
     }
 
     void FilterEmployees()
