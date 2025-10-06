@@ -7,51 +7,91 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
 {
     private const string EmployeeQueryEndpoint = "q/api/v1/employees";
     private const string EmployeeCommandEndpoint = "c/api/v1/employees";
-    private readonly string currentEmployeeId;
 
     public EmployeeQuestionnaireService(IHttpClientFactory factory) : base(factory)
     {
-        // TODO: Get current employee ID from authentication context
-        currentEmployeeId = "b0f388c2-6294-4116-a8b2-eccafa29b3fb";
     }
 
     public async Task<List<QuestionnaireAssignment>> GetMyAssignmentsAsync()
     {
-        return await GetEmployeeResourceAsync<QuestionnaireAssignment>(EmployeeQueryEndpoint, currentEmployeeId, "assignments");
+        // Call the secure "me" endpoint - backend uses UserContext to get employee ID
+        return await GetAllAsync<QuestionnaireAssignment>($"{EmployeeQueryEndpoint}/me/assignments");
     }
 
     public async Task<QuestionnaireAssignment?> GetMyAssignmentByIdAsync(Guid assignmentId)
     {
-        return await GetEmployeeSubResourceAsync<QuestionnaireAssignment>(EmployeeQueryEndpoint, currentEmployeeId, "assignments", assignmentId);
+        // Use "me" endpoint - backend resolves employee ID from UserContext
+        try
+        {
+            return await HttpQueryClient.GetFromJsonAsync<QuestionnaireAssignment>($"{EmployeeQueryEndpoint}/me/assignments/{assignmentId}");
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error fetching assignment {assignmentId}", ex);
+            return null;
+        }
     }
 
     public async Task<QuestionnaireResponse?> GetMyResponseAsync(Guid assignmentId)
     {
-        return await GetEmployeeSubResourceAsync<QuestionnaireResponse>(EmployeeQueryEndpoint, currentEmployeeId, "responses/assignment", assignmentId);
+        // Use "me" endpoint - backend resolves employee ID from UserContext
+        try
+        {
+            return await HttpQueryClient.GetFromJsonAsync<QuestionnaireResponse>($"{EmployeeQueryEndpoint}/me/responses/assignment/{assignmentId}");
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error fetching response for assignment {assignmentId}", ex);
+            return null;
+        }
     }
 
     public async Task<QuestionnaireResponse> SaveMyResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
     {
-        var result = await PostEmployeeResourceAsync<Dictionary<Guid, SectionResponse>, QuestionnaireResponse>(EmployeeCommandEndpoint, currentEmployeeId, "responses/assignment", assignmentId, sectionResponses);
-        return result ?? throw new Exception("Failed to save response");
+        // Use "me" endpoint - backend resolves employee ID from UserContext
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", sectionResponses);
+            response.EnsureSuccessStatusCode();
+            var result = await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
+            return result ?? throw new Exception("Failed to deserialize response");
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error saving response for assignment {assignmentId}", ex);
+            throw;
+        }
     }
 
     public async Task<QuestionnaireResponse?> SubmitMyResponseAsync(Guid assignmentId)
     {
-        return await PostEmployeeActionAsync<QuestionnaireResponse>(EmployeeCommandEndpoint, currentEmployeeId, "responses/assignment", assignmentId, "submit");
+        // Use "me" endpoint - backend resolves employee ID from UserContext
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}/submit", new { });
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error submitting response for assignment {assignmentId}", ex);
+            return null;
+        }
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsByStatusAsync(AssignmentStatus status)
     {
+        // Use "me" endpoint with status filter - backend resolves employee ID from UserContext
         var queryString = $"status={status}";
-        return await GetAllAsync<QuestionnaireAssignment>($"{EmployeeQueryEndpoint}/{currentEmployeeId}/assignments", queryString);
+        return await GetAllAsync<QuestionnaireAssignment>($"{EmployeeQueryEndpoint}/me/assignments", queryString);
     }
 
     public async Task<AssignmentProgress> GetAssignmentProgressAsync(Guid assignmentId)
     {
         try
         {
-            var response = await HttpQueryClient.GetFromJsonAsync<AssignmentProgress>($"{EmployeeQueryEndpoint}/{currentEmployeeId}/assignments/{assignmentId}/progress");
+            // Use "me" endpoint - backend resolves employee ID from UserContext
+            var response = await HttpQueryClient.GetFromJsonAsync<AssignmentProgress>($"{EmployeeQueryEndpoint}/me/assignments/{assignmentId}/progress");
             return response ?? new AssignmentProgress { AssignmentId = assignmentId };
         }
         catch (Exception ex)
@@ -63,6 +103,7 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
 
     public async Task<List<AssignmentProgress>> GetAllAssignmentProgressAsync()
     {
-        return await GetEmployeeResourceAsync<AssignmentProgress>(EmployeeQueryEndpoint, currentEmployeeId, "assignments/progress");
+        // Use "me" endpoint - backend resolves employee ID from UserContext
+        return await GetAllAsync<AssignmentProgress>($"{EmployeeQueryEndpoint}/me/assignments/progress");
     }
 }
