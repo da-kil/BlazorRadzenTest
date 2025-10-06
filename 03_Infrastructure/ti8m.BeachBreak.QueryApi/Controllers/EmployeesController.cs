@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
+using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
@@ -13,13 +15,16 @@ public class EmployeesController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;
     private readonly ILogger<EmployeesController> logger;
+    private readonly UserContext userContext;
 
     public EmployeesController(
         IQueryDispatcher queryDispatcher,
-        ILogger<EmployeesController> logger)
+        ILogger<EmployeesController> logger,
+        UserContext userContext)
     {
         this.queryDispatcher = queryDispatcher;
         this.logger = logger;
+        this.userContext = userContext;
     }
 
     [HttpGet]
@@ -139,4 +144,124 @@ public class EmployeesController : BaseController
         }
     }
 
+    /// <summary>
+    /// Gets all questionnaire assignments for the currently authenticated employee.
+    /// Uses UserContext to get the employee ID - more secure than accepting it as a parameter.
+    /// </summary>
+    [HttpGet("me/assignments")]
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetMyAssignments()
+    {
+        // Get employee ID from authenticated user context (security best practice)
+        if (!Guid.TryParse(userContext.Id, out var employeeId))
+        {
+            logger.LogWarning("GetMyAssignments failed: Unable to parse user ID from context");
+            return Unauthorized("User ID not found in authentication context");
+        }
+
+        logger.LogInformation("Received GetMyAssignments request for authenticated EmployeeId: {EmployeeId}", employeeId);
+
+        try
+        {
+            var result = await queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
+
+            if (result.Succeeded)
+            {
+                var assignmentCount = result.Payload?.Count() ?? 0;
+                logger.LogInformation("GetMyAssignments completed successfully for EmployeeId: {EmployeeId}, returned {AssignmentCount} assignments",
+                    employeeId, assignmentCount);
+            }
+            else
+            {
+                logger.LogWarning("GetMyAssignments failed for EmployeeId: {EmployeeId}, Error: {ErrorMessage}", employeeId, result.Message);
+            }
+
+            return CreateResponse(result, assignments =>
+            {
+                return assignments.Select(assignment => new QuestionnaireAssignmentDto
+                {
+                    Id = assignment.Id,
+                    EmployeeId = assignment.EmployeeId.ToString(),
+                    EmployeeName = assignment.EmployeeName,
+                    EmployeeEmail = assignment.EmployeeEmail,
+                    TemplateId = assignment.TemplateId,
+                    Status = MapAssignmentStatusToDto[assignment.Status],
+                    AssignedDate = assignment.AssignedDate,
+                    DueDate = assignment.DueDate,
+                    CompletedDate = assignment.CompletedDate,
+                    AssignedBy = assignment.AssignedBy,
+                    Notes = assignment.Notes
+                });
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving assignments for authenticated employee {EmployeeId}", employeeId);
+            return StatusCode(500, "An error occurred while retrieving your assignments");
+        }
+    }
+
+    /// <summary>
+    /// Gets all questionnaire assignments for a specific employee by ID.
+    /// This endpoint requires HR role as it allows viewing other employees' assignments.
+    /// </summary>
+    [HttpGet("{employeeId:guid}/assignments")]
+    [Authorize(Roles = "TeamLead")]
+    [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetEmployeeAssignments(Guid employeeId)
+    {
+        logger.LogInformation("Received GetEmployeeAssignments request for EmployeeId: {EmployeeId}", employeeId);
+
+        try
+        {
+            var result = await queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
+
+            if (result.Succeeded)
+            {
+                var assignmentCount = result.Payload?.Count() ?? 0;
+                logger.LogInformation("GetEmployeeAssignments completed successfully for EmployeeId: {EmployeeId}, returned {AssignmentCount} assignments",
+                    employeeId, assignmentCount);
+            }
+            else
+            {
+                logger.LogWarning("GetEmployeeAssignments failed for EmployeeId: {EmployeeId}, Error: {ErrorMessage}", employeeId, result.Message);
+            }
+
+            return CreateResponse(result, assignments =>
+            {
+                return assignments.Select(assignment => new QuestionnaireAssignmentDto
+                {
+                    Id = assignment.Id,
+                    EmployeeId = assignment.EmployeeId.ToString(),
+                    EmployeeName = assignment.EmployeeName,
+                    EmployeeEmail = assignment.EmployeeEmail,
+                    TemplateId = assignment.TemplateId,
+                    Status = MapAssignmentStatusToDto[assignment.Status],
+                    AssignedDate = assignment.AssignedDate,
+                    DueDate = assignment.DueDate,
+                    CompletedDate = assignment.CompletedDate,
+                    AssignedBy = assignment.AssignedBy,
+                    Notes = assignment.Notes
+                });
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving assignments for employee {EmployeeId}", employeeId);
+            return StatusCode(500, "An error occurred while retrieving employee assignments");
+        }
+    }
+
+    private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus> MapAssignmentStatusToDto =>
+        new Dictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus>
+        {
+            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Assigned, QueryApi.Dto.AssignmentStatus.Assigned },
+            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue, QueryApi.Dto.AssignmentStatus.Overdue },
+            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled, QueryApi.Dto.AssignmentStatus.Cancelled },
+            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress, QueryApi.Dto.AssignmentStatus.InProgress },
+            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed, QueryApi.Dto.AssignmentStatus.Completed },
+        };
 }
