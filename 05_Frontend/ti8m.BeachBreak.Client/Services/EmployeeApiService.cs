@@ -45,7 +45,7 @@ public class EmployeeApiService : BaseApiService, IEmployeeApiService
     {
         try
         {
-            var response = await HttpCommandClient.PutAsJsonAsync($"api/v1/employees/{employeeId}/application-role", new { NewRole = newRole });
+            var response = await HttpCommandClient.PutAsJsonAsync($"c/api/v1/employees/{employeeId}/application-role", new { NewRole = newRole });
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)

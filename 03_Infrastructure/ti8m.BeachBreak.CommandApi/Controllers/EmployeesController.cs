@@ -96,7 +96,7 @@ public class EmployeesController : BaseController
     /// Users can only assign roles at their level or below.
     /// </summary>
     [HttpPut("{employeeId:guid}/application-role")]
-    [Authorize(Policy = "HR")]
+    [Authorize(Roles = "HR")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
