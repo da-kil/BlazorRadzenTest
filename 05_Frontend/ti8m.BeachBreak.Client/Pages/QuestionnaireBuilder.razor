@@ -17,13 +17,15 @@
 @inject QuestionConfigurationService ConfigurationService
 @inject QuestionnaireValidationService ValidationService
 @inject ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory HandlerFactory
+@inject QuestionnaireBuilderState State
 @inherits OptimizedComponentBase
+@implements IDisposable
 
 <PageTitle>Questionnaire Builder</PageTitle>
 
 <QuestionnaireBuilderHeader
-	IsEditMode="@IsEditMode"
-	Status="@template.Status"
+	IsEditMode="@State.IsEditMode"
+	Status="@State.Template.Status"
 	OnSave="@SaveQuestionnaire"
 	OnPublish="@PublishQuestionnaire"
 	OnArchive="@ArchiveQuestionnaire"
@@ -31,13 +33,13 @@
 	OnRestore="@RestoreQuestionnaire" />
 
 <ProgressSteps
-	CurrentStep="@currentStep"
+	CurrentStep="@State.CurrentStep"
 	OnStepClick="@SetCurrentStep" />
 
 <!-- Main Content -->
 <div class="main-content-modern">
 	<div class="container-fluid">
-		@if (showQuestionEditor)
+		@if (State.ShowQuestionEditor)
 		{
 			<!-- Full-screen Question Editor -->
 			<div class="question-editor-fullscreen">
@@ -54,10 +56,10 @@
 					</div>
 				</div>
 				<div class="editor-content p-4">
-					@if (editingQuestion != null)
+					@if (State.EditingQuestion != null)
 					{
-						<QuestionCard Question="@editingQuestion"
-									  Template="@template"
+						<QuestionCard Question="@State.EditingQuestion"
+									  Template="@State.Template"
 									  CanMoveUp="false"
 									  CanMoveDown="false"
 									  QuestionTypeLabels="@questionTypeLabels"
@@ -72,29 +74,29 @@
 		else
 		{
 			<!-- Step Content -->
-			@if (currentStep == 1)
+			@if (State.CurrentStep == 1)
 			{
 				<div class="step-content-modern">
 					<div class="step-header">
 						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Template Information</RadzenText>
 						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">@GetStatusDescription()</RadzenText>
 					</div>
-					<BasicInfoTab Template="@template" Categories="@categories" />
+					<BasicInfoTab Template="@State.Template" Categories="@categories" />
 					<div class="step-navigation mt-4 d-flex justify-content-end">
 						<RadzenButton Text="Next: Build Sections" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(2))" />
 					</div>
 				</div>
 			}
-			else if (currentStep == 2)
+			else if (State.CurrentStep == 2)
 			{
 				<div class="step-content-modern">
 					<div class="step-header">
 						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Build Sections</RadzenText>
 						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Organize your assessment into logical sections and configure questions</RadzenText>
 					</div>
-					<QuestionsTab Template="@template"
-								  ShowQuestionTypeSelection="@showQuestionTypeSelection"
-								  SelectedSectionIndex="@selectedSectionIndex"
+					<QuestionsTab Template="@State.Template"
+								  ShowQuestionTypeSelection="@State.ShowQuestionTypeSelection"
+								  SelectedSectionIndex="@State.SelectedSectionIndex"
 								  QuestionTypeLabels="@questionTypeLabels"
 								  OnAddSectionWithType="@AddSectionWithType"
 								  OnMoveSectionUp="@MoveSectionUp"
@@ -114,19 +116,19 @@
 					</div>
 				</div>
 			}
-			else if (currentStep == 3)
+			else if (State.CurrentStep == 3)
 			{
 				<div class="step-content-modern">
 					<div class="step-header">
 						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Review & Publish</RadzenText>
 						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Review your questionnaire and make it available for assignments</RadzenText>
 					</div>
-					<PreviewTab Template="@template" QuestionTypeLabels="@questionTypeLabels" />
+					<PreviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" />
 					<div class="step-navigation mt-4 d-flex justify-content-between">
 						<RadzenButton Text="Previous: Build Sections" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
 						<div class="d-flex gap-2">
 							@{
-								var stepNavStatus = IsEditMode ? template.Status : TemplateStatus.Draft;
+								var stepNavStatus = State.IsEditMode ? State.Template.Status : TemplateStatus.Draft;
 							}
 							@switch (stepNavStatus)
 							{
@@ -152,22 +154,7 @@
 @code {
 	[Parameter] public Guid? TemplateId { get; set; }
 
-	private QuestionnaireTemplate template = new();
 	private bool IsEditMode => TemplateId.HasValue;
-
-	// Step navigation state
-	private int currentStep = 1;
-
-	// Question editor state
-	private bool showQuestionEditor = false;
-	private QuestionItem? editingQuestion = null;
-	private int editingSectionIndex = -1;
-	private int editingQuestionIndex = -1;
-
-	// Question type selection state
-	private bool showQuestionTypeSelection = false;
-	private int selectedSectionIndex = -1;
-	private QuestionType? selectedQuestionType = null;
 
 	// Editable question type labels
 	private Dictionary<QuestionType, string> questionTypeLabels = new()
@@ -181,6 +168,8 @@
 
 	protected override async Task OnInitializedAsync()
 	{
+		State.OnStateChanged += HandleStateChanged;
+
 		await ExecuteSafelyAsync(async () =>
 		{
 			if (IsEditMode && TemplateId.HasValue)
@@ -197,7 +186,7 @@
 				await LoadCategories();
 
 				// Initialize empty template with default values
-				template = new QuestionnaireTemplate
+				State.Template = new QuestionnaireTemplate
 				{
 					Name = "",
 					Description = "",
@@ -208,12 +197,23 @@
 		}, "InitializeQuestionnaireBuilder");
 	}
 
+	private void HandleStateChanged()
+	{
+		NotifyStateChanged();
+	}
+
+	public override void Dispose()
+	{
+		State.OnStateChanged -= HandleStateChanged;
+		base.Dispose();
+	}
+
 	protected override bool HasStateChanged()
 	{
-		return HasParameterChanged(nameof(template), template?.Id) ||
-			   HasParameterChanged(nameof(currentStep), currentStep) ||
-			   HasParameterChanged(nameof(showQuestionEditor), showQuestionEditor) ||
-			   HasParameterChanged(nameof(showQuestionTypeSelection), showQuestionTypeSelection);
+		return HasParameterChanged(nameof(State.Template), State.Template?.Id) ||
+			   HasParameterChanged(nameof(State.CurrentStep), State.CurrentStep) ||
+			   HasParameterChanged(nameof(State.ShowQuestionEditor), State.ShowQuestionEditor) ||
+			   HasParameterChanged(nameof(State.ShowQuestionTypeSelection), State.ShowQuestionTypeSelection);
 	}
 
 	private async Task LoadCategories()
@@ -237,12 +237,12 @@
 			var loadedTemplate = await ApiService.GetTemplateByIdAsync(templateId);
 			if (loadedTemplate != null)
 			{
-				template = loadedTemplate;
+				State.Template = loadedTemplate;
 			}
 			else
 			{
 				NotificationService.Notify(NotificationSeverity.Warning, "Not Found", "Template not found. Creating new template.");
-				template = new QuestionnaireTemplate();
+				State.Template = new QuestionnaireTemplate();
 				// Clear the TemplateId parameter to switch to create mode
 				TemplateId = null;
 			}
@@ -250,30 +250,24 @@
 		catch (Exception ex)
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load template: {ex.Message}");
-			template = new QuestionnaireTemplate();
+			State.Template = new QuestionnaireTemplate();
 			TemplateId = null;
 		}
 	}
 
 	private void SetCurrentStep(int step)
 	{
-		if (currentStep != step)
-		{
-			currentStep = step;
-			NotifyStateChanged();
-		}
+		State.CurrentStep = step;
 	}
 
 	private async Task OpenQuestionEditor((int sectionIndex, int questionIndex) indices)
 	{
-		if (indices.sectionIndex >= 0 && indices.sectionIndex < template.Sections.Count &&
-			indices.questionIndex >= 0 && indices.questionIndex < template.Sections[indices.sectionIndex].Questions.Count)
+		if (indices.sectionIndex >= 0 && indices.sectionIndex < State.Template.Sections.Count &&
+			indices.questionIndex >= 0 && indices.questionIndex < State.Template.Sections[indices.sectionIndex].Questions.Count)
 		{
-			editingSectionIndex = indices.sectionIndex;
-			editingQuestionIndex = indices.questionIndex;
 			// Create a deep copy of the question for editing
-			var originalQuestion = template.Sections[indices.sectionIndex].Questions[indices.questionIndex];
-			editingQuestion = new QuestionItem
+			var originalQuestion = State.Template.Sections[indices.sectionIndex].Questions[indices.questionIndex];
+			var editingQuestion = new QuestionItem
 			{
 				Id = originalQuestion.Id,
 				Title = originalQuestion.Title,
@@ -283,26 +277,22 @@
 				IsRequired = originalQuestion.IsRequired,
 				Configuration = new Dictionary<string, object>(originalQuestion.Configuration)
 			};
-			showQuestionEditor = true;
-			NotifyStateChanged();
+			State.OpenQuestionEditor(editingQuestion, indices.sectionIndex, indices.questionIndex);
 		}
 	}
 
 	private void CloseQuestionEditor()
 	{
-		showQuestionEditor = false;
-		editingQuestion = null;
-		editingSectionIndex = -1;
-		editingQuestionIndex = -1;
-		NotifyStateChanged();
+		State.CloseQuestionEditor();
 	}
 
-	private async Task SaveCurrentQuestion()
+	private void SaveCurrentQuestion()
 	{
-		if (editingQuestion != null && editingSectionIndex >= 0 && editingQuestionIndex >= 0)
+		if (State.EditingQuestion != null && State.EditingSectionIndex >= 0 && State.EditingQuestionIndex >= 0)
 		{
 			// Save the edited question back to the template
-			template.Sections[editingSectionIndex].Questions[editingQuestionIndex] = editingQuestion;
+			State.Template.Sections[State.EditingSectionIndex].Questions[State.EditingQuestionIndex] = State.EditingQuestion;
+			State.MarkAsDirty();
 			CloseQuestionEditor();
 			NotificationService.Notify(NotificationSeverity.Success, "Saved", "Question updated successfully");
 		}
@@ -310,7 +300,7 @@
 
 	private string GetCurrentQuestionTitle()
 	{
-		return editingQuestion?.Title ?? "Untitled Question";
+		return State.EditingQuestion?.Title ?? "Untitled Question";
 	}
 
 
@@ -319,14 +309,15 @@
 		var newSection = new QuestionSection
 		{
 			Title = GetDefaultSectionTitle(questionType),
-			Order = template.Sections.Count,
+			Order = State.Template.Sections.Count,
 			IsRequired = true
 		};
 
-		template.Sections.Add(newSection);
+		State.Template.Sections.Add(newSection);
 
 		// Immediately add a question of the selected type
-		AddQuestionOfExistingType(template.Sections.Count - 1, questionType);
+		AddQuestionOfExistingType(State.Template.Sections.Count - 1, questionType);
+		State.MarkAsDirty();
 	}
 
 	private string GetDefaultSectionTitle(QuestionType type)
@@ -336,15 +327,15 @@
 			QuestionType.SelfAssessment => "Self-Assessment",
 			QuestionType.GoalAchievement => "Goal Achievement Review",
 			QuestionType.TextQuestion => "Open-Ended Questions",
-			_ => $"Section {template.Sections.Count + 1}"
+			_ => $"Section {State.Template.Sections.Count + 1}"
 		};
 	}
 
 	private void AddItemDirectly(int sectionIndex)
 	{
-		if (sectionIndex >= 0 && sectionIndex < template.Sections.Count)
+		if (sectionIndex >= 0 && sectionIndex < State.Template.Sections.Count)
 		{
-			var section = template.Sections[sectionIndex];
+			var section = State.Template.Sections[sectionIndex];
 
 			// If section already has questions, add an item to the existing question
 			if (section.Questions.Any())
@@ -365,16 +356,14 @@
 		// Use Strategy Pattern to delegate to appropriate handler
 		var handler = HandlerFactory.GetHandler(question.Type);
 		handler.AddItem(question);
-
-		// Force component re-render
-		NotifyStateChanged();
+		State.MarkAsDirty();
 	}
 
 	private void AddQuestionOfExistingType(int sectionIndex, QuestionType questionType)
 	{
-		if (sectionIndex >= 0 && sectionIndex < template.Sections.Count)
+		if (sectionIndex >= 0 && sectionIndex < State.Template.Sections.Count)
 		{
-			var section = template.Sections[sectionIndex];
+			var section = State.Template.Sections[sectionIndex];
 			var handler = HandlerFactory.GetHandler(questionType);
 
 			var newQuestion = new QuestionItem
@@ -391,26 +380,28 @@
 
 			// Add the question to the section
 			section.Questions.Add(newQuestion);
+			State.MarkAsDirty();
 		}
 	}
 
 	private async Task RemoveSection(int index)
 	{
-		if (index >= 0 && index < template.Sections.Count)
+		if (index >= 0 && index < State.Template.Sections.Count)
 		{
-			var section = template.Sections[index];
+			var section = State.Template.Sections[index];
 			var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {index + 1}" : section.Title;
 			var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{sectionName}'? This will also delete all questions in this section.", "Delete Section",
 				new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
 
 			if (confirmed.HasValue && confirmed.Value)
 			{
-				template.Sections.RemoveAt(index);
+				State.Template.Sections.RemoveAt(index);
 				// Reorder remaining sections
-				for (int i = 0; i < template.Sections.Count; i++)
+				for (int i = 0; i < State.Template.Sections.Count; i++)
 				{
-					template.Sections[i].Order = i;
+					State.Template.Sections[i].Order = i;
 				}
+				State.MarkAsDirty();
 			}
 		}
 	}
@@ -419,28 +410,27 @@
 	{
 		if (index > 0)
 		{
-			(template.Sections[index], template.Sections[index - 1]) = (template.Sections[index - 1], template.Sections[index]);
-			template.Sections[index].Order = index;
-			template.Sections[index - 1].Order = index - 1;
+			(State.Template.Sections[index], State.Template.Sections[index - 1]) = (State.Template.Sections[index - 1], State.Template.Sections[index]);
+			State.Template.Sections[index].Order = index;
+			State.Template.Sections[index - 1].Order = index - 1;
+			State.MarkAsDirty();
 		}
 	}
 
 	private void MoveSectionDown(int index)
 	{
-		if (index < template.Sections.Count - 1)
+		if (index < State.Template.Sections.Count - 1)
 		{
-			(template.Sections[index], template.Sections[index + 1]) = (template.Sections[index + 1], template.Sections[index]);
-			template.Sections[index].Order = index;
-			template.Sections[index + 1].Order = index + 1;
+			(State.Template.Sections[index], State.Template.Sections[index + 1]) = (State.Template.Sections[index + 1], State.Template.Sections[index]);
+			State.Template.Sections[index].Order = index;
+			State.Template.Sections[index + 1].Order = index + 1;
+			State.MarkAsDirty();
 		}
 	}
 
 	private void ShowAddQuestionDialog(int sectionIndex)
 	{
-		// Show inline question type selection
-		showQuestionTypeSelection = true;
-		selectedSectionIndex = sectionIndex;
-		selectedQuestionType = null;
+		State.OpenQuestionTypeSelection(sectionIndex);
 	}
 
 
@@ -449,7 +439,7 @@
 
 	private async Task RemoveQuestion(int sectionIndex, int questionIndex)
 	{
-		var section = template.Sections[sectionIndex];
+		var section = State.Template.Sections[sectionIndex];
 		if (questionIndex >= 0 && questionIndex < section.Questions.Count)
 		{
 			var question = section.Questions[questionIndex];
@@ -465,29 +455,32 @@
 				{
 					section.Questions[i].Order = i;
 				}
+				State.MarkAsDirty();
 			}
 		}
 	}
 
 	private void MoveQuestionUp(int sectionIndex, int questionIndex)
 	{
-		var questions = template.Sections[sectionIndex].Questions;
+		var questions = State.Template.Sections[sectionIndex].Questions;
 		if (questionIndex > 0)
 		{
 			(questions[questionIndex], questions[questionIndex - 1]) = (questions[questionIndex - 1], questions[questionIndex]);
 			questions[questionIndex].Order = questionIndex;
 			questions[questionIndex - 1].Order = questionIndex - 1;
+			State.MarkAsDirty();
 		}
 	}
 
 	private void MoveQuestionDown(int sectionIndex, int questionIndex)
 	{
-		var questions = template.Sections[sectionIndex].Questions;
+		var questions = State.Template.Sections[sectionIndex].Questions;
 		if (questionIndex < questions.Count - 1)
 		{
 			(questions[questionIndex], questions[questionIndex + 1]) = (questions[questionIndex + 1], questions[questionIndex]);
 			questions[questionIndex].Order = questionIndex;
 			questions[questionIndex + 1].Order = questionIndex + 1;
+			State.MarkAsDirty();
 		}
 	}
 
@@ -515,9 +508,11 @@
 		{
 			if (IsEditMode)
 			{
-				var updated = await ApiService.UpdateTemplateAsync(template);
+				var updated = await ApiService.UpdateTemplateAsync(State.Template);
 				if (updated != null)
 				{
+					State.Template = updated;
+					State.MarkAsClean();
 					NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template updated successfully");
 				}
 				else
@@ -527,8 +522,9 @@
 			}
 			else
 			{
-				var created = await ApiService.CreateTemplateAsync(template);
-				template.Id = created.Id; // Update with the server-generated ID
+				var created = await ApiService.CreateTemplateAsync(State.Template);
+				State.Template.Id = created.Id; // Update with the server-generated ID
+				State.MarkAsClean();
 				NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
 			}
 		}
@@ -551,32 +547,33 @@
 			await SaveQuestionnaire();
 
 			// Set as published
-			template.Status = TemplateStatus.Published;
-			template.LastPublishedDate = DateTime.Now;
+			State.Template.Status = TemplateStatus.Published;
+			State.Template.LastPublishedDate = DateTime.Now;
 
 			// Set PublishedDate only on first publish
-			if (template.PublishedDate == null)
+			if (State.Template.PublishedDate == null)
 			{
-				template.PublishedDate = DateTime.Now;
+				State.Template.PublishedDate = DateTime.Now;
 			}
 
 			// TODO: Set PublishedBy when user context is available
-			// template.PublishedBy = currentUser.Name;
+			// State.Template.PublishedBy = currentUser.Name;
 
 			// Update the template with published status
 			if (IsEditMode)
 			{
-				var updated = await ApiService.PublishTemplateAsync(template.Id, "");
+				var updated = await ApiService.PublishTemplateAsync(State.Template.Id, "");
 				if (updated != null)
 				{
+					State.Template = updated;
 					NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template is now published and available for assignments");
 				}
 				else
 				{
 					NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
 					// Revert on failure
-					template.Status = TemplateStatus.Draft;
-					template.LastPublishedDate = null;
+					State.Template.Status = TemplateStatus.Draft;
+					State.Template.LastPublishedDate = null;
 				}
 			}
 			else
@@ -589,8 +586,8 @@
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
 			// Revert on failure
-			template.Status = TemplateStatus.Draft;
-			template.LastPublishedDate = null;
+			State.Template.Status = TemplateStatus.Draft;
+			State.Template.LastPublishedDate = null;
 		}
 	}
 
@@ -599,24 +596,25 @@
 		try
 		{
 			// Set as unpublished (back to draft)
-			template.Status = TemplateStatus.Draft;
+			State.Template.Status = TemplateStatus.Draft;
 
 			// Update the template with unpublished status
-			var updated = await ApiService.UpdateTemplateAsync(template);
+			var updated = await ApiService.UpdateTemplateAsync(State.Template);
 			if (updated != null)
 			{
+				State.Template = updated;
 				NotificationService.Notify(NotificationSeverity.Info, "Unpublished", "Questionnaire template is now in draft mode and unavailable for new assignments");
 			}
 			else
 			{
 				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unpublish template");
-				template.Status = TemplateStatus.Published; // Revert on failure
+				State.Template.Status = TemplateStatus.Published; // Revert on failure
 			}
 		}
 		catch (Exception ex)
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
-			template.Status = TemplateStatus.Published; // Revert on failure
+			State.Template.Status = TemplateStatus.Published; // Revert on failure
 		}
 	}
 
@@ -625,23 +623,24 @@
 		try
 		{
 			// Set as inactive while keeping published status
-			template.Status = TemplateStatus.Archived;
+			State.Template.Status = TemplateStatus.Archived;
 
-			var updated = await ApiService.UpdateTemplateAsync(template);
+			var updated = await ApiService.UpdateTemplateAsync(State.Template);
 			if (updated != null)
 			{
+				State.Template = updated;
 				NotificationService.Notify(NotificationSeverity.Warning, "Disabled", "Questionnaire template is temporarily disabled but remains published");
 			}
 			else
 			{
 				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to disable template");
-				template.Status = TemplateStatus.Draft; // Revert on failure
+				State.Template.Status = TemplateStatus.Draft; // Revert on failure
 			}
 		}
 		catch (Exception ex)
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to disable template: {ex.Message}");
-			template.Status = TemplateStatus.Draft; // Revert on failure
+			State.Template.Status = TemplateStatus.Draft; // Revert on failure
 		}
 	}
 
@@ -650,23 +649,24 @@
 		try
 		{
 			// Re-activate while keeping published status
-			template.Status = TemplateStatus.Draft;
+			State.Template.Status = TemplateStatus.Draft;
 
-			var updated = await ApiService.UpdateTemplateAsync(template);
+			var updated = await ApiService.UpdateTemplateAsync(State.Template);
 			if (updated != null)
 			{
+				State.Template = updated;
 				NotificationService.Notify(NotificationSeverity.Success, "Enabled", "Questionnaire template is now active and available for assignments");
 			}
 			else
 			{
 				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to enable template");
-				template.Status = TemplateStatus.Archived; // Revert on failure
+				State.Template.Status = TemplateStatus.Archived; // Revert on failure
 			}
 		}
 		catch (Exception ex)
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to enable template: {ex.Message}");
-			template.Status = TemplateStatus.Archived; // Revert on failure
+			State.Template.Status = TemplateStatus.Archived; // Revert on failure
 		}
 	}
 
@@ -674,25 +674,26 @@
 	{
 		try
 		{
-			var previousStatus = template.Status;
-			template.Status = TemplateStatus.Archived;
+			var previousStatus = State.Template.Status;
+			State.Template.Status = TemplateStatus.Archived;
 
-			var updated = await ApiService.UpdateTemplateAsync(template);
+			var updated = await ApiService.UpdateTemplateAsync(State.Template);
 			if (updated != null)
 			{
+				State.Template = updated;
 				NotificationService.Notify(NotificationSeverity.Success, "Archived", "Questionnaire template has been archived and is no longer available for assignments");
 			}
 			else
 			{
 				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to archive template");
-				template.Status = previousStatus; // Revert on failure
+				State.Template.Status = previousStatus; // Revert on failure
 			}
 		}
 		catch (Exception ex)
 		{
-			var previousStatus = template.Status;
+			var previousStatus = State.Template.Status;
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to archive template: {ex.Message}");
-			template.Status = previousStatus; // Revert on failure
+			State.Template.Status = previousStatus; // Revert on failure
 		}
 	}
 
@@ -704,7 +705,7 @@
 
 	private bool ValidateQuestionnaire()
 	{
-		var validationErrors = ValidationService.ValidateQuestionnaire(template);
+		var validationErrors = ValidationService.ValidateQuestionnaire(State.Template);
 
 		// Show validation errors if any
 		if (validationErrors.Count > 0)
@@ -735,9 +736,9 @@
 
 	private async Task AddQuestionOfType(QuestionType questionType)
 	{
-		if (selectedSectionIndex >= 0 && selectedSectionIndex < template.Sections.Count)
+		if (State.SelectedSectionIndex >= 0 && State.SelectedSectionIndex < State.Template.Sections.Count)
 		{
-			var section = template.Sections[selectedSectionIndex];
+			var section = State.Template.Sections[State.SelectedSectionIndex];
 			var handler = HandlerFactory.GetHandler(questionType);
 
 			var newQuestion = new QuestionItem
@@ -754,19 +755,16 @@
 
 			// Add the question to the section
 			section.Questions.Add(newQuestion);
+			State.MarkAsDirty();
 		}
 
 		// Reset selection state
-		showQuestionTypeSelection = false;
-		selectedSectionIndex = -1;
-		selectedQuestionType = null;
+		State.CloseQuestionTypeSelection();
 	}
 
 	private void CancelQuestionTypeSelection()
 	{
-		showQuestionTypeSelection = false;
-		selectedSectionIndex = -1;
-		selectedQuestionType = null;
+		State.CloseQuestionTypeSelection();
 	}
 
 	private string GetStatusDescription()
@@ -776,7 +774,7 @@
 			return "Create comprehensive assessments with our visual editor";
 		}
 
-		return TemplateStatusHelper.GetStatusDescription(template.Status);
+		return TemplateStatusHelper.GetStatusDescription(State.Template.Status);
 	}
 
 

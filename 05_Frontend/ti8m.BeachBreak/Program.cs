@@ -221,6 +221,9 @@ public class Program
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.TextQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory>();
 
+        // Register state management
+        builder.Services.AddScoped<QuestionnaireBuilderState>();
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
