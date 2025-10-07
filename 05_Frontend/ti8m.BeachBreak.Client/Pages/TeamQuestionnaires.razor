@@ -6,104 +6,65 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
-@inherits OptimizedComponentBase
+@inherits BaseQuestionnaireListPage
 @inject IManagerQuestionnaireService ManagerQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
-@inject ICategoryApiService CategoryService
-@inject NotificationService NotificationService
 
 <PageTitle>Team Questionnaires</PageTitle>
 
 @if (configuration != null && dataService != null)
 {
-    <GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
+	<GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
 }
 else if (isLoading)
 {
-    <div class="text-center p-5">
-        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading team data...</RadzenText>
-    </div>
+	<div class="text-center p-5">
+		<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+		<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading team data...</RadzenText>
+	</div>
 }
 
 @code {
-    private QuestionnairePageConfiguration? configuration;
-    private IQuestionnaireDataService? dataService;
+	// Manager-specific state
+	private List<QuestionnaireAssignment> allAssignments = new();
+	private List<EmployeeDto> teamMembers = new();
 
-    private List<QuestionnaireAssignment> allAssignments = new();
-    private List<EmployeeDto> teamMembers = new();
-    private List<Category> categories = new();
-    private bool isLoading = false;
+	protected override string GetInitializationContext() => "InitializeTeamQuestionnaires";
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadInitialData();
-        SetupConfiguration();
-    }
+	protected override async Task LoadRoleSpecificDataAsync()
+	{
+		// Create the data service
+		dataService = new ManagerQuestionnaireDataService(ManagerQuestionnaireService, TemplateService);
 
-    private async Task LoadInitialData()
-    {
-        SetLoading(true);
+		// Load data in parallel
+		var assignmentsTask = ManagerQuestionnaireService.GetTeamAssignmentsAsync();
+		var teamMembersTask = ManagerQuestionnaireService.GetTeamMembersAsync();
 
-        try
-        {
-            // Create the data service
-            dataService = new ManagerQuestionnaireDataService(ManagerQuestionnaireService, TemplateService);
+		await Task.WhenAll(assignmentsTask, teamMembersTask);
 
-            // Load data to setup configuration
-            var assignmentsTask = ManagerQuestionnaireService.GetTeamAssignmentsAsync();
-            var teamMembersTask = ManagerQuestionnaireService.GetTeamMembersAsync();
-            var categoriesTask = CategoryService.GetAllCategoriesAsync();
+		allAssignments = assignmentsTask.Result;
+		teamMembers = teamMembersTask.Result;
+	}
 
-            await Task.WhenAll(assignmentsTask, teamMembersTask, categoriesTask);
+	protected override QuestionnairePageConfiguration CreateConfiguration()
+	{
+		return QuestionnairePageConfigurationFactory.CreateManagerConfiguration(
+			allAssignments,
+			teamMembers,
+			categories);
+	}
 
-            allAssignments = assignmentsTask.Result;
-            teamMembers = teamMembersTask.Result;
-            categories = categoriesTask.Result;
-        }
-        catch (Exception ex)
-        {
-            HandleError(ex, "loading team data");
-        }
-        finally
-        {
-            SetLoading(false);
-        }
-    }
+	protected override void ConfigureActions()
+	{
+		var exportAction = configuration?.Actions.FirstOrDefault(a => a.Id == "export");
+		if (exportAction != null)
+		{
+			exportAction.OnClick = ExportTeamReport;
+		}
+	}
 
-    private void SetupConfiguration()
-    {
-        configuration = QuestionnairePageConfigurationFactory.CreateManagerConfiguration(
-            allAssignments,
-            teamMembers,
-            categories);
-
-        // Add custom action handlers
-        var exportAction = configuration.Actions.FirstOrDefault(a => a.Id == "export");
-        if (exportAction != null)
-        {
-            exportAction.OnClick = ExportTeamReport;
-        }
-    }
-
-    private async Task ExportTeamReport()
-    {
-        ShowInfo("Team report export functionality would be implemented here");
-    }
-
-    private void SetLoading(bool loading)
-    {
-        isLoading = loading;
-        NotifyStateChanged();
-    }
-
-    private void HandleError(Exception ex, string context)
-    {
-        NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed {context}: {ex.Message}");
-    }
-
-    private void ShowInfo(string message)
-    {
-        NotificationService.Notify(NotificationSeverity.Info, "Information", message);
-    }
+	private async Task ExportTeamReport()
+	{
+		ShowInfo("Team report export functionality would be implemented here");
+	}
 }
