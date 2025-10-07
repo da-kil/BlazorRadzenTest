@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
@@ -16,15 +19,21 @@ public class EmployeesController : BaseController
     private readonly IQueryDispatcher queryDispatcher;
     private readonly ILogger<EmployeesController> logger;
     private readonly UserContext userContext;
+    private readonly IManagerAuthorizationService authorizationService;
+    private readonly IAuthorizationCacheService authorizationCacheService;
 
     public EmployeesController(
         IQueryDispatcher queryDispatcher,
         ILogger<EmployeesController> logger,
-        UserContext userContext)
+        UserContext userContext,
+        IManagerAuthorizationService authorizationService,
+        IAuthorizationCacheService authorizationCacheService)
     {
         this.queryDispatcher = queryDispatcher;
         this.logger = logger;
         this.userContext = userContext;
+        this.authorizationService = authorizationService;
+        this.authorizationCacheService = authorizationCacheService;
     }
 
     [HttpGet]
@@ -40,12 +49,35 @@ public class EmployeesController : BaseController
 
         try
         {
+            // Get current user ID for authorization
+            Guid userId;
+            try
+            {
+                userId = await authorizationService.GetCurrentManagerIdAsync();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning("GetAllEmployees authorization failed: {Message}", ex.Message);
+                return Unauthorized(ex.Message);
+            }
+
+            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+
+            // If user is TeamLead (not HR/Admin), restrict to their direct reports
+            Guid? effectiveManagerId = managerId;
+            if (!hasElevatedRole)
+            {
+                // TeamLead can only see their own team
+                effectiveManagerId = userId;
+                logger.LogInformation("TeamLead {UserId} requesting employees - restricting to their direct reports", userId);
+            }
+
             var query = new EmployeeListQuery
             {
                 IncludeDeleted = includeDeleted,
                 OrganizationNumber = organizationNumber,
                 Role = role,
-                ManagerId = managerId
+                ManagerId = effectiveManagerId
             };
 
             var result = await queryDispatcher.QueryAsync(query);
@@ -100,6 +132,30 @@ public class EmployeesController : BaseController
 
         try
         {
+            // Get current user ID for authorization
+            Guid userId;
+            try
+            {
+                userId = await authorizationService.GetCurrentManagerIdAsync();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning("GetEmployee authorization failed: {Message}", ex.Message);
+                return Unauthorized(ex.Message);
+            }
+
+            // Check authorization
+            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+            var isSelf = userId == id;
+            var isDirectReport = !isSelf && !hasElevatedRole && await authorizationService.IsManagerOfAsync(userId, id);
+
+            // Allow if: viewing self, has elevated role, or is manager of this employee
+            if (!isSelf && !hasElevatedRole && !isDirectReport)
+            {
+                logger.LogWarning("User {UserId} attempted to access employee {EmployeeId} without authorization", userId, id);
+                return Forbid();
+            }
+
             var result = await queryDispatcher.QueryAsync(new EmployeeQuery(id));
 
             if (result?.Payload == null)
@@ -205,10 +261,11 @@ public class EmployeesController : BaseController
 
     /// <summary>
     /// Gets all questionnaire assignments for a specific employee by ID.
-    /// This endpoint requires HR role as it allows viewing other employees' assignments.
+    /// Managers can only view assignments for their direct reports.
+    /// HR/Admin can view assignments for any employee.
     /// </summary>
     [HttpGet("{employeeId:guid}/assignments")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetEmployeeAssignments(Guid employeeId)
@@ -217,6 +274,32 @@ public class EmployeesController : BaseController
 
         try
         {
+            // Get current user ID for authorization
+            Guid userId;
+            try
+            {
+                userId = await authorizationService.GetCurrentManagerIdAsync();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning("GetEmployeeAssignments authorization failed: {Message}", ex.Message);
+                return Unauthorized(ex.Message);
+            }
+
+            // Check authorization
+            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+            if (!hasElevatedRole)
+            {
+                // TeamLead must be manager of this employee
+                var isDirectReport = await authorizationService.IsManagerOfAsync(userId, employeeId);
+                if (!isDirectReport)
+                {
+                    logger.LogWarning("Manager {UserId} attempted to access assignments for non-direct report employee {EmployeeId}",
+                        userId, employeeId);
+                    return Forbid();
+                }
+            }
+
             var result = await queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
 
             if (result.Succeeded)
@@ -253,6 +336,24 @@ public class EmployeesController : BaseController
             logger.LogError(ex, "Error retrieving assignments for employee {EmployeeId}", employeeId);
             return StatusCode(500, "An error occurred while retrieving employee assignments");
         }
+    }
+
+    /// <summary>
+    /// Checks if the current user has an elevated role (HR, HRLead, or Admin).
+    /// Returns true if elevated, false if user is only TeamLead/Employee.
+    /// </summary>
+    private async Task<bool> HasElevatedRoleAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, cancellationToken);
+        if (employeeRole == null)
+        {
+            logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+            return false;
+        }
+
+        return employeeRole.ApplicationRole == ApplicationRole.HR ||
+               employeeRole.ApplicationRole == ApplicationRole.HRLead ||
+               employeeRole.ApplicationRole == ApplicationRole.Admin;
     }
 
     private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus> MapAssignmentStatusToDto =>
