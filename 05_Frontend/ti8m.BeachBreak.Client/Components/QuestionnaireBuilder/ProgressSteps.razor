@@ -1,0 +1,38 @@
+@using Radzen
+@using Radzen.Blazor
+
+<!-- Progress Steps -->
+<div style="background: var(--background-color); border-bottom: 1px solid var(--border-light);">
+	<div class="container-fluid">
+		<div class="progress-steps-modern py-3">
+			<div class="step-modern @(CurrentStep == 1 ? "active" : CurrentStep > 1 ? "completed" : "")" @onclick="() => HandleStepClick(1)">
+				<div class="step-number-modern">
+					<RadzenIcon Icon="@(CurrentStep > 1 ? "check" : "info")" />
+				</div>
+				<span class="step-text-modern">Basic Info</span>
+			</div>
+			<div class="step-modern @(CurrentStep == 2 ? "active" : CurrentStep > 2 ? "completed" : "")" @onclick="() => HandleStepClick(2)">
+				<div class="step-number-modern">
+					<RadzenIcon Icon="@(CurrentStep > 2 ? "check" : "view_list")" />
+				</div>
+				<span class="step-text-modern">Build Sections</span>
+			</div>
+			<div class="step-modern @(CurrentStep == 3 ? "active" : CurrentStep > 3 ? "completed" : "")" @onclick="() => HandleStepClick(3)">
+				<div class="step-number-modern">
+					<RadzenIcon Icon="@(CurrentStep > 3 ? "check" : "preview")" />
+				</div>
+				<span class="step-text-modern">Review & Publish</span>
+			</div>
+		</div>
+	</div>
+</div>
+
+@code {
+	[Parameter] public int CurrentStep { get; set; } = 1;
+	[Parameter] public EventCallback<int> OnStepClick { get; set; }
+
+	private async Task HandleStepClick(int step)
+	{
+		await OnStepClick.InvokeAsync(step);
+	}
+}

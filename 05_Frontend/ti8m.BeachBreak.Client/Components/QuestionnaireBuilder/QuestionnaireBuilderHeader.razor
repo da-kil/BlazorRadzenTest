@@ -1,0 +1,60 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<!-- Header -->
+<div class="page-header-modern">
+	<div class="container-fluid">
+		<div class="d-flex justify-content-between align-items-center py-3">
+			<div class="d-flex align-items-center">
+				<RadzenText TextStyle="TextStyle.H4" Class="text-white fw-bold mb-0">
+					<RadzenIcon Icon="psychology" Class="me-2" />
+					@(IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")
+				</RadzenText>
+				<div class="status-badge ms-3">
+					@{
+						var status = IsEditMode ? Status : TemplateStatus.Draft;
+						var statusText = IsEditMode ? TemplateStatusHelper.GetStatusText(Status) : "NEW";
+						var statusIcon = IsEditMode ? TemplateStatusHelper.GetStatusIcon(Status) : "add_circle";
+						var statusClass = IsEditMode ? TemplateStatusHelper.GetStatusBadgeClass(Status) : "badge bg-info text-dark";
+					}
+					<span class="@statusClass d-flex align-items-center px-3 py-1">
+						<RadzenIcon Icon="@statusIcon" Class="me-1" Style="font-size: 0.8rem;" />
+						@statusText
+					</span>
+				</div>
+			</div>
+			<div class="d-flex gap-2">
+				@{
+					var currentStatus = IsEditMode ? Status : TemplateStatus.Draft;
+				}
+				@switch (currentStatus)
+				{
+					case TemplateStatus.Draft:
+						<RadzenButton Text="Save" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@OnSave" />
+						<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@OnPublish" />
+						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" />
+						break;
+					case TemplateStatus.Published:
+						<RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@OnUnpublish" />
+						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" />
+						break;
+					case TemplateStatus.Archived:
+						<RadzenButton Text="Restore" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@OnRestore" />
+						break;
+				}
+			</div>
+		</div>
+	</div>
+</div>
+
+@code {
+	[Parameter] public bool IsEditMode { get; set; }
+	[Parameter] public TemplateStatus Status { get; set; }
+
+	[Parameter] public EventCallback OnSave { get; set; }
+	[Parameter] public EventCallback OnPublish { get; set; }
+	[Parameter] public EventCallback OnArchive { get; set; }
+	[Parameter] public EventCallback OnUnpublish { get; set; }
+	[Parameter] public EventCallback OnRestore { get; set; }
+}
