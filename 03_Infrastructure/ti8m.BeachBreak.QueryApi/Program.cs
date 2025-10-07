@@ -8,6 +8,7 @@ using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Core.Infrastructure.Database;
 using ti8m.BeachBreak.Infrastructure.Marten;
+using ti8m.BeachBreak.QueryApi.Authorization;
 
 namespace ti8m.BeachBreak.QueryApi;
 
@@ -93,6 +94,9 @@ public class Program
 
         builder.Services.AddScoped<UserContext>();
         builder.Services.AddApplication(builder.Configuration);
+
+        // Register manager authorization service
+        builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
 
         var app = builder.Build();
 
