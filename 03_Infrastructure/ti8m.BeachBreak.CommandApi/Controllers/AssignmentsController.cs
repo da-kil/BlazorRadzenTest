@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
+using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -15,15 +18,18 @@ public class AssignmentsController : BaseController
     private readonly ICommandDispatcher commandDispatcher;
     private readonly ILogger<AssignmentsController> logger;
     private readonly IManagerAuthorizationService authorizationService;
+    private readonly IAuthorizationCacheService authorizationCacheService;
 
     public AssignmentsController(
         ICommandDispatcher commandDispatcher,
         ILogger<AssignmentsController> logger,
-        IManagerAuthorizationService authorizationService)
+        IManagerAuthorizationService authorizationService,
+        IAuthorizationCacheService authorizationCacheService)
     {
         this.commandDispatcher = commandDispatcher;
         this.logger = logger;
         this.authorizationService = authorizationService;
+        this.authorizationCacheService = authorizationCacheService;
     }
 
     /// <summary>
@@ -174,14 +180,46 @@ public class AssignmentsController : BaseController
         }
     }
 
+    /// <summary>
+    /// Extends the due date of an assignment.
+    /// Managers can only extend assignments for their direct reports.
+    /// HR/Admin can extend any assignment.
+    /// </summary>
     [HttpPost("extend-due-date")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ExtendAssignmentDueDate([FromBody] ExtendAssignmentDueDateDto extendDto)
     {
         try
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
+            Guid managerId;
+            try
+            {
+                managerId = await authorizationService.GetCurrentManagerIdAsync();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning("Authorization failed: {Message}", ex.Message);
+                return Unauthorized(ex.Message);
+            }
+
+            var hasElevatedRole = await HasElevatedRoleAsync(managerId);
+            if (!hasElevatedRole)
+            {
+                var canAccess = await authorizationService.CanAccessAssignmentAsync(managerId, extendDto.AssignmentId);
+
+                if (!canAccess)
+                {
+                    logger.LogWarning("Manager {ManagerId} attempted to extend assignment {AssignmentId} for non-direct report",
+                        managerId, extendDto.AssignmentId);
+                    return Forbid();
+                }
+            }
 
             var command = new ExtendAssignmentDueDateCommand(
                 extendDto.AssignmentId,
@@ -198,14 +236,46 @@ public class AssignmentsController : BaseController
         }
     }
 
+    /// <summary>
+    /// Withdraws (cancels) an assignment.
+    /// Managers can only withdraw assignments for their direct reports.
+    /// HR/Admin can withdraw any assignment.
+    /// </summary>
     [HttpPost("withdraw")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> WithdrawAssignment([FromBody] WithdrawAssignmentDto withdrawDto)
     {
         try
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
+            Guid managerId;
+            try
+            {
+                managerId = await authorizationService.GetCurrentManagerIdAsync();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning("Authorization failed: {Message}", ex.Message);
+                return Unauthorized(ex.Message);
+            }
+
+            var hasElevatedRole = await HasElevatedRoleAsync(managerId);
+            if (!hasElevatedRole)
+            {
+                var canAccess = await authorizationService.CanAccessAssignmentAsync(managerId, withdrawDto.AssignmentId);
+
+                if (!canAccess)
+                {
+                    logger.LogWarning("Manager {ManagerId} attempted to withdraw assignment {AssignmentId} for non-direct report",
+                        managerId, withdrawDto.AssignmentId);
+                    return Forbid();
+                }
+            }
 
             var command = new WithdrawAssignmentCommand(
                 withdrawDto.AssignmentId,
@@ -385,6 +455,24 @@ public class AssignmentsController : BaseController
             logger.LogError(ex, "Error sending reminder for assignment {AssignmentId}", reminderDto.AssignmentId);
             return StatusCode(500, "An error occurred while sending reminder");
         }
+    }
+
+    /// <summary>
+    /// Checks if the current user has an elevated role (HR, HRLead, or Admin).
+    /// Returns true if elevated, false if user is only TeamLead/Employee.
+    /// </summary>
+    private async Task<bool> HasElevatedRoleAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, cancellationToken);
+        if (employeeRole == null)
+        {
+            logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+            return false;
+        }
+
+        return employeeRole.ApplicationRole == ApplicationRole.HR ||
+               employeeRole.ApplicationRole == ApplicationRole.HRLead ||
+               employeeRole.ApplicationRole == ApplicationRole.Admin;
     }
 
 }

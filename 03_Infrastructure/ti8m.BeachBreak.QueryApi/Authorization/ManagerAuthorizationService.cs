@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.QueryApi.Authorization;
 
@@ -12,19 +15,22 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
     private readonly IEmployeeRepository employeeRepository;
     private readonly IQuestionnaireAssignmentRepository assignmentRepository;
     private readonly ILogger<ManagerAuthorizationService> logger;
+    private readonly IAuthorizationCacheService authorizationCacheService;
 
     public ManagerAuthorizationService(
         UserContext userContext,
         IHttpContextAccessor httpContextAccessor,
         IEmployeeRepository employeeRepository,
         IQuestionnaireAssignmentRepository assignmentRepository,
-        ILogger<ManagerAuthorizationService> logger)
+        ILogger<ManagerAuthorizationService> logger,
+        IAuthorizationCacheService authorizationCacheService)
     {
         this.userContext = userContext;
         this.httpContextAccessor = httpContextAccessor;
         this.employeeRepository = employeeRepository;
         this.assignmentRepository = assignmentRepository;
         this.logger = logger;
+        this.authorizationCacheService = authorizationCacheService;
     }
 
     public Task<Guid> GetCurrentManagerIdAsync()
@@ -46,16 +52,18 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
             return true;
         }
 
-        // Check if user has HR or Admin role
-        var user = httpContextAccessor.HttpContext?.User;
-        if (user == null)
+        // Check if user has HR or Admin role using authorization cache
+        var employeeRole = authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(requestingUserId).GetAwaiter().GetResult();
+        if (employeeRole == null)
         {
-            logger.LogWarning("No user context available for CanViewTeam check");
+            logger.LogWarning("Unable to retrieve employee role for user {UserId} in CanViewTeam check", requestingUserId);
             return false;
         }
 
         // HR and HRLead can view any manager's team
-        if (user.IsInRole("HR") || user.IsInRole("HRLead") || user.IsInRole("Admin"))
+        if (employeeRole.ApplicationRole == ApplicationRole.HR ||
+            employeeRole.ApplicationRole == ApplicationRole.HRLead ||
+            employeeRole.ApplicationRole == ApplicationRole.Admin)
         {
             logger.LogInformation("User {RequestingUserId} granted access to view manager {TargetManagerId} team via elevated role",
                 requestingUserId, targetManagerId);
