@@ -76,7 +76,7 @@
     }
 
     .section-header {
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
         padding-bottom: 1.5rem;
         border-bottom: 1px solid var(--border-light);
     }
@@ -96,11 +96,14 @@
     }
 
     .question-container {
-        margin-bottom: 3rem;
-        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .question-content {
         background: var(--bg-light);
         border-radius: 6px;
         border-left: 4px solid var(--primary-color);
+        padding: 1.5rem;
     }
 
     .question-header {
@@ -274,10 +277,33 @@
         background: #fef2f2;
         border: 1px solid #fecaca;
         color: #dc2626;
-        padding: 0.75rem;
+        padding: 1rem;
         border-radius: 4px;
         font-size: 0.875rem;
         margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .validation-error strong {
+        flex-shrink: 0;
+        font-weight: 700;
+    }
+
+    .validation-error ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        flex: 1;
+    }
+
+    .validation-error li {
+        padding: 0.125rem 0;
+    }
+
+    .validation-error li::before {
+        content: "• ";
     }
 
     @@media (max-width: 768px) {
@@ -352,8 +378,7 @@
 
             <div class="progress-header">
                 <div class="section-progress">
-                    Section @(currentSectionIndex + 1) of @template.Sections.Count:
-                    <strong>@currentSection.Title</strong>
+                    Section @(currentSectionIndex + 1) of @template.Sections.Count
                 </div>
             <div class="progress-info">
                 <RadzenProgressBar Value="@progressPercentage" Max="100" ShowValue="true" />
@@ -371,7 +396,7 @@
         {
             <div class="validation-error">
                 <strong>Please fix the following issues:</strong>
-                <ul class="mt-2 mb-0">
+                <ul>
                     @foreach (var error in validationErrors)
                     {
                         <li>@error</li>
@@ -392,19 +417,12 @@
             @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
             {
                 <div class="question-container">
-                    <div class="question-header">
-                        <div class="question-label">
-                            @GetQuestionTypeLabel(question)
-                            @if (question.IsRequired)
-                            {
-                                <span class="required-indicator">*</span>
-                            }
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(question.Description))
-                        {
+                    @if (!string.IsNullOrWhiteSpace(question.Description))
+                    {
+                        <div class="question-header">
                             <p class="question-description">@question.Description</p>
-                        }
-                    </div>
+                        </div>
+                    }
                     <div class="question-content">
                         @GetQuestionInput(question)
                     </div>

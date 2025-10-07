@@ -23,7 +23,9 @@
 }
 else if (configuration != null && dataService != null)
 {
-	<GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
+	<GenericQuestionnaireListPage Configuration="@configuration"
+								  DataService="@dataService"
+								  OnStartQuestionnaire="@StartQuestionnaire" />
 }
 else if (isLoading)
 {
