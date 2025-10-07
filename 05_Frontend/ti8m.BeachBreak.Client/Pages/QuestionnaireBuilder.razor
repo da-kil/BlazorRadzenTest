@@ -16,6 +16,7 @@
 @inject ICategoryApiService CategoryService
 @inject QuestionConfigurationService ConfigurationService
 @inject QuestionnaireValidationService ValidationService
+@inject ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory HandlerFactory
 @inherits OptimizedComponentBase
 
 <PageTitle>Questionnaire Builder</PageTitle>
@@ -420,36 +421,9 @@
 
 	private void AddItemToExistingQuestion(QuestionItem question)
 	{
-		if (question.Type == QuestionType.SelfAssessment)
-		{
-			var competencies = ConfigurationService.GetCompetencies(question);
-			var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
-			var newCompetency = new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false, nextOrder);
-
-			// Create a new list to ensure change detection
-			var updatedCompetencies = new List<CompetencyDefinition>(competencies) { newCompetency };
-			ConfigurationService.SetCompetencies(question, updatedCompetencies);
-		}
-		else if (question.Type == QuestionType.GoalAchievement)
-		{
-			var goalCategories = ConfigurationService.GetGoalCategories(question);
-			var nextOrder = goalCategories.Count > 0 ? goalCategories.Max(g => g.Order) + 1 : 0;
-			var newCategory = new QuestionCard.GoalCategory { Title = "", Description = "", IsRequired = false, Order = nextOrder };
-
-			// Create a new list to ensure change detection
-			var updatedCategories = new List<QuestionCard.GoalCategory>(goalCategories) { newCategory };
-			ConfigurationService.SetGoalCategories(question, updatedCategories);
-		}
-		else if (question.Type == QuestionType.TextQuestion)
-		{
-			var textSections = ConfigurationService.GetTextSections(question);
-			var nextOrder = textSections.Count > 0 ? textSections.Max(t => t.Order) + 1 : 0;
-			var newSection = new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = nextOrder };
-
-			// Create a new list to ensure change detection
-			var updatedSections = new List<QuestionCard.TextSection>(textSections) { newSection };
-			ConfigurationService.SetTextSections(question, updatedSections);
-		}
+		// Use Strategy Pattern to delegate to appropriate handler
+		var handler = HandlerFactory.GetHandler(question.Type);
+		handler.AddItem(question);
 
 		// Force component re-render
 		NotifyStateChanged();
@@ -460,46 +434,19 @@
 		if (sectionIndex >= 0 && sectionIndex < template.Sections.Count)
 		{
 			var section = template.Sections[sectionIndex];
+			var handler = HandlerFactory.GetHandler(questionType);
+
 			var newQuestion = new QuestionItem
 			{
 				Id = Guid.NewGuid(),
-				Title = GetDefaultQuestionTitle(questionType),
+				Title = handler.GetDefaultTitle(),
 				Type = questionType,
 				Order = section.Questions.Count,
 				IsRequired = true
 			};
 
-			// Initialize default configuration for each question type
-			if (questionType == QuestionType.SelfAssessment)
-			{
-				// Initialize with one default competency
-				var competencies = new List<CompetencyDefinition>
-				{
-					new CompetencyDefinition("competency_1", "", "", false, 0)
-				};
-				newQuestion.Configuration["Competencies"] = competencies;
-
-				// Initialize default rating scale settings
-				newQuestion.Configuration["RatingScale"] = 4; // Default to 1-4 scale
-				newQuestion.Configuration["ScaleLowLabel"] = "Poor";
-				newQuestion.Configuration["ScaleHighLabel"] = "Excellent";
-			}
-			else if (questionType == QuestionType.GoalAchievement)
-			{
-				// Initialize with one default goal category
-				newQuestion.Configuration["GoalCategories"] = new List<QuestionCard.GoalCategory>
-				{
-					new QuestionCard.GoalCategory { Title = "", Description = "", IsRequired = false, Order = 0 }
-				};
-			}
-			else if (questionType == QuestionType.TextQuestion)
-			{
-				// Initialize with one default text section using proper type
-				newQuestion.Configuration["TextSections"] = new List<QuestionCard.TextSection>
-				{
-					new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = 0 }
-				};
-			}
+			// Use handler to initialize configuration
+			handler.InitializeQuestion(newQuestion);
 
 			// Add the question to the section
 			section.Questions.Add(newQuestion);
@@ -850,43 +797,19 @@
 		if (selectedSectionIndex >= 0 && selectedSectionIndex < template.Sections.Count)
 		{
 			var section = template.Sections[selectedSectionIndex];
+			var handler = HandlerFactory.GetHandler(questionType);
+
 			var newQuestion = new QuestionItem
 			{
 				Id = Guid.NewGuid(),
-				Title = GetDefaultQuestionTitle(questionType),
+				Title = handler.GetDefaultTitle(),
 				Type = questionType,
 				Order = section.Questions.Count,
 				IsRequired = true
 			};
 
-			// Initialize default configuration for each question type
-			if (questionType == QuestionType.SelfAssessment)
-			{
-				// Initialize with one default competency
-				var competencies = new List<CompetencyDefinition>
-			{
-				new CompetencyDefinition("competency_1", "", "", false, 0)
-			};
-				newQuestion.Configuration["Competencies"] = competencies;
-
-				// Initialize default rating scale settings
-				newQuestion.Configuration["RatingScale"] = 4; // Default to 1-4 scale
-				newQuestion.Configuration["ScaleLowLabel"] = "Poor";
-				newQuestion.Configuration["ScaleHighLabel"] = "Excellent";
-			}
-			else if (questionType == QuestionType.GoalAchievement)
-			{
-				// Initialize with empty goal categories using proper type
-				newQuestion.Configuration["GoalCategories"] = new List<QuestionCard.GoalCategory>();
-			}
-			else if (questionType == QuestionType.TextQuestion)
-			{
-				// Initialize with one default text section using proper type
-				newQuestion.Configuration["TextSections"] = new List<QuestionCard.TextSection>
-			{
-				new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = 0 }
-			};
-			}
+			// Use handler to initialize configuration
+			handler.InitializeQuestion(newQuestion);
 
 			// Add the question to the section
 			section.Questions.Add(newQuestion);
@@ -903,17 +826,6 @@
 		showQuestionTypeSelection = false;
 		selectedSectionIndex = -1;
 		selectedQuestionType = null;
-	}
-
-	private string GetDefaultQuestionTitle(QuestionType type)
-	{
-		return type switch
-		{
-			QuestionType.SelfAssessment => $"{questionTypeLabels[QuestionType.SelfAssessment]} of Competencies",
-			QuestionType.GoalAchievement => $"{questionTypeLabels[QuestionType.GoalAchievement]} Review",
-			QuestionType.TextQuestion => "Career Development & Planning",
-			_ => "New Question"
-		};
 	}
 
 	private string GetStatusDescription()
