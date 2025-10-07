@@ -211,6 +211,10 @@ public class Program
         builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
 
+        // Register refactoring services
+        builder.Services.AddScoped<QuestionConfigurationService>();
+        builder.Services.AddScoped<QuestionnaireValidationService>();
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
