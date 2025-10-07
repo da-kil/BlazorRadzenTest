@@ -5,6 +5,7 @@ using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.Application.Command;
 using ti8m.BeachBreak.Application.Query;
+using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Core.Infrastructure.Database;
 using ti8m.BeachBreak.Infrastructure.Marten;
@@ -132,6 +133,9 @@ namespace ti8m.BeachBreak.CommandApi
 
             // Add Query application services for authorization handler
             Application.Query.Extensions.AddApplication(builder.Services, builder.Configuration);
+
+            // Register manager authorization service for command operations
+            builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
 
             var app = builder.Build();
 

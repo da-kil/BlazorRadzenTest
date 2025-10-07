@@ -54,7 +54,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             Notes = notes
         };
 
-        // Create the bulk assignments
+        // Create the bulk assignments - HR/Admin endpoint
         var result = await CreateWithResponseAsync<CreateBulkAssignmentsDto, object>($"{AssignmentCommandEndpoint}/bulk", createRequest);
 
         if (result == null)
@@ -64,6 +64,54 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
 
         // Query back the assignments for this template to get the newly created ones
         // This is necessary because the command API only returns Result, not the created assignments
+        var allAssignments = await GetAssignmentsByTemplateAsync(templateId);
+
+        // Filter to assignments created for the specific employees (best effort to return the new ones)
+        var employeeIds = employees.Select(e => e.Id).ToList();
+        var newAssignments = allAssignments.Where(a =>
+            employeeIds.Contains(a.EmployeeId) &&
+            a.AssignedDate >= DateTime.UtcNow.AddMinutes(-1) // Recently created
+        ).ToList();
+
+        return newAssignments.Any() ? newAssignments : allAssignments.Where(a => employeeIds.Contains(a.EmployeeId)).ToList();
+    }
+
+    /// <summary>
+    /// Creates assignments for a manager's direct reports. TeamLead role only.
+    /// Backend validates that all employees are direct reports of the authenticated manager.
+    /// </summary>
+    public async Task<List<QuestionnaireAssignment>> CreateManagerAssignmentsAsync(
+        Guid templateId,
+        List<EmployeeDto> employees,
+        DateTime? dueDate,
+        string? notes,
+        string? assignedBy = null)
+    {
+        var employeeAssignments = employees.Select(emp => new EmployeeAssignmentDto
+        {
+            EmployeeId = emp.Id,
+            EmployeeName = emp.FullName,
+            EmployeeEmail = emp.EMail
+        }).ToList();
+
+        var createRequest = new CreateBulkAssignmentsDto
+        {
+            TemplateId = templateId,
+            EmployeeAssignments = employeeAssignments,
+            DueDate = dueDate,
+            AssignedBy = assignedBy, // Backend will default to authenticated user if null
+            Notes = notes
+        };
+
+        // Create the bulk assignments - Manager endpoint with authorization checks
+        var result = await CreateWithResponseAsync<CreateBulkAssignmentsDto, object>($"{AssignmentCommandEndpoint}/manager/bulk", createRequest);
+
+        if (result == null)
+        {
+            return new List<QuestionnaireAssignment>();
+        }
+
+        // Query back the assignments for this template to get the newly created ones
         var allAssignments = await GetAssignmentsByTemplateAsync(templateId);
 
         // Filter to assignments created for the specific employees (best effort to return the new ones)

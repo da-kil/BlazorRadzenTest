@@ -14,6 +14,7 @@ public interface IQuestionnaireAssignmentService
 
     // Assignment creation and management
     Task<List<QuestionnaireAssignment>> CreateAssignmentsAsync(Guid templateId, List<EmployeeDto> employees, DateTime? dueDate, string? notes, string assignedBy);
+    Task<List<QuestionnaireAssignment>> CreateManagerAssignmentsAsync(Guid templateId, List<EmployeeDto> employees, DateTime? dueDate, string? notes, string? assignedBy = null);
     Task<QuestionnaireAssignment?> UpdateAssignmentStatusAsync(Guid id, AssignmentStatus status);
 
     // Assignment queries
