@@ -19,6 +19,10 @@ public class QuestionnaireAssignment
     public string? AssignedBy { get; set; }
     public string? Notes { get; set; }
 
+    // Denormalized template metadata (populated in query handler)
+    public string TemplateName { get; set; } = string.Empty;
+    public Guid? TemplateCategoryId { get; set; }
+
     // Workflow properties
     public string WorkflowState { get; set; } = "Assigned";
     public List<SectionProgressDto> SectionProgress { get; set; } = new();

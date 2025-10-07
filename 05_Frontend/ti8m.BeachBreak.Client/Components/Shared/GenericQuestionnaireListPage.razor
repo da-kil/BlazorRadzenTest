@@ -76,7 +76,6 @@
 
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> employees = new();
-    private List<QuestionnaireTemplate> templates = new();
     private object? additionalData = null;
 
     // Lazy loading state
@@ -132,14 +131,13 @@
                 }
 
                 // Load other data in parallel
+                // Note: Templates are now denormalized in assignments, no need to fetch separately
                 var employeesTask = DataService.GetEmployeesAsync();
-                var templatesTask = DataService.GetTemplatesAsync();
                 var additionalDataTask = DataService.GetAdditionalDataAsync();
 
-                await Task.WhenAll(employeesTask, templatesTask, additionalDataTask);
+                await Task.WhenAll(employeesTask, additionalDataTask);
 
                 employees = employeesTask.Result;
-                templates = templatesTask.Result;
                 additionalData = additionalDataTask.Result;
             }, "LoadData");
         }
@@ -537,12 +535,9 @@
         // Apply category filter
         if (categoryFilter.HasValue)
         {
-            // Filter by questionnaire template category
+            // Filter by questionnaire template category (using denormalized data)
             filteredAssignments = filteredAssignments.Where(a =>
-            {
-                var template = templates.FirstOrDefault(t => t.Id == a.TemplateId);
-                return template?.CategoryId == categoryFilter.Value;
-            });
+                a.TemplateCategoryId == categoryFilter.Value);
         }
 
         return filteredAssignments.ToList();
@@ -588,8 +583,8 @@
 
     private string GetTemplateName(QuestionnaireAssignment assignment)
     {
-        var template = templates.FirstOrDefault(t => t.Id == assignment.TemplateId);
-        return template?.Name ?? "Unknown Template";
+        // Use denormalized template name from assignment
+        return assignment.TemplateName;
     }
 
     // Helper methods that were in BasePageComponent

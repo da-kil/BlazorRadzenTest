@@ -64,13 +64,8 @@ else
 		// Create the data service
 		dataService = new EmployeeQuestionnaireDataService(EmployeeQuestionnaireService, TemplateService);
 
-		// Load data with performance optimization
-		var loadAssignmentsTask = EmployeeQuestionnaireService.GetMyAssignmentsAsync();
-		var loadTemplatesTask = TemplateService.GetAllTemplatesAsync();
-
-		await Task.WhenAll(loadAssignmentsTask, loadTemplatesTask);
-
-		allAssignments = loadAssignmentsTask.Result;
+		// Load assignments (templates are denormalized in query handler)
+		allAssignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
 
 		// Categorize assignments
 		await CategorizeQuestionnaires();
