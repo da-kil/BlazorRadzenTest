@@ -278,4 +278,31 @@ public class AssignmentsController : BaseController
         }
     }
 
+    [HttpPost("reminder")]
+    [Authorize(Roles = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SendReminder([FromBody] SendReminderDto reminderDto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new SendAssignmentReminderCommand(
+                reminderDto.AssignmentId,
+                reminderDto.Message,
+                reminderDto.SentBy);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error sending reminder for assignment {AssignmentId}", reminderDto.AssignmentId);
+            return StatusCode(500, "An error occurred while sending reminder");
+        }
+    }
+
 }

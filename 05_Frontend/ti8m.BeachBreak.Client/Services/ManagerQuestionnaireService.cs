@@ -7,42 +7,53 @@ public class ManagerQuestionnaireService : BaseApiService, IManagerQuestionnaire
 {
     private const string ManagerEndpoint = "q/api/v1/managers";
     private const string AssignmentCommandEndpoint = "c/api/v1/assignments";
-    private readonly string currentManagerId;
 
     public ManagerQuestionnaireService(IHttpClientFactory factory) : base(factory)
     {
-        // TODO: Get current manager ID from authentication context
-        currentManagerId = "current-manager";
     }
 
     public async Task<List<EmployeeDto>> GetTeamMembersAsync()
     {
-        return await GetManagerResourceAsync<EmployeeDto>(ManagerEndpoint, currentManagerId, "team");
+        // Uses authenticated manager ID from UserContext on backend
+        return await GetAllAsync<EmployeeDto>($"{ManagerEndpoint}/me/team");
     }
 
     public async Task<List<QuestionnaireAssignment>> GetTeamAssignmentsAsync()
     {
-        return await GetManagerResourceAsync<QuestionnaireAssignment>(ManagerEndpoint, currentManagerId, "assignments");
+        // Uses authenticated manager ID from UserContext on backend
+        return await GetAllAsync<QuestionnaireAssignment>($"{ManagerEndpoint}/me/assignments");
     }
 
     public async Task<List<QuestionnaireAssignment>> GetTeamAssignmentsByStatusAsync(AssignmentStatus status)
     {
-        return await GetManagerResourceWithQueryAsync<QuestionnaireAssignment>(ManagerEndpoint, currentManagerId, "assignments", $"status={status}");
+        // Uses authenticated manager ID from UserContext on backend
+        return await GetAllAsync<QuestionnaireAssignment>($"{ManagerEndpoint}/me/assignments", $"status={status}");
     }
 
     public async Task<List<AssignmentProgress>> GetTeamProgressAsync()
     {
-        return await GetManagerResourceAsync<AssignmentProgress>(ManagerEndpoint, currentManagerId, "team/progress");
+        // Uses authenticated manager ID from UserContext on backend
+        return await GetAllAsync<AssignmentProgress>($"{ManagerEndpoint}/me/team/progress");
     }
 
     public async Task<TeamAnalytics> GetTeamAnalyticsAsync()
     {
-        return await GetManagerSingleResourceAsync<TeamAnalytics>(ManagerEndpoint, currentManagerId, "analytics") ?? new TeamAnalytics();
+        // Uses authenticated manager ID from UserContext on backend
+        try
+        {
+            return await HttpQueryClient.GetFromJsonAsync<TeamAnalytics>($"{ManagerEndpoint}/me/analytics") ?? new TeamAnalytics();
+        }
+        catch (Exception ex)
+        {
+            LogError("Error fetching team analytics", ex);
+            return new TeamAnalytics();
+        }
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsByEmployeeAsync(string employeeId)
     {
-        return await GetManagerResourceAsync<QuestionnaireAssignment>(ManagerEndpoint, currentManagerId, $"employees/{employeeId}/assignments");
+        // Uses EmployeesController endpoint which has proper authorization
+        return await GetEmployeeResourceAsync<QuestionnaireAssignment>("q/api/v1/employees", employeeId, "assignments");
     }
 
     public async Task<bool> SendReminderAsync(Guid assignmentId, string message)
@@ -51,7 +62,7 @@ public class ManagerQuestionnaireService : BaseApiService, IManagerQuestionnaire
         {
             AssignmentId = assignmentId,
             Message = message,
-            SentBy = currentManagerId
+            SentBy = "System" // Backend will use authenticated user context
         };
 
         try
@@ -68,12 +79,7 @@ public class ManagerQuestionnaireService : BaseApiService, IManagerQuestionnaire
 
     public async Task<TeamPerformanceReport> GenerateTeamReportAsync(DateTime? fromDate = null, DateTime? toDate = null)
     {
-        var queryParams = new List<string>();
-        if (fromDate.HasValue) queryParams.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
-        if (toDate.HasValue) queryParams.Add($"toDate={toDate.Value:yyyy-MM-dd}");
-
-        var queryString = queryParams.Any() ? string.Join("&", queryParams) : "";
-
-        return await GetManagerSingleResourceAsync<TeamPerformanceReport>(ManagerEndpoint, currentManagerId, $"reports/performance{(string.IsNullOrEmpty(queryString) ? "" : "?" + queryString)}") ?? new TeamPerformanceReport();
+        // TODO: Implement when backend endpoint is available
+        return new TeamPerformanceReport();
     }
 }
