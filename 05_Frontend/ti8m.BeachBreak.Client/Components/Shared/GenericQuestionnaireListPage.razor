@@ -3,6 +3,8 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Services.Enhanced
+@using Microsoft.AspNetCore.Components
+@inject NavigationManager NavigationManager
 @inherits OptimizedComponentBase
 
 <div class="container-fluid">
@@ -387,7 +389,8 @@
                     var memberAssignments = allAssignments.Where(a => a.EmployeeId.ToString() == member.Id.ToString()).ToList();
                     <TeamMemberCard TeamMember="@member"
                                    Assignments="@memberAssignments"
-                                   OnSendReminder="@HandleSendReminder" />
+                                   OnSendReminder="@HandleSendReminder"
+                                   OnAssignmentClick="@HandleAssignmentClick" />
                 }
             </div>
         }
@@ -432,7 +435,8 @@
                                               CategoryName="@questionnaireGroup.CategoryName"
                                               Assignments="@questionnaireGroup.Assignments"
                                               OnSendReminders="@HandleSendQuestionnaireReminders"
-                                              OnViewAnalytics="@HandleViewQuestionnaireAnalytics" />
+                                              OnViewAnalytics="@HandleViewQuestionnaireAnalytics"
+                                              OnAssignmentClick="@HandleAssignmentClick" />
                 }
             </div>
         }
@@ -679,7 +683,8 @@
         }
         else
         {
-            NavigateToPage($"/my-questionnaires/{assignment.TemplateId}");
+            // Use new assignment-based route
+            NavigationManager.NavigateTo($"/questionnaire/{assignment.Id}");
         }
     }
 
@@ -702,8 +707,12 @@
     // Helper methods that were in BasePageComponent
     private void NavigateToPage(string url)
     {
-        // Navigation would be implemented here
-        Console.WriteLine($"Navigating to: {url}");
+        NavigationManager.NavigateTo(url);
+    }
+
+    private async Task HandleAssignmentClick(Guid assignmentId)
+    {
+        NavigationManager.NavigateTo($"/questionnaire/{assignmentId}");
     }
 
     private void ShowInfo(string message)

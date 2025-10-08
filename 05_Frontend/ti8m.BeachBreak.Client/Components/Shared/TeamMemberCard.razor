@@ -71,7 +71,9 @@
                 <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-2">Active Assignments</RadzenText>
                 @foreach (var assignment in Assignments.Take(5))
                 {
-                    <div class="assignment-item p-2 mb-2 border-start border-3 @GetBorderClass(assignment)" style="padding-left: 0.75rem !important;">
+                    <div class="assignment-item p-2 mb-2 border-start border-3 @GetBorderClass(assignment)"
+                         style="padding-left: 0.75rem !important; cursor: pointer;"
+                         @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
                         <div class="d-flex justify-content-between align-items-start">
                             <div class="flex-grow-1">
                                 <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">@assignment.TemplateName</RadzenText>
@@ -127,6 +129,7 @@
     [Parameter, EditorRequired] public EmployeeDto TeamMember { get; set; } = default!;
     [Parameter, EditorRequired] public List<QuestionnaireAssignment> Assignments { get; set; } = new();
     [Parameter] public EventCallback<EmployeeDto> OnSendReminder { get; set; }
+    [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
 
     private bool ShowDetails { get; set; } = false;
 

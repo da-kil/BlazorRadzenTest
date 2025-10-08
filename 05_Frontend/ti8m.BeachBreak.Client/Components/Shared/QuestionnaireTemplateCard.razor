@@ -99,7 +99,9 @@
                 <div class="assignment-details-list">
                     @foreach (var assignment in Assignments.OrderByDescending(a => GetAssignmentPriority(a)).Take(10))
                     {
-                        <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetAssignmentBorderClass(assignment)">
+                        <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetAssignmentBorderClass(assignment)"
+                             style="cursor: pointer;"
+                             @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
                             <div class="flex-grow-1">
                                 <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
                                     <RadzenIcon Icon="person" Style="font-size: 0.875rem;" Class="me-1" />
@@ -171,6 +173,7 @@
     [Parameter, EditorRequired] public List<QuestionnaireAssignment> Assignments { get; set; } = new();
     [Parameter] public EventCallback<Guid> OnSendReminders { get; set; }
     [Parameter] public EventCallback<Guid> OnViewAnalytics { get; set; }
+    [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
 
     private bool ShowDetails { get; set; } = false;
 
