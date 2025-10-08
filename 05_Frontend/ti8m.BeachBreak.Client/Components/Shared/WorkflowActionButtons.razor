@@ -6,11 +6,6 @@
 <div class="workflow-action-buttons">
     @if (Assignment != null)
     {
-        <div class="action-info">
-            <i class="material-icons">info</i>
-            <span>@GetActionMessage()</span>
-        </div>
-
         <div class="button-group">
             @if (IsEmployee && WorkflowStateHelper.CanEmployeeConfirm(Assignment))
             {
@@ -68,28 +63,6 @@
         margin: 16px 0;
     }
 
-    .action-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
-        padding: 12px;
-        background: white;
-        border-radius: 6px;
-        border-left: 4px solid #0F60FF;
-    }
-
-    .action-info i {
-        color: #0F60FF;
-        font-size: 20px;
-    }
-
-    .action-info span {
-        font-size: 14px;
-        color: #333;
-        font-weight: 500;
-    }
-
     .button-group {
         display: flex;
         gap: 12px;
@@ -114,18 +87,6 @@
     public EventCallback OnActionCompleted { get; set; }
 
     private bool isProcessing = false;
-
-    private string GetActionMessage()
-    {
-        if (Assignment == null) return string.Empty;
-
-        if (IsEmployee)
-            return WorkflowStateHelper.GetNextActionForEmployee(Assignment);
-        else if (IsManager)
-            return WorkflowStateHelper.GetNextActionForManager(Assignment);
-
-        return "No action required";
-    }
 
     private async Task ConfirmEmployeeCompletion()
     {

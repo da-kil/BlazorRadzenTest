@@ -96,6 +96,16 @@
                 }
             </div>
 
+            @* Workflow Action Buttons *@
+            @if (assignment != null && assignmentId.HasValue)
+            {
+                <WorkflowActionButtons Assignment="@assignment"
+                                      IsEmployee="@isEmployee"
+                                      IsManager="@isManager"
+                                      UserName="@currentUserName"
+                                      OnActionCompleted="@OnWorkflowActionCompleted" />
+            }
+
             <div class="d-flex justify-content-between mt-4">
                 <RadzenButton Text="Previous" 
                              ButtonStyle="ButtonStyle.Light" 
@@ -116,16 +126,16 @@
                     {
                         @if (template.Settings.AllowReviewBeforeSubmit)
                         {
-                            <RadzenButton Text="Review & Submit" 
-                                         ButtonStyle="ButtonStyle.Success" 
-                                         Icon="preview"
+                            <RadzenButton Text="Submit"
+                                         ButtonStyle="ButtonStyle.Success"
+                                         Icon="send"
                                          Click="@ShowReview"
-                                         Disabled="@(!CanProceedFromCurrentSection())" />
+                                         Disabled="@(!CanSubmit())" />
                         }
                         else
                         {
-                            <RadzenButton Text="Submit" 
-                                         ButtonStyle="ButtonStyle.Success" 
+                            <RadzenButton Text="Submit"
+                                         ButtonStyle="ButtonStyle.Success"
                                          Icon="send"
                                          Click="@SubmitQuestionnaire"
                                          Disabled="@(!CanSubmit())" />
@@ -157,6 +167,7 @@
     private bool isManager = false;
     private bool isEmployee = false;
     private string currentUserRole = "Employee";
+    private string currentUserName = string.Empty;
     private List<QuestionSection> visibleSections = new();
     private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
 
@@ -181,6 +192,9 @@
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+
+        // Get user name for workflow actions
+        currentUserName = user.Identity?.Name ?? "Unknown User";
 
         // Check application roles - use actual ApplicationRole enum values
         isEmployee = user.IsInRole("Employee");
@@ -1032,9 +1046,29 @@
     {
         var competencies = GetCompetenciesForQuestion(question);
         if (competencies.Count == 0) return true;
-        
-        // Check that at least one competency has been rated
-        return competencies.Any(c => GetCompetencyRating(question.Id, c.Key) > 0);
+
+        // Check that at least one competency has been rated in the ComplexValue
+        if (questionResponse.ComplexValue == null) return false;
+
+        return competencies.Any(c =>
+        {
+            if (questionResponse.ComplexValue.TryGetValue($"rating_{c.Key}", out var value))
+            {
+                // Handle JsonElement from deserialization
+                if (value is System.Text.Json.JsonElement jsonElement)
+                {
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                    {
+                        return jsonElement.GetInt32() > 0;
+                    }
+                }
+                else if (value is int intValue)
+                {
+                    return intValue > 0;
+                }
+            }
+            return false;
+        });
     }
 
     private bool IsSectionCompleted(Guid sectionId)
@@ -1071,8 +1105,29 @@
 
     private bool CanSubmit()
     {
+        // If no visible sections, allow submission
+        if (!visibleSections.Any()) return true;
+
         // Check only visible sections for current user role
-        return visibleSections.All(s => IsSectionCompleted(s.Id));
+        // A section is considered complete if it has no required questions OR all required questions are answered
+        return visibleSections.All(s =>
+        {
+            var section = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+            if (section == null) return true;
+
+            var requiredQuestions = section.Questions.Where(q => q.IsRequired).ToList();
+
+            // If no required questions, section is complete
+            if (!requiredQuestions.Any()) return true;
+
+            // Check if all required questions are answered
+            if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
+                return false;
+
+            return requiredQuestions.All(q =>
+                sectionResponse.QuestionResponses.TryGetValue(q.Id, out var qr) &&
+                IsQuestionAnswered(q, qr));
+        });
     }
 
     private async Task SaveProgress()
@@ -1103,8 +1158,48 @@
 
     private async Task ShowReview()
     {
-        // TODO: Show review dialog
-        NotificationService.Notify(NotificationSeverity.Info, "Review", "Review functionality would appear here");
+        if (!CanSubmit())
+        {
+            // Debug: Show which sections are incomplete
+            var incompleteSections = visibleSections.Where(s =>
+            {
+                var section = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+                if (section == null) return false;
+
+                var requiredQuestions = section.Questions.Where(q => q.IsRequired).ToList();
+                if (!requiredQuestions.Any()) return false;
+
+                if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
+                    return true;
+
+                return !requiredQuestions.All(q =>
+                    sectionResponse.QuestionResponses.TryGetValue(q.Id, out var qr) &&
+                    IsQuestionAnswered(q, qr));
+            }).Select(s => s.Title).ToList();
+
+            var message = incompleteSections.Any()
+                ? $"Please complete all required questions in: {string.Join(", ", incompleteSections)}"
+                : "Please complete all required questions before reviewing";
+
+            NotificationService.Notify(NotificationSeverity.Warning, "Incomplete", message);
+            return;
+        }
+
+        // Show a confirmation dialog with review summary
+        var confirmed = await DialogService.Confirm(
+            $"You are about to submit your responses for '{template?.Name}'. Please review your answers before submitting. Do you want to continue?",
+            "Submit",
+            new ConfirmOptions
+            {
+                OkButtonText = "Submit",
+                CancelButtonText = "Cancel",
+                AutoFocusFirstElement = true
+            });
+
+        if (confirmed == true)
+        {
+            await SubmitQuestionnaire();
+        }
     }
 
     private async Task SubmitQuestionnaire()
@@ -1132,7 +1227,8 @@
             }
             else
             {
-                // Employee flow - save and submit
+                // Employee flow - complete sections, save and submit
+                await CompleteSectionsAsEmployee();
                 await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
                 var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
 
@@ -1154,6 +1250,25 @@
         }
     }
 
+    private async Task CompleteSectionsAsEmployee()
+    {
+        if (!assignmentId.HasValue) return;
+
+        // Complete each visible section that the employee is responsible for
+        foreach (var section in visibleSections.Where(s => IsSectionCompleted(s.Id)))
+        {
+            try
+            {
+                await AssignmentService.CompleteSectionAsEmployeeAsync(assignmentId.Value, section.Id);
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
+                    $"Could not complete section '{section.Title}': {ex.Message}");
+            }
+        }
+    }
+
     private async Task CompleteSectionsAsManager()
     {
         if (!assignmentId.HasValue) return;
@@ -1169,6 +1284,32 @@
             {
                 NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
                     $"Could not complete section '{section.Title}': {ex.Message}");
+            }
+        }
+    }
+
+    private async Task OnWorkflowActionCompleted()
+    {
+        // Reload the assignment to get updated workflow state
+        if (assignmentId.HasValue)
+        {
+            try
+            {
+                if (isEmployee)
+                {
+                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+                }
+                else if (isManager)
+                {
+                    assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+                }
+
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Reload Error",
+                    $"Failed to reload assignment: {ex.Message}");
             }
         }
     }

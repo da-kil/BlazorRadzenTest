@@ -319,6 +319,16 @@
                         </RadzenText>
                     </div>
 
+                    <!-- Workflow State Badge (if not default) -->
+                    @if (!string.IsNullOrEmpty(assignment.WorkflowState) && assignment.WorkflowState != "Assigned")
+                    {
+                        <div class="mt-2">
+                            <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
+                                        BadgeStyle="BadgeStyle.Light"
+                                        Style="@($"font-size: 0.75rem; background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
+                        </div>
+                    }
+
                     <!-- Assignment Details Grid -->
                     <div class="row g-3 mt-2">
                         <div class="col-md-4">
