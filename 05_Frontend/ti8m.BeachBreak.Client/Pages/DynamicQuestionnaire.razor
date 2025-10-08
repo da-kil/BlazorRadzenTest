@@ -203,10 +203,8 @@
                 // Load assignment using appropriate service based on user role
                 if (isEmployee)
                 {
-                    // Employees: Load all their assignments and find the specific one
-                    // Backend validates ownership via "me" endpoint
-                    var myAssignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
-                    assignment = myAssignments.FirstOrDefault(a => a.Id == assignmentId.Value);
+                    // Employees use the "me/assignments/{id}" endpoint which validates ownership
+                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
                 }
                 else if (isManager)
                 {
