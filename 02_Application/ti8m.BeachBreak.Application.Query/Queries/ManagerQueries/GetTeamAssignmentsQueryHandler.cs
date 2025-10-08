@@ -8,15 +8,18 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
 {
     private readonly IQuestionnaireAssignmentRepository assignmentRepository;
     private readonly IEmployeeRepository employeeRepository;
+    private readonly IQuestionnaireTemplateRepository templateRepository;
     private readonly ILogger<GetTeamAssignmentsQueryHandler> logger;
 
     public GetTeamAssignmentsQueryHandler(
         IQuestionnaireAssignmentRepository assignmentRepository,
         IEmployeeRepository employeeRepository,
+        IQuestionnaireTemplateRepository templateRepository,
         ILogger<GetTeamAssignmentsQueryHandler> logger)
     {
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
+        this.templateRepository = templateRepository;
         this.logger = logger;
     }
 
@@ -38,57 +41,20 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
             }
 
             // Get all assignments for team members
-            var allAssignments = new List<QuestionnaireAssignment>();
+            var allReadModels = new List<Projections.QuestionnaireAssignmentReadModel>();
             foreach (var employeeId in teamMemberIds)
             {
                 var employeeAssignments = await assignmentRepository.GetAssignmentsByEmployeeIdAsync(employeeId, cancellationToken);
-                allAssignments.AddRange(employeeAssignments.Select(a => new QuestionnaireAssignment
-                {
-                    Id = a.Id,
-                    TemplateId = a.TemplateId,
-                    EmployeeId = a.EmployeeId,
-                    EmployeeName = a.EmployeeName,
-                    EmployeeEmail = a.EmployeeEmail,
-                    AssignedDate = a.AssignedDate,
-                    DueDate = a.DueDate,
-                    StartedDate = a.StartedDate,
-                    CompletedDate = a.CompletedDate,
-                    IsWithdrawn = a.IsWithdrawn,
-                    WithdrawnDate = a.WithdrawnDate,
-                    WithdrawnBy = a.WithdrawnBy,
-                    WithdrawalReason = a.WithdrawalReason,
-                    Status = a.Status,
-                    AssignedBy = a.AssignedBy,
-                    Notes = a.Notes,
-                    TemplateName = string.Empty, // TODO: Fetch from template if needed
-                    TemplateCategoryId = null, // TODO: Fetch from template if needed
-                    WorkflowState = a.WorkflowState,
-                    SectionProgress = a.SectionProgress?.Select(sp => new SectionProgressDto
-                    {
-                        SectionId = sp.SectionId,
-                        IsEmployeeCompleted = sp.IsEmployeeCompleted,
-                        IsManagerCompleted = sp.IsManagerCompleted,
-                        EmployeeCompletedDate = sp.EmployeeCompletedDate,
-                        ManagerCompletedDate = sp.ManagerCompletedDate
-                    }).ToList() ?? new List<SectionProgressDto>(),
-                    EmployeeConfirmedDate = a.EmployeeConfirmedDate,
-                    EmployeeConfirmedBy = a.EmployeeConfirmedBy,
-                    ManagerConfirmedDate = a.ManagerConfirmedDate,
-                    ManagerConfirmedBy = a.ManagerConfirmedBy,
-                    ReviewInitiatedDate = a.ReviewInitiatedDate,
-                    ReviewInitiatedBy = a.ReviewInitiatedBy,
-                    EmployeeReviewConfirmedDate = a.EmployeeReviewConfirmedDate,
-                    EmployeeReviewConfirmedBy = a.EmployeeReviewConfirmedBy,
-                    FinalizedDate = a.FinalizedDate,
-                    FinalizedBy = a.FinalizedBy,
-                    IsLocked = a.IsLocked
-                }));
+                allReadModels.AddRange(employeeAssignments);
             }
+
+            // Enrich with template metadata
+            var enrichedAssignments = await EnrichWithTemplateMetadataAsync(allReadModels, cancellationToken);
 
             // Apply status filter if provided
             var filteredAssignments = query.FilterByStatus.HasValue
-                ? allAssignments.Where(a => a.Status == query.FilterByStatus.Value)
-                : allAssignments;
+                ? enrichedAssignments.Where(a => a.Status == query.FilterByStatus.Value)
+                : enrichedAssignments;
 
             logger.LogInformation("Retrieved {Count} team assignments for manager {ManagerId}", filteredAssignments.Count(), query.ManagerId);
             return Result<IEnumerable<QuestionnaireAssignment>>.Success(filteredAssignments);
@@ -98,5 +64,95 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
             logger.LogError(ex, "Failed to retrieve team assignments for manager {ManagerId}", query.ManagerId);
             return Result<IEnumerable<QuestionnaireAssignment>>.Fail($"Failed to retrieve team assignments: {ex.Message}", 500);
         }
+    }
+
+    /// <summary>
+    /// Enriches assignments with template metadata (name and category).
+    /// Only fetches templates referenced by the assignments to minimize data transfer.
+    /// </summary>
+    private async Task<IEnumerable<QuestionnaireAssignment>> EnrichWithTemplateMetadataAsync(
+        IEnumerable<Projections.QuestionnaireAssignmentReadModel> readModels,
+        CancellationToken cancellationToken)
+    {
+        var readModelsList = readModels.ToList();
+        if (!readModelsList.Any())
+        {
+            return Enumerable.Empty<QuestionnaireAssignment>();
+        }
+
+        // Get unique template IDs from assignments
+        var templateIds = readModelsList.Select(a => a.TemplateId).Distinct().ToList();
+
+        // Fetch only the templates we need
+        var templates = await templateRepository.GetAllAsync(cancellationToken);
+        var templateLookup = templates
+            .Where(t => templateIds.Contains(t.Id))
+            .ToDictionary(t => t.Id, t => (t.Name, t.CategoryId));
+
+        // Map and enrich
+        return readModelsList.Select(readModel =>
+        {
+            var assignment = MapToQuestionnaireAssignment(readModel);
+
+            // Denormalize template metadata
+            if (templateLookup.TryGetValue(readModel.TemplateId, out var templateMetadata))
+            {
+                assignment.TemplateName = templateMetadata.Name;
+                assignment.TemplateCategoryId = templateMetadata.CategoryId;
+            }
+            else
+            {
+                // Template not found - log warning but don't fail
+                logger.LogWarning("Template {TemplateId} not found for assignment {AssignmentId}",
+                    readModel.TemplateId, readModel.Id);
+                assignment.TemplateName = "Unknown Template";
+                assignment.TemplateCategoryId = null;
+            }
+
+            return assignment;
+        });
+    }
+
+    private static QuestionnaireAssignment MapToQuestionnaireAssignment(Projections.QuestionnaireAssignmentReadModel readModel)
+    {
+        return new QuestionnaireAssignment
+        {
+            Id = readModel.Id,
+            TemplateId = readModel.TemplateId,
+            EmployeeId = readModel.EmployeeId,
+            EmployeeName = readModel.EmployeeName,
+            EmployeeEmail = readModel.EmployeeEmail,
+            AssignedDate = readModel.AssignedDate,
+            DueDate = readModel.DueDate,
+            StartedDate = readModel.StartedDate,
+            CompletedDate = readModel.CompletedDate,
+            IsWithdrawn = readModel.IsWithdrawn,
+            WithdrawnDate = readModel.WithdrawnDate,
+            WithdrawnBy = readModel.WithdrawnBy,
+            WithdrawalReason = readModel.WithdrawalReason,
+            Status = readModel.Status,
+            AssignedBy = readModel.AssignedBy,
+            Notes = readModel.Notes,
+            WorkflowState = readModel.WorkflowState,
+            SectionProgress = readModel.SectionProgress?.Select(sp => new SectionProgressDto
+            {
+                SectionId = sp.SectionId,
+                IsEmployeeCompleted = sp.IsEmployeeCompleted,
+                IsManagerCompleted = sp.IsManagerCompleted,
+                EmployeeCompletedDate = sp.EmployeeCompletedDate,
+                ManagerCompletedDate = sp.ManagerCompletedDate
+            }).ToList() ?? new List<SectionProgressDto>(),
+            EmployeeConfirmedDate = readModel.EmployeeConfirmedDate,
+            EmployeeConfirmedBy = readModel.EmployeeConfirmedBy,
+            ManagerConfirmedDate = readModel.ManagerConfirmedDate,
+            ManagerConfirmedBy = readModel.ManagerConfirmedBy,
+            ReviewInitiatedDate = readModel.ReviewInitiatedDate,
+            ReviewInitiatedBy = readModel.ReviewInitiatedBy,
+            EmployeeReviewConfirmedDate = readModel.EmployeeReviewConfirmedDate,
+            EmployeeReviewConfirmedBy = readModel.EmployeeReviewConfirmedBy,
+            FinalizedDate = readModel.FinalizedDate,
+            FinalizedBy = readModel.FinalizedBy,
+            IsLocked = readModel.IsLocked
+        };
     }
 }

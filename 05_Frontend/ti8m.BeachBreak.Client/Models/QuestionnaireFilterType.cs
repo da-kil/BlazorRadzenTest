@@ -4,6 +4,7 @@ public enum QuestionnaireFilterType
 {
     Search,
     Category,
+    Template,
     Status,
     Department,
     DateRange

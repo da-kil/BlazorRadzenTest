@@ -100,9 +100,10 @@ public class ManagersController : BaseController
     /// <summary>
     /// Gets all questionnaire assignments for the authenticated manager's team.
     /// Uses authorization service to get the manager ID securely.
+    /// Returns enriched data including template names.
     /// </summary>
     [HttpGet("me/assignments")]
-    [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<TeamAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetMyTeamAssignments([FromQuery] string? status = null)
@@ -145,13 +146,15 @@ public class ManagersController : BaseController
 
             return CreateResponse(result, assignments =>
             {
-                return assignments.Select(assignment => new QuestionnaireAssignmentDto
+                return assignments.Select(assignment => new TeamAssignmentDto
                 {
                     Id = assignment.Id,
                     EmployeeId = assignment.EmployeeId.ToString(),
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
                     TemplateId = assignment.TemplateId,
+                    TemplateName = assignment.TemplateName,
+                    TemplateCategoryId = assignment.TemplateCategoryId,
                     Status = MapAssignmentStatusToDto[assignment.Status],
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,
@@ -381,10 +384,11 @@ public class ManagersController : BaseController
 
     /// <summary>
     /// Gets all questionnaire assignments for a specific manager's team. HR/Admin only.
+    /// Returns enriched data including template names.
     /// </summary>
     [HttpGet("{managerId:guid}/assignments")]
     [Authorize(Roles = "HR,HRLead,Admin")]
-    [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<TeamAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetManagerTeamAssignments(Guid managerId, [FromQuery] string? status = null)
@@ -436,13 +440,15 @@ public class ManagersController : BaseController
 
             return CreateResponse(result, assignments =>
             {
-                return assignments.Select(assignment => new QuestionnaireAssignmentDto
+                return assignments.Select(assignment => new TeamAssignmentDto
                 {
                     Id = assignment.Id,
                     EmployeeId = assignment.EmployeeId.ToString(),
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
                     TemplateId = assignment.TemplateId,
+                    TemplateName = assignment.TemplateName,
+                    TemplateCategoryId = assignment.TemplateCategoryId,
                     Status = MapAssignmentStatusToDto[assignment.Status],
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,

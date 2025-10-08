@@ -129,6 +129,22 @@ public static class QuestionnairePageConfigurationFactory
                 },
                 new()
                 {
+                    Id = "template",
+                    Label = "Questionnaire Filter",
+                    Type = QuestionnaireFilterType.Template,
+                    IsVisible = true,
+                    TemplateOptions = allAssignments
+                        .GroupBy(a => new { a.TemplateId, a.TemplateName })
+                        .Select(g => new QuestionnaireTemplateOption
+                        {
+                            Id = g.Key.TemplateId,
+                            Name = g.Key.TemplateName
+                        })
+                        .OrderBy(t => t.Name)
+                        .ToList()
+                },
+                new()
+                {
                     Id = "status",
                     Label = "Status Filter",
                     Type = QuestionnaireFilterType.Status,

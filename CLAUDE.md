@@ -155,3 +155,28 @@ dotnet run
 - **API DTOs**: Located in `03_Infrastructure/ti8m.BeachBreak.CommandApi/Dto/`
 - **ENDPOINT MATCHING**: Ensure client calls correct endpoints:
 - **TYPE SAFETY**: Replace all `object`, `var`, and anonymous types with proper strongly-typed DTOs
+
+### 5. NEVER Use `dynamic` Keyword
+- **ABSOLUTELY FORBIDDEN**: The `dynamic` keyword must NEVER be used in this codebase
+- **ALWAYS** create strongly-typed classes or records instead
+- **REASON**: Loss of compile-time type safety, IntelliSense, and refactoring support
+- **EXAMPLE - BAD**:
+  ```csharp
+  TemplateOptions = items.Select(i => (dynamic)new { Id = i.Id, Name = i.Name }).ToList()
+  ```
+- **EXAMPLE - GOOD**:
+  ```csharp
+  // Create a proper model class
+  public class QuestionnaireTemplateOption
+  {
+      public Guid Id { get; set; }
+      public string Name { get; set; } = string.Empty;
+  }
+
+  // Use it
+  TemplateOptions = items.Select(i => new QuestionnaireTemplateOption
+  {
+      Id = i.Id,
+      Name = i.Name
+  }).ToList()
+  ```

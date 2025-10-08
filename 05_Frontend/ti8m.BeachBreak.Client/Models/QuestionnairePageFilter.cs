@@ -9,4 +9,5 @@ public class QuestionnairePageFilter
     public object? DefaultValue { get; set; }
     public List<string> Options { get; set; } = new();
     public List<Category> CategoryOptions { get; set; } = new();
+    public List<QuestionnaireTemplateOption> TemplateOptions { get; set; } = new();
 }

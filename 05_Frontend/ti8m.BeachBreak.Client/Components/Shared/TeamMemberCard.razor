@@ -1,0 +1,176 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<RadzenCard Class="team-member-card mb-3">
+    <div class="d-flex align-items-start justify-content-between mb-3">
+        <div class="d-flex align-items-center flex-grow-1">
+            <div class="team-member-avatar me-3">
+                <RadzenIcon Icon="person" Style="font-size: 2rem;" Class="text-primary" />
+            </div>
+            <div>
+                <RadzenText TextStyle="TextStyle.H6" Class="mb-1">@TeamMember.FirstName @TeamMember.LastName</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-1">@TeamMember.EMail</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    <RadzenIcon Icon="badge" Style="font-size: 0.875rem;" Class="me-1" />
+                    @TeamMember.Role
+                </RadzenText>
+            </div>
+        </div>
+        <div class="text-end">
+            <RadzenBadge Text="@($"{CompletedCount}/{TotalCount}")"
+                        BadgeStyle="@GetProgressBadgeStyle()"
+                        Class="px-3 py-2" />
+        </div>
+    </div>
+
+    @if (Assignments.Any())
+    {
+        <div class="assignments-summary mb-3">
+            <div class="row g-2">
+                <div class="col-3 text-center">
+                    <div class="stat-box p-2 border rounded">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-warning mb-1">@PendingCount</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Pending</RadzenText>
+                    </div>
+                </div>
+                <div class="col-3 text-center">
+                    <div class="stat-box p-2 border rounded">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-info mb-1">@InProgressCount</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">In Progress</RadzenText>
+                    </div>
+                </div>
+                <div class="col-3 text-center">
+                    <div class="stat-box p-2 border rounded">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-success mb-1">@CompletedCount</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Completed</RadzenText>
+                    </div>
+                </div>
+                <div class="col-3 text-center">
+                    <div class="stat-box p-2 border rounded">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-danger mb-1">@OverdueCount</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overdue</RadzenText>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overall Progress</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@ProgressPercentage%</RadzenText>
+            </div>
+            <RadzenProgressBar Value="@ProgressPercentage" ShowValue="false" Style="height: 8px;" />
+        </div>
+
+        <!-- Assignments List -->
+        @if (ShowDetails)
+        {
+            <div class="assignments-list mt-3">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-2">Active Assignments</RadzenText>
+                @foreach (var assignment in Assignments.Take(5))
+                {
+                    <div class="assignment-item p-2 mb-2 border-start border-3 @GetBorderClass(assignment)" style="padding-left: 0.75rem !important;">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">@assignment.TemplateName</RadzenText>
+                                @if (assignment.DueDate.HasValue)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                        <RadzenIcon Icon="event" Style="font-size: 0.75rem;" />
+                                        Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
+                                    </RadzenText>
+                                }
+                            </div>
+                            <RadzenBadge Text="@assignment.Status.ToString()"
+                                        BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
+                                        Class="ms-2" />
+                        </div>
+                    </div>
+                }
+                @if (Assignments.Count > 5)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                        +@(Assignments.Count - 5) more assignments
+                    </RadzenText>
+                }
+            </div>
+        }
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 mt-3">
+            <RadzenButton Text="@(ShowDetails ? "Hide Details" : "View Details")"
+                         ButtonStyle="ButtonStyle.Light"
+                         Size="ButtonSize.Small"
+                         Click="@(() => ShowDetails = !ShowDetails)" />
+            @if (OnSendReminder.HasDelegate && (PendingCount > 0 || InProgressCount > 0))
+            {
+                <RadzenButton Text="Send Reminder"
+                             Icon="notifications"
+                             ButtonStyle="ButtonStyle.Secondary"
+                             Size="ButtonSize.Small"
+                             Click="@(() => OnSendReminder.InvokeAsync(TeamMember))" />
+            }
+        </div>
+    }
+    else
+    {
+        <div class="text-center p-3">
+            <RadzenIcon Icon="assignment" Class="text-muted mb-2" Style="font-size: 2rem;" />
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">No assignments yet</RadzenText>
+        </div>
+    }
+</RadzenCard>
+
+@code {
+    [Parameter, EditorRequired] public EmployeeDto TeamMember { get; set; } = default!;
+    [Parameter, EditorRequired] public List<QuestionnaireAssignment> Assignments { get; set; } = new();
+    [Parameter] public EventCallback<EmployeeDto> OnSendReminder { get; set; }
+
+    private bool ShowDetails { get; set; } = false;
+
+    private int TotalCount => Assignments.Count;
+    private int CompletedCount => Assignments.Count(a => a.Status == AssignmentStatus.Completed);
+    private int PendingCount => Assignments.Count(a => a.Status == AssignmentStatus.Assigned);
+    private int InProgressCount => Assignments.Count(a => a.Status == AssignmentStatus.InProgress);
+    private int OverdueCount => Assignments.Count(a =>
+        a.DueDate.HasValue &&
+        a.DueDate.Value < DateTime.Now &&
+        a.Status != AssignmentStatus.Completed);
+
+    private double ProgressPercentage => TotalCount > 0 ? Math.Round((double)CompletedCount / TotalCount * 100, 1) : 0;
+
+    private BadgeStyle GetProgressBadgeStyle()
+    {
+        if (OverdueCount > 0) return BadgeStyle.Danger;
+        if (ProgressPercentage >= 100) return BadgeStyle.Success;
+        if (ProgressPercentage >= 50) return BadgeStyle.Info;
+        return BadgeStyle.Warning;
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => BadgeStyle.Secondary,
+            AssignmentStatus.InProgress => BadgeStyle.Info,
+            AssignmentStatus.Completed => BadgeStyle.Success,
+            AssignmentStatus.Overdue => BadgeStyle.Danger,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private string GetBorderClass(QuestionnaireAssignment assignment)
+    {
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+            return "border-danger";
+
+        return assignment.Status switch
+        {
+            AssignmentStatus.InProgress => "border-info",
+            AssignmentStatus.Completed => "border-success",
+            _ => "border-warning"
+        };
+    }
+}
