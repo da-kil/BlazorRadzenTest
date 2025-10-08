@@ -64,57 +64,65 @@
             <RadzenProgressBar Value="@ProgressPercentage" ShowValue="false" Style="height: 8px;" />
         </div>
 
-        <!-- Assignments List -->
-        @if (ShowDetails)
-        {
-            <div class="assignments-list mt-3">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-2">Active Assignments</RadzenText>
-                @foreach (var assignment in Assignments.Take(5))
+        <!-- Assignments List - Always Visible, Aligned with Questionnaire View -->
+        <div class="assignments-list mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary">
+                    <RadzenIcon Icon="touch_app" Style="font-size: 1rem;" Class="me-1" />
+                    Click to Review & Complete
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @Assignments.Count @(Assignments.Count == 1 ? "assignment" : "assignments")
+                </RadzenText>
+            </div>
+            <div class="assignment-details-list">
+                @foreach (var assignment in Assignments.Take(10))
                 {
-                    <div class="assignment-item p-2 mb-2 border-start border-3 @GetBorderClass(assignment)"
-                         style="padding-left: 0.75rem !important; cursor: pointer;"
+                    <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetBorderClass(assignment)"
+                         style="cursor: pointer;"
                          @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">@assignment.TemplateName</RadzenText>
-                                @if (assignment.DueDate.HasValue)
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                        <RadzenIcon Icon="event" Style="font-size: 0.75rem;" />
-                                        Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
-                                    </RadzenText>
-                                }
-                            </div>
-                            <RadzenBadge Text="@assignment.Status.ToString()"
-                                        BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
-                                        Class="ms-2" />
+                        <div class="flex-grow-1">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
+                                <RadzenIcon Icon="description" Style="font-size: 0.875rem;" Class="me-1" />
+                                @assignment.TemplateName
+                            </RadzenText>
+                            @if (assignment.DueDate.HasValue)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Class="@GetDueDateClass(assignment)">
+                                    <RadzenIcon Icon="event" Style="font-size: 0.75rem;" />
+                                    Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
+                                    @if (assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+                                    {
+                                        <span class="text-danger fw-bold"> (Overdue by @((DateTime.Now - assignment.DueDate.Value).Days) days)</span>
+                                    }
+                                </RadzenText>
+                            }
                         </div>
+                        <RadzenBadge Text="@assignment.Status.ToString()"
+                                    BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
+                                    Class="ms-2" />
                     </div>
                 }
-                @if (Assignments.Count > 5)
+                @if (Assignments.Count > 10)
                 {
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                        +@(Assignments.Count - 5) more assignments
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted text-center mt-2">
+                        +@(Assignments.Count - 10) more assignments
                     </RadzenText>
                 }
             </div>
-        }
+        </div>
 
         <!-- Action Buttons -->
-        <div class="d-flex gap-2 mt-3">
-            <RadzenButton Text="@(ShowDetails ? "Hide Details" : "View Details")"
-                         ButtonStyle="ButtonStyle.Light"
-                         Size="ButtonSize.Small"
-                         Click="@(() => ShowDetails = !ShowDetails)" />
-            @if (OnSendReminder.HasDelegate && (PendingCount > 0 || InProgressCount > 0))
-            {
+        @if (OnSendReminder.HasDelegate && (PendingCount > 0 || InProgressCount > 0))
+        {
+            <div class="d-flex gap-2 mt-3">
                 <RadzenButton Text="Send Reminder"
                              Icon="notifications"
                              ButtonStyle="ButtonStyle.Secondary"
                              Size="ButtonSize.Small"
                              Click="@(() => OnSendReminder.InvokeAsync(TeamMember))" />
-            }
-        </div>
+            </div>
+        }
     }
     else
     {
@@ -130,8 +138,6 @@
     [Parameter, EditorRequired] public List<QuestionnaireAssignment> Assignments { get; set; } = new();
     [Parameter] public EventCallback<EmployeeDto> OnSendReminder { get; set; }
     [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
-
-    private bool ShowDetails { get; set; } = false;
 
     private int TotalCount => Assignments.Count;
     private int CompletedCount => Assignments.Count(a => a.Status == AssignmentStatus.Completed);
@@ -175,5 +181,12 @@
             AssignmentStatus.Completed => "border-success",
             _ => "border-warning"
         };
+    }
+
+    private string GetDueDateClass(QuestionnaireAssignment assignment)
+    {
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+            return "text-danger fw-bold";
+        return "text-muted";
     }
 }

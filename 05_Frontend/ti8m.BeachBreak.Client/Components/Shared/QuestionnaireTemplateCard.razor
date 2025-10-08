@@ -81,79 +81,69 @@
         </div>
     </div>
 
-    <!-- Expandable Assignment Details -->
-    @if (ShowDetails)
-    {
-        <RadzenCard Class="bg-light p-3 mb-3">
-            <div class="d-flex align-items-center justify-content-between mb-3">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary fw-bold">
-                    <RadzenIcon Icon="assignment_ind" Style="font-size: 1.2rem;" Class="me-2" />
-                    Individual Team Member Assignments
-                </RadzenText>
-                <RadzenBadge Text="@($"{TotalAssignments} {(TotalAssignments == 1 ? "person" : "people")}")"
-                            BadgeStyle="BadgeStyle.Light" />
-            </div>
+    <!-- Individual Team Member Assignments - Always Visible -->
+    <RadzenCard Class="bg-light p-3 mb-3">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary">
+                <RadzenIcon Icon="touch_app" Style="font-size: 1rem;" Class="me-2" />
+                Click to Review & Complete
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                @TotalAssignments @(TotalAssignments == 1 ? "team member" : "team members")
+            </RadzenText>
+        </div>
 
-            @if (Assignments.Any())
-            {
-                <div class="assignment-details-list">
-                    @foreach (var assignment in Assignments.OrderByDescending(a => GetAssignmentPriority(a)).Take(10))
-                    {
-                        <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetAssignmentBorderClass(assignment)"
-                             style="cursor: pointer;"
-                             @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
-                            <div class="flex-grow-1">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
-                                    <RadzenIcon Icon="person" Style="font-size: 0.875rem;" Class="me-1" />
-                                    @assignment.EmployeeName
+        @if (Assignments.Any())
+        {
+            <div class="assignment-details-list">
+                @foreach (var assignment in Assignments.OrderByDescending(a => GetAssignmentPriority(a)).Take(10))
+                {
+                    <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetAssignmentBorderClass(assignment)"
+                         style="cursor: pointer;"
+                         @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
+                        <div class="flex-grow-1">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
+                                <RadzenIcon Icon="person" Style="font-size: 0.875rem;" Class="me-1" />
+                                @assignment.EmployeeName
+                            </RadzenText>
+                            @if (assignment.DueDate.HasValue)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Class="@GetDueDateClass(assignment)">
+                                    <RadzenIcon Icon="event" Style="font-size: 0.75rem;" />
+                                    Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
+                                    @if (assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+                                    {
+                                        <span class="text-danger fw-bold"> (Overdue by @((DateTime.Now - assignment.DueDate.Value).Days) days)</span>
+                                    }
                                 </RadzenText>
-                                @if (assignment.DueDate.HasValue)
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="@GetDueDateClass(assignment)">
-                                        <RadzenIcon Icon="event" Style="font-size: 0.75rem;" />
-                                        Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
-                                        @if (assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
-                                        {
-                                            <span class="text-danger fw-bold"> (Overdue by @((DateTime.Now - assignment.DueDate.Value).Days) days)</span>
-                                        }
-                                    </RadzenText>
-                                }
-                            </div>
-                            <RadzenBadge Text="@assignment.Status.ToString()"
-                                        BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
-                                        Class="ms-2" />
+                            }
                         </div>
-                    }
+                        <RadzenBadge Text="@assignment.Status.ToString()"
+                                    BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
+                                    Class="ms-2" />
+                    </div>
+                }
 
-                    @if (Assignments.Count > 10)
-                    {
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted text-center mt-2">
-                            +@(Assignments.Count - 10) more assignments
-                        </RadzenText>
-                    }
-                </div>
-            }
-        </RadzenCard>
-    }
+                @if (Assignments.Count > 10)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted text-center mt-2">
+                        +@(Assignments.Count - 10) more assignments
+                    </RadzenText>
+                }
+            </div>
+        }
+    </RadzenCard>
 
     <!-- Action Buttons -->
-    <div class="d-flex gap-2 justify-content-between align-items-center">
-        <div class="d-flex gap-2">
-            <RadzenButton Text="@(ShowDetails ? "Hide Details" : "View Details")"
-                         Icon="@(ShowDetails ? "expand_less" : "expand_more")"
-                         ButtonStyle="ButtonStyle.Light"
+    <div class="d-flex gap-2 justify-content-end align-items-center">
+        @if (OverdueCount > 0 && OnSendReminders.HasDelegate)
+        {
+            <RadzenButton Text="Send Reminders"
+                         Icon="notifications"
+                         ButtonStyle="ButtonStyle.Warning"
                          Size="ButtonSize.Small"
-                         Click="@(() => ShowDetails = !ShowDetails)" />
-
-            @if (OverdueCount > 0 && OnSendReminders.HasDelegate)
-            {
-                <RadzenButton Text="Send Reminders"
-                             Icon="notifications"
-                             ButtonStyle="ButtonStyle.Warning"
-                             Size="ButtonSize.Small"
-                             Click="@(() => OnSendReminders.InvokeAsync(TemplateId))" />
-            }
-        </div>
+                         Click="@(() => OnSendReminders.InvokeAsync(TemplateId))" />
+        }
 
         @if (OnViewAnalytics.HasDelegate)
         {
@@ -174,8 +164,6 @@
     [Parameter] public EventCallback<Guid> OnSendReminders { get; set; }
     [Parameter] public EventCallback<Guid> OnViewAnalytics { get; set; }
     [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
-
-    private bool ShowDetails { get; set; } = false;
 
     private int TotalAssignments => Assignments.Count;
     private int AssignedCount => Assignments.Count(a => a.Status == AssignmentStatus.Assigned);

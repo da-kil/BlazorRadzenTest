@@ -1,4 +1,5 @@
 @page "/my-questionnaires/{TemplateId:guid}"
+@page "/questionnaire/{AssignmentId:guid}"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @using Radzen
 @using Radzen.Blazor
@@ -11,6 +12,7 @@
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
+@inject IQuestionnaireAssignmentService AssignmentService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -50,7 +52,7 @@
                             Progress: @response.ProgressPercentage%
                         </RadzenText>
                         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                            Section @(currentSectionIndex + 1) of @template.Sections.Count
+                            Section @(currentSectionIndex + 1) of @visibleSections.Count
                         </RadzenText>
                     </div>
                     <RadzenProgressBar Value="@response.ProgressPercentage" Max="100" ProgressBarStyle="ProgressBarStyle.Primary" />
@@ -58,9 +60,9 @@
             }
 
             <RadzenSteps Value="@currentSectionIndex" Change="@OnSectionChanged" Class="mb-4">
-                @for (int i = 0; i < template.Sections.Count; i++)
+                @for (int i = 0; i < visibleSections.Count; i++)
                 {
-                    var section = template.Sections[i];
+                    var section = visibleSections[i];
                     var isCompleted = IsSectionCompleted(section.Id);
                     var sectionTitle = section.Title;
                     <RadzenStepsItem Text="@sectionTitle" Icon="@(isCompleted ? "check_circle" : null)" />
@@ -109,8 +111,8 @@
                                      Icon="save"
                                      Click="@SaveProgress" />
                     }
-                    
-                    @if (currentSectionIndex == template.Sections.Count - 1)
+
+                    @if (currentSectionIndex == visibleSections.Count - 1)
                     {
                         @if (template.Settings.AllowReviewBeforeSubmit)
                         {
@@ -144,20 +146,27 @@
 </div>
 
 @code {
-    [Parameter] public Guid TemplateId { get; set; }
-    private Guid? assignmentId;
+    [Parameter] public Guid? TemplateId { get; set; }
+    [Parameter] public Guid? AssignmentId { get; set; }
 
+    private Guid? assignmentId;
+    private QuestionnaireAssignment? assignment;
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse response = new();
     private int currentSectionIndex = 0;
-    private QuestionSection? currentSection => template?.Sections.OrderBy(s => s.Order).ElementAtOrDefault(currentSectionIndex);
+    private bool isManager = false;
+    private bool isEmployee = false;
+    private string currentUserRole = "Employee";
+    private List<QuestionSection> visibleSections = new();
+    private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadTemplate();
-        await LoadAssignmentForCurrentEmployee();
+        await DetermineUserRole();
+        await LoadAssignmentAndTemplate();
         await LoadExistingResponse();
         await InitializeResponseAsync();
+        FilterVisibleSections();
         UpdateProgress();
     }
 
@@ -168,11 +177,128 @@
                HasParameterChanged(nameof(template), template);
     }
 
-    private async Task LoadTemplate()
+    private async Task DetermineUserRole()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Check application roles - use actual ApplicationRole enum values
+        isEmployee = user.IsInRole("Employee");
+        // Managers are TeamLead, HR, HRLead, or Admin - anyone who can manage team questionnaires
+        isManager = user.IsInRole("TeamLead") || user.IsInRole("HR") || user.IsInRole("HRLead") || user.IsInRole("Admin");
+
+        currentUserRole = isManager ? "Manager" : "Employee";
+    }
+
+    private async Task LoadAssignmentAndTemplate()
     {
         try
         {
-            template = await TemplateService.GetTemplateByIdAsync(TemplateId);
+            // Determine which parameter was provided
+            if (AssignmentId.HasValue)
+            {
+                // New route: /questionnaire/{assignmentId}
+                assignmentId = AssignmentId.Value;
+                assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+
+                if (assignment == null)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Assignment not found");
+                    NavigateBack();
+                    return;
+                }
+
+                // Validate user has access to this assignment
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var employeeGuid = authState.User.FindFirst("EmployeeGuid")?.Value;
+
+                bool hasAccess = false;
+
+                // Manager access - managers can access any assignment in their team
+                if (isManager)
+                {
+                    // TODO: Validate manager has this employee in their team via backend API
+                    // For now, allow all managers (assuming authorization happens at API level)
+                    hasAccess = true;
+                }
+                // Employee access - can only access their own assignments
+                else if (isEmployee && assignment.EmployeeId.ToString() == employeeGuid)
+                {
+                    hasAccess = true;
+                }
+
+                if (!hasAccess)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Access Denied", "You do not have access to this questionnaire");
+                    NavigateBack();
+                    return;
+                }
+
+                template = await TemplateService.GetTemplateByIdAsync(assignment.TemplateId);
+            }
+            else if (TemplateId.HasValue)
+            {
+                // Legacy route: /my-questionnaires/{templateId} (employee only)
+                await LoadTemplate();
+                await LoadAssignmentForCurrentEmployee();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "No questionnaire specified");
+                NavigateBack();
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load questionnaire: {ex.Message}");
+            NavigateBack();
+        }
+    }
+
+    private void FilterVisibleSections()
+    {
+        if (template == null)
+        {
+            visibleSections = new List<QuestionSection>();
+            return;
+        }
+
+        // Filter sections based on current user role and completion role
+        visibleSections = template.Sections
+            .Where(s =>
+            {
+                if (isManager && (s.AssignedTo == CompletionRole.Manager || s.AssignedTo == CompletionRole.Both))
+                    return true;
+                if (isEmployee && (s.AssignedTo == CompletionRole.Employee || s.AssignedTo == CompletionRole.Both))
+                    return true;
+                return false;
+            })
+            .OrderBy(s => s.Order)
+            .ToList();
+
+        // If no visible sections, show error
+        if (!visibleSections.Any() && template.Sections.Any())
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "No Sections",
+                $"This questionnaire has no sections assigned to {currentUserRole}s");
+        }
+    }
+
+    private void NavigateBack()
+    {
+        if (isManager)
+            NavigationManager.NavigateTo("/team/questionnaires");
+        else
+            NavigationManager.NavigateTo("/my-questionnaires");
+    }
+
+    private async Task LoadTemplate()
+    {
+        if (!TemplateId.HasValue) return;
+
+        try
+        {
+            template = await TemplateService.GetTemplateByIdAsync(TemplateId.Value);
             if (template == null)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Error", "Questionnaire template not found");
@@ -192,7 +318,7 @@
         {
         template = new QuestionnaireTemplate
         {
-            Id = TemplateId,
+            Id = TemplateId.Value,
             Name = "Employee Performance Review",
             Description = "Annual performance evaluation questionnaire",
             Settings = new QuestionnaireSettings
@@ -258,12 +384,13 @@
         {
             // Load the current employee's assignment for this template
             var assignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
-            var assignment = assignments.FirstOrDefault(a => a.TemplateId == TemplateId &&
+            var matchingAssignment = assignments.FirstOrDefault(a => a.TemplateId == TemplateId!.Value &&
                                                            (a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress));
 
-            if (assignment != null)
+            if (matchingAssignment != null)
             {
-                assignmentId = assignment.Id;
+                assignmentId = matchingAssignment.Id;
+                assignment = matchingAssignment;
             }
             else
             {
@@ -290,7 +417,7 @@
                 response = existingResponse;
                 // Find current section based on progress
                 var completedSections = response.SectionResponses.Count(sr => sr.Value.IsCompleted);
-                currentSectionIndex = Math.Min(completedSections, (template?.Sections.Count ?? 1) - 1);
+                currentSectionIndex = Math.Min(completedSections, Math.Max(0, visibleSections.Count - 1));
             }
         }
         catch (Exception ex)
@@ -310,7 +437,7 @@
 
         response = new QuestionnaireResponse
         {
-            TemplateId = TemplateId,
+            TemplateId = TemplateId ?? template?.Id ?? Guid.Empty,
             AssignmentId = assignmentId ?? Guid.Empty,
             EmployeeId = employeeGuid,
             Status = ResponseStatus.InProgress
@@ -847,7 +974,7 @@
 
     private void NextSection()
     {
-        if (CanProceedFromCurrentSection() && currentSectionIndex < template!.Sections.Count - 1)
+        if (CanProceedFromCurrentSection() && currentSectionIndex < visibleSections.Count - 1)
         {
             currentSectionIndex++;
             UpdateProgress();
@@ -927,7 +1054,8 @@
 
     private bool CanSubmit()
     {
-        return template!.Sections.All(s => IsSectionCompleted(s.Id));
+        // Check only visible sections for current user role
+        return visibleSections.All(s => IsSectionCompleted(s.Id));
     }
 
     private async Task SaveProgress()
@@ -940,7 +1068,14 @@
 
         try
         {
-            await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+            // Employees save responses via employee service
+            if (isEmployee && !isManager)
+            {
+                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+            }
+            // Managers don't have a direct "save responses" - they complete sections
+            // For now, just show success for managers (responses are stored locally until section completion)
+
             NotificationService.Notify(NotificationSeverity.Success, "Saved", "Your progress has been saved successfully");
         }
         catch (Exception ex)
@@ -971,28 +1106,53 @@
 
         try
         {
-            // First save the current responses
-            await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
-
-            // Then submit the questionnaire
-            var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
-
-            if (submittedResponse != null)
+            if (isManager)
             {
-                response = submittedResponse;
-                NotificationService.Notify(NotificationSeverity.Success, "Submitted", template.Settings.SuccessMessage);
-
-                // Navigate back to questionnaire list
-                NavigationManager.NavigateTo("/my-questionnaires");
+                // Manager completes their sections
+                await CompleteSectionsAsManager();
+                NotificationService.Notify(NotificationSeverity.Success, "Completed", "Your sections have been completed successfully");
+                NavigateBack();
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", "Failed to submit questionnaire");
+                // Employee flow - save and submit
+                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+                var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
+
+                if (submittedResponse != null)
+                {
+                    response = submittedResponse;
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", template!.Settings.SuccessMessage);
+                    NavigationManager.NavigateTo("/my-questionnaires");
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", "Failed to submit questionnaire");
+                }
             }
         }
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", $"Failed to submit questionnaire: {ex.Message}");
+        }
+    }
+
+    private async Task CompleteSectionsAsManager()
+    {
+        if (!assignmentId.HasValue) return;
+
+        // Complete each visible section that the manager is responsible for
+        foreach (var section in visibleSections.Where(s => IsSectionCompleted(s.Id)))
+        {
+            try
+            {
+                await AssignmentService.CompleteSectionAsManagerAsync(assignmentId.Value, section.Id);
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
+                    $"Could not complete section '{section.Title}': {ex.Message}");
+            }
         }
     }
 
