@@ -303,51 +303,108 @@
 
     private RenderFragment<QuestionnaireAssignment> RenderQuestionnaireCard => assignment => __builder =>
     {
-        <RadzenCard Class="@($"questionnaire-card {GetCardCssClass(assignment)}")">
-            <div class="d-flex justify-content-between align-items-start mb-3">
+        var isOverdue = IsOverdue(assignment);
+        var dueDateColor = isOverdue ? "var(--rz-danger)" : "var(--rz-text-secondary-color)";
+        var dueDateTextColor = isOverdue ? "var(--rz-danger)" : "inherit";
+        var statusColor = GetStatusColor(assignment.Status);
+
+        <RadzenCard Class="@($"questionnaire-card mb-3 {GetCardCssClass(assignment)}")" Style="border-left: 4px solid var(--rz-primary);">
+            <div class="d-flex justify-content-between align-items-start">
                 <div class="flex-grow-1">
-                    <RadzenText TextStyle="TextStyle.H6" Class="mb-1">@GetTemplateName(assignment)</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@assignment.AssignedBy</RadzenText>
-                </div>
-                <RadzenBadge Text="@assignment.Status.ToString()"
-                            BadgeStyle="@GetStatusBadgeStyle(assignment.Status)" />
-            </div>
+                    <!-- Questionnaire Title -->
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <RadzenIcon Icon="quiz" Style="color: var(--rz-primary);" />
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-0" Style="font-weight: 600;">
+                            @GetTemplateName(assignment)
+                        </RadzenText>
+                    </div>
 
-            @if (assignment.DueDate.HasValue)
-            {
-                <div class="mb-3">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                        <RadzenIcon Icon="event" Class="me-1" />
-                        Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
-                    </RadzenText>
-                </div>
-            }
+                    <!-- Assignment Details Grid -->
+                    <div class="row g-3 mt-2">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <RadzenIcon Icon="person" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
+                                <div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0" Style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        Assigned By
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-0" Style="font-weight: 500;">
+                                        @assignment.AssignedBy
+                                    </RadzenText>
+                                </div>
+                            </div>
+                        </div>
 
-            <div class="questionnaire-actions">
-                @if (Configuration.PageType == QuestionnairePageType.Employee)
-                {
-                    @if (assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress)
+                        @if (assignment.DueDate.HasValue)
+                        {
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center gap-2">
+                                    <RadzenIcon Icon="event" Style="@($"font-size: 1rem; color: {dueDateColor};")" />
+                                    <div>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0" Style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                            Due Date
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="mb-0" Style="@($"font-weight: 500; color: {dueDateTextColor};")">
+                                            @assignment.DueDate.Value.ToString("MMM dd, yyyy")
+                                            @if (isOverdue)
+                                            {
+                                                <span style="font-size: 0.75rem; color: var(--rz-danger);"> (Overdue)</span>
+                                            }
+                                        </RadzenText>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <RadzenIcon Icon="@GetStatusIcon(assignment.Status)" Style="@($"font-size: 1rem; color: {statusColor};")" />
+                                <div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0" Style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        Status
+                                    </RadzenText>
+                                    <RadzenBadge Text="@GetStatusText(assignment.Status)"
+                                                BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
+                                                Style="font-size: 0.75rem;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="ms-3">
+                    @if (Configuration.PageType == QuestionnairePageType.Employee)
                     {
-                        <RadzenButton Text="@(assignment.Status == AssignmentStatus.InProgress ? "Continue" : "Start")"
-                                     ButtonStyle="ButtonStyle.Primary"
-                                     Size="ButtonSize.Small"
-                                     Click="@(() => NavigateToQuestionnaire(assignment))" />
+                        @if (assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress)
+                        {
+                            <RadzenButton Text="@(assignment.Status == AssignmentStatus.InProgress ? "CONTINUE" : "START")"
+                                         Icon="@(assignment.Status == AssignmentStatus.InProgress ? "play_circle" : "play_arrow")"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Size="ButtonSize.Medium"
+                                         Style="min-width: 120px; font-weight: 600;"
+                                         Click="@(() => NavigateToQuestionnaire(assignment))" />
+                        }
+                        else if (assignment.Status == AssignmentStatus.Completed)
+                        {
+                            <RadzenButton Text="VIEW"
+                                         Icon="visibility"
+                                         ButtonStyle="ButtonStyle.Success"
+                                         Size="ButtonSize.Medium"
+                                         Style="min-width: 120px; font-weight: 600;"
+                                         Click="@(() => ViewResults(assignment))" />
+                        }
                     }
-                    else if (assignment.Status == AssignmentStatus.Completed)
+                    else
                     {
-                        <RadzenButton Text="View Results"
+                        <RadzenButton Text="DETAILS"
+                                     Icon="info"
                                      ButtonStyle="ButtonStyle.Light"
-                                     Size="ButtonSize.Small"
-                                     Click="@(() => ViewResults(assignment))" />
+                                     Size="ButtonSize.Medium"
+                                     Style="min-width: 120px;"
+                                     Click="@(() => ViewAssignmentDetails(assignment))" />
                     }
-                }
-                else
-                {
-                    <RadzenButton Text="View Details"
-                                 ButtonStyle="ButtonStyle.Light"
-                                 Size="ButtonSize.Small"
-                                 Click="@(() => ViewAssignmentDetails(assignment))" />
-                }
+                </div>
             </div>
         </RadzenCard>
     };
@@ -503,6 +560,46 @@
             AssignmentStatus.Completed => BadgeStyle.Success,
             _ => BadgeStyle.Light
         };
+    }
+
+    private string GetStatusText(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "ASSIGNED",
+            AssignmentStatus.InProgress => "IN PROGRESS",
+            AssignmentStatus.Completed => "COMPLETED",
+            _ => status.ToString().ToUpper()
+        };
+    }
+
+    private string GetStatusIcon(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "assignment",
+            AssignmentStatus.InProgress => "pending",
+            AssignmentStatus.Completed => "check_circle",
+            _ => "help"
+        };
+    }
+
+    private string GetStatusColor(AssignmentStatus status)
+    {
+        return status switch
+        {
+            AssignmentStatus.Assigned => "var(--rz-secondary)",
+            AssignmentStatus.InProgress => "var(--rz-info)",
+            AssignmentStatus.Completed => "var(--rz-success)",
+            _ => "var(--rz-text-secondary-color)"
+        };
+    }
+
+    private bool IsOverdue(QuestionnaireAssignment assignment)
+    {
+        return assignment.DueDate.HasValue &&
+               assignment.DueDate.Value < DateTime.Now &&
+               assignment.Status != AssignmentStatus.Completed;
     }
 
     private ButtonStyle GetButtonStyle(string buttonStyle)
