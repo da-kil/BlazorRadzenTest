@@ -51,7 +51,7 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         // Use "me" endpoint - backend resolves employee ID from UserContext
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", sectionResponses);
+            var response = await HttpCommandClient.PostAsJsonAsync($"c/api/v1/responses/assignment/{assignmentId}", sectionResponses);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
             return result ?? throw new Exception("Failed to deserialize response");
@@ -68,7 +68,7 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         // Use "me" endpoint - backend resolves employee ID from UserContext
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}/submit", new { });
+            var response = await HttpCommandClient.PostAsJsonAsync($"c/api/v1/responses/assignment/{assignmentId}/submit", new { });
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
         }

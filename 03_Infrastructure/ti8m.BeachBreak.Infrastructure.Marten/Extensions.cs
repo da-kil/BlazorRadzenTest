@@ -39,6 +39,7 @@ public static class Extensions
             options.Projections.Snapshot<EmployeeReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<OrganizationReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<QuestionnaireAssignmentReadModel>(SnapshotLifecycle.Inline);
+            options.Projections.Snapshot<QuestionnaireResponseReadModel>(SnapshotLifecycle.Inline);
 
         }).UseLightweightSessions().UseNpgsqlDataSource();
 

@@ -7,6 +7,7 @@ using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using CommandResult = ti8m.BeachBreak.Application.Command.Commands.Result;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -39,7 +40,7 @@ public class EmployeesController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> BulkInsertEmployees([FromBody] IEnumerable<EmployeeDto> employees)
     {
-        Result result = await commandDispatcher.SendAsync(new BulkInsertEmployeesCommand(
+        CommandResult result = await commandDispatcher.SendAsync(new BulkInsertEmployeesCommand(
             employees.Select(dto => new SyncEmployee
             {
                 Id = dto.Id,
@@ -67,7 +68,7 @@ public class EmployeesController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> BulkUpdateEmployees([FromBody] IEnumerable<EmployeeDto> employees)
     {
-        Result result = await commandDispatcher.SendAsync(new BulkUpdateEmployeesCommand(
+        CommandResult result = await commandDispatcher.SendAsync(new BulkUpdateEmployeesCommand(
             employees.Select(dto => new SyncEmployee
             {
                 Id = dto.Id,
@@ -95,7 +96,7 @@ public class EmployeesController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> BulkDeleteEmployees([FromBody] IEnumerable<Guid> employeeIds)
     {
-        Result result = await commandDispatcher.SendAsync(new BulkDeleteEmployeesCommand(employeeIds));
+        CommandResult result = await commandDispatcher.SendAsync(new BulkDeleteEmployeesCommand(employeeIds));
 
         return CreateResponse(result);
     }
@@ -119,7 +120,7 @@ public class EmployeesController : BaseController
         if (!Guid.TryParse(userContext.Id, out var userId))
         {
             logger.LogWarning("Cannot change application role: User ID not found in UserContext");
-            return CreateResponse(Result.Fail("User identification failed", 401));
+            return CreateResponse(CommandResult.Fail("User identification failed", 401));
         }
 
         var requesterRoleResult = await queryDispatcher.QueryAsync(
@@ -129,11 +130,11 @@ public class EmployeesController : BaseController
         if (requesterRoleResult == null)
         {
             logger.LogWarning("Cannot change application role: Requester role not found for user {UserId}", userId);
-            return CreateResponse(Result.Fail("Requester role not found", 403));
+            return CreateResponse(CommandResult.Fail("Requester role not found", 403));
         }
 
         // Dispatch command with requester's role - business rules validated in domain
-        Result result = await commandDispatcher.SendAsync(
+        CommandResult result = await commandDispatcher.SendAsync(
             new ChangeEmployeeApplicationRoleCommand(
                 employeeId,
                 (ApplicationRole)dto.NewRole,

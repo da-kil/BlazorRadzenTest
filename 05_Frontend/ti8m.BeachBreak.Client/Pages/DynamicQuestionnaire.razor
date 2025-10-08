@@ -164,8 +164,8 @@
     {
         await DetermineUserRole();
         await LoadAssignmentAndTemplate();
-        await LoadExistingResponse();
         await InitializeResponseAsync();
+        await LoadExistingResponse();
         FilterVisibleSections();
         UpdateProgress();
     }
@@ -409,9 +409,29 @@
         try
         {
             var existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
-            if (existingResponse != null)
+
+            if (existingResponse != null && existingResponse.SectionResponses.Any())
             {
-                response = existingResponse;
+                // Merge existing responses with initialized structure
+                foreach (var sectionKvp in existingResponse.SectionResponses)
+                {
+                    if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
+                    {
+                        // Merge question responses
+                        foreach (var questionKvp in sectionKvp.Value.QuestionResponses)
+                        {
+                            if (sectionResponse.QuestionResponses.ContainsKey(questionKvp.Key))
+                            {
+                                sectionResponse.QuestionResponses[questionKvp.Key] = questionKvp.Value;
+                            }
+                        }
+                        sectionResponse.IsCompleted = sectionKvp.Value.IsCompleted;
+                    }
+                }
+
+                // Update response metadata
+                response.Status = existingResponse.Status;
+
                 // Find current section based on progress
                 var completedSections = response.SectionResponses.Count(sr => sr.Value.IsCompleted);
                 currentSectionIndex = Math.Min(completedSections, Math.Max(0, visibleSections.Count - 1));
@@ -1174,7 +1194,22 @@
         var response = GetQuestionResponse(questionId);
         if (response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
         {
-            return Convert.ToInt32(value);
+            // Handle JsonElement from deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    return jsonElement.GetInt32();
+                }
+            }
+            else if (value is int intValue)
+            {
+                return intValue;
+            }
+            else
+            {
+                return Convert.ToInt32(value);
+            }
         }
         return 0;
     }

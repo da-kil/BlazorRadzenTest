@@ -331,6 +331,119 @@ public class EmployeesController : BaseController
     }
 
     /// <summary>
+    /// Gets the questionnaire response for a specific assignment for the currently authenticated employee.
+    /// Uses UserContext to get the employee ID - more secure than accepting it as a parameter.
+    /// </summary>
+    [HttpGet("me/responses/assignment/{assignmentId:guid}")]
+    [ProducesResponseType(typeof(QuestionnaireResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyResponse(Guid assignmentId)
+    {
+        // Get employee ID from authenticated user context (security best practice)
+        if (!Guid.TryParse(userContext.Id, out var employeeId))
+        {
+            logger.LogWarning("GetMyResponse failed: Unable to parse user ID from context");
+            return CreateResponse(Result.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
+        }
+
+        logger.LogInformation("Received GetMyResponse request for authenticated EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
+            employeeId, assignmentId);
+
+        try
+        {
+            var query = new Application.Query.Queries.ResponseQueries.GetResponseByAssignmentIdQuery(assignmentId);
+            var response = await queryDispatcher.QueryAsync(query);
+
+            if (response == null)
+            {
+                logger.LogInformation("Response not found for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", employeeId, assignmentId);
+                return CreateResponse(Result.Fail($"Response not found for assignment {assignmentId}", StatusCodes.Status404NotFound));
+            }
+
+            // Verify this response belongs to the requesting employee
+            if (response.EmployeeId != employeeId)
+            {
+                logger.LogWarning("Employee {EmployeeId} attempted to access response for Assignment {AssignmentId} belonging to {ActualEmployeeId}",
+                    employeeId, assignmentId, response.EmployeeId);
+                return CreateResponse(Result.Fail("You do not have permission to access this response", StatusCodes.Status403Forbidden));
+            }
+
+            logger.LogInformation("GetMyResponse completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
+                employeeId, assignmentId);
+
+            // Map section responses - deserialize from Marten's JSON storage
+            var sectionResponsesDto = new Dictionary<Guid, SectionResponseDto>();
+            foreach (var sectionKvp in response.SectionResponses)
+            {
+                var questionResponsesDict = new Dictionary<Guid, QuestionResponseDto>();
+
+                // The value is Dictionary<Guid, object> from Marten where object is the serialized question response
+                if (sectionKvp.Value is System.Text.Json.JsonElement jsonElement)
+                {
+                    // Deserialize the entire section's question responses at once
+                    var questionResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Guid, QuestionResponseDto>>(jsonElement.GetRawText());
+                    if (questionResponses != null)
+                    {
+                        questionResponsesDict = questionResponses;
+                    }
+                }
+                else if (sectionKvp.Value is Dictionary<Guid, object> questionResponses)
+                {
+                    // Try to convert each object to QuestionResponseDto
+                    foreach (var questionKvp in questionResponses)
+                    {
+                        if (questionKvp.Value is System.Text.Json.JsonElement qJsonElement)
+                        {
+                            var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
+                            if (questionResponse != null)
+                            {
+                                questionResponsesDict[questionKvp.Key] = questionResponse;
+                            }
+                        }
+                        else
+                        {
+                            // Fallback: create a simple response with just the value
+                            questionResponsesDict[questionKvp.Key] = new QuestionResponseDto
+                            {
+                                QuestionId = questionKvp.Key,
+                                Value = questionKvp.Value
+                            };
+                        }
+                    }
+                }
+
+                sectionResponsesDto[sectionKvp.Key] = new SectionResponseDto
+                {
+                    SectionId = sectionKvp.Key,
+                    QuestionResponses = questionResponsesDict
+                };
+            }
+
+            var dto = new QuestionnaireResponseDto
+            {
+                Id = response.Id,
+                AssignmentId = response.AssignmentId,
+                TemplateId = response.TemplateId,
+                EmployeeId = response.EmployeeId.ToString(),
+                Status = MapResponseStatusToDto(response.Status),
+                SectionResponses = sectionResponsesDto,
+                StartedDate = response.StartedDate,
+                CompletedDate = response.SubmittedDate,
+                ProgressPercentage = response.ProgressPercentage
+            };
+
+            return CreateResponse(Result<QuestionnaireResponseDto>.Success(dto));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving response for assignment {AssignmentId} and employee {EmployeeId}",
+                assignmentId, employeeId);
+            return CreateResponse(Result.Fail("An error occurred while retrieving your response", StatusCodes.Status500InternalServerError));
+        }
+    }
+
+    /// <summary>
     /// Gets all questionnaire assignments for a specific employee by ID.
     /// Managers can only view assignments for their direct reports.
     /// HR/Admin can view assignments for any employee.
@@ -425,6 +538,18 @@ public class EmployeesController : BaseController
         return employeeRole.ApplicationRole == ApplicationRole.HR ||
                employeeRole.ApplicationRole == ApplicationRole.HRLead ||
                employeeRole.ApplicationRole == ApplicationRole.Admin;
+    }
+
+    private static ResponseStatus MapResponseStatusToDto(Application.Query.Queries.ResponseQueries.ResponseStatus status)
+    {
+        return status switch
+        {
+            Application.Query.Queries.ResponseQueries.ResponseStatus.NotStarted => ResponseStatus.NotStarted,
+            Application.Query.Queries.ResponseQueries.ResponseStatus.InProgress => ResponseStatus.InProgress,
+            Application.Query.Queries.ResponseQueries.ResponseStatus.Completed => ResponseStatus.Completed,
+            Application.Query.Queries.ResponseQueries.ResponseStatus.Submitted => ResponseStatus.Submitted,
+            _ => ResponseStatus.NotStarted
+        };
     }
 
     private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus> MapAssignmentStatusToDto =>
