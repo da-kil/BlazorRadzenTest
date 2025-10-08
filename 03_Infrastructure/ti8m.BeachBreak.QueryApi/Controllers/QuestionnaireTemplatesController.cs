@@ -181,6 +181,7 @@ public class QuestionnaireTemplatesController : BaseController
                 Description = section.Description,
                 Order = section.Order,
                 IsRequired = section.IsRequired,
+                CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
                 Questions = section.Questions.Select(question => new QuestionItemDto
                 {
                     Id = question.Id,
@@ -214,6 +215,16 @@ public class QuestionnaireTemplatesController : BaseController
             Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Published => QueryApi.Dto.TemplateStatus.Published,
             Application.Query.Queries.QuestionnaireTemplateQueries.TemplateStatus.Archived => QueryApi.Dto.TemplateStatus.Archived,
             _ => QueryApi.Dto.TemplateStatus.Draft
+        };
+    }
+
+    private static Domain.QuestionnaireTemplateAggregate.CompletionRole MapToCompletionRoleEnum(string completionRole)
+    {
+        return completionRole?.ToLower() switch
+        {
+            "manager" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager,
+            "both" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Both,
+            _ => Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee
         };
     }
 

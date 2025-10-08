@@ -49,7 +49,7 @@
         <div class="header-content-row">
             <div class="role-assignment-section">
                 <RadzenText TextStyle="TextStyle.Caption" Class="role-label">Who completes this section?</RadzenText>
-                <RadzenRadioButtonList @bind-Value="@Section.AssignedTo"
+                <RadzenRadioButtonList @bind-Value="@Section.CompletionRole"
                                        Data="@roleOptions"
                                        TextProperty="Text"
                                        ValueProperty="Value"
@@ -969,7 +969,7 @@
 
     private string GetCompletionRoleText()
     {
-        return Section.AssignedTo switch
+        return Section.CompletionRole switch
         {
             CompletionRole.Employee => "Employee",
             CompletionRole.Manager => "Manager",

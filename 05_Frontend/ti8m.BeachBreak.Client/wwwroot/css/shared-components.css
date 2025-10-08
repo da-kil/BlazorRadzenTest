@@ -1015,11 +1015,6 @@
 
 .stat-box {
     background: var(--rz-base-50);
-    transition: background-color 0.2s;
-}
-
-.stat-box:hover {
-    background: var(--rz-base-100);
 }
 
 .assignment-item {
@@ -1067,15 +1062,7 @@
 
 .stat-mini-box {
     background: white;
-    transition: all 0.2s;
     border-color: var(--rz-base-300) !important;
-}
-
-.stat-mini-box:hover {
-    background: var(--rz-primary-lighter);
-    transform: scale(1.08);
-    border-color: var(--rz-primary) !important;
-    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 
 .assignment-detail-item {

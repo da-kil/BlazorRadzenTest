@@ -267,20 +267,23 @@
         visibleSections = template.Sections
             .Where(s =>
             {
-                if (isManager && (s.AssignedTo == CompletionRole.Manager || s.AssignedTo == CompletionRole.Both))
+                if (isManager && (s.CompletionRole == CompletionRole.Manager || s.CompletionRole == CompletionRole.Both))
                     return true;
-                if (isEmployee && (s.AssignedTo == CompletionRole.Employee || s.AssignedTo == CompletionRole.Both))
+                if (isEmployee && (s.CompletionRole == CompletionRole.Employee || s.CompletionRole == CompletionRole.Both))
                     return true;
                 return false;
             })
             .OrderBy(s => s.Order)
             .ToList();
 
-        // If no visible sections, show error
+        // If no visible sections, show helpful error
         if (!visibleSections.Any() && template.Sections.Any())
         {
-            NotificationService.Notify(NotificationSeverity.Warning, "No Sections",
-                $"This questionnaire has no sections assigned to {currentUserRole}s");
+            var sectionDetails = string.Join(", ", template.Sections.Select(s => $"'{s.Title}' (assigned to {s.CompletionRole})"));
+            NotificationService.Notify(NotificationSeverity.Warning, "No Sections Available",
+                $"This questionnaire has no sections assigned to {currentUserRole}s. " +
+                $"Please edit the template to assign sections appropriately. " +
+                $"Current sections: {sectionDetails}");
         }
     }
 
@@ -408,6 +411,14 @@
     private async Task LoadExistingResponse()
     {
         if (!assignmentId.HasValue) return;
+
+        // Managers don't load responses via employee endpoint
+        // They complete sections directly via commands
+        if (isManager)
+        {
+            // TODO: Load manager's section completion status from assignment
+            return;
+        }
 
         try
         {

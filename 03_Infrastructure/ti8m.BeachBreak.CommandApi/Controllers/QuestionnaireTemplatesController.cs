@@ -47,6 +47,7 @@ public class QuestionnaireTemplatesController : BaseController
                     IsRequired = section.IsRequired,
                     Order = section.Order,
                     Title = section.Title,
+                    CompletionRole = section.CompletionRole,
                     Questions = section.Questions.Select(question => new CommandQuestionItem
                     {
                         Configuration = question.Configuration,
@@ -104,6 +105,7 @@ public class QuestionnaireTemplatesController : BaseController
                     IsRequired = section.IsRequired,
                     Order = section.Order,
                     Title = section.Title,
+                    CompletionRole = section.CompletionRole,
                     Questions = section.Questions.Select(question => new CommandQuestionItem
                     {
                         Configuration = question.Configuration,
