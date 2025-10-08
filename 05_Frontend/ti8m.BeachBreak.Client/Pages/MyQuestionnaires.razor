@@ -9,19 +9,11 @@
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
+@inject NavigationManager NavigationManager
 
 <PageTitle>My Questionnaires</PageTitle>
 
-@if (currentAssignment != null)
-{
-	<!-- Questionnaire Completion Mode -->
-	<QuestionnaireCompletion Assignment="@currentAssignment"
-							QuestionTypeLabels="@questionTypeLabels"
-							ExistingResponses="@GetExistingResponsesForAssignment(currentAssignment)"
-							OnCompleted="@OnQuestionnaireCompleted"
-							OnSave="@OnQuestionnaireSaved" />
-}
-else if (configuration != null && dataService != null)
+@if (configuration != null && dataService != null)
 {
 	<GenericQuestionnaireListPage Configuration="@configuration"
 								  DataService="@dataService"
@@ -49,15 +41,6 @@ else
 	private List<QuestionnaireAssignment> completedQuestionnaires = new();
 	private List<QuestionnaireAssignment> overdueQuestionnaires = new();
 	private Dictionary<Guid, Dictionary<Guid, SectionResponse>> questionnaireResponses = new();
-
-	// Questionnaire completion state
-	private QuestionnaireAssignment? currentAssignment;
-	private Dictionary<QuestionType, string> questionTypeLabels = new()
-	{
-		{ QuestionType.SelfAssessment, "Self-Assessment" },
-		{ QuestionType.GoalAchievement, "Goal Achievement" },
-		{ QuestionType.TextQuestion, "Text Question" }
-	};
 
 	protected override string GetInitializationContext() => "InitializeMyQuestionnaires";
 
@@ -101,7 +84,6 @@ else
 	protected override bool HasAdditionalStateChanged()
 	{
 		return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
-			   HasParameterChanged(nameof(currentAssignment), currentAssignment?.Id) ||
 			   HasParameterChanged(nameof(questionnaireResponses), questionnaireResponses.Count);
 	}
 
@@ -164,13 +146,8 @@ else
 
 		try
 		{
-			currentAssignment = assignment;
-			NotifyStateChanged();
-
-			var message = assignment.Status == AssignmentStatus.InProgress
-				? $"Resuming questionnaire: {assignment.TemplateId}"
-				: $"Starting questionnaire: {assignment.TemplateId}";
-			ShowInfo(message);
+			// Navigate to the unified questionnaire page
+			NavigationManager.NavigateTo($"/questionnaire/{assignment.Id}");
 		}
 		catch (Exception ex)
 		{
@@ -178,59 +155,4 @@ else
 		}
 	}
 
-	private async Task OnQuestionnaireCompleted()
-	{
-		try
-		{
-			if (currentAssignment != null)
-			{
-				// Update assignment status to completed
-				currentAssignment.Status = AssignmentStatus.Completed;
-				currentAssignment.CompletedDate = DateTime.Now;
-
-				// Refresh the data
-				await RefreshData();
-
-				// Return to list view
-				currentAssignment = null;
-				NotifyStateChanged();
-
-				ShowSuccess("Questionnaire completed successfully!");
-			}
-		}
-		catch (Exception ex)
-		{
-			HandleError(ex, "completing questionnaire");
-		}
-	}
-
-	private async Task OnQuestionnaireSaved(Dictionary<Guid, SectionResponse> responses)
-	{
-		try
-		{
-			if (currentAssignment != null)
-			{
-				// Update assignment status to in progress
-				if (currentAssignment.Status == AssignmentStatus.Assigned)
-				{
-					currentAssignment.Status = AssignmentStatus.InProgress;
-				}
-
-				ShowInfo("Your progress has been saved.");
-			}
-		}
-		catch (Exception ex)
-		{
-			HandleError(ex, "saving questionnaire progress");
-		}
-	}
-
-	private Dictionary<Guid, SectionResponse>? GetExistingResponsesForAssignment(QuestionnaireAssignment assignment)
-	{
-		if (assignment != null && questionnaireResponses.ContainsKey(assignment.Id))
-		{
-			return questionnaireResponses[assignment.Id];
-		}
-		return null;
-	}
 }

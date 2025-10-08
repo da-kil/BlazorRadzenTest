@@ -199,37 +199,25 @@
             {
                 // New route: /questionnaire/{assignmentId}
                 assignmentId = AssignmentId.Value;
-                assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+
+                // Load assignment using appropriate service based on user role
+                if (isEmployee)
+                {
+                    // Employees: Load all their assignments and find the specific one
+                    // Backend validates ownership via "me" endpoint
+                    var myAssignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
+                    assignment = myAssignments.FirstOrDefault(a => a.Id == assignmentId.Value);
+                }
+                else if (isManager)
+                {
+                    // Managers use the general assignment service
+                    // Backend validates manager has this employee in their team
+                    assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+                }
 
                 if (assignment == null)
                 {
                     NotificationService.Notify(NotificationSeverity.Error, "Error", "Assignment not found");
-                    NavigateBack();
-                    return;
-                }
-
-                // Validate user has access to this assignment
-                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-                var employeeGuid = authState.User.FindFirst("EmployeeGuid")?.Value;
-
-                bool hasAccess = false;
-
-                // Manager access - managers can access any assignment in their team
-                if (isManager)
-                {
-                    // TODO: Validate manager has this employee in their team via backend API
-                    // For now, allow all managers (assuming authorization happens at API level)
-                    hasAccess = true;
-                }
-                // Employee access - can only access their own assignments
-                else if (isEmployee && assignment.EmployeeId.ToString() == employeeGuid)
-                {
-                    hasAccess = true;
-                }
-
-                if (!hasAccess)
-                {
-                    NotificationService.Notify(NotificationSeverity.Error, "Access Denied", "You do not have access to this questionnaire");
                     NavigateBack();
                     return;
                 }
