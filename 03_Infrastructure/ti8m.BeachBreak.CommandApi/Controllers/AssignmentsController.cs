@@ -2,10 +2,12 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
+using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
@@ -16,17 +18,23 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 public class AssignmentsController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
+    private readonly IQueryDispatcher queryDispatcher;
+    private readonly UserContext userContext;
     private readonly ILogger<AssignmentsController> logger;
     private readonly IManagerAuthorizationService authorizationService;
     private readonly IAuthorizationCacheService authorizationCacheService;
 
     public AssignmentsController(
         ICommandDispatcher commandDispatcher,
+        IQueryDispatcher queryDispatcher,
+        UserContext userContext,
         ILogger<AssignmentsController> logger,
         IManagerAuthorizationService authorizationService,
         IAuthorizationCacheService authorizationCacheService)
     {
         this.commandDispatcher = commandDispatcher;
+        this.queryDispatcher = queryDispatcher;
+        this.userContext = userContext;
         this.logger = logger;
         this.authorizationService = authorizationService;
         this.authorizationCacheService = authorizationCacheService;
@@ -49,6 +57,18 @@ public class AssignmentsController : BaseController
             if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
                 return BadRequest("At least one employee assignment is required");
 
+            // Get current user's name from UserContext
+            var assignedBy = bulkAssignmentDto.AssignedBy;
+            if (string.IsNullOrEmpty(assignedBy) && Guid.TryParse(userContext.Id, out var userId))
+            {
+                var employeeResult = await queryDispatcher.QueryAsync(new EmployeeQuery(userId), HttpContext.RequestAborted);
+                if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
+                {
+                    assignedBy = $"{employeeResult.Payload.FirstName} {employeeResult.Payload.LastName}";
+                    logger.LogInformation("Set AssignedBy to {AssignedBy} from user context {UserId}", assignedBy, userId);
+                }
+            }
+
             var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
                 .Select(e => new EmployeeAssignmentData(
                     e.EmployeeId,
@@ -60,7 +80,7 @@ public class AssignmentsController : BaseController
                 bulkAssignmentDto.TemplateId,
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
-                bulkAssignmentDto.AssignedBy,
+                assignedBy,
                 bulkAssignmentDto.Notes);
 
             var result = await commandDispatcher.SendAsync(command);
@@ -116,6 +136,18 @@ public class AssignmentsController : BaseController
                 return Forbid();
             }
 
+            // Get current user's name from database
+            var assignedBy = bulkAssignmentDto.AssignedBy;
+            if (string.IsNullOrEmpty(assignedBy))
+            {
+                var employeeResult = await queryDispatcher.QueryAsync(new EmployeeQuery(managerId), HttpContext.RequestAborted);
+                if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
+                {
+                    assignedBy = $"{employeeResult.Payload.FirstName} {employeeResult.Payload.LastName}";
+                    logger.LogInformation("Set AssignedBy to {AssignedBy} for manager {ManagerId}", assignedBy, managerId);
+                }
+            }
+
             var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
                 .Select(e => new EmployeeAssignmentData(
                     e.EmployeeId,
@@ -127,7 +159,7 @@ public class AssignmentsController : BaseController
                 bulkAssignmentDto.TemplateId,
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
-                bulkAssignmentDto.AssignedBy, // Will be set by backend if null
+                assignedBy,
                 bulkAssignmentDto.Notes);
 
             var result = await commandDispatcher.SendAsync(command);
