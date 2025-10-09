@@ -43,7 +43,23 @@ else
 	private List<QuestionnaireAssignment> overdueQuestionnaires = new();
 	private Dictionary<Guid, Dictionary<Guid, SectionResponse>> questionnaireResponses = new();
 
+	private bool hasInitialized = false;
+
 	protected override string GetInitializationContext() => "InitializeMyQuestionnaires";
+
+	protected override async Task OnParametersSetAsync()
+	{
+		// Skip refresh on initial load (OnInitializedAsync handles that)
+		if (!hasInitialized)
+		{
+			hasInitialized = true;
+			return;
+		}
+
+		// This runs every time the user navigates back to this page after initial load
+		// Reload data to ensure we have the latest assignment statuses
+		await RefreshData();
+	}
 
 	protected override async Task LoadRoleSpecificDataAsync()
 	{

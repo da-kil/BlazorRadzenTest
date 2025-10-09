@@ -35,6 +35,8 @@ public class QuestionnaireResponseCommandHandler :
             // Try to load existing response by assignment ID
             var response = await repository.FindByAssignmentIdAsync(command.AssignmentId, cancellationToken);
 
+            bool isFirstSave = response == null;
+
             if (response == null)
             {
                 // First time - initiate new response with unique aggregate ID
@@ -71,6 +73,25 @@ public class QuestionnaireResponseCommandHandler :
             }
 
             await repository.StoreAsync(response, cancellationToken);
+
+            // If this is the first time the employee is saving progress, mark the assignment as started
+            if (isFirstSave)
+            {
+                var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                    command.AssignmentId,
+                    cancellationToken: cancellationToken);
+
+                if (assignment != null)
+                {
+                    assignment.StartWork();
+                    await assignmentRepository.StoreAsync(assignment, cancellationToken);
+                    logger.LogInformation("Assignment {AssignmentId} marked as started", command.AssignmentId);
+                }
+                else
+                {
+                    logger.LogWarning("Assignment {AssignmentId} not found when trying to mark as started", command.AssignmentId);
+                }
+            }
 
             logger.LogInformation("Successfully saved employee response for AssignmentId: {AssignmentId}", command.AssignmentId);
             return Result<Guid>.Success(response.Id);
