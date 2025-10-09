@@ -48,13 +48,13 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
 
     public async Task<QuestionnaireResponse> SaveMyResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
     {
-        // Use "me" endpoint - backend resolves employee ID from UserContext
+        // Use "me" endpoint - backend resolves employee ID from UserContext for security
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"c/api/v1/responses/assignment/{assignmentId}", sectionResponses);
+            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", sectionResponses);
             response.EnsureSuccessStatusCode();
-            var result = await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
-            return result ?? throw new Exception("Failed to deserialize response");
+            var responseId = await response.Content.ReadFromJsonAsync<Guid>();
+            return new QuestionnaireResponse { Id = responseId, AssignmentId = assignmentId, SectionResponses = sectionResponses };
         }
         catch (Exception ex)
         {
@@ -65,10 +65,10 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
 
     public async Task<QuestionnaireResponse?> SubmitMyResponseAsync(Guid assignmentId)
     {
-        // Use "me" endpoint - backend resolves employee ID from UserContext
+        // Use "me" endpoint - backend resolves employee ID from UserContext for security
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"c/api/v1/responses/assignment/{assignmentId}/submit", new { });
+            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}/submit", new { });
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
         }

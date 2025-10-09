@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
+using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.CommandApi.Models;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using CommandResult = ti8m.BeachBreak.Application.Command.Commands.Result;
@@ -139,6 +141,109 @@ public class EmployeesController : BaseController
                 employeeId,
                 (ApplicationRole)dto.NewRole,
                 requesterRoleResult.ApplicationRole));
+
+        return CreateResponse(result);
+    }
+
+    /// <summary>
+    /// Saves the currently authenticated employee's response to their assigned questionnaire.
+    /// Uses UserContext to get the employee ID - more secure than accepting it as a parameter.
+    /// This is the employee self-service endpoint that follows the "me" pattern for implicit authorization.
+    /// Stores responses with CompletionRole.Employee in the domain model.
+    /// </summary>
+    [HttpPost("me/responses/assignment/{assignmentId:guid}")]
+    [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> SaveMyResponse(
+        Guid assignmentId,
+        [FromBody] Dictionary<Guid, SectionResponse> sectionResponses)
+    {
+        // Get employee ID from authenticated user context
+        if (!Guid.TryParse(userContext.Id, out var employeeId))
+        {
+            logger.LogWarning("SaveMyResponse failed: Unable to parse user ID from context");
+            return CreateResponse(Application.Command.Commands.Result<Guid>.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
+        }
+
+        logger.LogInformation("Received SaveMyResponse request for authenticated EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
+            employeeId, assignmentId);
+
+        if (sectionResponses == null)
+        {
+            logger.LogWarning("SaveMyResponse failed: Section responses are null");
+            return CreateResponse(Application.Command.Commands.Result<Guid>.Fail("Section responses are required", StatusCodes.Status400BadRequest));
+        }
+
+        // Extract QuestionResponses from each SectionResponse
+        var responsesAsObjects = sectionResponses.ToDictionary(
+            kvp => kvp.Key,
+            kvp => (object)kvp.Value.QuestionResponses.ToDictionary(
+                q => q.Key,
+                q => (object)q.Value
+            )
+        );
+
+        var command = new SaveEmployeeResponseCommand(
+            employeeId: employeeId,
+            assignmentId: assignmentId,
+            sectionResponses: responsesAsObjects
+        );
+
+        var result = await commandDispatcher.SendAsync(command);
+
+        if (result.Succeeded)
+        {
+            logger.LogInformation("SaveMyResponse completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}, ResponseId: {ResponseId}",
+                employeeId, assignmentId, result.Payload);
+        }
+        else
+        {
+            logger.LogWarning("SaveMyResponse failed for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}, Error: {ErrorMessage}",
+                employeeId, assignmentId, result.Message);
+        }
+
+        return CreateResponse(result);
+    }
+
+    /// <summary>
+    /// Submits the currently authenticated employee's response for their assigned questionnaire.
+    /// Uses UserContext to get the employee ID - more secure than accepting it as a parameter.
+    /// This is the employee self-service endpoint that follows the "me" pattern for implicit authorization.
+    /// </summary>
+    [HttpPost("me/responses/assignment/{assignmentId:guid}/submit")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> SubmitMyResponse(Guid assignmentId)
+    {
+        // Get employee ID from authenticated user context
+        if (!Guid.TryParse(userContext.Id, out var employeeId))
+        {
+            logger.LogWarning("SubmitMyResponse failed: Unable to parse user ID from context");
+            return CreateResponse(CommandResult.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
+        }
+
+        logger.LogInformation("Received SubmitMyResponse request for authenticated EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
+            employeeId, assignmentId);
+
+        var command = new SubmitEmployeeResponseCommand(
+            employeeId: employeeId,
+            assignmentId: assignmentId
+        );
+
+        var result = await commandDispatcher.SendAsync(command);
+
+        if (result.Succeeded)
+        {
+            logger.LogInformation("SubmitMyResponse completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
+                employeeId, assignmentId);
+        }
+        else
+        {
+            logger.LogWarning("SubmitMyResponse failed for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}, Error: {ErrorMessage}",
+                employeeId, assignmentId, result.Message);
+        }
 
         return CreateResponse(result);
     }
