@@ -12,11 +12,6 @@ public enum WorkflowState
     ManagerSubmitted,
     BothSubmitted,
 
-    // Legacy confirmation states (deprecated - kept for backward compatibility)
-    EmployeeConfirmed,
-    ManagerConfirmed,
-    BothConfirmed,
-
     // Review phase
     InReview,
 

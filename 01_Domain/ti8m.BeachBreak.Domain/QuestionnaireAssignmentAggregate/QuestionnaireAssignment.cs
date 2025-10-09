@@ -30,12 +30,6 @@ public class QuestionnaireAssignment : AggregateRoot
     public DateTime? ManagerSubmittedDate { get; private set; }
     public string? ManagerSubmittedBy { get; private set; }
 
-    // Legacy confirmation (deprecated)
-    public DateTime? EmployeeConfirmedDate { get; private set; }
-    public string? EmployeeConfirmedBy { get; private set; }
-    public DateTime? ManagerConfirmedDate { get; private set; }
-    public string? ManagerConfirmedBy { get; private set; }
-
     // Review phase
     public DateTime? ReviewInitiatedDate { get; private set; }
     public string? ReviewInitiatedBy { get; private set; }
@@ -254,37 +248,6 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new ManagerQuestionnaireSubmitted(DateTime.UtcNow, submittedBy));
     }
 
-    // Legacy confirmation methods (deprecated - kept for backward compatibility)
-    public void ConfirmEmployeeCompletion(string confirmedBy)
-    {
-        if (IsLocked)
-            throw new InvalidOperationException("Cannot confirm - questionnaire is finalized");
-
-        if (IsWithdrawn)
-            throw new InvalidOperationException("Cannot confirm - assignment is withdrawn");
-
-        if (WorkflowState == WorkflowState.EmployeeConfirmed ||
-            WorkflowState == WorkflowState.BothConfirmed)
-            throw new InvalidOperationException("Employee completion already confirmed");
-
-        RaiseEvent(new EmployeeCompletionConfirmed(DateTime.UtcNow, confirmedBy));
-    }
-
-    public void ConfirmManagerCompletion(string confirmedBy)
-    {
-        if (IsLocked)
-            throw new InvalidOperationException("Cannot confirm - questionnaire is finalized");
-
-        if (IsWithdrawn)
-            throw new InvalidOperationException("Cannot confirm - assignment is withdrawn");
-
-        if (WorkflowState == WorkflowState.ManagerConfirmed ||
-            WorkflowState == WorkflowState.BothConfirmed)
-            throw new InvalidOperationException("Manager completion already confirmed");
-
-        RaiseEvent(new ManagerCompletionConfirmed(DateTime.UtcNow, confirmedBy));
-    }
-
     public void InitiateReview(string initiatedBy)
     {
         if (IsLocked)
@@ -429,20 +392,6 @@ public class QuestionnaireAssignment : AggregateRoot
         UpdateWorkflowStateOnSubmission();
     }
 
-    public void Apply(EmployeeCompletionConfirmed @event)
-    {
-        EmployeeConfirmedDate = @event.ConfirmedDate;
-        EmployeeConfirmedBy = @event.ConfirmedBy;
-        UpdateWorkflowStateOnConfirmation();
-    }
-
-    public void Apply(ManagerCompletionConfirmed @event)
-    {
-        ManagerConfirmedDate = @event.ConfirmedDate;
-        ManagerConfirmedBy = @event.ConfirmedBy;
-        UpdateWorkflowStateOnConfirmation();
-    }
-
     public void Apply(ReviewInitiated @event)
     {
         ReviewInitiatedDate = @event.InitiatedDate;
@@ -509,22 +458,6 @@ public class QuestionnaireAssignment : AggregateRoot
         else if (ManagerSubmittedDate.HasValue)
         {
             WorkflowState = WorkflowState.ManagerSubmitted;
-        }
-    }
-
-    private void UpdateWorkflowStateOnConfirmation()
-    {
-        if (EmployeeConfirmedDate.HasValue && ManagerConfirmedDate.HasValue)
-        {
-            WorkflowState = WorkflowState.BothConfirmed;
-        }
-        else if (EmployeeConfirmedDate.HasValue)
-        {
-            WorkflowState = WorkflowState.EmployeeConfirmed;
-        }
-        else if (ManagerConfirmedDate.HasValue)
-        {
-            WorkflowState = WorkflowState.ManagerConfirmed;
         }
     }
 }

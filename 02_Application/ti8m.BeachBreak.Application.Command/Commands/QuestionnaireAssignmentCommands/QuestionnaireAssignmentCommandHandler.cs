@@ -15,8 +15,6 @@ public class QuestionnaireAssignmentCommandHandler :
     ICommandHandler<CompleteBulkSectionsAsManagerCommand, Result>,
     ICommandHandler<SubmitEmployeeQuestionnaireCommand, Result>,
     ICommandHandler<SubmitManagerQuestionnaireCommand, Result>,
-    ICommandHandler<ConfirmEmployeeCompletionCommand, Result>,
-    ICommandHandler<ConfirmManagerCompletionCommand, Result>,
     ICommandHandler<InitiateReviewCommand, Result>,
     ICommandHandler<EditAnswerDuringReviewCommand, Result>,
     ICommandHandler<ConfirmEmployeeReviewCommand, Result>,
@@ -283,46 +281,6 @@ public class QuestionnaireAssignmentCommandHandler :
         {
             logger.LogError(ex, "Error submitting manager questionnaire for assignment {AssignmentId}", command.AssignmentId);
             return Result.Fail("Failed to submit manager questionnaire: " + ex.Message, 500);
-        }
-    }
-
-    public async Task<Result> HandleAsync(ConfirmEmployeeCompletionCommand command, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            logger.LogInformation("Employee confirming completion for assignment {AssignmentId}", command.AssignmentId);
-
-            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
-            assignment.ConfirmEmployeeCompletion(command.ConfirmedBy);
-            await repository.StoreAsync(assignment, cancellationToken);
-
-            logger.LogInformation("Successfully confirmed employee completion for assignment {AssignmentId}", command.AssignmentId);
-            return Result.Success("Employee completion confirmed");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error confirming employee completion for assignment {AssignmentId}", command.AssignmentId);
-            return Result.Fail("Failed to confirm employee completion: " + ex.Message, 500);
-        }
-    }
-
-    public async Task<Result> HandleAsync(ConfirmManagerCompletionCommand command, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            logger.LogInformation("Manager confirming completion for assignment {AssignmentId}", command.AssignmentId);
-
-            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
-            assignment.ConfirmManagerCompletion(command.ConfirmedBy);
-            await repository.StoreAsync(assignment, cancellationToken);
-
-            logger.LogInformation("Successfully confirmed manager completion for assignment {AssignmentId}", command.AssignmentId);
-            return Result.Success("Manager completion confirmed");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error confirming manager completion for assignment {AssignmentId}", command.AssignmentId);
-            return Result.Fail("Failed to confirm manager completion: " + ex.Message, 500);
         }
     }
 

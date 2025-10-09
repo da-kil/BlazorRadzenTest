@@ -24,14 +24,22 @@ public class QuestionnaireAssignmentReadModel
     // Workflow properties
     public string WorkflowState { get; set; } = "Assigned";
     public List<SectionProgressDto> SectionProgress { get; set; } = new();
-    public DateTime? EmployeeConfirmedDate { get; set; }
-    public string? EmployeeConfirmedBy { get; set; }
-    public DateTime? ManagerConfirmedDate { get; set; }
-    public string? ManagerConfirmedBy { get; set; }
+
+    // Submission phase
+    public DateTime? EmployeeSubmittedDate { get; set; }
+    public string? EmployeeSubmittedBy { get; set; }
+    public DateTime? ManagerSubmittedDate { get; set; }
+    public string? ManagerSubmittedBy { get; set; }
+
+    // Review phase
     public DateTime? ReviewInitiatedDate { get; set; }
     public string? ReviewInitiatedBy { get; set; }
     public DateTime? EmployeeReviewConfirmedDate { get; set; }
     public string? EmployeeReviewConfirmedBy { get; set; }
+    public DateTime? ManagerReviewConfirmedDate { get; set; }
+    public string? ManagerReviewConfirmedBy { get; set; }
+
+    // Final state
     public DateTime? FinalizedDate { get; set; }
     public string? FinalizedBy { get; set; }
     public bool IsLocked => WorkflowState == "Finalized";
@@ -127,18 +135,18 @@ public class QuestionnaireAssignmentReadModel
         UpdateWorkflowState();
     }
 
-    public void Apply(EmployeeCompletionConfirmed @event)
+    public void Apply(EmployeeQuestionnaireSubmitted @event)
     {
-        EmployeeConfirmedDate = @event.ConfirmedDate;
-        EmployeeConfirmedBy = @event.ConfirmedBy;
-        UpdateWorkflowStateOnConfirmation();
+        EmployeeSubmittedDate = @event.SubmittedDate;
+        EmployeeSubmittedBy = @event.SubmittedBy;
+        UpdateWorkflowStateOnSubmission();
     }
 
-    public void Apply(ManagerCompletionConfirmed @event)
+    public void Apply(ManagerQuestionnaireSubmitted @event)
     {
-        ManagerConfirmedDate = @event.ConfirmedDate;
-        ManagerConfirmedBy = @event.ConfirmedBy;
-        UpdateWorkflowStateOnConfirmation();
+        ManagerSubmittedDate = @event.SubmittedDate;
+        ManagerSubmittedBy = @event.SubmittedBy;
+        UpdateWorkflowStateOnSubmission();
     }
 
     public void Apply(ReviewInitiated @event)
@@ -159,6 +167,13 @@ public class QuestionnaireAssignmentReadModel
         EmployeeReviewConfirmedDate = @event.ConfirmedDate;
         EmployeeReviewConfirmedBy = @event.ConfirmedBy;
         WorkflowState = "EmployeeReviewConfirmed";
+    }
+
+    public void Apply(ManagerReviewConfirmed @event)
+    {
+        ManagerReviewConfirmedDate = @event.ConfirmedDate;
+        ManagerReviewConfirmedBy = @event.ConfirmedBy;
+        WorkflowState = "ManagerReviewConfirmed";
     }
 
     public void Apply(QuestionnaireFinalized @event)
@@ -187,19 +202,19 @@ public class QuestionnaireAssignmentReadModel
         }
     }
 
-    private void UpdateWorkflowStateOnConfirmation()
+    private void UpdateWorkflowStateOnSubmission()
     {
-        if (EmployeeConfirmedDate.HasValue && ManagerConfirmedDate.HasValue)
+        if (EmployeeSubmittedDate.HasValue && ManagerSubmittedDate.HasValue)
         {
-            WorkflowState = "BothConfirmed";
+            WorkflowState = "BothSubmitted";
         }
-        else if (EmployeeConfirmedDate.HasValue)
+        else if (EmployeeSubmittedDate.HasValue)
         {
-            WorkflowState = "EmployeeConfirmed";
+            WorkflowState = "EmployeeSubmitted";
         }
-        else if (ManagerConfirmedDate.HasValue)
+        else if (ManagerSubmittedDate.HasValue)
         {
-            WorkflowState = "ManagerConfirmed";
+            WorkflowState = "ManagerSubmitted";
         }
     }
 }
