@@ -150,10 +150,10 @@
             },
             new WorkflowStep
             {
-                Label = "Confirmed",
-                SubLabel = GetConfirmedSubLabel(),
-                IsCompleted = IsStateAfter(currentState, "BothConfirmed"),
-                IsActive = currentState.Contains("Confirmed") && currentState != "BothConfirmed"
+                Label = "Submitted",
+                SubLabel = GetSubmittedSubLabel(),
+                IsCompleted = IsStateAfter(currentState, "BothSubmitted"),
+                IsActive = currentState.Contains("Submitted") && currentState != "BothSubmitted"
             },
             new WorkflowStep
             {
@@ -183,25 +183,25 @@
     {
         if (Assignment == null) return null;
 
-        var employeeDone = Assignment.EmployeeConfirmedDate != null;
-        var managerDone = Assignment.ManagerConfirmedDate != null;
+        var employeeSubmitted = Assignment.EmployeeSubmittedDate != null;
+        var managerSubmitted = Assignment.ManagerSubmittedDate != null;
 
-        if (employeeDone && managerDone) return "Both working";
-        if (employeeDone) return "Employee done";
-        if (managerDone) return "Manager done";
-        return "Starting";
+        if (employeeSubmitted && managerSubmitted) return "Both submitted";
+        if (employeeSubmitted) return "Employee submitted";
+        if (managerSubmitted) return "Manager submitted";
+        return "In progress";
     }
 
-    private string? GetConfirmedSubLabel()
+    private string? GetSubmittedSubLabel()
     {
         if (Assignment == null) return null;
 
-        var employeeDone = Assignment.EmployeeConfirmedDate != null;
-        var managerDone = Assignment.ManagerConfirmedDate != null;
+        var employeeSubmitted = Assignment.EmployeeSubmittedDate != null;
+        var managerSubmitted = Assignment.ManagerSubmittedDate != null;
 
-        if (employeeDone && managerDone) return "Both confirmed";
-        if (employeeDone) return "Employee ✓";
-        if (managerDone) return "Manager ✓";
+        if (employeeSubmitted && managerSubmitted) return "Both submitted";
+        if (employeeSubmitted) return "Employee ✓";
+        if (managerSubmitted) return "Manager ✓";
         return null;
     }
 
@@ -213,11 +213,12 @@
             "EmployeeInProgress",
             "ManagerInProgress",
             "BothInProgress",
-            "EmployeeConfirmed",
-            "ManagerConfirmed",
-            "BothConfirmed",
+            "EmployeeSubmitted",
+            "ManagerSubmitted",
+            "BothSubmitted",
             "InReview",
             "EmployeeReviewConfirmed",
+            "ManagerReviewConfirmed",
             "Finalized"
         };
 

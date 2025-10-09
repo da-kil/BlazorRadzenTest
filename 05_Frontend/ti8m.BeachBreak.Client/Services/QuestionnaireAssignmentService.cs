@@ -239,32 +239,47 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
-    public async Task<bool> ConfirmEmployeeCompletionAsync(Guid assignmentId, string confirmedBy)
+    public async Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy)
     {
         try
         {
-            var dto = new ConfirmCompletionDto { ConfirmedBy = confirmedBy };
-            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/confirm-employee", dto);
+            var dto = new SubmitQuestionnaireDto { SubmittedBy = submittedBy };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/submit-employee", dto);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
         {
-            LogError($"Error confirming employee completion for assignment {assignmentId}", ex);
+            LogError($"Error submitting employee questionnaire for assignment {assignmentId}", ex);
             return false;
         }
     }
 
-    public async Task<bool> ConfirmManagerCompletionAsync(Guid assignmentId, string confirmedBy)
+    public async Task<bool> SubmitManagerQuestionnaireAsync(Guid assignmentId, string submittedBy)
     {
         try
         {
-            var dto = new ConfirmCompletionDto { ConfirmedBy = confirmedBy };
-            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/confirm-manager", dto);
+            var dto = new SubmitQuestionnaireDto { SubmittedBy = submittedBy };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/submit-manager", dto);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
         {
-            LogError($"Error confirming manager completion for assignment {assignmentId}", ex);
+            LogError($"Error submitting manager questionnaire for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> ConfirmManagerReviewAsync(Guid assignmentId, string confirmedBy)
+    {
+        try
+        {
+            var dto = new ConfirmCompletionDto { ConfirmedBy = confirmedBy };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/confirm-manager-review", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error confirming manager review for assignment {assignmentId}", ex);
             return false;
         }
     }

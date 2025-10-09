@@ -199,10 +199,33 @@
     {
         if (assignment == null || string.IsNullOrEmpty(assignment.WorkflowState)) return false;
 
-        return assignment.WorkflowState == "Finalized" ||
-               assignment.WorkflowState == "EmployeeConfirmed" ||
-               assignment.WorkflowState == "BothConfirmed" ||
-               assignment.WorkflowState == "EmployeeReviewConfirmed";
+        // Phase 1 Read-Only: After both submitted (before review)
+        var isPhase1ReadOnly = assignment.WorkflowState is "BothSubmitted" or "EmployeeSubmitted" or "ManagerSubmitted";
+
+        // Phase 2 Read-Only: After finalization (permanent)
+        var isPhase2ReadOnly = assignment.WorkflowState == "Finalized";
+
+        // During InReview: Editing is allowed for collaborative adjustments
+        // So InReview is NOT read-only
+
+        // After employee confirms review but before finalization
+        var isPostEmployeeReviewConfirmation = assignment.WorkflowState is "EmployeeReviewConfirmed" or "ManagerReviewConfirmed";
+
+        // Determine read-only based on user role
+        if (isEmployee && !isManager)
+        {
+            // Employee can edit: Assigned, EmployeeInProgress, BothInProgress, InReview
+            // Employee cannot edit: After submission (all submitted states), After review confirmation, Finalized
+            return isPhase1ReadOnly || isPhase2ReadOnly || isPostEmployeeReviewConfirmation;
+        }
+        else if (isManager)
+        {
+            // Manager can edit: Assigned, ManagerInProgress, BothInProgress, InReview
+            // Manager cannot edit: After submission (all submitted states), After review confirmation, Finalized
+            return isPhase1ReadOnly || isPhase2ReadOnly || isPostEmployeeReviewConfirmation;
+        }
+
+        return isPhase2ReadOnly; // Default: only finalized is truly read-only
     }
 
     protected override async Task OnInitializedAsync()

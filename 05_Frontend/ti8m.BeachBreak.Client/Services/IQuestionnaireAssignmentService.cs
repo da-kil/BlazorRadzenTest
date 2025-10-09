@@ -33,9 +33,10 @@ public interface IQuestionnaireAssignmentService
     Task<bool> CompleteBulkSectionsAsEmployeeAsync(Guid assignmentId, List<Guid> sectionIds);
     Task<bool> CompleteSectionAsManagerAsync(Guid assignmentId, Guid sectionId);
     Task<bool> CompleteBulkSectionsAsManagerAsync(Guid assignmentId, List<Guid> sectionIds);
-    Task<bool> ConfirmEmployeeCompletionAsync(Guid assignmentId, string confirmedBy);
-    Task<bool> ConfirmManagerCompletionAsync(Guid assignmentId, string confirmedBy);
+    Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy);
+    Task<bool> SubmitManagerQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> InitiateReviewAsync(Guid assignmentId, string initiatedBy);
+    Task<bool> ConfirmManagerReviewAsync(Guid assignmentId, string confirmedBy);
     Task<bool> EditAnswerDuringReviewAsync(Guid assignmentId, Guid sectionId, Guid questionId, string answer, string editedBy);
     Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy);
     Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy);
