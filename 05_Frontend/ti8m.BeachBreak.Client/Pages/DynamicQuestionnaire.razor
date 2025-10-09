@@ -44,6 +44,26 @@
                 }
             </div>
 
+            @if (IsQuestionnaireCompleted())
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="mb-4" ShowIcon="true">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenIcon Icon="check_circle" />
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            <strong>This questionnaire has been completed and is now read-only.</strong>
+                            @if (assignment?.WorkflowState == "Finalized")
+                            {
+                                <span> The questionnaire has been finalized.</span>
+                            }
+                            else
+                            {
+                                <span> You can review your responses below, but cannot make changes.</span>
+                            }
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenAlert>
+            }
+
             @if (template.Settings.ShowProgressBar)
             {
                 <div class="progress-section mb-4">
@@ -114,40 +134,43 @@
                              Disabled="@(currentSectionIndex == 0)" />
                 
                 <div class="d-flex gap-2">
-                    @if (template.Settings.AllowSaveProgress)
+                    @if (!IsQuestionnaireCompleted())
                     {
-                        <RadzenButton Text="Save Progress" 
-                                     ButtonStyle="ButtonStyle.Info" 
-                                     Icon="save"
-                                     Click="@SaveProgress" />
-                    }
-
-                    @if (currentSectionIndex == visibleSections.Count - 1)
-                    {
-                        @if (template.Settings.AllowReviewBeforeSubmit)
+                        @if (template.Settings.AllowSaveProgress)
                         {
-                            <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
-                                         ButtonStyle="ButtonStyle.Success"
-                                         Icon="send"
-                                         Click="@ShowReview"
-                                         Disabled="@(!CanSubmit() || isSubmitting)" />
+                            <RadzenButton Text="Save Progress"
+                                         ButtonStyle="ButtonStyle.Info"
+                                         Icon="save"
+                                         Click="@SaveProgress" />
+                        }
+
+                        @if (currentSectionIndex == visibleSections.Count - 1)
+                        {
+                            @if (template.Settings.AllowReviewBeforeSubmit)
+                            {
+                                <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
+                                             ButtonStyle="ButtonStyle.Success"
+                                             Icon="send"
+                                             Click="@ShowReview"
+                                             Disabled="@(!CanSubmit() || isSubmitting)" />
+                            }
+                            else
+                            {
+                                <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
+                                             ButtonStyle="ButtonStyle.Success"
+                                             Icon="send"
+                                             Click="@SubmitQuestionnaire"
+                                             Disabled="@(!CanSubmit() || isSubmitting)" />
+                            }
                         }
                         else
                         {
-                            <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
-                                         ButtonStyle="ButtonStyle.Success"
-                                         Icon="send"
-                                         Click="@SubmitQuestionnaire"
-                                         Disabled="@(!CanSubmit() || isSubmitting)" />
+                            <RadzenButton Text="Next"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Icon="arrow_forward"
+                                         Click="@NextSection"
+                                         Disabled="@(!CanProceedFromCurrentSection())" />
                         }
-                    }
-                    else
-                    {
-                        <RadzenButton Text="Next" 
-                                     ButtonStyle="ButtonStyle.Primary" 
-                                     Icon="arrow_forward"
-                                     Click="@NextSection"
-                                     Disabled="@(!CanProceedFromCurrentSection())" />
                     }
                 </div>
             </div>
@@ -171,6 +194,16 @@
     private List<QuestionSection> visibleSections = new();
     private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
     private bool isSubmitting = false;
+
+    private bool IsQuestionnaireCompleted()
+    {
+        if (assignment == null || string.IsNullOrEmpty(assignment.WorkflowState)) return false;
+
+        return assignment.WorkflowState == "Finalized" ||
+               assignment.WorkflowState == "EmployeeConfirmed" ||
+               assignment.WorkflowState == "BothConfirmed" ||
+               assignment.WorkflowState == "EmployeeReviewConfirmed";
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -549,9 +582,10 @@
                                 <RadzenColumn Size="12" SizeMD="4" Class="text-end">
                                     <div class="rating-section">
                                         <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
-                                        <RadzenRating Value="@GetCompetencyRating(question.Id, competency.Key)" 
+                                        <RadzenRating Value="@GetCompetencyRating(question.Id, competency.Key)"
                                                     ValueChanged="@((int value) => SetCompetencyRating(question.Id, competency.Key, value))"
-                                                    Stars="4" 
+                                                    Stars="4"
+                                                    Disabled="@IsQuestionnaireCompleted()"
                                                     Class="mb-2" />
                                         <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
                                             @GetRatingText(GetCompetencyRating(question.Id, competency.Key))
@@ -563,6 +597,7 @@
                                           ValueChanged="@((string value) => SetCompetencyComment(question.Id, competency.Key, value))"
                                           Placeholder="Optional: Add your comments here..."
                                           Rows="2"
+                                          Disabled="@IsQuestionnaireCompleted()"
                                           Class="w-100 mt-2" />
                         </RadzenCard>
                     }
@@ -602,6 +637,7 @@
                                       ValueChanged="@(value => UpdateQuestionResponseText(question.Id, value))"
                                       Placeholder="Describe your thoughts, plans, and goals..."
                                       Rows="4"
+                                      Disabled="@IsQuestionnaireCompleted()"
                                       Class="w-100" />
                     </RadzenCard>
                 </div>
@@ -637,6 +673,7 @@
                                       ValueChanged="@(value => SetGoalDescription(question.Id, value))"
                                       Placeholder="Describe the goal that was set for 2023..."
                                       Rows="3"
+                                      Disabled="@IsQuestionnaireCompleted()"
                                       Class="w-100" />
                     </div>
 
@@ -647,10 +684,11 @@
                                 <RadzenNumeric TValue="int"
                                              Value="@GetGoalAchievementPercentage(question.Id)"
                                              ValueChanged="@((int value) => SetGoalAchievementPercentage(question.Id, value))"
-                                             Min="0" 
-                                             Max="100" 
+                                             Min="0"
+                                             Max="100"
                                              Step="5"
                                              Format="0"
+                                             Disabled="@IsQuestionnaireCompleted()"
                                              Class="flex-grow-1 me-2" />
                                 <RadzenText TextStyle="TextStyle.Body1">%</RadzenText>
                             </div>
@@ -676,6 +714,7 @@
                                       ValueChanged="@(value => SetGoalJustification(question.Id, value))"
                                       Placeholder="Explain why you achieved this percentage. What factors contributed to your success or challenges?"
                                       Rows="4"
+                                      Disabled="@IsQuestionnaireCompleted()"
                                       Class="w-100" />
                     </div>
                 </RadzenCard>
@@ -694,9 +733,10 @@
             {
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
             }
-            <RadzenToggleButton Value="@GetBooleanValue(question.Id)" 
+            <RadzenToggleButton Value="@GetBooleanValue(question.Id)"
                               ValueChanged="@(value => SetBooleanValue(question.Id, value))"
-                              Text="@(GetBooleanValue(question.Id) ? "Yes" : "No")" 
+                              Text="@(GetBooleanValue(question.Id) ? "Yes" : "No")"
+                              Disabled="@IsQuestionnaireCompleted()"
                               ButtonStyle="@(GetBooleanValue(question.Id) ? ButtonStyle.Success : ButtonStyle.Secondary)" />
         </div>;
     }
@@ -717,6 +757,7 @@
                             TValue="DateTime?"
                             ShowTime="false"
                             DateFormat="dd/MM/yyyy"
+                            Disabled="@IsQuestionnaireCompleted()"
                             Class="w-100" />
         </div>;
     }
@@ -732,9 +773,10 @@
             {
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
             }
-            <RadzenNumeric Value="@GetNumericValue(question.Id)" 
+            <RadzenNumeric Value="@GetNumericValue(question.Id)"
                          ValueChanged="@(value => SetNumericValue(question.Id, value))"
                          TValue="int"
+                         Disabled="@IsQuestionnaireCompleted()"
                          Class="w-100" />
         </div>;
     }

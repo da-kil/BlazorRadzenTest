@@ -13,11 +13,14 @@ public class QuestionnaireAssignmentCommandHandler :
     ICommandHandler<CompleteBulkSectionsAsEmployeeCommand, Result>,
     ICommandHandler<CompleteSectionAsManagerCommand, Result>,
     ICommandHandler<CompleteBulkSectionsAsManagerCommand, Result>,
+    ICommandHandler<SubmitEmployeeQuestionnaireCommand, Result>,
+    ICommandHandler<SubmitManagerQuestionnaireCommand, Result>,
     ICommandHandler<ConfirmEmployeeCompletionCommand, Result>,
     ICommandHandler<ConfirmManagerCompletionCommand, Result>,
     ICommandHandler<InitiateReviewCommand, Result>,
     ICommandHandler<EditAnswerDuringReviewCommand, Result>,
     ICommandHandler<ConfirmEmployeeReviewCommand, Result>,
+    ICommandHandler<ConfirmManagerReviewCommand, Result>,
     ICommandHandler<FinalizeQuestionnaireCommand, Result>
 {
     private readonly IQuestionnaireAssignmentAggregateRepository repository;
@@ -237,6 +240,52 @@ public class QuestionnaireAssignmentCommandHandler :
         }
     }
 
+    public async Task<Result> HandleAsync(SubmitEmployeeQuestionnaireCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Employee submitting questionnaire for assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                command.ExpectedVersion,
+                cancellationToken);
+            assignment.SubmitEmployeeQuestionnaire(command.SubmittedBy);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully submitted employee questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Employee questionnaire submitted");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error submitting employee questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to submit employee questionnaire: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(SubmitManagerQuestionnaireCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Manager submitting questionnaire for assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                command.ExpectedVersion,
+                cancellationToken);
+            assignment.SubmitManagerQuestionnaire(command.SubmittedBy);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully submitted manager questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Manager questionnaire submitted");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error submitting manager questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to submit manager questionnaire: " + ex.Message, 500);
+        }
+    }
+
     public async Task<Result> HandleAsync(ConfirmEmployeeCompletionCommand command, CancellationToken cancellationToken = default)
     {
         try
@@ -334,6 +383,29 @@ public class QuestionnaireAssignmentCommandHandler :
         {
             logger.LogError(ex, "Error confirming employee review for assignment {AssignmentId}", command.AssignmentId);
             return Result.Fail("Failed to confirm employee review: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(ConfirmManagerReviewCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Manager confirming review for assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                command.ExpectedVersion,
+                cancellationToken);
+            assignment.ConfirmManagerReview(command.ConfirmedBy);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully confirmed manager review for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Manager review confirmed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error confirming manager review for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to confirm manager review: " + ex.Message, 500);
         }
     }
 

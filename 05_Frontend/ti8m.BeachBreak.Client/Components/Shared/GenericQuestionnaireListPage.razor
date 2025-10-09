@@ -387,7 +387,16 @@
                 <div class="ms-3">
                     @if (Configuration.PageType == QuestionnairePageType.Employee)
                     {
-                        @if (assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress)
+                        @if (IsQuestionnaireCompleted(assignment))
+                        {
+                            <RadzenButton Text="VIEW"
+                                         Icon="visibility"
+                                         ButtonStyle="ButtonStyle.Success"
+                                         Size="ButtonSize.Medium"
+                                         Style="min-width: 120px; font-weight: 600;"
+                                         Click="@(() => NavigateToQuestionnaire(assignment))" />
+                        }
+                        else if (assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress)
                         {
                             var hasProgress = assignment.Status == AssignmentStatus.InProgress ||
                                              (assignment.SectionProgress != null && assignment.SectionProgress.Any()) ||
@@ -830,6 +839,16 @@
     {
         // Info notification would be implemented here
         Console.WriteLine($"Info: {message}");
+    }
+
+    private bool IsQuestionnaireCompleted(QuestionnaireAssignment assignment)
+    {
+        if (assignment == null || string.IsNullOrEmpty(assignment.WorkflowState)) return false;
+
+        return assignment.WorkflowState == "Finalized" ||
+               assignment.WorkflowState == "EmployeeConfirmed" ||
+               assignment.WorkflowState == "BothConfirmed" ||
+               assignment.WorkflowState == "EmployeeReviewConfirmed";
     }
 
     private async Task<List<QuestionnaireAssignment>> GetAssignmentsPaginated(int page, int size)

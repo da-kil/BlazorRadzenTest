@@ -23,14 +23,28 @@ public class QuestionnaireAssignment : AggregateRoot
     // Workflow properties
     public WorkflowState WorkflowState { get; private set; } = WorkflowState.Assigned;
     public List<SectionProgress> SectionProgressList { get; private set; } = new();
+
+    // Submission phase
+    public DateTime? EmployeeSubmittedDate { get; private set; }
+    public string? EmployeeSubmittedBy { get; private set; }
+    public DateTime? ManagerSubmittedDate { get; private set; }
+    public string? ManagerSubmittedBy { get; private set; }
+
+    // Legacy confirmation (deprecated)
     public DateTime? EmployeeConfirmedDate { get; private set; }
     public string? EmployeeConfirmedBy { get; private set; }
     public DateTime? ManagerConfirmedDate { get; private set; }
     public string? ManagerConfirmedBy { get; private set; }
+
+    // Review phase
     public DateTime? ReviewInitiatedDate { get; private set; }
     public string? ReviewInitiatedBy { get; private set; }
     public DateTime? EmployeeReviewConfirmedDate { get; private set; }
     public string? EmployeeReviewConfirmedBy { get; private set; }
+    public DateTime? ManagerReviewConfirmedDate { get; private set; }
+    public string? ManagerReviewConfirmedBy { get; private set; }
+
+    // Final state
     public DateTime? FinalizedDate { get; private set; }
     public string? FinalizedBy { get; private set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
@@ -199,6 +213,48 @@ public class QuestionnaireAssignment : AggregateRoot
         }
     }
 
+    // Submit methods (Phase 1)
+    public void SubmitEmployeeQuestionnaire(string submittedBy)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot submit - questionnaire is finalized");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot submit - assignment is withdrawn");
+
+        if (WorkflowState == WorkflowState.EmployeeSubmitted ||
+            WorkflowState == WorkflowState.BothSubmitted)
+            throw new InvalidOperationException("Employee questionnaire already submitted");
+
+        // Must be in progress to submit
+        if (WorkflowState != WorkflowState.EmployeeInProgress &&
+            WorkflowState != WorkflowState.BothInProgress)
+            throw new InvalidOperationException("Employee must have started filling sections before submitting");
+
+        RaiseEvent(new EmployeeQuestionnaireSubmitted(DateTime.UtcNow, submittedBy));
+    }
+
+    public void SubmitManagerQuestionnaire(string submittedBy)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot submit - questionnaire is finalized");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot submit - assignment is withdrawn");
+
+        if (WorkflowState == WorkflowState.ManagerSubmitted ||
+            WorkflowState == WorkflowState.BothSubmitted)
+            throw new InvalidOperationException("Manager questionnaire already submitted");
+
+        // Must be in progress to submit
+        if (WorkflowState != WorkflowState.ManagerInProgress &&
+            WorkflowState != WorkflowState.BothInProgress)
+            throw new InvalidOperationException("Manager must have started filling sections before submitting");
+
+        RaiseEvent(new ManagerQuestionnaireSubmitted(DateTime.UtcNow, submittedBy));
+    }
+
+    // Legacy confirmation methods (deprecated - kept for backward compatibility)
     public void ConfirmEmployeeCompletion(string confirmedBy)
     {
         if (IsLocked)
@@ -237,8 +293,8 @@ public class QuestionnaireAssignment : AggregateRoot
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot initiate review - assignment is withdrawn");
 
-        if (WorkflowState != WorkflowState.BothConfirmed)
-            throw new InvalidOperationException("Both employee and manager must confirm completion before review");
+        if (WorkflowState != WorkflowState.BothSubmitted)
+            throw new InvalidOperationException("Both employee and manager must submit their questionnaires before review");
 
         RaiseEvent(new ReviewInitiated(DateTime.UtcNow, initiatedBy));
     }
@@ -265,13 +321,25 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new EmployeeReviewConfirmed(DateTime.UtcNow, confirmedBy));
     }
 
+    public void ConfirmManagerReview(string confirmedBy)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot confirm review - questionnaire is finalized");
+
+        if (WorkflowState != WorkflowState.InReview &&
+            WorkflowState != WorkflowState.EmployeeReviewConfirmed)
+            throw new InvalidOperationException("Review must be in progress or employee must have confirmed review");
+
+        RaiseEvent(new ManagerReviewConfirmed(DateTime.UtcNow, confirmedBy));
+    }
+
     public void Finalize(string finalizedBy)
     {
         if (IsLocked)
             throw new InvalidOperationException("Questionnaire is already finalized");
 
-        if (WorkflowState != WorkflowState.EmployeeReviewConfirmed)
-            throw new InvalidOperationException("Employee must confirm review before finalization");
+        if (!EmployeeReviewConfirmedDate.HasValue || !ManagerReviewConfirmedDate.HasValue)
+            throw new InvalidOperationException("Both employee and manager must confirm review before finalization");
 
         RaiseEvent(new QuestionnaireFinalized(DateTime.UtcNow, finalizedBy));
     }
@@ -347,6 +415,20 @@ public class QuestionnaireAssignment : AggregateRoot
         UpdateWorkflowState();
     }
 
+    public void Apply(EmployeeQuestionnaireSubmitted @event)
+    {
+        EmployeeSubmittedDate = @event.SubmittedDate;
+        EmployeeSubmittedBy = @event.SubmittedBy;
+        UpdateWorkflowStateOnSubmission();
+    }
+
+    public void Apply(ManagerQuestionnaireSubmitted @event)
+    {
+        ManagerSubmittedDate = @event.SubmittedDate;
+        ManagerSubmittedBy = @event.SubmittedBy;
+        UpdateWorkflowStateOnSubmission();
+    }
+
     public void Apply(EmployeeCompletionConfirmed @event)
     {
         EmployeeConfirmedDate = @event.ConfirmedDate;
@@ -381,6 +463,13 @@ public class QuestionnaireAssignment : AggregateRoot
         WorkflowState = WorkflowState.EmployeeReviewConfirmed;
     }
 
+    public void Apply(ManagerReviewConfirmed @event)
+    {
+        ManagerReviewConfirmedDate = @event.ConfirmedDate;
+        ManagerReviewConfirmedBy = @event.ConfirmedBy;
+        WorkflowState = WorkflowState.ManagerReviewConfirmed;
+    }
+
     public void Apply(QuestionnaireFinalized @event)
     {
         FinalizedDate = @event.FinalizedDate;
@@ -404,6 +493,22 @@ public class QuestionnaireAssignment : AggregateRoot
         else if (hasManagerProgress)
         {
             WorkflowState = WorkflowState.ManagerInProgress;
+        }
+    }
+
+    private void UpdateWorkflowStateOnSubmission()
+    {
+        if (EmployeeSubmittedDate.HasValue && ManagerSubmittedDate.HasValue)
+        {
+            WorkflowState = WorkflowState.BothSubmitted;
+        }
+        else if (EmployeeSubmittedDate.HasValue)
+        {
+            WorkflowState = WorkflowState.EmployeeSubmitted;
+        }
+        else if (ManagerSubmittedDate.HasValue)
+        {
+            WorkflowState = WorkflowState.ManagerSubmitted;
         }
     }
 

@@ -397,6 +397,45 @@ public class AssignmentsController : BaseController
         }
     }
 
+    [HttpPost("{assignmentId}/submit-employee")]
+    public async Task<IActionResult> SubmitEmployeeQuestionnaire(Guid assignmentId, [FromBody] SubmitQuestionnaireDto submitDto)
+    {
+        try
+        {
+            var command = new SubmitEmployeeQuestionnaireCommand(
+                assignmentId,
+                submitDto.SubmittedBy,
+                submitDto.ExpectedVersion);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error submitting employee questionnaire");
+            return StatusCode(500, "An error occurred while submitting employee questionnaire");
+        }
+    }
+
+    [HttpPost("{assignmentId}/submit-manager")]
+    [Authorize(Roles = "TeamLead")]
+    public async Task<IActionResult> SubmitManagerQuestionnaire(Guid assignmentId, [FromBody] SubmitQuestionnaireDto submitDto)
+    {
+        try
+        {
+            var command = new SubmitManagerQuestionnaireCommand(
+                assignmentId,
+                submitDto.SubmittedBy,
+                submitDto.ExpectedVersion);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error submitting manager questionnaire");
+            return StatusCode(500, "An error occurred while submitting manager questionnaire");
+        }
+    }
+
     [HttpPost("{assignmentId}/confirm-employee")]
     public async Task<IActionResult> ConfirmEmployeeCompletion(Guid assignmentId, [FromBody] ConfirmCompletionDto confirmDto)
     {
@@ -481,6 +520,26 @@ public class AssignmentsController : BaseController
         {
             logger.LogError(ex, "Error confirming employee review");
             return StatusCode(500, "An error occurred while confirming employee review");
+        }
+    }
+
+    [HttpPost("{assignmentId}/confirm-manager-review")]
+    [Authorize(Roles = "TeamLead")]
+    public async Task<IActionResult> ConfirmManagerReview(Guid assignmentId, [FromBody] ConfirmReviewDto confirmDto)
+    {
+        try
+        {
+            var command = new ConfirmManagerReviewCommand(
+                assignmentId,
+                confirmDto.ConfirmedBy,
+                confirmDto.ExpectedVersion);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error confirming manager review");
+            return StatusCode(500, "An error occurred while confirming manager review");
         }
     }
 

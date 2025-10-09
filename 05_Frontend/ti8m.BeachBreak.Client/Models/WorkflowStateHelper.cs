@@ -8,11 +8,15 @@ public static class WorkflowStateHelper
         "EmployeeInProgress",
         "ManagerInProgress",
         "BothInProgress",
-        "EmployeeConfirmed",
-        "ManagerConfirmed",
-        "BothConfirmed",
+        "EmployeeSubmitted",
+        "ManagerSubmitted",
+        "BothSubmitted",
+        "EmployeeConfirmed",      // Legacy/deprecated
+        "ManagerConfirmed",       // Legacy/deprecated
+        "BothConfirmed",          // Legacy/deprecated
         "InReview",
         "EmployeeReviewConfirmed",
+        "ManagerReviewConfirmed",
         "Finalized"
     };
 
@@ -38,11 +42,15 @@ public static class WorkflowStateHelper
             "EmployeeInProgress" => "Employee Working",
             "ManagerInProgress" => "Manager Working",
             "BothInProgress" => "Both Working",
-            "EmployeeConfirmed" => "Employee Confirmed",
-            "ManagerConfirmed" => "Manager Confirmed",
-            "BothConfirmed" => "Ready for Review",
+            "EmployeeSubmitted" => "Employee Submitted",
+            "ManagerSubmitted" => "Manager Submitted",
+            "BothSubmitted" => "Both Submitted - Ready for Review",
+            "EmployeeConfirmed" => "Employee Confirmed (Legacy)",
+            "ManagerConfirmed" => "Manager Confirmed (Legacy)",
+            "BothConfirmed" => "Both Confirmed (Legacy)",
             "InReview" => "In Review",
-            "EmployeeReviewConfirmed" => "Review Confirmed",
+            "EmployeeReviewConfirmed" => "Employee Review Confirmed",
+            "ManagerReviewConfirmed" => "Manager Review Confirmed",
             "Finalized" => "Finalized",
             _ => state
         };
@@ -54,9 +62,10 @@ public static class WorkflowStateHelper
         {
             "Assigned" => "#6c757d",
             "EmployeeInProgress" or "ManagerInProgress" or "BothInProgress" => "#0F60FF",
+            "EmployeeSubmitted" or "ManagerSubmitted" or "BothSubmitted" => "#935BA9",
             "EmployeeConfirmed" or "ManagerConfirmed" or "BothConfirmed" => "#935BA9",
             "InReview" => "#FF9800",
-            "EmployeeReviewConfirmed" => "#00E6C8",
+            "EmployeeReviewConfirmed" or "ManagerReviewConfirmed" => "#00E6C8",
             "Finalized" => "#4CAF50",
             _ => "#6c757d"
         };
@@ -68,9 +77,10 @@ public static class WorkflowStateHelper
         {
             "Assigned" => "assignment",
             "EmployeeInProgress" or "ManagerInProgress" or "BothInProgress" => "edit",
+            "EmployeeSubmitted" or "ManagerSubmitted" or "BothSubmitted" => "send",
             "EmployeeConfirmed" or "ManagerConfirmed" or "BothConfirmed" => "check_circle",
             "InReview" => "rate_review",
-            "EmployeeReviewConfirmed" => "verified",
+            "EmployeeReviewConfirmed" or "ManagerReviewConfirmed" => "verified",
             "Finalized" => "lock",
             _ => "help"
         };
@@ -81,7 +91,12 @@ public static class WorkflowStateHelper
         if (assignment.IsLocked) return false;
 
         var state = assignment.WorkflowState;
+
+        // Can edit before submission or during review
         return state is "Assigned" or "EmployeeInProgress" or "BothInProgress" or "InReview";
+
+        // Cannot edit after submission (Phase 1 read-only): EmployeeSubmitted, ManagerSubmitted, BothSubmitted
+        // Cannot edit after finalization (Phase 2 read-only): Finalized
     }
 
     public static bool CanManagerEdit(QuestionnaireAssignment assignment)
@@ -89,9 +104,27 @@ public static class WorkflowStateHelper
         if (assignment.IsLocked) return false;
 
         var state = assignment.WorkflowState;
+
+        // Can edit before submission or during review
         return state is "Assigned" or "ManagerInProgress" or "BothInProgress" or "InReview";
+
+        // Cannot edit after submission (Phase 1 read-only): EmployeeSubmitted, ManagerSubmitted, BothSubmitted
+        // Cannot edit after finalization (Phase 2 read-only): Finalized
     }
 
+    public static bool CanEmployeeSubmit(QuestionnaireAssignment assignment)
+    {
+        var state = assignment.WorkflowState;
+        return state is "EmployeeInProgress" or "BothInProgress";
+    }
+
+    public static bool CanManagerSubmit(QuestionnaireAssignment assignment)
+    {
+        var state = assignment.WorkflowState;
+        return state is "ManagerInProgress" or "BothInProgress" or "EmployeeSubmitted";
+    }
+
+    // Legacy methods - kept for backward compatibility
     public static bool CanEmployeeConfirm(QuestionnaireAssignment assignment)
     {
         var state = assignment.WorkflowState;
@@ -108,7 +141,7 @@ public static class WorkflowStateHelper
 
     public static bool CanInitiateReview(QuestionnaireAssignment assignment)
     {
-        return assignment.WorkflowState == "BothConfirmed";
+        return assignment.WorkflowState == "BothSubmitted";
     }
 
     public static bool CanEmployeeConfirmReview(QuestionnaireAssignment assignment)
@@ -117,9 +150,17 @@ public static class WorkflowStateHelper
                assignment.EmployeeReviewConfirmedDate == null;
     }
 
+    public static bool CanManagerConfirmReview(QuestionnaireAssignment assignment)
+    {
+        return (assignment.WorkflowState == "InReview" ||
+                assignment.WorkflowState == "EmployeeReviewConfirmed") &&
+               assignment.ManagerReviewConfirmedDate == null;
+    }
+
     public static bool CanManagerFinalize(QuestionnaireAssignment assignment)
     {
-        return assignment.WorkflowState == "EmployeeReviewConfirmed";
+        return assignment.EmployeeReviewConfirmedDate.HasValue &&
+               assignment.ManagerReviewConfirmedDate.HasValue;
     }
 
     public static string GetNextActionForEmployee(QuestionnaireAssignment assignment)
@@ -127,13 +168,17 @@ public static class WorkflowStateHelper
         return assignment.WorkflowState switch
         {
             "Assigned" => "Start completing your sections",
-            "EmployeeInProgress" => "Complete remaining sections",
-            "BothInProgress" => "Complete and confirm your sections",
-            "EmployeeConfirmed" => "Waiting for manager",
-            "ManagerConfirmed" => "Complete your sections",
-            "BothConfirmed" => "Waiting for manager to initiate review",
+            "EmployeeInProgress" => "Complete and submit your sections",
+            "BothInProgress" => "Complete and submit your sections",
+            "EmployeeSubmitted" => "Waiting for manager to submit",
+            "ManagerSubmitted" => "Complete and submit your sections",
+            "BothSubmitted" => "Waiting for manager to initiate review",
+            "EmployeeConfirmed" => "Waiting for manager (Legacy)",
+            "ManagerConfirmed" => "Complete your sections (Legacy)",
+            "BothConfirmed" => "Waiting for manager to initiate review (Legacy)",
             "InReview" => "Review all sections and confirm",
-            "EmployeeReviewConfirmed" => "Waiting for manager to finalize",
+            "EmployeeReviewConfirmed" => "Waiting for manager to confirm and finalize",
+            "ManagerReviewConfirmed" => "Waiting for manager to finalize",
             "Finalized" => "Questionnaire is finalized",
             _ => "No action required"
         };
@@ -144,13 +189,17 @@ public static class WorkflowStateHelper
         return assignment.WorkflowState switch
         {
             "Assigned" => "Start completing your sections",
-            "ManagerInProgress" => "Complete remaining sections",
-            "BothInProgress" => "Complete and confirm your sections",
-            "EmployeeConfirmed" => "Complete your sections",
-            "ManagerConfirmed" => "Waiting for employee",
-            "BothConfirmed" => "Initiate performance review",
-            "InReview" => "Collaborate on final review",
-            "EmployeeReviewConfirmed" => "Finalize the questionnaire",
+            "ManagerInProgress" => "Complete and submit your sections",
+            "BothInProgress" => "Complete and submit your sections",
+            "EmployeeSubmitted" => "Complete and submit your sections",
+            "ManagerSubmitted" => "Waiting for employee to submit",
+            "BothSubmitted" => "Initiate performance review",
+            "EmployeeConfirmed" => "Complete your sections (Legacy)",
+            "ManagerConfirmed" => "Waiting for employee (Legacy)",
+            "BothConfirmed" => "Initiate performance review (Legacy)",
+            "InReview" => "Collaborate on final review and confirm",
+            "EmployeeReviewConfirmed" => "Confirm review and finalize",
+            "ManagerReviewConfirmed" => "Finalize the questionnaire",
             "Finalized" => "Questionnaire is finalized",
             _ => "No action required"
         };
