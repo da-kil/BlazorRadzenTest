@@ -341,6 +341,25 @@ public class AssignmentsController : BaseController
         }
     }
 
+    [HttpPost("{assignmentId}/sections/bulk-complete-employee")]
+    public async Task<IActionResult> CompleteBulkSectionsAsEmployee(Guid assignmentId, [FromBody] List<Guid> sectionIds)
+    {
+        try
+        {
+            if (sectionIds == null || !sectionIds.Any())
+                return BadRequest("Section IDs list cannot be null or empty");
+
+            var command = new CompleteBulkSectionsAsEmployeeCommand(assignmentId, sectionIds);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing sections as employee");
+            return StatusCode(500, "An error occurred while completing sections");
+        }
+    }
+
     [HttpPost("{assignmentId}/sections/{sectionId}/complete-manager")]
     [Authorize(Roles = "TeamLead")]
     public async Task<IActionResult> CompleteSectionAsManager(Guid assignmentId, Guid sectionId)
@@ -355,6 +374,26 @@ public class AssignmentsController : BaseController
         {
             logger.LogError(ex, "Error completing section as manager");
             return StatusCode(500, "An error occurred while completing section");
+        }
+    }
+
+    [HttpPost("{assignmentId}/sections/bulk-complete-manager")]
+    [Authorize(Roles = "TeamLead")]
+    public async Task<IActionResult> CompleteBulkSectionsAsManager(Guid assignmentId, [FromBody] List<Guid> sectionIds)
+    {
+        try
+        {
+            if (sectionIds == null || !sectionIds.Any())
+                return BadRequest("Section IDs list cannot be null or empty");
+
+            var command = new CompleteBulkSectionsAsManagerCommand(assignmentId, sectionIds);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing sections as manager");
+            return StatusCode(500, "An error occurred while completing sections");
         }
     }
 

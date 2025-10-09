@@ -39,7 +39,7 @@ public class EventSourcedAggregateRepository : IAggregateRepository
         else
         {
             // Existing stream - use optimistic concurrency
-            session.Events.Append(aggregateRootEntity.Id, expectedVersion, domainEvents);
+            session.Events.Append(aggregateRootEntity.Id, aggregateRootEntity.Version, domainEvents);
         }
 
         logger.LogSaveEventStream(domainEvents.Count(), aggregateRootEntity.Id);

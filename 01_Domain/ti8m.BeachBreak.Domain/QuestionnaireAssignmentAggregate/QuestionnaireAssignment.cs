@@ -132,6 +132,32 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new EmployeeSectionCompleted(sectionId, DateTime.UtcNow));
     }
 
+    public void CompleteBulkSectionsAsEmployee(List<Guid> sectionIds)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot complete sections - questionnaire is finalized");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot complete sections - assignment is withdrawn");
+
+        if (sectionIds == null || !sectionIds.Any())
+            throw new ArgumentException("Section IDs list cannot be null or empty", nameof(sectionIds));
+
+        var completedDate = DateTime.UtcNow;
+
+        foreach (var sectionId in sectionIds)
+        {
+            var progress = SectionProgressList.FirstOrDefault(p => p.SectionId == sectionId);
+            if (progress?.IsEmployeeCompleted == true)
+            {
+                // Skip already completed sections instead of throwing
+                continue;
+            }
+
+            RaiseEvent(new EmployeeSectionCompleted(sectionId, completedDate));
+        }
+    }
+
     public void CompleteSectionAsManager(Guid sectionId)
     {
         if (IsLocked)
@@ -145,6 +171,32 @@ public class QuestionnaireAssignment : AggregateRoot
             throw new InvalidOperationException("Section already completed by manager");
 
         RaiseEvent(new ManagerSectionCompleted(sectionId, DateTime.UtcNow));
+    }
+
+    public void CompleteBulkSectionsAsManager(List<Guid> sectionIds)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot complete sections - questionnaire is finalized");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot complete sections - assignment is withdrawn");
+
+        if (sectionIds == null || !sectionIds.Any())
+            throw new ArgumentException("Section IDs list cannot be null or empty", nameof(sectionIds));
+
+        var completedDate = DateTime.UtcNow;
+
+        foreach (var sectionId in sectionIds)
+        {
+            var progress = SectionProgressList.FirstOrDefault(p => p.SectionId == sectionId);
+            if (progress?.IsManagerCompleted == true)
+            {
+                // Skip already completed sections instead of throwing
+                continue;
+            }
+
+            RaiseEvent(new ManagerSectionCompleted(sectionId, completedDate));
+        }
     }
 
     public void ConfirmEmployeeCompletion(string confirmedBy)

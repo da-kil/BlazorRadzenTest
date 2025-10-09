@@ -126,19 +126,19 @@
                     {
                         @if (template.Settings.AllowReviewBeforeSubmit)
                         {
-                            <RadzenButton Text="Submit"
+                            <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
                                          ButtonStyle="ButtonStyle.Success"
                                          Icon="send"
                                          Click="@ShowReview"
-                                         Disabled="@(!CanSubmit())" />
+                                         Disabled="@(!CanSubmit() || isSubmitting)" />
                         }
                         else
                         {
-                            <RadzenButton Text="Submit"
+                            <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
                                          ButtonStyle="ButtonStyle.Success"
                                          Icon="send"
                                          Click="@SubmitQuestionnaire"
-                                         Disabled="@(!CanSubmit())" />
+                                         Disabled="@(!CanSubmit() || isSubmitting)" />
                         }
                     }
                     else
@@ -170,6 +170,7 @@
     private string currentUserName = string.Empty;
     private List<QuestionSection> visibleSections = new();
     private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
+    private bool isSubmitting = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -1216,8 +1217,16 @@
             return;
         }
 
+        if (isSubmitting)
+        {
+            return; // Prevent double submission
+        }
+
         try
         {
+            isSubmitting = true;
+            StateHasChanged();
+
             if (isManager)
             {
                 // Manager completes their sections
@@ -1248,24 +1257,35 @@
         {
             NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", $"Failed to submit questionnaire: {ex.Message}");
         }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
     }
 
     private async Task CompleteSectionsAsEmployee()
     {
         if (!assignmentId.HasValue) return;
 
-        // Complete each visible section that the employee is responsible for
-        foreach (var section in visibleSections.Where(s => IsSectionCompleted(s.Id)))
+        // Collect all completed section IDs
+        var completedSectionIds = visibleSections
+            .Where(s => IsSectionCompleted(s.Id))
+            .Select(s => s.Id)
+            .ToList();
+
+        if (!completedSectionIds.Any())
+            return;
+
+        try
         {
-            try
-            {
-                await AssignmentService.CompleteSectionAsEmployeeAsync(assignmentId.Value, section.Id);
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
-                    $"Could not complete section '{section.Title}': {ex.Message}");
-            }
+            // Single atomic bulk operation - fixes concurrency issue
+            await AssignmentService.CompleteBulkSectionsAsEmployeeAsync(assignmentId.Value, completedSectionIds);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
+                $"Could not complete sections: {ex.Message}");
         }
     }
 
@@ -1273,18 +1293,24 @@
     {
         if (!assignmentId.HasValue) return;
 
-        // Complete each visible section that the manager is responsible for
-        foreach (var section in visibleSections.Where(s => IsSectionCompleted(s.Id)))
+        // Collect all completed section IDs
+        var completedSectionIds = visibleSections
+            .Where(s => IsSectionCompleted(s.Id))
+            .Select(s => s.Id)
+            .ToList();
+
+        if (!completedSectionIds.Any())
+            return;
+
+        try
         {
-            try
-            {
-                await AssignmentService.CompleteSectionAsManagerAsync(assignmentId.Value, section.Id);
-            }
-            catch (Exception ex)
-            {
-                NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
-                    $"Could not complete section '{section.Title}': {ex.Message}");
-            }
+            // Single atomic bulk operation - fixes concurrency issue
+            await AssignmentService.CompleteBulkSectionsAsManagerAsync(assignmentId.Value, completedSectionIds);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
+                $"Could not complete sections: {ex.Message}");
         }
     }
 

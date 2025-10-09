@@ -75,6 +75,7 @@
     [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
     [Parameter, EditorRequired] public IQuestionnaireDataService DataService { get; set; } = default!;
     [Parameter] public EventCallback<QuestionnaireAssignment> OnStartQuestionnaire { get; set; }
+    [Parameter] public Func<Guid, bool>? HasProgressChecker { get; set; }
 
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> employees = new();
@@ -388,8 +389,11 @@
                     {
                         @if (assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress)
                         {
-                            <RadzenButton Text="@(assignment.Status == AssignmentStatus.InProgress ? "CONTINUE" : "START")"
-                                         Icon="@(assignment.Status == AssignmentStatus.InProgress ? "play_circle" : "play_arrow")"
+                            var hasProgress = assignment.Status == AssignmentStatus.InProgress ||
+                                             (assignment.SectionProgress != null && assignment.SectionProgress.Any()) ||
+                                             (HasProgressChecker != null && HasProgressChecker(assignment.Id));
+                            <RadzenButton Text="@(hasProgress ? "CONTINUE" : "START")"
+                                         Icon="@(hasProgress ? "play_circle" : "play_arrow")"
                                          ButtonStyle="ButtonStyle.Primary"
                                          Size="ButtonSize.Medium"
                                          Style="min-width: 120px; font-weight: 600;"

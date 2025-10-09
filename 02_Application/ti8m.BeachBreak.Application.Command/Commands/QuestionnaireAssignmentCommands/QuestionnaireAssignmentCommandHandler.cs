@@ -10,7 +10,9 @@ public class QuestionnaireAssignmentCommandHandler :
     ICommandHandler<ExtendAssignmentDueDateCommand, Result>,
     ICommandHandler<WithdrawAssignmentCommand, Result>,
     ICommandHandler<CompleteSectionAsEmployeeCommand, Result>,
+    ICommandHandler<CompleteBulkSectionsAsEmployeeCommand, Result>,
     ICommandHandler<CompleteSectionAsManagerCommand, Result>,
+    ICommandHandler<CompleteBulkSectionsAsManagerCommand, Result>,
     ICommandHandler<ConfirmEmployeeCompletionCommand, Result>,
     ICommandHandler<ConfirmManagerCompletionCommand, Result>,
     ICommandHandler<InitiateReviewCommand, Result>,
@@ -176,6 +178,24 @@ public class QuestionnaireAssignmentCommandHandler :
         }
     }
 
+    public async Task<Result> HandleAsync(CompleteBulkSectionsAsEmployeeCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.CompleteBulkSectionsAsEmployee(command.SectionIds);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            return Result.Success("Sections completed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing sections as employee for assignment {AssignmentId}",
+                command.AssignmentId);
+            return Result.Fail("Failed to complete sections: " + ex.Message, 500);
+        }
+    }
+
     public async Task<Result> HandleAsync(CompleteSectionAsManagerCommand command, CancellationToken cancellationToken = default)
     {
         try
@@ -196,6 +216,24 @@ public class QuestionnaireAssignmentCommandHandler :
             logger.LogError(ex, "Error completing section {SectionId} as manager for assignment {AssignmentId}",
                 command.SectionId, command.AssignmentId);
             return Result.Fail("Failed to complete section: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(CompleteBulkSectionsAsManagerCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.CompleteBulkSectionsAsManager(command.SectionIds);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            return Result.Success("Sections completed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing sections as manager for assignment {AssignmentId}",
+                command.AssignmentId);
+            return Result.Fail("Failed to complete sections: " + ex.Message, 500);
         }
     }
 

@@ -30,7 +30,9 @@ public interface IQuestionnaireAssignmentService
 
     // Workflow operations
     Task<bool> CompleteSectionAsEmployeeAsync(Guid assignmentId, Guid sectionId);
+    Task<bool> CompleteBulkSectionsAsEmployeeAsync(Guid assignmentId, List<Guid> sectionIds);
     Task<bool> CompleteSectionAsManagerAsync(Guid assignmentId, Guid sectionId);
+    Task<bool> CompleteBulkSectionsAsManagerAsync(Guid assignmentId, List<Guid> sectionIds);
     Task<bool> ConfirmEmployeeCompletionAsync(Guid assignmentId, string confirmedBy);
     Task<bool> ConfirmManagerCompletionAsync(Guid assignmentId, string confirmedBy);
     Task<bool> InitiateReviewAsync(Guid assignmentId, string initiatedBy);
