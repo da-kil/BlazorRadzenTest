@@ -172,6 +172,14 @@
                                          Disabled="@(!CanProceedFromCurrentSection())" />
                         }
                     }
+                    else if (currentSectionIndex < visibleSections.Count - 1)
+                    {
+                        @* In read-only mode, show Next button for navigation *@
+                        <RadzenButton Text="Next"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Icon="arrow_forward"
+                                     Click="@NextSection" />
+                    }
                 </div>
             </div>
         </RadzenCard>
@@ -617,7 +625,7 @@
                                         <RadzenRating Value="@GetCompetencyRating(question.Id, competency.Key)"
                                                     ValueChanged="@((int value) => SetCompetencyRating(question.Id, competency.Key, value))"
                                                     Stars="4"
-                                                    Disabled="@IsQuestionnaireCompleted()"
+                                                    ReadOnly="@IsQuestionnaireCompleted()"
                                                     Class="mb-2" />
                                         <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
                                             @GetRatingText(GetCompetencyRating(question.Id, competency.Key))
@@ -1053,6 +1061,18 @@
     // Navigation methods
     private void OnSectionChanged(int newIndex)
     {
+        // In read-only mode, allow free navigation between all sections
+        if (IsQuestionnaireCompleted())
+        {
+            if (HasParameterChanged(nameof(currentSectionIndex), newIndex))
+            {
+                currentSectionIndex = newIndex;
+                NotifyStateChanged();
+            }
+            return;
+        }
+
+        // In edit mode, validate completion before allowing forward navigation
         if (newIndex < currentSectionIndex || CanProceedFromCurrentSection())
         {
             if (HasParameterChanged(nameof(currentSectionIndex), newIndex))
@@ -1080,6 +1100,18 @@
 
     private void NextSection()
     {
+        // In read-only mode, allow navigation without validation
+        if (IsQuestionnaireCompleted())
+        {
+            if (currentSectionIndex < visibleSections.Count - 1)
+            {
+                currentSectionIndex++;
+                NotifyStateChanged();
+            }
+            return;
+        }
+
+        // In edit mode, validate completion before allowing navigation
         if (CanProceedFromCurrentSection() && currentSectionIndex < visibleSections.Count - 1)
         {
             currentSectionIndex++;

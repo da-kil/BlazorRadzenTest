@@ -151,7 +151,7 @@ public class ResponsesController : BaseController
                 StartedDate = response.StartedDate,
                 CompletedDate = response.SubmittedDate,
                 Status = MapResponseStatus(response.Status),
-                SectionResponses = response.SectionResponses.ToDictionary(kvp => kvp.Key, kvp => new SectionResponseDto { SectionId = kvp.Key }),
+                SectionResponses = MapEmployeeSectionResponsesToDto(response.SectionResponses),
                 ProgressPercentage = 0 // TODO: Calculate progress percentage
             });
         }
@@ -262,6 +262,72 @@ public class ResponsesController : BaseController
             }
 
             // Only include sections that have manager responses
+            if (questionResponsesDict.Any())
+            {
+                result[sectionId] = new SectionResponseDto
+                {
+                    SectionId = sectionId,
+                    QuestionResponses = questionResponsesDict
+                };
+            }
+        }
+
+        return result;
+    }
+
+    private static Dictionary<Guid, SectionResponseDto> MapEmployeeSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
+    {
+        var result = new Dictionary<Guid, SectionResponseDto>();
+
+        foreach (var sectionKvp in sectionResponses)
+        {
+            var sectionId = sectionKvp.Key;
+            Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
+
+            // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
+            if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
+            {
+                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
+            }
+            else if (sectionKvp.Value is Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
+            {
+                roleBasedResponses = typedRoleResponses;
+            }
+
+            if (roleBasedResponses == null) continue;
+
+            // For employee endpoints, return EMPLOYEE responses
+            var questionResponsesDict = new Dictionary<Guid, QuestionResponseDto>();
+
+            if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponses))
+            {
+                // employeeResponses is Dictionary<Guid, object> where each value might be JsonElement
+                foreach (var questionKvp in employeeResponses)
+                {
+                    var questionId = questionKvp.Key;
+                    var responseValue = questionKvp.Value;
+
+                    if (responseValue is System.Text.Json.JsonElement qJsonElement)
+                    {
+                        var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
+                        if (questionResponse != null)
+                        {
+                            questionResponsesDict[questionId] = questionResponse;
+                        }
+                    }
+                    else
+                    {
+                        // Fallback: create a simple response
+                        questionResponsesDict[questionId] = new QuestionResponseDto
+                        {
+                            QuestionId = questionId,
+                            Value = responseValue
+                        };
+                    }
+                }
+            }
+
+            // Only include sections that have employee responses
             if (questionResponsesDict.Any())
             {
                 result[sectionId] = new SectionResponseDto

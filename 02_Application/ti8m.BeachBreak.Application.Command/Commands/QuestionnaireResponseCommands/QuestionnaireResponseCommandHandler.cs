@@ -205,8 +205,25 @@ public class QuestionnaireResponseCommandHandler :
                 return Result.Fail("Unauthorized to submit this response", StatusCodes.Status403Forbidden);
             }
 
+            // Submit the response
             response.Submit();
             await repository.StoreAsync(response, cancellationToken);
+
+            // Update assignment workflow state to mark as completed
+            var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                cancellationToken: cancellationToken);
+
+            if (assignment != null)
+            {
+                assignment.CompleteWork();
+                await assignmentRepository.StoreAsync(assignment, cancellationToken);
+                logger.LogInformation("Assignment {AssignmentId} marked as completed", command.AssignmentId);
+            }
+            else
+            {
+                logger.LogWarning("Assignment {AssignmentId} not found when trying to mark as completed", command.AssignmentId);
+            }
 
             logger.LogInformation("Successfully submitted response for AssignmentId: {AssignmentId}", command.AssignmentId);
             return Result.Success("Response submitted successfully");
