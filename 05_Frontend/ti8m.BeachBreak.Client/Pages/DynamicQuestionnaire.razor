@@ -197,6 +197,10 @@
 
     private bool IsQuestionnaireCompleted()
     {
+        // If response is submitted, it's read-only regardless of workflow state
+        if (response.Status == ResponseStatus.Submitted)
+            return true;
+
         if (assignment == null || string.IsNullOrEmpty(assignment.WorkflowState)) return false;
 
         // Phase 1 Read-Only: After both submitted (before review)
@@ -1206,6 +1210,13 @@
         if (!assignmentId.HasValue)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Cannot Save", "No assignment ID available");
+            return;
+        }
+
+        // Prevent saving if response has been submitted
+        if (response.Status == ResponseStatus.Submitted)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Cannot Save", "This questionnaire has already been submitted and cannot be modified");
             return;
         }
 

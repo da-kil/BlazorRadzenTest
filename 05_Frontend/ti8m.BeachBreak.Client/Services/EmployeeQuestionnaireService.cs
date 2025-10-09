@@ -70,7 +70,10 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         {
             var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}/submit", new { });
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadFromJsonAsync<QuestionnaireResponse>();
+
+            // Backend returns Result (void), not QuestionnaireResponse
+            // So we reload the response from the query API after successful submission
+            return await GetMyResponseAsync(assignmentId);
         }
         catch (Exception ex)
         {
