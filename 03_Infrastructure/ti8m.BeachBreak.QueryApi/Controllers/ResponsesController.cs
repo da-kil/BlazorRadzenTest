@@ -1,12 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using ti8m.BeachBreak.QueryApi.Controllers;
-using ti8m.BeachBreak.QueryApi.Dto;
 using ti8m.BeachBreak.Application.Query.Queries;
-using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
-using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
-using ResponseStatusQuery = ti8m.BeachBreak.Application.Query.Queries.ResponseQueries.ResponseStatus;
+using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
+using ti8m.BeachBreak.QueryApi.Dto;
 using ResponseStatusDto = ti8m.BeachBreak.QueryApi.Dto.ResponseStatus;
+using ResponseStatusQuery = ti8m.BeachBreak.Application.Query.Queries.ResponseQueries.ResponseStatus;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -204,23 +202,77 @@ public class ResponsesController : BaseController
             TemplateId = response.TemplateId,
             EmployeeId = response.EmployeeId.ToString(),
             Status = (ResponseStatusDto)response.Status,
-            SectionResponses = response.SectionResponses.ToDictionary(
-                kvp => kvp.Key,
-                kvp => MapToSectionResponseDto(kvp.Value)
-            ),
+            SectionResponses = MapSectionResponsesToDto(response.SectionResponses),
             CompletedDate = response.SubmittedDate,
             StartedDate = response.StartedDate
         };
     }
 
-    private static SectionResponseDto MapToSectionResponseDto(object sectionResponse)
+    private static Dictionary<Guid, SectionResponseDto> MapSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
     {
-        // For now, return a basic mapping - this could be enhanced based on actual structure
-        return new SectionResponseDto
+        var result = new Dictionary<Guid, SectionResponseDto>();
+
+        foreach (var sectionKvp in sectionResponses)
         {
-            SectionId = Guid.Empty, // This would need to be extracted from the response
-            QuestionResponses = new Dictionary<Guid, QuestionResponseDto>()
-        };
+            var sectionId = sectionKvp.Key;
+            Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
+
+            // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
+            if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
+            {
+                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
+            }
+            else if (sectionKvp.Value is Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
+            {
+                roleBasedResponses = typedRoleResponses;
+            }
+
+            if (roleBasedResponses == null) continue;
+
+            // For general response endpoints, return MANAGER responses
+            // (This endpoint is primarily used by managers viewing responses)
+            var questionResponsesDict = new Dictionary<Guid, QuestionResponseDto>();
+
+            if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager, out var managerResponses))
+            {
+                // managerResponses is Dictionary<Guid, object> where each value might be JsonElement
+                foreach (var questionKvp in managerResponses)
+                {
+                    var questionId = questionKvp.Key;
+                    var responseValue = questionKvp.Value;
+
+                    if (responseValue is System.Text.Json.JsonElement qJsonElement)
+                    {
+                        var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
+                        if (questionResponse != null)
+                        {
+                            questionResponsesDict[questionId] = questionResponse;
+                        }
+                    }
+                    else
+                    {
+                        // Fallback: create a simple response
+                        questionResponsesDict[questionId] = new QuestionResponseDto
+                        {
+                            QuestionId = questionId,
+                            Value = responseValue
+                        };
+                    }
+                }
+            }
+
+            // Only include sections that have manager responses
+            if (questionResponsesDict.Any())
+            {
+                result[sectionId] = new SectionResponseDto
+                {
+                    SectionId = sectionId,
+                    QuestionResponses = questionResponsesDict
+                };
+            }
+        }
+
+        return result;
     }
 
     // Helper methods for status mapping

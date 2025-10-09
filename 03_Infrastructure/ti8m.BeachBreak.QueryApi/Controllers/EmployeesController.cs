@@ -373,25 +373,33 @@ public class EmployeesController : BaseController
                 employeeId, assignmentId);
 
             // Map section responses - deserialize from Marten's JSON storage
+            // Note: Response structure is Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, object>>>
+            // For employee "me" endpoint, we only return EMPLOYEE responses
             var sectionResponsesDto = new Dictionary<Guid, SectionResponseDto>();
             foreach (var sectionKvp in response.SectionResponses)
             {
+                var sectionId = sectionKvp.Key;
+                Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
+
+                // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
+                if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
+                {
+                    roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
+                }
+                else if (sectionKvp.Value is Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
+                {
+                    roleBasedResponses = typedRoleResponses;
+                }
+
+                if (roleBasedResponses == null) continue;
+
                 var questionResponsesDict = new Dictionary<Guid, QuestionResponseDto>();
 
-                // The value is Dictionary<Guid, object> from Marten where object is the serialized question response
-                if (sectionKvp.Value is System.Text.Json.JsonElement jsonElement)
+                // Only extract Employee role responses for this endpoint
+                if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponses))
                 {
-                    // Deserialize the entire section's question responses at once
-                    var questionResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Guid, QuestionResponseDto>>(jsonElement.GetRawText());
-                    if (questionResponses != null)
-                    {
-                        questionResponsesDict = questionResponses;
-                    }
-                }
-                else if (sectionKvp.Value is Dictionary<Guid, object> questionResponses)
-                {
-                    // Try to convert each object to QuestionResponseDto
-                    foreach (var questionKvp in questionResponses)
+                    // employeeResponses is Dictionary<Guid, object> where each value might be JsonElement
+                    foreach (var questionKvp in employeeResponses)
                     {
                         if (questionKvp.Value is System.Text.Json.JsonElement qJsonElement)
                         {
@@ -413,11 +421,15 @@ public class EmployeesController : BaseController
                     }
                 }
 
-                sectionResponsesDto[sectionKvp.Key] = new SectionResponseDto
+                // Only include sections that have employee responses
+                if (questionResponsesDict.Any())
                 {
-                    SectionId = sectionKvp.Key,
-                    QuestionResponses = questionResponsesDict
-                };
+                    sectionResponsesDto[sectionId] = new SectionResponseDto
+                    {
+                        SectionId = sectionId,
+                        QuestionResponses = questionResponsesDict
+                    };
+                }
             }
 
             var dto = new QuestionnaireResponseDto
