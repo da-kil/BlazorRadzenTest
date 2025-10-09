@@ -14,6 +14,7 @@ public interface IQuestionnaireResponseService
 
     // Response management
     Task<QuestionnaireResponse> SaveResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses);
+    Task<QuestionnaireResponse> SaveManagerResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses);
     Task<QuestionnaireResponse?> SubmitResponseAsync(Guid assignmentId);
     Task<bool> DeleteResponseAsync(Guid id);
 

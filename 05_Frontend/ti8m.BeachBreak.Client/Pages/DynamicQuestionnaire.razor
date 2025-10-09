@@ -469,44 +469,49 @@
     {
         if (!assignmentId.HasValue) return;
 
-        // Managers don't load responses via employee endpoint
-        // They complete sections directly via commands
-        if (isManager)
-        {
-            // TODO: Load manager's section completion status from assignment
-            return;
-        }
-
         try
         {
-            var existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
+            QuestionnaireResponse? existingResponse = null;
 
-            if (existingResponse != null && existingResponse.SectionResponses.Any())
+            if (isEmployee && !isManager)
             {
-                // Merge existing responses with initialized structure
-                foreach (var sectionKvp in existingResponse.SectionResponses)
-                {
-                    if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
-                    {
-                        // Merge question responses
-                        foreach (var questionKvp in sectionKvp.Value.QuestionResponses)
-                        {
-                            if (sectionResponse.QuestionResponses.ContainsKey(questionKvp.Key))
-                            {
-                                sectionResponse.QuestionResponses[questionKvp.Key] = questionKvp.Value;
-                            }
-                        }
-                        sectionResponse.IsCompleted = sectionKvp.Value.IsCompleted;
-                    }
-                }
-
-                // Update response metadata
-                response.Status = existingResponse.Status;
-
-                // Find current section based on progress
-                var completedSections = response.SectionResponses.Count(sr => sr.Value.IsCompleted);
-                currentSectionIndex = Math.Min(completedSections, Math.Max(0, visibleSections.Count - 1));
+                // Employees load responses via employee service
+                existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
             }
+            else if (isManager)
+            {
+                // Managers load responses via general response service
+                existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignmentId.Value);
+            }
+
+            if (existingResponse == null || !existingResponse.SectionResponses.Any())
+            {
+                return;
+            }
+
+            // Merge existing responses with initialized structure
+            foreach (var sectionKvp in existingResponse.SectionResponses)
+            {
+                if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
+                {
+                    // Merge question responses
+                    foreach (var questionKvp in sectionKvp.Value.QuestionResponses)
+                    {
+                        if (sectionResponse.QuestionResponses.ContainsKey(questionKvp.Key))
+                        {
+                            sectionResponse.QuestionResponses[questionKvp.Key] = questionKvp.Value;
+                        }
+                    }
+                    sectionResponse.IsCompleted = sectionKvp.Value.IsCompleted;
+                }
+            }
+
+            // Update response metadata
+            response.Status = existingResponse.Status;
+
+            // Find current section based on progress
+            var completedSections = response.SectionResponses.Count(sr => sr.Value.IsCompleted);
+            currentSectionIndex = Math.Min(completedSections, Math.Max(0, visibleSections.Count - 1));
         }
         catch (Exception ex)
         {
@@ -1206,13 +1211,16 @@
 
         try
         {
-            // Employees save responses via employee service
             if (isEmployee && !isManager)
             {
+                // Employees save responses via employee service (role: Employee)
                 await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
             }
-            // Managers don't have a direct "save responses" - they complete sections
-            // For now, just show success for managers (responses are stored locally until section completion)
+            else if (isManager)
+            {
+                // Managers save responses via manager endpoint (role: Manager)
+                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses);
+            }
 
             NotificationService.Notify(NotificationSeverity.Success, "Saved", "Your progress has been saved successfully");
         }

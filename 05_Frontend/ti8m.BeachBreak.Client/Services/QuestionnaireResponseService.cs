@@ -41,6 +41,22 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
         return result ?? throw new Exception("Failed to save response");
     }
 
+    public async Task<QuestionnaireResponse> SaveManagerResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/manager/assignment/{assignmentId}", sectionResponses);
+            response.EnsureSuccessStatusCode();
+            var responseId = await response.Content.ReadFromJsonAsync<Guid>();
+            return new QuestionnaireResponse { Id = responseId, AssignmentId = assignmentId, SectionResponses = sectionResponses };
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error saving manager response for assignment {assignmentId}", ex);
+            throw;
+        }
+    }
+
     public async Task<QuestionnaireResponse?> SubmitResponseAsync(Guid assignmentId)
     {
         return await PostActionAsync<QuestionnaireResponse>(ResponseCommandEndpoint, "assignment", assignmentId, "submit");
