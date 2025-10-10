@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
-using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
+using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
+using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.QueryApi.Dto;
 
@@ -22,24 +23,27 @@ public class ResponsesController : BaseController
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<QuestionnaireResponseDto>>> GetAllResponses()
+    [ProducesResponseType(typeof(List<QuestionnaireResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllResponses()
     {
         try
         {
             var query = new GetAllResponsesQuery();
             var responses = await _queryDispatcher.QueryAsync(query);
             var responseDtos = responses.Select(MapToDto).ToList();
-            return Ok(responseDtos);
+            return CreateResponse(Result<List<QuestionnaireResponseDto>>.Success(responseDtos));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving responses");
-            return StatusCode(500, "An error occurred while retrieving responses");
+            return CreateResponse(Result<List<QuestionnaireResponseDto>>.Fail("An error occurred while retrieving responses", 500));
         }
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<QuestionnaireResponseDto>> GetResponse(Guid id)
+    [ProducesResponseType(typeof(QuestionnaireResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetResponse(Guid id)
     {
         try
         {
@@ -47,19 +51,21 @@ public class ResponsesController : BaseController
             var response = await _queryDispatcher.QueryAsync(query);
 
             if (response == null)
-                return NotFound($"Response with ID {id} not found");
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response with ID {id} not found", 404));
 
-            return Ok(MapToDto(response));
+            return CreateResponse(Result<QuestionnaireResponseDto>.Success(MapToDto(response)));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving response {ResponseId}", id);
-            return StatusCode(500, "An error occurred while retrieving the response");
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("An error occurred while retrieving the response", 500));
         }
     }
 
     [HttpGet("assignment/{assignmentId:guid}")]
-    public async Task<ActionResult<QuestionnaireResponseDto>> GetResponseByAssignment(Guid assignmentId)
+    [ProducesResponseType(typeof(QuestionnaireResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetResponseByAssignment(Guid assignmentId)
     {
         try
         {
@@ -67,14 +73,14 @@ public class ResponsesController : BaseController
             var response = await _queryDispatcher.QueryAsync(query);
 
             if (response == null)
-                return NotFound($"Response for assignment {assignmentId} not found");
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response for assignment {assignmentId} not found", 404));
 
-            return Ok(MapToDto(response));
+            return CreateResponse(Result<QuestionnaireResponseDto>.Success(MapToDto(response)));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving response for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while retrieving the response");
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("An error occurred while retrieving the response", 500));
         }
     }
 
@@ -87,7 +93,7 @@ public class ResponsesController : BaseController
 
         try
         {
-            var result = await _queryDispatcher.QueryAsync(new EmployeeAssignmentListQuery(employeeId));
+            var result = await _queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
 
             if (result.Succeeded && result.Payload != null)
             {
@@ -119,28 +125,40 @@ public class ResponsesController : BaseController
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving assignments for employee {EmployeeId}", employeeId);
-            return StatusCode(500, "An error occurred while retrieving employee assignments");
+            return CreateResponse(Result<IEnumerable<QuestionnaireAssignmentDto>>.Fail("An error occurred while retrieving employee assignments", 500));
         }
     }
 
     [HttpGet("employee/{employeeId:guid}/assignment/{assignmentId:guid}")]
     [ProducesResponseType(typeof(QuestionnaireResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetEmployeeResponse(Guid employeeId, Guid assignmentId)
     {
         _logger.LogInformation("Received GetEmployeeResponse request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", employeeId, assignmentId);
 
         try
         {
-            var result = await _queryDispatcher.QueryAsync(new EmployeeResponseQuery(employeeId, assignmentId));
+            // Use standard query handler with Marten read models
+            var query = new GetResponseByAssignmentIdQuery(assignmentId);
+            var response = await _queryDispatcher.QueryAsync(query);
 
-            if (result?.Payload == null)
+            if (response == null)
             {
                 _logger.LogInformation("Response not found for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", employeeId, assignmentId);
-                return NotFound($"Response not found for assignment {assignmentId} and employee {employeeId}");
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response not found for assignment {assignmentId} and employee {employeeId}", 404));
             }
 
-            return CreateResponse(result, response => new QuestionnaireResponseDto
+            // Validate this response belongs to the requesting employee (authorization check)
+            if (response.EmployeeId != employeeId)
+            {
+                _logger.LogWarning("Employee {EmployeeId} attempted to access response for Assignment {AssignmentId} belonging to {ActualEmployeeId}",
+                    employeeId, assignmentId, response.EmployeeId);
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("You do not have permission to access this response", 403));
+            }
+
+            // Map to DTO with employee-specific section responses
+            var dto = new QuestionnaireResponseDto
             {
                 Id = response.Id,
                 TemplateId = response.TemplateId,
@@ -149,12 +167,14 @@ public class ResponsesController : BaseController
                 StartedDate = response.StartedDate,
                 SectionResponses = MapEmployeeSectionResponsesToDto(response.SectionResponses),
                 ProgressPercentage = 0 // TODO: Calculate progress percentage
-            });
+            };
+
+            return CreateResponse(Result<QuestionnaireResponseDto>.Success(dto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving response for assignment {AssignmentId} and employee {EmployeeId}", assignmentId, employeeId);
-            return StatusCode(500, "An error occurred while retrieving the employee response");
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("An error occurred while retrieving the employee response", 500));
         }
     }
 
@@ -185,7 +205,7 @@ public class ResponsesController : BaseController
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving assignment progress for employee {EmployeeId}", employeeId);
-            return StatusCode(500, "An error occurred while retrieving employee assignment progress");
+            return CreateResponse(Result<IEnumerable<AssignmentProgressDto>>.Fail("An error occurred while retrieving employee assignment progress", 500));
         }
     }
 
@@ -336,16 +356,16 @@ public class ResponsesController : BaseController
     }
 
     // Helper methods for status mapping
-    private static AssignmentStatus MapAssignmentStatus(Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus status)
+    private static Dto.AssignmentStatus MapAssignmentStatus(Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus status)
     {
         return status switch
         {
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Assigned => AssignmentStatus.Assigned,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress => AssignmentStatus.InProgress,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed => AssignmentStatus.Completed,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue => AssignmentStatus.Overdue,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled => AssignmentStatus.Cancelled,
-            _ => AssignmentStatus.Assigned
+            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Assigned => Dto.AssignmentStatus.Assigned,
+            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress => Dto.AssignmentStatus.InProgress,
+            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed => Dto.AssignmentStatus.Completed,
+            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue => Dto.AssignmentStatus.Overdue,
+            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled => Dto.AssignmentStatus.Cancelled,
+            _ => Dto.AssignmentStatus.Assigned
         };
     }
 }
