@@ -438,10 +438,8 @@ public class EmployeesController : BaseController
                 AssignmentId = response.AssignmentId,
                 TemplateId = response.TemplateId,
                 EmployeeId = response.EmployeeId.ToString(),
-                Status = MapResponseStatusToDto(response.Status),
                 SectionResponses = sectionResponsesDto,
                 StartedDate = response.StartedDate,
-                CompletedDate = response.SubmittedDate,
                 ProgressPercentage = response.ProgressPercentage
             };
 
@@ -550,18 +548,6 @@ public class EmployeesController : BaseController
         return employeeRole.ApplicationRole == ApplicationRole.HR ||
                employeeRole.ApplicationRole == ApplicationRole.HRLead ||
                employeeRole.ApplicationRole == ApplicationRole.Admin;
-    }
-
-    private static ResponseStatus MapResponseStatusToDto(Application.Query.Queries.ResponseQueries.ResponseStatus status)
-    {
-        return status switch
-        {
-            Application.Query.Queries.ResponseQueries.ResponseStatus.NotStarted => ResponseStatus.NotStarted,
-            Application.Query.Queries.ResponseQueries.ResponseStatus.InProgress => ResponseStatus.InProgress,
-            Application.Query.Queries.ResponseQueries.ResponseStatus.Completed => ResponseStatus.Completed,
-            Application.Query.Queries.ResponseQueries.ResponseStatus.Submitted => ResponseStatus.Submitted,
-            _ => ResponseStatus.NotStarted
-        };
     }
 
     private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus> MapAssignmentStatusToDto =>

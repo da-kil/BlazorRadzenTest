@@ -124,6 +124,33 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new AssignmentWithdrawn(DateTime.UtcNow, withdrawnBy, withdrawalReason));
     }
 
+    // Workflow state query methods (business rules)
+    /// <summary>
+    /// Determines if an employee can edit the questionnaire based on current workflow state.
+    /// Employee can edit when: Assigned, EmployeeInProgress, BothInProgress, InReview
+    /// </summary>
+    public bool CanEmployeeEdit()
+    {
+        return WorkflowState is
+            WorkflowState.Assigned or
+            WorkflowState.EmployeeInProgress or
+            WorkflowState.BothInProgress or
+            WorkflowState.InReview;
+    }
+
+    /// <summary>
+    /// Determines if a manager can edit the questionnaire based on current workflow state.
+    /// Manager can edit when: Assigned, ManagerInProgress, BothInProgress, InReview
+    /// </summary>
+    public bool CanManagerEdit()
+    {
+        return WorkflowState is
+            WorkflowState.Assigned or
+            WorkflowState.ManagerInProgress or
+            WorkflowState.BothInProgress or
+            WorkflowState.InReview;
+    }
+
     // Workflow methods
     public void CompleteSectionAsEmployee(Guid sectionId)
     {

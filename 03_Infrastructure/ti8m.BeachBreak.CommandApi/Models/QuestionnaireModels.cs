@@ -89,18 +89,8 @@ public class QuestionnaireResponse
     public Guid AssignmentId { get; set; }
     public string EmployeeId { get; set; } = string.Empty;
     public DateTime StartedDate { get; set; } = DateTime.Now;
-    public DateTime? CompletedDate { get; set; }
-    public ResponseStatus Status { get; set; } = ResponseStatus.InProgress;
     public Dictionary<Guid, SectionResponse> SectionResponses { get; set; } = new();
     public int ProgressPercentage { get; set; }
-}
-
-public enum ResponseStatus
-{
-    NotStarted,
-    InProgress,
-    Completed,
-    Submitted
 }
 
 public class SectionResponse

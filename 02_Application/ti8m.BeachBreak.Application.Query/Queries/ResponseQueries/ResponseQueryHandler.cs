@@ -102,12 +102,10 @@ public class ResponseQueryHandler :
             AssignmentId = readModel.AssignmentId,
             TemplateId = readModel.TemplateId,
             EmployeeId = readModel.EmployeeId,
-            Status = Enum.Parse<ResponseStatus>(readModel.Status),
             SectionResponses = readModel.SectionResponses.ToDictionary(
                 kvp => kvp.Key,
                 kvp => (object)kvp.Value
             ),
-            SubmittedDate = readModel.SubmittedDate,
             LastModified = readModel.LastModified,
             StartedDate = readModel.CreatedAt
         };

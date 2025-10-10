@@ -121,12 +121,6 @@ public interface IQuestionnaireResponseService
     /// </summary>
     Task<List<QuestionnaireResponse>> GetResponsesByTemplateAsync(Guid templateId);
 
-    /// <summary>
-    /// Gets all responses filtered by completion status.
-    /// Used for workflow management and progress tracking.
-    /// Requires Manager/HR/Admin permissions.
-    /// </summary>
-    Task<List<QuestionnaireResponse>> GetResponsesByStatusAsync(ResponseStatus status);
 
     // ============================================================================
     // RESPONSE ANALYTICS (HR/Admin reporting)

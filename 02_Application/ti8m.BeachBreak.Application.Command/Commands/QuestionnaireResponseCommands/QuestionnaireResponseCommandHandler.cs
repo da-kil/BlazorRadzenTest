@@ -32,6 +32,24 @@ public class QuestionnaireResponseCommandHandler :
             logger.LogInformation("Processing save response for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
                 command.EmployeeId, command.AssignmentId);
 
+            // Check workflow state to ensure editing is allowed for employee
+            var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                cancellationToken: cancellationToken);
+
+            if (assignment == null)
+            {
+                logger.LogWarning("Assignment {AssignmentId} not found", command.AssignmentId);
+                return Result<Guid>.Fail("Assignment not found", StatusCodes.Status404NotFound);
+            }
+
+            // Validate employee can edit based on workflow state
+            if (!assignment.CanEmployeeEdit())
+            {
+                logger.LogWarning("Employee cannot edit in workflow state {WorkflowState}", assignment.WorkflowState);
+                return Result<Guid>.Fail($"Cannot edit questionnaire in {assignment.WorkflowState} state", StatusCodes.Status400BadRequest);
+            }
+
             // Try to load existing response by assignment ID
             var response = await repository.FindByAssignmentIdAsync(command.AssignmentId, cancellationToken);
 
@@ -77,20 +95,9 @@ public class QuestionnaireResponseCommandHandler :
             // If this is the first time the employee is saving progress, mark the assignment as started
             if (isFirstSave)
             {
-                var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
-                    command.AssignmentId,
-                    cancellationToken: cancellationToken);
-
-                if (assignment != null)
-                {
-                    assignment.StartWork();
-                    await assignmentRepository.StoreAsync(assignment, cancellationToken);
-                    logger.LogInformation("Assignment {AssignmentId} marked as started", command.AssignmentId);
-                }
-                else
-                {
-                    logger.LogWarning("Assignment {AssignmentId} not found when trying to mark as started", command.AssignmentId);
-                }
+                assignment.StartWork();
+                await assignmentRepository.StoreAsync(assignment, cancellationToken);
+                logger.LogInformation("Assignment {AssignmentId} marked as started", command.AssignmentId);
             }
 
             logger.LogInformation("Successfully saved employee response for AssignmentId: {AssignmentId}", command.AssignmentId);
@@ -115,22 +122,29 @@ public class QuestionnaireResponseCommandHandler :
             logger.LogInformation("Processing save manager response for ManagerId: {ManagerId}, AssignmentId: {AssignmentId}",
                 command.ManagerId, command.AssignmentId);
 
+            // Load assignment and check workflow state
+            var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                cancellationToken: cancellationToken);
+
+            if (assignment == null)
+            {
+                logger.LogWarning("Assignment {AssignmentId} not found", command.AssignmentId);
+                return Result<Guid>.Fail("Assignment not found", StatusCodes.Status404NotFound);
+            }
+
+            // Validate manager can edit based on workflow state
+            if (!assignment.CanManagerEdit())
+            {
+                logger.LogWarning("Manager cannot edit in workflow state {WorkflowState}", assignment.WorkflowState);
+                return Result<Guid>.Fail($"Cannot edit questionnaire in {assignment.WorkflowState} state", StatusCodes.Status400BadRequest);
+            }
+
             // Try to load existing response by assignment ID
             var response = await repository.FindByAssignmentIdAsync(command.AssignmentId, cancellationToken);
 
             if (response == null)
             {
-                // First time - need to get employee ID from assignment
-                var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
-                    command.AssignmentId,
-                    cancellationToken: cancellationToken);
-
-                if (assignment == null)
-                {
-                    logger.LogWarning("Assignment {AssignmentId} not found", command.AssignmentId);
-                    return Result<Guid>.Fail("Assignment not found", StatusCodes.Status404NotFound);
-                }
-
                 // Initiate new response with employee ID from assignment
                 var responseId = Guid.NewGuid();
                 response = new QuestionnaireResponse(
@@ -205,27 +219,24 @@ public class QuestionnaireResponseCommandHandler :
                 return Result.Fail("Unauthorized to submit this response", StatusCodes.Status403Forbidden);
             }
 
-            // Submit the response
-            response.Submit();
-            await repository.StoreAsync(response, cancellationToken);
-
-            // Update assignment workflow state to mark as completed
+            // Submission is now handled by the QuestionnaireAssignment aggregate's workflow state
+            // Update assignment workflow state via SubmitEmployeeQuestionnaire
             var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
                 command.AssignmentId,
                 cancellationToken: cancellationToken);
 
-            if (assignment != null)
+            if (assignment == null)
             {
-                assignment.CompleteWork();
-                await assignmentRepository.StoreAsync(assignment, cancellationToken);
-                logger.LogInformation("Assignment {AssignmentId} marked as completed", command.AssignmentId);
-            }
-            else
-            {
-                logger.LogWarning("Assignment {AssignmentId} not found when trying to mark as completed", command.AssignmentId);
+                logger.LogWarning("Assignment {AssignmentId} not found", command.AssignmentId);
+                return Result.Fail("Assignment not found", StatusCodes.Status404NotFound);
             }
 
-            logger.LogInformation("Successfully submitted response for AssignmentId: {AssignmentId}", command.AssignmentId);
+            // Submit via assignment aggregate (which manages workflow state)
+            assignment.SubmitEmployeeQuestionnaire(command.EmployeeId.ToString());
+            await assignmentRepository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully submitted employee questionnaire for AssignmentId: {AssignmentId}, new state: {WorkflowState}",
+                command.AssignmentId, assignment.WorkflowState);
             return Result.Success("Response submitted successfully");
         }
         catch (InvalidOperationException ex)

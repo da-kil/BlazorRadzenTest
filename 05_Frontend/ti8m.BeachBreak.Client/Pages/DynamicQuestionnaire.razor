@@ -205,36 +205,35 @@
 
     private bool IsQuestionnaireCompleted()
     {
-        // If response is submitted, it's read-only regardless of workflow state
-        if (response.Status == ResponseStatus.Submitted)
-            return true;
+        // Read-only state is determined ONLY by the assignment's WorkflowState
+        // The response.Status is for domain-level validation, not UI read-only logic
+        if (assignment == null || string.IsNullOrEmpty(assignment.WorkflowState))
+            return false;
 
-        if (assignment == null || string.IsNullOrEmpty(assignment.WorkflowState)) return false;
-
-        // Phase 1 Read-Only: After both submitted (before review)
-        var isPhase1ReadOnly = assignment.WorkflowState is "BothSubmitted" or "EmployeeSubmitted" or "ManagerSubmitted";
-
-        // Phase 2 Read-Only: After finalization (permanent)
+        // Phase 2 Read-Only (Permanent): After finalization
         var isPhase2ReadOnly = assignment.WorkflowState == "Finalized";
 
-        // During InReview: Editing is allowed for collaborative adjustments
-        // So InReview is NOT read-only
+        // After review confirmation states (waiting for finalization)
+        var isPostReviewConfirmation = assignment.WorkflowState is "EmployeeReviewConfirmed" or "ManagerReviewConfirmed";
 
-        // After employee confirms review but before finalization
-        var isPostEmployeeReviewConfirmation = assignment.WorkflowState is "EmployeeReviewConfirmed" or "ManagerReviewConfirmed";
-
-        // Determine read-only based on user role
+        // Determine read-only based on user role and workflow state
         if (isEmployee && !isManager)
         {
             // Employee can edit: Assigned, EmployeeInProgress, BothInProgress, InReview
-            // Employee cannot edit: After submission (all submitted states), After review confirmation, Finalized
-            return isPhase1ReadOnly || isPhase2ReadOnly || isPostEmployeeReviewConfirmation;
+            // Employee CANNOT edit ONLY when: EmployeeSubmitted, BothSubmitted, Post-review, Finalized
+            // Note: Employee CAN still see ManagerSubmitted state (manager submitted but employee hasn't)
+            return assignment.WorkflowState is "EmployeeSubmitted" or "BothSubmitted"
+                || isPostReviewConfirmation
+                || isPhase2ReadOnly;
         }
         else if (isManager)
         {
             // Manager can edit: Assigned, ManagerInProgress, BothInProgress, InReview
-            // Manager cannot edit: After submission (all submitted states), After review confirmation, Finalized
-            return isPhase1ReadOnly || isPhase2ReadOnly || isPostEmployeeReviewConfirmation;
+            // Manager CANNOT edit ONLY when: ManagerSubmitted, BothSubmitted, Post-review, Finalized
+            // Note: Manager CAN still see EmployeeSubmitted state (employee submitted but manager hasn't)
+            return assignment.WorkflowState is "ManagerSubmitted" or "BothSubmitted"
+                || isPostReviewConfirmation
+                || isPhase2ReadOnly;
         }
 
         return isPhase2ReadOnly; // Default: only finalized is truly read-only
@@ -518,9 +517,6 @@
                 }
             }
 
-            // Update response metadata
-            response.Status = existingResponse.Status;
-
             // Find current section based on progress
             var completedSections = response.SectionResponses.Count(sr => sr.Value.IsCompleted);
             currentSectionIndex = Math.Min(completedSections, Math.Max(0, visibleSections.Count - 1));
@@ -544,8 +540,7 @@
         {
             TemplateId = TemplateId ?? template?.Id ?? Guid.Empty,
             AssignmentId = assignmentId ?? Guid.Empty,
-            EmployeeId = employeeGuid,
-            Status = ResponseStatus.InProgress
+            EmployeeId = employeeGuid
         };
 
         // Initialize section responses
@@ -1245,10 +1240,10 @@
             return;
         }
 
-        // Prevent saving if response has been submitted
-        if (response.Status == ResponseStatus.Submitted)
+        // Prevent saving if questionnaire is in read-only state (uses WorkflowState logic)
+        if (IsQuestionnaireCompleted())
         {
-            NotificationService.Notify(NotificationSeverity.Warning, "Cannot Save", "This questionnaire has already been submitted and cannot be modified");
+            NotificationService.Notify(NotificationSeverity.Warning, "Cannot Save", "This questionnaire is in read-only state and cannot be modified");
             return;
         }
 

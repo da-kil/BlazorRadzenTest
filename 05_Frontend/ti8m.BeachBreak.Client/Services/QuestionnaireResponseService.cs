@@ -73,11 +73,6 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
         return await GetAllAsync<QuestionnaireResponse>($"{ResponseQueryEndpoint}/template/{templateId}");
     }
 
-    public async Task<List<QuestionnaireResponse>> GetResponsesByStatusAsync(ResponseStatus status)
-    {
-        return await GetAllAsync<QuestionnaireResponse>($"{ResponseQueryEndpoint}/status/{status}");
-    }
-
     // Response analytics
     public async Task<Dictionary<string, object>> GetResponseAnalyticsAsync()
     {

@@ -81,7 +81,7 @@ public class QuestionnaireResponseQueryHandler :
             await using var cmd = connection.CreateCommand();
 
             cmd.CommandText = """
-                SELECT r.id, r.template_id, r.employee_id, r.status, r.section_responses, r.submitted_date, r.last_modified
+                SELECT r.id, r.template_id, r.employee_id, r.section_responses, r.last_modified
                 FROM questionnaire_responses r
                 INNER JOIN questionnaire_assignments a ON r.assignment_id = a.id
                 WHERE r.employee_id = @employeeId AND a.id = @assignmentId
@@ -99,10 +99,8 @@ public class QuestionnaireResponseQueryHandler :
                     Id = reader.GetGuid(0),
                     TemplateId = reader.GetGuid(1),
                     EmployeeId = reader.GetGuid(2),
-                    Status = Enum.Parse<ResponseStatus>(reader.GetString(3)),
-                    SectionResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Guid, object>>(reader.GetString(4)) ?? new(),
-                    SubmittedDate = reader.IsDBNull(5) ? null : reader.GetDateTime(5),
-                    LastModified = reader.GetDateTime(6)
+                    SectionResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Guid, object>>(reader.GetString(3)) ?? new(),
+                    LastModified = reader.GetDateTime(4)
                 };
 
                 logger.LogInformation("Employee response query completed successfully");

@@ -3,8 +3,6 @@ using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.QueryApi.Dto;
-using ResponseStatusDto = ti8m.BeachBreak.QueryApi.Dto.ResponseStatus;
-using ResponseStatusQuery = ti8m.BeachBreak.Application.Query.Queries.ResponseQueries.ResponseStatus;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -149,8 +147,6 @@ public class ResponsesController : BaseController
                 AssignmentId = response.AssignmentId,
                 EmployeeId = response.EmployeeId.ToString(),
                 StartedDate = response.StartedDate,
-                CompletedDate = response.SubmittedDate,
-                Status = MapResponseStatus(response.Status),
                 SectionResponses = MapEmployeeSectionResponsesToDto(response.SectionResponses),
                 ProgressPercentage = 0 // TODO: Calculate progress percentage
             });
@@ -201,9 +197,7 @@ public class ResponsesController : BaseController
             AssignmentId = response.AssignmentId,
             TemplateId = response.TemplateId,
             EmployeeId = response.EmployeeId.ToString(),
-            Status = (ResponseStatusDto)response.Status,
             SectionResponses = MapSectionResponsesToDto(response.SectionResponses),
-            CompletedDate = response.SubmittedDate,
             StartedDate = response.StartedDate
         };
     }
@@ -352,18 +346,6 @@ public class ResponsesController : BaseController
             Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue => AssignmentStatus.Overdue,
             Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled => AssignmentStatus.Cancelled,
             _ => AssignmentStatus.Assigned
-        };
-    }
-
-    private static ResponseStatusDto MapResponseStatus(ResponseStatusQuery status)
-    {
-        return status switch
-        {
-            ResponseStatusQuery.NotStarted => ResponseStatusDto.NotStarted,
-            ResponseStatusQuery.InProgress => ResponseStatusDto.InProgress,
-            ResponseStatusQuery.Completed => ResponseStatusDto.Completed,
-            ResponseStatusQuery.Submitted => ResponseStatusDto.Submitted,
-            _ => ResponseStatusDto.NotStarted
         };
     }
 }
