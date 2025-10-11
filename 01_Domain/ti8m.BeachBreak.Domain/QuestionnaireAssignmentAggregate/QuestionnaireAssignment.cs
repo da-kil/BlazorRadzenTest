@@ -127,7 +127,8 @@ public class QuestionnaireAssignment : AggregateRoot
     // Workflow state query methods (business rules)
     /// <summary>
     /// Determines if an employee can edit the questionnaire based on current workflow state.
-    /// Employee can edit when: Assigned, EmployeeInProgress, BothInProgress, InReview
+    /// Employee can edit when: Assigned, EmployeeInProgress, BothInProgress, ManagerSubmitted, InReview
+    /// Employee is blocked only after they themselves submit (EmployeeSubmitted, BothSubmitted) or when finalized.
     /// </summary>
     public bool CanEmployeeEdit()
     {
@@ -135,12 +136,14 @@ public class QuestionnaireAssignment : AggregateRoot
             WorkflowState.Assigned or
             WorkflowState.EmployeeInProgress or
             WorkflowState.BothInProgress or
+            WorkflowState.ManagerSubmitted or
             WorkflowState.InReview;
     }
 
     /// <summary>
     /// Determines if a manager can edit the questionnaire based on current workflow state.
-    /// Manager can edit when: Assigned, ManagerInProgress, BothInProgress, InReview
+    /// Manager can edit when: Assigned, ManagerInProgress, BothInProgress, EmployeeSubmitted, InReview
+    /// Manager is blocked only after they themselves submit (ManagerSubmitted, BothSubmitted) or when finalized.
     /// </summary>
     public bool CanManagerEdit()
     {
@@ -148,6 +151,7 @@ public class QuestionnaireAssignment : AggregateRoot
             WorkflowState.Assigned or
             WorkflowState.ManagerInProgress or
             WorkflowState.BothInProgress or
+            WorkflowState.EmployeeSubmitted or
             WorkflowState.InReview;
     }
 
@@ -247,9 +251,10 @@ public class QuestionnaireAssignment : AggregateRoot
             WorkflowState == WorkflowState.BothSubmitted)
             throw new InvalidOperationException("Employee questionnaire already submitted");
 
-        // Must be in progress to submit
+        // Employee can submit when in progress OR when manager has already submitted
         if (WorkflowState != WorkflowState.EmployeeInProgress &&
-            WorkflowState != WorkflowState.BothInProgress)
+            WorkflowState != WorkflowState.BothInProgress &&
+            WorkflowState != WorkflowState.ManagerSubmitted)
             throw new InvalidOperationException("Employee must have started filling sections before submitting");
 
         RaiseEvent(new EmployeeQuestionnaireSubmitted(DateTime.UtcNow, submittedBy));

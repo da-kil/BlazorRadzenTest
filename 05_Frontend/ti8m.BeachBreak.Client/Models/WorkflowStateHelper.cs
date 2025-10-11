@@ -84,11 +84,12 @@ public static class WorkflowStateHelper
 
         var state = assignment.WorkflowState;
 
-        // Can edit before submission or during review
-        return state is "Assigned" or "EmployeeInProgress" or "BothInProgress" or "InReview";
+        // Employee can edit until they themselves submit, or during review
+        // Employee can continue editing even if manager has already submitted (ManagerSubmitted)
+        return state is "Assigned" or "EmployeeInProgress" or "BothInProgress" or "ManagerSubmitted" or "InReview";
 
-        // Cannot edit after submission (Phase 1 read-only): EmployeeSubmitted, ManagerSubmitted, BothSubmitted
-        // Cannot edit after finalization (Phase 2 read-only): Finalized
+        // Cannot edit after employee submits: EmployeeSubmitted, BothSubmitted
+        // Cannot edit after finalization: Finalized
     }
 
     public static bool CanManagerEdit(QuestionnaireAssignment assignment)
@@ -97,11 +98,12 @@ public static class WorkflowStateHelper
 
         var state = assignment.WorkflowState;
 
-        // Can edit before submission or during review
-        return state is "Assigned" or "ManagerInProgress" or "BothInProgress" or "InReview";
+        // Manager can edit until they themselves submit, or during review
+        // Manager can continue editing even if employee has already submitted (EmployeeSubmitted)
+        return state is "Assigned" or "ManagerInProgress" or "BothInProgress" or "EmployeeSubmitted" or "InReview";
 
-        // Cannot edit after submission (Phase 1 read-only): EmployeeSubmitted, ManagerSubmitted, BothSubmitted
-        // Cannot edit after finalization (Phase 2 read-only): Finalized
+        // Cannot edit after manager submits: ManagerSubmitted, BothSubmitted
+        // Cannot edit after finalization: Finalized
     }
 
     public static bool CanEmployeeSubmit(QuestionnaireAssignment assignment)

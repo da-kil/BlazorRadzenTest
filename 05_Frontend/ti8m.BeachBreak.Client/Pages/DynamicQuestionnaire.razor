@@ -1382,6 +1382,11 @@
                 if (submittedResponse != null)
                 {
                     response = submittedResponse;
+
+                    // Reload the assignment to get the updated WorkflowState
+                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+                    StateHasChanged(); // Force UI update with new workflow state
+
                     NotificationService.Notify(NotificationSeverity.Success, "Submitted", template!.Settings.SuccessMessage);
                     NavigationManager.NavigateTo("/my-questionnaires");
                 }
