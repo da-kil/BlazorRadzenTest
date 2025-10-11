@@ -168,6 +168,78 @@ public class QuestionnaireTemplate : AggregateRoot
         return Status != TemplateStatus.Archived;
     }
 
+    /// <summary>
+    /// Creates a clone of an existing questionnaire template with new IDs.
+    /// The cloned template is always in Draft status with reset timestamps.
+    /// </summary>
+    public static QuestionnaireTemplate CloneFrom(
+        Guid newTemplateId,
+        QuestionnaireTemplate source,
+        string namePrefix = "Copy of ")
+    {
+        if (source == null)
+            throw new ArgumentNullException(nameof(source));
+
+        if (source.IsDeleted)
+            throw new InvalidOperationException("Cannot clone a deleted template");
+
+        // Generate new name
+        var clonedName = $"{namePrefix}{source.Name}";
+
+        // Deep copy sections with new IDs
+        var clonedSections = source.Sections.Select(section =>
+        {
+            var clonedQuestions = section.Questions.Select(question =>
+                new QuestionItem(
+                    Guid.NewGuid(),  // New question ID
+                    question.Title,
+                    question.Description,
+                    question.Type,
+                    question.Order,
+                    question.IsRequired,
+                    new Dictionary<string, object>(question.Configuration),  // Deep copy
+                    new List<string>(question.Options)  // Deep copy
+                )
+            ).ToList();
+
+            return new QuestionSection(
+                Guid.NewGuid(),  // New section ID
+                section.Title,
+                section.Description,
+                section.Order,
+                section.IsRequired,
+                section.CompletionRole,
+                clonedQuestions
+            );
+        }).ToList();
+
+        // Clone settings (value object, already immutable)
+        var clonedSettings = new QuestionnaireSettings(
+            source.Settings.AllowSaveProgress,
+            source.Settings.ShowProgressBar,
+            source.Settings.RequireAllSections,
+            source.Settings.SuccessMessage,
+            source.Settings.IncompleteMessage,
+            source.Settings.TimeLimit,
+            source.Settings.AllowReviewBeforeSubmit
+        );
+
+        // Create new aggregate instance
+        var clonedTemplate = new QuestionnaireTemplate();
+        clonedTemplate.RaiseEvent(new QuestionnaireTemplateCloned(
+            newTemplateId,
+            source.Id,
+            clonedName,
+            source.Description,
+            source.CategoryId,
+            clonedSections,
+            clonedSettings,
+            DateTime.UtcNow
+        ));
+
+        return clonedTemplate;
+    }
+
     // Apply methods for event sourcing
     public void Apply(QuestionnaireTemplateCreated @event)
     {
@@ -236,5 +308,21 @@ public class QuestionnaireTemplate : AggregateRoot
     public void Apply(QuestionnaireTemplateDeleted @event)
     {
         IsDeleted = true;
+    }
+
+    public void Apply(QuestionnaireTemplateCloned @event)
+    {
+        Id = @event.NewTemplateId;
+        Name = @event.Name;
+        Description = @event.Description;
+        CategoryId = @event.CategoryId;
+        Sections = @event.Sections;
+        Settings = @event.Settings;
+        Status = TemplateStatus.Draft;  // Always draft
+        CreatedDate = @event.CreatedDate;
+        PublishedDate = null;  // Reset publication data
+        LastPublishedDate = null;
+        PublishedBy = string.Empty;
+        IsDeleted = false;
     }
 }

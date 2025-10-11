@@ -29,6 +29,9 @@ public interface IQuestionnaireTemplateService
     Task<QuestionnaireTemplate?> ActivateTemplateAsync(Guid templateId);
     Task<QuestionnaireTemplate?> DeactivateTemplateAsync(Guid templateId);
 
+    // Template cloning
+    Task<Guid?> CloneTemplateAsync(Guid templateId, string? namePrefix = null);
+
     // Template analytics
     Task<Dictionary<string, object>> GetTemplateAnalyticsAsync(Guid templateId);
     Task<Dictionary<string, object>> GetPublishingAnalyticsAsync();

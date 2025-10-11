@@ -1,4 +1,6 @@
+using System.Net.Http.Json;
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.Dto;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -113,6 +115,34 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
     public async Task<QuestionnaireTemplate?> DeactivateTemplateAsync(Guid templateId)
     {
         return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "deactivate", null, TemplateQueryEndpoint);
+    }
+
+    // Template cloning
+    public async Task<Guid?> CloneTemplateAsync(Guid templateId, string? namePrefix = null)
+    {
+        try
+        {
+            var requestDto = new CloneTemplateRequestDto { NamePrefix = namePrefix };
+
+            var response = await HttpCommandClient.PostAsJsonAsync(
+                $"{TemplateCommandEndpoint}/{templateId}/clone",
+                requestDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<CloneTemplateResponseDto>();
+                return result?.NewTemplateId;
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            LogError($"Failed to clone template {templateId}: {response.StatusCode}", new Exception(errorContent));
+            return null;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error cloning template {templateId}", ex);
+            return null;
+        }
     }
 
     // Template analytics

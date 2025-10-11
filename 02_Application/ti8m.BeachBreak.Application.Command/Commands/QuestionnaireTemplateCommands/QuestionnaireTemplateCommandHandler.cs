@@ -16,7 +16,8 @@ public class QuestionnaireTemplateCommandHandler :
     ICommandHandler<ActivateQuestionnaireTemplateCommand, Result>,
     ICommandHandler<DeactivateQuestionnaireTemplateCommand, Result>,
     ICommandHandler<ArchiveQuestionnaireTemplateCommand, Result>,
-    ICommandHandler<RestoreQuestionnaireTemplateCommand, Result>
+    ICommandHandler<RestoreQuestionnaireTemplateCommand, Result>,
+    ICommandHandler<CloneQuestionnaireTemplateCommand, Result<Guid>>
 {
     private readonly IQuestionnaireTemplateAggregateRepository repository;
     private readonly IQuestionnaireAssignmentService assignmentService;
@@ -331,6 +332,62 @@ public class QuestionnaireTemplateCommandHandler :
         {
             logger.LogRestoreQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
             return Result.Fail($"Failed to restore questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
+        }
+    }
+
+    public async Task<Result<Guid>> HandleAsync(CloneQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogCloneQuestionnaireTemplate(command.SourceTemplateId);
+
+            // Load source template
+            var sourceTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(
+                command.SourceTemplateId,
+                cancellationToken: cancellationToken);
+
+            if (sourceTemplate == null)
+            {
+                logger.LogQuestionnaireTemplateNotFound(command.SourceTemplateId);
+                return Result<Guid>.Fail(
+                    $"Source template with ID {command.SourceTemplateId} not found",
+                    StatusCodes.Status404NotFound);
+            }
+
+            if (sourceTemplate.IsDeleted)
+            {
+                logger.LogCloneQuestionnaireTemplateFailed(
+                    command.SourceTemplateId,
+                    "Cannot clone deleted template");
+                return Result<Guid>.Fail(
+                    "Cannot clone a deleted template",
+                    StatusCodes.Status400BadRequest);
+            }
+
+            // Clone the template (domain logic handles deep copy)
+            var newTemplateId = Guid.NewGuid();
+            var clonedTemplate = DomainQuestionnaireTemplate.CloneFrom(
+                newTemplateId,
+                sourceTemplate,
+                command.NamePrefix ?? "Copy of ");
+
+            // Store the new template
+            await repository.StoreAsync(clonedTemplate, cancellationToken);
+
+            logger.LogQuestionnaireTemplateCloned(command.SourceTemplateId, newTemplateId);
+            return Result<Guid>.Success(newTemplateId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogCloneQuestionnaireTemplateFailed(command.SourceTemplateId, ex.Message, ex);
+            return Result<Guid>.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex)
+        {
+            logger.LogCloneQuestionnaireTemplateFailed(command.SourceTemplateId, ex.Message, ex);
+            return Result<Guid>.Fail(
+                $"Failed to clone questionnaire template: {ex.Message}",
+                StatusCodes.Status400BadRequest);
         }
     }
 

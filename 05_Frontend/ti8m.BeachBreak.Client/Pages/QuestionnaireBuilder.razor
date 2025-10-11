@@ -30,7 +30,8 @@
 	OnPublish="@PublishQuestionnaire"
 	OnArchive="@ArchiveQuestionnaire"
 	OnUnpublish="@UnpublishQuestionnaire"
-	OnRestore="@RestoreQuestionnaire" />
+	OnRestore="@RestoreQuestionnaire"
+	OnClone="@HandleClone" />
 
 <ProgressSteps
 	CurrentStep="@State.CurrentStep"
@@ -695,6 +696,46 @@
 			var previousStatus = State.Template.Status;
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to archive template: {ex.Message}");
 			State.Template.Status = previousStatus; // Revert on failure
+		}
+	}
+
+	private async Task HandleClone()
+	{
+		try
+		{
+			// Show confirmation dialog
+			var confirmed = await DialogService.Confirm(
+				"This will create a copy of the current questionnaire template in Draft status. Continue?",
+				"Clone Template",
+				new ConfirmOptions
+				{
+					OkButtonText = "Clone",
+					CancelButtonText = "Cancel"
+				});
+
+			if (confirmed != true)
+				return;
+
+			NotificationService.Notify(NotificationSeverity.Info, "Cloning", "Cloning template...");
+
+			// Call service to clone
+			var newTemplateId = await ApiService.CloneTemplateAsync(State.Template.Id);
+
+			if (newTemplateId.HasValue)
+			{
+				NotificationService.Notify(NotificationSeverity.Success, "Cloned", "Template cloned successfully!");
+
+				// Navigate to the cloned template editor
+				NavigationManager.NavigateTo($"/questionnaire-builder/{newTemplateId.Value}");
+			}
+			else
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to clone template. Please try again.");
+			}
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error cloning template: {ex.Message}");
 		}
 	}
 

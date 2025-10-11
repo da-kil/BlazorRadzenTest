@@ -235,6 +235,42 @@ public class QuestionnaireTemplatesController : BaseController
         }
     }
 
+    /// <summary>
+    /// Clone an existing questionnaire template.
+    /// Creates a complete copy with new IDs in Draft status.
+    /// </summary>
+    /// <param name="id">Source template ID to clone</param>
+    /// <param name="request">Optional clone request with name prefix</param>
+    /// <returns>The ID of the newly created cloned template</returns>
+    [HttpPost("{id:guid}/clone")]
+    [ProducesResponseType(typeof(CloneTemplateResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CloneTemplate(Guid id, [FromBody] CloneTemplateRequestDto? request = null)
+    {
+        try
+        {
+            var command = new CloneQuestionnaireTemplateCommand(
+                id,
+                request?.NamePrefix);
+
+            Result<Guid> result = await commandDispatcher.SendAsync(command);
+
+            if (result.Succeeded)
+            {
+                return Ok(new CloneTemplateResponseDto { NewTemplateId = result.Payload });
+            }
+
+            return CreateResponse(Result.Fail(result.Message, result.StatusCode));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error cloning template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while cloning the template");
+        }
+    }
+
     private static QuestionType MapQuestionType(QuestionTypeDto dtoType) => dtoType switch
     {
         QuestionTypeDto.TextQuestion => QuestionType.TextQuestion,
