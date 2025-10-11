@@ -46,20 +46,7 @@ public class AssignmentsController : BaseController
             var result = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentListQuery());
             return CreateResponse(result, templates =>
             {
-                return templates.Select(template => new QuestionnaireAssignmentDto
-                {
-                    AssignedBy = template.AssignedBy,
-                    AssignedDate = template.AssignedDate,
-                    CompletedDate = template.CompletedDate,
-                    DueDate = template.DueDate,
-                    EmployeeEmail = template.EmployeeEmail,
-                    EmployeeId = template.EmployeeId.ToString(),
-                    EmployeeName = template.EmployeeName,
-                    Id = template.Id,
-                    Notes = template.Notes,
-                    Status = MapAssignmentStatusToDto[template.Status],
-                    TemplateId = template.TemplateId
-                });
+                return templates.Select(template => MapToDto(template));
             });
         }
         catch (Exception ex)
@@ -115,20 +102,7 @@ public class AssignmentsController : BaseController
                 }
             }
 
-            return CreateResponse(result, template => new QuestionnaireAssignmentDto
-            {
-                AssignedBy = template.AssignedBy,
-                AssignedDate = template.AssignedDate,
-                CompletedDate = template.CompletedDate,
-                DueDate = template.DueDate,
-                EmployeeEmail = template.EmployeeEmail,
-                EmployeeId = template.EmployeeId.ToString(),
-                EmployeeName = template.EmployeeName,
-                Id = template.Id,
-                Notes = template.Notes,
-                Status = MapAssignmentStatusToDto[template.Status],
-                TemplateId = template.TemplateId
-            });
+            return CreateResponse(result, template => MapToDto(template));
         }
         catch (Exception ex)
         {
@@ -178,20 +152,7 @@ public class AssignmentsController : BaseController
             var result = await queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
             return CreateResponse(result, templates =>
             {
-                return templates.Select(template => new QuestionnaireAssignmentDto
-                {
-                    AssignedBy = template.AssignedBy,
-                    AssignedDate = template.AssignedDate,
-                    CompletedDate = template.CompletedDate,
-                    DueDate = template.DueDate,
-                    EmployeeEmail = template.EmployeeEmail,
-                    EmployeeId = template.EmployeeId.ToString(),
-                    EmployeeName = template.EmployeeName,
-                    Id = template.Id,
-                    Notes = template.Notes,
-                    Status = MapAssignmentStatusToDto[template.Status],
-                    TemplateId = template.TemplateId
-                });
+                return templates.Select(template => MapToDto(template));
             });
         }
         catch (Exception ex)
@@ -228,4 +189,51 @@ public class AssignmentsController : BaseController
         { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress, QueryApi.Dto.AssignmentStatus.InProgress },
         { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed, QueryApi.Dto.AssignmentStatus.Completed },
     };
+
+    /// <summary>
+    /// Maps a QuestionnaireAssignment query result to a QuestionnaireAssignmentDto.
+    /// Includes all workflow properties for proper state management on the frontend.
+    /// </summary>
+    private static QuestionnaireAssignmentDto MapToDto(Application.Query.Queries.QuestionnaireAssignmentQueries.QuestionnaireAssignment assignment)
+    {
+        return new QuestionnaireAssignmentDto
+        {
+            AssignedBy = assignment.AssignedBy,
+            AssignedDate = assignment.AssignedDate,
+            CompletedDate = assignment.CompletedDate,
+            DueDate = assignment.DueDate,
+            EmployeeEmail = assignment.EmployeeEmail,
+            EmployeeId = assignment.EmployeeId.ToString(),
+            EmployeeName = assignment.EmployeeName,
+            Id = assignment.Id,
+            Notes = assignment.Notes,
+            Status = MapAssignmentStatusToDto[assignment.Status],
+            TemplateId = assignment.TemplateId,
+            TemplateName = assignment.TemplateName,
+            TemplateCategoryId = assignment.TemplateCategoryId,
+
+            // Workflow properties
+            WorkflowState = assignment.WorkflowState,
+            SectionProgress = assignment.SectionProgress,
+
+            // Submission phase
+            EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
+            EmployeeSubmittedBy = assignment.EmployeeSubmittedBy,
+            ManagerSubmittedDate = assignment.ManagerSubmittedDate,
+            ManagerSubmittedBy = assignment.ManagerSubmittedBy,
+
+            // Review phase
+            ReviewInitiatedDate = assignment.ReviewInitiatedDate,
+            ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+            EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
+            EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
+            ManagerReviewConfirmedDate = assignment.ManagerReviewConfirmedDate,
+            ManagerReviewConfirmedBy = assignment.ManagerReviewConfirmedBy,
+
+            // Final state
+            FinalizedDate = assignment.FinalizedDate,
+            FinalizedBy = assignment.FinalizedBy,
+            IsLocked = assignment.IsLocked
+        };
+    }
 }
