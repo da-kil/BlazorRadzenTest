@@ -92,6 +92,22 @@ public class QuestionnaireTemplateReadModel
         IsDeleted = true;
     }
 
+    public void Apply(QuestionnaireTemplateCloned @event)
+    {
+        Id = @event.NewTemplateId;
+        Name = @event.Name;
+        Description = @event.Description;
+        CategoryId = @event.CategoryId;
+        Sections = MapDomainSectionsToQuerySections(@event.Sections);
+        Settings = MapDomainSettingsToQuerySettings(@event.Settings);
+        Status = TemplateStatus.Draft;
+        CreatedDate = @event.CreatedDate;
+        PublishedDate = null;
+        LastPublishedDate = null;
+        PublishedBy = string.Empty;
+        IsDeleted = false;
+    }
+
     private static List<QuestionSection> MapDomainSectionsToQuerySections(List<Domain.QuestionnaireTemplateAggregate.QuestionSection> domainSections)
     {
         return domainSections.Select(ds => new QuestionSection
