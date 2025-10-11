@@ -35,8 +35,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         Guid templateId,
         List<EmployeeDto> employees,
         DateTime? dueDate,
-        string? notes,
-        string assignedBy)
+        string? notes)
     {
         var employeeAssignments = employees.Select(emp => new EmployeeAssignmentDto
         {
@@ -50,7 +49,6 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             TemplateId = templateId,
             EmployeeAssignments = employeeAssignments,
             DueDate = dueDate,
-            AssignedBy = assignedBy,
             Notes = notes
         };
 
@@ -84,8 +82,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         Guid templateId,
         List<EmployeeDto> employees,
         DateTime? dueDate,
-        string? notes,
-        string? assignedBy = null)
+        string? notes)
     {
         var employeeAssignments = employees.Select(emp => new EmployeeAssignmentDto
         {
@@ -99,7 +96,6 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             TemplateId = templateId,
             EmployeeAssignments = employeeAssignments,
             DueDate = dueDate,
-            AssignedBy = assignedBy, // Backend will default to authenticated user if null
             Notes = notes
         };
 

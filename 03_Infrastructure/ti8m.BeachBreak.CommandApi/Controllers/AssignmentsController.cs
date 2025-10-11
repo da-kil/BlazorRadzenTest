@@ -58,8 +58,8 @@ public class AssignmentsController : BaseController
                 return BadRequest("At least one employee assignment is required");
 
             // Get current user's name from UserContext
-            var assignedBy = bulkAssignmentDto.AssignedBy;
-            if (string.IsNullOrEmpty(assignedBy) && Guid.TryParse(userContext.Id, out var userId))
+            var assignedBy = "";
+            if (Guid.TryParse(userContext.Id, out var userId))
             {
                 var employeeResult = await queryDispatcher.QueryAsync(new EmployeeQuery(userId), HttpContext.RequestAborted);
                 if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
@@ -137,15 +137,12 @@ public class AssignmentsController : BaseController
             }
 
             // Get current user's name from database
-            var assignedBy = bulkAssignmentDto.AssignedBy;
-            if (string.IsNullOrEmpty(assignedBy))
+            var assignedBy = "";
+            var employeeResult = await queryDispatcher.QueryAsync(new EmployeeQuery(managerId), HttpContext.RequestAborted);
+            if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
             {
-                var employeeResult = await queryDispatcher.QueryAsync(new EmployeeQuery(managerId), HttpContext.RequestAborted);
-                if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
-                {
-                    assignedBy = $"{employeeResult.Payload.FirstName} {employeeResult.Payload.LastName}";
-                    logger.LogInformation("Set AssignedBy to {AssignedBy} for manager {ManagerId}", assignedBy, managerId);
-                }
+                assignedBy = $"{employeeResult.Payload.FirstName} {employeeResult.Payload.LastName}";
+                logger.LogInformation("Set AssignedBy to {AssignedBy} for manager {ManagerId}", assignedBy, managerId);
             }
 
             var employeeAssignments = bulkAssignmentDto.EmployeeAssignments

@@ -627,8 +627,7 @@
                 selectedQuestionnaireId!.Value,
                 selectedEmployees,
                 assignmentDueDate,
-                assignmentNotes,
-                await GetCurrentUserAsync()
+                assignmentNotes
             );
 
             if (newAssignments.Any())
@@ -923,8 +922,7 @@
                         assignment.TemplateId,
                         newEmployees,
                         editModel.DueDate,
-                        editModel.Notes,
-                        editModel.AssignedBy ?? await GetCurrentUserAsync()
+                        editModel.Notes
                     );
 
                     if (newAssignments.Any())
@@ -1002,14 +1000,6 @@
             NotificationService.Notify(NotificationSeverity.Error, "Error",
                 $"Failed to open bulk assignment: {ex.Message}");
         }
-    }
-
-    private async Task<string> GetCurrentUserAsync()
-    {
-        // TODO: Replace with actual authentication service when implemented
-        // For now, return a system user identifier
-        await Task.CompletedTask; // Placeholder for async auth call
-        return Environment.UserName ?? "System Administrator";
     }
 
     private string GetEmployeeInitials(string name)
