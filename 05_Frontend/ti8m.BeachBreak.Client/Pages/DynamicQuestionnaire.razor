@@ -1251,14 +1251,27 @@
         {
             if (isEmployee && !isManager)
             {
-                // Employees save responses via employee service (role: Employee)
+                // Employees save responses and complete any finished sections
+                await CompleteSectionsAsEmployee(); // Complete sections first to update workflow state
                 await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
             }
             else if (isManager)
             {
-                // Managers save responses via manager endpoint (role: Manager)
+                // Managers save responses and complete any finished sections
+                await CompleteSectionsAsManager(); // Complete sections first to update workflow state
                 await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses);
             }
+
+            // Reload assignment to get updated workflow state and section progress
+            if (isEmployee)
+            {
+                assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+            }
+            else if (isManager)
+            {
+                assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+            }
+            StateHasChanged(); // Force UI update with new workflow state
 
             NotificationService.Notify(NotificationSeverity.Success, "Saved", "Your progress has been saved successfully");
         }
@@ -1340,10 +1353,24 @@
 
             if (isManager)
             {
-                // Manager completes their sections
+                // Manager flow - complete sections, save and submit
                 await CompleteSectionsAsManager();
-                NotificationService.Notify(NotificationSeverity.Success, "Completed", "Your sections have been completed successfully");
-                NavigateBack();
+                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses);
+                var submitSuccess = await AssignmentService.SubmitManagerQuestionnaireAsync(assignmentId.Value, currentUserName);
+
+                if (submitSuccess)
+                {
+                    // Reload the assignment to get the updated WorkflowState
+                    assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+                    StateHasChanged(); // Force UI update with new workflow state
+
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", template!.Settings.SuccessMessage);
+                    NavigationManager.NavigateTo("/team/questionnaires");
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", "Failed to submit questionnaire");
+                }
             }
             else
             {

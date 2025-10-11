@@ -396,11 +396,10 @@
                                          Style="min-width: 120px; font-weight: 600;"
                                          Click="@(() => NavigateToQuestionnaire(assignment))" />
                         }
-                        else if (assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress)
+                        else if (WorkflowStateHelper.CanEmployeeEdit(assignment))
                         {
-                            var hasProgress = assignment.Status == AssignmentStatus.InProgress ||
-                                             (assignment.SectionProgress != null && assignment.SectionProgress.Any()) ||
-                                             (HasProgressChecker != null && HasProgressChecker(assignment.Id));
+                            // Can edit if: Assigned, EmployeeInProgress, BothInProgress, or InReview
+                            var hasProgress = assignment.WorkflowState != "Assigned";
                             <RadzenButton Text="@(hasProgress ? "CONTINUE" : "START")"
                                          Icon="@(hasProgress ? "play_circle" : "play_arrow")"
                                          ButtonStyle="ButtonStyle.Primary"
@@ -408,14 +407,16 @@
                                          Style="min-width: 120px; font-weight: 600;"
                                          Click="@(() => NavigateToQuestionnaire(assignment))" />
                         }
-                        else if (assignment.Status == AssignmentStatus.Completed)
+                        else
                         {
+                            // Employee has submitted, waiting for manager or in review confirmation states
                             <RadzenButton Text="VIEW"
                                          Icon="visibility"
-                                         ButtonStyle="ButtonStyle.Success"
+                                         ButtonStyle="ButtonStyle.Info"
                                          Size="ButtonSize.Medium"
                                          Style="min-width: 120px; font-weight: 600;"
-                                         Click="@(() => ViewResults(assignment))" />
+                                         Disabled="@(!WorkflowStateHelper.CanEmployeeEdit(assignment))"
+                                         Click="@(() => NavigateToQuestionnaire(assignment))" />
                         }
                     }
                     else

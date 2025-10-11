@@ -149,9 +149,32 @@ public class QuestionnaireAssignmentQueryHandler :
             WithdrawnDate = readModel.WithdrawnDate,
             WithdrawnBy = readModel.WithdrawnBy,
             WithdrawalReason = readModel.WithdrawalReason,
-            Status = readModel.Status,
+            Status = readModel.Status,  // This is the computed property that now checks WorkflowState
             AssignedBy = readModel.AssignedBy,
-            Notes = readModel.Notes
+            Notes = readModel.Notes,
+
+            // Workflow properties
+            WorkflowState = readModel.WorkflowState,
+            SectionProgress = readModel.SectionProgress,
+
+            // Submission phase
+            EmployeeSubmittedDate = readModel.EmployeeSubmittedDate,
+            EmployeeSubmittedBy = readModel.EmployeeSubmittedBy,
+            ManagerSubmittedDate = readModel.ManagerSubmittedDate,
+            ManagerSubmittedBy = readModel.ManagerSubmittedBy,
+
+            // Review phase
+            ReviewInitiatedDate = readModel.ReviewInitiatedDate,
+            ReviewInitiatedBy = readModel.ReviewInitiatedBy,
+            EmployeeReviewConfirmedDate = readModel.EmployeeReviewConfirmedDate,
+            EmployeeReviewConfirmedBy = readModel.EmployeeReviewConfirmedBy,
+            ManagerReviewConfirmedDate = readModel.ManagerReviewConfirmedDate,
+            ManagerReviewConfirmedBy = readModel.ManagerReviewConfirmedBy,
+
+            // Final state
+            FinalizedDate = readModel.FinalizedDate,
+            FinalizedBy = readModel.FinalizedBy,
+            IsLocked = readModel.IsLocked
         };
     }
 }

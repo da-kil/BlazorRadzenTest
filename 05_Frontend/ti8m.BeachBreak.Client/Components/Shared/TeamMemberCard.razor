@@ -91,15 +91,16 @@
                                 <RadzenText TextStyle="TextStyle.Caption" Class="@GetDueDateClass(assignment)">
                                     <RadzenIcon Icon="event" Style="font-size: 0.75rem;" />
                                     Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
-                                    @if (assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+                                    @if (assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != "Finalized")
                                     {
                                         <span class="text-danger fw-bold"> (Overdue by @((DateTime.Now - assignment.DueDate.Value).Days) days)</span>
                                     }
                                 </RadzenText>
                             }
                         </div>
-                        <RadzenBadge Text="@assignment.Status.ToString()"
-                                    BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
+                        <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
+                                    BadgeStyle="BadgeStyle.Light"
+                                    Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")"
                                     Class="ms-2" />
                     </div>
                 }
@@ -140,13 +141,20 @@
     [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
 
     private int TotalCount => Assignments.Count;
-    private int CompletedCount => Assignments.Count(a => a.Status == AssignmentStatus.Completed);
-    private int PendingCount => Assignments.Count(a => a.Status == AssignmentStatus.Assigned);
-    private int InProgressCount => Assignments.Count(a => a.Status == AssignmentStatus.InProgress);
+    // Completed: BothSubmitted onwards (includes review and finalized states)
+    private int CompletedCount => Assignments.Count(a =>
+        a.WorkflowState is "BothSubmitted" or "InReview" or "EmployeeReviewConfirmed"
+        or "ManagerReviewConfirmed" or "Finalized");
+    // Pending: Just assigned, not started yet
+    private int PendingCount => Assignments.Count(a => a.WorkflowState == "Assigned");
+    // In Progress: Work started but not both submitted (includes submission states where one party submitted)
+    private int InProgressCount => Assignments.Count(a =>
+        a.WorkflowState is "EmployeeInProgress" or "ManagerInProgress" or "BothInProgress"
+        or "EmployeeSubmitted" or "ManagerSubmitted");
     private int OverdueCount => Assignments.Count(a =>
         a.DueDate.HasValue &&
         a.DueDate.Value < DateTime.Now &&
-        a.Status != AssignmentStatus.Completed);
+        a.WorkflowState != "Finalized");
 
     private double ProgressPercentage => TotalCount > 0 ? Math.Round((double)CompletedCount / TotalCount * 100, 1) : 0;
 
@@ -172,20 +180,23 @@
 
     private string GetBorderClass(QuestionnaireAssignment assignment)
     {
-        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != "Finalized")
             return "border-danger";
 
-        return assignment.Status switch
+        return assignment.WorkflowState switch
         {
-            AssignmentStatus.InProgress => "border-info",
-            AssignmentStatus.Completed => "border-success",
-            _ => "border-warning"
+            "Assigned" => "border-warning",
+            "EmployeeInProgress" or "ManagerInProgress" or "BothInProgress" => "border-info",
+            "EmployeeSubmitted" or "ManagerSubmitted" => "border-info",
+            "BothSubmitted" or "InReview" or "EmployeeReviewConfirmed" or "ManagerReviewConfirmed" => "border-primary",
+            "Finalized" => "border-success",
+            _ => "border-secondary"
         };
     }
 
     private string GetDueDateClass(QuestionnaireAssignment assignment)
     {
-        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != "Finalized")
             return "text-danger fw-bold";
         return "text-muted";
     }

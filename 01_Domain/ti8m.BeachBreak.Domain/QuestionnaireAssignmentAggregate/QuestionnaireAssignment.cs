@@ -267,9 +267,10 @@ public class QuestionnaireAssignment : AggregateRoot
             WorkflowState == WorkflowState.BothSubmitted)
             throw new InvalidOperationException("Manager questionnaire already submitted");
 
-        // Must be in progress to submit
+        // Manager can submit when in progress OR when employee has already submitted
         if (WorkflowState != WorkflowState.ManagerInProgress &&
-            WorkflowState != WorkflowState.BothInProgress)
+            WorkflowState != WorkflowState.BothInProgress &&
+            WorkflowState != WorkflowState.EmployeeSubmitted)
             throw new InvalidOperationException("Manager must have started filling sections before submitting");
 
         RaiseEvent(new ManagerQuestionnaireSubmitted(DateTime.UtcNow, submittedBy));
@@ -455,6 +456,14 @@ public class QuestionnaireAssignment : AggregateRoot
 
     private void UpdateWorkflowState()
     {
+        // Don't update state if already in submission, review, or finalization phases
+        // Only update during the initial work-in-progress phase
+        if (WorkflowState >= WorkflowState.EmployeeSubmitted)
+        {
+            // Once submitted or beyond, section completion doesn't change workflow state
+            return;
+        }
+
         var hasEmployeeProgress = SectionProgressList.Any(p => p.IsEmployeeCompleted);
         var hasManagerProgress = SectionProgressList.Any(p => p.IsManagerCompleted);
 

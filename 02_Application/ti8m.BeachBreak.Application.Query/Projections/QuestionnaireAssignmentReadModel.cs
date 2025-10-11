@@ -51,7 +51,21 @@ public class QuestionnaireAssignmentReadModel
     {
         if (IsWithdrawn) return AssignmentStatus.Withdrawn;
         if (CompletedDate.HasValue) return AssignmentStatus.Completed;
-        if (StartedDate.HasValue) return AssignmentStatus.InProgress;
+
+        // Check workflow state to determine if work is in progress
+        if (WorkflowState == "EmployeeInProgress" ||
+            WorkflowState == "ManagerInProgress" ||
+            WorkflowState == "BothInProgress" ||
+            WorkflowState == "EmployeeSubmitted" ||
+            WorkflowState == "ManagerSubmitted" ||
+            WorkflowState == "BothSubmitted" ||
+            WorkflowState == "InReview" ||
+            WorkflowState == "EmployeeReviewConfirmed" ||
+            WorkflowState == "ManagerReviewConfirmed")
+        {
+            return AssignmentStatus.InProgress;
+        }
+
         if (DueDate.HasValue && DueDate.Value < DateTime.UtcNow) return AssignmentStatus.Overdue;
         return AssignmentStatus.Assigned;
     }

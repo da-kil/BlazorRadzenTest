@@ -160,7 +160,30 @@ public class ManagersController : BaseController
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
                     AssignedBy = assignment.AssignedBy,
-                    Notes = assignment.Notes
+                    Notes = assignment.Notes,
+
+                    // Workflow properties
+                    WorkflowState = assignment.WorkflowState,
+                    SectionProgress = assignment.SectionProgress,
+
+                    // Submission phase
+                    EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
+                    EmployeeSubmittedBy = assignment.EmployeeSubmittedBy,
+                    ManagerSubmittedDate = assignment.ManagerSubmittedDate,
+                    ManagerSubmittedBy = assignment.ManagerSubmittedBy,
+
+                    // Review phase
+                    ReviewInitiatedDate = assignment.ReviewInitiatedDate,
+                    ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+                    EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
+                    EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
+                    ManagerReviewConfirmedDate = assignment.ManagerReviewConfirmedDate,
+                    ManagerReviewConfirmedBy = assignment.ManagerReviewConfirmedBy,
+
+                    // Final state
+                    FinalizedDate = assignment.FinalizedDate,
+                    FinalizedBy = assignment.FinalizedBy,
+                    IsLocked = assignment.IsLocked
                 });
             });
         }
@@ -454,7 +477,30 @@ public class ManagersController : BaseController
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
                     AssignedBy = assignment.AssignedBy,
-                    Notes = assignment.Notes
+                    Notes = assignment.Notes,
+
+                    // Workflow properties
+                    WorkflowState = assignment.WorkflowState,
+                    SectionProgress = assignment.SectionProgress,
+
+                    // Submission phase
+                    EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
+                    EmployeeSubmittedBy = assignment.EmployeeSubmittedBy,
+                    ManagerSubmittedDate = assignment.ManagerSubmittedDate,
+                    ManagerSubmittedBy = assignment.ManagerSubmittedBy,
+
+                    // Review phase
+                    ReviewInitiatedDate = assignment.ReviewInitiatedDate,
+                    ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+                    EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
+                    EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
+                    ManagerReviewConfirmedDate = assignment.ManagerReviewConfirmedDate,
+                    ManagerReviewConfirmedBy = assignment.ManagerReviewConfirmedBy,
+
+                    // Final state
+                    FinalizedDate = assignment.FinalizedDate,
+                    FinalizedBy = assignment.FinalizedBy,
+                    IsLocked = assignment.IsLocked
                 });
             });
         }

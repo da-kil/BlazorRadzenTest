@@ -1,3 +1,5 @@
+using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
 /// <summary>
@@ -19,4 +21,27 @@ public class TeamAssignmentDto
     public AssignmentStatus Status { get; set; }
     public string? AssignedBy { get; set; }
     public string? Notes { get; set; }
+
+    // Workflow properties
+    public string WorkflowState { get; set; } = "Assigned";
+    public List<SectionProgressDto> SectionProgress { get; set; } = new();
+
+    // Submission phase
+    public DateTime? EmployeeSubmittedDate { get; set; }
+    public string? EmployeeSubmittedBy { get; set; }
+    public DateTime? ManagerSubmittedDate { get; set; }
+    public string? ManagerSubmittedBy { get; set; }
+
+    // Review phase
+    public DateTime? ReviewInitiatedDate { get; set; }
+    public string? ReviewInitiatedBy { get; set; }
+    public DateTime? EmployeeReviewConfirmedDate { get; set; }
+    public string? EmployeeReviewConfirmedBy { get; set; }
+    public DateTime? ManagerReviewConfirmedDate { get; set; }
+    public string? ManagerReviewConfirmedBy { get; set; }
+
+    // Final state
+    public DateTime? FinalizedDate { get; set; }
+    public string? FinalizedBy { get; set; }
+    public bool IsLocked { get; set; }
 }
