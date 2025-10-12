@@ -1,6 +1,7 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Core.Domain.SharedKernel;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
@@ -34,14 +35,17 @@ public class QuestionnaireAssignment : AggregateRoot
     // Review phase
     public DateTime? ReviewInitiatedDate { get; private set; }
     public string? ReviewInitiatedBy { get; private set; }
+    public DateTime? ManagerReviewFinishedDate { get; private set; }
+    public string? ManagerReviewFinishedBy { get; private set; }
+    public string? ManagerReviewSummary { get; private set; }
     public DateTime? EmployeeReviewConfirmedDate { get; private set; }
     public string? EmployeeReviewConfirmedBy { get; private set; }
-    public DateTime? ManagerReviewConfirmedDate { get; private set; }
-    public string? ManagerReviewConfirmedBy { get; private set; }
+    public string? EmployeeReviewComments { get; private set; }
 
     // Final state
     public DateTime? FinalizedDate { get; private set; }
     public string? FinalizedBy { get; private set; }
+    public string? ManagerFinalNotes { get; private set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
     private QuestionnaireAssignment() { }
@@ -128,8 +132,9 @@ public class QuestionnaireAssignment : AggregateRoot
     // Workflow state query methods (business rules)
     /// <summary>
     /// Determines if an employee can edit the questionnaire based on current workflow state.
-    /// Employee can edit when: Assigned, EmployeeInProgress, BothInProgress, ManagerSubmitted, InReview
-    /// Employee is blocked only after they themselves submit (EmployeeSubmitted, BothSubmitted) or when finalized.
+    /// Employee can edit when: Assigned, EmployeeInProgress, BothInProgress, ManagerSubmitted.
+    /// Employee is READ-ONLY during: InReview (manager-led review meeting).
+    /// Employee is blocked after submission: EmployeeSubmitted, BothSubmitted, and all review/final states.
     /// </summary>
     public bool CanEmployeeEdit()
     {
@@ -137,14 +142,14 @@ public class QuestionnaireAssignment : AggregateRoot
             WorkflowState.Assigned or
             WorkflowState.EmployeeInProgress or
             WorkflowState.BothInProgress or
-            WorkflowState.ManagerSubmitted or
-            WorkflowState.InReview;
+            WorkflowState.ManagerSubmitted;
     }
 
     /// <summary>
     /// Determines if a manager can edit the questionnaire based on current workflow state.
-    /// Manager can edit when: Assigned, ManagerInProgress, BothInProgress, EmployeeSubmitted, InReview
-    /// Manager is blocked only after they themselves submit (ManagerSubmitted, BothSubmitted) or when finalized.
+    /// Manager can edit when: Assigned, ManagerInProgress, BothInProgress, EmployeeSubmitted.
+    /// Manager can edit ALL sections during: InReview (including employee-only sections).
+    /// Manager is blocked after submission: ManagerSubmitted, BothSubmitted, and all confirmation/final states.
     /// </summary>
     public bool CanManagerEdit()
     {
@@ -152,8 +157,25 @@ public class QuestionnaireAssignment : AggregateRoot
             WorkflowState.Assigned or
             WorkflowState.ManagerInProgress or
             WorkflowState.BothInProgress or
-            WorkflowState.EmployeeSubmitted or
-            WorkflowState.InReview;
+            WorkflowState.EmployeeSubmitted;
+    }
+
+    /// <summary>
+    /// Determines if a manager can edit during the review meeting (InReview state).
+    /// Manager has special edit permissions during review - can edit ALL sections including employee-only.
+    /// </summary>
+    public bool CanManagerEditDuringReview()
+    {
+        return WorkflowState == WorkflowState.InReview;
+    }
+
+    /// <summary>
+    /// Determines if an employee has read-only access during review.
+    /// Employee cannot edit but can view during InReview state.
+    /// </summary>
+    public bool IsEmployeeReadOnlyDuringReview()
+    {
+        return WorkflowState == WorkflowState.InReview;
     }
 
     // Workflow methods
@@ -296,49 +318,76 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new ReviewInitiated(DateTime.UtcNow, initiatedBy));
     }
 
-    public void EditAnswerDuringReview(Guid sectionId, Guid questionId, string answer, string editedBy)
+    public void EditAnswerAsManagerDuringReview(
+        Guid sectionId,
+        Guid questionId,
+        CompletionRole originalCompletionRole,
+        string newAnswer,
+        string editedBy)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot edit answer - questionnaire is finalized");
 
         if (WorkflowState != WorkflowState.InReview)
-            throw new InvalidOperationException("Answers can only be edited during review phase");
+            throw new InvalidOperationException("Answers can only be edited during review meeting");
 
-        RaiseEvent(new AnswerEditedDuringReview(sectionId, questionId, answer, DateTime.UtcNow, editedBy));
+        RaiseEvent(new ManagerEditedAnswerDuringReview(
+            Id,
+            sectionId,
+            questionId,
+            originalCompletionRole,
+            newAnswer,
+            DateTime.UtcNow,
+            editedBy
+        ));
     }
 
-    public void ConfirmEmployeeReview(string confirmedBy)
+    public void FinishReviewMeeting(string finishedBy, string? reviewSummary)
     {
         if (IsLocked)
-            throw new InvalidOperationException("Cannot confirm review - questionnaire is finalized");
+            throw new InvalidOperationException("Cannot finish review - questionnaire is finalized");
 
         if (WorkflowState != WorkflowState.InReview)
-            throw new InvalidOperationException("Review must be in progress to confirm");
+            throw new InvalidOperationException("No active review meeting to finish");
 
-        RaiseEvent(new EmployeeReviewConfirmed(DateTime.UtcNow, confirmedBy));
+        RaiseEvent(new ManagerReviewMeetingFinished(
+            Id,
+            DateTime.UtcNow,
+            finishedBy,
+            reviewSummary
+        ));
     }
 
-    public void ConfirmManagerReview(string confirmedBy)
+    public void ConfirmReviewOutcomeAsEmployee(string confirmedBy, string? comments)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot confirm review - questionnaire is finalized");
 
-        if (WorkflowState != WorkflowState.InReview &&
-            WorkflowState != WorkflowState.EmployeeReviewConfirmed)
-            throw new InvalidOperationException("Review must be in progress or employee must have confirmed review");
+        if (WorkflowState != WorkflowState.ManagerReviewConfirmed)
+            throw new InvalidOperationException("Manager must finish review meeting before employee confirmation");
 
-        RaiseEvent(new ManagerReviewConfirmed(DateTime.UtcNow, confirmedBy));
+        RaiseEvent(new EmployeeConfirmedReviewOutcome(
+            Id,
+            DateTime.UtcNow,
+            confirmedBy,
+            comments
+        ));
     }
 
-    public void Finalize(string finalizedBy)
+    public void FinalizeAsManager(string finalizedBy, string? finalNotes)
     {
         if (IsLocked)
             throw new InvalidOperationException("Questionnaire is already finalized");
 
-        if (!EmployeeReviewConfirmedDate.HasValue || !ManagerReviewConfirmedDate.HasValue)
-            throw new InvalidOperationException("Both employee and manager must confirm review before finalization");
+        if (WorkflowState != WorkflowState.EmployeeReviewConfirmed)
+            throw new InvalidOperationException("Employee must confirm review before manager can finalize");
 
-        RaiseEvent(new QuestionnaireFinalized(DateTime.UtcNow, finalizedBy));
+        RaiseEvent(new ManagerFinalizedQuestionnaire(
+            Id,
+            DateTime.UtcNow,
+            finalizedBy,
+            finalNotes
+        ));
     }
 
     public void Apply(QuestionnaireAssignmentAssigned @event)
@@ -439,25 +488,35 @@ public class QuestionnaireAssignment : AggregateRoot
         // This event is for audit trail purposes
     }
 
-    public void Apply(EmployeeReviewConfirmed @event)
+    // Apply methods for refined review workflow
+    public void Apply(ManagerEditedAnswerDuringReview @event)
     {
+        // Answer changes are tracked in ReviewChangeLog projection
+        // This event is for audit trail purposes only
+    }
+
+    public void Apply(ManagerReviewMeetingFinished @event)
+    {
+        WorkflowState = WorkflowState.ManagerReviewConfirmed;
+        ManagerReviewFinishedDate = @event.FinishedDate;
+        ManagerReviewFinishedBy = @event.FinishedBy;
+        ManagerReviewSummary = @event.ReviewSummary;
+    }
+
+    public void Apply(EmployeeConfirmedReviewOutcome @event)
+    {
+        WorkflowState = WorkflowState.EmployeeReviewConfirmed;
         EmployeeReviewConfirmedDate = @event.ConfirmedDate;
         EmployeeReviewConfirmedBy = @event.ConfirmedBy;
-        WorkflowState = WorkflowState.EmployeeReviewConfirmed;
+        EmployeeReviewComments = @event.EmployeeComments;
     }
 
-    public void Apply(ManagerReviewConfirmed @event)
+    public void Apply(ManagerFinalizedQuestionnaire @event)
     {
-        ManagerReviewConfirmedDate = @event.ConfirmedDate;
-        ManagerReviewConfirmedBy = @event.ConfirmedBy;
-        WorkflowState = WorkflowState.ManagerReviewConfirmed;
-    }
-
-    public void Apply(QuestionnaireFinalized @event)
-    {
+        WorkflowState = WorkflowState.Finalized;
         FinalizedDate = @event.FinalizedDate;
         FinalizedBy = @event.FinalizedBy;
-        WorkflowState = WorkflowState.Finalized;
+        ManagerFinalNotes = @event.ManagerFinalNotes;
     }
 
     private void UpdateWorkflowState()

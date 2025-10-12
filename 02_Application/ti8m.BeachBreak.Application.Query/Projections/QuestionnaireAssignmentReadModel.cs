@@ -35,14 +35,17 @@ public class QuestionnaireAssignmentReadModel
     // Review phase
     public DateTime? ReviewInitiatedDate { get; set; }
     public string? ReviewInitiatedBy { get; set; }
+    public DateTime? ManagerReviewFinishedDate { get; set; }
+    public string? ManagerReviewFinishedBy { get; set; }
+    public string? ManagerReviewSummary { get; set; }
     public DateTime? EmployeeReviewConfirmedDate { get; set; }
     public string? EmployeeReviewConfirmedBy { get; set; }
-    public DateTime? ManagerReviewConfirmedDate { get; set; }
-    public string? ManagerReviewConfirmedBy { get; set; }
+    public string? EmployeeReviewComments { get; set; }
 
     // Final state
     public DateTime? FinalizedDate { get; set; }
     public string? FinalizedBy { get; set; }
+    public string? ManagerFinalNotes { get; set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
     // Apply methods for all QuestionnaireAssignment domain events
@@ -151,25 +154,34 @@ public class QuestionnaireAssignmentReadModel
         // This event is for audit trail purposes
     }
 
-    public void Apply(EmployeeReviewConfirmed @event)
+    public void Apply(ManagerEditedAnswerDuringReview @event)
     {
+        // Answer changes are tracked in ReviewChangeLog projection
+        // This event is for audit trail purposes only
+    }
+
+    public void Apply(ManagerReviewMeetingFinished @event)
+    {
+        WorkflowState = WorkflowState.ManagerReviewConfirmed;
+        ManagerReviewFinishedDate = @event.FinishedDate;
+        ManagerReviewFinishedBy = @event.FinishedBy;
+        ManagerReviewSummary = @event.ReviewSummary;
+    }
+
+    public void Apply(EmployeeConfirmedReviewOutcome @event)
+    {
+        WorkflowState = WorkflowState.EmployeeReviewConfirmed;
         EmployeeReviewConfirmedDate = @event.ConfirmedDate;
         EmployeeReviewConfirmedBy = @event.ConfirmedBy;
-        WorkflowState = WorkflowState.EmployeeReviewConfirmed;
+        EmployeeReviewComments = @event.EmployeeComments;
     }
 
-    public void Apply(ManagerReviewConfirmed @event)
+    public void Apply(ManagerFinalizedQuestionnaire @event)
     {
-        ManagerReviewConfirmedDate = @event.ConfirmedDate;
-        ManagerReviewConfirmedBy = @event.ConfirmedBy;
-        WorkflowState = WorkflowState.ManagerReviewConfirmed;
-    }
-
-    public void Apply(QuestionnaireFinalized @event)
-    {
+        WorkflowState = WorkflowState.Finalized;
         FinalizedDate = @event.FinalizedDate;
         FinalizedBy = @event.FinalizedBy;
-        WorkflowState = WorkflowState.Finalized;
+        ManagerFinalNotes = @event.ManagerFinalNotes;
     }
 
     private void UpdateWorkflowState()

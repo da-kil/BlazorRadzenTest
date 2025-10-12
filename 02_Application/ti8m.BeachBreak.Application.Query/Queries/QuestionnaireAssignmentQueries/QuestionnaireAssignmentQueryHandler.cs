@@ -165,14 +165,17 @@ public class QuestionnaireAssignmentQueryHandler :
             // Review phase
             ReviewInitiatedDate = readModel.ReviewInitiatedDate,
             ReviewInitiatedBy = readModel.ReviewInitiatedBy,
+            ManagerReviewFinishedDate = readModel.ManagerReviewFinishedDate,
+            ManagerReviewFinishedBy = readModel.ManagerReviewFinishedBy,
+            ManagerReviewSummary = readModel.ManagerReviewSummary,
             EmployeeReviewConfirmedDate = readModel.EmployeeReviewConfirmedDate,
             EmployeeReviewConfirmedBy = readModel.EmployeeReviewConfirmedBy,
-            ManagerReviewConfirmedDate = readModel.ManagerReviewConfirmedDate,
-            ManagerReviewConfirmedBy = readModel.ManagerReviewConfirmedBy,
+            EmployeeReviewComments = readModel.EmployeeReviewComments,
 
             // Final state
             FinalizedDate = readModel.FinalizedDate,
             FinalizedBy = readModel.FinalizedBy,
+            ManagerFinalNotes = readModel.ManagerFinalNotes,
             IsLocked = readModel.IsLocked
         };
     }

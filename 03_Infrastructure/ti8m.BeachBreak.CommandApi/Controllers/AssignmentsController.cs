@@ -455,10 +455,14 @@ public class AssignmentsController : BaseController
     {
         try
         {
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(editDto.OriginalCompletionRole, out var completionRole))
+                return BadRequest("Invalid CompletionRole value");
+
             var command = new EditAnswerDuringReviewCommand(
                 assignmentId,
                 editDto.SectionId,
                 editDto.QuestionId,
+                completionRole,
                 editDto.Answer,
                 editDto.EditedBy);
             var result = await commandDispatcher.SendAsync(command);
@@ -471,55 +475,96 @@ public class AssignmentsController : BaseController
         }
     }
 
-    [HttpPost("{assignmentId}/confirm-employee-review")]
-    public async Task<IActionResult> ConfirmEmployeeReview(Guid assignmentId, [FromBody] ConfirmCompletionDto confirmDto)
+    // Refined review workflow endpoints
+    /// <summary>
+    /// Manager finishes the review meeting.
+    /// Transitions from InReview to ManagerReviewConfirmed state.
+    /// </summary>
+    [HttpPost("{assignmentId}/review/finish")]
+    [Authorize(Roles = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> FinishReviewMeeting(Guid assignmentId, [FromBody] FinishReviewMeetingDto finishDto)
     {
         try
         {
-            var command = new ConfirmEmployeeReviewCommand(assignmentId, confirmDto.ConfirmedBy);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new FinishReviewMeetingCommand(
+                assignmentId,
+                finishDto.FinishedBy,
+                finishDto.ReviewSummary,
+                finishDto.ExpectedVersion);
+
             var result = await commandDispatcher.SendAsync(command);
             return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error confirming employee review");
-            return StatusCode(500, "An error occurred while confirming employee review");
+            logger.LogError(ex, "Error finishing review meeting for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while finishing review meeting");
         }
     }
 
-    [HttpPost("{assignmentId}/confirm-manager-review")]
-    [Authorize(Roles = "TeamLead")]
-    public async Task<IActionResult> ConfirmManagerReview(Guid assignmentId, [FromBody] ConfirmReviewDto confirmDto)
+    /// <summary>
+    /// Employee confirms the review outcome.
+    /// Employee cannot reject but can add comments.
+    /// Transitions from ManagerReviewConfirmed to EmployeeReviewConfirmed state.
+    /// </summary>
+    [HttpPost("{assignmentId}/review/confirm-employee")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> ConfirmReviewOutcomeAsEmployee(Guid assignmentId, [FromBody] ConfirmReviewOutcomeDto confirmDto)
     {
         try
         {
-            var command = new ConfirmManagerReviewCommand(
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new ConfirmReviewOutcomeAsEmployeeCommand(
                 assignmentId,
                 confirmDto.ConfirmedBy,
+                confirmDto.EmployeeComments,
                 confirmDto.ExpectedVersion);
+
             var result = await commandDispatcher.SendAsync(command);
             return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error confirming manager review");
-            return StatusCode(500, "An error occurred while confirming manager review");
+            logger.LogError(ex, "Error confirming review outcome for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while confirming review outcome");
         }
     }
 
-    [HttpPost("{assignmentId}/finalize")]
+    /// <summary>
+    /// Manager finalizes the questionnaire after employee confirmation.
+    /// This is the final step in the review process.
+    /// Transitions from EmployeeReviewConfirmed to Finalized state.
+    /// </summary>
+    [HttpPost("{assignmentId}/review/finalize-manager")]
     [Authorize(Roles = "TeamLead")]
-    public async Task<IActionResult> FinalizeQuestionnaire(Guid assignmentId, [FromBody] FinalizeQuestionnaireDto finalizeDto)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> FinalizeQuestionnaireAsManager(Guid assignmentId, [FromBody] FinalizeAsManagerDto finalizeDto)
     {
         try
         {
-            var command = new FinalizeQuestionnaireCommand(assignmentId, finalizeDto.FinalizedBy);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var command = new FinalizeQuestionnaireAsManagerCommand(
+                assignmentId,
+                finalizeDto.FinalizedBy,
+                finalizeDto.ManagerFinalNotes,
+                finalizeDto.ExpectedVersion);
+
             var result = await commandDispatcher.SendAsync(command);
             return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error finalizing questionnaire");
+            logger.LogError(ex, "Error finalizing questionnaire as manager for assignment {AssignmentId}", assignmentId);
             return StatusCode(500, "An error occurred while finalizing questionnaire");
         }
     }

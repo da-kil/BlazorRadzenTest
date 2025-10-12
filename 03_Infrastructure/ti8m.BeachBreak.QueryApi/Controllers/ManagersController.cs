@@ -173,14 +173,17 @@ public class ManagersController : BaseController
                     // Review phase
                     ReviewInitiatedDate = assignment.ReviewInitiatedDate,
                     ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+                    ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
+                    ManagerReviewFinishedBy = assignment.ManagerReviewFinishedBy,
+                    ManagerReviewSummary = assignment.ManagerReviewSummary,
                     EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
                     EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
-                    ManagerReviewConfirmedDate = assignment.ManagerReviewConfirmedDate,
-                    ManagerReviewConfirmedBy = assignment.ManagerReviewConfirmedBy,
+                    EmployeeReviewComments = assignment.EmployeeReviewComments,
 
                     // Final state
                     FinalizedDate = assignment.FinalizedDate,
                     FinalizedBy = assignment.FinalizedBy,
+                    ManagerFinalNotes = assignment.ManagerFinalNotes,
                     IsLocked = assignment.IsLocked
                 });
             });
@@ -489,14 +492,17 @@ public class ManagersController : BaseController
                     // Review phase
                     ReviewInitiatedDate = assignment.ReviewInitiatedDate,
                     ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+                    ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
+                    ManagerReviewFinishedBy = assignment.ManagerReviewFinishedBy,
+                    ManagerReviewSummary = assignment.ManagerReviewSummary,
                     EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
                     EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
-                    ManagerReviewConfirmedDate = assignment.ManagerReviewConfirmedDate,
-                    ManagerReviewConfirmedBy = assignment.ManagerReviewConfirmedBy,
+                    EmployeeReviewComments = assignment.EmployeeReviewComments,
 
                     // Final state
                     FinalizedDate = assignment.FinalizedDate,
                     FinalizedBy = assignment.FinalizedBy,
+                    ManagerFinalNotes = assignment.ManagerFinalNotes,
                     IsLocked = assignment.IsLocked
                 });
             });

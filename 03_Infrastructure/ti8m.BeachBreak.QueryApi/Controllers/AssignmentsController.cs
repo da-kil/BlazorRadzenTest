@@ -214,15 +214,82 @@ public class AssignmentsController : BaseController
             // Review phase
             ReviewInitiatedDate = assignment.ReviewInitiatedDate,
             ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+            ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
+            ManagerReviewFinishedBy = assignment.ManagerReviewFinishedBy,
+            ManagerReviewSummary = assignment.ManagerReviewSummary,
             EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
             EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
-            ManagerReviewConfirmedDate = assignment.ManagerReviewConfirmedDate,
-            ManagerReviewConfirmedBy = assignment.ManagerReviewConfirmedBy,
+            EmployeeReviewComments = assignment.EmployeeReviewComments,
 
             // Final state
             FinalizedDate = assignment.FinalizedDate,
             FinalizedBy = assignment.FinalizedBy,
+            ManagerFinalNotes = assignment.ManagerFinalNotes,
             IsLocked = assignment.IsLocked
         };
+    }
+
+    /// <summary>
+    /// Gets all review changes for a specific assignment.
+    /// Returns a list of all edits made by the manager during the review meeting.
+    /// </summary>
+    [HttpGet("{id:guid}/review-changes")]
+    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [ProducesResponseType(typeof(IEnumerable<ReviewChangeDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetReviewChanges(Guid id)
+    {
+        try
+        {
+            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
+            Guid userId;
+            try
+            {
+                userId = await authorizationService.GetCurrentManagerIdAsync();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning("GetReviewChanges authorization failed: {Message}", ex.Message);
+                return Unauthorized(ex.Message);
+            }
+
+            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+            if (!hasElevatedRole)
+            {
+                var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, id);
+
+                if (!canAccess)
+                {
+                    logger.LogWarning("Manager {UserId} attempted to access review changes for assignment {AssignmentId} for non-direct report",
+                        userId, id);
+                    return Forbid();
+                }
+            }
+
+            var result = await queryDispatcher.QueryAsync(new Application.Query.Queries.ReviewQueries.GetReviewChangesQuery(id));
+            return CreateResponse(Result<List<Application.Query.Projections.ReviewChangeLogReadModel>>.Success(result), changes =>
+            {
+                return changes.Select(c => new ReviewChangeDto
+                {
+                    Id = c.Id,
+                    AssignmentId = c.AssignmentId,
+                    SectionId = c.SectionId,
+                    SectionTitle = c.SectionTitle,
+                    QuestionId = c.QuestionId,
+                    QuestionTitle = c.QuestionTitle,
+                    OriginalCompletionRole = c.OriginalCompletionRole,
+                    OldValue = c.OldValue,
+                    NewValue = c.NewValue,
+                    ChangedAt = c.ChangedAt,
+                    ChangedBy = c.ChangedBy
+                });
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving review changes for assignment {AssignmentId}", id);
+            return StatusCode(500, "An error occurred while retrieving review changes");
+        }
     }
 }

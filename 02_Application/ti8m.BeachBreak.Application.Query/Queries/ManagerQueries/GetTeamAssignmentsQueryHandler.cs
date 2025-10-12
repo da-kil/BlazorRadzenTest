@@ -145,14 +145,17 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
             EmployeeSubmittedBy = readModel.EmployeeSubmittedBy,
             ManagerSubmittedDate = readModel.ManagerSubmittedDate,
             ManagerSubmittedBy = readModel.ManagerSubmittedBy,
-            ManagerReviewConfirmedDate = readModel.ManagerReviewConfirmedDate,
-            ManagerReviewConfirmedBy = readModel.ManagerReviewConfirmedBy,
             ReviewInitiatedDate = readModel.ReviewInitiatedDate,
             ReviewInitiatedBy = readModel.ReviewInitiatedBy,
+            ManagerReviewFinishedDate = readModel.ManagerReviewFinishedDate,
+            ManagerReviewFinishedBy = readModel.ManagerReviewFinishedBy,
+            ManagerReviewSummary = readModel.ManagerReviewSummary,
             EmployeeReviewConfirmedDate = readModel.EmployeeReviewConfirmedDate,
             EmployeeReviewConfirmedBy = readModel.EmployeeReviewConfirmedBy,
+            EmployeeReviewComments = readModel.EmployeeReviewComments,
             FinalizedDate = readModel.FinalizedDate,
             FinalizedBy = readModel.FinalizedBy,
+            ManagerFinalNotes = readModel.ManagerFinalNotes,
             IsLocked = readModel.IsLocked
         };
     }
