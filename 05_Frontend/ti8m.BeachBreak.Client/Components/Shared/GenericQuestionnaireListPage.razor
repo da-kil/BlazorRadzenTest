@@ -846,10 +846,13 @@
     {
         if (assignment == null || string.IsNullOrEmpty(assignment.WorkflowState)) return false;
 
-        return assignment.WorkflowState == "Finalized" ||
-               assignment.WorkflowState == "EmployeeConfirmed" ||
-               assignment.WorkflowState == "BothConfirmed" ||
-               assignment.WorkflowState == "EmployeeReviewConfirmed";
+        // For employees: questionnaire is "completed" (read-only VIEW button) when:
+        // - Employee has submitted (EmployeeSubmitted, BothSubmitted)
+        // - In review phase (InReview, EmployeeReviewConfirmed, ManagerReviewConfirmed)
+        // - Finalized
+        return assignment.WorkflowState is "EmployeeSubmitted" or "BothSubmitted"
+            or "InReview" or "EmployeeReviewConfirmed" or "ManagerReviewConfirmed"
+            or "Finalized";
     }
 
     private async Task<List<QuestionnaireAssignment>> GetAssignmentsPaginated(int page, int size)

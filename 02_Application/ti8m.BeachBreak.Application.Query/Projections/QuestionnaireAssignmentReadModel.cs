@@ -52,16 +52,25 @@ public class QuestionnaireAssignmentReadModel
         if (IsWithdrawn) return AssignmentStatus.Withdrawn;
         if (CompletedDate.HasValue) return AssignmentStatus.Completed;
 
-        // Check workflow state to determine if work is in progress
+        // Completed: From BothSubmitted onwards (both parties have submitted)
+        // Includes: BothSubmitted, InReview, EmployeeReviewConfirmed, ManagerReviewConfirmed, Finalized
+        if (WorkflowState == "BothSubmitted" ||
+            WorkflowState == "InReview" ||
+            WorkflowState == "EmployeeReviewConfirmed" ||
+            WorkflowState == "ManagerReviewConfirmed" ||
+            WorkflowState == "Finalized")
+        {
+            return AssignmentStatus.Completed;
+        }
+
+        // In Progress: Either party is working or has submitted (but not both)
+        // Includes: EmployeeInProgress, ManagerInProgress, BothInProgress,
+        //           EmployeeSubmitted (waiting for manager), ManagerSubmitted (waiting for employee)
         if (WorkflowState == "EmployeeInProgress" ||
             WorkflowState == "ManagerInProgress" ||
             WorkflowState == "BothInProgress" ||
             WorkflowState == "EmployeeSubmitted" ||
-            WorkflowState == "ManagerSubmitted" ||
-            WorkflowState == "BothSubmitted" ||
-            WorkflowState == "InReview" ||
-            WorkflowState == "EmployeeReviewConfirmed" ||
-            WorkflowState == "ManagerReviewConfirmed")
+            WorkflowState == "ManagerSubmitted")
         {
             return AssignmentStatus.InProgress;
         }

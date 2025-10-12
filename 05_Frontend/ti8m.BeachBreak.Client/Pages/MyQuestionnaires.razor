@@ -114,8 +114,9 @@ else
 
 		// In Progress: Employee is working or has submitted and waiting for manager
 		// According to workflow diagram, employee can see these as "in progress" until both submit
+		// Also includes ManagerSubmitted (manager submitted but employee still needs to submit)
 		inProgressQuestionnaires = allAssignments.Where(a =>
-			a.WorkflowState is "EmployeeInProgress" or "BothInProgress" or "EmployeeSubmitted").ToList();
+			a.WorkflowState is "EmployeeInProgress" or "BothInProgress" or "EmployeeSubmitted" or "ManagerSubmitted").ToList();
 
 		// Completed: From BothSubmitted onwards (includes all review and finalized states)
 		completedQuestionnaires = allAssignments.Where(a =>
