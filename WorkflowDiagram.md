@@ -27,18 +27,29 @@ stateDiagram-v2
     BothSubmitted --> InReview: Manager initiates review
 
     note right of InReview
-        EDITING ALLOWED
-        Collaborative adjustments
-        during review meeting
+        MANAGER: Can edit ALL sections
+        EMPLOYEE: Read-only view
+        In-person/video meeting
+        Changes tracked in ReviewChangeLog
     end note
 
-    InReview --> EmployeeReviewConfirmed: Employee confirms review
-    InReview --> ManagerReviewConfirmed: Manager confirms review
+    InReview --> ManagerReviewConfirmed: Manager finishes review meeting
 
-    EmployeeReviewConfirmed --> ManagerReviewConfirmed: Manager confirms
-    ManagerReviewConfirmed --> ManagerReviewConfirmed: Manager can finalize
+    note right of ManagerReviewConfirmed
+        Employee confirmation required
+        Employee sees final version (read-only)
+        Can add comments but cannot reject
+    end note
 
-    ManagerReviewConfirmed --> Finalized: Manager finalizes
+    ManagerReviewConfirmed --> EmployeeReviewConfirmed: Employee confirms
+
+    note right of EmployeeReviewConfirmed
+        Manager finalization required
+        Manager sees employee comments
+        Final sign-off before archiving
+    end note
+
+    EmployeeReviewConfirmed --> Finalized: Manager finalizes
 
     note right of Finalized
         PHASE 2 READ-ONLY
@@ -73,9 +84,9 @@ stateDiagram-v2
 - **BothSubmitted**: Both parties have submitted, ready for review meeting
 
 ### Review States
-- **InReview**: Review meeting initiated, editing allowed for collaborative adjustments (Editable)
-- **EmployeeReviewConfirmed**: Employee has confirmed the review results
-- **ManagerReviewConfirmed**: Manager has confirmed the review results
+- **InReview**: Review meeting in progress - Manager can edit ALL sections, Employee has read-only access
+- **ManagerReviewConfirmed**: Manager finished review meeting, waiting for employee confirmation
+- **EmployeeReviewConfirmed**: Employee confirmed review outcome with optional comments, waiting for manager finalization
 
 ### Final State (Phase 2 Read-Only - Permanent)
 - **Finalized**: Questionnaire finalized and permanently locked by manager
@@ -91,9 +102,9 @@ stateDiagram-v2
 | EmployeeSubmitted | ❌ Wait for manager | Complete sections, Submit |
 | ManagerSubmitted | Complete sections, Submit | ❌ Wait for employee |
 | BothSubmitted | ❌ Wait for review | Initiate Review Meeting |
-| InReview | Edit answers, Confirm Review | Edit answers, Confirm Review |
-| EmployeeReviewConfirmed | ❌ Wait for finalization | Confirm Review, Finalize |
-| ManagerReviewConfirmed | ❌ Wait for finalization | Finalize |
+| InReview | ❌ Read-only view | Edit ALL sections, Finish Review |
+| ManagerReviewConfirmed | Confirm with comments | ❌ Wait for employee |
+| EmployeeReviewConfirmed | ❌ Wait for finalization | Finalize with notes |
 | Finalized | ❌ Read-only | ❌ Read-only |
 
 ## Read-Only Phases
@@ -119,7 +130,9 @@ Occurs after finalization:
 ## Key Workflow Features
 
 1. **Parallel Completion**: Employee and manager can work independently on their sections
-2. **Submit vs Confirm**: Single action to submit/approve questionnaire (not two separate steps)
-3. **Review Meeting Flexibility**: During `InReview`, both parties can make collaborative adjustments
-4. **Manager Control**: Manager controls key transitions (initiate review, finalize)
-5. **Two-Phase Read-Only**: Temporary read-only before review, permanent read-only after finalization
+2. **Manager-Led Review**: During `InReview`, manager can edit ALL sections while employee has read-only access
+3. **Review Changes Tracking**: All edits during review are logged in dedicated ReviewChangeLog projection
+4. **Employee Confirmation**: Employee must confirm review outcome (can add comments, cannot reject)
+5. **Manager Finalization**: Manager has final sign-off after seeing employee comments
+6. **"Both" Sections**: Displayed side-by-side with copy buttons for quick alignment
+7. **Two-Phase Read-Only**: Temporary read-only before review, permanent read-only after finalization

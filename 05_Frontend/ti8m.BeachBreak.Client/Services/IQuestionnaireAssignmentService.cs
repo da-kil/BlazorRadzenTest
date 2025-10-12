@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.Dto;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -40,4 +41,7 @@ public interface IQuestionnaireAssignmentService
     Task<bool> EditAnswerDuringReviewAsync(Guid assignmentId, Guid sectionId, Guid questionId, string answer, string editedBy);
     Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy);
     Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy);
+
+    // Review changes tracking
+    Task<List<ReviewChangeDto>> GetReviewChangesAsync(Guid assignmentId);
 }

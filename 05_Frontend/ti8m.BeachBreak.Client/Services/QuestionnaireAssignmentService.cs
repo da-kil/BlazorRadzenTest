@@ -345,4 +345,10 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             return false;
         }
     }
+
+    // Review changes tracking
+    public async Task<List<ReviewChangeDto>> GetReviewChangesAsync(Guid assignmentId)
+    {
+        return await GetAllAsync<ReviewChangeDto>($"{AssignmentQueryEndpoint}/{assignmentId}/review-changes");
+    }
 }
