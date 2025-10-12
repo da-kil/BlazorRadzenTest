@@ -149,7 +149,6 @@ public class QuestionnaireAssignmentQueryHandler :
             WithdrawnDate = readModel.WithdrawnDate,
             WithdrawnBy = readModel.WithdrawnBy,
             WithdrawalReason = readModel.WithdrawalReason,
-            Status = readModel.Status,  // This is the computed property that now checks WorkflowState
             AssignedBy = readModel.AssignedBy,
             Notes = readModel.Notes,
 

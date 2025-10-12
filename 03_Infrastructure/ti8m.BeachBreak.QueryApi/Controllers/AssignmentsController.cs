@@ -180,16 +180,6 @@ public class AssignmentsController : BaseController
                employeeRole.ApplicationRole == ApplicationRole.Admin;
     }
 
-    private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus> MapAssignmentStatusToDto =>
-    new Dictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus>
-    {
-        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Assigned, QueryApi.Dto.AssignmentStatus.Assigned },
-        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue, QueryApi.Dto.AssignmentStatus.Overdue },
-        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled, QueryApi.Dto.AssignmentStatus.Cancelled },
-        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress, QueryApi.Dto.AssignmentStatus.InProgress },
-        { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed, QueryApi.Dto.AssignmentStatus.Completed },
-    };
-
     /// <summary>
     /// Maps a QuestionnaireAssignment query result to a QuestionnaireAssignmentDto.
     /// Includes all workflow properties for proper state management on the frontend.
@@ -207,7 +197,6 @@ public class AssignmentsController : BaseController
             EmployeeName = assignment.EmployeeName,
             Id = assignment.Id,
             Notes = assignment.Notes,
-            Status = MapAssignmentStatusToDto[assignment.Status],
             TemplateId = assignment.TemplateId,
             TemplateName = assignment.TemplateName,
             TemplateCategoryId = assignment.TemplateCategoryId,

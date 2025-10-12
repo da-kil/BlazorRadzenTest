@@ -18,7 +18,6 @@ public class TeamAssignmentDto
     public DateTime AssignedDate { get; set; }
     public DateTime? DueDate { get; set; }
     public DateTime? CompletedDate { get; set; }
-    public AssignmentStatus Status { get; set; }
     public string? AssignedBy { get; set; }
     public string? Notes { get; set; }
 

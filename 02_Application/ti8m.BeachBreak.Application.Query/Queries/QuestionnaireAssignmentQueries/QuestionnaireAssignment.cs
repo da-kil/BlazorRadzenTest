@@ -15,7 +15,6 @@ public class QuestionnaireAssignment
     public DateTime? WithdrawnDate { get; set; }
     public string? WithdrawnBy { get; set; }
     public string? WithdrawalReason { get; set; }
-    public AssignmentStatus Status { get; set; } = AssignmentStatus.Assigned;
     public string? AssignedBy { get; set; }
     public string? Notes { get; set; }
 

@@ -44,41 +44,6 @@ public class QuestionnaireAssignmentReadModel
     public string? FinalizedBy { get; set; }
     public bool IsLocked => WorkflowState == "Finalized";
 
-    // Computed properties for compatibility with existing UI
-    public AssignmentStatus Status => DetermineStatus();
-
-    private AssignmentStatus DetermineStatus()
-    {
-        if (IsWithdrawn) return AssignmentStatus.Withdrawn;
-        if (CompletedDate.HasValue) return AssignmentStatus.Completed;
-
-        // Completed: From BothSubmitted onwards (both parties have submitted)
-        // Includes: BothSubmitted, InReview, EmployeeReviewConfirmed, ManagerReviewConfirmed, Finalized
-        if (WorkflowState == "BothSubmitted" ||
-            WorkflowState == "InReview" ||
-            WorkflowState == "EmployeeReviewConfirmed" ||
-            WorkflowState == "ManagerReviewConfirmed" ||
-            WorkflowState == "Finalized")
-        {
-            return AssignmentStatus.Completed;
-        }
-
-        // In Progress: Either party is working or has submitted (but not both)
-        // Includes: EmployeeInProgress, ManagerInProgress, BothInProgress,
-        //           EmployeeSubmitted (waiting for manager), ManagerSubmitted (waiting for employee)
-        if (WorkflowState == "EmployeeInProgress" ||
-            WorkflowState == "ManagerInProgress" ||
-            WorkflowState == "BothInProgress" ||
-            WorkflowState == "EmployeeSubmitted" ||
-            WorkflowState == "ManagerSubmitted")
-        {
-            return AssignmentStatus.InProgress;
-        }
-
-        if (DueDate.HasValue && DueDate.Value < DateTime.UtcNow) return AssignmentStatus.Overdue;
-        return AssignmentStatus.Assigned;
-    }
-
     // Apply methods for all QuestionnaireAssignment domain events
     public void Apply(QuestionnaireAssignmentAssigned @event)
     {

@@ -1,6 +1,4 @@
-﻿using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
-
-namespace ti8m.BeachBreak.QueryApi.Dto;
+﻿namespace ti8m.BeachBreak.QueryApi.Dto;
 
 public class QuestionnaireAssignmentDto
 {
@@ -12,7 +10,6 @@ public class QuestionnaireAssignmentDto
     public DateTime AssignedDate { get; set; } = DateTime.Now;
     public DateTime? DueDate { get; set; }
     public DateTime? CompletedDate { get; set; }
-    public AssignmentStatus Status { get; set; } = AssignmentStatus.Assigned;
     public string? AssignedBy { get; set; }
     public string? Notes { get; set; }
 

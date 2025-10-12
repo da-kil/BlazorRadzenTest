@@ -55,7 +55,7 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
                         ? (int)((double)completedSections / totalSections * 100)
                         : 0;
 
-                    var isCompleted = assignment.Status == AssignmentStatus.Completed;
+                    var isCompleted = assignment.WorkflowState == "Finalized";
 
                     var timeSpent = assignment.StartedDate.HasValue && assignment.CompletedDate.HasValue
                         ? assignment.CompletedDate.Value - assignment.StartedDate.Value

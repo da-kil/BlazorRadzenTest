@@ -50,11 +50,11 @@ public class GetTeamAnalyticsQueryHandler : IQueryHandler<GetTeamAnalyticsQuery,
             var allAssignments = allAssignmentReadModels.ToList();
 
             var now = DateTime.Now;
-            var completedAssignments = allAssignments.Where(a => a.Status == AssignmentStatus.Completed).ToList();
+            var completedAssignments = allAssignments.Where(a => a.WorkflowState == "Finalized").ToList();
             var overdueAssignments = allAssignments.Where(a =>
                 a.DueDate.HasValue &&
                 a.DueDate.Value < now &&
-                a.Status != AssignmentStatus.Completed &&
+                a.WorkflowState != "Finalized" &&
                 !a.IsWithdrawn).ToList();
 
             // Calculate average completion time
@@ -80,7 +80,7 @@ public class GetTeamAnalyticsQueryHandler : IQueryHandler<GetTeamAnalyticsQuery,
                 .Select(g =>
                 {
                     var total = g.Count();
-                    var completed = g.Count(a => a.Status == AssignmentStatus.Completed);
+                    var completed = g.Count(a => a.WorkflowState == "Finalized");
                     var completedWithTimes = g
                         .Where(a => a.StartedDate.HasValue && a.CompletedDate.HasValue)
                         .Select(a => (a.CompletedDate!.Value - a.StartedDate!.Value).TotalDays)
@@ -102,11 +102,11 @@ public class GetTeamAnalyticsQueryHandler : IQueryHandler<GetTeamAnalyticsQuery,
             {
                 var employee = activeTeamMembers.First(e => e.Id == employeeId);
                 var employeeAssignments = allAssignments.Where(a => a.EmployeeId == employeeId).ToList();
-                var employeeCompleted = employeeAssignments.Count(a => a.Status == AssignmentStatus.Completed);
+                var employeeCompleted = employeeAssignments.Count(a => a.WorkflowState == "Finalized");
                 var employeeOverdue = employeeAssignments.Count(a =>
                     a.DueDate.HasValue &&
                     a.DueDate.Value < now &&
-                    a.Status != AssignmentStatus.Completed &&
+                    a.WorkflowState != "Finalized" &&
                     !a.IsWithdrawn);
 
                 var employeeCompletedWithTimes = employeeAssignments
