@@ -105,14 +105,14 @@ public class ManagersController : BaseController
     [ProducesResponseType(typeof(IEnumerable<TeamAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetMyTeamAssignments([FromQuery] string? status = null)
+    public async Task<IActionResult> GetMyTeamAssignments([FromQuery] string? workflowState = null)
     {
         Guid managerId;
         try
         {
             managerId = await authorizationService.GetCurrentManagerIdAsync();
-            logger.LogInformation("Received GetMyTeamAssignments request for authenticated ManagerId: {ManagerId}, Status: {Status}",
-                managerId, status);
+            logger.LogInformation("Received GetMyTeamAssignments request for authenticated ManagerId: {ManagerId}, WorkflowState: {WorkflowState}",
+                managerId, workflowState);
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -123,7 +123,7 @@ public class ManagersController : BaseController
         try
         {
             WorkflowState? filterWorkflowState = null;
-            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<WorkflowState>(status, true, out var parsedState))
+            if (!string.IsNullOrWhiteSpace(workflowState) && Enum.TryParse<WorkflowState>(workflowState, true, out var parsedState))
             {
                 filterWorkflowState = parsedState;
             }
@@ -412,7 +412,7 @@ public class ManagersController : BaseController
     [ProducesResponseType(typeof(IEnumerable<TeamAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetManagerTeamAssignments(Guid managerId, [FromQuery] string? status = null)
+    public async Task<IActionResult> GetManagerTeamAssignments(Guid managerId, [FromQuery] string? workflowState = null)
     {
         Guid requestingUserId;
         try
@@ -433,13 +433,13 @@ public class ManagersController : BaseController
             return Forbid();
         }
 
-        logger.LogInformation("User {RequestingUserId} viewing team assignments for ManagerId: {ManagerId}, Status: {Status}",
-            requestingUserId, managerId, status);
+        logger.LogInformation("User {RequestingUserId} viewing team assignments for ManagerId: {ManagerId}, WorkflowState: {WorkflowState}",
+            requestingUserId, managerId, workflowState);
 
         try
         {
             WorkflowState? filterWorkflowState = null;
-            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<WorkflowState>(status, true, out var parsedState))
+            if (!string.IsNullOrWhiteSpace(workflowState) && Enum.TryParse<WorkflowState>(workflowState, true, out var parsedState))
             {
                 filterWorkflowState = parsedState;
             }

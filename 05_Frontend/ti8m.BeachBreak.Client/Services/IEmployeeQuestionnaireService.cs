@@ -69,9 +69,9 @@ public interface IEmployeeQuestionnaireService
     Task<QuestionnaireResponse?> SubmitMyResponseAsync(Guid assignmentId);
 
     /// <summary>
-    /// Gets assignments filtered by status for the currently authenticated employee.
+    /// Gets assignments filtered by workflow state for the currently authenticated employee.
     /// </summary>
-    Task<List<QuestionnaireAssignment>> GetAssignmentsByStatusAsync(AssignmentStatus status);
+    Task<List<QuestionnaireAssignment>> GetAssignmentsByWorkflowStateAsync(WorkflowState workflowState);
 
     /// <summary>
     /// Gets progress information for a specific assignment for the currently authenticated employee.

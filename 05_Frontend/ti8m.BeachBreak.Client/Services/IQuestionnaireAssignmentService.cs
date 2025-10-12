@@ -15,12 +15,12 @@ public interface IQuestionnaireAssignmentService
     // Assignment creation and management
     Task<List<QuestionnaireAssignment>> CreateAssignmentsAsync(Guid templateId, List<EmployeeDto> employees, DateTime? dueDate, string? notes);
     Task<List<QuestionnaireAssignment>> CreateManagerAssignmentsAsync(Guid templateId, List<EmployeeDto> employees, DateTime? dueDate, string? notes);
-    Task<QuestionnaireAssignment?> UpdateAssignmentStatusAsync(Guid id, AssignmentStatus status);
+    Task<QuestionnaireAssignment?> UpdateAssignmentWorkflowStateAsync(Guid id, WorkflowState workflowState);
 
     // Assignment queries
     Task<List<QuestionnaireAssignment>> GetAssignmentsByEmployeeAsync(Guid employeeId);
     Task<List<QuestionnaireAssignment>> GetAssignmentsByTemplateAsync(Guid templateId);
-    Task<List<QuestionnaireAssignment>> GetAssignmentsByStatusAsync(AssignmentStatus status);
+    Task<List<QuestionnaireAssignment>> GetAssignmentsByWorkflowStateAsync(WorkflowState workflowState);
     Task<List<QuestionnaireAssignment>> GetAssignmentsByAssignerAsync(string assignerId);
 
     // Assignment analytics

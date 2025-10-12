@@ -203,12 +203,13 @@ public class EmployeesController : BaseController
     /// <summary>
     /// Gets all questionnaire assignments for the currently authenticated employee.
     /// Uses UserContext to get the employee ID - more secure than accepting it as a parameter.
+    /// Optionally filter by workflow state.
     /// </summary>
     [HttpGet("me/assignments")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetMyAssignments()
+    public async Task<IActionResult> GetMyAssignments([FromQuery] string? workflowState = null)
     {
         // Get employee ID from authenticated user context (security best practice)
         if (!Guid.TryParse(userContext.Id, out var employeeId))
@@ -217,7 +218,8 @@ public class EmployeesController : BaseController
             return Unauthorized("User ID not found in authentication context");
         }
 
-        logger.LogInformation("Received GetMyAssignments request for authenticated EmployeeId: {EmployeeId}", employeeId);
+        logger.LogInformation("Received GetMyAssignments request for authenticated EmployeeId: {EmployeeId}, WorkflowState: {WorkflowState}",
+            employeeId, workflowState);
 
         try
         {
@@ -236,7 +238,15 @@ public class EmployeesController : BaseController
 
             return CreateResponse(result, assignments =>
             {
-                return assignments.Select(assignment => new QuestionnaireAssignmentDto
+                // Filter by workflow state if provided
+                var filteredAssignments = assignments;
+                if (!string.IsNullOrWhiteSpace(workflowState) &&
+                    Enum.TryParse<Domain.QuestionnaireAssignmentAggregate.WorkflowState>(workflowState, true, out var parsedState))
+                {
+                    filteredAssignments = assignments.Where(a => a.WorkflowState == parsedState);
+                }
+
+                return filteredAssignments.Select(assignment => new QuestionnaireAssignmentDto
                 {
                     Id = assignment.Id,
                     EmployeeId = assignment.EmployeeId.ToString(),

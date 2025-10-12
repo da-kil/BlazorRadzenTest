@@ -82,10 +82,10 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         }
     }
 
-    public async Task<List<QuestionnaireAssignment>> GetAssignmentsByStatusAsync(AssignmentStatus status)
+    public async Task<List<QuestionnaireAssignment>> GetAssignmentsByWorkflowStateAsync(WorkflowState workflowState)
     {
-        // Use "me" endpoint with status filter - backend resolves employee ID from UserContext
-        var queryString = $"status={status}";
+        // Use "me" endpoint with workflow state filter - backend resolves employee ID from UserContext
+        var queryString = $"workflowState={workflowState}";
         return await GetAllAsync<QuestionnaireAssignment>($"{EmployeeQueryEndpoint}/me/assignments", queryString);
     }
 

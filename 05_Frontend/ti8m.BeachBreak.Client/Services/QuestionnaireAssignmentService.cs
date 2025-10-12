@@ -120,9 +120,9 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         return newAssignments.Any() ? newAssignments : allAssignments.Where(a => employeeIds.Contains(a.EmployeeId)).ToList();
     }
 
-    public async Task<QuestionnaireAssignment?> UpdateAssignmentStatusAsync(Guid id, AssignmentStatus status)
+    public async Task<QuestionnaireAssignment?> UpdateAssignmentWorkflowStateAsync(Guid id, WorkflowState workflowState)
     {
-        return await PatchAsync<AssignmentStatus, QuestionnaireAssignment>(AssignmentCommandEndpoint, id, "status", status);
+        return await PatchAsync<WorkflowState, QuestionnaireAssignment>(AssignmentCommandEndpoint, id, "workflowState", workflowState);
     }
 
     // Assignment queries
@@ -136,9 +136,9 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/template/{templateId}");
     }
 
-    public async Task<List<QuestionnaireAssignment>> GetAssignmentsByStatusAsync(AssignmentStatus status)
+    public async Task<List<QuestionnaireAssignment>> GetAssignmentsByWorkflowStateAsync(WorkflowState workflowState)
     {
-        return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/status/{status}");
+        return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/workflowState/{workflowState}");
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsByAssignerAsync(string assignerId)

@@ -24,10 +24,10 @@ public class ManagerQuestionnaireService : BaseApiService, IManagerQuestionnaire
         return await GetAllAsync<QuestionnaireAssignment>($"{ManagerEndpoint}/me/assignments");
     }
 
-    public async Task<List<QuestionnaireAssignment>> GetTeamAssignmentsByStatusAsync(AssignmentStatus status)
+    public async Task<List<QuestionnaireAssignment>> GetTeamAssignmentsByWorkflowStateAsync(WorkflowState workflowState)
     {
         // Uses authenticated manager ID from UserContext on backend
-        return await GetAllAsync<QuestionnaireAssignment>($"{ManagerEndpoint}/me/assignments", $"status={status}");
+        return await GetAllAsync<QuestionnaireAssignment>($"{ManagerEndpoint}/me/assignments", $"workflowState={workflowState}");
     }
 
     public async Task<List<AssignmentProgress>> GetTeamProgressAsync()
