@@ -1,7 +1,7 @@
 using Marten;
 using ti8m.BeachBreak.Application.Query.Projections;
-using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.ReadModelRepositories;
 
@@ -41,13 +41,13 @@ internal class QuestionnaireAssignmentRepository(IDocumentStore store) : IQuesti
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<QuestionnaireAssignmentReadModel>> GetAssignmentsByStatusAsync(AssignmentStatus status, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<QuestionnaireAssignmentReadModel>> GetAssignmentsByWorkflowStateAsync(WorkflowState workflowState, CancellationToken cancellationToken = default)
     {
         using var session = await store.LightweightSerializableSessionAsync();
         return await session.Query<QuestionnaireAssignmentReadModel>()
-            .Where(a => !a.IsWithdrawn)
-            .ToListAsync(cancellationToken)
-            .ContinueWith(task => task.Result.Where(a => a.Status == status), cancellationToken);
+            .Where(a => !a.IsWithdrawn && a.WorkflowState == workflowState)
+            .OrderBy(a => a.AssignedDate)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<IEnumerable<QuestionnaireAssignmentReadModel>> GetOverdueAssignmentsAsync(CancellationToken cancellationToken = default)

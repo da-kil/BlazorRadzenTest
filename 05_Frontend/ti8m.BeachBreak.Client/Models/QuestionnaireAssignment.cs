@@ -10,7 +10,6 @@ public class QuestionnaireAssignment
     public DateTime AssignedDate { get; set; } = DateTime.Now;
     public DateTime? DueDate { get; set; }
     public DateTime? CompletedDate { get; set; }
-    public AssignmentStatus Status { get; set; } = AssignmentStatus.Assigned;
     public string? AssignedBy { get; set; }
     public string? Notes { get; set; }
 
@@ -19,7 +18,7 @@ public class QuestionnaireAssignment
     public Guid? TemplateCategoryId { get; set; }
 
     // Workflow properties
-    public string WorkflowState { get; set; } = "Assigned";
+    public WorkflowState WorkflowState { get; set; } = WorkflowState.Assigned;
     public List<SectionProgressDto> SectionProgress { get; set; } = new();
 
     // Submission phase

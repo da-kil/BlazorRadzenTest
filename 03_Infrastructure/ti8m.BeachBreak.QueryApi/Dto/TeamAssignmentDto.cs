@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
@@ -22,7 +23,7 @@ public class TeamAssignmentDto
     public string? Notes { get; set; }
 
     // Workflow properties
-    public string WorkflowState { get; set; } = "Assigned";
+    public WorkflowState WorkflowState { get; set; } = WorkflowState.Assigned;
     public List<SectionProgressDto> SectionProgress { get; set; } = new();
 
     // Submission phase

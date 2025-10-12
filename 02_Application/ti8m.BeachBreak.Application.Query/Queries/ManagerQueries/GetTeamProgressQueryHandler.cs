@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;
 
@@ -55,7 +56,7 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
                         ? (int)((double)completedSections / totalSections * 100)
                         : 0;
 
-                    var isCompleted = assignment.WorkflowState == "Finalized";
+                    var isCompleted = assignment.WorkflowState == WorkflowState.Finalized;
 
                     var timeSpent = assignment.StartedDate.HasValue && assignment.CompletedDate.HasValue
                         ? assignment.CompletedDate.Value - assignment.StartedDate.Value

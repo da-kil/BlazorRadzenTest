@@ -243,7 +243,7 @@ public class EmployeesController : BaseController
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
                     TemplateId = assignment.TemplateId,
-                    Status = MapAssignmentStatusToDto[assignment.Status],
+                    WorkflowState = assignment.WorkflowState,
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
@@ -312,7 +312,7 @@ public class EmployeesController : BaseController
                 EmployeeName = assignment.EmployeeName,
                 EmployeeEmail = assignment.EmployeeEmail,
                 TemplateId = assignment.TemplateId,
-                Status = MapAssignmentStatusToDto[assignment.Status],
+                WorkflowState = assignment.WorkflowState,
                 AssignedDate = assignment.AssignedDate,
                 DueDate = assignment.DueDate,
                 CompletedDate = assignment.CompletedDate,
@@ -516,7 +516,7 @@ public class EmployeesController : BaseController
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
                     TemplateId = assignment.TemplateId,
-                    Status = MapAssignmentStatusToDto[assignment.Status],
+                    WorkflowState = assignment.WorkflowState,
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
@@ -550,13 +550,4 @@ public class EmployeesController : BaseController
                employeeRole.ApplicationRole == ApplicationRole.Admin;
     }
 
-    private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus> MapAssignmentStatusToDto =>
-        new Dictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, QueryApi.Dto.AssignmentStatus>
-        {
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Assigned, QueryApi.Dto.AssignmentStatus.Assigned },
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue, QueryApi.Dto.AssignmentStatus.Overdue },
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled, QueryApi.Dto.AssignmentStatus.Cancelled },
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress, QueryApi.Dto.AssignmentStatus.InProgress },
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed, QueryApi.Dto.AssignmentStatus.Completed },
-        };
 }

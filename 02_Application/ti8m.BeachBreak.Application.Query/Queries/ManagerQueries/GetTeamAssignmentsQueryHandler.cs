@@ -51,9 +51,9 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
             // Enrich with template metadata
             var enrichedAssignments = await EnrichWithTemplateMetadataAsync(allReadModels, cancellationToken);
 
-            // Apply status filter if provided
-            var filteredAssignments = query.FilterByStatus.HasValue
-                ? enrichedAssignments.Where(a => a.Status == query.FilterByStatus.Value)
+            // Apply workflow state filter if provided
+            var filteredAssignments = query.FilterByWorkflowState.HasValue
+                ? enrichedAssignments.Where(a => a.WorkflowState == query.FilterByWorkflowState.Value)
                 : enrichedAssignments;
 
             logger.LogInformation("Retrieved {Count} team assignments for manager {ManagerId}", filteredAssignments.Count(), query.ManagerId);
@@ -130,7 +130,6 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
             WithdrawnDate = readModel.WithdrawnDate,
             WithdrawnBy = readModel.WithdrawnBy,
             WithdrawalReason = readModel.WithdrawalReason,
-            Status = readModel.Status,
             AssignedBy = readModel.AssignedBy,
             Notes = readModel.Notes,
             WorkflowState = readModel.WorkflowState,

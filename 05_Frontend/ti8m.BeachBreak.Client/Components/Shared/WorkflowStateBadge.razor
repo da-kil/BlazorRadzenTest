@@ -25,29 +25,20 @@
 
 @code {
     [Parameter]
-    public string? WorkflowState { get; set; }
+    public WorkflowState WorkflowState { get; set; }
 
     private string GetStateDisplayName()
     {
-        if (string.IsNullOrEmpty(WorkflowState))
-            return "Unknown";
-
         return WorkflowStateHelper.GetStateDisplayName(WorkflowState);
     }
 
     private string GetStateColor()
     {
-        if (string.IsNullOrEmpty(WorkflowState))
-            return "#6c757d";
-
         return WorkflowStateHelper.GetStateColor(WorkflowState);
     }
 
     private string GetStateIcon()
     {
-        if (string.IsNullOrEmpty(WorkflowState))
-            return "help";
-
         return WorkflowStateHelper.GetStateIcon(WorkflowState);
     }
 }

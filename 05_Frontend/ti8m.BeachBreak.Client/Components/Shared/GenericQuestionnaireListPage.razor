@@ -307,7 +307,7 @@
         var isOverdue = IsOverdue(assignment);
         var dueDateColor = isOverdue ? "var(--rz-danger)" : "var(--rz-text-secondary-color)";
         var dueDateTextColor = isOverdue ? "var(--rz-danger)" : "inherit";
-        var statusColor = GetStatusColor(assignment.Status);
+        var statusColor = GetStatusColor(assignment.WorkflowState);
 
         <RadzenCard Class="@($"questionnaire-card mb-3 {GetCardCssClass(assignment)}")" Style="border-left: 4px solid var(--rz-primary);">
             <div class="d-flex justify-content-between align-items-start">
@@ -321,7 +321,7 @@
                     </div>
 
                     <!-- Workflow State Badge (if not default) -->
-                    @if (!string.IsNullOrEmpty(assignment.WorkflowState) && assignment.WorkflowState != "Assigned")
+                    @if (assignment.WorkflowState != WorkflowState.Assigned)
                     {
                         <div class="mt-2">
                             <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
@@ -369,13 +369,13 @@
 
                         <div class="col-md-4">
                             <div class="d-flex align-items-center gap-2">
-                                <RadzenIcon Icon="@GetStatusIcon(assignment.Status)" Style="@($"font-size: 1rem; color: {statusColor};")" />
+                                <RadzenIcon Icon="@GetStatusIcon(assignment.WorkflowState)" Style="@($"font-size: 1rem; color: {statusColor};")" />
                                 <div>
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0" Style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
                                         Status
                                     </RadzenText>
-                                    <RadzenBadge Text="@GetStatusText(assignment.Status)"
-                                                BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
+                                    <RadzenBadge Text="@GetStatusText(assignment.WorkflowState)"
+                                                BadgeStyle="@GetStatusBadgeStyle(assignment.WorkflowState)"
                                                 Style="font-size: 0.75rem;" />
                                 </div>
                             </div>
@@ -399,7 +399,7 @@
                         else if (WorkflowStateHelper.CanEmployeeEdit(assignment))
                         {
                             // Can edit if: Assigned, EmployeeInProgress, BothInProgress, or InReview
-                            var hasProgress = assignment.WorkflowState != "Assigned";
+                            var hasProgress = assignment.WorkflowState != WorkflowState.Assigned;
                             <RadzenButton Text="@(hasProgress ? "CONTINUE" : "START")"
                                          Icon="@(hasProgress ? "play_circle" : "play_arrow")"
                                          ButtonStyle="ButtonStyle.Primary"
@@ -534,21 +534,21 @@
     private List<QuestionnaireAssignment> GetCurrentAssignments()
     {
         var baseAssignments = allAssignments.Where(a =>
-            a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress).ToList();
+            a.WorkflowState != WorkflowState.Finalized).ToList();
         return ApplyFilteringToAssignments(baseAssignments);
     }
 
     private List<QuestionnaireAssignment> GetUpcomingAssignments()
     {
         var baseAssignments = allAssignments.Where(a =>
-            a.Status == AssignmentStatus.Assigned &&
+            a.WorkflowState == WorkflowState.Assigned &&
             a.AssignedDate > DateTime.Now.AddDays(-1)).ToList();
         return ApplyFilteringToAssignments(baseAssignments);
     }
 
     private List<QuestionnaireAssignment> GetCompletedAssignments()
     {
-        var baseAssignments = allAssignments.Where(a => a.Status == AssignmentStatus.Completed).ToList();
+        var baseAssignments = allAssignments.Where(a => a.WorkflowState == WorkflowState.Finalized).ToList();
         return ApplyFilteringToAssignments(baseAssignments);
     }
 
@@ -557,64 +557,81 @@
         var baseAssignments = allAssignments.Where(a =>
             a.DueDate.HasValue &&
             a.DueDate.Value < DateTime.Now &&
-            a.Status != AssignmentStatus.Completed).ToList();
+            a.WorkflowState != WorkflowState.Finalized).ToList();
         return ApplyFilteringToAssignments(baseAssignments);
     }
 
     // UI Helper methods
     private string GetCardCssClass(QuestionnaireAssignment assignment)
     {
-        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
             return "overdue-card";
 
-        return assignment.Status switch
+        return assignment.WorkflowState switch
         {
-            AssignmentStatus.InProgress => "inprogress-card",
-            AssignmentStatus.Completed => "completed-card",
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "inprogress-card",
+            WorkflowState.Finalized => "completed-card",
             _ => "assigned-card"
         };
     }
 
-    private BadgeStyle GetStatusBadgeStyle(AssignmentStatus status)
+    private BadgeStyle GetStatusBadgeStyle(WorkflowState state)
     {
-        return status switch
+        return state switch
         {
-            AssignmentStatus.Assigned => BadgeStyle.Secondary,
-            AssignmentStatus.InProgress => BadgeStyle.Info,
-            AssignmentStatus.Completed => BadgeStyle.Success,
+            WorkflowState.Assigned => BadgeStyle.Secondary,
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => BadgeStyle.Info,
+            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => BadgeStyle.Warning,
+            WorkflowState.InReview => BadgeStyle.Info,
+            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => BadgeStyle.Success,
+            WorkflowState.Finalized => BadgeStyle.Success,
             _ => BadgeStyle.Light
         };
     }
 
-    private string GetStatusText(AssignmentStatus status)
+    private string GetStatusText(WorkflowState state)
     {
-        return status switch
+        return state switch
         {
-            AssignmentStatus.Assigned => "ASSIGNED",
-            AssignmentStatus.InProgress => "IN PROGRESS",
-            AssignmentStatus.Completed => "COMPLETED",
-            _ => status.ToString().ToUpper()
+            WorkflowState.Assigned => "ASSIGNED",
+            WorkflowState.EmployeeInProgress => "EMPLOYEE IN PROGRESS",
+            WorkflowState.ManagerInProgress => "MANAGER IN PROGRESS",
+            WorkflowState.BothInProgress => "IN PROGRESS",
+            WorkflowState.EmployeeSubmitted => "EMPLOYEE SUBMITTED",
+            WorkflowState.ManagerSubmitted => "MANAGER SUBMITTED",
+            WorkflowState.BothSubmitted => "SUBMITTED",
+            WorkflowState.InReview => "IN REVIEW",
+            WorkflowState.EmployeeReviewConfirmed => "EMPLOYEE CONFIRMED",
+            WorkflowState.ManagerReviewConfirmed => "MANAGER CONFIRMED",
+            WorkflowState.Finalized => "FINALIZED",
+            _ => state.ToString().ToUpper()
         };
     }
 
-    private string GetStatusIcon(AssignmentStatus status)
+    private string GetStatusIcon(WorkflowState state)
     {
-        return status switch
+        return state switch
         {
-            AssignmentStatus.Assigned => "assignment",
-            AssignmentStatus.InProgress => "pending",
-            AssignmentStatus.Completed => "check_circle",
+            WorkflowState.Assigned => "assignment",
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "pending",
+            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "send",
+            WorkflowState.InReview => "rate_review",
+            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "check_circle_outline",
+            WorkflowState.Finalized => "check_circle",
             _ => "help"
         };
     }
 
-    private string GetStatusColor(AssignmentStatus status)
+    private string GetStatusColor(WorkflowState state)
     {
-        return status switch
+        return state switch
         {
-            AssignmentStatus.Assigned => "var(--rz-secondary)",
-            AssignmentStatus.InProgress => "var(--rz-info)",
-            AssignmentStatus.Completed => "var(--rz-success)",
+            WorkflowState.Assigned => "var(--rz-secondary)",
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "var(--rz-info)",
+            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "var(--rz-warning)",
+            WorkflowState.InReview => "var(--rz-info)",
+            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "var(--rz-success)",
+            WorkflowState.Finalized => "var(--rz-success)",
             _ => "var(--rz-text-secondary-color)"
         };
     }
@@ -623,7 +640,7 @@
     {
         return assignment.DueDate.HasValue &&
                assignment.DueDate.Value < DateTime.Now &&
-               assignment.Status != AssignmentStatus.Completed;
+               assignment.WorkflowState != WorkflowState.Finalized;
     }
 
     private ButtonStyle GetButtonStyle(string buttonStyle)
@@ -746,19 +763,19 @@
         // Apply status filter
         if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All")
         {
-            if (Enum.TryParse<AssignmentStatus>(statusFilter.Replace(" ", ""), out var status))
+            if (Enum.TryParse<WorkflowState>(statusFilter.Replace(" ", ""), out var state))
             {
-                filteredAssignments = filteredAssignments.Where(a => a.Status == status);
+                filteredAssignments = filteredAssignments.Where(a => a.WorkflowState == state);
             }
             else if (statusFilter == "Pending")
             {
                 filteredAssignments = filteredAssignments.Where(a =>
-                    a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress);
+                    a.WorkflowState != WorkflowState.Finalized);
             }
             else if (statusFilter == "Overdue")
             {
                 filteredAssignments = filteredAssignments.Where(a =>
-                    a.DueDate.HasValue && a.DueDate.Value < DateTime.Now && a.Status != AssignmentStatus.Completed);
+                    a.DueDate.HasValue && a.DueDate.Value < DateTime.Now && a.WorkflowState != WorkflowState.Finalized);
             }
         }
 
@@ -844,15 +861,15 @@
 
     private bool IsQuestionnaireCompleted(QuestionnaireAssignment assignment)
     {
-        if (assignment == null || string.IsNullOrEmpty(assignment.WorkflowState)) return false;
+        if (assignment == null) return false;
 
         // For employees: questionnaire is "completed" (read-only VIEW button) when:
         // - Employee has submitted (EmployeeSubmitted, BothSubmitted)
         // - In review phase (InReview, EmployeeReviewConfirmed, ManagerReviewConfirmed)
         // - Finalized
-        return assignment.WorkflowState is "EmployeeSubmitted" or "BothSubmitted"
-            or "InReview" or "EmployeeReviewConfirmed" or "ManagerReviewConfirmed"
-            or "Finalized";
+        return assignment.WorkflowState is WorkflowState.EmployeeSubmitted or WorkflowState.BothSubmitted
+            or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed
+            or WorkflowState.Finalized;
     }
 
     private async Task<List<QuestionnaireAssignment>> GetAssignmentsPaginated(int page, int size)
@@ -916,7 +933,7 @@
             a.EmployeeId.ToString() == member.Id.ToString() &&
             a.DueDate.HasValue &&
             a.DueDate.Value < DateTime.Now &&
-            a.Status != AssignmentStatus.Completed);
+            a.WorkflowState != WorkflowState.Finalized);
     }
 
     private double GetMemberProgressPercentage(EmployeeDto member)
@@ -924,7 +941,7 @@
         var memberAssignments = allAssignments.Where(a => a.EmployeeId.ToString() == member.Id.ToString()).ToList();
         if (!memberAssignments.Any()) return 0;
 
-        var completed = memberAssignments.Count(a => a.Status == AssignmentStatus.Completed);
+        var completed = memberAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
         return (double)completed / memberAssignments.Count * 100;
     }
 
@@ -993,10 +1010,12 @@
     {
         return statusFilter switch
         {
-            "Pending" => assignment.Status == AssignmentStatus.Assigned || assignment.Status == AssignmentStatus.InProgress,
-            "In Progress" => assignment.Status == AssignmentStatus.InProgress,
-            "Completed" => assignment.Status == AssignmentStatus.Completed,
-            "Overdue" => assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed,
+            "Pending" => assignment.WorkflowState != WorkflowState.Finalized,
+            "In Progress" => assignment.WorkflowState == WorkflowState.EmployeeInProgress ||
+                            assignment.WorkflowState == WorkflowState.ManagerInProgress ||
+                            assignment.WorkflowState == WorkflowState.BothInProgress,
+            "Completed" => assignment.WorkflowState == WorkflowState.Finalized,
+            "Overdue" => assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized,
             _ => true
         };
     }
@@ -1040,13 +1059,13 @@
 
         public double CompletionPercentage =>
             Assignments.Count > 0
-                ? Math.Round((double)Assignments.Count(a => a.Status == AssignmentStatus.Completed) / Assignments.Count * 100, 1)
+                ? Math.Round((double)Assignments.Count(a => a.WorkflowState == WorkflowState.Finalized) / Assignments.Count * 100, 1)
                 : 0;
 
         public int OverdueCount =>
             Assignments.Count(a =>
                 a.DueDate.HasValue &&
                 a.DueDate.Value < DateTime.Now &&
-                a.Status != AssignmentStatus.Completed);
+                a.WorkflowState != WorkflowState.Finalized);
     }
 }

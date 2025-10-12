@@ -201,7 +201,7 @@ public static class QuestionnairePageConfigurationFactory
                         Icon = "pending_actions",
                         IconClass = "text-warning",
                         CssClass = "stats-pending",
-                        ValueCalculator = () => allAssignments.Count(a => a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress)
+                        ValueCalculator = () => allAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized)
                     },
                     new()
                     {
@@ -210,7 +210,7 @@ public static class QuestionnairePageConfigurationFactory
                         Icon = "task_alt",
                         IconClass = "text-success",
                         CssClass = "stats-completed",
-                        ValueCalculator = () => allAssignments.Count(a => a.Status == AssignmentStatus.Completed)
+                        ValueCalculator = () => allAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized)
                     },
                     new()
                     {
@@ -219,7 +219,7 @@ public static class QuestionnairePageConfigurationFactory
                         Icon = "warning",
                         IconClass = "text-danger",
                         CssClass = "stats-overdue",
-                        ValueCalculator = () => allAssignments.Count(a => a.DueDate.HasValue && a.DueDate.Value < DateTime.Now && a.Status != AssignmentStatus.Completed)
+                        ValueCalculator = () => allAssignments.Count(a => a.DueDate.HasValue && a.DueDate.Value < DateTime.Now && a.WorkflowState != WorkflowState.Finalized)
                     }
                 }
             }
@@ -360,7 +360,7 @@ public static class QuestionnairePageConfigurationFactory
                         Icon = "pending_actions",
                         IconClass = "text-warning",
                         CssClass = "stats-pending",
-                        ValueCalculator = () => allAssignments.Count(a => a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress)
+                        ValueCalculator = () => allAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized)
                     },
                     new()
                     {
@@ -369,7 +369,7 @@ public static class QuestionnairePageConfigurationFactory
                         Icon = "task_alt",
                         IconClass = "text-success",
                         CssClass = "stats-completed",
-                        ValueCalculator = () => allAssignments.Count(a => a.Status == AssignmentStatus.Completed)
+                        ValueCalculator = () => allAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized)
                     },
                     new()
                     {
@@ -378,7 +378,7 @@ public static class QuestionnairePageConfigurationFactory
                         Icon = "warning",
                         IconClass = "text-danger",
                         CssClass = "stats-overdue",
-                        ValueCalculator = () => allAssignments.Count(a => a.DueDate.HasValue && a.DueDate.Value < DateTime.Now && a.Status != AssignmentStatus.Completed)
+                        ValueCalculator = () => allAssignments.Count(a => a.DueDate.HasValue && a.DueDate.Value < DateTime.Now && a.WorkflowState != WorkflowState.Finalized)
                     }
                 }
             }

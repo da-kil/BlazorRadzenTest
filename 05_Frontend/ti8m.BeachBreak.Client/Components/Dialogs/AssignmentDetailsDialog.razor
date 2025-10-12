@@ -276,7 +276,7 @@
         <div class="hero-content">
             <div class="status-chip @GetStatusClass()">
                 <RadzenIcon Icon="@GetStatusIcon()" />
-                @Assignment.Status.ToString()
+                @Assignment.WorkflowState.ToString()
             </div>
 
             <RadzenText TextStyle="TextStyle.H3" Class="mb-2">Assignment Details</RadzenText>
@@ -397,7 +397,9 @@
                             </div>
                         </div>
 
-                        @if (Assignment.Status == AssignmentStatus.InProgress)
+                        @if (Assignment.WorkflowState == WorkflowState.EmployeeInProgress ||
+                             Assignment.WorkflowState == WorkflowState.ManagerInProgress ||
+                             Assignment.WorkflowState == WorkflowState.BothInProgress)
                         {
                             <div class="mt-3">
                                 <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">Progress</RadzenText>
@@ -405,7 +407,7 @@
                                     <div class="progress-fill" style="width: 60%;"></div>
                                 </div>
                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                    Employee is actively working on this questionnaire
+                                    Questionnaire is in progress
                                 </RadzenText>
                             </div>
                         }
@@ -434,7 +436,7 @@
 
     <!-- Action Bar -->
     <div class="action-bar">
-        @if (Assignment.Status != AssignmentStatus.Completed && Assignment.Status != AssignmentStatus.Cancelled)
+        @if (Assignment.WorkflowState != WorkflowState.Finalized)
         {
             <RadzenButton Text="Assign to More"
                          ButtonStyle="ButtonStyle.Secondary"
@@ -466,26 +468,25 @@
 
     private string GetStatusClass()
     {
-        return Assignment.Status switch
+        return Assignment.WorkflowState switch
         {
-            AssignmentStatus.Assigned => "status-assigned",
-            AssignmentStatus.InProgress => "status-in-progress",
-            AssignmentStatus.Completed => "status-completed",
-            AssignmentStatus.Overdue => "status-overdue",
-            AssignmentStatus.Cancelled => "status-cancelled",
+            WorkflowState.Assigned => "status-assigned",
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "status-in-progress",
+            WorkflowState.Finalized => "status-completed",
             _ => "status-assigned"
         };
     }
 
     private string GetStatusIcon()
     {
-        return Assignment.Status switch
+        return Assignment.WorkflowState switch
         {
-            AssignmentStatus.Assigned => "assignment",
-            AssignmentStatus.InProgress => "hourglass_top",
-            AssignmentStatus.Completed => "check_circle",
-            AssignmentStatus.Overdue => "warning",
-            AssignmentStatus.Cancelled => "cancel",
+            WorkflowState.Assigned => "assignment",
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "hourglass_top",
+            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "send",
+            WorkflowState.InReview => "rate_review",
+            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "check_circle_outline",
+            WorkflowState.Finalized => "check_circle",
             _ => "assignment"
         };
     }
@@ -494,7 +495,7 @@
     {
         return Assignment.DueDate.HasValue &&
                Assignment.DueDate < DateTime.Now &&
-               Assignment.Status != AssignmentStatus.Completed;
+               Assignment.WorkflowState != WorkflowState.Finalized;
     }
 
     private int GetTotalQuestions()

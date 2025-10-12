@@ -2,8 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;
-using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
-using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Dto;
 
@@ -123,13 +122,13 @@ public class ManagersController : BaseController
 
         try
         {
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus? filterStatus = null;
-            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus>(status, true, out var parsedStatus))
+            WorkflowState? filterWorkflowState = null;
+            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<WorkflowState>(status, true, out var parsedState))
             {
-                filterStatus = parsedStatus;
+                filterWorkflowState = parsedState;
             }
 
-            var query = new GetTeamAssignmentsQuery(managerId, filterStatus);
+            var query = new GetTeamAssignmentsQuery(managerId, filterWorkflowState);
             var result = await queryDispatcher.QueryAsync(query);
 
             if (result.Succeeded)
@@ -155,7 +154,6 @@ public class ManagersController : BaseController
                     TemplateId = assignment.TemplateId,
                     TemplateName = assignment.TemplateName,
                     TemplateCategoryId = assignment.TemplateCategoryId,
-                    Status = MapAssignmentStatusToDto[assignment.Status],
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
@@ -440,13 +438,13 @@ public class ManagersController : BaseController
 
         try
         {
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus? filterStatus = null;
-            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus>(status, true, out var parsedStatus))
+            WorkflowState? filterWorkflowState = null;
+            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<WorkflowState>(status, true, out var parsedState))
             {
-                filterStatus = parsedStatus;
+                filterWorkflowState = parsedState;
             }
 
-            var query = new GetTeamAssignmentsQuery(managerId, filterStatus);
+            var query = new GetTeamAssignmentsQuery(managerId, filterWorkflowState);
             var result = await queryDispatcher.QueryAsync(query);
 
             if (result.Succeeded)
@@ -472,7 +470,6 @@ public class ManagersController : BaseController
                     TemplateId = assignment.TemplateId,
                     TemplateName = assignment.TemplateName,
                     TemplateCategoryId = assignment.TemplateCategoryId,
-                    Status = MapAssignmentStatusToDto[assignment.Status],
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
@@ -511,13 +508,4 @@ public class ManagersController : BaseController
         }
     }
 
-    private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, Dto.AssignmentStatus> MapAssignmentStatusToDto =>
-        new Dictionary<Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus, Dto.AssignmentStatus>
-        {
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Assigned, Dto.AssignmentStatus.Assigned },
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue, Dto.AssignmentStatus.Overdue },
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled, Dto.AssignmentStatus.Cancelled },
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress, Dto.AssignmentStatus.InProgress },
-            { Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed, Dto.AssignmentStatus.Completed },
-        };
 }

@@ -1,3 +1,4 @@
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
@@ -22,7 +23,7 @@ public class QuestionnaireAssignmentReadModel
     public string? WithdrawalReason { get; set; }
 
     // Workflow properties
-    public string WorkflowState { get; set; } = "Assigned";
+    public WorkflowState WorkflowState { get; set; } = WorkflowState.Assigned;
     public List<SectionProgressDto> SectionProgress { get; set; } = new();
 
     // Submission phase
@@ -42,7 +43,7 @@ public class QuestionnaireAssignmentReadModel
     // Final state
     public DateTime? FinalizedDate { get; set; }
     public string? FinalizedBy { get; set; }
-    public bool IsLocked => WorkflowState == "Finalized";
+    public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
     // Apply methods for all QuestionnaireAssignment domain events
     public void Apply(QuestionnaireAssignmentAssigned @event)
@@ -141,7 +142,7 @@ public class QuestionnaireAssignmentReadModel
     {
         ReviewInitiatedDate = @event.InitiatedDate;
         ReviewInitiatedBy = @event.InitiatedBy;
-        WorkflowState = "InReview";
+        WorkflowState = WorkflowState.InReview;
     }
 
     public void Apply(AnswerEditedDuringReview @event)
@@ -154,39 +155,46 @@ public class QuestionnaireAssignmentReadModel
     {
         EmployeeReviewConfirmedDate = @event.ConfirmedDate;
         EmployeeReviewConfirmedBy = @event.ConfirmedBy;
-        WorkflowState = "EmployeeReviewConfirmed";
+        WorkflowState = WorkflowState.EmployeeReviewConfirmed;
     }
 
     public void Apply(ManagerReviewConfirmed @event)
     {
         ManagerReviewConfirmedDate = @event.ConfirmedDate;
         ManagerReviewConfirmedBy = @event.ConfirmedBy;
-        WorkflowState = "ManagerReviewConfirmed";
+        WorkflowState = WorkflowState.ManagerReviewConfirmed;
     }
 
     public void Apply(QuestionnaireFinalized @event)
     {
         FinalizedDate = @event.FinalizedDate;
         FinalizedBy = @event.FinalizedBy;
-        WorkflowState = "Finalized";
+        WorkflowState = WorkflowState.Finalized;
     }
 
     private void UpdateWorkflowState()
     {
+        // CRITICAL: Do not update workflow state if either party has already submitted
+        // Once submitted, only submission events (via UpdateWorkflowStateOnSubmission) should change the state
+        if (EmployeeSubmittedDate.HasValue || ManagerSubmittedDate.HasValue)
+        {
+            return; // Preserve the current submitted state
+        }
+
         var hasEmployeeProgress = SectionProgress.Any(p => p.IsEmployeeCompleted);
         var hasManagerProgress = SectionProgress.Any(p => p.IsManagerCompleted);
 
         if (hasEmployeeProgress && hasManagerProgress)
         {
-            WorkflowState = "BothInProgress";
+            WorkflowState = WorkflowState.BothInProgress;
         }
         else if (hasEmployeeProgress)
         {
-            WorkflowState = "EmployeeInProgress";
+            WorkflowState = WorkflowState.EmployeeInProgress;
         }
         else if (hasManagerProgress)
         {
-            WorkflowState = "ManagerInProgress";
+            WorkflowState = WorkflowState.ManagerInProgress;
         }
     }
 
@@ -194,15 +202,15 @@ public class QuestionnaireAssignmentReadModel
     {
         if (EmployeeSubmittedDate.HasValue && ManagerSubmittedDate.HasValue)
         {
-            WorkflowState = "BothSubmitted";
+            WorkflowState = WorkflowState.BothSubmitted;
         }
         else if (EmployeeSubmittedDate.HasValue)
         {
-            WorkflowState = "EmployeeSubmitted";
+            WorkflowState = WorkflowState.EmployeeSubmitted;
         }
         else if (ManagerSubmittedDate.HasValue)
         {
-            WorkflowState = "ManagerSubmitted";
+            WorkflowState = WorkflowState.ManagerSubmitted;
         }
     }
 }

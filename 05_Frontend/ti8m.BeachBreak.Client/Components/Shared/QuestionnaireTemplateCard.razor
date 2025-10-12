@@ -111,15 +111,15 @@
                                 <RadzenText TextStyle="TextStyle.Caption" Class="@GetDueDateClass(assignment)">
                                     <RadzenIcon Icon="event" Style="font-size: 0.75rem;" />
                                     Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
-                                    @if (assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+                                    @if (assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
                                     {
                                         <span class="text-danger fw-bold"> (Overdue by @((DateTime.Now - assignment.DueDate.Value).Days) days)</span>
                                     }
                                 </RadzenText>
                             }
                         </div>
-                        <RadzenBadge Text="@assignment.Status.ToString()"
-                                    BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
+                        <RadzenBadge Text="@assignment.WorkflowState.ToString()"
+                                    BadgeStyle="@GetStatusBadgeStyle(assignment.WorkflowState)"
                                     Class="ms-2" />
                     </div>
                 }
@@ -166,13 +166,16 @@
     [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
 
     private int TotalAssignments => Assignments.Count;
-    private int AssignedCount => Assignments.Count(a => a.Status == AssignmentStatus.Assigned);
-    private int InProgressCount => Assignments.Count(a => a.Status == AssignmentStatus.InProgress);
-    private int CompletedCount => Assignments.Count(a => a.Status == AssignmentStatus.Completed);
+    private int AssignedCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Assigned);
+    private int InProgressCount => Assignments.Count(a =>
+        a.WorkflowState == WorkflowState.EmployeeInProgress ||
+        a.WorkflowState == WorkflowState.ManagerInProgress ||
+        a.WorkflowState == WorkflowState.BothInProgress);
+    private int CompletedCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
     private int OverdueCount => Assignments.Count(a =>
         a.DueDate.HasValue &&
         a.DueDate.Value < DateTime.Now &&
-        a.Status != AssignmentStatus.Completed);
+        a.WorkflowState != WorkflowState.Finalized);
 
     private double CompletionPercentage =>
         TotalAssignments > 0 ? Math.Round((double)CompletedCount / TotalAssignments * 100, 1) : 0;
@@ -206,37 +209,38 @@
         return ProgressBarStyle.Warning;
     }
 
-    private BadgeStyle GetStatusBadgeStyle(AssignmentStatus status)
+    private BadgeStyle GetStatusBadgeStyle(WorkflowState state)
     {
-        return status switch
+        return state switch
         {
-            AssignmentStatus.Assigned => BadgeStyle.Secondary,
-            AssignmentStatus.InProgress => BadgeStyle.Info,
-            AssignmentStatus.Completed => BadgeStyle.Success,
-            AssignmentStatus.Overdue => BadgeStyle.Danger,
+            WorkflowState.Assigned => BadgeStyle.Secondary,
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => BadgeStyle.Info,
+            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => BadgeStyle.Primary,
+            WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => BadgeStyle.Warning,
+            WorkflowState.Finalized => BadgeStyle.Success,
             _ => BadgeStyle.Light
         };
     }
 
     private string GetAssignmentBorderClass(QuestionnaireAssignment assignment)
     {
-        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
             return "border-danger";
 
-        return assignment.Status switch
+        return assignment.WorkflowState switch
         {
-            AssignmentStatus.InProgress => "border-info",
-            AssignmentStatus.Completed => "border-success",
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "border-info",
+            WorkflowState.Finalized => "border-success",
             _ => "border-secondary"
         };
     }
 
     private string GetDueDateClass(QuestionnaireAssignment assignment)
     {
-        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
             return "text-danger";
 
-        if (assignment.DueDate.HasValue && (assignment.DueDate.Value - DateTime.Now).Days <= 3 && assignment.Status != AssignmentStatus.Completed)
+        if (assignment.DueDate.HasValue && (assignment.DueDate.Value - DateTime.Now).Days <= 3 && assignment.WorkflowState != WorkflowState.Finalized)
             return "text-warning";
 
         return "text-muted";
@@ -245,15 +249,15 @@
     private int GetAssignmentPriority(QuestionnaireAssignment assignment)
     {
         // Overdue gets highest priority
-        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.Status != AssignmentStatus.Completed)
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
             return 3;
 
         // In progress is next
-        if (assignment.Status == AssignmentStatus.InProgress)
+        if (assignment.WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress)
             return 2;
 
         // Assigned is next
-        if (assignment.Status == AssignmentStatus.Assigned)
+        if (assignment.WorkflowState == WorkflowState.Assigned)
             return 1;
 
         // Completed is lowest

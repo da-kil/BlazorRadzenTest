@@ -138,42 +138,42 @@
             {
                 Label = "Assigned",
                 SubLabel = Assignment.AssignedDate.ToString("MMM dd"),
-                IsCompleted = currentState != "Assigned",
-                IsActive = currentState == "Assigned"
+                IsCompleted = currentState != WorkflowState.Assigned,
+                IsActive = currentState == WorkflowState.Assigned
             },
             new WorkflowStep
             {
                 Label = "In Progress",
                 SubLabel = GetProgressSubLabel(),
-                IsCompleted = IsStateAfter(currentState, "BothInProgress"),
-                IsActive = currentState.Contains("InProgress")
+                IsCompleted = IsStateAfter(currentState, WorkflowState.BothInProgress),
+                IsActive = IsInProgressState(currentState)
             },
             new WorkflowStep
             {
                 Label = "Submitted",
                 SubLabel = GetSubmittedSubLabel(),
-                IsCompleted = IsStateAfter(currentState, "BothSubmitted"),
-                IsActive = currentState.Contains("Submitted") && currentState != "BothSubmitted"
+                IsCompleted = IsStateAfter(currentState, WorkflowState.BothSubmitted),
+                IsActive = IsSubmittedState(currentState) && currentState != WorkflowState.BothSubmitted
             },
             new WorkflowStep
             {
                 Label = "Review",
                 SubLabel = Assignment.ReviewInitiatedDate?.ToString("MMM dd"),
-                IsCompleted = IsStateAfter(currentState, "InReview"),
-                IsActive = currentState == "InReview"
+                IsCompleted = IsStateAfter(currentState, WorkflowState.InReview),
+                IsActive = currentState == WorkflowState.InReview
             },
             new WorkflowStep
             {
                 Label = "Review Confirmed",
                 SubLabel = Assignment.EmployeeReviewConfirmedDate?.ToString("MMM dd"),
-                IsCompleted = currentState == "Finalized",
-                IsActive = currentState == "EmployeeReviewConfirmed"
+                IsCompleted = currentState == WorkflowState.Finalized,
+                IsActive = currentState == WorkflowState.EmployeeReviewConfirmed
             },
             new WorkflowStep
             {
                 Label = "Finalized",
                 SubLabel = Assignment.FinalizedDate?.ToString("MMM dd"),
-                IsCompleted = currentState == "Finalized",
+                IsCompleted = currentState == WorkflowState.Finalized,
                 IsActive = false
             }
         };
@@ -205,21 +205,35 @@
         return null;
     }
 
-    private bool IsStateAfter(string currentState, string referenceState)
+    private bool IsInProgressState(WorkflowState state)
     {
-        var stateOrder = new List<string>
+        return state == WorkflowState.EmployeeInProgress ||
+               state == WorkflowState.ManagerInProgress ||
+               state == WorkflowState.BothInProgress;
+    }
+
+    private bool IsSubmittedState(WorkflowState state)
+    {
+        return state == WorkflowState.EmployeeSubmitted ||
+               state == WorkflowState.ManagerSubmitted ||
+               state == WorkflowState.BothSubmitted;
+    }
+
+    private bool IsStateAfter(WorkflowState currentState, WorkflowState referenceState)
+    {
+        var stateOrder = new List<WorkflowState>
         {
-            "Assigned",
-            "EmployeeInProgress",
-            "ManagerInProgress",
-            "BothInProgress",
-            "EmployeeSubmitted",
-            "ManagerSubmitted",
-            "BothSubmitted",
-            "InReview",
-            "EmployeeReviewConfirmed",
-            "ManagerReviewConfirmed",
-            "Finalized"
+            WorkflowState.Assigned,
+            WorkflowState.EmployeeInProgress,
+            WorkflowState.ManagerInProgress,
+            WorkflowState.BothInProgress,
+            WorkflowState.EmployeeSubmitted,
+            WorkflowState.ManagerSubmitted,
+            WorkflowState.BothSubmitted,
+            WorkflowState.InReview,
+            WorkflowState.EmployeeReviewConfirmed,
+            WorkflowState.ManagerReviewConfirmed,
+            WorkflowState.Finalized
         };
 
         var currentIndex = stateOrder.IndexOf(currentState);

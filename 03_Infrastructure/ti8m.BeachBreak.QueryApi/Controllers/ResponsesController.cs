@@ -113,10 +113,10 @@ public class ResponsesController : BaseController
                     EmployeeId = assignment.EmployeeId.ToString(),
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
+                    WorkflowState = assignment.WorkflowState,
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
-                    Status = MapAssignmentStatus(assignment.Status),
                     AssignedBy = assignment.AssignedBy,
                     Notes = assignment.Notes
                 });
@@ -355,17 +355,4 @@ public class ResponsesController : BaseController
         return result;
     }
 
-    // Helper methods for status mapping
-    private static Dto.AssignmentStatus MapAssignmentStatus(Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus status)
-    {
-        return status switch
-        {
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Assigned => Dto.AssignmentStatus.Assigned,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress => Dto.AssignmentStatus.InProgress,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed => Dto.AssignmentStatus.Completed,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue => Dto.AssignmentStatus.Overdue,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled => Dto.AssignmentStatus.Cancelled,
-            _ => Dto.AssignmentStatus.Assigned
-        };
-    }
 }

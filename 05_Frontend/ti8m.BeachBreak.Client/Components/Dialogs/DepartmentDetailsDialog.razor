@@ -275,7 +275,7 @@
 
     private RenderFragment RenderAssignmentsView()
     {
-        var assignmentsByStatus = DepartmentAssignments.GroupBy(a => a.Status).ToDictionary(g => g.Key, g => g.ToList());
+        var assignmentsByStatus = DepartmentAssignments.GroupBy(a => a.WorkflowState).ToDictionary(g => g.Key, g => g.ToList());
 
         return @<div>
             <div class="row">
@@ -319,7 +319,7 @@
             <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
                 @(employee?.FullName ?? "Unknown Employee")
             </RadzenText>
-            <AssignmentStatusBadge Status="@assignment.Status" DueDate="@assignment.DueDate" />
+            <WorkflowStateBadge WorkflowState="@assignment.WorkflowState" />
             @if (assignment.DueDate.HasValue)
             {
                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
@@ -402,7 +402,7 @@
     }
 
     // Helper methods
-    private int GetDepartmentCompletedCount() => DepartmentAssignments.Count(a => a.Status == AssignmentStatus.Completed);
+    private int GetDepartmentCompletedCount() => DepartmentAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
     private int GetDepartmentOverdueCount() => DepartmentAssignments.Count(IsOverdue);
 
     private int GetDepartmentProgressPercentage()
@@ -448,7 +448,7 @@
 
     private double GetDepartmentAverageCompletionDays()
     {
-        var completed = DepartmentAssignments.Where(a => a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        var completed = DepartmentAssignments.Where(a => a.WorkflowState == WorkflowState.Finalized && a.CompletedDate.HasValue);
         if (!completed.Any()) return 0;
 
         return Math.Round(completed.Average(a => (a.CompletedDate!.Value - a.AssignedDate).TotalDays), 1);
@@ -459,9 +459,12 @@
         return DepartmentEmployees.Select(employee =>
         {
             var employeeAssignments = DepartmentAssignments.Where(a => a.EmployeeId == employee.Id).ToList();
-            var completed = employeeAssignments.Count(a => a.Status == AssignmentStatus.Completed);
+            var completed = employeeAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
             var overdue = employeeAssignments.Count(IsOverdue);
-            var inProgress = employeeAssignments.Count(a => a.Status == AssignmentStatus.InProgress);
+            var inProgress = employeeAssignments.Count(a =>
+                a.WorkflowState == WorkflowState.EmployeeInProgress ||
+                a.WorkflowState == WorkflowState.ManagerInProgress ||
+                a.WorkflowState == WorkflowState.BothInProgress);
 
             return new
             {
@@ -494,7 +497,7 @@
         {
             var categoryTemplateIds = Templates.Where(t => t.CategoryId == category.Id).Select(t => t.Id).ToHashSet();
             var categoryAssignments = DepartmentAssignments.Where(a => categoryTemplateIds.Contains(a.TemplateId)).ToList();
-            var completed = categoryAssignments.Count(a => a.Status == AssignmentStatus.Completed);
+            var completed = categoryAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
 
             return new
             {
@@ -541,14 +544,13 @@
     {
         return assignment.DueDate.HasValue &&
                assignment.DueDate < DateTime.Now &&
-               assignment.Status != AssignmentStatus.Completed &&
-               assignment.Status != AssignmentStatus.Cancelled;
+               assignment.WorkflowState != WorkflowState.Finalized;
     }
 
     private string GetEmployeeCardClass(List<QuestionnaireAssignment> assignments)
     {
         if (assignments.Any(IsOverdue)) return "employee-overdue";
-        if (assignments.All(a => a.Status == AssignmentStatus.Completed)) return "employee-completed";
+        if (assignments.All(a => a.WorkflowState == WorkflowState.Finalized)) return "employee-completed";
         return "employee-normal";
     }
 

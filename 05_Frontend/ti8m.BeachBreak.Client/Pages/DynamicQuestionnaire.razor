@@ -51,7 +51,7 @@
                         <RadzenIcon Icon="check_circle" />
                         <RadzenText TextStyle="TextStyle.Body1">
                             <strong>This questionnaire has been completed and is now read-only.</strong>
-                            @if (assignment?.WorkflowState == "Finalized")
+                            @if (assignment?.WorkflowState == WorkflowState.Finalized)
                             {
                                 <span> The questionnaire has been finalized.</span>
                             }
@@ -207,14 +207,14 @@
     {
         // Read-only state is determined ONLY by the assignment's WorkflowState
         // The response.Status is for domain-level validation, not UI read-only logic
-        if (assignment == null || string.IsNullOrEmpty(assignment.WorkflowState))
+        if (assignment == null)
             return false;
 
         // Phase 2 Read-Only (Permanent): After finalization
-        var isPhase2ReadOnly = assignment.WorkflowState == "Finalized";
+        var isPhase2ReadOnly = assignment.WorkflowState == WorkflowState.Finalized;
 
         // After review confirmation states (waiting for finalization)
-        var isPostReviewConfirmation = assignment.WorkflowState is "EmployeeReviewConfirmed" or "ManagerReviewConfirmed";
+        var isPostReviewConfirmation = assignment.WorkflowState is WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed;
 
         // Determine read-only based on user role and workflow state
         if (isEmployee && !isManager)
@@ -222,7 +222,7 @@
             // Employee can edit: Assigned, EmployeeInProgress, BothInProgress, InReview
             // Employee CANNOT edit ONLY when: EmployeeSubmitted, BothSubmitted, Post-review, Finalized
             // Note: Employee CAN still see ManagerSubmitted state (manager submitted but employee hasn't)
-            return assignment.WorkflowState is "EmployeeSubmitted" or "BothSubmitted"
+            return assignment.WorkflowState is WorkflowState.EmployeeSubmitted or WorkflowState.BothSubmitted
                 || isPostReviewConfirmation
                 || isPhase2ReadOnly;
         }
@@ -231,7 +231,7 @@
             // Manager can edit: Assigned, ManagerInProgress, BothInProgress, InReview
             // Manager CANNOT edit ONLY when: ManagerSubmitted, BothSubmitted, Post-review, Finalized
             // Note: Manager CAN still see EmployeeSubmitted state (employee submitted but manager hasn't)
-            return assignment.WorkflowState is "ManagerSubmitted" or "BothSubmitted"
+            return assignment.WorkflowState is WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted
                 || isPostReviewConfirmation
                 || isPhase2ReadOnly;
         }
@@ -456,7 +456,7 @@
             // Load the current employee's assignment for this template
             var assignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
             var matchingAssignment = assignments.FirstOrDefault(a => a.TemplateId == TemplateId!.Value &&
-                                                           (a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress));
+                                                           a.WorkflowState != WorkflowState.Finalized);
 
             if (matchingAssignment != null)
             {

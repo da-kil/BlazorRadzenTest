@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;
 
@@ -50,11 +51,11 @@ public class GetTeamAnalyticsQueryHandler : IQueryHandler<GetTeamAnalyticsQuery,
             var allAssignments = allAssignmentReadModels.ToList();
 
             var now = DateTime.Now;
-            var completedAssignments = allAssignments.Where(a => a.WorkflowState == "Finalized").ToList();
+            var completedAssignments = allAssignments.Where(a => a.WorkflowState == WorkflowState.Finalized).ToList();
             var overdueAssignments = allAssignments.Where(a =>
                 a.DueDate.HasValue &&
                 a.DueDate.Value < now &&
-                a.WorkflowState != "Finalized" &&
+                a.WorkflowState != WorkflowState.Finalized &&
                 !a.IsWithdrawn).ToList();
 
             // Calculate average completion time
@@ -80,7 +81,7 @@ public class GetTeamAnalyticsQueryHandler : IQueryHandler<GetTeamAnalyticsQuery,
                 .Select(g =>
                 {
                     var total = g.Count();
-                    var completed = g.Count(a => a.WorkflowState == "Finalized");
+                    var completed = g.Count(a => a.WorkflowState == WorkflowState.Finalized);
                     var completedWithTimes = g
                         .Where(a => a.StartedDate.HasValue && a.CompletedDate.HasValue)
                         .Select(a => (a.CompletedDate!.Value - a.StartedDate!.Value).TotalDays)
@@ -102,11 +103,11 @@ public class GetTeamAnalyticsQueryHandler : IQueryHandler<GetTeamAnalyticsQuery,
             {
                 var employee = activeTeamMembers.First(e => e.Id == employeeId);
                 var employeeAssignments = allAssignments.Where(a => a.EmployeeId == employeeId).ToList();
-                var employeeCompleted = employeeAssignments.Count(a => a.WorkflowState == "Finalized");
+                var employeeCompleted = employeeAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
                 var employeeOverdue = employeeAssignments.Count(a =>
                     a.DueDate.HasValue &&
                     a.DueDate.Value < now &&
-                    a.WorkflowState != "Finalized" &&
+                    a.WorkflowState != WorkflowState.Finalized &&
                     !a.IsWithdrawn);
 
                 var employeeCompletedWithTimes = employeeAssignments

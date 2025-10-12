@@ -110,24 +110,24 @@ else
 
 		// New: Assignments that haven't been started yet
 		newQuestionnaires = allAssignments.Where(a =>
-			a.WorkflowState == "Assigned").ToList();
+			a.WorkflowState == WorkflowState.Assigned).ToList();
 
 		// In Progress: Employee is working or has submitted and waiting for manager
 		// According to workflow diagram, employee can see these as "in progress" until both submit
 		// Also includes ManagerSubmitted (manager submitted but employee still needs to submit)
 		inProgressQuestionnaires = allAssignments.Where(a =>
-			a.WorkflowState is "EmployeeInProgress" or "BothInProgress" or "EmployeeSubmitted" or "ManagerSubmitted").ToList();
+			a.WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.BothInProgress or WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted).ToList();
 
 		// Completed: From BothSubmitted onwards (includes all review and finalized states)
 		completedQuestionnaires = allAssignments.Where(a =>
-			a.WorkflowState is "BothSubmitted" or "InReview" or "EmployeeReviewConfirmed"
-			or "ManagerReviewConfirmed" or "Finalized").ToList();
+			a.WorkflowState is WorkflowState.BothSubmitted or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed
+			or WorkflowState.ManagerReviewConfirmed or WorkflowState.Finalized).ToList();
 
 		// Overdue: Any non-completed assignment past due date
 		overdueQuestionnaires = allAssignments.Where(a =>
 			a.DueDate.HasValue &&
 			a.DueDate.Value < now &&
-			a.WorkflowState != "Finalized").ToList();
+			a.WorkflowState != WorkflowState.Finalized).ToList();
 
 		// Load existing responses for in-progress questionnaires
 		await LoadExistingResponses();

@@ -369,10 +369,9 @@
                                     </Template>
                                 </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.Status)" Title="Status" Width="130px">
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.WorkflowState)" Title="Status" Width="130px">
                                     <Template Context="assignment">
-                                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(assignment.Status)"
-                                                   Text="@assignment.Status.ToString()" />
+                                        <WorkflowStateBadge WorkflowState="@assignment.WorkflowState" />
                                     </Template>
                                 </RadzenDataGridColumn>
 
@@ -382,7 +381,7 @@
                                     <Template Context="assignment">
                                         @if (assignment.DueDate.HasValue)
                                         {
-                                            var isOverdue = assignment.DueDate < DateTime.Now && assignment.Status != AssignmentStatus.Completed;
+                                            var isOverdue = assignment.DueDate < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized;
                                             <RadzenText TextStyle="TextStyle.Body2"
                                                        Class="@(isOverdue ? "text-danger fw-bold" : "")">
                                                 @assignment.DueDate.Value.ToString("dd/MM/yyyy")
@@ -456,18 +455,24 @@
 
     // Filters
     private string searchText = "";
-    private AssignmentStatus? statusFilter;
+    private WorkflowState? statusFilter;
     private Guid selectedCategoryId;
     private List<Category> availableCategories = new();
 
     private readonly List<StatusOption> statusOptions = new()
     {
         new("All", null),
-        new("Assigned", AssignmentStatus.Assigned),
-        new("In Progress", AssignmentStatus.InProgress),
-        new("Completed", AssignmentStatus.Completed),
-        new("Overdue", AssignmentStatus.Overdue),
-        new("Cancelled", AssignmentStatus.Cancelled)
+        new("Assigned", WorkflowState.Assigned),
+        new("Employee In Progress", WorkflowState.EmployeeInProgress),
+        new("Manager In Progress", WorkflowState.ManagerInProgress),
+        new("Both In Progress", WorkflowState.BothInProgress),
+        new("Employee Submitted", WorkflowState.EmployeeSubmitted),
+        new("Manager Submitted", WorkflowState.ManagerSubmitted),
+        new("Both Submitted", WorkflowState.BothSubmitted),
+        new("In Review", WorkflowState.InReview),
+        new("Employee Review Confirmed", WorkflowState.EmployeeReviewConfirmed),
+        new("Manager Review Confirmed", WorkflowState.ManagerReviewConfirmed),
+        new("Finalized", WorkflowState.Finalized)
     };
 
     protected override async Task OnInitializedAsync()
@@ -559,7 +564,7 @@
     private void FilterAssignments()
     {
         filteredAssignments = assignments.Where(a =>
-            (statusFilter == null || a.Status == statusFilter) &&
+            (statusFilter == null || a.WorkflowState == statusFilter) &&
             (string.IsNullOrWhiteSpace(searchText) ||
              a.EmployeeName.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
              a.EmployeeEmail.Contains(searchText, StringComparison.OrdinalIgnoreCase))
@@ -719,18 +724,7 @@
         return Math.Max(5, totalQuestions * 2);
     }
 
-    private BadgeStyle GetStatusBadgeStyle(AssignmentStatus status)
-    {
-        return status switch
-        {
-            AssignmentStatus.Assigned => BadgeStyle.Secondary,
-            AssignmentStatus.InProgress => BadgeStyle.Info,
-            AssignmentStatus.Completed => BadgeStyle.Success,
-            AssignmentStatus.Overdue => BadgeStyle.Danger,
-            AssignmentStatus.Cancelled => BadgeStyle.Light,
-            _ => BadgeStyle.Secondary
-        };
-    }
+    // Note: GetStatusBadgeStyle is no longer needed since we use WorkflowStateBadge component
 
 
     private async Task HandleAssignmentActionClick(AssignmentActionButtons.AssignmentActionEventArgs eventArgs)
@@ -879,13 +873,12 @@
                 // TODO: Call actual API to update assignment status
                 await Task.Delay(1000); // Simulate API call
 
-                assignment.Status = AssignmentStatus.Cancelled;
-                FilterAssignments();
-
-                NotificationService.Notify(NotificationSeverity.Success,
-                    "Assignment Cancelled",
-                    $"Assignment has been cancelled for {assignment.EmployeeName}",
+                // Note: Cancelling assignments needs to be implemented with proper workflow state transitions
+                NotificationService.Notify(NotificationSeverity.Warning,
+                    "Not Implemented",
+                    "Assignment cancellation will be implemented with proper workflow state management",
                     duration: 5000);
+                FilterAssignments();
             }
         }
         catch (Exception ex)
@@ -942,7 +935,7 @@
             await Task.Delay(1000); // Simulate API call
 
             // Update the local assignment object
-            assignment.Status = editModel.Status;
+            assignment.WorkflowState = editModel.WorkflowState;
             assignment.DueDate = editModel.DueDate;
             assignment.Notes = editModel.Notes;
             assignment.AssignedBy = editModel.AssignedBy;
@@ -1015,13 +1008,13 @@
     // Helper classes
     public class StatusOption
     {
-        public StatusOption(string text, AssignmentStatus? value)
+        public StatusOption(string text, WorkflowState? value)
         {
             Text = text;
             Value = value;
         }
         public string Text { get; set; }
-        public AssignmentStatus? Value { get; set; }
+        public WorkflowState? Value { get; set; }
     }
 
 }
