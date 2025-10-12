@@ -16,10 +16,10 @@ public class ReviewChangeLogProjection : EventProjection
     /// Creates a new ReviewChangeLog entry when a manager edits an answer during review.
     /// Enriches the log with section/question titles from template and old value from response.
     /// </summary>
-    public async Task<ReviewChangeLogReadModel> Project(ManagerEditedAnswerDuringReview @event, IDocumentSession session)
+    public async Task Project(ManagerEditedAnswerDuringReview @event, IDocumentOperations operations)
     {
         // Fetch the assignment to get the template ID
-        var assignment = await session.LoadAsync<QuestionnaireAssignmentReadModel>(@event.AggregateId);
+        var assignment = await operations.LoadAsync<QuestionnaireAssignmentReadModel>(@event.AggregateId);
 
         string sectionTitle = "Unknown Section";
         string questionTitle = "Unknown Question";
@@ -28,7 +28,7 @@ public class ReviewChangeLogProjection : EventProjection
         if (assignment != null)
         {
             // Fetch the template to get section and question titles
-            var template = await session.LoadAsync<QuestionnaireTemplateReadModel>(assignment.TemplateId);
+            var template = await operations.LoadAsync<QuestionnaireTemplateReadModel>(assignment.TemplateId);
             if (template != null)
             {
                 var section = template.Sections?.FirstOrDefault(s => s.Id == @event.SectionId);
@@ -45,7 +45,7 @@ public class ReviewChangeLogProjection : EventProjection
             }
 
             // Fetch the response to get the old value
-            var response = await session.Query<QuestionnaireResponseReadModel>()
+            var response = await operations.Query<QuestionnaireResponseReadModel>()
                 .FirstOrDefaultAsync(r => r.AssignmentId == @event.AggregateId);
 
             if (response != null)
@@ -64,7 +64,7 @@ public class ReviewChangeLogProjection : EventProjection
             }
         }
 
-        return new ReviewChangeLogReadModel
+        var changeLog = new ReviewChangeLogReadModel
         {
             Id = Guid.NewGuid(),
             AssignmentId = @event.AggregateId,
@@ -78,5 +78,8 @@ public class ReviewChangeLogProjection : EventProjection
             ChangedAt = @event.EditedDate,
             ChangedBy = @event.EditedBy
         };
+
+        // Store the new document
+        operations.Store(changeLog);
     }
 }
