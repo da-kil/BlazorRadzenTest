@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+using ti8m.BeachBreak.Core.Domain.SharedKernel;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 

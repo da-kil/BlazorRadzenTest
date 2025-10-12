@@ -1,4 +1,4 @@
-namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+namespace ti8m.BeachBreak.Core.Domain.SharedKernel;
 
 public enum WorkflowState
 {

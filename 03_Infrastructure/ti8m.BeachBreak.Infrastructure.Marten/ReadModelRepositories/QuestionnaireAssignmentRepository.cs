@@ -1,7 +1,7 @@
 using Marten;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Repositories;
-using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+using ti8m.BeachBreak.Core.Domain.SharedKernel;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.ReadModelRepositories;
 
