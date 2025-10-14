@@ -28,6 +28,11 @@
             <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Loading questionnaire...</RadzenText>
         </div>
     }
+    else if (assignment != null && assignment.WorkflowState == WorkflowState.InReview && isManager)
+    {
+        <!-- Show Review Mode for managers during InReview state -->
+        <QuestionnaireReviewMode Assignment="@assignment" OnReviewFinished="@OnReviewFinished" />
+    }
     else
     {
         <RadzenCard Class="p-4">
@@ -1481,6 +1486,19 @@
                     $"Failed to reload assignment: {ex.Message}");
             }
         }
+    }
+
+    private async Task OnReviewFinished()
+    {
+        // This is called when the manager finishes the review meeting
+        // It should trigger the WorkflowActionButtons "Finish Review" workflow action
+        // Or directly call the finish review API
+        await OnWorkflowActionCompleted();
+
+        // Navigate back to team questionnaires
+        NotificationService.Notify(NotificationSeverity.Success, "Review Complete",
+            "The review meeting has been completed. The employee can now confirm the review outcome.");
+        NavigationManager.NavigateTo("/team/questionnaires");
     }
 
     // Competency-specific helper methods

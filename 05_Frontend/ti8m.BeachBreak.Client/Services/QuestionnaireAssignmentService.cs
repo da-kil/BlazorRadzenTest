@@ -295,7 +295,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
-    public async Task<bool> EditAnswerDuringReviewAsync(Guid assignmentId, Guid sectionId, Guid questionId, string answer, string editedBy)
+    public async Task<bool> EditAnswerDuringReviewAsync(Guid assignmentId, Guid sectionId, Guid questionId, CompletionRole originalCompletionRole, string answer, string editedBy)
     {
         try
         {
@@ -303,6 +303,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             {
                 SectionId = sectionId,
                 QuestionId = questionId,
+                OriginalCompletionRole = originalCompletionRole.ToString(),
                 Answer = answer,
                 EditedBy = editedBy
             };

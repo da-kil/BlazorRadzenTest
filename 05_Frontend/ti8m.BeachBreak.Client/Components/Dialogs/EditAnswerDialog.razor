@@ -1,0 +1,183 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@inject DialogService DialogService
+
+<style>
+    .edit-answer-dialog {
+        padding: 1.5rem;
+    }
+
+    .question-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid #667eea;
+    }
+
+    .role-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        margin-top: 0.5rem;
+    }
+
+    .answer-editor {
+        margin-bottom: 1.5rem;
+    }
+
+    .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+</style>
+
+<div class="edit-answer-dialog">
+    <div class="question-info">
+        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+            @Question.Title
+        </RadzenText>
+        @if (!string.IsNullOrWhiteSpace(Question.Description))
+        {
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                @Question.Description
+            </RadzenText>
+        }
+        <div class="role-indicator">
+            <RadzenIcon Icon="@GetRoleIcon()" />
+            Editing @CompletionRole's Answer
+        </div>
+    </div>
+
+    <div class="answer-editor">
+        @if (Question.Type == QuestionType.TextQuestion)
+        {
+            <RadzenTextArea @bind-Value="@editedAnswer"
+                           Placeholder="Enter your answer here..."
+                           Rows="10"
+                           Style="width: 100%;" />
+        }
+        else if (Question.Type == QuestionType.SelfAssessment)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-3">
+                For complex question types like Self Assessment, please provide a simplified text summary.
+            </RadzenAlert>
+            <RadzenTextArea @bind-Value="@editedAnswer"
+                           Placeholder="Enter answer summary..."
+                           Rows="8"
+                           Style="width: 100%;" />
+        }
+        else if (Question.Type == QuestionType.GoalAchievement)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-3">
+                For Goal Achievement questions, please provide a simplified text summary.
+            </RadzenAlert>
+            <RadzenTextArea @bind-Value="@editedAnswer"
+                           Placeholder="Enter goal summary..."
+                           Rows="8"
+                           Style="width: 100%;" />
+        }
+        else
+        {
+            <RadzenTextBox @bind-Value="@editedAnswer"
+                          Placeholder="Enter your answer..."
+                          Style="width: 100%;" />
+        }
+    </div>
+
+    <div class="dialog-actions">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel" />
+        <RadzenButton Text="Save Changes"
+                     ButtonStyle="ButtonStyle.Success"
+                     Icon="save"
+                     Click="@SaveChanges" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionItem Question { get; set; } = null!;
+    [Parameter] public object? CurrentAnswer { get; set; }
+    [Parameter] public CompletionRole CompletionRole { get; set; }
+
+    private string editedAnswer = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        // Initialize with current answer
+        editedAnswer = ConvertAnswerToString(CurrentAnswer);
+    }
+
+    private string ConvertAnswerToString(object? answer)
+    {
+        if (answer == null)
+            return string.Empty;
+
+        // Handle different answer types
+        if (answer is string str)
+            return str;
+
+        if (answer is Dictionary<string, object> dict)
+        {
+            // For complex answers, create a readable text representation
+            var parts = new List<string>();
+
+            foreach (var kvp in dict)
+            {
+                if (kvp.Key.StartsWith("rating_"))
+                {
+                    var key = kvp.Key.Replace("rating_", "");
+                    parts.Add($"{key}: {kvp.Value} stars");
+                }
+                else if (kvp.Key == "Description" || kvp.Key == "GoalDescription")
+                {
+                    parts.Add($"Goal: {kvp.Value}");
+                }
+                else if (kvp.Key == "AchievementPercentage")
+                {
+                    parts.Add($"Achievement: {kvp.Value}%");
+                }
+                else if (kvp.Key == "Justification")
+                {
+                    parts.Add($"Justification: {kvp.Value}");
+                }
+            }
+
+            return string.Join("\n", parts);
+        }
+
+        return answer.ToString() ?? string.Empty;
+    }
+
+    private string GetRoleIcon()
+    {
+        return CompletionRole switch
+        {
+            CompletionRole.Employee => "person",
+            CompletionRole.Manager => "supervisor_account",
+            CompletionRole.Both => "groups",
+            _ => "help"
+        };
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private void SaveChanges()
+    {
+        DialogService.Close(editedAnswer);
+    }
+}
