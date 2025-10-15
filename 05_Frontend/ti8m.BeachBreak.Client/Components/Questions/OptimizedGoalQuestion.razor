@@ -115,23 +115,56 @@
 
     private string GetGoalDescription()
     {
-        return Response.ComplexValue?.TryGetValue("Description", out var value) == true
-            ? value.ToString() ?? ""
-            : "";
+        if (Response.ComplexValue?.TryGetValue("Description", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? ""
+                    : "";
+            }
+
+            return value.ToString() ?? "";
+        }
+
+        return "";
     }
 
     private int GetGoalAchievementPercentage()
     {
-        return Response.ComplexValue?.TryGetValue("AchievementPercentage", out var value) == true
-            ? Convert.ToInt32(value)
-            : 0;
+        if (Response.ComplexValue?.TryGetValue("AchievementPercentage", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number
+                    ? jsonElement.GetInt32()
+                    : 0;
+            }
+
+            return Convert.ToInt32(value);
+        }
+
+        return 0;
     }
 
     private string GetGoalJustification()
     {
-        return Response.ComplexValue?.TryGetValue("Justification", out var value) == true
-            ? value.ToString() ?? ""
-            : "";
+        if (Response.ComplexValue?.TryGetValue("Justification", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? ""
+                    : "";
+            }
+
+            return value.ToString() ?? "";
+        }
+
+        return "";
     }
 
     private async Task SetGoalDescription(string value)

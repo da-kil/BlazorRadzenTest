@@ -97,33 +97,30 @@
     private string scaleLowLabel = "Poor";
     private string scaleHighLabel = "Excellent";
 
+    protected override void OnInitialized()
+    {
+        // Always load configuration on initialization
+        // This ensures the component works correctly when used in dialogs or other contexts
+        // where parameter change detection might not work as expected
+        LoadConfiguration();
+
+        base.OnInitialized();
+    }
+
     protected override void OnParametersSet()
     {
         if (HasParameterChanged(nameof(Question), Question))
         {
-            competencies = GetCompetenciesFromConfiguration();
-            ratingScale = GetRatingScaleFromConfiguration();
-            scaleLowLabel = GetScaleLowLabelFromConfiguration();
-            scaleHighLabel = GetScaleHighLabelFromConfiguration();
-
-            // Debug logging
-            if (!competencies.Any())
-            {
-                Console.WriteLine($"[OptimizedSelfAssessment] No competencies loaded for question {Question.Id}");
-                if (Question.Configuration != null)
-                {
-                    Console.WriteLine($"[OptimizedSelfAssessment] Configuration keys: {string.Join(", ", Question.Configuration.Keys)}");
-                }
-            }
-            else
-            {
-                Console.WriteLine($"[OptimizedSelfAssessment] Loaded {competencies.Count} competencies: {string.Join(", ", competencies.Select(c => c.Key))}");
-                if (Response.ComplexValue != null)
-                {
-                    Console.WriteLine($"[OptimizedSelfAssessment] Response keys: {string.Join(", ", Response.ComplexValue.Keys)}");
-                }
-            }
+            LoadConfiguration();
         }
+    }
+
+    private void LoadConfiguration()
+    {
+        competencies = GetCompetenciesFromConfiguration();
+        ratingScale = GetRatingScaleFromConfiguration();
+        scaleLowLabel = GetScaleLowLabelFromConfiguration();
+        scaleHighLabel = GetScaleHighLabelFromConfiguration();
     }
 
     protected override bool HasStateChanged()
@@ -168,10 +165,7 @@
                     return competencies;
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to deserialize competencies: {ex.Message}");
-            }
+            catch { /* Skip deserialization errors */ }
         }
 
         // Handle IEnumerable<object> or other list types
@@ -200,7 +194,6 @@
             if (result.Any()) return result;
         }
 
-        // Return empty list if we couldn't deserialize
         return new List<CompetencyDefinition>();
     }
 
@@ -235,16 +228,40 @@
 
     private int GetCompetencyRating(string competencyKey)
     {
-        return Response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true
-            ? Convert.ToInt32(value)
-            : 0;
+        if (Response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number
+                    ? jsonElement.GetInt32()
+                    : 0;
+            }
+
+            // Handle direct int value
+            return Convert.ToInt32(value);
+        }
+
+        return 0;
     }
 
     private string GetCompetencyComment(string competencyKey)
     {
-        return Response.ComplexValue?.TryGetValue($"comment_{competencyKey}", out var value) == true
-            ? value.ToString() ?? ""
-            : "";
+        if (Response.ComplexValue?.TryGetValue($"comment_{competencyKey}", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? ""
+                    : "";
+            }
+
+            // Handle direct string value
+            return value.ToString() ?? "";
+        }
+
+        return "";
     }
 
     private async Task SetCompetencyRating(string competencyKey, int value)

@@ -288,7 +288,7 @@
                                                      ButtonStyle="ButtonStyle.Light"
                                                      Icon="content_copy"
                                                      Size="ButtonSize.Small"
-                                                     Click="@(() => CopyAnswer(question.Id, CompletionRole.Employee, CompletionRole.Manager))"
+                                                     Click="@(() => CopyAnswer(question, CompletionRole.Employee, CompletionRole.Manager))"
                                                      Class="copy-button" />
                                         <RadzenButton Text="Edit"
                                                      ButtonStyle="ButtonStyle.Primary"
@@ -316,7 +316,7 @@
                                                      ButtonStyle="ButtonStyle.Light"
                                                      Icon="content_copy"
                                                      Size="ButtonSize.Small"
-                                                     Click="@(() => CopyAnswer(question.Id, CompletionRole.Manager, CompletionRole.Employee))"
+                                                     Click="@(() => CopyAnswer(question, CompletionRole.Manager, CompletionRole.Employee))"
                                                      Class="copy-button" />
                                         <RadzenButton Text="Edit"
                                                      ButtonStyle="ButtonStyle.Primary"
@@ -548,9 +548,7 @@
     private async Task EditAnswer(QuestionItem question, CompletionRole originalRole)
     {
         var currentAnswer = GetAnswer(currentSection!.Id, question.Id, originalRole);
-        var currentValue = currentAnswer?.ToString() ?? "";
 
-        // Show edit dialog based on question type
         var result = await DialogService.OpenAsync<EditAnswerDialog>(
             $"Edit Answer: {question.Title}",
             new Dictionary<string, object>
@@ -564,24 +562,34 @@
 
         if (result != null)
         {
-            var newAnswer = result.ToString() ?? "";
-            if (!string.IsNullOrEmpty(newAnswer))
-            {
-                await SaveEditedAnswer(currentSection.Id, question.Id, originalRole, newAnswer);
-            }
+            await SaveEditedAnswer(currentSection.Id, question.Id, originalRole, result, question.Type);
         }
     }
 
-    private async Task SaveEditedAnswer(Guid sectionId, Guid questionId, CompletionRole originalRole, string newAnswer)
+    private async Task SaveEditedAnswer(Guid sectionId, Guid questionId, CompletionRole originalRole, object newAnswer, QuestionType questionType)
     {
         try
         {
+            // Convert answer to string format expected by API
+            string answerString;
+
+            if (questionType is QuestionType.SelfAssessment or QuestionType.GoalAchievement)
+            {
+                // For complex types, serialize to JSON
+                answerString = System.Text.Json.JsonSerializer.Serialize(newAnswer);
+            }
+            else
+            {
+                // For simple types, just convert to string
+                answerString = newAnswer?.ToString() ?? "";
+            }
+
             var success = await AssignmentService.EditAnswerDuringReviewAsync(
                 Assignment.Id,
                 sectionId,
                 questionId,
                 originalRole,
-                newAnswer,
+                answerString,
                 currentManagerName
             );
 
@@ -604,9 +612,9 @@
         }
     }
 
-    private async Task CopyAnswer(Guid questionId, CompletionRole fromRole, CompletionRole toRole)
+    private async Task CopyAnswer(QuestionItem question, CompletionRole fromRole, CompletionRole toRole)
     {
-        var sourceAnswer = GetAnswer(currentSection!.Id, questionId, fromRole);
+        var sourceAnswer = GetAnswer(currentSection!.Id, question.Id, fromRole);
         if (sourceAnswer == null)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Nothing to Copy", "Source answer is empty");
@@ -621,7 +629,7 @@
 
         if (confirmed == true)
         {
-            await SaveEditedAnswer(currentSection.Id, questionId, toRole, sourceAnswer.ToString() ?? "");
+            await SaveEditedAnswer(currentSection.Id, question.Id, toRole, sourceAnswer, question.Type);
         }
     }
 
