@@ -38,7 +38,7 @@
 
             @if (IsEmployee && WorkflowStateHelper.CanEmployeeConfirmReview(Assignment))
             {
-                <RadzenButton Text="Confirm Review"
+                <RadzenButton Text="Sign Off on Review"
                               Icon="verified"
                               ButtonStyle="ButtonStyle.Success"
                               Click="@ConfirmEmployeeReview"
@@ -213,7 +213,7 @@
 
         // Open dialog to collect optional employee comments
         var result = await DialogService.OpenAsync<ConfirmEmployeeReviewDialog>(
-            "Confirm Review Outcome",
+            "Employee Sign-Off",
             new Dictionary<string, object>(),
             new DialogOptions
             {
