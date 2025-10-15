@@ -63,39 +63,30 @@
             @if (IsQuestionnaireCompleted())
             {
                 <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="mb-4" ShowIcon="true">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenIcon Icon="check_circle" />
-                        <RadzenText TextStyle="TextStyle.Body1">
-                            <strong>This questionnaire has been completed and is now read-only.</strong>
-                            @if (assignment?.WorkflowState == WorkflowState.Finalized)
-                            {
-                                <span> The questionnaire has been finalized.</span>
-                            }
-                            else
-                            {
-                                <span> You can review your responses below, but cannot make changes.</span>
-                            }
-                        </RadzenText>
-                    </RadzenStack>
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>This questionnaire has been completed and is now read-only.</strong>
+                        @if (assignment?.WorkflowState == WorkflowState.Finalized)
+                        {
+                            <span> The questionnaire has been finalized.</span>
+                        }
+                        else
+                        {
+                            <span> You can review your responses below, but cannot make changes.</span>
+                        }
+                    </RadzenText>
                 </RadzenAlert>
             }
 
             @if (template.Settings.ShowProgressBar)
             {
-                <div class="progress-section mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                            Progress: @response.ProgressPercentage%
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                            Section @(currentSectionIndex + 1) of @visibleSections.Count
-                        </RadzenText>
-                    </div>
-                    <RadzenProgressBar Value="@response.ProgressPercentage" Max="100" ProgressBarStyle="ProgressBarStyle.Primary" />
+                <div class="section-counter mb-4">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted text-end">
+                        Section @(currentSectionIndex + 1) of @visibleSections.Count
+                    </RadzenText>
                 </div>
             }
 
-            <RadzenSteps Value="@currentSectionIndex" Change="@OnSectionChanged" Class="mb-4">
+            <RadzenSteps Value="@currentSectionIndex" Change="@OnSectionChanged" Class="mb-4" ShowStepsButtons="false">
                 @for (int i = 0; i < visibleSections.Count; i++)
                 {
                     var section = visibleSections[i];
@@ -133,12 +124,12 @@
             </div>
 
             <div class="d-flex justify-content-between mt-4">
-                <RadzenButton Text="Previous" 
-                             ButtonStyle="ButtonStyle.Light" 
+                <RadzenButton Text="Previous"
+                             ButtonStyle="ButtonStyle.Light"
                              Icon="arrow_back"
                              Click="@PreviousSection"
                              Disabled="@(currentSectionIndex == 0)" />
-                
+
                 <div class="d-flex gap-2">
                     @if (!IsQuestionnaireCompleted())
                     {
