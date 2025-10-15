@@ -3,13 +3,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
-using ti8m.BeachBreak.Application.Command;
-using ti8m.BeachBreak.Application.Query;
 using ti8m.BeachBreak.CommandApi.Authorization;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Core.Infrastructure.Database;
-using ti8m.BeachBreak.Infrastructure.Marten;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Infrastructure.Marten;
 
 namespace ti8m.BeachBreak.CommandApi
 {
@@ -122,7 +119,6 @@ namespace ti8m.BeachBreak.CommandApi
             });
 
             builder.AddNpgsqlDataSource(connectionName: "beachbreakdb");
-            builder.MigrateDatabase();
 
             builder.AddMartenInfrastructure();
 
@@ -138,9 +134,6 @@ namespace ti8m.BeachBreak.CommandApi
             builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
 
             var app = builder.Build();
-
-            // Initialize database
-            await app.Services.InitializeDatabaseAsync();
 
             app.MapDefaultEndpoints();
 

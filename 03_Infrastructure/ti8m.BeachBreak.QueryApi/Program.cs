@@ -6,7 +6,6 @@ using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.Application.Query;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Core.Infrastructure.Database;
 using ti8m.BeachBreak.Infrastructure.Marten;
 using ti8m.BeachBreak.QueryApi.Authorization;
 
@@ -88,7 +87,6 @@ public class Program
         });
 
         builder.AddNpgsqlDataSource(connectionName: "beachbreakdb");
-        builder.MigrateDatabase();
 
         builder.AddMartenInfrastructure();
 
@@ -99,9 +97,6 @@ public class Program
         builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
 
         var app = builder.Build();
-
-        // Initialize database
-        await app.Services.InitializeDatabaseAsync();
 
         app.MapDefaultEndpoints();
 
