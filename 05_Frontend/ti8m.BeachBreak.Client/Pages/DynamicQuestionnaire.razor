@@ -1520,15 +1520,36 @@
 
     private async Task OnReviewFinished()
     {
-        // This is called when the manager finishes the review meeting
-        // It should trigger the WorkflowActionButtons "Finish Review" workflow action
-        // Or directly call the finish review API
-        await OnWorkflowActionCompleted();
+        if (!assignmentId.HasValue)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No assignment ID available");
+            return;
+        }
 
-        // Navigate back to team questionnaires
-        NotificationService.Notify(NotificationSeverity.Success, "Review Complete",
-            "The review meeting has been completed. The employee can now confirm the review outcome.");
-        NavigationManager.NavigateTo("/team/questionnaires");
+        try
+        {
+            // Call the API to finish the manager review meeting
+            var success = await AssignmentService.FinishReviewMeetingAsync(assignmentId.Value, currentUserName, null);
+
+            if (success)
+            {
+                // Reload assignment to get updated workflow state
+                await OnWorkflowActionCompleted();
+
+                // Navigate back to team questionnaires
+                NotificationService.Notify(NotificationSeverity.Success, "Review Complete",
+                    "The review meeting has been completed. The employee can now confirm the review outcome.");
+                NavigationManager.NavigateTo("/team/questionnaires");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to finish review meeting");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to finish review meeting: {ex.Message}");
+        }
     }
 
     // Competency-specific helper methods
