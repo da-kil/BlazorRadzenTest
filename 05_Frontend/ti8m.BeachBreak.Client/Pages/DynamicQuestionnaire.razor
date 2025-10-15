@@ -50,6 +50,16 @@
                 }
             </div>
 
+            @* Workflow Action Buttons - Sticky Banner *@
+            @if (assignment != null && assignmentId.HasValue)
+            {
+                <WorkflowActionButtons Assignment="@assignment"
+                                      IsEmployee="@isEmployee"
+                                      IsManager="@isManager"
+                                      UserName="@currentUserName"
+                                      OnActionCompleted="@OnWorkflowActionCompleted" />
+            }
+
             @if (IsQuestionnaireCompleted())
             {
                 <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="mb-4" ShowIcon="true">
@@ -121,16 +131,6 @@
                     </RadzenCard>
                 }
             </div>
-
-            @* Workflow Action Buttons *@
-            @if (assignment != null && assignmentId.HasValue)
-            {
-                <WorkflowActionButtons Assignment="@assignment"
-                                      IsEmployee="@isEmployee"
-                                      IsManager="@isManager"
-                                      UserName="@currentUserName"
-                                      OnActionCompleted="@OnWorkflowActionCompleted" />
-            }
 
             <div class="d-flex justify-content-between mt-4">
                 <RadzenButton Text="Previous" 
