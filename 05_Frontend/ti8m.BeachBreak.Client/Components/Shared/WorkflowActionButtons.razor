@@ -1,7 +1,9 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Dialogs
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject NotificationService NotificationService
+@inject DialogService DialogService
 
 <div class="workflow-action-buttons">
     @if (Assignment != null)
@@ -209,10 +211,34 @@
     {
         if (Assignment == null) return;
 
+        // Open dialog to collect optional employee comments
+        var result = await DialogService.OpenAsync<ConfirmEmployeeReviewDialog>(
+            "Confirm Review Outcome",
+            new Dictionary<string, object>(),
+            new DialogOptions
+            {
+                Width = "600px",
+                Resizable = false,
+                Draggable = true
+            });
+
+        // If dialog was cancelled, return
+        if (result == null)
+        {
+            return;
+        }
+
         isProcessing = true;
         try
         {
-            var success = await AssignmentService.ConfirmEmployeeReviewAsync(Assignment.Id, UserName, null);
+            // Result is the employee comments (can be null or empty string)
+            var employeeComments = result as string;
+
+            var success = await AssignmentService.ConfirmEmployeeReviewAsync(
+                Assignment.Id,
+                UserName,
+                string.IsNullOrWhiteSpace(employeeComments) ? null : employeeComments);
+
             if (success)
             {
                 NotificationService.Notify(new NotificationMessage
@@ -245,10 +271,34 @@
     {
         if (Assignment == null) return;
 
+        // Open dialog to collect optional review summary
+        var result = await DialogService.OpenAsync<FinishReviewMeetingDialog>(
+            "Finish Review Meeting",
+            new Dictionary<string, object>(),
+            new DialogOptions
+            {
+                Width = "650px",
+                Resizable = false,
+                Draggable = true
+            });
+
+        // If dialog was cancelled, return
+        if (result == null)
+        {
+            return;
+        }
+
         isProcessing = true;
         try
         {
-            var success = await AssignmentService.FinishReviewMeetingAsync(Assignment.Id, UserName, null);
+            // Result is the review summary (can be null or empty string)
+            var reviewSummary = result as string;
+
+            var success = await AssignmentService.FinishReviewMeetingAsync(
+                Assignment.Id,
+                UserName,
+                string.IsNullOrWhiteSpace(reviewSummary) ? null : reviewSummary);
+
             if (success)
             {
                 NotificationService.Notify(new NotificationMessage
@@ -281,10 +331,34 @@
     {
         if (Assignment == null) return;
 
+        // Open dialog to collect optional final notes
+        var result = await DialogService.OpenAsync<FinalizeQuestionnaireDialog>(
+            "Finalize Questionnaire",
+            new Dictionary<string, object>(),
+            new DialogOptions
+            {
+                Width = "650px",
+                Resizable = false,
+                Draggable = true
+            });
+
+        // If dialog was cancelled, return
+        if (result == null)
+        {
+            return;
+        }
+
         isProcessing = true;
         try
         {
-            var success = await AssignmentService.FinalizeQuestionnaireAsync(Assignment.Id, UserName, null);
+            // Result is the final notes (can be null or empty string)
+            var finalNotes = result as string;
+
+            var success = await AssignmentService.FinalizeQuestionnaireAsync(
+                Assignment.Id,
+                UserName,
+                string.IsNullOrWhiteSpace(finalNotes) ? null : finalNotes);
+
             if (success)
             {
                 NotificationService.Notify(new NotificationMessage
