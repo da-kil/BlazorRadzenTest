@@ -445,7 +445,7 @@
         return question.Type switch
         {
             QuestionType.TextQuestion => RenderTextAnswer(answer),
-            QuestionType.SelfAssessment => RenderSelfAssessmentAnswer(answer),
+            QuestionType.SelfAssessment => RenderSelfAssessmentAnswer(answer, question),
             QuestionType.GoalAchievement => RenderGoalAnswer(answer),
             _ => @<span>@answer.ToString()</span>
         };
@@ -457,30 +457,116 @@
         return @<div style="white-space: pre-wrap;">@text</div>;
     }
 
-    private RenderFragment RenderSelfAssessmentAnswer(object answer)
+    private RenderFragment RenderSelfAssessmentAnswer(object answer, QuestionItem question)
     {
         if (answer is not Dictionary<string, object> complexValue)
         {
             return @<span class="empty-answer">No ratings provided</span>;
         }
 
+        // Get competency definitions from question configuration
+        var competencies = GetCompetenciesFromQuestion(question);
+        var ratingScale = GetRatingScaleFromQuestion(question);
+
         return @<div>
             @foreach (var kvp in complexValue.Where(k => k.Key.StartsWith("rating_")))
             {
                 var competencyKey = kvp.Key.Replace("rating_", "");
-                var rating = kvp.Value?.ToString() ?? "0";
-                var commentKey = $"comment_{competencyKey}";
-                var comment = complexValue.ContainsKey(commentKey) ? complexValue[commentKey]?.ToString() : "";
 
-                <div class="mb-2">
-                    <strong>@competencyKey:</strong> @rating stars
+                // Get rating value, handle JsonElement
+                int ratingValue = 0;
+                if (kvp.Value is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    ratingValue = jsonElement.GetInt32();
+                }
+                else if (kvp.Value != null)
+                {
+                    int.TryParse(kvp.Value.ToString(), out ratingValue);
+                }
+
+                // Get comment
+                var commentKey = $"comment_{competencyKey}";
+                var comment = "";
+                if (complexValue.ContainsKey(commentKey))
+                {
+                    var commentValue = complexValue[commentKey];
+                    if (commentValue is System.Text.Json.JsonElement commentJson && commentJson.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        comment = commentJson.GetString() ?? "";
+                    }
+                    else
+                    {
+                        comment = commentValue?.ToString() ?? "";
+                    }
+                }
+
+                // Get competency title
+                var competency = competencies.FirstOrDefault(c => c.Key == competencyKey);
+                var competencyTitle = competency?.Title ?? competencyKey;
+
+                <div class="mb-3 p-2 border rounded">
+                    <div class="d-flex align-items-center mb-2">
+                        <strong class="me-2">@competencyTitle:</strong>
+                        <RadzenRating Value="@ratingValue" Stars="@ratingScale" ReadOnly="true" />
+                    </div>
                     @if (!string.IsNullOrWhiteSpace(comment))
                     {
-                        <div class="text-muted" style="font-size: 0.875rem; margin-left: 1rem;">@comment</div>
+                        <div class="text-muted" style="font-size: 0.875rem; padding-left: 1rem; border-left: 2px solid #dee2e6;">
+                            @comment
+                        </div>
                     }
                 </div>
             }
         </div>;
+    }
+
+    private List<CompetencyDefinition> GetCompetenciesFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration?.ContainsKey("Competencies") != true)
+        {
+            return new List<CompetencyDefinition>();
+        }
+
+        var competenciesValue = question.Configuration["Competencies"];
+
+        // Handle direct List<CompetencyDefinition>
+        if (competenciesValue is List<CompetencyDefinition> comps)
+        {
+            return comps;
+        }
+
+        // Handle JsonElement (from API deserialization)
+        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
+        {
+            try
+            {
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+                };
+
+                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
+                    jsonElement.GetRawText(),
+                    options
+                );
+
+                return competencies ?? new List<CompetencyDefinition>();
+            }
+            catch { /* Skip deserialization errors */ }
+        }
+
+        return new List<CompetencyDefinition>();
+    }
+
+    private int GetRatingScaleFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration?.ContainsKey("RatingScale") == true &&
+            int.TryParse(question.Configuration["RatingScale"].ToString(), out int scale))
+        {
+            return scale;
+        }
+        return 4;
     }
 
     private RenderFragment RenderGoalAnswer(object answer)
