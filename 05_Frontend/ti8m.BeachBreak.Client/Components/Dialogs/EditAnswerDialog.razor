@@ -1,18 +1,22 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Questions
 @inject DialogService DialogService
 
 <style>
     .edit-answer-dialog {
-        padding: 1.5rem;
+        padding: 1rem;
+        min-height: 400px;
+        max-height: 550px;
+        overflow-y: auto;
     }
 
     .question-info {
         background: #f8f9fa;
         border-radius: 8px;
         padding: 1rem;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
         border-left: 4px solid #667eea;
     }
 
@@ -30,7 +34,8 @@
     }
 
     .answer-editor {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
+        padding: 0 0.5rem;
     }
 
     .dialog-actions {
@@ -39,6 +44,20 @@
         gap: 1rem;
         padding-top: 1rem;
         border-top: 1px solid #e9ecef;
+        position: sticky;
+        bottom: 0;
+        background: white;
+        margin: 0 -1rem -1rem -1rem;
+        padding: 1rem;
+    }
+
+    /* Ensure competency cards fit well in dialog */
+    .answer-editor .rz-card {
+        margin-bottom: 0 !important;
+    }
+
+    .answer-editor .competency-card {
+        margin-bottom: 1rem !important;
     }
 </style>
 
@@ -62,34 +81,28 @@
     <div class="answer-editor">
         @if (Question.Type == QuestionType.TextQuestion)
         {
-            <RadzenTextArea @bind-Value="@editedAnswer"
+            <RadzenTextArea @bind-Value="@editResponse.TextValue"
                            Placeholder="Enter your answer here..."
                            Rows="10"
                            Style="width: 100%;" />
         }
         else if (Question.Type == QuestionType.SelfAssessment)
         {
-            <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-3">
-                For complex question types like Self Assessment, please provide a simplified text summary.
-            </RadzenAlert>
-            <RadzenTextArea @bind-Value="@editedAnswer"
-                           Placeholder="Enter answer summary..."
-                           Rows="8"
-                           Style="width: 100%;" />
+            <OptimizedSelfAssessmentQuestion Question="@Question"
+                                           Response="@editResponse"
+                                           OnResponseChanged="@HandleResponseChanged"
+                                           IsReadOnly="false" />
         }
         else if (Question.Type == QuestionType.GoalAchievement)
         {
-            <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-3">
-                For Goal Achievement questions, please provide a simplified text summary.
-            </RadzenAlert>
-            <RadzenTextArea @bind-Value="@editedAnswer"
-                           Placeholder="Enter goal summary..."
-                           Rows="8"
-                           Style="width: 100%;" />
+            <OptimizedGoalQuestion Question="@Question"
+                                  Response="@editResponse"
+                                  OnResponseChanged="@HandleResponseChanged"
+                                  IsReadOnly="false" />
         }
         else
         {
-            <RadzenTextBox @bind-Value="@editedAnswer"
+            <RadzenTextBox @bind-Value="@editResponse.TextValue"
                           Placeholder="Enter your answer..."
                           Style="width: 100%;" />
         }
@@ -111,53 +124,42 @@
     [Parameter] public object? CurrentAnswer { get; set; }
     [Parameter] public CompletionRole CompletionRole { get; set; }
 
-    private string editedAnswer = string.Empty;
+    private QuestionResponse editResponse = new();
 
     protected override void OnInitialized()
     {
-        // Initialize with current answer
-        editedAnswer = ConvertAnswerToString(CurrentAnswer);
+        editResponse = new QuestionResponse
+        {
+            QuestionId = Question.Id,
+            LastModified = DateTime.Now
+        };
+
+        if (CurrentAnswer != null)
+        {
+            if (CurrentAnswer is string str)
+            {
+                editResponse.TextValue = str;
+            }
+            else if (CurrentAnswer is int numValue)
+            {
+                editResponse.NumericValue = numValue;
+            }
+            else if (CurrentAnswer is Dictionary<string, object> complexValue)
+            {
+                editResponse.ComplexValue = new Dictionary<string, object>(complexValue);
+            }
+            else
+            {
+                editResponse.Value = CurrentAnswer;
+            }
+        }
     }
 
-    private string ConvertAnswerToString(object? answer)
+    private async Task HandleResponseChanged(QuestionResponse response)
     {
-        if (answer == null)
-            return string.Empty;
-
-        // Handle different answer types
-        if (answer is string str)
-            return str;
-
-        if (answer is Dictionary<string, object> dict)
-        {
-            // For complex answers, create a readable text representation
-            var parts = new List<string>();
-
-            foreach (var kvp in dict)
-            {
-                if (kvp.Key.StartsWith("rating_"))
-                {
-                    var key = kvp.Key.Replace("rating_", "");
-                    parts.Add($"{key}: {kvp.Value} stars");
-                }
-                else if (kvp.Key == "Description" || kvp.Key == "GoalDescription")
-                {
-                    parts.Add($"Goal: {kvp.Value}");
-                }
-                else if (kvp.Key == "AchievementPercentage")
-                {
-                    parts.Add($"Achievement: {kvp.Value}%");
-                }
-                else if (kvp.Key == "Justification")
-                {
-                    parts.Add($"Justification: {kvp.Value}");
-                }
-            }
-
-            return string.Join("\n", parts);
-        }
-
-        return answer.ToString() ?? string.Empty;
+        // Update is already handled by the component
+        // This is just to track changes
+        await Task.CompletedTask;
     }
 
     private string GetRoleIcon()
@@ -178,6 +180,15 @@
 
     private void SaveChanges()
     {
-        DialogService.Close(editedAnswer);
+        // Return the edited response based on question type
+        object? result = Question.Type switch
+        {
+            QuestionType.TextQuestion => editResponse.TextValue,
+            QuestionType.SelfAssessment => editResponse.ComplexValue,
+            QuestionType.GoalAchievement => editResponse.ComplexValue,
+            _ => editResponse.TextValue ?? editResponse.Value
+        };
+
+        DialogService.Close(result);
     }
 }

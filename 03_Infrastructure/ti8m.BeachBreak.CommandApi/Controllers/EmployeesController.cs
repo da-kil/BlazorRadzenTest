@@ -175,12 +175,15 @@ public class EmployeesController : BaseController
             return CreateResponse(Application.Command.Commands.Result<Guid>.Fail("Section responses are required", StatusCodes.Status400BadRequest));
         }
 
-        // Extract QuestionResponses from each SectionResponse
+        // Extract role-based responses from each SectionResponse and flatten to domain structure
         var responsesAsObjects = sectionResponses.ToDictionary(
             kvp => kvp.Key,
-            kvp => (object)kvp.Value.QuestionResponses.ToDictionary(
-                q => q.Key,
-                q => (object)q.Value
+            kvp => (object)kvp.Value.RoleResponses.ToDictionary(
+                roleKvp => roleKvp.Key, // Role key ("Employee" or "Manager")
+                roleKvp => (object)roleKvp.Value.ToDictionary(
+                    q => q.Key,  // Question ID
+                    q => (object)q.Value // QuestionResponse
+                )
             )
         );
 

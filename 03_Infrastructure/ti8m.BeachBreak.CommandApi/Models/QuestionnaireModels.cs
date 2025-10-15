@@ -71,7 +71,9 @@ public class SectionResponse
 {
     public Guid SectionId { get; set; }
     public bool IsCompleted { get; set; }
-    public Dictionary<Guid, QuestionResponse> QuestionResponses { get; set; } = new();
+
+    // Role-based structure: RoleKey (e.g., "Employee", "Manager") -> QuestionId -> QuestionResponse
+    public Dictionary<string, Dictionary<Guid, QuestionResponse>> RoleResponses { get; set; } = new();
 }
 
 public class QuestionResponse

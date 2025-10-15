@@ -437,7 +437,10 @@ public class EmployeesController : BaseController
                     sectionResponsesDto[sectionId] = new SectionResponseDto
                     {
                         SectionId = sectionId,
-                        QuestionResponses = questionResponsesDict
+                        RoleResponses = new Dictionary<string, Dictionary<Guid, QuestionResponseDto>>
+                        {
+                            { "Employee", questionResponsesDict }
+                        }
                     };
                 }
             }

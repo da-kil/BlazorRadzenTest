@@ -62,10 +62,12 @@ public class QuestionnaireResponseCommandHandler :
                 response = new QuestionnaireResponse(
                     responseId,
                     command.AssignmentId,
+                    assignment.TemplateId,
                     command.EmployeeId,
                     DateTime.UtcNow);
 
-                logger.LogInformation("Initiated new questionnaire response {ResponseId} for AssignmentId: {AssignmentId}", responseId, command.AssignmentId);
+                logger.LogInformation("Initiated new questionnaire response {ResponseId} for AssignmentId: {AssignmentId}, TemplateId: {TemplateId}",
+                    responseId, command.AssignmentId, assignment.TemplateId);
             }
 
             // Record section responses with Employee role
@@ -73,10 +75,18 @@ public class QuestionnaireResponseCommandHandler :
             {
                 var sectionId = section.Key;
 
-                // The section.Value is already a Dictionary<Guid, object> after controller conversion
-                if (section.Value is not Dictionary<Guid, object> questionResponses)
+                // Extract role-based responses: section.Value is Dictionary<string, Dictionary<Guid, object>>
+                if (section.Value is not Dictionary<string, object> roleBasedResponses)
                 {
                     logger.LogWarning("Section {SectionId} has invalid response type: {Type}", sectionId, section.Value?.GetType());
+                    continue;
+                }
+
+                // Extract Employee role responses
+                if (!roleBasedResponses.TryGetValue("Employee", out var employeeResponsesObj) ||
+                    employeeResponsesObj is not Dictionary<Guid, object> questionResponses)
+                {
+                    logger.LogDebug("Section {SectionId} has no Employee responses", sectionId);
                     continue;
                 }
 
@@ -150,11 +160,12 @@ public class QuestionnaireResponseCommandHandler :
                 response = new QuestionnaireResponse(
                     responseId,
                     command.AssignmentId,
+                    assignment.TemplateId,
                     assignment.EmployeeId,
                     DateTime.UtcNow);
 
-                logger.LogInformation("Initiated new questionnaire response {ResponseId} for manager input on AssignmentId: {AssignmentId}, EmployeeId: {EmployeeId}",
-                    responseId, command.AssignmentId, assignment.EmployeeId);
+                logger.LogInformation("Initiated new questionnaire response {ResponseId} for manager input on AssignmentId: {AssignmentId}, TemplateId: {TemplateId}, EmployeeId: {EmployeeId}",
+                    responseId, command.AssignmentId, assignment.TemplateId, assignment.EmployeeId);
             }
 
             // Record section responses with Manager role
@@ -162,10 +173,18 @@ public class QuestionnaireResponseCommandHandler :
             {
                 var sectionId = section.Key;
 
-                // The section.Value is already a Dictionary<Guid, object> after controller conversion
-                if (section.Value is not Dictionary<Guid, object> questionResponses)
+                // Extract role-based responses: section.Value is Dictionary<string, Dictionary<Guid, object>>
+                if (section.Value is not Dictionary<string, object> roleBasedResponses)
                 {
                     logger.LogWarning("Section {SectionId} has invalid response type: {Type}", sectionId, section.Value?.GetType());
+                    continue;
+                }
+
+                // Extract Manager role responses
+                if (!roleBasedResponses.TryGetValue("Manager", out var managerResponsesObj) ||
+                    managerResponsesObj is not Dictionary<Guid, object> questionResponses)
+                {
+                    logger.LogDebug("Section {SectionId} has no Manager responses", sectionId);
                     continue;
                 }
 

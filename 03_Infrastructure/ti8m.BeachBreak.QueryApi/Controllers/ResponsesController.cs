@@ -243,14 +243,18 @@ public class ResponsesController : BaseController
 
             if (roleBasedResponses == null) continue;
 
-            // For general response endpoints, return MANAGER responses
-            // (This endpoint is primarily used by managers viewing responses)
-            var questionResponsesDict = new Dictionary<Guid, QuestionResponseDto>();
+            // NEW: Populate RoleResponses with BOTH Employee and Manager responses (for review mode)
+            var roleResponsesDto = new Dictionary<string, Dictionary<Guid, QuestionResponseDto>>();
 
-            if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager, out var managerResponses))
+            foreach (var roleKvp in roleBasedResponses)
             {
-                // managerResponses is Dictionary<Guid, object> where each value might be JsonElement
-                foreach (var questionKvp in managerResponses)
+                var role = roleKvp.Key;
+                var roleKey = role.ToString(); // "Employee" or "Manager"
+                var roleQuestions = roleKvp.Value;
+
+                var questionResponsesForRole = new Dictionary<Guid, QuestionResponseDto>();
+
+                foreach (var questionKvp in roleQuestions)
                 {
                     var questionId = questionKvp.Key;
                     var responseValue = questionKvp.Value;
@@ -260,28 +264,33 @@ public class ResponsesController : BaseController
                         var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
                         if (questionResponse != null)
                         {
-                            questionResponsesDict[questionId] = questionResponse;
+                            questionResponsesForRole[questionId] = questionResponse;
                         }
                     }
                     else
                     {
                         // Fallback: create a simple response
-                        questionResponsesDict[questionId] = new QuestionResponseDto
+                        questionResponsesForRole[questionId] = new QuestionResponseDto
                         {
                             QuestionId = questionId,
                             Value = responseValue
                         };
                     }
                 }
+
+                if (questionResponsesForRole.Any())
+                {
+                    roleResponsesDto[roleKey] = questionResponsesForRole;
+                }
             }
 
-            // Only include sections that have manager responses
-            if (questionResponsesDict.Any())
+            // Include section if it has any role responses
+            if (roleResponsesDto.Any())
             {
                 result[sectionId] = new SectionResponseDto
                 {
                     SectionId = sectionId,
-                    QuestionResponses = questionResponsesDict
+                    RoleResponses = roleResponsesDto
                 };
             }
         }
@@ -310,11 +319,13 @@ public class ResponsesController : BaseController
 
             if (roleBasedResponses == null) continue;
 
-            // For employee endpoints, return EMPLOYEE responses
-            var questionResponsesDict = new Dictionary<Guid, QuestionResponseDto>();
+            // For employee endpoints, return EMPLOYEE responses only
+            var roleResponsesDto = new Dictionary<string, Dictionary<Guid, QuestionResponseDto>>();
 
             if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponses))
             {
+                var questionResponsesForEmployee = new Dictionary<Guid, QuestionResponseDto>();
+
                 // employeeResponses is Dictionary<Guid, object> where each value might be JsonElement
                 foreach (var questionKvp in employeeResponses)
                 {
@@ -326,28 +337,33 @@ public class ResponsesController : BaseController
                         var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
                         if (questionResponse != null)
                         {
-                            questionResponsesDict[questionId] = questionResponse;
+                            questionResponsesForEmployee[questionId] = questionResponse;
                         }
                     }
                     else
                     {
                         // Fallback: create a simple response
-                        questionResponsesDict[questionId] = new QuestionResponseDto
+                        questionResponsesForEmployee[questionId] = new QuestionResponseDto
                         {
                             QuestionId = questionId,
                             Value = responseValue
                         };
                     }
                 }
+
+                if (questionResponsesForEmployee.Any())
+                {
+                    roleResponsesDto["Employee"] = questionResponsesForEmployee;
+                }
             }
 
             // Only include sections that have employee responses
-            if (questionResponsesDict.Any())
+            if (roleResponsesDto.Any())
             {
                 result[sectionId] = new SectionResponseDto
                 {
                     SectionId = sectionId,
-                    QuestionResponses = questionResponsesDict
+                    RoleResponses = roleResponsesDto
                 };
             }
         }

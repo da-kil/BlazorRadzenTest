@@ -9,5 +9,6 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
 public record QuestionnaireResponseInitiated(
     Guid AggregateId,
     Guid AssignmentId,
+    Guid TemplateId,
     Guid EmployeeId,
     DateTime InitiatedDate) : IDomainEvent;

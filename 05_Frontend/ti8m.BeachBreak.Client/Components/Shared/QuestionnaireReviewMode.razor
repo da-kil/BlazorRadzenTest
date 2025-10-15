@@ -514,34 +514,35 @@
 
     private object? GetAnswer(Guid sectionId, Guid questionId, CompletionRole role)
     {
-        // TODO: LIMITATION - The current API doesn't expose role-based responses
-        // The QuestionnaireResponse DTO needs to be updated to include:
-        // Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, object>>> SectionResponses
-        //
-        // For now, we return the generic answer without role distinction
-        // This means the review mode will show the same answer for both employee and manager
-        // which is incorrect for the "Both" sections
-
         if (response?.SectionResponses == null)
             return null;
 
         if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
             return null;
 
-        if (!sectionResponse.QuestionResponses.TryGetValue(questionId, out var questionResponse))
-            return null;
+        // Use role-based responses structure
+        var roleKey = role.ToString();
 
-        // Return whatever value is available (could be TextValue, NumericValue, or ComplexValue)
-        if (!string.IsNullOrEmpty(questionResponse.TextValue))
-            return questionResponse.TextValue;
+        if (sectionResponse.RoleResponses != null &&
+            sectionResponse.RoleResponses.TryGetValue(roleKey, out var roleQuestions))
+        {
+            if (roleQuestions.TryGetValue(questionId, out var questionResponse))
+            {
+                // Return whatever value is available (could be TextValue, NumericValue, or ComplexValue)
+                if (!string.IsNullOrEmpty(questionResponse.TextValue))
+                    return questionResponse.TextValue;
 
-        if (questionResponse.NumericValue.HasValue)
-            return questionResponse.NumericValue.Value;
+                if (questionResponse.NumericValue.HasValue)
+                    return questionResponse.NumericValue.Value;
 
-        if (questionResponse.ComplexValue != null && questionResponse.ComplexValue.Count > 0)
-            return questionResponse.ComplexValue;
+                if (questionResponse.ComplexValue != null && questionResponse.ComplexValue.Count > 0)
+                    return questionResponse.ComplexValue;
 
-        return questionResponse.Value;
+                return questionResponse.Value;
+            }
+        }
+
+        return null;
     }
 
     private async Task EditAnswer(QuestionItem question, CompletionRole originalRole)
@@ -558,7 +559,7 @@
                 { "CurrentAnswer", currentAnswer },
                 { "CompletionRole", originalRole }
             },
-            new DialogOptions { Width = "700px", Height = "500px", Resizable = true, Draggable = true }
+            new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
         );
 
         if (result != null)

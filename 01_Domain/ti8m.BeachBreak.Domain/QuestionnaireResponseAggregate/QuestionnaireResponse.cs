@@ -12,6 +12,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate;
 public class QuestionnaireResponse : AggregateRoot
 {
     public Guid AssignmentId { get; private set; }
+    public Guid TemplateId { get; private set; }
     public Guid EmployeeId { get; private set; }
 
     // Role-based section responses: SectionId -> CompletionRole -> QuestionId -> Answer
@@ -29,12 +30,14 @@ public class QuestionnaireResponse : AggregateRoot
     public QuestionnaireResponse(
         Guid id,
         Guid assignmentId,
+        Guid templateId,
         Guid employeeId,
         DateTime initiatedDate)
     {
         RaiseEvent(new QuestionnaireResponseInitiated(
             id,
             assignmentId,
+            templateId,
             employeeId,
             initiatedDate));
     }
@@ -63,6 +66,7 @@ public class QuestionnaireResponse : AggregateRoot
     {
         Id = @event.AggregateId;
         AssignmentId = @event.AssignmentId;
+        TemplateId = @event.TemplateId;
         EmployeeId = @event.EmployeeId;
         InitiatedDate = @event.InitiatedDate;
         LastModified = @event.InitiatedDate;

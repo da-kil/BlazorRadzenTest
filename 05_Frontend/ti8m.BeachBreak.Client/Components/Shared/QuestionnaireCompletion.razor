@@ -1,9 +1,11 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NotificationService NotificationService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <style>
     .questionnaire-completion {
@@ -485,6 +487,7 @@
     private bool isSaving = false;
     private bool isLoading = true;
     private DateTime? lastSavedTime;
+    private string currentUserRole = "Employee";
 
     // Auto-save timer
     private Timer? autoSaveTimer;
@@ -495,12 +498,23 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await DetermineUserRole();
         await LoadTemplate();
         await LoadExistingResponses();
         InitializeResponses();
         SetupAutoSave();
         isLoading = false;
         StateHasChanged();
+    }
+
+    private async Task DetermineUserRole()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Managers are TeamLead, HR, HRLead, or Admin
+        var isManager = user.IsInRole("TeamLead") || user.IsInRole("HR") || user.IsInRole("HRLead") || user.IsInRole("Admin");
+        currentUserRole = isManager ? "Manager" : "Employee";
     }
 
     private async Task LoadTemplate()
@@ -554,16 +568,22 @@
                 responses[section.Id] = new SectionResponse
                 {
                     SectionId = section.Id,
-                    QuestionResponses = new Dictionary<Guid, QuestionResponse>()
+                    RoleResponses = new Dictionary<string, Dictionary<Guid, QuestionResponse>>()
                 };
             }
 
-            // Initialize question responses
+            // Ensure role dictionary exists
+            if (!responses[section.Id].RoleResponses.ContainsKey(currentUserRole))
+            {
+                responses[section.Id].RoleResponses[currentUserRole] = new Dictionary<Guid, QuestionResponse>();
+            }
+
+            // Initialize question responses for current user's role
             foreach (var question in section.Questions)
             {
-                if (!responses[section.Id].QuestionResponses.ContainsKey(question.Id))
+                if (!responses[section.Id].RoleResponses[currentUserRole].ContainsKey(question.Id))
                 {
-                    responses[section.Id].QuestionResponses[question.Id] = new QuestionResponse
+                    responses[section.Id].RoleResponses[currentUserRole][question.Id] = new QuestionResponse
                     {
                         QuestionId = question.Id,
                         QuestionType = question.Type,
@@ -672,9 +692,17 @@
         validationErrors.Clear();
         var section = currentSection;
 
+        if (!responses[section.Id].RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+            return false;
+
         foreach (var question in section.Questions.Where(q => q.IsRequired))
         {
-            var response = responses[section.Id].QuestionResponses[question.Id];
+            if (!roleQuestions.TryGetValue(question.Id, out var response))
+            {
+                validationErrors.Add($"'{GetQuestionTypeLabel(question)}' is required");
+                continue;
+            }
+
             if (!IsQuestionAnswered(question, response))
             {
                 validationErrors.Add($"'{GetQuestionTypeLabel(question)}' is required");
@@ -692,10 +720,13 @@
 
         foreach (var section in template.Sections)
         {
+            if (!responses[section.Id].RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+                continue;
+
             foreach (var question in section.Questions.Where(q => q.IsRequired))
             {
-                var response = responses[section.Id].QuestionResponses[question.Id];
-                if (!IsQuestionAnswered(question, response))
+                if (!roleQuestions.TryGetValue(question.Id, out var response) ||
+                    !IsQuestionAnswered(question, response))
                 {
                     validationErrors.Add($"'{GetQuestionTypeLabel(question)}' in section '{section.Title}' is required");
                 }
@@ -775,7 +806,7 @@
         var scaleLowLabel = GetScaleLowLabelFromQuestion(question);
         var scaleHighLabel = GetScaleHighLabelFromQuestion(question);
         var sectionResponse = responses[currentSection.Id];
-        var questionResponse = sectionResponse.QuestionResponses[question.Id];
+        var questionResponse = sectionResponse.RoleResponses[currentUserRole][question.Id];
 
         return @<div class="self-assessment-input">
             @foreach (var competency in competencies)
@@ -839,7 +870,7 @@
     private RenderFragment GetGoalAchievementInput(QuestionItem question)
     {
         var sectionResponse = responses[currentSection.Id];
-        var questionResponse = sectionResponse.QuestionResponses[question.Id];
+        var questionResponse = sectionResponse.RoleResponses[currentUserRole][question.Id];
 
         return @<div class="goal-achievement-input">
             @{
@@ -895,7 +926,7 @@
     private RenderFragment GetTextQuestionInput(QuestionItem question)
     {
         var sectionResponse = responses[currentSection.Id];
-        var questionResponse = sectionResponse.QuestionResponses[question.Id];
+        var questionResponse = sectionResponse.RoleResponses[currentUserRole][question.Id];
 
         return @<div class="text-question-input">
             @{

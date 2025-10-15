@@ -510,12 +510,17 @@
             {
                 if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
                 {
-                    // Merge question responses
-                    foreach (var questionKvp in sectionKvp.Value.QuestionResponses)
+                    // Extract responses for current user's role from RoleResponses
+                    if (sectionKvp.Value.RoleResponses != null && sectionKvp.Value.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
                     {
-                        if (sectionResponse.QuestionResponses.ContainsKey(questionKvp.Key))
+                        // Merge question responses for this role
+                        foreach (var questionKvp in roleQuestions)
                         {
-                            sectionResponse.QuestionResponses[questionKvp.Key] = questionKvp.Value;
+                            if (sectionResponse.RoleResponses.ContainsKey(currentUserRole) &&
+                                sectionResponse.RoleResponses[currentUserRole].ContainsKey(questionKvp.Key))
+                            {
+                                sectionResponse.RoleResponses[currentUserRole][questionKvp.Key] = questionKvp.Value;
+                            }
                         }
                     }
                     sectionResponse.IsCompleted = sectionKvp.Value.IsCompleted;
@@ -548,24 +553,28 @@
             EmployeeId = employeeGuid
         };
 
-        // Initialize section responses
+        // Initialize section responses with role-based structure
         foreach (var section in template.Sections)
         {
-            response.SectionResponses[section.Id] = new SectionResponse
+            var sectionResponse = new SectionResponse
             {
                 SectionId = section.Id,
-                QuestionResponses = new Dictionary<Guid, QuestionResponse>()
+                RoleResponses = new Dictionary<string, Dictionary<Guid, QuestionResponse>>()
             };
 
-            // Initialize question responses
+            // Initialize question responses for current user's role
+            sectionResponse.RoleResponses[currentUserRole] = new Dictionary<Guid, QuestionResponse>();
+
             foreach (var question in section.Questions)
             {
-                response.SectionResponses[section.Id].QuestionResponses[question.Id] = new QuestionResponse
+                sectionResponse.RoleResponses[currentUserRole][question.Id] = new QuestionResponse
                 {
                     QuestionId = question.Id,
                     QuestionType = question.Type
                 };
             }
+
+            response.SectionResponses[section.Id] = sectionResponse;
         }
     }
 
@@ -825,11 +834,17 @@
     private QuestionResponse GetQuestionResponse(Guid questionId)
     {
         if (currentSection == null) return new QuestionResponse { QuestionId = questionId };
-        
+
         var sectionResponse = response.SectionResponses[currentSection.Id];
-        return sectionResponse.QuestionResponses.TryGetValue(questionId, out var questionResponse) 
-            ? questionResponse 
-            : new QuestionResponse { QuestionId = questionId };
+
+        // Access responses for current user's role
+        if (sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions) &&
+            roleQuestions.TryGetValue(questionId, out var questionResponse))
+        {
+            return questionResponse;
+        }
+
+        return new QuestionResponse { QuestionId = questionId };
     }
 
     private void UpdateQuestionResponse(Guid questionId, int value)
@@ -1123,18 +1138,22 @@
     private bool CanProceedFromCurrentSection()
     {
         if (currentSection == null || !currentSection.IsRequired) return true;
-        
+
         var sectionResponse = response.SectionResponses[currentSection.Id];
-        
+
+        // Check if role responses exist for current user
+        if (!sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+            return false;
+
         foreach (var question in currentSection.Questions.Where(q => q.IsRequired))
         {
-            if (!sectionResponse.QuestionResponses.TryGetValue(question.Id, out var questionResponse))
+            if (!roleQuestions.TryGetValue(question.Id, out var questionResponse))
                 return false;
-                
+
             if (!IsQuestionAnswered(question, questionResponse))
                 return false;
         }
-        
+
         return true;
     }
 
@@ -1182,31 +1201,35 @@
     {
         if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
             return false;
-            
+
+        if (!sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+            return false;
+
         var section = template!.Sections.First(s => s.Id == sectionId);
-        
-        return section.Questions.Where(q => q.IsRequired).All(q => 
-            sectionResponse.QuestionResponses.TryGetValue(q.Id, out var qr) && 
+
+        return section.Questions.Where(q => q.IsRequired).All(q =>
+            roleQuestions.TryGetValue(q.Id, out var qr) &&
             IsQuestionAnswered(q, qr));
     }
 
     private void UpdateProgress()
     {
         if (template == null) return;
-        
+
         var totalQuestions = template.Sections.SelectMany(s => s.Questions.Where(q => q.IsRequired)).Count();
         var answeredQuestions = 0;
-        
+
         foreach (var section in template.Sections)
         {
-            if (response.SectionResponses.TryGetValue(section.Id, out var sectionResponse))
+            if (response.SectionResponses.TryGetValue(section.Id, out var sectionResponse) &&
+                sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
             {
-                answeredQuestions += section.Questions.Where(q => q.IsRequired).Count(q => 
-                    sectionResponse.QuestionResponses.TryGetValue(q.Id, out var qr) && 
+                answeredQuestions += section.Questions.Where(q => q.IsRequired).Count(q =>
+                    roleQuestions.TryGetValue(q.Id, out var qr) &&
                     IsQuestionAnswered(q, qr));
             }
         }
-        
+
         response.ProgressPercentage = totalQuestions > 0 ? (int)(answeredQuestions * 100.0 / totalQuestions) : 0;
     }
 
@@ -1231,8 +1254,11 @@
             if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
                 return false;
 
+            if (!sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+                return false;
+
             return requiredQuestions.All(q =>
-                sectionResponse.QuestionResponses.TryGetValue(q.Id, out var qr) &&
+                roleQuestions.TryGetValue(q.Id, out var qr) &&
                 IsQuestionAnswered(q, qr));
         });
     }
@@ -1302,8 +1328,11 @@
                 if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
                     return true;
 
+                if (!sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+                    return true;
+
                 return !requiredQuestions.All(q =>
-                    sectionResponse.QuestionResponses.TryGetValue(q.Id, out var qr) &&
+                    roleQuestions.TryGetValue(q.Id, out var qr) &&
                     IsQuestionAnswered(q, qr));
             }).Select(s => s.Title).ToList();
 
@@ -1504,13 +1533,77 @@
     // Competency-specific helper methods
     private List<CompetencyDefinition> GetCompetenciesForQuestion(QuestionItem question)
     {
-        if (question.Configuration.ContainsKey("Competencies") && 
-            question.Configuration["Competencies"] is List<CompetencyDefinition> competencies)
+        if (!question.Configuration.ContainsKey("Competencies"))
         {
-            return competencies;
+            // Return default competencies if none configured
+            return new List<CompetencyDefinition>
+            {
+                new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities.", false)
+            };
         }
-        
-        // Return default competencies if none configured
+
+        var competenciesValue = question.Configuration["Competencies"];
+
+        // Handle direct List<CompetencyDefinition>
+        if (competenciesValue is List<CompetencyDefinition> comps)
+        {
+            return comps;
+        }
+
+        // Handle JsonElement (from API deserialization)
+        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
+        {
+            try
+            {
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+                };
+
+                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
+                    jsonElement.GetRawText(),
+                    options
+                );
+
+                if (competencies != null && competencies.Any())
+                {
+                    return competencies;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DynamicQuestionnaire] Failed to deserialize competencies: {ex.Message}");
+            }
+        }
+
+        // Handle IEnumerable<object> or other list types
+        if (competenciesValue is IEnumerable<object> enumerable)
+        {
+            var result = new List<CompetencyDefinition>();
+            foreach (var item in enumerable)
+            {
+                if (item is CompetencyDefinition compDef)
+                {
+                    result.Add(compDef);
+                }
+                else if (item is System.Text.Json.JsonElement itemJson)
+                {
+                    try
+                    {
+                        var deserializedComp = System.Text.Json.JsonSerializer.Deserialize<CompetencyDefinition>(
+                            itemJson.GetRawText(),
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+                        if (deserializedComp != null) result.Add(deserializedComp);
+                    }
+                    catch { /* Skip invalid items */ }
+                }
+            }
+            if (result.Any()) return result;
+        }
+
+        // Return default competencies if deserialization failed
         return new List<CompetencyDefinition>
         {
             new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities.", false)

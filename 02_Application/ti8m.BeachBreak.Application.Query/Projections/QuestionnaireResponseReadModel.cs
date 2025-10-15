@@ -27,8 +27,8 @@ public class QuestionnaireResponseReadModel
     {
         Id = @event.AggregateId;
         AssignmentId = @event.AssignmentId;
+        TemplateId = @event.TemplateId;
         EmployeeId = @event.EmployeeId;
-        // TemplateId is not in the event - would need to be added or loaded from assignment
         CreatedAt = @event.InitiatedDate;
         LastModified = @event.InitiatedDate;
     }
