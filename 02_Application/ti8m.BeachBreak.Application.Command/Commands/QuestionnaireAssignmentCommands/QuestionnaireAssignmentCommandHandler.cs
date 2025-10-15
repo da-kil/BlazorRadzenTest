@@ -22,13 +22,16 @@ public class QuestionnaireAssignmentCommandHandler :
     ICommandHandler<FinalizeQuestionnaireAsManagerCommand, Result>
 {
     private readonly IQuestionnaireAssignmentAggregateRepository repository;
+    private readonly IQuestionnaireResponseAggregateRepository responseRepository;
     private readonly ILogger<QuestionnaireAssignmentCommandHandler> logger;
 
     public QuestionnaireAssignmentCommandHandler(
         IQuestionnaireAssignmentAggregateRepository repository,
+        IQuestionnaireResponseAggregateRepository responseRepository,
         ILogger<QuestionnaireAssignmentCommandHandler> logger)
     {
         this.repository = repository;
+        this.responseRepository = responseRepository;
         this.logger = logger;
     }
 
@@ -310,6 +313,7 @@ public class QuestionnaireAssignmentCommandHandler :
         {
             logger.LogInformation("Editing answer during review for assignment {AssignmentId}", command.AssignmentId);
 
+            // 1. Raise audit event on assignment aggregate
             var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
             assignment.EditAnswerAsManagerDuringReview(
                 command.SectionId,
@@ -318,6 +322,30 @@ public class QuestionnaireAssignmentCommandHandler :
                 command.Answer,
                 command.EditedBy);
             await repository.StoreAsync(assignment, cancellationToken);
+
+            // 2. Update the actual answer in the response aggregate
+            var response = await responseRepository.FindByAssignmentIdAsync(command.AssignmentId, cancellationToken);
+            if (response == null)
+            {
+                logger.LogError("QuestionnaireResponse not found for assignment {AssignmentId}", command.AssignmentId);
+                return Result.Fail("Response not found", 404);
+            }
+
+            // Get current section responses for this role
+            var currentSectionResponses = new Dictionary<Guid, object>();
+            if (response.SectionResponses.TryGetValue(command.SectionId, out var roleResponses) &&
+                roleResponses.TryGetValue(command.OriginalCompletionRole, out var existingQuestions))
+            {
+                // Copy existing responses
+                currentSectionResponses = new Dictionary<Guid, object>(existingQuestions);
+            }
+
+            // Update or add the specific question answer
+            currentSectionResponses[command.QuestionId] = command.Answer;
+
+            // Record the updated section response
+            response.RecordSectionResponse(command.SectionId, command.OriginalCompletionRole, currentSectionResponses);
+            await responseRepository.StoreAsync(response, cancellationToken);
 
             logger.LogInformation("Successfully edited answer during review for assignment {AssignmentId}", command.AssignmentId);
             return Result.Success("Answer edited");

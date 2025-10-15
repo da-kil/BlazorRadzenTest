@@ -337,6 +337,19 @@
             return;
         }
 
+        // After review confirmation, managers see ALL sections in read-only mode
+        var isPostReviewReadOnly = assignment != null && isManager &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                          WorkflowState.EmployeeReviewConfirmed or
+                                          WorkflowState.Finalized);
+
+        if (isPostReviewReadOnly)
+        {
+            // Show ALL sections to manager in read-only view after review
+            visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
+            return;
+        }
+
         // Filter sections based on current user role and completion role
         visibleSections = template.Sections
             .Where(s =>
@@ -497,7 +510,7 @@
             }
             else if (isManager)
             {
-                // Managers load responses via general response service
+                // Managers load responses via general response service (includes ALL role responses)
                 existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignmentId.Value);
             }
 
@@ -511,10 +524,37 @@
             {
                 if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
                 {
-                    // Extract responses for current user's role from RoleResponses
-                    if (sectionKvp.Value.RoleResponses != null && sectionKvp.Value.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+                    // For managers in post-review read-only mode, load ALL role responses (Employee + Manager)
+                    // For normal mode, only load current user's role responses
+                    var isPostReviewReadOnly = assignment != null && isManager &&
+                        (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                                      WorkflowState.EmployeeReviewConfirmed or
+                                                      WorkflowState.Finalized);
+
+                    if (isPostReviewReadOnly && sectionKvp.Value.RoleResponses != null)
                     {
-                        // Merge question responses for this role
+                        // Load ALL role responses (Employee, Manager, Both)
+                        foreach (var roleKvp in sectionKvp.Value.RoleResponses)
+                        {
+                            var roleName = roleKvp.Key;
+                            var roleQuestions = roleKvp.Value;
+
+                            // Ensure role exists in response structure
+                            if (!sectionResponse.RoleResponses.ContainsKey(roleName))
+                            {
+                                sectionResponse.RoleResponses[roleName] = new Dictionary<Guid, QuestionResponse>();
+                            }
+
+                            // Merge question responses for this role
+                            foreach (var questionKvp in roleQuestions)
+                            {
+                                sectionResponse.RoleResponses[roleName][questionKvp.Key] = questionKvp.Value;
+                            }
+                        }
+                    }
+                    else if (sectionKvp.Value.RoleResponses != null && sectionKvp.Value.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+                    {
+                        // Normal mode: only load current user's role responses
                         foreach (var questionKvp in roleQuestions)
                         {
                             if (sectionResponse.RoleResponses.ContainsKey(currentUserRole) &&
@@ -838,8 +878,29 @@
 
         var sectionResponse = response.SectionResponses[currentSection.Id];
 
-        // Access responses for current user's role
-        if (sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions) &&
+        // Determine which role's responses to fetch based on section's CompletionRole
+        // In read-only mode after review, managers view responses based on who originally completed the section
+        var isPostReviewReadOnly = assignment != null && isManager &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                          WorkflowState.EmployeeReviewConfirmed or
+                                          WorkflowState.Finalized);
+
+        string roleToFetch = currentUserRole;
+
+        if (isPostReviewReadOnly)
+        {
+            // In post-review read-only mode, fetch responses based on section's CompletionRole
+            roleToFetch = currentSection.CompletionRole switch
+            {
+                CompletionRole.Employee => "Employee",
+                CompletionRole.Manager => "Manager",
+                CompletionRole.Both => currentUserRole,
+                _ => currentUserRole
+            };
+        }
+
+        // Access responses for the determined role
+        if (sectionResponse.RoleResponses.TryGetValue(roleToFetch, out var roleQuestions) &&
             roleQuestions.TryGetValue(questionId, out var questionResponse))
         {
             return questionResponse;
