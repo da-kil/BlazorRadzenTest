@@ -265,17 +265,17 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
-    public async Task<bool> ConfirmManagerReviewAsync(Guid assignmentId, string confirmedBy)
+    public async Task<bool> FinishReviewMeetingAsync(Guid assignmentId, string finishedBy, string? reviewSummary)
     {
         try
         {
-            var dto = new ConfirmCompletionDto { ConfirmedBy = confirmedBy };
-            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/confirm-manager-review", dto);
+            var dto = new FinishReviewMeetingDto { FinishedBy = finishedBy, ReviewSummary = reviewSummary };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/finish", dto);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
         {
-            LogError($"Error confirming manager review for assignment {assignmentId}", ex);
+            LogError($"Error finishing review meeting for assignment {assignmentId}", ex);
             return false;
         }
     }
@@ -317,12 +317,12 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
-    public async Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy)
+    public async Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy, string? comments)
     {
         try
         {
-            var dto = new ConfirmCompletionDto { ConfirmedBy = confirmedBy };
-            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/confirm-employee-review", dto);
+            var dto = new ConfirmReviewOutcomeDto { ConfirmedBy = confirmedBy, EmployeeComments = comments };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/confirm-employee", dto);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -332,12 +332,12 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
-    public async Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy)
+    public async Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy, string? finalNotes)
     {
         try
         {
-            var dto = new FinalizeQuestionnaireDto { FinalizedBy = finalizedBy };
-            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/finalize", dto);
+            var dto = new FinalizeQuestionnaireDto { FinalizedBy = finalizedBy, ManagerFinalNotes = finalNotes };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/finalize-manager", dto);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)

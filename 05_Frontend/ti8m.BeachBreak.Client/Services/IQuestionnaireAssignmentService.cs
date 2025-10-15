@@ -37,10 +37,10 @@ public interface IQuestionnaireAssignmentService
     Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> SubmitManagerQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> InitiateReviewAsync(Guid assignmentId, string initiatedBy);
-    Task<bool> ConfirmManagerReviewAsync(Guid assignmentId, string confirmedBy);
+    Task<bool> FinishReviewMeetingAsync(Guid assignmentId, string finishedBy, string? reviewSummary);
     Task<bool> EditAnswerDuringReviewAsync(Guid assignmentId, Guid sectionId, Guid questionId, CompletionRole originalCompletionRole, string answer, string editedBy);
-    Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy);
-    Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy);
+    Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy, string? comments);
+    Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy, string? finalNotes);
 
     // Review changes tracking
     Task<List<ReviewChangeDto>> GetReviewChangesAsync(Guid assignmentId);

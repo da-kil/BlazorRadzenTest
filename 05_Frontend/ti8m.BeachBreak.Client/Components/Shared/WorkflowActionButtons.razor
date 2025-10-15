@@ -43,12 +43,12 @@
                               Disabled="@isProcessing" />
             }
 
-            @if (IsManager && WorkflowStateHelper.CanManagerConfirmReview(Assignment))
+            @if (IsManager && WorkflowStateHelper.CanManagerFinishReviewMeeting(Assignment))
             {
-                <RadzenButton Text="Confirm Review"
-                              Icon="verified"
+                <RadzenButton Text="Finish Review Meeting"
+                              Icon="event_available"
                               ButtonStyle="ButtonStyle.Success"
-                              Click="@ConfirmManagerReview"
+                              Click="@FinishReviewMeeting"
                               Disabled="@isProcessing" />
             }
 
@@ -212,7 +212,7 @@
         isProcessing = true;
         try
         {
-            var success = await AssignmentService.ConfirmEmployeeReviewAsync(Assignment.Id, UserName);
+            var success = await AssignmentService.ConfirmEmployeeReviewAsync(Assignment.Id, UserName, null);
             if (success)
             {
                 NotificationService.Notify(new NotificationMessage
@@ -241,21 +241,21 @@
         }
     }
 
-    private async Task ConfirmManagerReview()
+    private async Task FinishReviewMeeting()
     {
         if (Assignment == null) return;
 
         isProcessing = true;
         try
         {
-            var success = await AssignmentService.ConfirmManagerReviewAsync(Assignment.Id, UserName);
+            var success = await AssignmentService.FinishReviewMeetingAsync(Assignment.Id, UserName, null);
             if (success)
             {
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
                     Summary = "Success",
-                    Detail = "Review confirmed by manager",
+                    Detail = "Review meeting finished successfully",
                     Duration = 4000
                 });
                 await OnActionCompleted.InvokeAsync();
@@ -266,7 +266,7 @@
                 {
                     Severity = NotificationSeverity.Error,
                     Summary = "Error",
-                    Detail = "Failed to confirm review",
+                    Detail = "Failed to finish review meeting",
                     Duration = 4000
                 });
             }
@@ -284,7 +284,7 @@
         isProcessing = true;
         try
         {
-            var success = await AssignmentService.FinalizeQuestionnaireAsync(Assignment.Id, UserName);
+            var success = await AssignmentService.FinalizeQuestionnaireAsync(Assignment.Id, UserName, null);
             if (success)
             {
                 NotificationService.Notify(new NotificationMessage

@@ -84,11 +84,13 @@ public static class WorkflowStateHelper
 
         var state = assignment.WorkflowState;
 
-        // Employee can edit until they themselves submit, or during review
+        // Employee can edit until they themselves submit
         // Employee can continue editing even if manager has already submitted (ManagerSubmitted)
-        return state is WorkflowState.Assigned or WorkflowState.EmployeeInProgress or WorkflowState.BothInProgress or WorkflowState.ManagerSubmitted or WorkflowState.InReview;
+        // Employee is READ-ONLY during InReview (manager-led review meeting)
+        return state is WorkflowState.Assigned or WorkflowState.EmployeeInProgress or WorkflowState.BothInProgress or WorkflowState.ManagerSubmitted;
 
         // Cannot edit after employee submits: EmployeeSubmitted, BothSubmitted
+        // Cannot edit during review: InReview
         // Cannot edit after finalization: Finalized
     }
 
@@ -98,18 +100,25 @@ public static class WorkflowStateHelper
 
         var state = assignment.WorkflowState;
 
-        // Manager can edit until they themselves submit, or during review
+        // Manager can edit until they themselves submit
         // Manager can continue editing even if employee has already submitted (EmployeeSubmitted)
-        return state is WorkflowState.Assigned or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress or WorkflowState.EmployeeSubmitted or WorkflowState.InReview;
+        // During InReview, manager has special editing privileges (handled via CanManagerEditDuringReview)
+        return state is WorkflowState.Assigned or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress or WorkflowState.EmployeeSubmitted;
 
         // Cannot edit after manager submits: ManagerSubmitted, BothSubmitted
         // Cannot edit after finalization: Finalized
     }
 
+    public static bool CanManagerEditDuringReview(QuestionnaireAssignment assignment)
+    {
+        return assignment.WorkflowState == WorkflowState.InReview;
+    }
+
     public static bool CanEmployeeSubmit(QuestionnaireAssignment assignment)
     {
         var state = assignment.WorkflowState;
-        return state is WorkflowState.EmployeeInProgress or WorkflowState.BothInProgress;
+        // Employee can submit when they're in progress, or when manager has already submitted
+        return state is WorkflowState.EmployeeInProgress or WorkflowState.BothInProgress or WorkflowState.ManagerSubmitted;
     }
 
     public static bool CanManagerSubmit(QuestionnaireAssignment assignment)
@@ -123,23 +132,22 @@ public static class WorkflowStateHelper
         return assignment.WorkflowState == WorkflowState.BothSubmitted;
     }
 
-    public static bool CanEmployeeConfirmReview(QuestionnaireAssignment assignment)
+    public static bool CanManagerFinishReviewMeeting(QuestionnaireAssignment assignment)
     {
-        return assignment.WorkflowState == WorkflowState.InReview &&
-               assignment.EmployeeReviewConfirmedDate == null;
+        // Manager finishes the review meeting, transitioning from InReview to ManagerReviewConfirmed
+        return assignment.WorkflowState == WorkflowState.InReview;
     }
 
-    public static bool CanManagerConfirmReview(QuestionnaireAssignment assignment)
+    public static bool CanEmployeeConfirmReview(QuestionnaireAssignment assignment)
     {
-        return (assignment.WorkflowState == WorkflowState.InReview ||
-                assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed) &&
-               assignment.ManagerReviewConfirmedDate == null;
+        // Employee confirms review outcome after manager finishes the review meeting
+        return assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
     }
 
     public static bool CanManagerFinalize(QuestionnaireAssignment assignment)
     {
-        return assignment.EmployeeReviewConfirmedDate.HasValue &&
-               assignment.ManagerReviewConfirmedDate.HasValue;
+        // Manager finalizes after employee confirms the review outcome
+        return assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed;
     }
 
     public static string GetNextActionForEmployee(QuestionnaireAssignment assignment)
@@ -151,10 +159,10 @@ public static class WorkflowStateHelper
             WorkflowState.BothInProgress => "Complete and submit your sections",
             WorkflowState.EmployeeSubmitted => "Waiting for manager to submit",
             WorkflowState.ManagerSubmitted => "Complete and submit your sections",
-            WorkflowState.BothSubmitted => "Waiting for manager to initiate review",
-            WorkflowState.InReview => "Review all sections and confirm",
-            WorkflowState.EmployeeReviewConfirmed => "Waiting for manager to confirm and finalize",
-            WorkflowState.ManagerReviewConfirmed => "Waiting for manager to finalize",
+            WorkflowState.BothSubmitted => "Waiting for manager to initiate review meeting",
+            WorkflowState.InReview => "Review meeting in progress (read-only)",
+            WorkflowState.ManagerReviewConfirmed => "Confirm the review outcome",
+            WorkflowState.EmployeeReviewConfirmed => "Waiting for manager to finalize",
             WorkflowState.Finalized => "Questionnaire is finalized",
             _ => "No action required"
         };
@@ -169,10 +177,10 @@ public static class WorkflowStateHelper
             WorkflowState.BothInProgress => "Complete and submit your sections",
             WorkflowState.EmployeeSubmitted => "Complete and submit your sections",
             WorkflowState.ManagerSubmitted => "Waiting for employee to submit",
-            WorkflowState.BothSubmitted => "Initiate performance review",
-            WorkflowState.InReview => "Collaborate on final review and confirm",
-            WorkflowState.EmployeeReviewConfirmed => "Confirm review and finalize",
-            WorkflowState.ManagerReviewConfirmed => "Finalize the questionnaire",
+            WorkflowState.BothSubmitted => "Initiate performance review meeting",
+            WorkflowState.InReview => "Conduct review meeting and finish when done",
+            WorkflowState.ManagerReviewConfirmed => "Waiting for employee to confirm review",
+            WorkflowState.EmployeeReviewConfirmed => "Finalize the questionnaire",
             WorkflowState.Finalized => "Questionnaire is finalized",
             _ => "No action required"
         };

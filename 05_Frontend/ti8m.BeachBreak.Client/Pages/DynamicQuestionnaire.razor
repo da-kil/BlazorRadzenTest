@@ -224,10 +224,11 @@
         // Determine read-only based on user role and workflow state
         if (isEmployee && !isManager)
         {
-            // Employee can edit: Assigned, EmployeeInProgress, BothInProgress, InReview
-            // Employee CANNOT edit ONLY when: EmployeeSubmitted, BothSubmitted, Post-review, Finalized
-            // Note: Employee CAN still see ManagerSubmitted state (manager submitted but employee hasn't)
-            return assignment.WorkflowState is WorkflowState.EmployeeSubmitted or WorkflowState.BothSubmitted
+            // Employee can edit: Assigned, EmployeeInProgress, BothInProgress, ManagerSubmitted
+            // Employee is READ-ONLY during: InReview (manager-led review meeting)
+            // Employee CANNOT edit after: EmployeeSubmitted, BothSubmitted, Post-review, Finalized
+            // Note: Employee CAN still edit when ManagerSubmitted (manager submitted but employee hasn't)
+            return assignment.WorkflowState is WorkflowState.EmployeeSubmitted or WorkflowState.BothSubmitted or WorkflowState.InReview
                 || isPostReviewConfirmation
                 || isPhase2ReadOnly;
         }

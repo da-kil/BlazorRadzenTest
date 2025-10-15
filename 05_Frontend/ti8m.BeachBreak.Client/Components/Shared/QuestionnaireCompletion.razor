@@ -5,6 +5,7 @@
 @inject NotificationService NotificationService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
+@inject IQuestionnaireAssignmentService AssignmentService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 
 <style>
@@ -458,13 +459,14 @@
                 @if (template != null && currentSectionIndex < template.Sections.Count - 1)
                 {
                     <RadzenButton Text="Next" ButtonStyle="ButtonStyle.Primary"
-                                  Icon="arrow_forward" Click="@NextSection" Class="nav-button" />
+                                  Icon="arrow_forward" Click="@NextSection" Class="nav-button"
+                                  Disabled="@(!canEdit)" />
                 }
-                else
+                else if (CanShowSubmitButton())
                 {
                     <RadzenButton Text="Submit" ButtonStyle="ButtonStyle.Success"
                                   Icon="send" Click="@SubmitQuestionnaire" Class="nav-button"
-                                  Disabled="@isSaving" />
+                                  Disabled="@(isSaving || !canEdit)" />
                 }
             </div>
         </div>
@@ -488,6 +490,9 @@
     private bool isLoading = true;
     private DateTime? lastSavedTime;
     private string currentUserRole = "Employee";
+    private bool isEmployee = false;
+    private bool isManager = false;
+    private bool canEdit = false;
 
     // Auto-save timer
     private Timer? autoSaveTimer;
@@ -513,8 +518,48 @@
         var user = authState.User;
 
         // Managers are TeamLead, HR, HRLead, or Admin
-        var isManager = user.IsInRole("TeamLead") || user.IsInRole("HR") || user.IsInRole("HRLead") || user.IsInRole("Admin");
+        isManager = user.IsInRole("TeamLead") || user.IsInRole("HR") || user.IsInRole("HRLead") || user.IsInRole("Admin");
+        isEmployee = !isManager;
         currentUserRole = isManager ? "Manager" : "Employee";
+
+        // Determine if editing is allowed based on workflow state
+        UpdateCanEdit();
+    }
+
+    private void UpdateCanEdit()
+    {
+        if (Assignment == null)
+        {
+            canEdit = false;
+            return;
+        }
+
+        // Check workflow state to determine if editing is allowed
+        if (isEmployee && !isManager)
+        {
+            canEdit = WorkflowStateHelper.CanEmployeeEdit(Assignment);
+        }
+        else if (isManager)
+        {
+            canEdit = WorkflowStateHelper.CanManagerEdit(Assignment) ||
+                      WorkflowStateHelper.CanManagerEditDuringReview(Assignment);
+        }
+    }
+
+    private bool CanShowSubmitButton()
+    {
+        if (Assignment == null) return false;
+
+        if (isEmployee && !isManager)
+        {
+            return WorkflowStateHelper.CanEmployeeSubmit(Assignment);
+        }
+        else if (isManager)
+        {
+            return WorkflowStateHelper.CanManagerSubmit(Assignment);
+        }
+
+        return false;
     }
 
     private async Task LoadTemplate()
@@ -675,10 +720,37 @@
 
             try
             {
-                await ResponseService.SubmitResponseAsync(Assignment.Id);
-                isCompleted = true;
-                NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
-                StateHasChanged();
+                // Use workflow-aware submission based on role
+                bool success;
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var userName = authState.User.Identity?.Name ?? "Unknown";
+
+                if (isEmployee && !isManager && WorkflowStateHelper.CanEmployeeSubmit(Assignment))
+                {
+                    success = await AssignmentService.SubmitEmployeeQuestionnaireAsync(Assignment.Id, userName);
+                }
+                else if (isManager && WorkflowStateHelper.CanManagerSubmit(Assignment))
+                {
+                    success = await AssignmentService.SubmitManagerQuestionnaireAsync(Assignment.Id, userName);
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Warning, "Cannot Submit",
+                        "You cannot submit this questionnaire in its current workflow state.");
+                    return;
+                }
+
+                if (success)
+                {
+                    isCompleted = true;
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
+                    StateHasChanged();
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Submission Failed",
+                        "Could not submit questionnaire. Please try again.");
+                }
             }
             catch (Exception ex)
             {
@@ -834,6 +906,7 @@
                         {
                             <RadzenRating @bind-Value="ratingValue"
                                           Stars="@ratingScale"
+                                          Disabled="@(!canEdit)"
                                           Change="@(async () => await OnCompetencyRatingChange(questionResponse, competency.Key, ratingValue))" />
                         }
                         else
@@ -841,7 +914,8 @@
                             <input type="number" value="@ratingValue"
                                    @onchange="@(async (ChangeEventArgs e) => await OnCompetencyRatingChange(questionResponse, competency.Key, int.TryParse(e.Value?.ToString(), out var r) ? r : 0))"
                                    class="form-input" style="width: 100px;"
-                                   min="1" max="@ratingScale" />
+                                   min="1" max="@ratingScale"
+                                   disabled="@(!canEdit)" />
                             <span>/ @ratingScale</span>
                         }
 
@@ -861,7 +935,8 @@
                     <textarea value="@commentsValue"
                               @onchange="@(async (ChangeEventArgs e) => await OnCompetencyCommentsChange(questionResponse, competency.Key, e.Value?.ToString() ?? ""))"
                               class="text-input" placeholder="Optional comments..."
-                              style="min-height: 80px;"></textarea>
+                              style="min-height: 80px;"
+                              disabled="@(!canEdit)"></textarea>
                 </div>
             }
         </div>;
@@ -887,7 +962,8 @@
                           @onchange="@(async (ChangeEventArgs e) => await OnGoalFieldChange(questionResponse, "GoalDescription", e.Value?.ToString() ?? ""))"
                           class="text-input"
                           placeholder="Describe your goal in detail..."
-                          required></textarea>
+                          required
+                          disabled="@(!canEdit)"></textarea>
             </div>
 
             <div class="goal-row">
@@ -895,13 +971,15 @@
                     <label class="goal-field-label">Start Date</label>
                     <input type="date" value="@(startDate?.ToString("yyyy-MM-dd"))"
                            @onchange="@(async (ChangeEventArgs e) => await OnGoalDateChange(questionResponse, "StartDate", DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null))"
-                           class="form-input" />
+                           class="form-input"
+                           disabled="@(!canEdit)" />
                 </div>
                 <div class="goal-field">
                     <label class="goal-field-label">Target End Date</label>
                     <input type="date" value="@(endDate?.ToString("yyyy-MM-dd"))"
                            @onchange="@(async (ChangeEventArgs e) => await OnGoalDateChange(questionResponse, "EndDate", DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null))"
-                           class="form-input" />
+                           class="form-input"
+                           disabled="@(!canEdit)" />
                 </div>
             </div>
 
@@ -910,7 +988,8 @@
                 <input type="text" value="@successCriteria"
                        @onchange="@(async (ChangeEventArgs e) => await OnGoalFieldChange(questionResponse, "SuccessCriteria", e.Value?.ToString() ?? ""))"
                        class="form-input"
-                       placeholder="How will you measure success?" />
+                       placeholder="How will you measure success?"
+                       disabled="@(!canEdit)" />
             </div>
 
             <div class="goal-field">
@@ -918,7 +997,8 @@
                 <input type="number" value="@achievementPercentage"
                        @onchange="@(async (ChangeEventArgs e) => await OnGoalNumberChange(questionResponse, "AchievementPercentage", int.TryParse(e.Value?.ToString(), out var n) ? n : 0))"
                        class="form-input"
-                       min="0" max="100" placeholder="0" />
+                       min="0" max="100" placeholder="0"
+                       disabled="@(!canEdit)" />
             </div>
         </div>;
     }
@@ -936,7 +1016,8 @@
                       @onchange="@(async (ChangeEventArgs e) => await OnTextResponseChange(questionResponse, e.Value?.ToString() ?? ""))"
                       class="text-input"
                       placeholder="Enter your response here..."
-                      rows="8"></textarea>
+                      rows="8"
+                      disabled="@(!canEdit)"></textarea>
         </div>;
     }
 
