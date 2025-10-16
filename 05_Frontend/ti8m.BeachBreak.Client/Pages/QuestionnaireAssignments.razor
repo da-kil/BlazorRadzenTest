@@ -365,9 +365,11 @@
                                     </Template>
                                 </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.WorkflowState)" Title="Status" Width="130px">
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.WorkflowState)" Title="Status" Width="180px">
                                     <Template Context="assignment">
-                                        <WorkflowStateBadge WorkflowState="@assignment.WorkflowState" />
+                                        <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
+                                                   BadgeStyle="BadgeStyle.Light"
+                                                   Style="@($"font-size: 0.75rem; background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
                                     </Template>
                                 </RadzenDataGridColumn>
 
@@ -391,11 +393,11 @@
                                     </Template>
                                 </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.CompletedDate)" Title="Completed" Width="120px">
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.FinalizedDate)" Title="Completed" Width="120px">
                                     <Template Context="assignment">
-                                        @if (assignment.CompletedDate.HasValue)
+                                        @if (assignment.FinalizedDate.HasValue)
                                         {
-                                            <RadzenText TextStyle="TextStyle.Body2">@assignment.CompletedDate.Value.ToString("dd/MM/yyyy")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2">@assignment.FinalizedDate.Value.ToString("dd/MM/yyyy")</RadzenText>
                                         }
                                         else
                                         {
@@ -408,12 +410,14 @@
 
                                 <RadzenDataGridColumn Filterable="false" Sortable="false" Width="250px" TextAlign="TextAlign.Center" Title="Actions">
                                     <Template Context="assignment">
-                                        <AssignmentActionButtons Assignment="@assignment"
-                                                               OnActionClick="@HandleAssignmentActionClick"
-                                                               ShowViewAction="true"
-                                                               ShowEditAction="true"
-                                                               ShowReminderAction="true"
-                                                               ShowCancelAction="true" />
+                                        <div class="d-flex justify-content-center">
+                                            <AssignmentActionButtons Assignment="@assignment"
+                                                                   OnActionClick="@HandleAssignmentActionClick"
+                                                                   ShowViewAction="true"
+                                                                   ShowEditAction="true"
+                                                                   ShowReminderAction="true"
+                                                                   ShowCancelAction="true" />
+                                        </div>
                                     </Template>
                                 </RadzenDataGridColumn>
                             </Columns>
@@ -706,9 +710,6 @@
     {
         return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.CategoryId ?? Guid.Empty;
     }
-
-    // Note: GetStatusBadgeStyle is no longer needed since we use WorkflowStateBadge component
-
 
     private async Task HandleAssignmentActionClick(AssignmentActionButtons.AssignmentActionEventArgs eventArgs)
     {
