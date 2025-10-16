@@ -271,6 +271,83 @@ public class EmployeesController : BaseController
     }
 
     /// <summary>
+    /// Gets the dashboard metrics for the currently authenticated employee.
+    /// Uses UserContext to get the employee ID - more secure than accepting it as a parameter.
+    /// Returns assignment counts (pending, in progress, completed) and urgent assignments list.
+    /// </summary>
+    [HttpGet("me/dashboard")]
+    [ProducesResponseType(typeof(EmployeeDashboardDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyDashboard()
+    {
+        // Get employee ID from authenticated user context (security best practice)
+        if (!Guid.TryParse(userContext.Id, out var employeeId))
+        {
+            logger.LogWarning("GetMyDashboard failed: Unable to parse user ID from context");
+            return Unauthorized("User ID not found in authentication context");
+        }
+
+        logger.LogInformation("Received GetMyDashboard request for authenticated EmployeeId: {EmployeeId}", employeeId);
+
+        try
+        {
+            var result = await queryDispatcher.QueryAsync(new EmployeeDashboardQuery(employeeId));
+
+            if (result?.Payload == null)
+            {
+                logger.LogInformation("Dashboard not found for EmployeeId: {EmployeeId} - this is expected for new employees with no assignments", employeeId);
+
+                // Return empty dashboard for employees with no assignments yet
+                return Ok(new EmployeeDashboardDto
+                {
+                    EmployeeId = employeeId,
+                    EmployeeFullName = string.Empty,
+                    EmployeeEmail = string.Empty,
+                    PendingCount = 0,
+                    InProgressCount = 0,
+                    CompletedCount = 0,
+                    UrgentAssignments = new List<UrgentAssignmentDto>(),
+                    LastUpdated = DateTime.UtcNow
+                });
+            }
+
+            if (result.Succeeded)
+            {
+                logger.LogInformation("GetMyDashboard completed successfully for EmployeeId: {EmployeeId}", employeeId);
+            }
+            else
+            {
+                logger.LogWarning("GetMyDashboard failed for EmployeeId: {EmployeeId}, Error: {ErrorMessage}", employeeId, result.Message);
+            }
+
+            return CreateResponse(result, dashboard => new EmployeeDashboardDto
+            {
+                EmployeeId = dashboard.EmployeeId,
+                EmployeeFullName = dashboard.EmployeeFullName,
+                EmployeeEmail = dashboard.EmployeeEmail,
+                PendingCount = dashboard.PendingCount,
+                InProgressCount = dashboard.InProgressCount,
+                CompletedCount = dashboard.CompletedCount,
+                UrgentAssignments = dashboard.UrgentAssignments.Select(ua => new UrgentAssignmentDto
+                {
+                    AssignmentId = ua.AssignmentId,
+                    QuestionnaireTemplateName = ua.QuestionnaireTemplateName,
+                    DueDate = ua.DueDate,
+                    WorkflowState = ua.WorkflowState,
+                    IsOverdue = ua.IsOverdue
+                }).ToList(),
+                LastUpdated = dashboard.LastUpdated
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving dashboard for authenticated employee {EmployeeId}", employeeId);
+            return StatusCode(500, "An error occurred while retrieving your dashboard");
+        }
+    }
+
+    /// <summary>
     /// Gets a specific questionnaire assignment by ID for the currently authenticated employee.
     /// Uses UserContext to get the employee ID - more secure than accepting it as a parameter.
     /// </summary>

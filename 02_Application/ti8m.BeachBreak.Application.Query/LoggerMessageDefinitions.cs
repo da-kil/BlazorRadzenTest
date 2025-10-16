@@ -265,4 +265,29 @@ public static partial class LoggerMessageDefinitions
         Level = LogLevel.Error,
         Message = "Failed to retrieve assignable questionnaire templates")]
     public static partial void LogAssignableQuestionnaireTemplatesQueryFailed(this ILogger logger, Exception exception);
+
+    // Employee Dashboard Query Operations
+    [LoggerMessage(
+        EventId = 4044,
+        Level = LogLevel.Information,
+        Message = "Starting employee dashboard query for EmployeeId: {EmployeeId}")]
+    public static partial void LogEmployeeDashboardQueryStarting(this ILogger logger, Guid employeeId);
+
+    [LoggerMessage(
+        EventId = 4045,
+        Level = LogLevel.Information,
+        Message = "Employee dashboard query completed successfully for EmployeeId: {EmployeeId}")]
+    public static partial void LogEmployeeDashboardQuerySucceeded(this ILogger logger, Guid employeeId);
+
+    [LoggerMessage(
+        EventId = 4046,
+        Level = LogLevel.Warning,
+        Message = "Employee dashboard not found for EmployeeId: {EmployeeId}")]
+    public static partial void LogEmployeeDashboardNotFound(this ILogger logger, Guid employeeId);
+
+    [LoggerMessage(
+        EventId = 4047,
+        Level = LogLevel.Error,
+        Message = "Failed to retrieve employee dashboard for EmployeeId: {EmployeeId}")]
+    public static partial void LogEmployeeDashboardQueryFailed(this ILogger logger, Guid employeeId, Exception exception);
 }
