@@ -180,15 +180,6 @@
                                          Icon="arrow_forward"
                                          Click="@NextSection" />
                         }
-                        else if (assignment != null && isEmployee && WorkflowStateHelper.CanEmployeeConfirmReview(assignment))
-                        {
-                            @* Employee on last section in ManagerReviewConfirmed state - show sign-off button *@
-                            <RadzenButton Text="Sign Off on Review"
-                                         ButtonStyle="ButtonStyle.Success"
-                                         Icon="verified"
-                                         Click="@EmployeeSignOffReview"
-                                         Disabled="@isProcessing" />
-                        }
                     }
                 </div>
             </div>
@@ -344,14 +335,18 @@
         }
 
         // After review confirmation, managers see ALL sections in read-only mode
-        var isPostReviewReadOnly = assignment != null && isManager &&
+        var isManagerPostReviewReadOnly = assignment != null && isManager &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                           WorkflowState.EmployeeReviewConfirmed or
                                           WorkflowState.Finalized);
 
-        if (isPostReviewReadOnly)
+        // Employees awaiting sign-off (ManagerReviewConfirmed) should also see ALL sections
+        var isEmployeeAwaitingSignOff = assignment != null && isEmployee && !isManager &&
+            assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+
+        if (isManagerPostReviewReadOnly || isEmployeeAwaitingSignOff)
         {
-            // Show ALL sections to manager in read-only view after review
+            // Show ALL sections in read-only view
             visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
             return;
         }
@@ -509,15 +504,19 @@
         {
             QuestionnaireResponse? existingResponse = null;
 
-            if (isEmployee && !isManager)
+            // Check if employee is awaiting sign-off - they need to see ALL responses
+            var isEmployeeAwaitingSignOff = assignment != null && isEmployee && !isManager &&
+                assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+
+            if (isEmployeeAwaitingSignOff || isManager)
             {
-                // Employees load responses via employee service
-                existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
-            }
-            else if (isManager)
-            {
-                // Managers load responses via general response service (includes ALL role responses)
+                // Managers and employees awaiting sign-off load ALL role responses
                 existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignmentId.Value);
+            }
+            else if (isEmployee && !isManager)
+            {
+                // Regular employees load only their own responses
+                existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
             }
 
             if (existingResponse == null || !existingResponse.SectionResponses.Any())
@@ -531,13 +530,16 @@
                 if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
                 {
                     // For managers in post-review read-only mode, load ALL role responses (Employee + Manager)
+                    // For employees awaiting sign-off, also load ALL role responses so they can see manager's answers
                     // For normal mode, only load current user's role responses
                     var isPostReviewReadOnly = assignment != null && isManager &&
                         (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                                       WorkflowState.EmployeeReviewConfirmed or
                                                       WorkflowState.Finalized);
 
-                    if (isPostReviewReadOnly && sectionKvp.Value.RoleResponses != null)
+                    // Use the isEmployeeAwaitingSignOff variable already declared at the start of this method
+
+                    if ((isPostReviewReadOnly || isEmployeeAwaitingSignOff) && sectionKvp.Value.RoleResponses != null)
                     {
                         // Load ALL role responses (Employee, Manager, Both)
                         foreach (var roleKvp in sectionKvp.Value.RoleResponses)
@@ -886,16 +888,20 @@
 
         // Determine which role's responses to fetch based on section's CompletionRole
         // In read-only mode after review, managers view responses based on who originally completed the section
+        // Employees awaiting sign-off also need to view responses based on section's CompletionRole
         var isPostReviewReadOnly = assignment != null && isManager &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                           WorkflowState.EmployeeReviewConfirmed or
                                           WorkflowState.Finalized);
 
+        var isEmployeeAwaitingSignOff = assignment != null && isEmployee && !isManager &&
+            assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+
         string roleToFetch = currentUserRole;
 
-        if (isPostReviewReadOnly)
+        if (isPostReviewReadOnly || isEmployeeAwaitingSignOff)
         {
-            // In post-review read-only mode, fetch responses based on section's CompletionRole
+            // In post-review read-only mode or employee awaiting sign-off, fetch responses based on section's CompletionRole
             roleToFetch = currentSection.CompletionRole switch
             {
                 CompletionRole.Employee => "Employee",
