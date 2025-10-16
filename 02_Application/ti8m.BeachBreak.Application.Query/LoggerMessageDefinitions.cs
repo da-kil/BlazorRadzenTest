@@ -290,4 +290,29 @@ public static partial class LoggerMessageDefinitions
         Level = LogLevel.Error,
         Message = "Failed to retrieve employee dashboard for EmployeeId: {EmployeeId}")]
     public static partial void LogEmployeeDashboardQueryFailed(this ILogger logger, Guid employeeId, Exception exception);
+
+    // Manager Dashboard Query Operations
+    [LoggerMessage(
+        EventId = 4048,
+        Level = LogLevel.Information,
+        Message = "Starting manager dashboard query for ManagerId: {ManagerId}")]
+    public static partial void LogManagerDashboardQueryStarting(this ILogger logger, Guid managerId);
+
+    [LoggerMessage(
+        EventId = 4049,
+        Level = LogLevel.Information,
+        Message = "Manager dashboard query completed successfully for ManagerId: {ManagerId}")]
+    public static partial void LogManagerDashboardQuerySucceeded(this ILogger logger, Guid managerId);
+
+    [LoggerMessage(
+        EventId = 4050,
+        Level = LogLevel.Warning,
+        Message = "Manager dashboard not found for ManagerId: {ManagerId}")]
+    public static partial void LogManagerDashboardNotFound(this ILogger logger, Guid managerId);
+
+    [LoggerMessage(
+        EventId = 4051,
+        Level = LogLevel.Error,
+        Message = "Failed to retrieve manager dashboard for ManagerId: {ManagerId}")]
+    public static partial void LogManagerDashboardQueryFailed(this ILogger logger, Guid managerId, Exception exception);
 }
