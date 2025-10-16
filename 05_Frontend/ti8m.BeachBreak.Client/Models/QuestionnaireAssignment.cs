@@ -30,13 +30,16 @@ public class QuestionnaireAssignment
     // Review phase
     public DateTime? ReviewInitiatedDate { get; set; }
     public string? ReviewInitiatedBy { get; set; }
+    public DateTime? ManagerReviewFinishedDate { get; set; }
+    public string? ManagerReviewFinishedBy { get; set; }
+    public string? ManagerReviewSummary { get; set; }
     public DateTime? EmployeeReviewConfirmedDate { get; set; }
     public string? EmployeeReviewConfirmedBy { get; set; }
-    public DateTime? ManagerReviewConfirmedDate { get; set; }
-    public string? ManagerReviewConfirmedBy { get; set; }
+    public string? EmployeeReviewComments { get; set; }
 
     // Final state
     public DateTime? FinalizedDate { get; set; }
     public string? FinalizedBy { get; set; }
+    public string? ManagerFinalNotes { get; set; }
     public bool IsLocked { get; set; }
 }

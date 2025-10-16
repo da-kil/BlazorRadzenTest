@@ -183,6 +183,14 @@
                     }
                 </div>
             </div>
+
+            @* Review Comments Display - Below Questionnaire *@
+            @if (assignment != null)
+            {
+                <ReviewComments Assignment="@assignment"
+                               IsEmployee="@isEmployee"
+                               IsManager="@isManager" />
+            }
         </RadzenCard>
     }
 </div>
