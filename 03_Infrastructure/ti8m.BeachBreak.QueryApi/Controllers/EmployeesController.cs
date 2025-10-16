@@ -253,6 +253,7 @@ public class EmployeesController : BaseController
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
                     TemplateId = assignment.TemplateId,
+                    TemplateName = assignment.TemplateName,
                     WorkflowState = assignment.WorkflowState,
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,

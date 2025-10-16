@@ -839,7 +839,9 @@
     private string GetTemplateName(QuestionnaireAssignment assignment)
     {
         // Use denormalized template name from assignment
-        return assignment.TemplateName;
+        return !string.IsNullOrWhiteSpace(assignment.TemplateName)
+            ? assignment.TemplateName
+            : "Questionnaire";
     }
 
     // Helper methods that were in BasePageComponent
