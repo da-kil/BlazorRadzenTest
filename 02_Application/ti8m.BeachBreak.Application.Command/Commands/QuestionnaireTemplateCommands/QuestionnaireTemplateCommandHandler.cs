@@ -13,8 +13,6 @@ public class QuestionnaireTemplateCommandHandler :
     ICommandHandler<DeleteQuestionnaireTemplateCommand, Result>,
     ICommandHandler<PublishQuestionnaireTemplateCommand, Result>,
     ICommandHandler<UnpublishQuestionnaireTemplateCommand, Result>,
-    ICommandHandler<ActivateQuestionnaireTemplateCommand, Result>,
-    ICommandHandler<DeactivateQuestionnaireTemplateCommand, Result>,
     ICommandHandler<ArchiveQuestionnaireTemplateCommand, Result>,
     ICommandHandler<RestoreQuestionnaireTemplateCommand, Result>,
     ICommandHandler<CloneQuestionnaireTemplateCommand, Result<Guid>>
@@ -204,70 +202,6 @@ public class QuestionnaireTemplateCommandHandler :
         {
             logger.LogUnpublishQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
             return Result.Fail($"Failed to unpublish questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
-        }
-    }
-
-    public async Task<Result> HandleAsync(ActivateQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            logger.LogRestoreQuestionnaireTemplate(command.Id);
-
-            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
-
-            if (questionnaireTemplate == null)
-            {
-                logger.LogQuestionnaireTemplateNotFound(command.Id);
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
-            }
-
-            questionnaireTemplate.RestoreFromArchive();
-            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
-
-            logger.LogQuestionnaireTemplateRestored(command.Id);
-            return Result.Success();
-        }
-        catch (InvalidOperationException ex)
-        {
-            logger.LogRestoreQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
-            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
-        }
-        catch (Exception ex)
-        {
-            logger.LogRestoreQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
-            return Result.Fail($"Failed to activate questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
-        }
-    }
-
-    public async Task<Result> HandleAsync(DeactivateQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            logger.LogArchiveQuestionnaireTemplate(command.Id);
-
-            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
-
-            if (questionnaireTemplate == null)
-            {
-                logger.LogQuestionnaireTemplateNotFound(command.Id);
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
-            }
-
-            questionnaireTemplate.Archive();
-            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
-
-            logger.LogQuestionnaireTemplateArchived(command.Id);
-            return Result.Success();
-        }
-        catch (InvalidOperationException ex)
-        {
-            logger.LogArchiveQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
-            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
-        }
-        catch (Exception ex)
-        {
-            logger.LogArchiveQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
-            return Result.Fail($"Failed to deactivate questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
         }
     }
 

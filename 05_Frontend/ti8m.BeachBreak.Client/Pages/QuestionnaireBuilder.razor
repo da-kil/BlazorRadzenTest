@@ -620,55 +620,24 @@
 		}
 	}
 
-	private async Task DisableQuestionnaire()
-	{
-		try
-		{
-			// Set as inactive while keeping published status
-			State.Template.Status = TemplateStatus.Archived;
-
-			var updated = await ApiService.UpdateTemplateAsync(State.Template);
-			if (updated != null)
-			{
-				State.Template = updated;
-				NotificationService.Notify(NotificationSeverity.Warning, "Disabled", "Questionnaire template is temporarily disabled but remains published");
-			}
-			else
-			{
-				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to disable template");
-				State.Template.Status = TemplateStatus.Draft; // Revert on failure
-			}
-		}
-		catch (Exception ex)
-		{
-			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to disable template: {ex.Message}");
-			State.Template.Status = TemplateStatus.Draft; // Revert on failure
-		}
-	}
-
 	private async Task RestoreQuestionnaire()
 	{
 		try
 		{
-			// Re-activate while keeping published status
-			State.Template.Status = TemplateStatus.Draft;
-
-			var updated = await ApiService.UpdateTemplateAsync(State.Template);
+			var updated = await ApiService.RestoreTemplateAsync(State.Template.Id);
 			if (updated != null)
 			{
 				State.Template = updated;
-				NotificationService.Notify(NotificationSeverity.Success, "Enabled", "Questionnaire template is now active and available for assignments");
+				NotificationService.Notify(NotificationSeverity.Success, "Restored", "Questionnaire template has been restored and is now active");
 			}
 			else
 			{
-				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to enable template");
-				State.Template.Status = TemplateStatus.Archived; // Revert on failure
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to restore template");
 			}
 		}
 		catch (Exception ex)
 		{
-			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to enable template: {ex.Message}");
-			State.Template.Status = TemplateStatus.Archived; // Revert on failure
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to restore template: {ex.Message}");
 		}
 	}
 
@@ -676,10 +645,7 @@
 	{
 		try
 		{
-			var previousStatus = State.Template.Status;
-			State.Template.Status = TemplateStatus.Archived;
-
-			var updated = await ApiService.UpdateTemplateAsync(State.Template);
+			var updated = await ApiService.ArchiveTemplateAsync(State.Template.Id);
 			if (updated != null)
 			{
 				State.Template = updated;
@@ -688,14 +654,11 @@
 			else
 			{
 				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to archive template");
-				State.Template.Status = previousStatus; // Revert on failure
 			}
 		}
 		catch (Exception ex)
 		{
-			var previousStatus = State.Template.Status;
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to archive template: {ex.Message}");
-			State.Template.Status = previousStatus; // Revert on failure
 		}
 	}
 
@@ -737,12 +700,6 @@
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error cloning template: {ex.Message}");
 		}
-	}
-
-	private async Task EditInactiveQuestionnaire()
-	{
-		// Simply enable and allow editing
-		await RestoreQuestionnaire();
 	}
 
 	private bool ValidateQuestionnaire()

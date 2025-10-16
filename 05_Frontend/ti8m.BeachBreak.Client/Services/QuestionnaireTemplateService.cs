@@ -77,7 +77,7 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
         }
     }
 
-    public async Task<List<QuestionnaireTemplate>> GetInactiveTemplatesAsync()
+    public async Task<List<QuestionnaireTemplate>> GetArchivedTemplatesAsync()
     {
         try
         {
@@ -86,7 +86,7 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
         }
         catch (Exception ex)
         {
-            LogError("Error fetching inactive templates", ex);
+            LogError("Error fetching archived templates", ex);
             return new List<QuestionnaireTemplate>();
         }
     }
@@ -107,14 +107,14 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
         return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "unpublish", null, TemplateQueryEndpoint);
     }
 
-    public async Task<QuestionnaireTemplate?> ActivateTemplateAsync(Guid templateId)
+    public async Task<QuestionnaireTemplate?> ArchiveTemplateAsync(Guid templateId)
     {
-        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "activate", null, TemplateQueryEndpoint);
+        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "archive", null, TemplateQueryEndpoint);
     }
 
-    public async Task<QuestionnaireTemplate?> DeactivateTemplateAsync(Guid templateId)
+    public async Task<QuestionnaireTemplate?> RestoreTemplateAsync(Guid templateId)
     {
-        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "deactivate", null, TemplateQueryEndpoint);
+        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "restore", null, TemplateQueryEndpoint);
     }
 
     // Template cloning

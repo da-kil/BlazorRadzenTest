@@ -20,14 +20,14 @@ public interface IQuestionnaireTemplateService
     Task<List<QuestionnaireTemplate>> GetDraftTemplatesAsync();
     Task<List<QuestionnaireTemplate>> GetAssignableTemplatesAsync(); // Active + Published
     Task<List<QuestionnaireTemplate>> GetActiveTemplatesAsync();
-    Task<List<QuestionnaireTemplate>> GetInactiveTemplatesAsync();
+    Task<List<QuestionnaireTemplate>> GetArchivedTemplatesAsync();
     Task<List<QuestionnaireTemplate>> GetAllPublishedTemplatesAsync();
 
     // Template status operations
     Task<QuestionnaireTemplate?> PublishTemplateAsync(Guid templateId, string publishedBy);
     Task<QuestionnaireTemplate?> UnpublishTemplateAsync(Guid templateId);
-    Task<QuestionnaireTemplate?> ActivateTemplateAsync(Guid templateId);
-    Task<QuestionnaireTemplate?> DeactivateTemplateAsync(Guid templateId);
+    Task<QuestionnaireTemplate?> ArchiveTemplateAsync(Guid templateId);
+    Task<QuestionnaireTemplate?> RestoreTemplateAsync(Guid templateId);
 
     // Template cloning
     Task<Guid?> CloneTemplateAsync(Guid templateId, string? namePrefix = null);

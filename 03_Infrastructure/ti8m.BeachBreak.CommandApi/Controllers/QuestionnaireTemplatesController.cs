@@ -203,35 +203,35 @@ public class QuestionnaireTemplatesController : BaseController
         }
     }
 
-    [HttpPost("{id:guid}/activate")]
-    public async Task<IActionResult> ActivateTemplate(Guid id)
+    [HttpPost("{id:guid}/archive")]
+    public async Task<IActionResult> ArchiveTemplate(Guid id)
     {
         try
         {
-            Result result = await commandDispatcher.SendAsync(new ActivateQuestionnaireTemplateCommand(id));
+            Result result = await commandDispatcher.SendAsync(new ArchiveQuestionnaireTemplateCommand(id));
 
             return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error activating template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while activating the template");
+            logger.LogError(ex, "Error archiving template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while archiving the template");
         }
     }
 
-    [HttpPost("{id:guid}/deactivate")]
-    public async Task<IActionResult> DeactivateTemplate(Guid id)
+    [HttpPost("{id:guid}/restore")]
+    public async Task<IActionResult> RestoreTemplate(Guid id)
     {
         try
         {
-            Result result = await commandDispatcher.SendAsync(new DeactivateQuestionnaireTemplateCommand(id));
+            Result result = await commandDispatcher.SendAsync(new RestoreQuestionnaireTemplateCommand(id));
 
             return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error deactivating template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while deactivating the template");
+            logger.LogError(ex, "Error restoring template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while restoring the template");
         }
     }
 

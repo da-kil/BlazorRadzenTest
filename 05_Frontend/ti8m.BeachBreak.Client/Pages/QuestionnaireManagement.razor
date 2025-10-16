@@ -55,8 +55,8 @@
                                               Placeholder="Search templates..."
                                               @oninput="@OnSearchTextChanged" />
                             </div>
-                            <RadzenToggleButton @bind-Value="@showInactiveTemplates" 
-                                               Text="Show Inactive" 
+                            <RadzenToggleButton @bind-Value="@showArchivedTemplates"
+                                               Text="Show Archived"
                                                Change="@FilterTemplates" />
                         </div>
 
@@ -204,7 +204,7 @@
 
     private string searchText = "";
     private Guid categoryFilter;
-    private bool showInactiveTemplates = false;
+    private bool showArchivedTemplates = false;
 
 
     private List<Category> categories = new();
@@ -282,7 +282,7 @@
     private void FilterTemplates()
     {
         filteredTemplates = templates.Where(t =>
-            (showInactiveTemplates || t.Status != TemplateStatus.Archived) &&
+            (showArchivedTemplates || t.Status != TemplateStatus.Archived) &&
             (categoryFilter == Guid.Empty || t.CategoryId == categoryFilter) &&
             (string.IsNullOrWhiteSpace(searchText) ||
              t.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
@@ -317,26 +317,31 @@
         try
         {
             var originalStatus = template.Status;
-            var newStatus = template.Status switch
-            {
-                TemplateStatus.Draft => TemplateStatus.Archived,
-                TemplateStatus.Published => TemplateStatus.Archived,
-                TemplateStatus.Archived => TemplateStatus.Draft,
-                _ => TemplateStatus.Draft
-            };
+            QuestionnaireTemplate? result;
+            string statusAction;
 
-            template.Status = newStatus;
-
-            var updatedTemplate = await ApiService.UpdateTemplateAsync(template);
-            if (updatedTemplate != null)
+            if (template.Status == TemplateStatus.Archived)
             {
-                var statusAction = newStatus == TemplateStatus.Archived ? "archived" : "restored";
+                // Restore from archive
+                result = await ApiService.RestoreTemplateAsync(template.Id);
+                statusAction = "restored";
+            }
+            else
+            {
+                // Archive the template (works for both Draft and Published)
+                result = await ApiService.ArchiveTemplateAsync(template.Id);
+                statusAction = "archived";
+            }
+
+            if (result != null)
+            {
+                // Update local template status
+                template.Status = result.Status;
                 NotificationService.Notify(NotificationSeverity.Success, "Status Updated", $"Template '{template.Name}' has been {statusAction}");
                 FilterTemplates();
             }
             else
             {
-                template.Status = originalStatus;
                 NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update template status");
             }
         }
