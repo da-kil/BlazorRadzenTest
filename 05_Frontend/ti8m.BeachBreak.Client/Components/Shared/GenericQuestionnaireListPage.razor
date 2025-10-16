@@ -307,7 +307,6 @@
         var isOverdue = IsOverdue(assignment);
         var dueDateColor = isOverdue ? "var(--rz-danger)" : "var(--rz-text-secondary-color)";
         var dueDateTextColor = isOverdue ? "var(--rz-danger)" : "inherit";
-        var statusColor = GetStatusColor(assignment.WorkflowState);
 
         <RadzenCard Class="@($"questionnaire-card mb-3 {GetCardCssClass(assignment)}")" Style="border-left: 4px solid var(--rz-primary);">
             <div class="d-flex justify-content-between align-items-start">
@@ -366,20 +365,6 @@
                                 </div>
                             </div>
                         }
-
-                        <div class="col-md-4">
-                            <div class="d-flex align-items-center gap-2">
-                                <RadzenIcon Icon="@GetStatusIcon(assignment.WorkflowState)" Style="@($"font-size: 1rem; color: {statusColor};")" />
-                                <div>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0" Style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
-                                        Status
-                                    </RadzenText>
-                                    <RadzenBadge Text="@GetStatusText(assignment.WorkflowState)"
-                                                BadgeStyle="@GetStatusBadgeStyle(assignment.WorkflowState)"
-                                                Style="font-size: 0.75rem;" />
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -572,67 +557,6 @@
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "inprogress-card",
             WorkflowState.Finalized => "completed-card",
             _ => "assigned-card"
-        };
-    }
-
-    private BadgeStyle GetStatusBadgeStyle(WorkflowState state)
-    {
-        return state switch
-        {
-            WorkflowState.Assigned => BadgeStyle.Secondary,
-            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => BadgeStyle.Info,
-            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => BadgeStyle.Warning,
-            WorkflowState.InReview => BadgeStyle.Info,
-            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => BadgeStyle.Success,
-            WorkflowState.Finalized => BadgeStyle.Success,
-            _ => BadgeStyle.Light
-        };
-    }
-
-    private string GetStatusText(WorkflowState state)
-    {
-        return state switch
-        {
-            WorkflowState.Assigned => "ASSIGNED",
-            WorkflowState.EmployeeInProgress => "EMPLOYEE IN PROGRESS",
-            WorkflowState.ManagerInProgress => "MANAGER IN PROGRESS",
-            WorkflowState.BothInProgress => "IN PROGRESS",
-            WorkflowState.EmployeeSubmitted => "EMPLOYEE SUBMITTED",
-            WorkflowState.ManagerSubmitted => "MANAGER SUBMITTED",
-            WorkflowState.BothSubmitted => "SUBMITTED",
-            WorkflowState.InReview => "IN REVIEW",
-            WorkflowState.EmployeeReviewConfirmed => "EMPLOYEE CONFIRMED",
-            WorkflowState.ManagerReviewConfirmed => "MANAGER CONFIRMED",
-            WorkflowState.Finalized => "FINALIZED",
-            _ => state.ToString().ToUpper()
-        };
-    }
-
-    private string GetStatusIcon(WorkflowState state)
-    {
-        return state switch
-        {
-            WorkflowState.Assigned => "assignment",
-            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "pending",
-            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "send",
-            WorkflowState.InReview => "rate_review",
-            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "check_circle_outline",
-            WorkflowState.Finalized => "check_circle",
-            _ => "help"
-        };
-    }
-
-    private string GetStatusColor(WorkflowState state)
-    {
-        return state switch
-        {
-            WorkflowState.Assigned => "var(--rz-secondary)",
-            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "var(--rz-info)",
-            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "var(--rz-warning)",
-            WorkflowState.InReview => "var(--rz-info)",
-            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "var(--rz-success)",
-            WorkflowState.Finalized => "var(--rz-success)",
-            _ => "var(--rz-text-secondary-color)"
         };
     }
 
