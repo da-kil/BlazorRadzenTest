@@ -193,10 +193,6 @@
                                                                         <RadzenIcon Icon="layers" Style="font-size: 0.85rem; margin-right: 4px;" />
                                                                         @questionnaire.Sections.Count sections
                                                                     </RadzenText>
-                                                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                                                        <RadzenIcon Icon="schedule" Style="font-size: 0.85rem; margin-right: 4px;" />
-                                                                        @GetEstimatedDuration(questionnaire) min
-                                                                    </RadzenText>
                                                                 </div>
                                                             </div>
                                                             @if (selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id)
@@ -709,19 +705,6 @@
     private Guid GetTemplateCategory(Guid templateId)
     {
         return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.CategoryId ?? Guid.Empty;
-    }
-
-    private int GetEstimatedDuration(QuestionnaireTemplate questionnaire)
-    {
-        // Use template settings if available, otherwise calculate from question count
-        if (questionnaire.Settings?.TimeLimit.HasValue == true)
-        {
-            return (int)questionnaire.Settings.TimeLimit.Value.TotalMinutes;
-        }
-
-        // Fallback: estimate based on question count (2 minutes per question, minimum 5 minutes)
-        var totalQuestions = questionnaire.Sections.Sum(s => s.Questions.Count);
-        return Math.Max(5, totalQuestions * 2);
     }
 
     // Note: GetStatusBadgeStyle is no longer needed since we use WorkflowStateBadge component
