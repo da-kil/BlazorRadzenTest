@@ -304,7 +304,46 @@
 
     private async Task CloneTemplate(QuestionnaireTemplate template)
     {
-        NotificationService.Notify(NotificationSeverity.Success, "Cloned", $"Template '{template.Name}' has been cloned");
+        try
+        {
+            // Show confirmation dialog
+            var confirmed = await DialogService.Confirm(
+                $"This will create a copy of '{template.Name}' in Draft status. Continue?",
+                "Clone Template",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Clone",
+                    CancelButtonText = "Cancel"
+                });
+
+            if (confirmed != true)
+                return;
+
+            NotificationService.Notify(NotificationSeverity.Info, "Cloning", "Cloning template...");
+
+            // Call service to clone
+            var newTemplateId = await ApiService.CloneTemplateAsync(template.Id);
+
+            if (newTemplateId.HasValue)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Cloned", "Template cloned successfully!");
+
+                // Reload templates to show the new cloned template
+                await LoadTemplates();
+                FilterTemplates();
+
+                // Navigate to the cloned template editor
+                NavigationManager.NavigateTo($"/questionnaire-builder/{newTemplateId.Value}");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to clone template. Please try again.");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error cloning template: {ex.Message}");
+        }
     }
 
     private async Task AssignTemplate(QuestionnaireTemplate template)
