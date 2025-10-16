@@ -27,15 +27,10 @@
                     Manage your questionnaire templates and view responses
                 </RadzenText>
             </div>
-            <div class="d-flex gap-2">
-                <RadzenButton Text="Import Template" 
-                             ButtonStyle="ButtonStyle.Secondary" 
-                             Icon="upload" />
-                <RadzenButton Text="Create New" 
-                             ButtonStyle="ButtonStyle.Primary" 
-                             Icon="add"
-                             Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
-            </div>
+            <RadzenButton Text="Create New"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Icon="add"
+                         Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
         </div>
 
         <RadzenTabs>
