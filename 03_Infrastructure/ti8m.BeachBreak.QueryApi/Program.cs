@@ -6,8 +6,8 @@ using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.Application.Query;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Core.Infrastructure.Database;
 using ti8m.BeachBreak.Infrastructure.Marten;
+using ti8m.BeachBreak.QueryApi.Authorization;
 
 namespace ti8m.BeachBreak.QueryApi;
 
@@ -40,24 +40,15 @@ public class Program
 
         builder.Services.AddAuthorization(options =>
         {
-            options.AddPolicy("Employee", policy =>
-                policy.RequireRole("Employee"));
-
-            options.AddPolicy("Admin", policy =>
-                policy.RequireRole("Admin"));
-
-            options.AddPolicy("HR", policy =>
-                policy.RequireRole("HR"));
-
-            options.AddPolicy("HRLead", policy =>
-                policy.RequireRole("HRLead"));
-
-            options.AddPolicy("TeamLead", policy =>
-                policy.RequireRole("TeamLead"));
+            options.AddPolicy("Employee", policy => policy.RequireRole("Employee"));
+            options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+            options.AddPolicy("HR", policy => policy.RequireRole("HR"));
+            options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead"));
+            options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead"));
         });
 
         // Register custom authorization middleware result handler
-        builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, RoleBasedAuthorizationMiddlewareResultHandler>();
+        builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, QueryApi.Authorization.RoleBasedAuthorizationMiddlewareResultHandler>();
 
         // Add distributed cache (using in-memory for now, can be replaced with Redis)
         builder.Services.AddDistributedMemoryCache();
@@ -96,17 +87,16 @@ public class Program
         });
 
         builder.AddNpgsqlDataSource(connectionName: "beachbreakdb");
-        builder.MigrateDatabase();
 
         builder.AddMartenInfrastructure();
 
         builder.Services.AddScoped<UserContext>();
         builder.Services.AddApplication(builder.Configuration);
 
-        var app = builder.Build();
+        // Register manager authorization service
+        builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
 
-        // Initialize database
-        await app.Services.InitializeDatabaseAsync();
+        var app = builder.Build();
 
         app.MapDefaultEndpoints();
 

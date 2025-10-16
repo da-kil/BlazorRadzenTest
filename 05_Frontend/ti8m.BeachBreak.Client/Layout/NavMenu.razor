@@ -1,83 +1,105 @@
-﻿<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+@using Microsoft.AspNetCore.Components.Authorization
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav-menu">
-        <!-- Main Navigation -->
-        <div class="nav-section">
-            <div class="nav-section-header">
-                <span class="nav-section-title">Main</span>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                    <span class="nav-icon">🏠</span>
-                    <span class="nav-text">Dashboard</span>
-                </NavLink>
-            </div>
-        </div>
+	<nav class="nav-menu">
+		<!-- Main Navigation -->
+		<div class="nav-section">
+			<div class="nav-section-header">
+				<span class="nav-section-title">Main</span>
+			</div>
+			<div class="nav-item">
+				<NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+					<span class="nav-icon">🏠</span>
+					<span class="nav-text">Dashboard</span>
+				</NavLink>
+			</div>
+		</div>
 
+		<!-- My Work -->
+		<div class="nav-section">
+			<div class="nav-section-header">
+				<span class="nav-section-title">My Work</span>
+			</div>
+			<div class="nav-item">
+				<NavLink class="nav-link" href="my-questionnaires">
+					<span class="nav-icon">📝</span>
+					<span class="nav-text">My Questionnaires</span>
+				</NavLink>
+			</div>
+			<AuthorizeView Policy="TeamLead">
+				<Authorized>
+					<div class="nav-item">
+						<NavLink class="nav-link" href="team/questionnaires">
+							<span class="nav-icon">👥</span>
+							<span class="nav-text">Team Overview</span>
+						</NavLink>
+					</div>
+				</Authorized>
+			</AuthorizeView>
+			<AuthorizeView Policy="HR">
+				<Authorized>
+					<div class="nav-item">
+						<NavLink class="nav-link" href="organization/questionnaires">
+							<span class="nav-icon">🏢</span>
+							<span class="nav-text">Organization</span>
+						</NavLink>
+					</div>
+				</Authorized>
+			</AuthorizeView>
+		</div>
 
-        <!-- My Work -->
-        <div class="nav-section">
-            <div class="nav-section-header">
-                <span class="nav-section-title">My Work</span>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link" href="my-questionnaires">
-                    <span class="nav-icon">📝</span>
-                    <span class="nav-text">My Questionnaires</span>
-                </NavLink>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link" href="team/questionnaires">
-                    <span class="nav-icon">👥</span>
-                    <span class="nav-text">Team Overview</span>
-                </NavLink>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link" href="organization/questionnaires">
-                    <span class="nav-icon">🏢</span>
-                    <span class="nav-text">Organization</span>
-                </NavLink>
-            </div>
-        </div>
+		<!-- Management -->
+		<AuthorizeView Policy="HR">
+			<Authorized>
+				<div class="nav-section">
+					<div class="nav-section-header">
+						<span class="nav-section-title">Management</span>
+					</div>
+					<div class="nav-item">
+						<NavLink class="nav-link" href="questionnaire-builder">
+							<span class="nav-icon">➕</span>
+							<span class="nav-text">Create Questionnaire</span>
+						</NavLink>
+					</div>
+					<div class="nav-item">
+						<NavLink class="nav-link" href="questionnaire-management">
+							<span class="nav-icon">⚙️</span>
+							<span class="nav-text">Manage Questionnaires</span>
+						</NavLink>
+					</div>
+					<div class="nav-item">
+						<NavLink class="nav-link" href="questionnaire-assignments">
+							<span class="nav-icon">📤</span>
+							<span class="nav-text">Assignments</span>
+						</NavLink>
+					</div>
+				</div>
+			</Authorized>
+		</AuthorizeView>
 
-        <!-- Management -->
-        <div class="nav-section">
-            <div class="nav-section-header">
-                <span class="nav-section-title">Management</span>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link" href="questionnaire-builder">
-                    <span class="nav-icon">➕</span>
-                    <span class="nav-text">Create Questionnaire</span>
-                </NavLink>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link" href="questionnaire-management">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-text">Manage Questionnaires</span>
-                </NavLink>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link" href="questionnaire-assignments">
-                    <span class="nav-icon">📤</span>
-                    <span class="nav-text">Assignments</span>
-                </NavLink>
-            </div>
-        </div>
-
-        <!-- Administration -->
-        <div class="nav-section">
-            <div class="nav-section-header">
-                <span class="nav-section-title">Administration</span>
-            </div>
-            <div class="nav-item">
-                <NavLink class="nav-link" href="admin/categories">
-                    <span class="nav-icon">🏷️</span>
-                    <span class="nav-text">Categories</span>
-                </NavLink>
-            </div>
-        </div>
-    </nav>
+		<!-- Administration -->
+		<AuthorizeView Policy="HR">
+			<Authorized>
+				<div class="nav-section">
+					<div class="nav-section-header">
+						<span class="nav-section-title">Administration</span>
+					</div>
+					<div class="nav-item">
+						<NavLink class="nav-link" href="admin/categories">
+							<span class="nav-icon">🏷️</span>
+							<span class="nav-text">Categories</span>
+						</NavLink>
+					</div>
+					<div class="nav-item">
+						<NavLink class="nav-link" href="admin/roles">
+							<span class="nav-icon">🔐</span>
+							<span class="nav-text">Role Management</span>
+						</NavLink>
+					</div>
+				</div>
+			</Authorized>
+		</AuthorizeView>
+	</nav>
 </div>
-

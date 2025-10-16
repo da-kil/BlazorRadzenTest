@@ -1,0 +1,138 @@
+@using Radzen
+@using Radzen.Blazor
+@inject DialogService DialogService
+
+<style>
+    .finalize-dialog {
+        padding: 1.5rem;
+        min-width: 550px;
+    }
+
+    .finalize-header {
+        background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .warning-section {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #FF9800;
+    }
+
+    .notes-section {
+        margin-bottom: 1rem;
+    }
+
+    .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .icon-box {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+<div class="finalize-dialog">
+    <div class="finalize-header">
+        <div class="text-center">
+            <RadzenIcon Icon="lock" Style="font-size: 3rem; margin-bottom: 1rem;" />
+            <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
+                Finalize Questionnaire
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                You are about to permanently lock this questionnaire. This action marks the completion of the entire review process.
+            </RadzenText>
+        </div>
+    </div>
+
+    <div class="warning-section">
+        <div class="icon-box">
+            <RadzenIcon Icon="warning" Style="color: #856404;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0" Style="color: #856404;">
+                Important: This action is final
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Style="color: #856404;">
+            Once finalized, the questionnaire becomes permanently read-only. Neither you nor the employee will be able to make any further changes.
+        </RadzenText>
+    </div>
+
+    <div class="info-section">
+        <div class="icon-box">
+            <RadzenIcon Icon="check_circle" Style="color: #FF9800;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                Finalization confirms:
+            </RadzenText>
+        </div>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">All review discussions are complete</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Employee has confirmed the review outcome</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">All feedback and changes have been documented</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">The questionnaire is ready for archival</RadzenText></li>
+        </ul>
+    </div>
+
+    <div class="notes-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+            Final Notes (Optional)
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+            Add any final notes, observations, or action items for future reference:
+        </RadzenText>
+        <RadzenTextArea @bind-Value="@finalNotes"
+                       Placeholder="Enter final notes here... (optional)"
+                       Rows="8"
+                       Style="width: 100%;"
+                       MaxLength="5000" />
+        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+            @(finalNotes?.Length ?? 0) / 5000 characters
+        </RadzenText>
+    </div>
+
+    <div class="dialog-actions">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel"
+                     Size="ButtonSize.Medium" />
+        <RadzenButton Text="Finalize Questionnaire"
+                     ButtonStyle="ButtonStyle.Warning"
+                     Icon="lock"
+                     Click="@FinalizeQuestionnaire"
+                     Size="ButtonSize.Medium" />
+    </div>
+</div>
+
+@code {
+    private string? finalNotes;
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private void FinalizeQuestionnaire()
+    {
+        // Return the final notes (return empty string if null to distinguish from cancellation)
+        DialogService.Close(finalNotes ?? string.Empty);
+    }
+}

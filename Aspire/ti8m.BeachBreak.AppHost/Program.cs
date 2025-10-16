@@ -6,6 +6,7 @@ var postgresdb = builder.AddPostgres("postgres")
     .WithDataVolume(isReadOnly: false)
     .WithLifetime(ContainerLifetime.Persistent)
     .WithPgAdmin()
+    .WithLifetime(ContainerLifetime.Session)
     .AddDatabase("beachbreakdb");
 
 var commandApi = builder.AddProject<Projects.ti8m_BeachBreak_CommandApi>("CommandApi")

@@ -1,161 +1,271 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Command.Repositories;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
 
 public class QuestionnaireResponseCommandHandler :
     ICommandHandler<SaveEmployeeResponseCommand, Result<Guid>>,
+    ICommandHandler<SaveManagerResponseCommand, Result<Guid>>,
     ICommandHandler<SubmitEmployeeResponseCommand, Result>
 {
+    private readonly IQuestionnaireResponseAggregateRepository repository;
+    private readonly IQuestionnaireAssignmentAggregateRepository assignmentRepository;
     private readonly ILogger<QuestionnaireResponseCommandHandler> logger;
 
-    public QuestionnaireResponseCommandHandler(ILogger<QuestionnaireResponseCommandHandler> logger)
+    public QuestionnaireResponseCommandHandler(
+        IQuestionnaireResponseAggregateRepository repository,
+        IQuestionnaireAssignmentAggregateRepository assignmentRepository,
+        ILogger<QuestionnaireResponseCommandHandler> logger)
     {
+        this.repository = repository;
+        this.assignmentRepository = assignmentRepository;
         this.logger = logger;
     }
 
     public async Task<Result<Guid>> HandleAsync(SaveEmployeeResponseCommand command, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting save employee response for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", command.EmployeeId, command.AssignmentId);
-
         try
         {
-            // TODO: Implement actual questionnaire response save logic
-            // This was previously commented out in the EmployeeCommandHandler
-            logger.LogWarning("SaveEmployeeResponseCommand handler not yet implemented - returning null for now");
-            return null;
+            logger.LogInformation("Processing save response for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
+                command.EmployeeId, command.AssignmentId);
 
-            //await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            //await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            // Check workflow state to ensure editing is allowed for employee
+            var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                cancellationToken: cancellationToken);
 
-            //try
-            //{
-            //    await using var cmd = connection.CreateCommand();
-            //    cmd.Transaction = transaction;
+            if (assignment == null)
+            {
+                logger.LogWarning("Assignment {AssignmentId} not found", command.AssignmentId);
+                return Result<Guid>.Fail("Assignment not found", StatusCodes.Status404NotFound);
+            }
 
-            //    cmd.CommandText = """
-            //        WITH upsert AS (
-            //            UPDATE questionnaire_responses
-            //            SET section_responses = @sectionResponses,
-            //                last_modified = @lastModified,
-            //                status = @status
-            //            WHERE assignment_id = @assignmentId AND employee_id = @employeeId
-            //            RETURNING id
-            //        ),
-            //        insert_attempt AS (
-            //            INSERT INTO questionnaire_responses (
-            //                id, assignment_id, template_id, employee_id, status, section_responses, last_modified, created_at
-            //            )
-            //            SELECT @id, @assignmentId, @templateId, @employeeId, @status, @sectionResponses, @lastModified, @lastModified
-            //            WHERE NOT EXISTS (SELECT 1 FROM questionnaire_responses WHERE assignment_id = @assignmentId AND employee_id = @employeeId)
-            //            RETURNING id
-            //        )
-            //        SELECT id FROM upsert
-            //        UNION ALL
-            //        SELECT id FROM insert_attempt
-            //        """;
+            // Validate employee can edit based on workflow state
+            if (!assignment.CanEmployeeEdit())
+            {
+                logger.LogWarning("Employee cannot edit in workflow state {WorkflowState}", assignment.WorkflowState);
+                return Result<Guid>.Fail($"Cannot edit questionnaire in {assignment.WorkflowState} state", StatusCodes.Status400BadRequest);
+            }
 
-            //    var responseId = Guid.NewGuid();
-            //    var sectionResponsesJson = System.Text.Json.JsonSerializer.Serialize(command.SectionResponses);
+            // Try to load existing response by assignment ID
+            var response = await repository.FindByAssignmentIdAsync(command.AssignmentId, cancellationToken);
 
-            //    cmd.Parameters.AddWithValue("@id", responseId);
-            //    cmd.Parameters.AddWithValue("@assignmentId", command.AssignmentId);
-            //    cmd.Parameters.AddWithValue("@templateId", command.TemplateId);
-            //    cmd.Parameters.AddWithValue("@employeeId", command.EmployeeId);
-            //    cmd.Parameters.AddWithValue("@status", command.Status.ToString());
-            //    cmd.Parameters.Add("@sectionResponses", NpgsqlTypes.NpgsqlDbType.Jsonb).Value = sectionResponsesJson;
-            //    cmd.Parameters.AddWithValue("@lastModified", DateTime.UtcNow);
+            bool isFirstSave = response == null;
 
-            //    var result = await cmd.ExecuteScalarAsync(cancellationToken);
-            //    var returnedId = (Guid)result!;
+            if (response == null)
+            {
+                // First time - initiate new response with unique aggregate ID
+                var responseId = Guid.NewGuid();
+                response = new QuestionnaireResponse(
+                    responseId,
+                    command.AssignmentId,
+                    assignment.TemplateId,
+                    command.EmployeeId,
+                    DateTime.UtcNow);
 
-            //    await transaction.CommitAsync(cancellationToken);
-            //    logger.LogInformation("Employee response saved successfully with Id: {ResponseId}", returnedId);
+                logger.LogInformation("Initiated new questionnaire response {ResponseId} for AssignmentId: {AssignmentId}, TemplateId: {TemplateId}",
+                    responseId, command.AssignmentId, assignment.TemplateId);
+            }
 
-            //    return Result<Guid>.Success(returnedId);
-            //}
-            //catch (Exception ex)
-            //{
-            //    logger.LogError(ex, "Error occurred during save employee response transaction, rolling back");
-            //    await transaction.RollbackAsync(cancellationToken);
-            //    throw;
-            //}
+            // Record section responses with Employee role
+            foreach (var section in command.SectionResponses)
+            {
+                var sectionId = section.Key;
+
+                // Extract role-based responses: section.Value is Dictionary<string, Dictionary<Guid, object>>
+                if (section.Value is not Dictionary<string, object> roleBasedResponses)
+                {
+                    logger.LogWarning("Section {SectionId} has invalid response type: {Type}", sectionId, section.Value?.GetType());
+                    continue;
+                }
+
+                // Extract Employee role responses
+                if (!roleBasedResponses.TryGetValue("Employee", out var employeeResponsesObj) ||
+                    employeeResponsesObj is not Dictionary<Guid, object> questionResponses)
+                {
+                    logger.LogDebug("Section {SectionId} has no Employee responses", sectionId);
+                    continue;
+                }
+
+                // Skip empty sections
+                if (questionResponses.Count == 0)
+                {
+                    logger.LogDebug("Skipping empty section {SectionId}", sectionId);
+                    continue;
+                }
+
+                response.RecordSectionResponse(sectionId, CompletionRole.Employee, questionResponses);
+            }
+
+            await repository.StoreAsync(response, cancellationToken);
+
+            // If this is the first time the employee is saving progress, mark the assignment as started
+            if (isFirstSave)
+            {
+                assignment.StartWork();
+                await assignmentRepository.StoreAsync(assignment, cancellationToken);
+                logger.LogInformation("Assignment {AssignmentId} marked as started", command.AssignmentId);
+            }
+
+            logger.LogInformation("Successfully saved employee response for AssignmentId: {AssignmentId}", command.AssignmentId);
+            return Result<Guid>.Success(response.Id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Business rule violation while saving employee response");
+            return Result<Guid>.Fail(ex.Message, StatusCodes.Status400BadRequest);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to save employee response for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", command.EmployeeId, command.AssignmentId);
+            logger.LogError(ex, "Error saving employee response for AssignmentId: {AssignmentId}", command.AssignmentId);
             return Result<Guid>.Fail($"Failed to save employee response: {ex.Message}", StatusCodes.Status500InternalServerError);
+        }
+    }
+
+    public async Task<Result<Guid>> HandleAsync(SaveManagerResponseCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Processing save manager response for ManagerId: {ManagerId}, AssignmentId: {AssignmentId}",
+                command.ManagerId, command.AssignmentId);
+
+            // Load assignment and check workflow state
+            var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                cancellationToken: cancellationToken);
+
+            if (assignment == null)
+            {
+                logger.LogWarning("Assignment {AssignmentId} not found", command.AssignmentId);
+                return Result<Guid>.Fail("Assignment not found", StatusCodes.Status404NotFound);
+            }
+
+            // Validate manager can edit based on workflow state
+            if (!assignment.CanManagerEdit())
+            {
+                logger.LogWarning("Manager cannot edit in workflow state {WorkflowState}", assignment.WorkflowState);
+                return Result<Guid>.Fail($"Cannot edit questionnaire in {assignment.WorkflowState} state", StatusCodes.Status400BadRequest);
+            }
+
+            // Try to load existing response by assignment ID
+            var response = await repository.FindByAssignmentIdAsync(command.AssignmentId, cancellationToken);
+
+            if (response == null)
+            {
+                // Initiate new response with employee ID from assignment
+                var responseId = Guid.NewGuid();
+                response = new QuestionnaireResponse(
+                    responseId,
+                    command.AssignmentId,
+                    assignment.TemplateId,
+                    assignment.EmployeeId,
+                    DateTime.UtcNow);
+
+                logger.LogInformation("Initiated new questionnaire response {ResponseId} for manager input on AssignmentId: {AssignmentId}, TemplateId: {TemplateId}, EmployeeId: {EmployeeId}",
+                    responseId, command.AssignmentId, assignment.TemplateId, assignment.EmployeeId);
+            }
+
+            // Record section responses with Manager role
+            foreach (var section in command.SectionResponses)
+            {
+                var sectionId = section.Key;
+
+                // Extract role-based responses: section.Value is Dictionary<string, Dictionary<Guid, object>>
+                if (section.Value is not Dictionary<string, object> roleBasedResponses)
+                {
+                    logger.LogWarning("Section {SectionId} has invalid response type: {Type}", sectionId, section.Value?.GetType());
+                    continue;
+                }
+
+                // Extract Manager role responses
+                if (!roleBasedResponses.TryGetValue("Manager", out var managerResponsesObj) ||
+                    managerResponsesObj is not Dictionary<Guid, object> questionResponses)
+                {
+                    logger.LogDebug("Section {SectionId} has no Manager responses", sectionId);
+                    continue;
+                }
+
+                // Skip empty sections
+                if (questionResponses.Count == 0)
+                {
+                    logger.LogDebug("Skipping empty section {SectionId}", sectionId);
+                    continue;
+                }
+
+                response.RecordSectionResponse(sectionId, CompletionRole.Manager, questionResponses);
+            }
+
+            await repository.StoreAsync(response, cancellationToken);
+
+            logger.LogInformation("Successfully saved manager response for AssignmentId: {AssignmentId}", command.AssignmentId);
+            return Result<Guid>.Success(response.Id);
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Business rule violation while saving manager response");
+            return Result<Guid>.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error saving manager response for AssignmentId: {AssignmentId}", command.AssignmentId);
+            return Result<Guid>.Fail($"Failed to save manager response: {ex.Message}", StatusCodes.Status500InternalServerError);
         }
     }
 
     public async Task<Result> HandleAsync(SubmitEmployeeResponseCommand command, CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting submit employee response for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", command.EmployeeId, command.AssignmentId);
-
         try
         {
-            // TODO: Implement actual questionnaire response submit logic
-            // This was previously commented out in the EmployeeCommandHandler
-            logger.LogWarning("SubmitEmployeeResponseCommand handler not yet implemented - returning null for now");
-            return null;
+            logger.LogInformation("Processing submit response for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
+                command.EmployeeId, command.AssignmentId);
 
-            //await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
-            //await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            var response = await repository.FindByAssignmentIdAsync(command.AssignmentId, cancellationToken);
 
-            //try
-            //{
-            //    await using var updateResponseCmd = connection.CreateCommand();
-            //    updateResponseCmd.Transaction = transaction;
-            //    updateResponseCmd.CommandText = """
-            //        UPDATE questionnaire_responses
-            //        SET status = 'Submitted',
-            //            submitted_date = @submittedDate,
-            //            last_modified = @lastModified
-            //        WHERE assignment_id = @assignmentId AND employee_id = @employeeId
-            //        """;
+            if (response == null)
+            {
+                logger.LogWarning("No response found for AssignmentId: {AssignmentId}", command.AssignmentId);
+                return Result.Fail("No response found to submit", StatusCodes.Status404NotFound);
+            }
 
-            //    updateResponseCmd.Parameters.AddWithValue("@submittedDate", DateTime.UtcNow);
-            //    updateResponseCmd.Parameters.AddWithValue("@lastModified", DateTime.UtcNow);
-            //    updateResponseCmd.Parameters.AddWithValue("@assignmentId", command.AssignmentId);
-            //    updateResponseCmd.Parameters.AddWithValue("@employeeId", command.EmployeeId);
+            // Verify this response belongs to the requesting employee
+            if (response.EmployeeId != command.EmployeeId)
+            {
+                logger.LogWarning("Employee {EmployeeId} attempted to submit response for Assignment {AssignmentId} belonging to {ActualEmployeeId}",
+                    command.EmployeeId, command.AssignmentId, response.EmployeeId);
+                return Result.Fail("Unauthorized to submit this response", StatusCodes.Status403Forbidden);
+            }
 
-            //    var responseRows = await updateResponseCmd.ExecuteNonQueryAsync(cancellationToken);
+            // Submission is now handled by the QuestionnaireAssignment aggregate's workflow state
+            // Update assignment workflow state via SubmitEmployeeQuestionnaire
+            var assignment = await assignmentRepository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                cancellationToken: cancellationToken);
 
-            //    if (responseRows == 0)
-            //    {
-            //        await transaction.RollbackAsync(cancellationToken);
-            //        return Result.Fail("No response found to submit", StatusCodes.Status404NotFound);
-            //    }
+            if (assignment == null)
+            {
+                logger.LogWarning("Assignment {AssignmentId} not found", command.AssignmentId);
+                return Result.Fail("Assignment not found", StatusCodes.Status404NotFound);
+            }
 
-            //    await using var updateAssignmentCmd = connection.CreateCommand();
-            //    updateAssignmentCmd.Transaction = transaction;
-            //    updateAssignmentCmd.CommandText = """
-            //        UPDATE questionnaire_assignments
-            //        SET status = 'Completed',
-            //            completed_date = @completedDate
-            //        WHERE id = @assignmentId
-            //        """;
+            // Submit via assignment aggregate (which manages workflow state)
+            assignment.SubmitEmployeeQuestionnaire(command.EmployeeId.ToString());
+            await assignmentRepository.StoreAsync(assignment, cancellationToken);
 
-            //    updateAssignmentCmd.Parameters.AddWithValue("@completedDate", DateTime.UtcNow);
-            //    updateAssignmentCmd.Parameters.AddWithValue("@assignmentId", command.AssignmentId);
-
-            //    await updateAssignmentCmd.ExecuteNonQueryAsync(cancellationToken);
-
-            //    await transaction.CommitAsync(cancellationToken);
-            //    logger.LogInformation("Employee response submitted successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", command.EmployeeId, command.AssignmentId);
-
-            //    return Result.Success("Response submitted successfully");
-            //}
-            //catch (Exception ex)
-            //{
-            //    logger.LogError(ex, "Error occurred during submit employee response transaction, rolling back");
-            //    await transaction.RollbackAsync(cancellationToken);
-            //    throw;
-            //}
+            logger.LogInformation("Successfully submitted employee questionnaire for AssignmentId: {AssignmentId}, new state: {WorkflowState}",
+                command.AssignmentId, assignment.WorkflowState);
+            return Result.Success("Response submitted successfully");
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogWarning(ex, "Business rule violation while submitting response");
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to submit employee response for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", command.EmployeeId, command.AssignmentId);
+            logger.LogError(ex, "Error submitting employee response for AssignmentId: {AssignmentId}", command.AssignmentId);
             return Result.Fail($"Failed to submit employee response: {ex.Message}", StatusCodes.Status500InternalServerError);
         }
     }

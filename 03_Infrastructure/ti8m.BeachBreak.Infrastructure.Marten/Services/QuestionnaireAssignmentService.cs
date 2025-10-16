@@ -1,5 +1,5 @@
 using Npgsql;
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.Services;
 

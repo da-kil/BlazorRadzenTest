@@ -9,4 +9,9 @@ public class BaseController : ControllerBase
     {
         return result.Succeeded ? Ok(string.IsNullOrWhiteSpace(result.Message) ? null : new { result.Message }) : Problem(detail: result.Message, statusCode: result.StatusCode);
     }
+
+    protected IActionResult CreateResponse<T>(Result<T> result)
+    {
+        return result.Succeeded ? Ok(result.Payload) : Problem(detail: result.Message, statusCode: result.StatusCode);
+    }
 }

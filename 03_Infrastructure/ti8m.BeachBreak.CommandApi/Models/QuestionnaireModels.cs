@@ -55,32 +55,6 @@ public class QuestionnaireSettings
     public TimeSpan? TimeLimit { get; set; }
     public bool AllowReviewBeforeSubmit { get; set; } = true;
 }
-
-// Employee assignment models
-public class QuestionnaireAssignment
-{
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid TemplateId { get; set; }
-    public string EmployeeId { get; set; } = string.Empty;
-    public string EmployeeName { get; set; } = string.Empty;
-    public string EmployeeEmail { get; set; } = string.Empty;
-    public DateTime AssignedDate { get; set; } = DateTime.Now;
-    public DateTime? DueDate { get; set; }
-    public DateTime? CompletedDate { get; set; }
-    public AssignmentStatus Status { get; set; } = AssignmentStatus.Assigned;
-    public string? AssignedBy { get; set; }
-    public string? Notes { get; set; }
-}
-
-public enum AssignmentStatus
-{
-    Assigned,
-    InProgress,
-    Completed,
-    Overdue,
-    Cancelled
-}
-
 // Response models
 public class QuestionnaireResponse
 {
@@ -89,25 +63,17 @@ public class QuestionnaireResponse
     public Guid AssignmentId { get; set; }
     public string EmployeeId { get; set; } = string.Empty;
     public DateTime StartedDate { get; set; } = DateTime.Now;
-    public DateTime? CompletedDate { get; set; }
-    public ResponseStatus Status { get; set; } = ResponseStatus.InProgress;
     public Dictionary<Guid, SectionResponse> SectionResponses { get; set; } = new();
     public int ProgressPercentage { get; set; }
-}
-
-public enum ResponseStatus
-{
-    NotStarted,
-    InProgress,
-    Completed,
-    Submitted
 }
 
 public class SectionResponse
 {
     public Guid SectionId { get; set; }
     public bool IsCompleted { get; set; }
-    public Dictionary<Guid, QuestionResponse> QuestionResponses { get; set; } = new();
+
+    // Role-based structure: RoleKey (e.g., "Employee", "Manager") -> QuestionId -> QuestionResponse
+    public Dictionary<string, Dictionary<Guid, QuestionResponse>> RoleResponses { get; set; } = new();
 }
 
 public class QuestionResponse

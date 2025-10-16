@@ -1,0 +1,430 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Dialogs
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<div class="workflow-action-buttons">
+    @if (Assignment != null)
+    {
+        <div class="workflow-banner-content">
+            <div class="workflow-info">
+                <div class="workflow-icon">
+                    <RadzenIcon Icon="@GetWorkflowIcon()" />
+                </div>
+                <div class="workflow-text">
+                    <div class="workflow-title">Workflow Status</div>
+                    <div class="workflow-status">@GetWorkflowStatusText()</div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                @if (IsManager && WorkflowStateHelper.CanInitiateReview(Assignment))
+                {
+                    <RadzenButton Text="Initiate Review Meeting"
+                                  Icon="rate_review"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="@InitiateReview"
+                                  Disabled="@isProcessing"
+                                  Size="ButtonSize.Medium" />
+                }
+
+                @if (IsEmployee && WorkflowStateHelper.CanEmployeeConfirmReview(Assignment))
+                {
+                    <RadzenButton Text="Sign Off on Review"
+                                  Icon="verified"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Click="@ConfirmEmployeeReview"
+                                  Disabled="@isProcessing"
+                                  Size="ButtonSize.Medium" />
+                }
+
+                @if (IsManager && WorkflowStateHelper.CanManagerFinishReviewMeeting(Assignment))
+                {
+                    <RadzenButton Text="Finish Review Meeting"
+                                  Icon="event_available"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Click="@FinishReviewMeeting"
+                                  Disabled="@isProcessing"
+                                  Size="ButtonSize.Medium" />
+                }
+
+                @if (IsManager && WorkflowStateHelper.CanManagerFinalize(Assignment))
+                {
+                    <RadzenButton Text="Finalize Questionnaire"
+                                  Icon="lock"
+                                  ButtonStyle="ButtonStyle.Warning"
+                                  Click="@FinalizeQuestionnaire"
+                                  Disabled="@isProcessing"
+                                  Size="ButtonSize.Medium" />
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .workflow-action-buttons {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-bottom: 3px solid #667eea;
+        padding: 16px 24px;
+        margin: -1rem -1rem 1.5rem -1rem; /* Negative margins to extend full width */
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .workflow-banner-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        max-width: 100%;
+    }
+
+    .workflow-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+
+    .workflow-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        color: white;
+        font-size: 24px;
+    }
+
+    .workflow-text {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .workflow-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: #495057;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .workflow-status {
+        font-size: 16px;
+        font-weight: 700;
+        color: #667eea;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .workflow-banner-content {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .workflow-info {
+            justify-content: center;
+            text-align: center;
+        }
+
+        .button-group {
+            justify-content: center;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public QuestionnaireAssignment? Assignment { get; set; }
+
+    [Parameter]
+    public bool IsEmployee { get; set; }
+
+    [Parameter]
+    public bool IsManager { get; set; }
+
+    [Parameter]
+    public string UserName { get; set; } = string.Empty;
+
+    [Parameter]
+    public EventCallback OnActionCompleted { get; set; }
+
+    private bool isProcessing = false;
+
+    private async Task InitiateReview()
+    {
+        if (Assignment == null) return;
+
+        isProcessing = true;
+        try
+        {
+            var success = await AssignmentService.InitiateReviewAsync(Assignment.Id, UserName);
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Performance review initiated",
+                    Duration = 4000
+                });
+                await OnActionCompleted.InvokeAsync();
+                StateHasChanged(); // Force re-render after assignment is reloaded
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to initiate review",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task ConfirmEmployeeReview()
+    {
+        if (Assignment == null) return;
+
+        // Open dialog to collect optional employee comments
+        var result = await DialogService.OpenAsync<ConfirmEmployeeReviewDialog>(
+            "Employee Sign-Off",
+            new Dictionary<string, object>(),
+            new DialogOptions
+            {
+                Width = "600px",
+                Resizable = false,
+                Draggable = true
+            });
+
+        // If dialog was cancelled, return
+        if (result == null)
+        {
+            return;
+        }
+
+        isProcessing = true;
+        try
+        {
+            // Result is the employee comments (can be null or empty string)
+            var employeeComments = result as string;
+
+            var success = await AssignmentService.ConfirmEmployeeReviewAsync(
+                Assignment.Id,
+                UserName,
+                string.IsNullOrWhiteSpace(employeeComments) ? null : employeeComments);
+
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Review confirmed by employee",
+                    Duration = 4000
+                });
+                await OnActionCompleted.InvokeAsync();
+                StateHasChanged(); // Force re-render after assignment is reloaded
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to confirm review",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task FinishReviewMeeting()
+    {
+        if (Assignment == null) return;
+
+        // Open dialog to collect optional review summary
+        var result = await DialogService.OpenAsync<FinishReviewMeetingDialog>(
+            "Finish Review Meeting",
+            new Dictionary<string, object>(),
+            new DialogOptions
+            {
+                Width = "650px",
+                Resizable = false,
+                Draggable = true
+            });
+
+        // If dialog was cancelled, return
+        if (result == null)
+        {
+            return;
+        }
+
+        isProcessing = true;
+        try
+        {
+            // Result is the review summary (can be null or empty string)
+            var reviewSummary = result as string;
+
+            var success = await AssignmentService.FinishReviewMeetingAsync(
+                Assignment.Id,
+                UserName,
+                string.IsNullOrWhiteSpace(reviewSummary) ? null : reviewSummary);
+
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Review meeting finished successfully",
+                    Duration = 4000
+                });
+                await OnActionCompleted.InvokeAsync();
+                StateHasChanged(); // Force re-render after assignment is reloaded
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to finish review meeting",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private async Task FinalizeQuestionnaire()
+    {
+        if (Assignment == null) return;
+
+        // Open dialog to collect optional final notes
+        var result = await DialogService.OpenAsync<FinalizeQuestionnaireDialog>(
+            "Finalize Questionnaire",
+            new Dictionary<string, object>(),
+            new DialogOptions
+            {
+                Width = "650px",
+                Resizable = false,
+                Draggable = true
+            });
+
+        // If dialog was cancelled, return
+        if (result == null)
+        {
+            return;
+        }
+
+        isProcessing = true;
+        try
+        {
+            // Result is the final notes (can be null or empty string)
+            var finalNotes = result as string;
+
+            var success = await AssignmentService.FinalizeQuestionnaireAsync(
+                Assignment.Id,
+                UserName,
+                string.IsNullOrWhiteSpace(finalNotes) ? null : finalNotes);
+
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Questionnaire finalized and locked",
+                    Duration = 4000
+                });
+                await OnActionCompleted.InvokeAsync();
+                StateHasChanged(); // Force re-render after assignment is reloaded
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to finalize questionnaire",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
+    }
+
+    private string GetWorkflowIcon()
+    {
+        if (Assignment == null) return "assignment";
+
+        return Assignment.WorkflowState switch
+        {
+            WorkflowState.Assigned => "assignment_turned_in",
+            WorkflowState.EmployeeInProgress => "edit",
+            WorkflowState.ManagerInProgress => "rate_review",
+            WorkflowState.BothInProgress => "people",
+            WorkflowState.EmployeeSubmitted => "check_circle",
+            WorkflowState.ManagerSubmitted => "verified",
+            WorkflowState.BothSubmitted => "done_all",
+            WorkflowState.InReview => "rate_review",
+            WorkflowState.ManagerReviewConfirmed => "event_available",
+            WorkflowState.EmployeeReviewConfirmed => "verified",
+            WorkflowState.Finalized => "lock",
+            _ => "assignment"
+        };
+    }
+
+    private string GetWorkflowStatusText()
+    {
+        if (Assignment == null) return "Unknown";
+
+        return Assignment.WorkflowState switch
+        {
+            WorkflowState.Assigned => "Assigned - Not Started",
+            WorkflowState.EmployeeInProgress => "Employee in Progress",
+            WorkflowState.ManagerInProgress => "Manager in Progress",
+            WorkflowState.BothInProgress => "Both in Progress",
+            WorkflowState.EmployeeSubmitted => "Employee Submitted",
+            WorkflowState.ManagerSubmitted => "Manager Submitted",
+            WorkflowState.BothSubmitted => "Both Submitted",
+            WorkflowState.InReview => "Review Meeting in Progress",
+            WorkflowState.ManagerReviewConfirmed => "Awaiting Employee Sign-Off",
+            WorkflowState.EmployeeReviewConfirmed => "Ready to Finalize",
+            WorkflowState.Finalized => "Finalized & Locked",
+            _ => "Unknown Status"
+        };
+    }
+}

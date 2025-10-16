@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\01_Domain\ti8m.BeachBreak.Domain\ti8m.BeachBreak.Domain.csproj" />
     <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Domain\ti8m.BeachBreak.Core.Domain.csproj" />
+    <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Infrastructure\ti8m.BeachBreak.Core.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

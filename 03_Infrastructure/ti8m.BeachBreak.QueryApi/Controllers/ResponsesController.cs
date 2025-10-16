@@ -1,12 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using ti8m.BeachBreak.QueryApi.Controllers;
-using ti8m.BeachBreak.QueryApi.Dto;
 using ti8m.BeachBreak.Application.Query.Queries;
-using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
-using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
-using ResponseStatusQuery = ti8m.BeachBreak.Application.Query.Queries.ResponseQueries.ResponseStatus;
-using ResponseStatusDto = ti8m.BeachBreak.QueryApi.Dto.ResponseStatus;
+using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
+using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -26,24 +23,27 @@ public class ResponsesController : BaseController
     }
 
     [HttpGet]
-    public async Task<ActionResult<List<QuestionnaireResponseDto>>> GetAllResponses()
+    [ProducesResponseType(typeof(List<QuestionnaireResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllResponses()
     {
         try
         {
             var query = new GetAllResponsesQuery();
             var responses = await _queryDispatcher.QueryAsync(query);
             var responseDtos = responses.Select(MapToDto).ToList();
-            return Ok(responseDtos);
+            return CreateResponse(Result<List<QuestionnaireResponseDto>>.Success(responseDtos));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving responses");
-            return StatusCode(500, "An error occurred while retrieving responses");
+            return CreateResponse(Result<List<QuestionnaireResponseDto>>.Fail("An error occurred while retrieving responses", 500));
         }
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<QuestionnaireResponseDto>> GetResponse(Guid id)
+    [ProducesResponseType(typeof(QuestionnaireResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetResponse(Guid id)
     {
         try
         {
@@ -51,19 +51,21 @@ public class ResponsesController : BaseController
             var response = await _queryDispatcher.QueryAsync(query);
 
             if (response == null)
-                return NotFound($"Response with ID {id} not found");
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response with ID {id} not found", 404));
 
-            return Ok(MapToDto(response));
+            return CreateResponse(Result<QuestionnaireResponseDto>.Success(MapToDto(response)));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving response {ResponseId}", id);
-            return StatusCode(500, "An error occurred while retrieving the response");
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("An error occurred while retrieving the response", 500));
         }
     }
 
     [HttpGet("assignment/{assignmentId:guid}")]
-    public async Task<ActionResult<QuestionnaireResponseDto>> GetResponseByAssignment(Guid assignmentId)
+    [ProducesResponseType(typeof(QuestionnaireResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetResponseByAssignment(Guid assignmentId)
     {
         try
         {
@@ -71,14 +73,14 @@ public class ResponsesController : BaseController
             var response = await _queryDispatcher.QueryAsync(query);
 
             if (response == null)
-                return NotFound($"Response for assignment {assignmentId} not found");
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response for assignment {assignmentId} not found", 404));
 
-            return Ok(MapToDto(response));
+            return CreateResponse(Result<QuestionnaireResponseDto>.Success(MapToDto(response)));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving response for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while retrieving the response");
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("An error occurred while retrieving the response", 500));
         }
     }
 
@@ -91,7 +93,7 @@ public class ResponsesController : BaseController
 
         try
         {
-            var result = await _queryDispatcher.QueryAsync(new EmployeeAssignmentListQuery(employeeId));
+            var result = await _queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
 
             if (result.Succeeded && result.Payload != null)
             {
@@ -111,10 +113,10 @@ public class ResponsesController : BaseController
                     EmployeeId = assignment.EmployeeId.ToString(),
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
+                    WorkflowState = assignment.WorkflowState,
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
-                    Status = MapAssignmentStatus(assignment.Status),
                     AssignedBy = assignment.AssignedBy,
                     Notes = assignment.Notes
                 });
@@ -123,44 +125,56 @@ public class ResponsesController : BaseController
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving assignments for employee {EmployeeId}", employeeId);
-            return StatusCode(500, "An error occurred while retrieving employee assignments");
+            return CreateResponse(Result<IEnumerable<QuestionnaireAssignmentDto>>.Fail("An error occurred while retrieving employee assignments", 500));
         }
     }
 
     [HttpGet("employee/{employeeId:guid}/assignment/{assignmentId:guid}")]
     [ProducesResponseType(typeof(QuestionnaireResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetEmployeeResponse(Guid employeeId, Guid assignmentId)
     {
         _logger.LogInformation("Received GetEmployeeResponse request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", employeeId, assignmentId);
 
         try
         {
-            var result = await _queryDispatcher.QueryAsync(new EmployeeResponseQuery(employeeId, assignmentId));
+            // Use standard query handler with Marten read models
+            var query = new GetResponseByAssignmentIdQuery(assignmentId);
+            var response = await _queryDispatcher.QueryAsync(query);
 
-            if (result?.Payload == null)
+            if (response == null)
             {
                 _logger.LogInformation("Response not found for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", employeeId, assignmentId);
-                return NotFound($"Response not found for assignment {assignmentId} and employee {employeeId}");
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response not found for assignment {assignmentId} and employee {employeeId}", 404));
             }
 
-            return CreateResponse(result, response => new QuestionnaireResponseDto
+            // Validate this response belongs to the requesting employee (authorization check)
+            if (response.EmployeeId != employeeId)
+            {
+                _logger.LogWarning("Employee {EmployeeId} attempted to access response for Assignment {AssignmentId} belonging to {ActualEmployeeId}",
+                    employeeId, assignmentId, response.EmployeeId);
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("You do not have permission to access this response", 403));
+            }
+
+            // Map to DTO with employee-specific section responses
+            var dto = new QuestionnaireResponseDto
             {
                 Id = response.Id,
                 TemplateId = response.TemplateId,
                 AssignmentId = response.AssignmentId,
                 EmployeeId = response.EmployeeId.ToString(),
                 StartedDate = response.StartedDate,
-                CompletedDate = response.SubmittedDate,
-                Status = MapResponseStatus(response.Status),
-                SectionResponses = response.SectionResponses.ToDictionary(kvp => kvp.Key, kvp => new SectionResponseDto { SectionId = kvp.Key }),
+                SectionResponses = MapEmployeeSectionResponsesToDto(response.SectionResponses),
                 ProgressPercentage = 0 // TODO: Calculate progress percentage
-            });
+            };
+
+            return CreateResponse(Result<QuestionnaireResponseDto>.Success(dto));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving response for assignment {AssignmentId} and employee {EmployeeId}", assignmentId, employeeId);
-            return StatusCode(500, "An error occurred while retrieving the employee response");
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("An error occurred while retrieving the employee response", 500));
         }
     }
 
@@ -191,7 +205,7 @@ public class ResponsesController : BaseController
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving assignment progress for employee {EmployeeId}", employeeId);
-            return StatusCode(500, "An error occurred while retrieving employee assignment progress");
+            return CreateResponse(Result<IEnumerable<AssignmentProgressDto>>.Fail("An error occurred while retrieving employee assignment progress", 500));
         }
     }
 
@@ -203,49 +217,158 @@ public class ResponsesController : BaseController
             AssignmentId = response.AssignmentId,
             TemplateId = response.TemplateId,
             EmployeeId = response.EmployeeId.ToString(),
-            Status = (ResponseStatusDto)response.Status,
-            SectionResponses = response.SectionResponses.ToDictionary(
-                kvp => kvp.Key,
-                kvp => MapToSectionResponseDto(kvp.Value)
-            ),
-            CompletedDate = response.SubmittedDate,
+            SectionResponses = MapSectionResponsesToDto(response.SectionResponses),
             StartedDate = response.StartedDate
         };
     }
 
-    private static SectionResponseDto MapToSectionResponseDto(object sectionResponse)
+    private static Dictionary<Guid, SectionResponseDto> MapSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
     {
-        // For now, return a basic mapping - this could be enhanced based on actual structure
-        return new SectionResponseDto
+        var result = new Dictionary<Guid, SectionResponseDto>();
+
+        foreach (var sectionKvp in sectionResponses)
         {
-            SectionId = Guid.Empty, // This would need to be extracted from the response
-            QuestionResponses = new Dictionary<Guid, QuestionResponseDto>()
-        };
+            var sectionId = sectionKvp.Key;
+            Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
+
+            // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
+            if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
+            {
+                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
+            }
+            else if (sectionKvp.Value is Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
+            {
+                roleBasedResponses = typedRoleResponses;
+            }
+
+            if (roleBasedResponses == null) continue;
+
+            // NEW: Populate RoleResponses with BOTH Employee and Manager responses (for review mode)
+            var roleResponsesDto = new Dictionary<string, Dictionary<Guid, QuestionResponseDto>>();
+
+            foreach (var roleKvp in roleBasedResponses)
+            {
+                var role = roleKvp.Key;
+                var roleKey = role.ToString(); // "Employee" or "Manager"
+                var roleQuestions = roleKvp.Value;
+
+                var questionResponsesForRole = new Dictionary<Guid, QuestionResponseDto>();
+
+                foreach (var questionKvp in roleQuestions)
+                {
+                    var questionId = questionKvp.Key;
+                    var responseValue = questionKvp.Value;
+
+                    if (responseValue is System.Text.Json.JsonElement qJsonElement)
+                    {
+                        var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
+                        if (questionResponse != null)
+                        {
+                            questionResponsesForRole[questionId] = questionResponse;
+                        }
+                    }
+                    else
+                    {
+                        // Fallback: create a simple response
+                        questionResponsesForRole[questionId] = new QuestionResponseDto
+                        {
+                            QuestionId = questionId,
+                            Value = responseValue
+                        };
+                    }
+                }
+
+                if (questionResponsesForRole.Any())
+                {
+                    roleResponsesDto[roleKey] = questionResponsesForRole;
+                }
+            }
+
+            // Include section if it has any role responses
+            if (roleResponsesDto.Any())
+            {
+                result[sectionId] = new SectionResponseDto
+                {
+                    SectionId = sectionId,
+                    RoleResponses = roleResponsesDto
+                };
+            }
+        }
+
+        return result;
     }
 
-    // Helper methods for status mapping
-    private static AssignmentStatus MapAssignmentStatus(Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus status)
+    private static Dictionary<Guid, SectionResponseDto> MapEmployeeSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
     {
-        return status switch
+        var result = new Dictionary<Guid, SectionResponseDto>();
+
+        foreach (var sectionKvp in sectionResponses)
         {
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Assigned => AssignmentStatus.Assigned,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.InProgress => AssignmentStatus.InProgress,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Completed => AssignmentStatus.Completed,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Overdue => AssignmentStatus.Overdue,
-            Application.Query.Queries.QuestionnaireAssignmentQueries.AssignmentStatus.Cancelled => AssignmentStatus.Cancelled,
-            _ => AssignmentStatus.Assigned
-        };
+            var sectionId = sectionKvp.Key;
+            Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
+
+            // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
+            if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
+            {
+                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
+            }
+            else if (sectionKvp.Value is Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
+            {
+                roleBasedResponses = typedRoleResponses;
+            }
+
+            if (roleBasedResponses == null) continue;
+
+            // For employee endpoints, return EMPLOYEE responses only
+            var roleResponsesDto = new Dictionary<string, Dictionary<Guid, QuestionResponseDto>>();
+
+            if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponses))
+            {
+                var questionResponsesForEmployee = new Dictionary<Guid, QuestionResponseDto>();
+
+                // employeeResponses is Dictionary<Guid, object> where each value might be JsonElement
+                foreach (var questionKvp in employeeResponses)
+                {
+                    var questionId = questionKvp.Key;
+                    var responseValue = questionKvp.Value;
+
+                    if (responseValue is System.Text.Json.JsonElement qJsonElement)
+                    {
+                        var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
+                        if (questionResponse != null)
+                        {
+                            questionResponsesForEmployee[questionId] = questionResponse;
+                        }
+                    }
+                    else
+                    {
+                        // Fallback: create a simple response
+                        questionResponsesForEmployee[questionId] = new QuestionResponseDto
+                        {
+                            QuestionId = questionId,
+                            Value = responseValue
+                        };
+                    }
+                }
+
+                if (questionResponsesForEmployee.Any())
+                {
+                    roleResponsesDto["Employee"] = questionResponsesForEmployee;
+                }
+            }
+
+            // Only include sections that have employee responses
+            if (roleResponsesDto.Any())
+            {
+                result[sectionId] = new SectionResponseDto
+                {
+                    SectionId = sectionId,
+                    RoleResponses = roleResponsesDto
+                };
+            }
+        }
+
+        return result;
     }
 
-    private static ResponseStatusDto MapResponseStatus(ResponseStatusQuery status)
-    {
-        return status switch
-        {
-            ResponseStatusQuery.NotStarted => ResponseStatusDto.NotStarted,
-            ResponseStatusQuery.InProgress => ResponseStatusDto.InProgress,
-            ResponseStatusQuery.Completed => ResponseStatusDto.Completed,
-            ResponseStatusQuery.Submitted => ResponseStatusDto.Submitted,
-            _ => ResponseStatusDto.NotStarted
-        };
-    }
 }

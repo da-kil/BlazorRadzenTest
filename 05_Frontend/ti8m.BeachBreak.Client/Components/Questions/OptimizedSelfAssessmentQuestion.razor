@@ -22,51 +22,66 @@
     </RadzenAlert>
 
     <div class="competencies-container">
-        @foreach (var competency in competencies)
+        @if (!competencies.Any())
         {
-            var competencyKey = competency.Key;
-            <div class="competency-card mb-3 p-3 border rounded" @key="@competencyKey">
-                <RadzenRow>
-                    <RadzenColumn Size="12" SizeMD="8">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
-                            @competency.Title
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                            @competency.Description
-                        </RadzenText>
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="4" Class="text-end">
-                        <div class="rating-section">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
-                            <RadzenRating Value="@GetCompetencyRating(competencyKey)"
-                                        ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
-                                        Stars="@ratingScale"
-                                        Disabled="@IsReadOnly"
-                                        Class="mb-2" />
-                            <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
-                                @GetRatingText(GetCompetencyRating(competencyKey))
-                            </RadzenText>
-                        </div>
-                    </RadzenColumn>
-                </RadzenRow>
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    <strong>Configuration Error:</strong> No competencies are defined for this question. Please check the question configuration.
+                </RadzenText>
+            </RadzenAlert>
+        }
+        else
+        {
+            @foreach (var competency in competencies)
+            {
+                var competencyKey = competency.Key;
+                var currentRating = GetCompetencyRating(competencyKey);
+                var currentComment = GetCompetencyComment(competencyKey);
+                var ratingText = GetRatingText(currentRating);
 
-                @if (!IsReadOnly)
-                {
-                    <RadzenTextArea Value="@GetCompetencyComment(competencyKey)"
-                                  ValueChanged="@((string value) => SetCompetencyComment(competencyKey, value))"
-                                  Placeholder="Optional: Add your comments here..."
-                                  Rows="2"
-                                  Class="w-100 mt-2"
-                                  Disabled="@IsReadOnly" />
-                }
-                else if (!string.IsNullOrEmpty(GetCompetencyComment(competencyKey)))
-                {
-                    <div class="mt-2 p-2 bg-light rounded">
-                        <small class="text-muted d-block mb-1">Comment:</small>
-                        <span>@GetCompetencyComment(competencyKey)</span>
-                    </div>
-                }
-            </div>
+                <div class="competency-card mb-3 p-3 border rounded" @key="@competencyKey">
+                    <RadzenRow>
+                        <RadzenColumn Size="12" SizeMD="8">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                                @competency.Title
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                                @competency.Description
+                            </RadzenText>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4" Class="text-end">
+                            <div class="rating-section">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
+                                <RadzenRating Value="@currentRating"
+                                            ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
+                                            Stars="@ratingScale"
+                                            Disabled="@IsReadOnly"
+                                            Class="mb-2" />
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
+                                    @ratingText
+                                </RadzenText>
+                            </div>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    @if (!IsReadOnly)
+                    {
+                        <RadzenTextArea Value="@currentComment"
+                                      ValueChanged="@((string value) => SetCompetencyComment(competencyKey, value))"
+                                      Placeholder="Optional: Add your comments here..."
+                                      Rows="2"
+                                      Class="w-100 mt-2"
+                                      Disabled="@IsReadOnly" />
+                    }
+                    else if (!string.IsNullOrEmpty(currentComment))
+                    {
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <small class="text-muted d-block mb-1">Comment:</small>
+                            <span>@currentComment</span>
+                        </div>
+                    }
+                </div>
+            }
         }
     </div>
 </RadzenCard>
@@ -82,15 +97,30 @@
     private string scaleLowLabel = "Poor";
     private string scaleHighLabel = "Excellent";
 
+    protected override void OnInitialized()
+    {
+        // Always load configuration on initialization
+        // This ensures the component works correctly when used in dialogs or other contexts
+        // where parameter change detection might not work as expected
+        LoadConfiguration();
+
+        base.OnInitialized();
+    }
+
     protected override void OnParametersSet()
     {
         if (HasParameterChanged(nameof(Question), Question))
         {
-            competencies = GetCompetenciesFromConfiguration();
-            ratingScale = GetRatingScaleFromConfiguration();
-            scaleLowLabel = GetScaleLowLabelFromConfiguration();
-            scaleHighLabel = GetScaleHighLabelFromConfiguration();
+            LoadConfiguration();
         }
+    }
+
+    private void LoadConfiguration()
+    {
+        competencies = GetCompetenciesFromConfiguration();
+        ratingScale = GetRatingScaleFromConfiguration();
+        scaleLowLabel = GetScaleLowLabelFromConfiguration();
+        scaleHighLabel = GetScaleHighLabelFromConfiguration();
     }
 
     protected override bool HasStateChanged()
@@ -101,18 +131,70 @@
 
     private List<CompetencyDefinition> GetCompetenciesFromConfiguration()
     {
-        if (Question.Configuration?.ContainsKey("Competencies") == true &&
-            Question.Configuration["Competencies"] is List<CompetencyDefinition> comps)
+        if (Question.Configuration?.ContainsKey("Competencies") != true)
+        {
+            return new List<CompetencyDefinition>();
+        }
+
+        var competenciesValue = Question.Configuration["Competencies"];
+
+        // Handle direct List<CompetencyDefinition>
+        if (competenciesValue is List<CompetencyDefinition> comps)
         {
             return comps;
         }
 
-        // Default competency
-        return new List<CompetencyDefinition>
+        // Handle JsonElement (from API deserialization)
+        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
         {
-            new("professional_knowledge", "Professional Knowledge",
-                "Assessment of your expertise and professional knowledge.", false)
-        };
+            try
+            {
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+                };
+
+                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
+                    jsonElement.GetRawText(),
+                    options
+                );
+
+                if (competencies != null && competencies.Any())
+                {
+                    return competencies;
+                }
+            }
+            catch { /* Skip deserialization errors */ }
+        }
+
+        // Handle IEnumerable<object> or other list types
+        if (competenciesValue is IEnumerable<object> enumerable)
+        {
+            var result = new List<CompetencyDefinition>();
+            foreach (var item in enumerable)
+            {
+                if (item is CompetencyDefinition compDef)
+                {
+                    result.Add(compDef);
+                }
+                else if (item is System.Text.Json.JsonElement itemJson)
+                {
+                    try
+                    {
+                        var deserializedComp = System.Text.Json.JsonSerializer.Deserialize<CompetencyDefinition>(
+                            itemJson.GetRawText(),
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+                        if (deserializedComp != null) result.Add(deserializedComp);
+                    }
+                    catch { /* Skip invalid items */ }
+                }
+            }
+            if (result.Any()) return result;
+        }
+
+        return new List<CompetencyDefinition>();
     }
 
     private int GetRatingScaleFromConfiguration()
@@ -146,16 +228,40 @@
 
     private int GetCompetencyRating(string competencyKey)
     {
-        return Response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true
-            ? Convert.ToInt32(value)
-            : 0;
+        if (Response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number
+                    ? jsonElement.GetInt32()
+                    : 0;
+            }
+
+            // Handle direct int value
+            return Convert.ToInt32(value);
+        }
+
+        return 0;
     }
 
     private string GetCompetencyComment(string competencyKey)
     {
-        return Response.ComplexValue?.TryGetValue($"comment_{competencyKey}", out var value) == true
-            ? value.ToString() ?? ""
-            : "";
+        if (Response.ComplexValue?.TryGetValue($"comment_{competencyKey}", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? ""
+                    : "";
+            }
+
+            // Handle direct string value
+            return value.ToString() ?? "";
+        }
+
+        return "";
     }
 
     private async Task SetCompetencyRating(string competencyKey, int value)

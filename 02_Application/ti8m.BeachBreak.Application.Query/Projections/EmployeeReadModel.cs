@@ -103,6 +103,6 @@ public class EmployeeReadModel
 
     public void Apply(EmployeeApplicationRoleChanged @event)
     {
-        ApplicationRole = @event.ApplicationRole;
+        ApplicationRole = @event.NewRole;
     }
 }

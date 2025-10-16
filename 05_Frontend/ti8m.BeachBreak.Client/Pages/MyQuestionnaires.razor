@@ -5,286 +5,178 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
-@inherits OptimizedComponentBase
+@inherits BaseQuestionnaireListPage
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
-@inject ICategoryApiService CategoryService
-@inject NotificationService NotificationService
+@inject NavigationManager NavigationManager
 
 <PageTitle>My Questionnaires</PageTitle>
 
-@if (currentAssignment != null)
+@if (configuration != null && dataService != null)
 {
-    <!-- Questionnaire Completion Mode -->
-    <QuestionnaireCompletion Assignment="@currentAssignment"
-                            QuestionTypeLabels="@questionTypeLabels"
-                            ExistingResponses="@GetExistingResponsesForAssignment(currentAssignment)"
-                            OnCompleted="@OnQuestionnaireCompleted"
-                            OnSave="@OnQuestionnaireSaved" />
-}
-else if (configuration != null && dataService != null)
-{
-    <GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
+	<GenericQuestionnaireListPage Configuration="@configuration"
+								  DataService="@dataService"
+								  OnStartQuestionnaire="@StartQuestionnaire"
+								  HasProgressChecker="@((assignmentId) => questionnaireResponses.ContainsKey(assignmentId))" />
 }
 else if (isLoading)
 {
-    <div class="text-center p-5">
-        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading my questionnaires...</RadzenText>
-    </div>
+	<div class="text-center p-5">
+		<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+		<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading my questionnaires...</RadzenText>
+	</div>
 }
 else
 {
-    <div class="text-center p-5">
-        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No questionnaire data available.</RadzenText>
-    </div>
+	<div class="text-center p-5">
+		<RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No questionnaire data available.</RadzenText>
+	</div>
 }
 
 @code {
-    private QuestionnairePageConfiguration? configuration;
-    private IQuestionnaireDataService? dataService;
+	// Employee-specific state
+	private List<QuestionnaireAssignment> allAssignments = new();
+	private List<QuestionnaireAssignment> newQuestionnaires = new();
+	private List<QuestionnaireAssignment> inProgressQuestionnaires = new();
+	private List<QuestionnaireAssignment> completedQuestionnaires = new();
+	private List<QuestionnaireAssignment> overdueQuestionnaires = new();
+	private Dictionary<Guid, Dictionary<Guid, SectionResponse>> questionnaireResponses = new();
 
-    private List<QuestionnaireAssignment> allAssignments = new();
-    private List<QuestionnaireAssignment> newQuestionnaires = new();
-    private List<QuestionnaireAssignment> inProgressQuestionnaires = new();
-    private List<QuestionnaireAssignment> completedQuestionnaires = new();
-    private List<QuestionnaireAssignment> overdueQuestionnaires = new();
-    private List<Category> categories = new();
-    private Dictionary<Guid, Dictionary<Guid, SectionResponse>> questionnaireResponses = new();
-    private bool isLoading = false;
+	private bool hasInitialized = false;
 
-    // Questionnaire completion state
-    private QuestionnaireAssignment? currentAssignment;
-    private Dictionary<QuestionType, string> questionTypeLabels = new()
-    {
-        { QuestionType.SelfAssessment, "Self-Assessment" },
-        { QuestionType.GoalAchievement, "Goal Achievement" },
-        { QuestionType.TextQuestion, "Text Question" }
-    };
+	protected override string GetInitializationContext() => "InitializeMyQuestionnaires";
 
-    protected override async Task OnInitializedAsync()
-    {
-        await ExecuteSafelyAsync(async () =>
-        {
-            await LoadInitialData();
-        }, "InitializeMyQuestionnaires");
+	protected override async Task OnParametersSetAsync()
+	{
+		// Skip refresh on initial load (OnInitializedAsync handles that)
+		if (!hasInitialized)
+		{
+			hasInitialized = true;
+			return;
+		}
 
-        SetupConfiguration();
-    }
+		// This runs every time the user navigates back to this page after initial load
+		// Reload data to ensure we have the latest assignment statuses
+		await RefreshData();
+	}
 
-    protected override bool HasStateChanged()
-    {
-        return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
-               HasParameterChanged(nameof(configuration), configuration) ||
-               HasParameterChanged(nameof(isLoading), isLoading) ||
-               HasParameterChanged(nameof(currentAssignment), currentAssignment?.Id) ||
-               HasParameterChanged(nameof(questionnaireResponses), questionnaireResponses.Count);
-    }
+	protected override async Task LoadRoleSpecificDataAsync()
+	{
+		// Create the data service
+		dataService = new EmployeeQuestionnaireDataService(EmployeeQuestionnaireService, TemplateService);
 
-    private async Task LoadInitialData()
-    {
-        SetLoading(true);
+		// Load assignments (templates are denormalized in query handler)
+		allAssignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
 
-        try
-        {
-            // Create the data service
-            dataService = new EmployeeQuestionnaireDataService(EmployeeQuestionnaireService, TemplateService);
+		// Categorize assignments
+		await CategorizeQuestionnaires();
+	}
 
-            // Load data to setup configuration with performance optimization
-            var loadAssignmentsTask = EmployeeQuestionnaireService.GetMyAssignmentsAsync();
-            var loadTemplatesTask = TemplateService.GetAllTemplatesAsync();
-            var loadCategoriesTask = CategoryService.GetAllCategoriesAsync();
+	protected override QuestionnairePageConfiguration CreateConfiguration()
+	{
+		return QuestionnairePageConfigurationFactory.CreateEmployeeConfiguration(
+			allAssignments,
+			newQuestionnaires,
+			inProgressQuestionnaires,
+			completedQuestionnaires,
+			overdueQuestionnaires,
+			categories);
+	}
 
-            // Load in parallel for better performance
-            await Task.WhenAll(loadAssignmentsTask, loadTemplatesTask, loadCategoriesTask);
+	protected override void ConfigureActions()
+	{
+		if (configuration?.Actions != null)
+		{
+			foreach (var action in configuration.Actions)
+			{
+				if (action.Id == "start-questionnaire")
+				{
+					action.OnClick = () => StartSelectedQuestionnaire();
+				}
+			}
+		}
+	}
 
-            allAssignments = loadAssignmentsTask.Result;
-            var templates = loadTemplatesTask.Result;
-            categories = loadCategoriesTask.Result;
+	protected override bool HasAdditionalStateChanged()
+	{
+		return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
+			   HasParameterChanged(nameof(questionnaireResponses), questionnaireResponses.Count);
+	}
 
-            // Categorize assignments with improved logic
-            await CategorizeQuestionnaires();
-        }
-        catch (Exception ex)
-        {
-            HandleError(ex, "loading questionnaire data");
-        }
-        finally
-        {
-            SetLoading(false);
-        }
-    }
+	private async Task CategorizeQuestionnaires()
+	{
+		var now = DateTime.Now;
 
-    private void SetupConfiguration()
-    {
-        configuration = QuestionnairePageConfigurationFactory.CreateEmployeeConfiguration(
-            allAssignments,
-            newQuestionnaires,
-            inProgressQuestionnaires,
-            completedQuestionnaires,
-            overdueQuestionnaires,
-            categories);
+		// New: Assignments that haven't been started yet
+		newQuestionnaires = allAssignments.Where(a =>
+			a.WorkflowState == WorkflowState.Assigned).ToList();
 
-        // Add custom action handlers for completing questionnaires
-        if (configuration.Actions != null)
-        {
-            foreach (var action in configuration.Actions)
-            {
-                if (action.Id == "start-questionnaire")
-                {
-                    action.OnClick = () => StartSelectedQuestionnaire();
-                }
-            }
-        }
-    }
+		// In Progress: Employee is working or has submitted and waiting for manager
+		// According to workflow diagram, employee can see these as "in progress" until both submit
+		// Also includes ManagerSubmitted (manager submitted but employee still needs to submit)
+		inProgressQuestionnaires = allAssignments.Where(a =>
+			a.WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.BothInProgress or WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted).ToList();
 
-    private async Task CategorizeQuestionnaires()
-    {
-        var now = DateTime.Now;
+		// Completed: From BothSubmitted onwards (includes all review and finalized states)
+		completedQuestionnaires = allAssignments.Where(a =>
+			a.WorkflowState is WorkflowState.BothSubmitted or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed
+			or WorkflowState.ManagerReviewConfirmed or WorkflowState.Finalized).ToList();
 
-        // Separate new assignments from in-progress ones
-        newQuestionnaires = allAssignments.Where(a =>
-            a.Status == AssignmentStatus.Assigned).ToList();
+		// Overdue: Any non-completed assignment past due date
+		overdueQuestionnaires = allAssignments.Where(a =>
+			a.DueDate.HasValue &&
+			a.DueDate.Value < now &&
+			a.WorkflowState != WorkflowState.Finalized).ToList();
 
-        inProgressQuestionnaires = allAssignments.Where(a =>
-            a.Status == AssignmentStatus.InProgress).ToList();
+		// Load existing responses for in-progress questionnaires
+		await LoadExistingResponses();
+	}
 
-        completedQuestionnaires = allAssignments.Where(a =>
-            a.Status == AssignmentStatus.Completed).ToList();
+	private async Task LoadExistingResponses()
+	{
+		try
+		{
+			foreach (var assignment in inProgressQuestionnaires)
+			{
+				try
+				{
+					var existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignment.Id);
+					if (existingResponse?.SectionResponses != null)
+					{
+						questionnaireResponses[assignment.Id] = existingResponse.SectionResponses;
+					}
+				}
+				catch (Exception ex)
+				{
+					Console.WriteLine($"Error loading responses for assignment {assignment.Id}: {ex.Message}");
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			Console.WriteLine($"Error loading existing responses: {ex.Message}");
+		}
+	}
 
-        overdueQuestionnaires = allAssignments.Where(a =>
-            a.DueDate.HasValue &&
-            a.DueDate.Value < now &&
-            a.Status != AssignmentStatus.Completed).ToList();
+	private async Task StartSelectedQuestionnaire()
+	{
+		ShowInfo("Select a questionnaire from the list to start working on it.");
+	}
 
-        // Load existing responses for in-progress questionnaires
-        await LoadExistingResponses();
-    }
+	private async Task StartQuestionnaire(QuestionnaireAssignment assignment)
+	{
+		if (assignment == null) return;
 
-    private async Task LoadExistingResponses()
-    {
-        try
-        {
-            foreach (var assignment in inProgressQuestionnaires)
-            {
-                try
-                {
-                    var existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignment.Id);
-                    if (existingResponse?.SectionResponses != null)
-                    {
-                        questionnaireResponses[assignment.Id] = existingResponse.SectionResponses;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error loading responses for assignment {assignment.Id}: {ex.Message}");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading existing responses: {ex.Message}");
-        }
-    }
+		try
+		{
+			// Navigate to the unified questionnaire page
+			NavigationManager.NavigateTo($"/questionnaire/{assignment.Id}");
+		}
+		catch (Exception ex)
+		{
+			HandleError(ex, "starting questionnaire");
+		}
+	}
 
-    private async Task StartSelectedQuestionnaire()
-    {
-        // This would be called from the generic list page
-        ShowInfo("Select a questionnaire from the list to start working on it.");
-    }
-
-    private void SetLoading(bool loading)
-    {
-        isLoading = loading;
-        NotifyStateChanged();
-    }
-
-    private void HandleError(Exception ex, string context)
-    {
-        NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed {context}: {ex.Message}");
-    }
-
-    private void ShowInfo(string message)
-    {
-        NotificationService.Notify(NotificationSeverity.Info, "Information", message);
-    }
-
-    private async Task StartQuestionnaire(QuestionnaireAssignment assignment)
-    {
-        if (assignment == null) return;
-
-        try
-        {
-            currentAssignment = assignment;
-            NotifyStateChanged();
-
-            var message = assignment.Status == AssignmentStatus.InProgress
-                ? $"Resuming questionnaire: {assignment.TemplateId}"
-                : $"Starting questionnaire: {assignment.TemplateId}";
-            ShowInfo(message);
-        }
-        catch (Exception ex)
-        {
-            HandleError(ex, "starting questionnaire");
-        }
-    }
-
-    private async Task OnQuestionnaireCompleted()
-    {
-        try
-        {
-            if (currentAssignment != null)
-            {
-                // Update assignment status to completed
-                currentAssignment.Status = AssignmentStatus.Completed;
-                currentAssignment.CompletedDate = DateTime.Now;
-
-                // Refresh the data
-                await LoadInitialData();
-                SetupConfiguration();
-
-                // Return to list view
-                currentAssignment = null;
-                NotifyStateChanged();
-
-                NotificationService.Notify(NotificationSeverity.Success, "Success", "Questionnaire completed successfully!");
-            }
-        }
-        catch (Exception ex)
-        {
-            HandleError(ex, "completing questionnaire");
-        }
-    }
-
-    private async Task OnQuestionnaireSaved(Dictionary<Guid, SectionResponse> responses)
-    {
-        try
-        {
-            if (currentAssignment != null)
-            {
-                // Update assignment status to in progress
-                if (currentAssignment.Status == AssignmentStatus.Assigned)
-                {
-                    currentAssignment.Status = AssignmentStatus.InProgress;
-                }
-
-                // Show save confirmation
-                NotificationService.Notify(NotificationSeverity.Info, "Saved", "Your progress has been saved.");
-            }
-        }
-        catch (Exception ex)
-        {
-            HandleError(ex, "saving questionnaire progress");
-        }
-    }
-
-    private Dictionary<Guid, SectionResponse>? GetExistingResponsesForAssignment(QuestionnaireAssignment assignment)
-    {
-        if (assignment != null && questionnaireResponses.ContainsKey(assignment.Id))
-        {
-            return questionnaireResponses[assignment.Id];
-        }
-        return null;
-    }
 }

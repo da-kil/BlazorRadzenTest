@@ -1,0 +1,778 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Components.Dialogs
+@using Microsoft.AspNetCore.Components.Authorization
+@inject IQuestionnaireTemplateService TemplateService
+@inject IQuestionnaireResponseService ResponseService
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<style>
+    .review-mode-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .review-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+    }
+
+    .review-progress {
+        margin-bottom: 2rem;
+    }
+
+    .section-review-card {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e9ecef;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f8f9fa;
+    }
+
+    .completion-role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    .role-employee {
+        background: rgba(59, 130, 246, 0.1);
+        color: #2563eb;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+    }
+
+    .role-manager {
+        background: rgba(139, 92, 246, 0.1);
+        color: #7c3aed;
+        border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+
+    .role-both {
+        background: rgba(16, 185, 129, 0.1);
+        color: #059669;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .question-review-container {
+        margin-bottom: 2rem;
+    }
+
+    /* Single column layout for Employee/Manager only sections */
+    .single-answer-view {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        border-left: 4px solid #667eea;
+    }
+
+    /* Side-by-side layout for Both sections */
+    .side-by-side-view {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .answer-column {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        position: relative;
+    }
+
+    .answer-column.employee {
+        border-left: 4px solid #2563eb;
+    }
+
+    .answer-column.manager {
+        border-left: 4px solid #7c3aed;
+    }
+
+    .answer-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .answer-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6c757d;
+    }
+
+    .answer-content {
+        margin-bottom: 1rem;
+        min-height: 60px;
+    }
+
+    .answer-value {
+        font-size: 1rem;
+        color: #212529;
+        line-height: 1.6;
+    }
+
+    .empty-answer {
+        font-style: italic;
+        color: #6c757d;
+        opacity: 0.7;
+    }
+
+    .answer-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .copy-button {
+        font-size: 0.875rem;
+    }
+
+    .navigation-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 2rem;
+        border-top: 2px solid #e9ecef;
+        margin-top: 2rem;
+    }
+
+    .question-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #212529;
+        margin-bottom: 1rem;
+    }
+
+    .question-description {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+        font-style: italic;
+    }
+
+    @@media (max-width: 968px) {
+        .side-by-side-view {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="review-mode-container">
+    @if (isLoading)
+    {
+        <div class="text-center p-5">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading review data...</RadzenText>
+        </div>
+    }
+    else if (template == null || response == null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
+            <RadzenText TextStyle="TextStyle.Body1">Unable to load questionnaire data for review.</RadzenText>
+        </RadzenAlert>
+    }
+    else
+    {
+        <!-- Review Header -->
+        <div class="review-header">
+            <RadzenText TextStyle="TextStyle.H3" Class="mb-2">
+                <RadzenIcon Icon="rate_review" Class="me-2" />
+                Review Meeting: @template.Name
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" Style="opacity: 0.9;">
+                Employee: @Assignment.EmployeeName
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.8;" Class="mt-2">
+                <RadzenIcon Icon="info" Class="me-1" />
+                You can view and edit all answers during this review meeting. All changes are tracked.
+            </RadzenText>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="review-progress">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    Section @(currentSectionIndex + 1) of @template.Sections.Count
+                </RadzenText>
+            </div>
+            <RadzenProgressBar Value="@(((double)(currentSectionIndex + 1) / template.Sections.Count) * 100)" Max="100" ShowValue="true" />
+        </div>
+
+        <!-- Current Section Review -->
+        @if (currentSection != null)
+        {
+            <div class="section-review-card">
+                <div class="section-header">
+                    <div class="flex-grow-1">
+                        <RadzenText TextStyle="TextStyle.H4" Class="mb-2">
+                            @currentSection.Title
+                        </RadzenText>
+                        @if (!string.IsNullOrWhiteSpace(currentSection.Description))
+                        {
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                @currentSection.Description
+                            </RadzenText>
+                        }
+                    </div>
+                    <div class="completion-role-badge @GetRoleClass(currentSection.CompletionRole)">
+                        <RadzenIcon Icon="@GetRoleIcon(currentSection.CompletionRole)" />
+                        @currentSection.CompletionRole.ToString()
+                    </div>
+                </div>
+
+                <!-- Questions -->
+                @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
+                {
+                    <div class="question-review-container">
+                        <div class="question-title">
+                            @question.Title
+                            @if (question.IsRequired)
+                            {
+                                <span class="text-danger">*</span>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(question.Description))
+                        {
+                            <div class="question-description">@question.Description</div>
+                        }
+
+                        @if (currentSection.CompletionRole == CompletionRole.Both)
+                        {
+                            <!-- Side-by-side view for Both sections -->
+                            <div class="side-by-side-view">
+                                <!-- Employee Answer -->
+                                <div class="answer-column employee">
+                                    <div class="answer-header">
+                                        <span class="answer-label">
+                                            <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                                            Employee's Answer
+                                        </span>
+                                    </div>
+                                    <div class="answer-content">
+                                        <div class="answer-value">
+                                            @RenderAnswerValue(question, CompletionRole.Employee)
+                                        </div>
+                                    </div>
+                                    <div class="answer-actions">
+                                        <RadzenButton Text="Copy to Manager →"
+                                                     ButtonStyle="ButtonStyle.Light"
+                                                     Icon="content_copy"
+                                                     Size="ButtonSize.Small"
+                                                     Click="@(() => CopyAnswer(question, CompletionRole.Employee, CompletionRole.Manager))"
+                                                     Class="copy-button" />
+                                        <RadzenButton Text="Edit"
+                                                     ButtonStyle="ButtonStyle.Primary"
+                                                     Icon="edit"
+                                                     Size="ButtonSize.Small"
+                                                     Click="@(() => EditAnswer(question, CompletionRole.Employee))" />
+                                    </div>
+                                </div>
+
+                                <!-- Manager Answer -->
+                                <div class="answer-column manager">
+                                    <div class="answer-header">
+                                        <span class="answer-label">
+                                            <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
+                                            Manager's Answer
+                                        </span>
+                                    </div>
+                                    <div class="answer-content">
+                                        <div class="answer-value">
+                                            @RenderAnswerValue(question, CompletionRole.Manager)
+                                        </div>
+                                    </div>
+                                    <div class="answer-actions">
+                                        <RadzenButton Text="← Copy to Employee"
+                                                     ButtonStyle="ButtonStyle.Light"
+                                                     Icon="content_copy"
+                                                     Size="ButtonSize.Small"
+                                                     Click="@(() => CopyAnswer(question, CompletionRole.Manager, CompletionRole.Employee))"
+                                                     Class="copy-button" />
+                                        <RadzenButton Text="Edit"
+                                                     ButtonStyle="ButtonStyle.Primary"
+                                                     Icon="edit"
+                                                     Size="ButtonSize.Small"
+                                                     Click="@(() => EditAnswer(question, CompletionRole.Manager))" />
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Single column view for Employee or Manager only sections -->
+                            <div class="single-answer-view">
+                                <div class="answer-header">
+                                    <span class="answer-label">
+                                        <RadzenIcon Icon="@GetRoleIcon(currentSection.CompletionRole)" Style="font-size: 1rem;" />
+                                        @currentSection.CompletionRole's Answer
+                                    </span>
+                                </div>
+                                <div class="answer-content">
+                                    <div class="answer-value">
+                                        @RenderAnswerValue(question, currentSection.CompletionRole)
+                                    </div>
+                                </div>
+                                <div class="answer-actions">
+                                    <RadzenButton Text="Edit Answer"
+                                                 ButtonStyle="ButtonStyle.Primary"
+                                                 Icon="edit"
+                                                 Size="ButtonSize.Medium"
+                                                 Click="@(() => EditAnswer(question, currentSection.CompletionRole))" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- Navigation Footer -->
+        <div class="navigation-footer">
+            <RadzenButton Text="Previous Section"
+                         ButtonStyle="ButtonStyle.Light"
+                         Icon="arrow_back"
+                         Click="@PreviousSection"
+                         Disabled="@(currentSectionIndex == 0)" />
+
+            <div class="d-flex gap-2">
+                @if (currentSectionIndex < template.Sections.Count - 1)
+                {
+                    <RadzenButton Text="Next Section"
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Icon="arrow_forward"
+                                 Click="@NextSection" />
+                }
+                else
+                {
+                    <RadzenButton Text="Finish Review Meeting"
+                                 ButtonStyle="ButtonStyle.Success"
+                                 Icon="check_circle"
+                                 Click="@FinishReview" />
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
+    [Parameter] public EventCallback OnReviewFinished { get; set; }
+
+    private QuestionnaireTemplate? template;
+    private QuestionnaireResponse? response;
+    private int currentSectionIndex = 0;
+    private bool isLoading = true;
+    private string currentManagerName = string.Empty;
+
+    private QuestionSection? currentSection => template?.Sections.OrderBy(s => s.Order).Skip(currentSectionIndex).FirstOrDefault();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadReviewData();
+    }
+
+    private async Task LoadReviewData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Get current manager name
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            currentManagerName = authState.User.Identity?.Name ?? "Unknown Manager";
+
+            // Load template
+            template = await TemplateService.GetTemplateByIdAsync(Assignment.TemplateId);
+
+            // Load response (contains both employee and manager answers)
+            response = await ResponseService.GetResponseByAssignmentIdAsync(Assignment.Id);
+
+            if (template == null || response == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load review data");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load review data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private RenderFragment RenderAnswerValue(QuestionItem question, CompletionRole role)
+    {
+        var answer = GetAnswer(currentSection!.Id, question.Id, role);
+
+        if (answer == null)
+        {
+            return @<span class="empty-answer">No answer provided</span>;
+        }
+
+        // Handle different question types
+        return question.Type switch
+        {
+            QuestionType.TextQuestion => RenderTextAnswer(answer),
+            QuestionType.SelfAssessment => RenderSelfAssessmentAnswer(answer, question),
+            QuestionType.GoalAchievement => RenderGoalAnswer(answer),
+            _ => @<span>@answer.ToString()</span>
+        };
+    }
+
+    private RenderFragment RenderTextAnswer(object answer)
+    {
+        var text = answer?.ToString() ?? "";
+        return @<div style="white-space: pre-wrap;">@text</div>;
+    }
+
+    private RenderFragment RenderSelfAssessmentAnswer(object answer, QuestionItem question)
+    {
+        if (answer is not Dictionary<string, object> complexValue)
+        {
+            return @<span class="empty-answer">No ratings provided</span>;
+        }
+
+        // Get competency definitions from question configuration
+        var competencies = GetCompetenciesFromQuestion(question);
+        var ratingScale = GetRatingScaleFromQuestion(question);
+
+        return @<div>
+            @foreach (var kvp in complexValue.Where(k => k.Key.StartsWith("rating_")))
+            {
+                var competencyKey = kvp.Key.Replace("rating_", "");
+
+                // Get rating value, handle JsonElement
+                int ratingValue = 0;
+                if (kvp.Value is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    ratingValue = jsonElement.GetInt32();
+                }
+                else if (kvp.Value != null)
+                {
+                    int.TryParse(kvp.Value.ToString(), out ratingValue);
+                }
+
+                // Get comment
+                var commentKey = $"comment_{competencyKey}";
+                var comment = "";
+                if (complexValue.ContainsKey(commentKey))
+                {
+                    var commentValue = complexValue[commentKey];
+                    if (commentValue is System.Text.Json.JsonElement commentJson && commentJson.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        comment = commentJson.GetString() ?? "";
+                    }
+                    else
+                    {
+                        comment = commentValue?.ToString() ?? "";
+                    }
+                }
+
+                // Get competency title
+                var competency = competencies.FirstOrDefault(c => c.Key == competencyKey);
+                var competencyTitle = competency?.Title ?? competencyKey;
+
+                <div class="mb-3 p-2 border rounded">
+                    <div class="d-flex align-items-center mb-2">
+                        <strong class="me-2">@competencyTitle:</strong>
+                        <RadzenRating Value="@ratingValue" Stars="@ratingScale" ReadOnly="true" />
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(comment))
+                    {
+                        <div class="text-muted" style="font-size: 0.875rem; padding-left: 1rem; border-left: 2px solid #dee2e6;">
+                            @comment
+                        </div>
+                    }
+                </div>
+            }
+        </div>;
+    }
+
+    private List<CompetencyDefinition> GetCompetenciesFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration?.ContainsKey("Competencies") != true)
+        {
+            return new List<CompetencyDefinition>();
+        }
+
+        var competenciesValue = question.Configuration["Competencies"];
+
+        // Handle direct List<CompetencyDefinition>
+        if (competenciesValue is List<CompetencyDefinition> comps)
+        {
+            return comps;
+        }
+
+        // Handle JsonElement (from API deserialization)
+        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
+        {
+            try
+            {
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+                };
+
+                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
+                    jsonElement.GetRawText(),
+                    options
+                );
+
+                return competencies ?? new List<CompetencyDefinition>();
+            }
+            catch { /* Skip deserialization errors */ }
+        }
+
+        return new List<CompetencyDefinition>();
+    }
+
+    private int GetRatingScaleFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration?.ContainsKey("RatingScale") == true &&
+            int.TryParse(question.Configuration["RatingScale"].ToString(), out int scale))
+        {
+            return scale;
+        }
+        return 4;
+    }
+
+    private RenderFragment RenderGoalAnswer(object answer)
+    {
+        if (answer is not Dictionary<string, object> complexValue)
+        {
+            return @<span class="empty-answer">No goal information provided</span>;
+        }
+
+        return @<div>
+            @if (complexValue.ContainsKey("Description"))
+            {
+                <div class="mb-2">
+                    <strong>Goal:</strong> @complexValue["Description"]?.ToString()
+                </div>
+            }
+            @if (complexValue.ContainsKey("AchievementPercentage"))
+            {
+                <div class="mb-2">
+                    <strong>Achievement:</strong> @complexValue["AchievementPercentage"]?.ToString()%
+                </div>
+            }
+            @if (complexValue.ContainsKey("Justification"))
+            {
+                <div class="mb-2">
+                    <strong>Justification:</strong> @complexValue["Justification"]?.ToString()
+                </div>
+            }
+        </div>;
+    }
+
+    private object? GetAnswer(Guid sectionId, Guid questionId, CompletionRole role)
+    {
+        if (response?.SectionResponses == null)
+            return null;
+
+        if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
+            return null;
+
+        // Use role-based responses structure
+        var roleKey = role.ToString();
+
+        if (sectionResponse.RoleResponses != null &&
+            sectionResponse.RoleResponses.TryGetValue(roleKey, out var roleQuestions))
+        {
+            if (roleQuestions.TryGetValue(questionId, out var questionResponse))
+            {
+                // Return whatever value is available (could be TextValue, NumericValue, or ComplexValue)
+                if (!string.IsNullOrEmpty(questionResponse.TextValue))
+                    return questionResponse.TextValue;
+
+                if (questionResponse.NumericValue.HasValue)
+                    return questionResponse.NumericValue.Value;
+
+                if (questionResponse.ComplexValue != null && questionResponse.ComplexValue.Count > 0)
+                    return questionResponse.ComplexValue;
+
+                return questionResponse.Value;
+            }
+        }
+
+        return null;
+    }
+
+    private async Task EditAnswer(QuestionItem question, CompletionRole originalRole)
+    {
+        var currentAnswer = GetAnswer(currentSection!.Id, question.Id, originalRole);
+
+        var result = await DialogService.OpenAsync<EditAnswerDialog>(
+            $"Edit Answer: {question.Title}",
+            new Dictionary<string, object>
+            {
+                { "Question", question },
+                { "CurrentAnswer", currentAnswer },
+                { "CompletionRole", originalRole }
+            },
+            new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
+        );
+
+        if (result != null)
+        {
+            await SaveEditedAnswer(currentSection.Id, question.Id, originalRole, result, question.Type);
+        }
+    }
+
+    private async Task SaveEditedAnswer(Guid sectionId, Guid questionId, CompletionRole originalRole, object newAnswer, QuestionType questionType)
+    {
+        try
+        {
+            // Convert answer to string format expected by API
+            string answerString;
+
+            if (questionType is QuestionType.SelfAssessment or QuestionType.GoalAchievement)
+            {
+                // For complex types, serialize to JSON
+                answerString = System.Text.Json.JsonSerializer.Serialize(newAnswer);
+            }
+            else
+            {
+                // For simple types, just convert to string
+                answerString = newAnswer?.ToString() ?? "";
+            }
+
+            var success = await AssignmentService.EditAnswerDuringReviewAsync(
+                Assignment.Id,
+                sectionId,
+                questionId,
+                originalRole,
+                answerString,
+                currentManagerName
+            );
+
+            if (success)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Saved", "Answer updated successfully");
+
+                // Reload response to show updated answer
+                await LoadReviewData();
+                StateHasChanged();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to save answer");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save answer: {ex.Message}");
+        }
+    }
+
+    private async Task CopyAnswer(QuestionItem question, CompletionRole fromRole, CompletionRole toRole)
+    {
+        var sourceAnswer = GetAnswer(currentSection!.Id, question.Id, fromRole);
+        if (sourceAnswer == null)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Nothing to Copy", "Source answer is empty");
+            return;
+        }
+
+        var confirmed = await DialogService.Confirm(
+            $"Copy answer from {fromRole} to {toRole}?",
+            "Confirm Copy",
+            new ConfirmOptions { OkButtonText = "Yes, Copy", CancelButtonText = "Cancel" }
+        );
+
+        if (confirmed == true)
+        {
+            await SaveEditedAnswer(currentSection.Id, question.Id, toRole, sourceAnswer, question.Type);
+        }
+    }
+
+    private void PreviousSection()
+    {
+        if (currentSectionIndex > 0)
+        {
+            currentSectionIndex--;
+            StateHasChanged();
+        }
+    }
+
+    private void NextSection()
+    {
+        if (template != null && currentSectionIndex < template.Sections.Count - 1)
+        {
+            currentSectionIndex++;
+            StateHasChanged();
+        }
+    }
+
+    private async Task FinishReview()
+    {
+        var confirmed = await DialogService.Confirm(
+            "Are you sure you want to finish this review meeting? The employee will be able to review the outcome.",
+            "Finish Review",
+            new ConfirmOptions { OkButtonText = "Yes, Finish", CancelButtonText = "Continue Reviewing" }
+        );
+
+        if (confirmed == true)
+        {
+            if (OnReviewFinished.HasDelegate)
+            {
+                await OnReviewFinished.InvokeAsync();
+            }
+        }
+    }
+
+    private string GetRoleClass(CompletionRole role)
+    {
+        return role switch
+        {
+            CompletionRole.Employee => "role-employee",
+            CompletionRole.Manager => "role-manager",
+            CompletionRole.Both => "role-both",
+            _ => ""
+        };
+    }
+
+    private string GetRoleIcon(CompletionRole role)
+    {
+        return role switch
+        {
+            CompletionRole.Employee => "person",
+            CompletionRole.Manager => "supervisor_account",
+            CompletionRole.Both => "groups",
+            _ => "help"
+        };
+    }
+}

@@ -35,8 +35,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         Guid templateId,
         List<EmployeeDto> employees,
         DateTime? dueDate,
-        string? notes,
-        string assignedBy)
+        string? notes)
     {
         var employeeAssignments = employees.Select(emp => new EmployeeAssignmentDto
         {
@@ -50,11 +49,10 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             TemplateId = templateId,
             EmployeeAssignments = employeeAssignments,
             DueDate = dueDate,
-            AssignedBy = assignedBy,
             Notes = notes
         };
 
-        // Create the bulk assignments
+        // Create the bulk assignments - HR/Admin endpoint
         var result = await CreateWithResponseAsync<CreateBulkAssignmentsDto, object>($"{AssignmentCommandEndpoint}/bulk", createRequest);
 
         if (result == null)
@@ -76,9 +74,55 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         return newAssignments.Any() ? newAssignments : allAssignments.Where(a => employeeIds.Contains(a.EmployeeId)).ToList();
     }
 
-    public async Task<QuestionnaireAssignment?> UpdateAssignmentStatusAsync(Guid id, AssignmentStatus status)
+    /// <summary>
+    /// Creates assignments for a manager's direct reports. TeamLead role only.
+    /// Backend validates that all employees are direct reports of the authenticated manager.
+    /// </summary>
+    public async Task<List<QuestionnaireAssignment>> CreateManagerAssignmentsAsync(
+        Guid templateId,
+        List<EmployeeDto> employees,
+        DateTime? dueDate,
+        string? notes)
     {
-        return await PatchAsync<AssignmentStatus, QuestionnaireAssignment>(AssignmentCommandEndpoint, id, "status", status);
+        var employeeAssignments = employees.Select(emp => new EmployeeAssignmentDto
+        {
+            EmployeeId = emp.Id,
+            EmployeeName = emp.FullName,
+            EmployeeEmail = emp.EMail
+        }).ToList();
+
+        var createRequest = new CreateBulkAssignmentsDto
+        {
+            TemplateId = templateId,
+            EmployeeAssignments = employeeAssignments,
+            DueDate = dueDate,
+            Notes = notes
+        };
+
+        // Create the bulk assignments - Manager endpoint with authorization checks
+        var result = await CreateWithResponseAsync<CreateBulkAssignmentsDto, object>($"{AssignmentCommandEndpoint}/manager/bulk", createRequest);
+
+        if (result == null)
+        {
+            return new List<QuestionnaireAssignment>();
+        }
+
+        // Query back the assignments for this template to get the newly created ones
+        var allAssignments = await GetAssignmentsByTemplateAsync(templateId);
+
+        // Filter to assignments created for the specific employees (best effort to return the new ones)
+        var employeeIds = employees.Select(e => e.Id).ToList();
+        var newAssignments = allAssignments.Where(a =>
+            employeeIds.Contains(a.EmployeeId) &&
+            a.AssignedDate >= DateTime.UtcNow.AddMinutes(-1) // Recently created
+        ).ToList();
+
+        return newAssignments.Any() ? newAssignments : allAssignments.Where(a => employeeIds.Contains(a.EmployeeId)).ToList();
+    }
+
+    public async Task<QuestionnaireAssignment?> UpdateAssignmentWorkflowStateAsync(Guid id, WorkflowState workflowState)
+    {
+        return await PatchAsync<WorkflowState, QuestionnaireAssignment>(AssignmentCommandEndpoint, id, "workflowState", workflowState);
     }
 
     // Assignment queries
@@ -92,9 +136,9 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/template/{templateId}");
     }
 
-    public async Task<List<QuestionnaireAssignment>> GetAssignmentsByStatusAsync(AssignmentStatus status)
+    public async Task<List<QuestionnaireAssignment>> GetAssignmentsByWorkflowStateAsync(WorkflowState workflowState)
     {
-        return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/status/{status}");
+        return await GetAllAsync<QuestionnaireAssignment>($"{AssignmentQueryEndpoint}/workflowState/{workflowState}");
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsByAssignerAsync(string assignerId)
@@ -132,5 +176,180 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     public async Task<Dictionary<string, object>> GetTemplateAssignmentStatsAsync(Guid templateId)
     {
         return await GetBySubPathAsync<Dictionary<string, object>>(AnalyticsEndpoint, "assignments/template", templateId) ?? new Dictionary<string, object>();
+    }
+
+    // Workflow operations
+    public async Task<bool> CompleteSectionAsEmployeeAsync(Guid assignmentId, Guid sectionId)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PostAsync($"{AssignmentCommandEndpoint}/{assignmentId}/sections/{sectionId}/complete-employee", null);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error completing section {sectionId} as employee for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> CompleteBulkSectionsAsEmployeeAsync(Guid assignmentId, List<Guid> sectionIds)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/sections/bulk-complete-employee", sectionIds);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error completing {sectionIds.Count} sections as employee for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> CompleteSectionAsManagerAsync(Guid assignmentId, Guid sectionId)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PostAsync($"{AssignmentCommandEndpoint}/{assignmentId}/sections/{sectionId}/complete-manager", null);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error completing section {sectionId} as manager for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> CompleteBulkSectionsAsManagerAsync(Guid assignmentId, List<Guid> sectionIds)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/sections/bulk-complete-manager", sectionIds);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error completing {sectionIds.Count} sections as manager for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy)
+    {
+        try
+        {
+            var dto = new SubmitQuestionnaireDto { SubmittedBy = submittedBy };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/submit-employee", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error submitting employee questionnaire for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> SubmitManagerQuestionnaireAsync(Guid assignmentId, string submittedBy)
+    {
+        try
+        {
+            var dto = new SubmitQuestionnaireDto { SubmittedBy = submittedBy };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/submit-manager", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error submitting manager questionnaire for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> FinishReviewMeetingAsync(Guid assignmentId, string finishedBy, string? reviewSummary)
+    {
+        try
+        {
+            var dto = new FinishReviewMeetingDto { FinishedBy = finishedBy, ReviewSummary = reviewSummary };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/finish", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error finishing review meeting for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> InitiateReviewAsync(Guid assignmentId, string initiatedBy)
+    {
+        try
+        {
+            var dto = new InitiateReviewDto { InitiatedBy = initiatedBy };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/initiate-review", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error initiating review for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> EditAnswerDuringReviewAsync(Guid assignmentId, Guid sectionId, Guid questionId, CompletionRole originalCompletionRole, string answer, string editedBy)
+    {
+        try
+        {
+            var dto = new EditAnswerDto
+            {
+                SectionId = sectionId,
+                QuestionId = questionId,
+                OriginalCompletionRole = originalCompletionRole.ToString(),
+                Answer = answer,
+                EditedBy = editedBy
+            };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/edit-answer", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error editing answer during review for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy, string? comments)
+    {
+        try
+        {
+            var dto = new ConfirmReviewOutcomeDto { ConfirmedBy = confirmedBy, EmployeeComments = comments };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/confirm-employee", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error confirming employee review for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy, string? finalNotes)
+    {
+        try
+        {
+            var dto = new FinalizeQuestionnaireDto { FinalizedBy = finalizedBy, ManagerFinalNotes = finalNotes };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/finalize-manager", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error finalizing questionnaire for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    // Review changes tracking
+    public async Task<List<ReviewChangeDto>> GetReviewChangesAsync(Guid assignmentId)
+    {
+        return await GetAllAsync<ReviewChangeDto>($"{AssignmentQueryEndpoint}/{assignmentId}/review-changes");
     }
 }

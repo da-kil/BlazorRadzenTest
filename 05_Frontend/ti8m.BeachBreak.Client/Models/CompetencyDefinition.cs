@@ -2,6 +2,14 @@ namespace ti8m.BeachBreak.Client.Models;
 
 public class CompetencyDefinition
 {
+    // Parameterless constructor for JSON deserialization
+    public CompetencyDefinition()
+    {
+        Key = string.Empty;
+        Title = string.Empty;
+        Description = string.Empty;
+    }
+
     public CompetencyDefinition(string key, string title, string description, bool isRequired, int order = 0)
     {
         Key = key;

@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Logging;
 using System.Globalization;
 using ti8m.BeachBreak.Application.Command.Repositories;
+using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
@@ -8,16 +10,25 @@ namespace ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
 public class EmployeeCommandHandler :
     ICommandHandler<BulkInsertEmployeesCommand, Result>,
     ICommandHandler<BulkUpdateEmployeesCommand, Result>,
-    ICommandHandler<BulkDeleteEmployeesCommand, Result>
+    ICommandHandler<BulkDeleteEmployeesCommand, Result>,
+    ICommandHandler<ChangeEmployeeApplicationRoleCommand, Result>
 {
     private static readonly Guid namespaceGuid = new("BF24D00E-4E5E-4B4D-AFC2-798860B2DA73");
     private readonly IEmployeeAggregateRepository repository;
     private readonly ILogger<EmployeeCommandHandler> logger;
+    private readonly IAuthorizationCacheInvalidationService? authorizationCacheService;
+    private readonly UserContext userContext;
 
-    public EmployeeCommandHandler(IEmployeeAggregateRepository repository, ILogger<EmployeeCommandHandler> logger)
+    public EmployeeCommandHandler(
+        IEmployeeAggregateRepository repository,
+        ILogger<EmployeeCommandHandler> logger,
+        UserContext userContext,
+        IAuthorizationCacheInvalidationService? authorizationCacheService = null)
     {
         this.repository = repository;
         this.logger = logger;
+        this.userContext = userContext;
+        this.authorizationCacheService = authorizationCacheService;
     }
 
     public async Task<Result> HandleAsync(BulkInsertEmployeesCommand command, CancellationToken cancellationToken = default)
@@ -152,5 +163,57 @@ public class EmployeeCommandHandler :
     {
         bool hasDateOut = DateOnly.TryParseExact(syncEndDate, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var endDate);
         return hasDateOut ? endDate : null;
+    }
+
+    public async Task<Result> HandleAsync(ChangeEmployeeApplicationRoleCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogChangeEmployeeApplicationRole(command.EmployeeId, command.NewRole.ToString());
+
+            var employee = await repository.LoadRequiredAsync<Employee>(command.EmployeeId, cancellationToken: cancellationToken);
+
+            if (employee.IsDeleted)
+            {
+                logger.LogChangeRoleForDeletedEmployee(command.EmployeeId);
+                return Result.Fail("Cannot change application role for a deleted employee", 400);
+            }
+
+            // Change the application role with audit information from UserContext
+            // RequesterRole is provided by infrastructure layer
+            // Domain method validates authorization rules
+            var userId = Guid.TryParse(userContext.Id, out var parsedUserId) ? parsedUserId : Guid.Empty;
+            var userName = string.IsNullOrEmpty(userContext.Name) ? "System" : userContext.Name;
+
+            var domainResult = employee.ChangeApplicationRole(
+                command.NewRole,
+                command.RequesterRole,
+                userId,
+                userName);
+
+            if (!domainResult.IsSuccess)
+            {
+                logger.LogWarning("Failed to change application role for employee {EmployeeId}: {ErrorMessage}",
+                    command.EmployeeId, domainResult.ErrorMessage);
+                return Result.Fail(domainResult.ErrorMessage!, domainResult.StatusCode ?? 403);
+            }
+
+            await repository.StoreAsync(employee, cancellationToken);
+
+            // Invalidate the authorization cache for this employee
+            if (authorizationCacheService != null)
+            {
+                await authorizationCacheService.InvalidateEmployeeRoleCacheAsync(command.EmployeeId, cancellationToken);
+            }
+
+            logger.LogEmployeeApplicationRoleChanged(command.EmployeeId, command.NewRole.ToString());
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            logger.LogChangeEmployeeApplicationRoleFailed(command.EmployeeId, ex.Message, ex);
+            throw;
+        }
     }
 }

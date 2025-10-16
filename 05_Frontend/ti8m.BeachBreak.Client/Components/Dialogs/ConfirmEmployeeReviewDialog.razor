@@ -1,0 +1,121 @@
+@using Radzen
+@using Radzen.Blazor
+@inject DialogService DialogService
+
+<style>
+    .confirm-review-dialog {
+        padding: 1.5rem;
+        min-width: 500px;
+    }
+
+    .review-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+    }
+
+    .comments-section {
+        margin-bottom: 1rem;
+    }
+
+    .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .icon-box {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+<div class="confirm-review-dialog">
+    <div class="review-info">
+        <div class="text-center">
+            <RadzenIcon Icon="verified" Style="font-size: 3rem; margin-bottom: 1rem;" />
+            <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
+                Employee Sign-Off
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                You are about to confirm that you have reviewed and acknowledged the questionnaire results discussed with your manager.
+            </RadzenText>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="icon-box">
+            <RadzenIcon Icon="info" Style="color: #667eea;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                What does this mean?
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            By confirming, you acknowledge that you have:
+        </RadzenText>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Reviewed all sections with your manager</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Discussed any changes made during the review meeting</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Understand the final outcome of the review</RadzenText></li>
+        </ul>
+    </div>
+
+    <div class="comments-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+            Comments (Optional)
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+            You may add comments about the review process, any concerns, or additional feedback:
+        </RadzenText>
+        <RadzenTextArea @bind-Value="@employeeComments"
+                       Placeholder="Enter your comments here... (optional)"
+                       Rows="6"
+                       Style="width: 100%;"
+                       MaxLength="2000" />
+        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+            @(employeeComments?.Length ?? 0) / 2000 characters
+        </RadzenText>
+    </div>
+
+    <div class="dialog-actions">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel"
+                     Size="ButtonSize.Medium" />
+        <RadzenButton Text="Sign Off on Review"
+                     ButtonStyle="ButtonStyle.Success"
+                     Icon="verified"
+                     Click="@ConfirmReview"
+                     Size="ButtonSize.Medium" />
+    </div>
+</div>
+
+@code {
+    private string? employeeComments;
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private void ConfirmReview()
+    {
+        // Return the comments (return empty string if null to distinguish from cancellation)
+        var result = employeeComments ?? string.Empty;
+        DialogService.Close(result);
+    }
+}

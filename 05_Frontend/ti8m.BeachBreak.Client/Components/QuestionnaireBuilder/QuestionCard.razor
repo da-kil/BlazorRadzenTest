@@ -635,22 +635,26 @@
 
     private void UpdateCompetencyTitle(int displayIndex, string value)
     {
-        var orderedCompetencies = GetOrderedCompetencies();
+        var competencies = GetCompetenciesFromConfiguration();
+        var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
             orderedCompetencies[displayIndex].Title = value ?? "";
-            Question.Configuration["Competencies"] = GetCompetenciesFromConfiguration();
+            // Store the original list (modifications already applied via reference)
+            Question.Configuration["Competencies"] = competencies;
             StateHasChanged();
         }
     }
 
     private void UpdateCompetencyDescription(int displayIndex, string value)
     {
-        var orderedCompetencies = GetOrderedCompetencies();
+        var competencies = GetCompetenciesFromConfiguration();
+        var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
             orderedCompetencies[displayIndex].Description = value ?? "";
-            Question.Configuration["Competencies"] = GetCompetenciesFromConfiguration();
+            // Store the original list (modifications already applied via reference)
+            Question.Configuration["Competencies"] = competencies;
             StateHasChanged();
         }
     }

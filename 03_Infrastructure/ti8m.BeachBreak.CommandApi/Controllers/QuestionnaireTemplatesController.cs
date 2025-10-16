@@ -3,13 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
-using DomainQuestionType = ti8m.BeachBreak.Domain.QuestionnaireAggregate.QuestionType;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/questionnaire-templates")]
-[Authorize] // All endpoints require authentication
+[Authorize(Roles = "HR")]
 public class QuestionnaireTemplatesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
@@ -24,7 +23,6 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpPost]
-    [Authorize(Policy = "HRAccess")] // Only Admin, HRLead, HR can create questionnaire templates
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateTemplate(QuestionnaireTemplateDto questionnaireTemplate)
     {
@@ -49,6 +47,7 @@ public class QuestionnaireTemplatesController : BaseController
                     IsRequired = section.IsRequired,
                     Order = section.Order,
                     Title = section.Title,
+                    CompletionRole = section.CompletionRole,
                     Questions = section.Questions.Select(question => new CommandQuestionItem
                     {
                         Configuration = question.Configuration,
@@ -85,7 +84,6 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = "HRAccess")] // Only Admin, HRLead, HR can update questionnaire templates
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateTemplate(Guid id, QuestionnaireTemplateDto questionnaireTemplate)
     {
@@ -107,6 +105,7 @@ public class QuestionnaireTemplatesController : BaseController
                     IsRequired = section.IsRequired,
                     Order = section.Order,
                     Title = section.Title,
+                    CompletionRole = section.CompletionRole,
                     Questions = section.Questions.Select(question => new CommandQuestionItem
                     {
                         Configuration = question.Configuration,
@@ -150,7 +149,6 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "HRAccess")] // Only Admin, HRLead, HR can delete questionnaire templates
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteTemplate(Guid id)
     {
@@ -205,43 +203,79 @@ public class QuestionnaireTemplatesController : BaseController
         }
     }
 
-    [HttpPost("{id:guid}/activate")]
-    public async Task<IActionResult> ActivateTemplate(Guid id)
+    [HttpPost("{id:guid}/archive")]
+    public async Task<IActionResult> ArchiveTemplate(Guid id)
     {
         try
         {
-            Result result = await commandDispatcher.SendAsync(new ActivateQuestionnaireTemplateCommand(id));
+            Result result = await commandDispatcher.SendAsync(new ArchiveQuestionnaireTemplateCommand(id));
 
             return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error activating template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while activating the template");
+            logger.LogError(ex, "Error archiving template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while archiving the template");
         }
     }
 
-    [HttpPost("{id:guid}/deactivate")]
-    public async Task<IActionResult> DeactivateTemplate(Guid id)
+    [HttpPost("{id:guid}/restore")]
+    public async Task<IActionResult> RestoreTemplate(Guid id)
     {
         try
         {
-            Result result = await commandDispatcher.SendAsync(new DeactivateQuestionnaireTemplateCommand(id));
+            Result result = await commandDispatcher.SendAsync(new RestoreQuestionnaireTemplateCommand(id));
 
             return CreateResponse(result);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error deactivating template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while deactivating the template");
+            logger.LogError(ex, "Error restoring template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while restoring the template");
         }
     }
 
-    private static DomainQuestionType MapQuestionType(QuestionTypeDto dtoType) => dtoType switch
+    /// <summary>
+    /// Clone an existing questionnaire template.
+    /// Creates a complete copy with new IDs in Draft status.
+    /// </summary>
+    /// <param name="id">Source template ID to clone</param>
+    /// <param name="request">Optional clone request with name prefix</param>
+    /// <returns>The ID of the newly created cloned template</returns>
+    [HttpPost("{id:guid}/clone")]
+    [ProducesResponseType(typeof(CloneTemplateResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CloneTemplate(Guid id, [FromBody] CloneTemplateRequestDto? request = null)
     {
-        QuestionTypeDto.TextQuestion => DomainQuestionType.TextQuestion,
-        QuestionTypeDto.SelfAssessment => DomainQuestionType.SelfAssessment,
-        QuestionTypeDto.GoalAchievement => DomainQuestionType.GoalAchievement,
+        try
+        {
+            var command = new CloneQuestionnaireTemplateCommand(
+                id,
+                request?.NamePrefix);
+
+            Result<Guid> result = await commandDispatcher.SendAsync(command);
+
+            if (result.Succeeded)
+            {
+                return Ok(new CloneTemplateResponseDto { NewTemplateId = result.Payload });
+            }
+
+            return CreateResponse(Result.Fail(result.Message, result.StatusCode));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error cloning template {TemplateId}", id);
+            return StatusCode(500, "An error occurred while cloning the template");
+        }
+    }
+
+    private static QuestionType MapQuestionType(QuestionTypeDto dtoType) => dtoType switch
+    {
+        QuestionTypeDto.TextQuestion => QuestionType.TextQuestion,
+        QuestionTypeDto.SelfAssessment => QuestionType.SelfAssessment,
+        QuestionTypeDto.GoalAchievement => QuestionType.GoalAchievement,
         _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
     };
 }

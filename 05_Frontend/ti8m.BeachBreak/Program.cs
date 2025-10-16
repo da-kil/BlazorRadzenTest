@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Radzen;
 using ti8m.BeachBreak.Authentication;
+using ti8m.BeachBreak.Authorization;
 using ti8m.BeachBreak.Client.Services;
 using ti8m.BeachBreak.Components;
 
@@ -115,7 +117,7 @@ public class Program
 
                 // ........................................................................
                 // Many OIDC providers work with the default issuer validator, but the
-                // configuration must account for the issuer parameterized with "{TENANT ID}" 
+                // configuration must account for the issuer parameterized with "{TENANT ID}"
                 // returned by the "common" endpoint's /.well-known/openid-configuration
                 // For more information, see
                 // https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet/issues/1731
@@ -145,31 +147,27 @@ public class Program
         // scope.
         builder.Services.ConfigureCookieOidcRefresh(CookieAuthenticationDefaults.AuthenticationScheme, MS_OIDC_SCHEME);
 
-        // Configure authorization with role-based policies
+        // Configure authorization with role-based policies (matching backend hierarchy)
         builder.Services.AddAuthorization(options =>
         {
-            // Admin-only policy
-            options.AddPolicy("AdminOnly", policy =>
-                policy.RequireRole("Admin"));
+            // Employee policy: All authenticated employees can access (Employee, TeamLead, HR, HRLead, Admin)
+            options.AddPolicy("Employee", policy => policy.RequireRole("Employee", "TeamLead", "HR", "HRLead", "Admin"));
 
-            // HR Access (HR, HRLead, Admin)
-            options.AddPolicy("HRAccess", policy =>
-                policy.RequireRole("HR", "HRLead", "Admin"));
+            // TeamLead policy: TeamLead and above can access (TeamLead, HR, HRLead, Admin)
+            options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
 
-            // HRLead-only policy
-            options.AddPolicy("HRLeadOnly", policy =>
-                policy.RequireRole("HRLead", "Admin"));
+            // HR policy: HR and above can access (HR, HRLead, Admin)
+            options.AddPolicy("HR", policy => policy.RequireRole("HR", "HRLead", "Admin"));
 
-            // Team Lead or higher (TeamLead, HR, HRLead, Admin)
-            options.AddPolicy("TeamLeadOrHigher", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+            // HRLead policy: HRLead and above can access (HRLead, Admin)
+            options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead", "Admin"));
 
-            // Manager Access (can manage team members)
-            options.AddPolicy("ManagerAccess", policy =>
-                policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
+            // Admin policy: Only Admin can access
+            options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
         });
 
-        builder.Services.AddAuthorization();
+        // Register custom AuthenticationStateProvider that enriches claims with ApplicationRole
+        builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 
         builder.Services.AddCascadingAuthenticationState();
 
@@ -213,6 +211,19 @@ public class Program
         builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
 
+        // Register refactoring services
+        builder.Services.AddScoped<QuestionConfigurationService>();
+        builder.Services.AddScoped<QuestionnaireValidationService>();
+
+        // Register question type handlers (Strategy Pattern)
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.SelfAssessmentQuestionHandler>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.GoalAchievementQuestionHandler>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.TextQuestionHandler>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory>();
+
+        // Register state management
+        builder.Services.AddScoped<QuestionnaireBuilderState>();
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
@@ -230,6 +241,10 @@ public class Program
         app.UseHttpsRedirection();
 
         app.UseAuthentication();
+
+        // Add middleware to enrich user claims with ApplicationRole from backend
+        //app.UseMiddleware<Authorization.ApplicationRoleClaimsMiddleware>();
+
         app.UseAuthorization();
 
         app.MapStaticAssets();

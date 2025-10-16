@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Repositories;
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate;
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
-using DomainQuestionnaireTemplate = ti8m.BeachBreak.Domain.QuestionnaireAggregate.QuestionnaireTemplate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
+using DomainQuestionnaireTemplate = ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.QuestionnaireTemplate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 
@@ -13,10 +13,9 @@ public class QuestionnaireTemplateCommandHandler :
     ICommandHandler<DeleteQuestionnaireTemplateCommand, Result>,
     ICommandHandler<PublishQuestionnaireTemplateCommand, Result>,
     ICommandHandler<UnpublishQuestionnaireTemplateCommand, Result>,
-    ICommandHandler<ActivateQuestionnaireTemplateCommand, Result>,
-    ICommandHandler<DeactivateQuestionnaireTemplateCommand, Result>,
     ICommandHandler<ArchiveQuestionnaireTemplateCommand, Result>,
-    ICommandHandler<RestoreQuestionnaireTemplateCommand, Result>
+    ICommandHandler<RestoreQuestionnaireTemplateCommand, Result>,
+    ICommandHandler<CloneQuestionnaireTemplateCommand, Result<Guid>>
 {
     private readonly IQuestionnaireTemplateAggregateRepository repository;
     private readonly IQuestionnaireAssignmentService assignmentService;
@@ -206,70 +205,6 @@ public class QuestionnaireTemplateCommandHandler :
         }
     }
 
-    public async Task<Result> HandleAsync(ActivateQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            logger.LogRestoreQuestionnaireTemplate(command.Id);
-
-            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
-
-            if (questionnaireTemplate == null)
-            {
-                logger.LogQuestionnaireTemplateNotFound(command.Id);
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
-            }
-
-            questionnaireTemplate.RestoreFromArchive();
-            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
-
-            logger.LogQuestionnaireTemplateRestored(command.Id);
-            return Result.Success();
-        }
-        catch (InvalidOperationException ex)
-        {
-            logger.LogRestoreQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
-            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
-        }
-        catch (Exception ex)
-        {
-            logger.LogRestoreQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
-            return Result.Fail($"Failed to activate questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
-        }
-    }
-
-    public async Task<Result> HandleAsync(DeactivateQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            logger.LogArchiveQuestionnaireTemplate(command.Id);
-
-            var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
-
-            if (questionnaireTemplate == null)
-            {
-                logger.LogQuestionnaireTemplateNotFound(command.Id);
-                return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
-            }
-
-            questionnaireTemplate.Archive();
-            await repository.StoreAsync(questionnaireTemplate, cancellationToken);
-
-            logger.LogQuestionnaireTemplateArchived(command.Id);
-            return Result.Success();
-        }
-        catch (InvalidOperationException ex)
-        {
-            logger.LogArchiveQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
-            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
-        }
-        catch (Exception ex)
-        {
-            logger.LogArchiveQuestionnaireTemplateFailed(command.Id, ex.Message, ex);
-            return Result.Fail($"Failed to deactivate questionnaire template: {ex.Message}", StatusCodes.Status400BadRequest);
-        }
-    }
-
     public async Task<Result> HandleAsync(ArchiveQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
     {
         try
@@ -334,6 +269,62 @@ public class QuestionnaireTemplateCommandHandler :
         }
     }
 
+    public async Task<Result<Guid>> HandleAsync(CloneQuestionnaireTemplateCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogCloneQuestionnaireTemplate(command.SourceTemplateId);
+
+            // Load source template
+            var sourceTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(
+                command.SourceTemplateId,
+                cancellationToken: cancellationToken);
+
+            if (sourceTemplate == null)
+            {
+                logger.LogQuestionnaireTemplateNotFound(command.SourceTemplateId);
+                return Result<Guid>.Fail(
+                    $"Source template with ID {command.SourceTemplateId} not found",
+                    StatusCodes.Status404NotFound);
+            }
+
+            if (sourceTemplate.IsDeleted)
+            {
+                logger.LogCloneQuestionnaireTemplateFailed(
+                    command.SourceTemplateId,
+                    "Cannot clone deleted template");
+                return Result<Guid>.Fail(
+                    "Cannot clone a deleted template",
+                    StatusCodes.Status400BadRequest);
+            }
+
+            // Clone the template (domain logic handles deep copy)
+            var newTemplateId = Guid.NewGuid();
+            var clonedTemplate = DomainQuestionnaireTemplate.CloneFrom(
+                newTemplateId,
+                sourceTemplate,
+                command.NamePrefix ?? "Copy of ");
+
+            // Store the new template
+            await repository.StoreAsync(clonedTemplate, cancellationToken);
+
+            logger.LogQuestionnaireTemplateCloned(command.SourceTemplateId, newTemplateId);
+            return Result<Guid>.Success(newTemplateId);
+        }
+        catch (InvalidOperationException ex)
+        {
+            logger.LogCloneQuestionnaireTemplateFailed(command.SourceTemplateId, ex.Message, ex);
+            return Result<Guid>.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
+        catch (Exception ex)
+        {
+            logger.LogCloneQuestionnaireTemplateFailed(command.SourceTemplateId, ex.Message, ex);
+            return Result<Guid>.Fail(
+                $"Failed to clone questionnaire template: {ex.Message}",
+                StatusCodes.Status400BadRequest);
+        }
+    }
+
     private static List<QuestionSection> MapToQuestionSections(List<CommandQuestionSection> commandSections)
     {
         return commandSections.Select(section => new QuestionSection(
@@ -342,6 +333,7 @@ public class QuestionnaireTemplateCommandHandler :
             section.Description,
             section.Order,
             section.IsRequired,
+            section.CompletionRole,
             MapToQuestionItems(section.Questions)
         )).ToList();
     }
@@ -352,7 +344,7 @@ public class QuestionnaireTemplateCommandHandler :
             item.Id,
             item.Title,
             item.Description,
-            item.Type,
+            MapQuestionType(item.Type),
             item.Order,
             item.IsRequired,
             item.Configuration,
@@ -372,4 +364,12 @@ public class QuestionnaireTemplateCommandHandler :
             commandSettings.AllowReviewBeforeSubmit
         );
     }
+
+    private static Domain.QuestionnaireTemplateAggregate.QuestionType MapQuestionType(QuestionType dtoType) => dtoType switch
+    {
+        QuestionType.TextQuestion => Domain.QuestionnaireTemplateAggregate.QuestionType.TextQuestion,
+        QuestionType.SelfAssessment => Domain.QuestionnaireTemplateAggregate.QuestionType.SelfAssessment,
+        QuestionType.GoalAchievement => Domain.QuestionnaireTemplateAggregate.QuestionType.GoalAchievement,
+        _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
+    };
 }

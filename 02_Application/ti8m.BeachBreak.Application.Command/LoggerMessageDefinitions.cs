@@ -137,6 +137,24 @@ public static partial class LoggerMessageDefinitions
     Message = "Questionnaire template with ID `{Id}` not found.")]
     public static partial void LogQuestionnaireTemplateNotFound(this ILogger logger, Guid id);
 
+    [LoggerMessage(
+    EventId = 5023,
+    Level = LogLevel.Information,
+    Message = "Cloning questionnaire template with ID `{TemplateId}`.")]
+    public static partial void LogCloneQuestionnaireTemplate(this ILogger logger, Guid templateId);
+
+    [LoggerMessage(
+    EventId = 5024,
+    Level = LogLevel.Information,
+    Message = "Successfully cloned questionnaire template `{SourceTemplateId}` to new template `{NewTemplateId}`.")]
+    public static partial void LogQuestionnaireTemplateCloned(this ILogger logger, Guid sourceTemplateId, Guid newTemplateId);
+
+    [LoggerMessage(
+    EventId = 5025,
+    Level = LogLevel.Error,
+    Message = "Failed to clone questionnaire template with ID `{TemplateId}`: {ErrorMessage}")]
+    public static partial void LogCloneQuestionnaireTemplateFailed(this ILogger logger, Guid templateId, string errorMessage, Exception? exception = null);
+
     // Questionnaire Assignment Command Operations
     [LoggerMessage(
     EventId = 6001,
@@ -245,4 +263,29 @@ public static partial class LoggerMessageDefinitions
     Level = LogLevel.Error,
     Message = "Failed to withdraw assignment `{AssignmentId}`: {ErrorMessage}")]
     public static partial void LogWithdrawAssignmentFailed(this ILogger logger, Guid assignmentId, string errorMessage, Exception exception);
+
+    // Employee Role Management Operations (7001-7099)
+    [LoggerMessage(
+    EventId = 7001,
+    Level = LogLevel.Information,
+    Message = "Changing application role for employee `{EmployeeId}` to `{NewRole}`.")]
+    public static partial void LogChangeEmployeeApplicationRole(this ILogger logger, Guid employeeId, string newRole);
+
+    [LoggerMessage(
+    EventId = 7002,
+    Level = LogLevel.Information,
+    Message = "Successfully changed application role for employee `{EmployeeId}` to `{NewRole}`.")]
+    public static partial void LogEmployeeApplicationRoleChanged(this ILogger logger, Guid employeeId, string newRole);
+
+    [LoggerMessage(
+    EventId = 7003,
+    Level = LogLevel.Error,
+    Message = "Failed to change application role for employee `{EmployeeId}`: {ErrorMessage}")]
+    public static partial void LogChangeEmployeeApplicationRoleFailed(this ILogger logger, Guid employeeId, string errorMessage, Exception exception);
+
+    [LoggerMessage(
+    EventId = 7004,
+    Level = LogLevel.Warning,
+    Message = "Attempted to change application role for deleted employee `{EmployeeId}`.")]
+    public static partial void LogChangeRoleForDeletedEmployee(this ILogger logger, Guid employeeId);
 }

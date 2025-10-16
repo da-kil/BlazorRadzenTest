@@ -1,4 +1,5 @@
 @page "/my-questionnaires/{TemplateId:guid}"
+@page "/questionnaire/{AssignmentId:guid}"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @using Radzen
 @using Radzen.Blazor
@@ -6,11 +7,13 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.Dialogs
 @using Microsoft.AspNetCore.Components.Authorization
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
+@inject IQuestionnaireAssignmentService AssignmentService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject AuthenticationStateProvider AuthenticationStateProvider
@@ -25,6 +28,11 @@
             <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
             <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Loading questionnaire...</RadzenText>
         </div>
+    }
+    else if (assignment != null && assignment.WorkflowState == WorkflowState.InReview && isManager)
+    {
+        <!-- Show Review Mode for managers during InReview state -->
+        <QuestionnaireReviewMode Assignment="@assignment" OnReviewFinished="@OnReviewFinished" />
     }
     else
     {
@@ -42,25 +50,46 @@
                 }
             </div>
 
+            @* Workflow Action Buttons - Sticky Banner *@
+            @if (assignment != null && assignmentId.HasValue)
+            {
+                <WorkflowActionButtons Assignment="@assignment"
+                                      IsEmployee="@isEmployee"
+                                      IsManager="@isManager"
+                                      UserName="@currentUserName"
+                                      OnActionCompleted="@OnWorkflowActionCompleted" />
+            }
+
+            @if (IsQuestionnaireCompleted())
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="mb-4" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        <strong>This questionnaire has been completed and is now read-only.</strong>
+                        @if (assignment?.WorkflowState == WorkflowState.Finalized)
+                        {
+                            <span> The questionnaire has been finalized.</span>
+                        }
+                        else
+                        {
+                            <span> You can review your responses below, but cannot make changes.</span>
+                        }
+                    </RadzenText>
+                </RadzenAlert>
+            }
+
             @if (template.Settings.ShowProgressBar)
             {
-                <div class="progress-section mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                            Progress: @response.ProgressPercentage%
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                            Section @(currentSectionIndex + 1) of @template.Sections.Count
-                        </RadzenText>
-                    </div>
-                    <RadzenProgressBar Value="@response.ProgressPercentage" Max="100" ProgressBarStyle="ProgressBarStyle.Primary" />
+                <div class="section-counter mb-4">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted text-end">
+                        Section @(currentSectionIndex + 1) of @visibleSections.Count
+                    </RadzenText>
                 </div>
             }
 
-            <RadzenSteps Value="@currentSectionIndex" Change="@OnSectionChanged" Class="mb-4">
-                @for (int i = 0; i < template.Sections.Count; i++)
+            <RadzenSteps Value="@currentSectionIndex" Change="@OnSectionChanged" Class="mb-4" ShowStepsButtons="false">
+                @for (int i = 0; i < visibleSections.Count; i++)
                 {
-                    var section = template.Sections[i];
+                    var section = visibleSections[i];
                     var isCompleted = IsSectionCompleted(section.Id);
                     var sectionTitle = section.Title;
                     <RadzenStepsItem Text="@sectionTitle" Icon="@(isCompleted ? "check_circle" : null)" />
@@ -95,69 +124,139 @@
             </div>
 
             <div class="d-flex justify-content-between mt-4">
-                <RadzenButton Text="Previous" 
-                             ButtonStyle="ButtonStyle.Light" 
+                <RadzenButton Text="Previous"
+                             ButtonStyle="ButtonStyle.Light"
                              Icon="arrow_back"
                              Click="@PreviousSection"
                              Disabled="@(currentSectionIndex == 0)" />
-                
+
                 <div class="d-flex gap-2">
-                    @if (template.Settings.AllowSaveProgress)
+                    @if (!IsQuestionnaireCompleted())
                     {
-                        <RadzenButton Text="Save Progress" 
-                                     ButtonStyle="ButtonStyle.Info" 
-                                     Icon="save"
-                                     Click="@SaveProgress" />
-                    }
-                    
-                    @if (currentSectionIndex == template.Sections.Count - 1)
-                    {
-                        @if (template.Settings.AllowReviewBeforeSubmit)
+                        @if (template.Settings.AllowSaveProgress)
                         {
-                            <RadzenButton Text="Review & Submit" 
-                                         ButtonStyle="ButtonStyle.Success" 
-                                         Icon="preview"
-                                         Click="@ShowReview"
-                                         Disabled="@(!CanProceedFromCurrentSection())" />
+                            <RadzenButton Text="Save Progress"
+                                         ButtonStyle="ButtonStyle.Info"
+                                         Icon="save"
+                                         Click="@SaveProgress" />
+                        }
+
+                        @if (currentSectionIndex == visibleSections.Count - 1)
+                        {
+                            @if (template.Settings.AllowReviewBeforeSubmit)
+                            {
+                                <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
+                                             ButtonStyle="ButtonStyle.Success"
+                                             Icon="send"
+                                             Click="@ShowReview"
+                                             Disabled="@(!CanSubmit() || isSubmitting)" />
+                            }
+                            else
+                            {
+                                <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
+                                             ButtonStyle="ButtonStyle.Success"
+                                             Icon="send"
+                                             Click="@SubmitQuestionnaire"
+                                             Disabled="@(!CanSubmit() || isSubmitting)" />
+                            }
                         }
                         else
                         {
-                            <RadzenButton Text="Submit" 
-                                         ButtonStyle="ButtonStyle.Success" 
-                                         Icon="send"
-                                         Click="@SubmitQuestionnaire"
-                                         Disabled="@(!CanSubmit())" />
+                            <RadzenButton Text="Next"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Icon="arrow_forward"
+                                         Click="@NextSection"
+                                         Disabled="@(!CanProceedFromCurrentSection())" />
                         }
                     }
                     else
                     {
-                        <RadzenButton Text="Next" 
-                                     ButtonStyle="ButtonStyle.Primary" 
-                                     Icon="arrow_forward"
-                                     Click="@NextSection"
-                                     Disabled="@(!CanProceedFromCurrentSection())" />
+                        @* In read-only mode *@
+                        @if (currentSectionIndex < visibleSections.Count - 1)
+                        {
+                            @* Show Next button for navigation if not on last section *@
+                            <RadzenButton Text="Next"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Icon="arrow_forward"
+                                         Click="@NextSection" />
+                        }
                     }
                 </div>
             </div>
+
+            @* Review Comments Display - Below Questionnaire *@
+            @if (assignment != null)
+            {
+                <ReviewComments Assignment="@assignment"
+                               IsEmployee="@isEmployee"
+                               IsManager="@isManager" />
+            }
         </RadzenCard>
     }
 </div>
 
 @code {
-    [Parameter] public Guid TemplateId { get; set; }
-    private Guid? assignmentId;
+    [Parameter] public Guid? TemplateId { get; set; }
+    [Parameter] public Guid? AssignmentId { get; set; }
 
+    private Guid? assignmentId;
+    private QuestionnaireAssignment? assignment;
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse response = new();
     private int currentSectionIndex = 0;
-    private QuestionSection? currentSection => template?.Sections.OrderBy(s => s.Order).ElementAtOrDefault(currentSectionIndex);
+    private bool isManager = false;
+    private bool isEmployee = false;
+    private string currentUserRole = "Employee";
+    private string currentUserName = string.Empty;
+    private List<QuestionSection> visibleSections = new();
+    private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
+    private bool isSubmitting = false;
+    private bool isProcessing = false;
+
+    private bool IsQuestionnaireCompleted()
+    {
+        // Read-only state is determined ONLY by the assignment's WorkflowState
+        // The response.Status is for domain-level validation, not UI read-only logic
+        if (assignment == null)
+            return false;
+
+        // Phase 2 Read-Only (Permanent): After finalization
+        var isPhase2ReadOnly = assignment.WorkflowState == WorkflowState.Finalized;
+
+        // After review confirmation states (waiting for finalization)
+        var isPostReviewConfirmation = assignment.WorkflowState is WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed;
+
+        // Determine read-only based on user role and workflow state
+        if (isEmployee && !isManager)
+        {
+            // Employee can edit: Assigned, EmployeeInProgress, BothInProgress, ManagerSubmitted
+            // Employee is READ-ONLY during: InReview (manager-led review meeting)
+            // Employee CANNOT edit after: EmployeeSubmitted, BothSubmitted, Post-review, Finalized
+            // Note: Employee CAN still edit when ManagerSubmitted (manager submitted but employee hasn't)
+            return assignment.WorkflowState is WorkflowState.EmployeeSubmitted or WorkflowState.BothSubmitted or WorkflowState.InReview
+                || isPostReviewConfirmation
+                || isPhase2ReadOnly;
+        }
+        else if (isManager)
+        {
+            // Manager can edit: Assigned, ManagerInProgress, BothInProgress, InReview
+            // Manager CANNOT edit ONLY when: ManagerSubmitted, BothSubmitted, Post-review, Finalized
+            // Note: Manager CAN still see EmployeeSubmitted state (employee submitted but manager hasn't)
+            return assignment.WorkflowState is WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted
+                || isPostReviewConfirmation
+                || isPhase2ReadOnly;
+        }
+
+        return isPhase2ReadOnly; // Default: only finalized is truly read-only
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadTemplate();
-        await LoadAssignmentForCurrentEmployee();
-        await LoadExistingResponse();
+        await DetermineUserRole();
+        await LoadAssignmentAndTemplate();
         await InitializeResponseAsync();
+        await LoadExistingResponse();
+        FilterVisibleSections();
         UpdateProgress();
     }
 
@@ -168,11 +267,139 @@
                HasParameterChanged(nameof(template), template);
     }
 
-    private async Task LoadTemplate()
+    private async Task DetermineUserRole()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Get user name for workflow actions
+        currentUserName = user.Identity?.Name ?? "Unknown User";
+
+        // Check application roles - use actual ApplicationRole enum values
+        isEmployee = user.IsInRole("Employee");
+        // Managers are TeamLead, HR, HRLead, or Admin - anyone who can manage team questionnaires
+        isManager = user.IsInRole("TeamLead") || user.IsInRole("HR") || user.IsInRole("HRLead") || user.IsInRole("Admin");
+
+        currentUserRole = isManager ? "Manager" : "Employee";
+    }
+
+    private async Task LoadAssignmentAndTemplate()
     {
         try
         {
-            template = await TemplateService.GetTemplateByIdAsync(TemplateId);
+            // Determine which parameter was provided
+            if (AssignmentId.HasValue)
+            {
+                // New route: /questionnaire/{assignmentId}
+                assignmentId = AssignmentId.Value;
+
+                // Load assignment using appropriate service based on user role
+                if (isEmployee)
+                {
+                    // Employees use the "me/assignments/{id}" endpoint which validates ownership
+                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+                }
+                else if (isManager)
+                {
+                    // Managers use the general assignment service
+                    // Backend validates manager has this employee in their team
+                    assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+                }
+
+                if (assignment == null)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Assignment not found");
+                    NavigateBack();
+                    return;
+                }
+
+                template = await TemplateService.GetTemplateByIdAsync(assignment.TemplateId);
+            }
+            else if (TemplateId.HasValue)
+            {
+                // Legacy route: /my-questionnaires/{templateId} (employee only)
+                await LoadTemplate();
+                await LoadAssignmentForCurrentEmployee();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "No questionnaire specified");
+                NavigateBack();
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load questionnaire: {ex.Message}");
+            NavigateBack();
+        }
+    }
+
+    private void FilterVisibleSections()
+    {
+        if (template == null)
+        {
+            visibleSections = new List<QuestionSection>();
+            return;
+        }
+
+        // After review confirmation, managers see ALL sections in read-only mode
+        var isManagerPostReviewReadOnly = assignment != null && isManager &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                          WorkflowState.EmployeeReviewConfirmed or
+                                          WorkflowState.Finalized);
+
+        // Employees in post-review states should also see ALL sections (including manager sections)
+        var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.EmployeeReviewConfirmed or
+                                         WorkflowState.Finalized);
+
+        if (isManagerPostReviewReadOnly || isEmployeePostReview)
+        {
+            // Show ALL sections in read-only view
+            visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
+            return;
+        }
+
+        // Filter sections based on current user role and completion role
+        visibleSections = template.Sections
+            .Where(s =>
+            {
+                if (isManager && (s.CompletionRole == CompletionRole.Manager || s.CompletionRole == CompletionRole.Both))
+                    return true;
+                if (isEmployee && (s.CompletionRole == CompletionRole.Employee || s.CompletionRole == CompletionRole.Both))
+                    return true;
+                return false;
+            })
+            .OrderBy(s => s.Order)
+            .ToList();
+
+        // If no visible sections, show helpful error
+        if (!visibleSections.Any() && template.Sections.Any())
+        {
+            var sectionDetails = string.Join(", ", template.Sections.Select(s => $"'{s.Title}' (assigned to {s.CompletionRole})"));
+            NotificationService.Notify(NotificationSeverity.Warning, "No Sections Available",
+                $"This questionnaire has no sections assigned to {currentUserRole}s. " +
+                $"Please edit the template to assign sections appropriately. " +
+                $"Current sections: {sectionDetails}");
+        }
+    }
+
+    private void NavigateBack()
+    {
+        if (isManager)
+            NavigationManager.NavigateTo("/team/questionnaires");
+        else
+            NavigationManager.NavigateTo("/my-questionnaires");
+    }
+
+    private async Task LoadTemplate()
+    {
+        if (!TemplateId.HasValue) return;
+
+        try
+        {
+            template = await TemplateService.GetTemplateByIdAsync(TemplateId.Value);
             if (template == null)
             {
                 NotificationService.Notify(NotificationSeverity.Error, "Error", "Questionnaire template not found");
@@ -192,7 +419,7 @@
         {
         template = new QuestionnaireTemplate
         {
-            Id = TemplateId,
+            Id = TemplateId.Value,
             Name = "Employee Performance Review",
             Description = "Annual performance evaluation questionnaire",
             Settings = new QuestionnaireSettings
@@ -258,12 +485,13 @@
         {
             // Load the current employee's assignment for this template
             var assignments = await EmployeeQuestionnaireService.GetMyAssignmentsAsync();
-            var assignment = assignments.FirstOrDefault(a => a.TemplateId == TemplateId &&
-                                                           (a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress));
+            var matchingAssignment = assignments.FirstOrDefault(a => a.TemplateId == TemplateId!.Value &&
+                                                           a.WorkflowState != WorkflowState.Finalized);
 
-            if (assignment != null)
+            if (matchingAssignment != null)
             {
-                assignmentId = assignment.Id;
+                assignmentId = matchingAssignment.Id;
+                assignment = matchingAssignment;
             }
             else
             {
@@ -284,19 +512,89 @@
 
         try
         {
-            var existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
-            if (existingResponse != null)
+            QuestionnaireResponse? existingResponse = null;
+
+            // Check if employee is awaiting sign-off or has already signed off - they need to see ALL responses
+            var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+                (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                             WorkflowState.EmployeeReviewConfirmed or
+                                             WorkflowState.Finalized);
+
+            if (isEmployeePostReview || isManager)
             {
-                response = existingResponse;
-                // Find current section based on progress
-                var completedSections = response.SectionResponses.Count(sr => sr.Value.IsCompleted);
-                currentSectionIndex = Math.Min(completedSections, (template?.Sections.Count ?? 1) - 1);
+                // Managers and employees in post-review states load ALL role responses
+                existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignmentId.Value);
             }
+            else if (isEmployee && !isManager)
+            {
+                // Regular employees load only their own responses
+                existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
+            }
+
+            if (existingResponse == null || !existingResponse.SectionResponses.Any())
+            {
+                return;
+            }
+
+            // Merge existing responses with initialized structure
+            foreach (var sectionKvp in existingResponse.SectionResponses)
+            {
+                if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
+                {
+                    // For managers in post-review read-only mode, load ALL role responses (Employee + Manager)
+                    // For employees in post-review states, also load ALL role responses so they can see manager's answers
+                    // For normal mode, only load current user's role responses
+                    var isPostReviewReadOnly = assignment != null && isManager &&
+                        (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                                      WorkflowState.EmployeeReviewConfirmed or
+                                                      WorkflowState.Finalized);
+
+                    // Use the isEmployeePostReview variable already declared at the start of this method
+
+                    if ((isPostReviewReadOnly || isEmployeePostReview) && sectionKvp.Value.RoleResponses != null)
+                    {
+                        // Load ALL role responses (Employee, Manager, Both)
+                        foreach (var roleKvp in sectionKvp.Value.RoleResponses)
+                        {
+                            var roleName = roleKvp.Key;
+                            var roleQuestions = roleKvp.Value;
+
+                            // Ensure role exists in response structure
+                            if (!sectionResponse.RoleResponses.ContainsKey(roleName))
+                            {
+                                sectionResponse.RoleResponses[roleName] = new Dictionary<Guid, QuestionResponse>();
+                            }
+
+                            // Merge question responses for this role
+                            foreach (var questionKvp in roleQuestions)
+                            {
+                                sectionResponse.RoleResponses[roleName][questionKvp.Key] = questionKvp.Value;
+                            }
+                        }
+                    }
+                    else if (sectionKvp.Value.RoleResponses != null && sectionKvp.Value.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+                    {
+                        // Normal mode: only load current user's role responses
+                        foreach (var questionKvp in roleQuestions)
+                        {
+                            if (sectionResponse.RoleResponses.ContainsKey(currentUserRole) &&
+                                sectionResponse.RoleResponses[currentUserRole].ContainsKey(questionKvp.Key))
+                            {
+                                sectionResponse.RoleResponses[currentUserRole][questionKvp.Key] = questionKvp.Value;
+                            }
+                        }
+                    }
+                    sectionResponse.IsCompleted = sectionKvp.Value.IsCompleted;
+                }
+            }
+
+            // Find current section based on progress
+            var completedSections = response.SectionResponses.Count(sr => sr.Value.IsCompleted);
+            currentSectionIndex = Math.Min(completedSections, Math.Max(0, visibleSections.Count - 1));
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Could not load existing response: {ex.Message}");
-            // Continue with new response
+            // Could not load existing response - continue with new response
         }
     }
 
@@ -310,30 +608,33 @@
 
         response = new QuestionnaireResponse
         {
-            TemplateId = TemplateId,
+            TemplateId = TemplateId ?? template?.Id ?? Guid.Empty,
             AssignmentId = assignmentId ?? Guid.Empty,
-            EmployeeId = employeeGuid,
-            Status = ResponseStatus.InProgress
+            EmployeeId = employeeGuid
         };
 
-        // Initialize section responses
+        // Initialize section responses with role-based structure
         foreach (var section in template.Sections)
         {
-            response.SectionResponses[section.Id] = new SectionResponse
+            var sectionResponse = new SectionResponse
             {
                 SectionId = section.Id,
-                QuestionResponses = new Dictionary<Guid, QuestionResponse>()
+                RoleResponses = new Dictionary<string, Dictionary<Guid, QuestionResponse>>()
             };
 
-            // Initialize question responses
+            // Initialize question responses for current user's role
+            sectionResponse.RoleResponses[currentUserRole] = new Dictionary<Guid, QuestionResponse>();
+
             foreach (var question in section.Questions)
             {
-                response.SectionResponses[section.Id].QuestionResponses[question.Id] = new QuestionResponse
+                sectionResponse.RoleResponses[currentUserRole][question.Id] = new QuestionResponse
                 {
                     QuestionId = question.Id,
                     QuestionType = question.Type
                 };
             }
+
+            response.SectionResponses[section.Id] = sectionResponse;
         }
     }
 
@@ -390,9 +691,10 @@
                                 <RadzenColumn Size="12" SizeMD="4" Class="text-end">
                                     <div class="rating-section">
                                         <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
-                                        <RadzenRating Value="@GetCompetencyRating(question.Id, competency.Key)" 
+                                        <RadzenRating Value="@GetCompetencyRating(question.Id, competency.Key)"
                                                     ValueChanged="@((int value) => SetCompetencyRating(question.Id, competency.Key, value))"
-                                                    Stars="4" 
+                                                    Stars="4"
+                                                    ReadOnly="@IsQuestionnaireCompleted()"
                                                     Class="mb-2" />
                                         <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
                                             @GetRatingText(GetCompetencyRating(question.Id, competency.Key))
@@ -404,6 +706,7 @@
                                           ValueChanged="@((string value) => SetCompetencyComment(question.Id, competency.Key, value))"
                                           Placeholder="Optional: Add your comments here..."
                                           Rows="2"
+                                          Disabled="@IsQuestionnaireCompleted()"
                                           Class="w-100 mt-2" />
                         </RadzenCard>
                     }
@@ -443,6 +746,7 @@
                                       ValueChanged="@(value => UpdateQuestionResponseText(question.Id, value))"
                                       Placeholder="Describe your thoughts, plans, and goals..."
                                       Rows="4"
+                                      Disabled="@IsQuestionnaireCompleted()"
                                       Class="w-100" />
                     </RadzenCard>
                 </div>
@@ -478,6 +782,7 @@
                                       ValueChanged="@(value => SetGoalDescription(question.Id, value))"
                                       Placeholder="Describe the goal that was set for 2023..."
                                       Rows="3"
+                                      Disabled="@IsQuestionnaireCompleted()"
                                       Class="w-100" />
                     </div>
 
@@ -488,10 +793,11 @@
                                 <RadzenNumeric TValue="int"
                                              Value="@GetGoalAchievementPercentage(question.Id)"
                                              ValueChanged="@((int value) => SetGoalAchievementPercentage(question.Id, value))"
-                                             Min="0" 
-                                             Max="100" 
+                                             Min="0"
+                                             Max="100"
                                              Step="5"
                                              Format="0"
+                                             Disabled="@IsQuestionnaireCompleted()"
                                              Class="flex-grow-1 me-2" />
                                 <RadzenText TextStyle="TextStyle.Body1">%</RadzenText>
                             </div>
@@ -517,6 +823,7 @@
                                       ValueChanged="@(value => SetGoalJustification(question.Id, value))"
                                       Placeholder="Explain why you achieved this percentage. What factors contributed to your success or challenges?"
                                       Rows="4"
+                                      Disabled="@IsQuestionnaireCompleted()"
                                       Class="w-100" />
                     </div>
                 </RadzenCard>
@@ -535,9 +842,10 @@
             {
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
             }
-            <RadzenToggleButton Value="@GetBooleanValue(question.Id)" 
+            <RadzenToggleButton Value="@GetBooleanValue(question.Id)"
                               ValueChanged="@(value => SetBooleanValue(question.Id, value))"
-                              Text="@(GetBooleanValue(question.Id) ? "Yes" : "No")" 
+                              Text="@(GetBooleanValue(question.Id) ? "Yes" : "No")"
+                              Disabled="@IsQuestionnaireCompleted()"
                               ButtonStyle="@(GetBooleanValue(question.Id) ? ButtonStyle.Success : ButtonStyle.Secondary)" />
         </div>;
     }
@@ -558,6 +866,7 @@
                             TValue="DateTime?"
                             ShowTime="false"
                             DateFormat="dd/MM/yyyy"
+                            Disabled="@IsQuestionnaireCompleted()"
                             Class="w-100" />
         </div>;
     }
@@ -573,9 +882,10 @@
             {
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
             }
-            <RadzenNumeric Value="@GetNumericValue(question.Id)" 
+            <RadzenNumeric Value="@GetNumericValue(question.Id)"
                          ValueChanged="@(value => SetNumericValue(question.Id, value))"
                          TValue="int"
+                         Disabled="@IsQuestionnaireCompleted()"
                          Class="w-100" />
         </div>;
     }
@@ -584,11 +894,44 @@
     private QuestionResponse GetQuestionResponse(Guid questionId)
     {
         if (currentSection == null) return new QuestionResponse { QuestionId = questionId };
-        
+
         var sectionResponse = response.SectionResponses[currentSection.Id];
-        return sectionResponse.QuestionResponses.TryGetValue(questionId, out var questionResponse) 
-            ? questionResponse 
-            : new QuestionResponse { QuestionId = questionId };
+
+        // Determine which role's responses to fetch based on section's CompletionRole
+        // In read-only mode after review, managers view responses based on who originally completed the section
+        // Employees in post-review states also need to view responses based on section's CompletionRole
+        var isPostReviewReadOnly = assignment != null && isManager &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                          WorkflowState.EmployeeReviewConfirmed or
+                                          WorkflowState.Finalized);
+
+        var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.EmployeeReviewConfirmed or
+                                         WorkflowState.Finalized);
+
+        string roleToFetch = currentUserRole;
+
+        if (isPostReviewReadOnly || isEmployeePostReview)
+        {
+            // In post-review states, fetch responses based on section's CompletionRole
+            roleToFetch = currentSection.CompletionRole switch
+            {
+                CompletionRole.Employee => "Employee",
+                CompletionRole.Manager => "Manager",
+                CompletionRole.Both => currentUserRole,
+                _ => currentUserRole
+            };
+        }
+
+        // Access responses for the determined role
+        if (sectionResponse.RoleResponses.TryGetValue(roleToFetch, out var roleQuestions) &&
+            roleQuestions.TryGetValue(questionId, out var questionResponse))
+        {
+            return questionResponse;
+        }
+
+        return new QuestionResponse { QuestionId = questionId };
     }
 
     private void UpdateQuestionResponse(Guid questionId, int value)
@@ -820,6 +1163,18 @@
     // Navigation methods
     private void OnSectionChanged(int newIndex)
     {
+        // In read-only mode, allow free navigation between all sections
+        if (IsQuestionnaireCompleted())
+        {
+            if (HasParameterChanged(nameof(currentSectionIndex), newIndex))
+            {
+                currentSectionIndex = newIndex;
+                NotifyStateChanged();
+            }
+            return;
+        }
+
+        // In edit mode, validate completion before allowing forward navigation
         if (newIndex < currentSectionIndex || CanProceedFromCurrentSection())
         {
             if (HasParameterChanged(nameof(currentSectionIndex), newIndex))
@@ -847,7 +1202,19 @@
 
     private void NextSection()
     {
-        if (CanProceedFromCurrentSection() && currentSectionIndex < template!.Sections.Count - 1)
+        // In read-only mode, allow navigation without validation
+        if (IsQuestionnaireCompleted())
+        {
+            if (currentSectionIndex < visibleSections.Count - 1)
+            {
+                currentSectionIndex++;
+                NotifyStateChanged();
+            }
+            return;
+        }
+
+        // In edit mode, validate completion before allowing navigation
+        if (CanProceedFromCurrentSection() && currentSectionIndex < visibleSections.Count - 1)
         {
             currentSectionIndex++;
             UpdateProgress();
@@ -858,18 +1225,22 @@
     private bool CanProceedFromCurrentSection()
     {
         if (currentSection == null || !currentSection.IsRequired) return true;
-        
+
         var sectionResponse = response.SectionResponses[currentSection.Id];
-        
+
+        // Check if role responses exist for current user
+        if (!sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+            return false;
+
         foreach (var question in currentSection.Questions.Where(q => q.IsRequired))
         {
-            if (!sectionResponse.QuestionResponses.TryGetValue(question.Id, out var questionResponse))
+            if (!roleQuestions.TryGetValue(question.Id, out var questionResponse))
                 return false;
-                
+
             if (!IsQuestionAnswered(question, questionResponse))
                 return false;
         }
-        
+
         return true;
     }
 
@@ -888,46 +1259,95 @@
     {
         var competencies = GetCompetenciesForQuestion(question);
         if (competencies.Count == 0) return true;
-        
-        // Check that at least one competency has been rated
-        return competencies.Any(c => GetCompetencyRating(question.Id, c.Key) > 0);
+
+        // Check that at least one competency has been rated in the ComplexValue
+        if (questionResponse.ComplexValue == null) return false;
+
+        return competencies.Any(c =>
+        {
+            if (questionResponse.ComplexValue.TryGetValue($"rating_{c.Key}", out var value))
+            {
+                // Handle JsonElement from deserialization
+                if (value is System.Text.Json.JsonElement jsonElement)
+                {
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                    {
+                        return jsonElement.GetInt32() > 0;
+                    }
+                }
+                else if (value is int intValue)
+                {
+                    return intValue > 0;
+                }
+            }
+            return false;
+        });
     }
 
     private bool IsSectionCompleted(Guid sectionId)
     {
         if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
             return false;
-            
+
+        if (!sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+            return false;
+
         var section = template!.Sections.First(s => s.Id == sectionId);
-        
-        return section.Questions.Where(q => q.IsRequired).All(q => 
-            sectionResponse.QuestionResponses.TryGetValue(q.Id, out var qr) && 
+
+        return section.Questions.Where(q => q.IsRequired).All(q =>
+            roleQuestions.TryGetValue(q.Id, out var qr) &&
             IsQuestionAnswered(q, qr));
     }
 
     private void UpdateProgress()
     {
         if (template == null) return;
-        
+
         var totalQuestions = template.Sections.SelectMany(s => s.Questions.Where(q => q.IsRequired)).Count();
         var answeredQuestions = 0;
-        
+
         foreach (var section in template.Sections)
         {
-            if (response.SectionResponses.TryGetValue(section.Id, out var sectionResponse))
+            if (response.SectionResponses.TryGetValue(section.Id, out var sectionResponse) &&
+                sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
             {
-                answeredQuestions += section.Questions.Where(q => q.IsRequired).Count(q => 
-                    sectionResponse.QuestionResponses.TryGetValue(q.Id, out var qr) && 
+                answeredQuestions += section.Questions.Where(q => q.IsRequired).Count(q =>
+                    roleQuestions.TryGetValue(q.Id, out var qr) &&
                     IsQuestionAnswered(q, qr));
             }
         }
-        
+
         response.ProgressPercentage = totalQuestions > 0 ? (int)(answeredQuestions * 100.0 / totalQuestions) : 0;
     }
 
     private bool CanSubmit()
     {
-        return template!.Sections.All(s => IsSectionCompleted(s.Id));
+        // If no visible sections, allow submission
+        if (!visibleSections.Any()) return true;
+
+        // Check only visible sections for current user role
+        // A section is considered complete if it has no required questions OR all required questions are answered
+        return visibleSections.All(s =>
+        {
+            var section = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+            if (section == null) return true;
+
+            var requiredQuestions = section.Questions.Where(q => q.IsRequired).ToList();
+
+            // If no required questions, section is complete
+            if (!requiredQuestions.Any()) return true;
+
+            // Check if all required questions are answered
+            if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
+                return false;
+
+            if (!sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+                return false;
+
+            return requiredQuestions.All(q =>
+                roleQuestions.TryGetValue(q.Id, out var qr) &&
+                IsQuestionAnswered(q, qr));
+        });
     }
 
     private async Task SaveProgress()
@@ -938,9 +1358,39 @@
             return;
         }
 
+        // Prevent saving if questionnaire is in read-only state (uses WorkflowState logic)
+        if (IsQuestionnaireCompleted())
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Cannot Save", "This questionnaire is in read-only state and cannot be modified");
+            return;
+        }
+
         try
         {
-            await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+            if (isEmployee && !isManager)
+            {
+                // Employees save responses and complete any finished sections
+                await CompleteSectionsAsEmployee(); // Complete sections first to update workflow state
+                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+            }
+            else if (isManager)
+            {
+                // Managers save responses and complete any finished sections
+                await CompleteSectionsAsManager(); // Complete sections first to update workflow state
+                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses);
+            }
+
+            // Reload assignment to get updated workflow state and section progress
+            if (isEmployee)
+            {
+                assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+            }
+            else if (isManager)
+            {
+                assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+            }
+            StateHasChanged(); // Force UI update with new workflow state
+
             NotificationService.Notify(NotificationSeverity.Success, "Saved", "Your progress has been saved successfully");
         }
         catch (Exception ex)
@@ -951,8 +1401,51 @@
 
     private async Task ShowReview()
     {
-        // TODO: Show review dialog
-        NotificationService.Notify(NotificationSeverity.Info, "Review", "Review functionality would appear here");
+        if (!CanSubmit())
+        {
+            // Debug: Show which sections are incomplete
+            var incompleteSections = visibleSections.Where(s =>
+            {
+                var section = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+                if (section == null) return false;
+
+                var requiredQuestions = section.Questions.Where(q => q.IsRequired).ToList();
+                if (!requiredQuestions.Any()) return false;
+
+                if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
+                    return true;
+
+                if (!sectionResponse.RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+                    return true;
+
+                return !requiredQuestions.All(q =>
+                    roleQuestions.TryGetValue(q.Id, out var qr) &&
+                    IsQuestionAnswered(q, qr));
+            }).Select(s => s.Title).ToList();
+
+            var message = incompleteSections.Any()
+                ? $"Please complete all required questions in: {string.Join(", ", incompleteSections)}"
+                : "Please complete all required questions before reviewing";
+
+            NotificationService.Notify(NotificationSeverity.Warning, "Incomplete", message);
+            return;
+        }
+
+        // Show a confirmation dialog with review summary
+        var confirmed = await DialogService.Confirm(
+            $"You are about to submit your responses for '{template?.Name}'. Please review your answers before submitting. Do you want to continue?",
+            "Submit",
+            new ConfirmOptions
+            {
+                OkButtonText = "Submit",
+                CancelButtonText = "Cancel",
+                AutoFocusFirstElement = true
+            });
+
+        if (confirmed == true)
+        {
+            await SubmitQuestionnaire();
+        }
     }
 
     private async Task SubmitQuestionnaire()
@@ -969,43 +1462,319 @@
             return;
         }
 
+        if (isSubmitting)
+        {
+            return; // Prevent double submission
+        }
+
         try
         {
-            // First save the current responses
-            await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+            isSubmitting = true;
+            StateHasChanged();
 
-            // Then submit the questionnaire
-            var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
-
-            if (submittedResponse != null)
+            if (isManager)
             {
-                response = submittedResponse;
-                NotificationService.Notify(NotificationSeverity.Success, "Submitted", template.Settings.SuccessMessage);
+                // Manager flow - complete sections, save and submit
+                await CompleteSectionsAsManager();
+                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses);
+                var submitSuccess = await AssignmentService.SubmitManagerQuestionnaireAsync(assignmentId.Value, currentUserName);
 
-                // Navigate back to questionnaire list
-                NavigationManager.NavigateTo("/my-questionnaires");
+                if (submitSuccess)
+                {
+                    // Reload the assignment to get the updated WorkflowState
+                    assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+                    StateHasChanged(); // Force UI update with new workflow state
+
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", template!.Settings.SuccessMessage);
+                    NavigationManager.NavigateTo("/team/questionnaires");
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", "Failed to submit questionnaire");
+                }
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", "Failed to submit questionnaire");
+                // Employee flow - complete sections, save and submit
+                await CompleteSectionsAsEmployee();
+                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+                var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
+
+                if (submittedResponse != null)
+                {
+                    response = submittedResponse;
+
+                    // Reload the assignment to get the updated WorkflowState
+                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+                    StateHasChanged(); // Force UI update with new workflow state
+
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", template!.Settings.SuccessMessage);
+                    NavigationManager.NavigateTo("/my-questionnaires");
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", "Failed to submit questionnaire");
+                }
             }
         }
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Submission Failed", $"Failed to submit questionnaire: {ex.Message}");
         }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CompleteSectionsAsEmployee()
+    {
+        if (!assignmentId.HasValue) return;
+
+        // Collect all completed section IDs
+        var completedSectionIds = visibleSections
+            .Where(s => IsSectionCompleted(s.Id))
+            .Select(s => s.Id)
+            .ToList();
+
+        if (!completedSectionIds.Any())
+            return;
+
+        try
+        {
+            // Single atomic bulk operation - fixes concurrency issue
+            await AssignmentService.CompleteBulkSectionsAsEmployeeAsync(assignmentId.Value, completedSectionIds);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
+                $"Could not complete sections: {ex.Message}");
+        }
+    }
+
+    private async Task CompleteSectionsAsManager()
+    {
+        if (!assignmentId.HasValue) return;
+
+        // Collect all completed section IDs
+        var completedSectionIds = visibleSections
+            .Where(s => IsSectionCompleted(s.Id))
+            .Select(s => s.Id)
+            .ToList();
+
+        if (!completedSectionIds.Any())
+            return;
+
+        try
+        {
+            // Single atomic bulk operation - fixes concurrency issue
+            await AssignmentService.CompleteBulkSectionsAsManagerAsync(assignmentId.Value, completedSectionIds);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
+                $"Could not complete sections: {ex.Message}");
+        }
+    }
+
+    private async Task OnWorkflowActionCompleted()
+    {
+        // Reload the assignment to get updated workflow state
+        if (assignmentId.HasValue)
+        {
+            try
+            {
+                if (isEmployee)
+                {
+                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+                }
+                else if (isManager)
+                {
+                    assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+                }
+
+                StateHasChanged();
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Reload Error",
+                    $"Failed to reload assignment: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task OnReviewFinished()
+    {
+        if (!assignmentId.HasValue)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", "No assignment ID available");
+            return;
+        }
+
+        try
+        {
+            // Call the API to finish the manager review meeting
+            var success = await AssignmentService.FinishReviewMeetingAsync(assignmentId.Value, currentUserName, null);
+
+            if (success)
+            {
+                // Reload assignment to get updated workflow state
+                await OnWorkflowActionCompleted();
+
+                // Navigate back to team questionnaires
+                NotificationService.Notify(NotificationSeverity.Success, "Review Complete",
+                    "The review meeting has been completed. The employee can now confirm the review outcome.");
+                NavigationManager.NavigateTo("/team/questionnaires");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to finish review meeting");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to finish review meeting: {ex.Message}");
+        }
+    }
+
+    private async Task EmployeeSignOffReview()
+    {
+        if (assignment == null || !assignmentId.HasValue) return;
+
+        isProcessing = true;
+        try
+        {
+            // Open dialog to collect optional employee comments
+            var result = await DialogService.OpenAsync<ConfirmEmployeeReviewDialog>(
+                "Employee Sign-Off",
+                new Dictionary<string, object>(),
+                new DialogOptions
+                {
+                    Width = "600px",
+                    Resizable = false,
+                    Draggable = true
+                });
+
+            // If dialog was cancelled, return
+            if (result == null)
+            {
+                return;
+            }
+
+            // Result is the employee comments (can be null or empty string)
+            var employeeComments = result as string;
+
+            var success = await AssignmentService.ConfirmEmployeeReviewAsync(
+                assignment.Id,
+                currentUserName,
+                string.IsNullOrWhiteSpace(employeeComments) ? null : employeeComments);
+
+            if (success)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Success",
+                    Detail = "Review signed off by employee",
+                    Duration = 4000
+                });
+
+                // Reload assignment and navigate back to my questionnaires
+                await OnWorkflowActionCompleted();
+                NavigationManager.NavigateTo("/my-questionnaires");
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Error",
+                    Detail = "Failed to sign off on review",
+                    Duration = 4000
+                });
+            }
+        }
+        finally
+        {
+            isProcessing = false;
+        }
     }
 
     // Competency-specific helper methods
     private List<CompetencyDefinition> GetCompetenciesForQuestion(QuestionItem question)
     {
-        if (question.Configuration.ContainsKey("Competencies") && 
-            question.Configuration["Competencies"] is List<CompetencyDefinition> competencies)
+        if (!question.Configuration.ContainsKey("Competencies"))
         {
-            return competencies;
+            // Return default competencies if none configured
+            return new List<CompetencyDefinition>
+            {
+                new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities.", false)
+            };
         }
-        
-        // Return default competencies if none configured
+
+        var competenciesValue = question.Configuration["Competencies"];
+
+        // Handle direct List<CompetencyDefinition>
+        if (competenciesValue is List<CompetencyDefinition> comps)
+        {
+            return comps;
+        }
+
+        // Handle JsonElement (from API deserialization)
+        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
+        {
+            try
+            {
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
+                };
+
+                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
+                    jsonElement.GetRawText(),
+                    options
+                );
+
+                if (competencies != null && competencies.Any())
+                {
+                    return competencies;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Failed to deserialize competencies - will use defaults
+            }
+        }
+
+        // Handle IEnumerable<object> or other list types
+        if (competenciesValue is IEnumerable<object> enumerable)
+        {
+            var result = new List<CompetencyDefinition>();
+            foreach (var item in enumerable)
+            {
+                if (item is CompetencyDefinition compDef)
+                {
+                    result.Add(compDef);
+                }
+                else if (item is System.Text.Json.JsonElement itemJson)
+                {
+                    try
+                    {
+                        var deserializedComp = System.Text.Json.JsonSerializer.Deserialize<CompetencyDefinition>(
+                            itemJson.GetRawText(),
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        );
+                        if (deserializedComp != null) result.Add(deserializedComp);
+                    }
+                    catch { /* Skip invalid items */ }
+                }
+            }
+            if (result.Any()) return result;
+        }
+
+        // Return default competencies if deserialization failed
         return new List<CompetencyDefinition>
         {
             new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities.", false)
@@ -1017,7 +1786,22 @@
         var response = GetQuestionResponse(questionId);
         if (response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
         {
-            return Convert.ToInt32(value);
+            // Handle JsonElement from deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    return jsonElement.GetInt32();
+                }
+            }
+            else if (value is int intValue)
+            {
+                return intValue;
+            }
+            else
+            {
+                return Convert.ToInt32(value);
+            }
         }
         return 0;
     }

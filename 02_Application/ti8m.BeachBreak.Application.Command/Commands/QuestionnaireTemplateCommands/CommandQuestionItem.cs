@@ -1,5 +1,3 @@
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate;
-
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 
 public class CommandQuestionItem

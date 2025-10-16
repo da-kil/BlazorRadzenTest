@@ -172,4 +172,14 @@ internal class EmployeeRepository(IDocumentStore store) : IEmployeeRepository
             .Where(e => e.LoginName == loginName && !e.IsDeleted)
             .SingleOrDefaultAsync(cancellationToken);
     }
+
+    public async Task<IEnumerable<EmployeeReadModel>> GetEmployeesByManagerIdAsync(string managerId, CancellationToken cancellationToken = default)
+    {
+        using var session = await store.LightweightSerializableSessionAsync();
+        return await session.Query<EmployeeReadModel>()
+            .Where(e => e.ManagerId == managerId)
+            .OrderBy(e => e.LastName)
+            .ThenBy(e => e.FirstName)
+            .ToListAsync(cancellationToken);
+    }
 }

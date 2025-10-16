@@ -3,12 +3,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
-using ti8m.BeachBreak.Application.Command;
-using ti8m.BeachBreak.Application.Query;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Core.Infrastructure.Database;
-using ti8m.BeachBreak.Infrastructure.Marten;
+using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Infrastructure.Marten;
 
 namespace ti8m.BeachBreak.CommandApi
 {
@@ -51,30 +49,24 @@ namespace ti8m.BeachBreak.CommandApi
 
             builder.Services.AddAuthorization(options =>
             {
-                options.AddPolicy("Employee", policy =>
-                    policy.RequireRole("Employee"));
-
-                options.AddPolicy("Admin", policy =>
-                    policy.RequireRole("Admin"));
-
-                options.AddPolicy("HR", policy =>
-                    policy.RequireRole("HR"));
-
-                options.AddPolicy("HRLead", policy =>
-                    policy.RequireRole("HRLead"));
-
-                options.AddPolicy("TeamLead", policy =>
-                    policy.RequireRole("TeamLead"));
+                options.AddPolicy("Employee", policy => policy.RequireRole("Employee"));
+                options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("HR", policy => policy.RequireRole("HR"));
+                options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead"));
+                options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead"));
             });
 
             // Register custom authorization middleware result handler
-            builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, RoleBasedAuthorizationMiddlewareResultHandler>();
+            builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, CommandApi.Authorization.RoleBasedAuthorizationMiddlewareResultHandler>();
 
             // Add distributed cache (using in-memory for now, can be replaced with Redis)
             builder.Services.AddDistributedMemoryCache();
 
             // Register authorization cache service
             builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
+
+            // Register authorization cache invalidation service
+            builder.Services.AddScoped<IAuthorizationCacheInvalidationService, AuthorizationCacheInvalidationService>();
 
             builder.Services.AddControllers();
 
@@ -127,7 +119,6 @@ namespace ti8m.BeachBreak.CommandApi
             });
 
             builder.AddNpgsqlDataSource(connectionName: "beachbreakdb");
-            builder.MigrateDatabase();
 
             builder.AddMartenInfrastructure();
 
@@ -139,10 +130,10 @@ namespace ti8m.BeachBreak.CommandApi
             // Add Query application services for authorization handler
             Application.Query.Extensions.AddApplication(builder.Services, builder.Configuration);
 
-            var app = builder.Build();
+            // Register manager authorization service for command operations
+            builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
 
-            // Initialize database
-            await app.Services.InitializeDatabaseAsync();
+            var app = builder.Build();
 
             app.MapDefaultEndpoints();
 

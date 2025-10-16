@@ -3,6 +3,7 @@
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @using Radzen
 @using Radzen.Blazor
+@using System.Text.Json
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 @using ti8m.BeachBreak.Client.Models
@@ -13,86 +14,33 @@
 @inject NavigationManager NavigationManager
 @inject IQuestionnaireTemplateService ApiService
 @inject ICategoryApiService CategoryService
+@inject QuestionConfigurationService ConfigurationService
+@inject QuestionnaireValidationService ValidationService
+@inject ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory HandlerFactory
+@inject QuestionnaireBuilderState State
 @inherits OptimizedComponentBase
+@implements IDisposable
 
 <PageTitle>Questionnaire Builder</PageTitle>
 
-<!-- Header -->
-<div class="page-header-modern">
-	<div class="container-fluid">
-		<div class="d-flex justify-content-between align-items-center py-3">
-			<div class="d-flex align-items-center">
-				<RadzenText TextStyle="TextStyle.H4" Class="text-white fw-bold mb-0">
-					<RadzenIcon Icon="psychology" Class="me-2" />
-					@(IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")
-				</RadzenText>
-				<div class="status-badge ms-3">
-					@{
-						var status = IsEditMode ? template.Status : TemplateStatus.Draft;
-						var statusText = IsEditMode ? TemplateStatusHelper.GetStatusText(template.Status) : "NEW";
-						var statusIcon = IsEditMode ? TemplateStatusHelper.GetStatusIcon(template.Status) : "add_circle";
-						var statusClass = IsEditMode ? TemplateStatusHelper.GetStatusBadgeClass(template.Status) : "badge bg-info text-dark";
-					}
-					<span class="@statusClass d-flex align-items-center px-3 py-1">
-						<RadzenIcon Icon="@statusIcon" Class="me-1" Style="font-size: 0.8rem;" />
-						@statusText
-					</span>
-				</div>
-			</div>
-			<div class="d-flex gap-2">
-				@{
-					var currentStatus = IsEditMode ? template.Status : TemplateStatus.Draft;
-				}
-				@switch (currentStatus)
-				{
-					case TemplateStatus.Draft:
-						<RadzenButton Text="Save" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" />
-						<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" />
-						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@ArchiveQuestionnaire" />
-						break;
-					case TemplateStatus.Published:
-						<RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@UnpublishQuestionnaire" />
-						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@ArchiveQuestionnaire" />
-						break;
-					case TemplateStatus.Archived:
-						<RadzenButton Text="Restore" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" />
-						break;
-				}
-			</div>
-		</div>
-	</div>
-</div>
+<QuestionnaireBuilderHeader
+	IsEditMode="@State.IsEditMode"
+	Status="@State.Template.Status"
+	OnSave="@SaveQuestionnaire"
+	OnPublish="@PublishQuestionnaire"
+	OnArchive="@ArchiveQuestionnaire"
+	OnUnpublish="@UnpublishQuestionnaire"
+	OnRestore="@RestoreQuestionnaire"
+	OnClone="@HandleClone" />
 
-<!-- Progress Steps -->
-<div style="background: var(--background-color); border-bottom: 1px solid var(--border-light);">
-	<div class="container-fluid">
-		<div class="progress-steps-modern py-3">
-			<div class="step-modern @(currentStep == 1 ? "active" : currentStep > 1 ? "completed" : "")" @onclick="() => SetCurrentStep(1)">
-				<div class="step-number-modern">
-					<RadzenIcon Icon="@(currentStep > 1 ? "check" : "info")" />
-				</div>
-				<span class="step-text-modern">Basic Info</span>
-			</div>
-			<div class="step-modern @(currentStep == 2 ? "active" : currentStep > 2 ? "completed" : "")" @onclick="() => SetCurrentStep(2)">
-				<div class="step-number-modern">
-					<RadzenIcon Icon="@(currentStep > 2 ? "check" : "view_list")" />
-				</div>
-				<span class="step-text-modern">Build Sections</span>
-			</div>
-			<div class="step-modern @(currentStep == 3 ? "active" : currentStep > 3 ? "completed" : "")" @onclick="() => SetCurrentStep(3)">
-				<div class="step-number-modern">
-					<RadzenIcon Icon="@(currentStep > 3 ? "check" : "preview")" />
-				</div>
-				<span class="step-text-modern">Review & Publish</span>
-			</div>
-		</div>
-	</div>
-</div>
+<ProgressSteps
+	CurrentStep="@State.CurrentStep"
+	OnStepClick="@SetCurrentStep" />
 
 <!-- Main Content -->
 <div class="main-content-modern">
 	<div class="container-fluid">
-		@if (showQuestionEditor)
+		@if (State.ShowQuestionEditor)
 		{
 			<!-- Full-screen Question Editor -->
 			<div class="question-editor-fullscreen">
@@ -109,10 +57,10 @@
 					</div>
 				</div>
 				<div class="editor-content p-4">
-					@if (editingQuestion != null)
+					@if (State.EditingQuestion != null)
 					{
-						<QuestionCard Question="@editingQuestion"
-									  Template="@template"
+						<QuestionCard Question="@State.EditingQuestion"
+									  Template="@State.Template"
 									  CanMoveUp="false"
 									  CanMoveDown="false"
 									  QuestionTypeLabels="@questionTypeLabels"
@@ -127,29 +75,29 @@
 		else
 		{
 			<!-- Step Content -->
-			@if (currentStep == 1)
+			@if (State.CurrentStep == 1)
 			{
 				<div class="step-content-modern">
 					<div class="step-header">
 						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Template Information</RadzenText>
 						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">@GetStatusDescription()</RadzenText>
 					</div>
-					<BasicInfoTab Template="@template" Categories="@categories" />
+					<BasicInfoTab Template="@State.Template" Categories="@categories" />
 					<div class="step-navigation mt-4 d-flex justify-content-end">
 						<RadzenButton Text="Next: Build Sections" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(2))" />
 					</div>
 				</div>
 			}
-			else if (currentStep == 2)
+			else if (State.CurrentStep == 2)
 			{
 				<div class="step-content-modern">
 					<div class="step-header">
 						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Build Sections</RadzenText>
 						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Organize your assessment into logical sections and configure questions</RadzenText>
 					</div>
-					<QuestionsTab Template="@template"
-								  ShowQuestionTypeSelection="@showQuestionTypeSelection"
-								  SelectedSectionIndex="@selectedSectionIndex"
+					<QuestionsTab Template="@State.Template"
+								  ShowQuestionTypeSelection="@State.ShowQuestionTypeSelection"
+								  SelectedSectionIndex="@State.SelectedSectionIndex"
 								  QuestionTypeLabels="@questionTypeLabels"
 								  OnAddSectionWithType="@AddSectionWithType"
 								  OnMoveSectionUp="@MoveSectionUp"
@@ -169,19 +117,19 @@
 					</div>
 				</div>
 			}
-			else if (currentStep == 3)
+			else if (State.CurrentStep == 3)
 			{
 				<div class="step-content-modern">
 					<div class="step-header">
 						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Review & Publish</RadzenText>
 						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Review your questionnaire and make it available for assignments</RadzenText>
 					</div>
-					<PreviewTab Template="@template" QuestionTypeLabels="@questionTypeLabels" />
+					<PreviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" />
 					<div class="step-navigation mt-4 d-flex justify-content-between">
 						<RadzenButton Text="Previous: Build Sections" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
 						<div class="d-flex gap-2">
 							@{
-								var stepNavStatus = IsEditMode ? template.Status : TemplateStatus.Draft;
+								var stepNavStatus = State.IsEditMode ? State.Template.Status : TemplateStatus.Draft;
 							}
 							@switch (stepNavStatus)
 							{
@@ -207,22 +155,7 @@
 @code {
 	[Parameter] public Guid? TemplateId { get; set; }
 
-	private QuestionnaireTemplate template = new();
 	private bool IsEditMode => TemplateId.HasValue;
-
-	// Step navigation state
-	private int currentStep = 1;
-
-	// Question editor state
-	private bool showQuestionEditor = false;
-	private QuestionItem? editingQuestion = null;
-	private int editingSectionIndex = -1;
-	private int editingQuestionIndex = -1;
-
-	// Question type selection state
-	private bool showQuestionTypeSelection = false;
-	private int selectedSectionIndex = -1;
-	private QuestionType? selectedQuestionType = null;
 
 	// Editable question type labels
 	private Dictionary<QuestionType, string> questionTypeLabels = new()
@@ -236,6 +169,8 @@
 
 	protected override async Task OnInitializedAsync()
 	{
+		State.OnStateChanged += HandleStateChanged;
+
 		await ExecuteSafelyAsync(async () =>
 		{
 			if (IsEditMode && TemplateId.HasValue)
@@ -252,7 +187,7 @@
 				await LoadCategories();
 
 				// Initialize empty template with default values
-				template = new QuestionnaireTemplate
+				State.Template = new QuestionnaireTemplate
 				{
 					Name = "",
 					Description = "",
@@ -263,12 +198,23 @@
 		}, "InitializeQuestionnaireBuilder");
 	}
 
+	private void HandleStateChanged()
+	{
+		NotifyStateChanged();
+	}
+
+	public override void Dispose()
+	{
+		State.OnStateChanged -= HandleStateChanged;
+		base.Dispose();
+	}
+
 	protected override bool HasStateChanged()
 	{
-		return HasParameterChanged(nameof(template), template?.Id) ||
-			   HasParameterChanged(nameof(currentStep), currentStep) ||
-			   HasParameterChanged(nameof(showQuestionEditor), showQuestionEditor) ||
-			   HasParameterChanged(nameof(showQuestionTypeSelection), showQuestionTypeSelection);
+		return HasParameterChanged(nameof(State.Template), State.Template?.Id) ||
+			   HasParameterChanged(nameof(State.CurrentStep), State.CurrentStep) ||
+			   HasParameterChanged(nameof(State.ShowQuestionEditor), State.ShowQuestionEditor) ||
+			   HasParameterChanged(nameof(State.ShowQuestionTypeSelection), State.ShowQuestionTypeSelection);
 	}
 
 	private async Task LoadCategories()
@@ -292,12 +238,12 @@
 			var loadedTemplate = await ApiService.GetTemplateByIdAsync(templateId);
 			if (loadedTemplate != null)
 			{
-				template = loadedTemplate;
+				State.Template = loadedTemplate;
 			}
 			else
 			{
 				NotificationService.Notify(NotificationSeverity.Warning, "Not Found", "Template not found. Creating new template.");
-				template = new QuestionnaireTemplate();
+				State.Template = new QuestionnaireTemplate();
 				// Clear the TemplateId parameter to switch to create mode
 				TemplateId = null;
 			}
@@ -305,30 +251,24 @@
 		catch (Exception ex)
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load template: {ex.Message}");
-			template = new QuestionnaireTemplate();
+			State.Template = new QuestionnaireTemplate();
 			TemplateId = null;
 		}
 	}
 
 	private void SetCurrentStep(int step)
 	{
-		if (currentStep != step)
-		{
-			currentStep = step;
-			NotifyStateChanged();
-		}
+		State.CurrentStep = step;
 	}
 
 	private async Task OpenQuestionEditor((int sectionIndex, int questionIndex) indices)
 	{
-		if (indices.sectionIndex >= 0 && indices.sectionIndex < template.Sections.Count &&
-			indices.questionIndex >= 0 && indices.questionIndex < template.Sections[indices.sectionIndex].Questions.Count)
+		if (indices.sectionIndex >= 0 && indices.sectionIndex < State.Template.Sections.Count &&
+			indices.questionIndex >= 0 && indices.questionIndex < State.Template.Sections[indices.sectionIndex].Questions.Count)
 		{
-			editingSectionIndex = indices.sectionIndex;
-			editingQuestionIndex = indices.questionIndex;
 			// Create a deep copy of the question for editing
-			var originalQuestion = template.Sections[indices.sectionIndex].Questions[indices.questionIndex];
-			editingQuestion = new QuestionItem
+			var originalQuestion = State.Template.Sections[indices.sectionIndex].Questions[indices.questionIndex];
+			var editingQuestion = new QuestionItem
 			{
 				Id = originalQuestion.Id,
 				Title = originalQuestion.Title,
@@ -338,26 +278,22 @@
 				IsRequired = originalQuestion.IsRequired,
 				Configuration = new Dictionary<string, object>(originalQuestion.Configuration)
 			};
-			showQuestionEditor = true;
-			NotifyStateChanged();
+			State.OpenQuestionEditor(editingQuestion, indices.sectionIndex, indices.questionIndex);
 		}
 	}
 
 	private void CloseQuestionEditor()
 	{
-		showQuestionEditor = false;
-		editingQuestion = null;
-		editingSectionIndex = -1;
-		editingQuestionIndex = -1;
-		NotifyStateChanged();
+		State.CloseQuestionEditor();
 	}
 
-	private async Task SaveCurrentQuestion()
+	private void SaveCurrentQuestion()
 	{
-		if (editingQuestion != null && editingSectionIndex >= 0 && editingQuestionIndex >= 0)
+		if (State.EditingQuestion != null && State.EditingSectionIndex >= 0 && State.EditingQuestionIndex >= 0)
 		{
 			// Save the edited question back to the template
-			template.Sections[editingSectionIndex].Questions[editingQuestionIndex] = editingQuestion;
+			State.Template.Sections[State.EditingSectionIndex].Questions[State.EditingQuestionIndex] = State.EditingQuestion;
+			State.MarkAsDirty();
 			CloseQuestionEditor();
 			NotificationService.Notify(NotificationSeverity.Success, "Saved", "Question updated successfully");
 		}
@@ -365,7 +301,7 @@
 
 	private string GetCurrentQuestionTitle()
 	{
-		return editingQuestion?.Title ?? "Untitled Question";
+		return State.EditingQuestion?.Title ?? "Untitled Question";
 	}
 
 
@@ -374,14 +310,16 @@
 		var newSection = new QuestionSection
 		{
 			Title = GetDefaultSectionTitle(questionType),
-			Order = template.Sections.Count,
-			IsRequired = true
+			Order = State.Template.Sections.Count,
+			IsRequired = true,
+			CompletionRole = CompletionRole.Employee
 		};
 
-		template.Sections.Add(newSection);
+		State.Template.Sections.Add(newSection);
 
 		// Immediately add a question of the selected type
-		AddQuestionOfExistingType(template.Sections.Count - 1, questionType);
+		AddQuestionOfExistingType(State.Template.Sections.Count - 1, questionType);
+		State.MarkAsDirty();
 	}
 
 	private string GetDefaultSectionTitle(QuestionType type)
@@ -391,15 +329,15 @@
 			QuestionType.SelfAssessment => "Self-Assessment",
 			QuestionType.GoalAchievement => "Goal Achievement Review",
 			QuestionType.TextQuestion => "Open-Ended Questions",
-			_ => $"Section {template.Sections.Count + 1}"
+			_ => $"Section {State.Template.Sections.Count + 1}"
 		};
 	}
 
 	private void AddItemDirectly(int sectionIndex)
 	{
-		if (sectionIndex >= 0 && sectionIndex < template.Sections.Count)
+		if (sectionIndex >= 0 && sectionIndex < State.Template.Sections.Count)
 		{
-			var section = template.Sections[sectionIndex];
+			var section = State.Template.Sections[sectionIndex];
 
 			// If section already has questions, add an item to the existing question
 			if (section.Questions.Any())
@@ -417,127 +355,55 @@
 
 	private void AddItemToExistingQuestion(QuestionItem question)
 	{
-		if (question.Type == QuestionType.SelfAssessment)
-		{
-			var competencies = GetCompetenciesFromQuestion(question);
-			var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
-			competencies.Add(new CompetencyDefinition($"competency_{competencies.Count + 1}", "", "", false, nextOrder));
-			question.Configuration["Competencies"] = competencies;
-		}
-		else if (question.Type == QuestionType.GoalAchievement)
-		{
-			var goalCategories = GetGoalCategoriesFromQuestion(question);
-			var nextOrder = goalCategories.Count > 0 ? goalCategories.Max(g => g.Order) + 1 : 0;
-			goalCategories.Add(new QuestionCard.GoalCategory { Title = "", Description = "", IsRequired = false, Order = nextOrder });
-			question.Configuration["GoalCategories"] = goalCategories;
-		}
-		else if (question.Type == QuestionType.TextQuestion)
-		{
-			var textSections = GetTextSectionsFromQuestion(question);
-			var nextOrder = textSections.Count > 0 ? textSections.Max(t => t.Order) + 1 : 0;
-			textSections.Add(new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = nextOrder });
-			question.Configuration["TextSections"] = textSections;
-		}
-	}
-
-	private List<CompetencyDefinition> GetCompetenciesFromQuestion(QuestionItem question)
-	{
-		if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
-		{
-			if (competenciesObj is List<CompetencyDefinition> competencies)
-				return competencies;
-		}
-		return new List<CompetencyDefinition>();
-	}
-
-	private List<QuestionCard.GoalCategory> GetGoalCategoriesFromQuestion(QuestionItem question)
-	{
-		if (question.Configuration.TryGetValue("GoalCategories", out var categoriesObj))
-		{
-			if (categoriesObj is List<QuestionCard.GoalCategory> categories)
-				return categories;
-		}
-		return new List<QuestionCard.GoalCategory>();
-	}
-
-	private List<QuestionCard.TextSection> GetTextSectionsFromQuestion(QuestionItem question)
-	{
-		if (question.Configuration.TryGetValue("TextSections", out var sectionsObj))
-		{
-			if (sectionsObj is List<QuestionCard.TextSection> sections)
-				return sections;
-		}
-		return new List<QuestionCard.TextSection>();
+		// Use Strategy Pattern to delegate to appropriate handler
+		var handler = HandlerFactory.GetHandler(question.Type);
+		handler.AddItem(question);
+		State.MarkAsDirty();
 	}
 
 	private void AddQuestionOfExistingType(int sectionIndex, QuestionType questionType)
 	{
-		if (sectionIndex >= 0 && sectionIndex < template.Sections.Count)
+		if (sectionIndex >= 0 && sectionIndex < State.Template.Sections.Count)
 		{
-			var section = template.Sections[sectionIndex];
+			var section = State.Template.Sections[sectionIndex];
+			var handler = HandlerFactory.GetHandler(questionType);
+
 			var newQuestion = new QuestionItem
 			{
 				Id = Guid.NewGuid(),
-				Title = GetDefaultQuestionTitle(questionType),
+				Title = handler.GetDefaultTitle(),
 				Type = questionType,
 				Order = section.Questions.Count,
 				IsRequired = true
 			};
 
-			// Initialize default configuration for each question type
-			if (questionType == QuestionType.SelfAssessment)
-			{
-				// Initialize with one default competency
-				var competencies = new List<CompetencyDefinition>
-				{
-					new CompetencyDefinition("competency_1", "", "", false, 0)
-				};
-				newQuestion.Configuration["Competencies"] = competencies;
-
-				// Initialize default rating scale settings
-				newQuestion.Configuration["RatingScale"] = 4; // Default to 1-4 scale
-				newQuestion.Configuration["ScaleLowLabel"] = "Poor";
-				newQuestion.Configuration["ScaleHighLabel"] = "Excellent";
-			}
-			else if (questionType == QuestionType.GoalAchievement)
-			{
-				// Initialize with one default goal category
-				newQuestion.Configuration["GoalCategories"] = new List<QuestionCard.GoalCategory>
-				{
-					new QuestionCard.GoalCategory { Title = "", Description = "", IsRequired = false, Order = 0 }
-				};
-			}
-			else if (questionType == QuestionType.TextQuestion)
-			{
-				// Initialize with one default text section using proper type
-				newQuestion.Configuration["TextSections"] = new List<QuestionCard.TextSection>
-				{
-					new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = 0 }
-				};
-			}
+			// Use handler to initialize configuration
+			handler.InitializeQuestion(newQuestion);
 
 			// Add the question to the section
 			section.Questions.Add(newQuestion);
+			State.MarkAsDirty();
 		}
 	}
 
 	private async Task RemoveSection(int index)
 	{
-		if (index >= 0 && index < template.Sections.Count)
+		if (index >= 0 && index < State.Template.Sections.Count)
 		{
-			var section = template.Sections[index];
+			var section = State.Template.Sections[index];
 			var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {index + 1}" : section.Title;
 			var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{sectionName}'? This will also delete all questions in this section.", "Delete Section",
 				new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
 
 			if (confirmed.HasValue && confirmed.Value)
 			{
-				template.Sections.RemoveAt(index);
+				State.Template.Sections.RemoveAt(index);
 				// Reorder remaining sections
-				for (int i = 0; i < template.Sections.Count; i++)
+				for (int i = 0; i < State.Template.Sections.Count; i++)
 				{
-					template.Sections[i].Order = i;
+					State.Template.Sections[i].Order = i;
 				}
+				State.MarkAsDirty();
 			}
 		}
 	}
@@ -546,87 +412,36 @@
 	{
 		if (index > 0)
 		{
-			(template.Sections[index], template.Sections[index - 1]) = (template.Sections[index - 1], template.Sections[index]);
-			template.Sections[index].Order = index;
-			template.Sections[index - 1].Order = index - 1;
+			(State.Template.Sections[index], State.Template.Sections[index - 1]) = (State.Template.Sections[index - 1], State.Template.Sections[index]);
+			State.Template.Sections[index].Order = index;
+			State.Template.Sections[index - 1].Order = index - 1;
+			State.MarkAsDirty();
 		}
 	}
 
 	private void MoveSectionDown(int index)
 	{
-		if (index < template.Sections.Count - 1)
+		if (index < State.Template.Sections.Count - 1)
 		{
-			(template.Sections[index], template.Sections[index + 1]) = (template.Sections[index + 1], template.Sections[index]);
-			template.Sections[index].Order = index;
-			template.Sections[index + 1].Order = index + 1;
+			(State.Template.Sections[index], State.Template.Sections[index + 1]) = (State.Template.Sections[index + 1], State.Template.Sections[index]);
+			State.Template.Sections[index].Order = index;
+			State.Template.Sections[index + 1].Order = index + 1;
+			State.MarkAsDirty();
 		}
 	}
 
 	private void ShowAddQuestionDialog(int sectionIndex)
 	{
-		// Show inline question type selection
-		showQuestionTypeSelection = true;
-		selectedSectionIndex = sectionIndex;
-		selectedQuestionType = null;
+		State.OpenQuestionTypeSelection(sectionIndex);
 	}
 
 
 
-	private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
-	{
-		if (question.Configuration.ContainsKey("Competencies"))
-		{
-			var competenciesObj = question.Configuration["Competencies"];
-
-			// Handle direct cast (when set in editor)
-			if (competenciesObj is List<CompetencyDefinition> competencies)
-			{
-				return competencies;
-			}
-
-			// Handle JSON deserialization (when loaded from API)
-			if (competenciesObj is System.Text.Json.JsonElement jsonElement)
-			{
-				try
-				{
-					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-					{
-						return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
-					}
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error deserializing competencies: {ex.Message}");
-				}
-			}
-
-			// Handle string representation (backup case)
-			if (competenciesObj is string jsonString)
-			{
-				try
-				{
-					return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonString) ?? new List<CompetencyDefinition>();
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error deserializing competencies from string: {ex.Message}");
-				}
-			}
-		}
-
-		// Return default competencies if none exist
-		return new List<CompetencyDefinition>();
-	}
-
-	private void SaveCompetenciesToConfiguration(QuestionItem question, List<CompetencyDefinition> competencies)
-	{
-		question.Configuration["Competencies"] = competencies;
-	}
 
 
 	private async Task RemoveQuestion(int sectionIndex, int questionIndex)
 	{
-		var section = template.Sections[sectionIndex];
+		var section = State.Template.Sections[sectionIndex];
 		if (questionIndex >= 0 && questionIndex < section.Questions.Count)
 		{
 			var question = section.Questions[questionIndex];
@@ -642,29 +457,32 @@
 				{
 					section.Questions[i].Order = i;
 				}
+				State.MarkAsDirty();
 			}
 		}
 	}
 
 	private void MoveQuestionUp(int sectionIndex, int questionIndex)
 	{
-		var questions = template.Sections[sectionIndex].Questions;
+		var questions = State.Template.Sections[sectionIndex].Questions;
 		if (questionIndex > 0)
 		{
 			(questions[questionIndex], questions[questionIndex - 1]) = (questions[questionIndex - 1], questions[questionIndex]);
 			questions[questionIndex].Order = questionIndex;
 			questions[questionIndex - 1].Order = questionIndex - 1;
+			State.MarkAsDirty();
 		}
 	}
 
 	private void MoveQuestionDown(int sectionIndex, int questionIndex)
 	{
-		var questions = template.Sections[sectionIndex].Questions;
+		var questions = State.Template.Sections[sectionIndex].Questions;
 		if (questionIndex < questions.Count - 1)
 		{
 			(questions[questionIndex], questions[questionIndex + 1]) = (questions[questionIndex + 1], questions[questionIndex]);
 			questions[questionIndex].Order = questionIndex;
 			questions[questionIndex + 1].Order = questionIndex + 1;
+			State.MarkAsDirty();
 		}
 	}
 
@@ -692,9 +510,11 @@
 		{
 			if (IsEditMode)
 			{
-				var updated = await ApiService.UpdateTemplateAsync(template);
+				var updated = await ApiService.UpdateTemplateAsync(State.Template);
 				if (updated != null)
 				{
+					State.Template = updated;
+					State.MarkAsClean();
 					NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template updated successfully");
 				}
 				else
@@ -704,8 +524,9 @@
 			}
 			else
 			{
-				var created = await ApiService.CreateTemplateAsync(template);
-				template.Id = created.Id; // Update with the server-generated ID
+				var created = await ApiService.CreateTemplateAsync(State.Template);
+				State.Template.Id = created.Id; // Update with the server-generated ID
+				State.MarkAsClean();
 				NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
 			}
 		}
@@ -728,32 +549,33 @@
 			await SaveQuestionnaire();
 
 			// Set as published
-			template.Status = TemplateStatus.Published;
-			template.LastPublishedDate = DateTime.Now;
+			State.Template.Status = TemplateStatus.Published;
+			State.Template.LastPublishedDate = DateTime.Now;
 
 			// Set PublishedDate only on first publish
-			if (template.PublishedDate == null)
+			if (State.Template.PublishedDate == null)
 			{
-				template.PublishedDate = DateTime.Now;
+				State.Template.PublishedDate = DateTime.Now;
 			}
 
 			// TODO: Set PublishedBy when user context is available
-			// template.PublishedBy = currentUser.Name;
+			// State.Template.PublishedBy = currentUser.Name;
 
 			// Update the template with published status
 			if (IsEditMode)
 			{
-				var updated = await ApiService.PublishTemplateAsync(template.Id, "");
+				var updated = await ApiService.PublishTemplateAsync(State.Template.Id, "");
 				if (updated != null)
 				{
+					State.Template = updated;
 					NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template is now published and available for assignments");
 				}
 				else
 				{
 					NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
 					// Revert on failure
-					template.Status = TemplateStatus.Draft;
-					template.LastPublishedDate = null;
+					State.Template.Status = TemplateStatus.Draft;
+					State.Template.LastPublishedDate = null;
 				}
 			}
 			else
@@ -766,8 +588,8 @@
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
 			// Revert on failure
-			template.Status = TemplateStatus.Draft;
-			template.LastPublishedDate = null;
+			State.Template.Status = TemplateStatus.Draft;
+			State.Template.LastPublishedDate = null;
 		}
 	}
 
@@ -776,49 +598,25 @@
 		try
 		{
 			// Set as unpublished (back to draft)
-			template.Status = TemplateStatus.Draft;
+			State.Template.Status = TemplateStatus.Draft;
 
 			// Update the template with unpublished status
-			var updated = await ApiService.UpdateTemplateAsync(template);
+			var updated = await ApiService.UpdateTemplateAsync(State.Template);
 			if (updated != null)
 			{
+				State.Template = updated;
 				NotificationService.Notify(NotificationSeverity.Info, "Unpublished", "Questionnaire template is now in draft mode and unavailable for new assignments");
 			}
 			else
 			{
 				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unpublish template");
-				template.Status = TemplateStatus.Published; // Revert on failure
+				State.Template.Status = TemplateStatus.Published; // Revert on failure
 			}
 		}
 		catch (Exception ex)
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
-			template.Status = TemplateStatus.Published; // Revert on failure
-		}
-	}
-
-	private async Task DisableQuestionnaire()
-	{
-		try
-		{
-			// Set as inactive while keeping published status
-			template.Status = TemplateStatus.Archived;
-
-			var updated = await ApiService.UpdateTemplateAsync(template);
-			if (updated != null)
-			{
-				NotificationService.Notify(NotificationSeverity.Warning, "Disabled", "Questionnaire template is temporarily disabled but remains published");
-			}
-			else
-			{
-				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to disable template");
-				template.Status = TemplateStatus.Draft; // Revert on failure
-			}
-		}
-		catch (Exception ex)
-		{
-			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to disable template: {ex.Message}");
-			template.Status = TemplateStatus.Draft; // Revert on failure
+			State.Template.Status = TemplateStatus.Published; // Revert on failure
 		}
 	}
 
@@ -826,24 +624,20 @@
 	{
 		try
 		{
-			// Re-activate while keeping published status
-			template.Status = TemplateStatus.Draft;
-
-			var updated = await ApiService.UpdateTemplateAsync(template);
+			var updated = await ApiService.RestoreTemplateAsync(State.Template.Id);
 			if (updated != null)
 			{
-				NotificationService.Notify(NotificationSeverity.Success, "Enabled", "Questionnaire template is now active and available for assignments");
+				State.Template = updated;
+				NotificationService.Notify(NotificationSeverity.Success, "Restored", "Questionnaire template has been restored and is now active");
 			}
 			else
 			{
-				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to enable template");
-				template.Status = TemplateStatus.Archived; // Revert on failure
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to restore template");
 			}
 		}
 		catch (Exception ex)
 		{
-			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to enable template: {ex.Message}");
-			template.Status = TemplateStatus.Archived; // Revert on failure
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to restore template: {ex.Message}");
 		}
 	}
 
@@ -851,124 +645,66 @@
 	{
 		try
 		{
-			var previousStatus = template.Status;
-			template.Status = TemplateStatus.Archived;
-
-			var updated = await ApiService.UpdateTemplateAsync(template);
+			var updated = await ApiService.ArchiveTemplateAsync(State.Template.Id);
 			if (updated != null)
 			{
+				State.Template = updated;
 				NotificationService.Notify(NotificationSeverity.Success, "Archived", "Questionnaire template has been archived and is no longer available for assignments");
 			}
 			else
 			{
 				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to archive template");
-				template.Status = previousStatus; // Revert on failure
 			}
 		}
 		catch (Exception ex)
 		{
-			var previousStatus = template.Status;
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to archive template: {ex.Message}");
-			template.Status = previousStatus; // Revert on failure
 		}
 	}
 
-	private async Task EditInactiveQuestionnaire()
+	private async Task HandleClone()
 	{
-		// Simply enable and allow editing
-		await RestoreQuestionnaire();
+		try
+		{
+			// Show confirmation dialog
+			var confirmed = await DialogService.Confirm(
+				"This will create a copy of the current questionnaire template in Draft status. Continue?",
+				"Clone Template",
+				new ConfirmOptions
+				{
+					OkButtonText = "Clone",
+					CancelButtonText = "Cancel"
+				});
+
+			if (confirmed != true)
+				return;
+
+			NotificationService.Notify(NotificationSeverity.Info, "Cloning", "Cloning template...");
+
+			// Call service to clone
+			var newTemplateId = await ApiService.CloneTemplateAsync(State.Template.Id);
+
+			if (newTemplateId.HasValue)
+			{
+				NotificationService.Notify(NotificationSeverity.Success, "Cloned", "Template cloned successfully!");
+
+				// Navigate to the cloned template editor
+				NavigationManager.NavigateTo($"/questionnaire-builder/{newTemplateId.Value}");
+			}
+			else
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to clone template. Please try again.");
+			}
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error cloning template: {ex.Message}");
+		}
 	}
 
 	private bool ValidateQuestionnaire()
 	{
-		var validationErrors = new List<string>();
-
-		// Validate template name
-		if (string.IsNullOrWhiteSpace(template.Name))
-		{
-			validationErrors.Add("Template name is required");
-		}
-
-		// Validate sections and questions
-		foreach (var section in template.Sections)
-		{
-			// Check if section has any questions
-			if (section.Questions.Count == 0)
-			{
-				var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
-				validationErrors.Add($"'{sectionName}' must contain at least one question");
-				continue;
-			}
-
-			// Validate each question in the section
-			foreach (var question in section.Questions)
-			{
-				var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
-				var questionPos = $"Question {question.Order + 1}";
-
-				// Validate question title
-				if (string.IsNullOrWhiteSpace(question.Title))
-				{
-					validationErrors.Add($"{questionPos} in '{sectionName}' requires a title");
-				}
-
-				// Validate question content based on type
-				if (question.Type == QuestionType.SelfAssessment)
-				{
-					var competencies = GetCompetenciesFromConfiguration(question);
-					if (competencies.Count == 0)
-					{
-						validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one competency");
-					}
-					else
-					{
-						for (int i = 0; i < competencies.Count; i++)
-						{
-							if (string.IsNullOrWhiteSpace(competencies[i].Title))
-							{
-								validationErrors.Add($"Competency {i + 1} in {questionPos} ('{sectionName}') requires a title");
-							}
-						}
-					}
-				}
-				else if (question.Type == QuestionType.GoalAchievement)
-				{
-					var goalCategories = GetGoalCategoriesFromConfiguration(question);
-					if (goalCategories.Count == 0)
-					{
-						validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one goal category");
-					}
-					else
-					{
-						for (int i = 0; i < goalCategories.Count; i++)
-						{
-							if (string.IsNullOrWhiteSpace(goalCategories[i].Title))
-							{
-								validationErrors.Add($"Goal category {i + 1} in {questionPos} ('{sectionName}') requires a title");
-							}
-						}
-					}
-				}
-				else if (question.Type == QuestionType.TextQuestion)
-				{
-					var textSections = GetTextSectionsFromConfiguration(question);
-					if (textSections.Count == 0)
-					{
-						validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one text section");
-					}
-					else
-					{
-						for (int i = 0; i < textSections.Count; i++)
-						{
-							if (string.IsNullOrWhiteSpace(textSections[i].Title))
-							{
-								validationErrors.Add($"Text section {i + 1} in {questionPos} ('{sectionName}') requires a title");
-							}
-						}
-					}
-				}
-			}
-		}
+		var validationErrors = ValidationService.ValidateQuestionnaire(State.Template);
 
 		// Show validation errors if any
 		if (validationErrors.Count > 0)
@@ -999,73 +735,35 @@
 
 	private async Task AddQuestionOfType(QuestionType questionType)
 	{
-		if (selectedSectionIndex >= 0 && selectedSectionIndex < template.Sections.Count)
+		if (State.SelectedSectionIndex >= 0 && State.SelectedSectionIndex < State.Template.Sections.Count)
 		{
-			var section = template.Sections[selectedSectionIndex];
+			var section = State.Template.Sections[State.SelectedSectionIndex];
+			var handler = HandlerFactory.GetHandler(questionType);
+
 			var newQuestion = new QuestionItem
 			{
 				Id = Guid.NewGuid(),
-				Title = GetDefaultQuestionTitle(questionType),
+				Title = handler.GetDefaultTitle(),
 				Type = questionType,
 				Order = section.Questions.Count,
 				IsRequired = true
 			};
 
-			// Initialize default configuration for each question type
-			if (questionType == QuestionType.SelfAssessment)
-			{
-				// Initialize with one default competency
-				var competencies = new List<CompetencyDefinition>
-			{
-				new CompetencyDefinition("competency_1", "", "", false, 0)
-			};
-				newQuestion.Configuration["Competencies"] = competencies;
-
-				// Initialize default rating scale settings
-				newQuestion.Configuration["RatingScale"] = 4; // Default to 1-4 scale
-				newQuestion.Configuration["ScaleLowLabel"] = "Poor";
-				newQuestion.Configuration["ScaleHighLabel"] = "Excellent";
-			}
-			else if (questionType == QuestionType.GoalAchievement)
-			{
-				// Initialize with empty goal categories using proper type
-				newQuestion.Configuration["GoalCategories"] = new List<QuestionCard.GoalCategory>();
-			}
-			else if (questionType == QuestionType.TextQuestion)
-			{
-				// Initialize with one default text section using proper type
-				newQuestion.Configuration["TextSections"] = new List<QuestionCard.TextSection>
-			{
-				new QuestionCard.TextSection { Title = "", Description = "", IsRequired = false, Order = 0 }
-			};
-			}
+			// Use handler to initialize configuration
+			handler.InitializeQuestion(newQuestion);
 
 			// Add the question to the section
 			section.Questions.Add(newQuestion);
+			State.MarkAsDirty();
 		}
 
 		// Reset selection state
-		showQuestionTypeSelection = false;
-		selectedSectionIndex = -1;
-		selectedQuestionType = null;
+		State.CloseQuestionTypeSelection();
 	}
 
 	private void CancelQuestionTypeSelection()
 	{
-		showQuestionTypeSelection = false;
-		selectedSectionIndex = -1;
-		selectedQuestionType = null;
-	}
-
-	private string GetDefaultQuestionTitle(QuestionType type)
-	{
-		return type switch
-		{
-			QuestionType.SelfAssessment => $"{questionTypeLabels[QuestionType.SelfAssessment]} of Competencies",
-			QuestionType.GoalAchievement => $"{questionTypeLabels[QuestionType.GoalAchievement]} Review",
-			QuestionType.TextQuestion => "Career Development & Planning",
-			_ => "New Question"
-		};
+		State.CloseQuestionTypeSelection();
 	}
 
 	private string GetStatusDescription()
@@ -1075,7 +773,7 @@
 			return "Create comprehensive assessments with our visual editor";
 		}
 
-		return TemplateStatusHelper.GetStatusDescription(template.Status);
+		return TemplateStatusHelper.GetStatusDescription(State.Template.Status);
 	}
 
 
@@ -1095,83 +793,6 @@
 		return questionTypeLabels[question.Type];
 	}
 
-	// Helper methods for validation
-	private List<QuestionCard.GoalCategory> GetGoalCategoriesFromConfiguration(QuestionItem question)
-	{
-		if (question.Configuration.ContainsKey("GoalCategories"))
-		{
-			var goalCategoriesObj = question.Configuration["GoalCategories"];
-
-			// Handle direct cast (when set in editor)
-			if (goalCategoriesObj is List<QuestionCard.GoalCategory> categories)
-			{
-				return categories;
-			}
-
-			// Handle JSON deserialization (when loaded from API)
-			if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement)
-			{
-				try
-				{
-					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-					{
-						return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
-					}
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error deserializing goal categories: {ex.Message}");
-				}
-			}
-		}
-		return new List<QuestionCard.GoalCategory>();
-	}
-
-	private List<QuestionCard.TextSection> GetTextSectionsFromConfiguration(QuestionItem question)
-	{
-		if (question.Configuration.ContainsKey("TextSections"))
-		{
-			var textSectionsObj = question.Configuration["TextSections"];
-
-			// Handle direct cast (when set in editor)
-			if (textSectionsObj is List<QuestionCard.TextSection> sections)
-			{
-				return sections;
-			}
-
-			// Handle JSON deserialization (when loaded from API)
-			if (textSectionsObj is System.Text.Json.JsonElement jsonElement)
-			{
-				try
-				{
-					if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-					{
-						return System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
-					}
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine($"Error deserializing text sections: {ex.Message}");
-				}
-			}
-		}
-
-		// Check for legacy format and convert
-		if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
-		{
-			return new List<QuestionCard.TextSection>
-		{
-			new QuestionCard.TextSection
-			{
-				Title = question.Configuration.ContainsKey("SectionTitle") ? question.Configuration["SectionTitle"].ToString() ?? "" : "",
-				Description = question.Configuration.ContainsKey("SectionDescription") ? question.Configuration["SectionDescription"].ToString() ?? "" : "",
-				IsRequired = false
-			}
-		};
-		}
-
-		return new List<QuestionCard.TextSection>();
-	}
 
 
 	// Event handler overloads for the new component structure

@@ -180,19 +180,19 @@
                     <small class="text-muted">Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")</small>
                 }
                 <div class="mt-2">
-                    <span class="badge @GetStatusBadgeClass(assignment.Status)">@assignment.Status</span>
+                    <span class="badge @GetStatusBadgeClass(assignment.WorkflowState)">@assignment.WorkflowState</span>
                 </div>
             </div>
         </div>;
     }
 
-    private string GetStatusBadgeClass(AssignmentStatus status)
+    private string GetStatusBadgeClass(WorkflowState state)
     {
-        return status switch
+        return state switch
         {
-            AssignmentStatus.Assigned => "bg-secondary",
-            AssignmentStatus.InProgress => "bg-info",
-            AssignmentStatus.Completed => "bg-success",
+            WorkflowState.Assigned => "bg-secondary",
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "bg-info",
+            WorkflowState.Finalized => "bg-success",
             _ => "bg-light text-dark"
         };
     }

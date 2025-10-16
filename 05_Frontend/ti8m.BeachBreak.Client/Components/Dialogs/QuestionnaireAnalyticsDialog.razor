@@ -274,7 +274,7 @@
                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
                         @(employee?.Department ?? "Unknown Department")
                     </RadzenText>
-                    <AssignmentStatusBadge Status="@assignment.Status" DueDate="@assignment.DueDate" />
+                    <WorkflowStateBadge WorkflowState="@assignment.WorkflowState" />
                 </div>
                 <div class="assignment-actions">
                     <RadzenButton Text="View"
@@ -373,7 +373,7 @@
 
     // Helper methods
     private int GetAssignmentCount() => Assignments.Count;
-    private int GetCompletedCount() => Assignments.Count(a => a.Status == AssignmentStatus.Completed);
+    private int GetCompletedCount() => Assignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
     private int GetOverdueCount() => Assignments.Count(IsOverdue);
 
     private int GetCompletionRate()
@@ -383,7 +383,7 @@
 
     private double GetAverageCompletionDays()
     {
-        var completed = Assignments.Where(a => a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        var completed = Assignments.Where(a => a.WorkflowState == WorkflowState.Finalized && a.CompletedDate.HasValue);
         if (!completed.Any()) return 0;
 
         return Math.Round(completed.Average(a => (a.CompletedDate!.Value - a.AssignedDate).TotalDays), 1);
@@ -391,12 +391,12 @@
 
     private List<QuestionnaireAssignment> GetActiveAssignments()
     {
-        return Assignments.Where(a => a.Status == AssignmentStatus.Assigned || a.Status == AssignmentStatus.InProgress).ToList();
+        return Assignments.Where(a => a.WorkflowState != WorkflowState.Finalized).ToList();
     }
 
     private List<QuestionnaireAssignment> GetCompletedAssignments()
     {
-        return Assignments.Where(a => a.Status == AssignmentStatus.Completed).ToList();
+        return Assignments.Where(a => a.WorkflowState == WorkflowState.Finalized).ToList();
     }
 
     private List<QuestionnaireAssignment> GetOverdueAssignments()
@@ -415,8 +415,8 @@
             {
                 Department = g.Key,
                 TotalCount = g.Count(),
-                CompletedCount = g.Count(a => a.Status == AssignmentStatus.Completed),
-                CompletionRate = g.Any() ? (g.Count(a => a.Status == AssignmentStatus.Completed) * 100 / g.Count()) : 0
+                CompletedCount = g.Count(a => a.WorkflowState == WorkflowState.Finalized),
+                CompletionRate = g.Any() ? (g.Count(a => a.WorkflowState == WorkflowState.Finalized) * 100 / g.Count()) : 0
             })
             .OrderByDescending(x => x.CompletionRate)
             .Cast<dynamic>()
@@ -511,7 +511,7 @@
 
     private int GetFastestCompletion()
     {
-        var completed = Assignments.Where(a => a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        var completed = Assignments.Where(a => a.WorkflowState == WorkflowState.Finalized && a.CompletedDate.HasValue);
         if (!completed.Any()) return 0;
 
         return (int)completed.Min(a => (a.CompletedDate!.Value - a.AssignedDate).TotalDays);
@@ -519,7 +519,7 @@
 
     private int GetSlowestCompletion()
     {
-        var completed = Assignments.Where(a => a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        var completed = Assignments.Where(a => a.WorkflowState == WorkflowState.Finalized && a.CompletedDate.HasValue);
         if (!completed.Any()) return 0;
 
         return (int)completed.Max(a => (a.CompletedDate!.Value - a.AssignedDate).TotalDays);
@@ -527,7 +527,7 @@
 
     private int GetOnTimeRate()
     {
-        var withDueDate = Assignments.Where(a => a.DueDate.HasValue && a.Status == AssignmentStatus.Completed && a.CompletedDate.HasValue);
+        var withDueDate = Assignments.Where(a => a.DueDate.HasValue && a.WorkflowState == WorkflowState.Finalized && a.CompletedDate.HasValue);
         if (!withDueDate.Any()) return 0;
 
         var onTime = withDueDate.Count(a => a.CompletedDate <= a.DueDate);
@@ -544,8 +544,7 @@
     {
         return assignment.DueDate.HasValue &&
                assignment.DueDate < DateTime.Now &&
-               assignment.Status != AssignmentStatus.Completed &&
-               assignment.Status != AssignmentStatus.Cancelled;
+               assignment.WorkflowState != WorkflowState.Finalized;
     }
 
     private string GetDueDateClass(QuestionnaireAssignment assignment)

@@ -8,16 +8,30 @@ public class QuestionnaireAssignmentCommandHandler :
     ICommandHandler<StartAssignmentWorkCommand, Result>,
     ICommandHandler<CompleteAssignmentWorkCommand, Result>,
     ICommandHandler<ExtendAssignmentDueDateCommand, Result>,
-    ICommandHandler<WithdrawAssignmentCommand, Result>
+    ICommandHandler<WithdrawAssignmentCommand, Result>,
+    ICommandHandler<CompleteSectionAsEmployeeCommand, Result>,
+    ICommandHandler<CompleteBulkSectionsAsEmployeeCommand, Result>,
+    ICommandHandler<CompleteSectionAsManagerCommand, Result>,
+    ICommandHandler<CompleteBulkSectionsAsManagerCommand, Result>,
+    ICommandHandler<SubmitEmployeeQuestionnaireCommand, Result>,
+    ICommandHandler<SubmitManagerQuestionnaireCommand, Result>,
+    ICommandHandler<InitiateReviewCommand, Result>,
+    ICommandHandler<EditAnswerDuringReviewCommand, Result>,
+    ICommandHandler<FinishReviewMeetingCommand, Result>,
+    ICommandHandler<ConfirmReviewOutcomeAsEmployeeCommand, Result>,
+    ICommandHandler<FinalizeQuestionnaireAsManagerCommand, Result>
 {
     private readonly IQuestionnaireAssignmentAggregateRepository repository;
+    private readonly IQuestionnaireResponseAggregateRepository responseRepository;
     private readonly ILogger<QuestionnaireAssignmentCommandHandler> logger;
 
     public QuestionnaireAssignmentCommandHandler(
         IQuestionnaireAssignmentAggregateRepository repository,
+        IQuestionnaireResponseAggregateRepository responseRepository,
         ILogger<QuestionnaireAssignmentCommandHandler> logger)
     {
         this.repository = repository;
+        this.responseRepository = responseRepository;
         this.logger = logger;
     }
 
@@ -142,6 +156,281 @@ public class QuestionnaireAssignmentCommandHandler :
         {
             logger.LogError(ex, "Error withdrawing assignment {AssignmentId}", command.AssignmentId);
             return Result.Fail("Failed to withdraw assignment: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(CompleteSectionAsEmployeeCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Employee completing section {SectionId} for assignment {AssignmentId}",
+                command.SectionId, command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.CompleteSectionAsEmployee(command.SectionId);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully completed section {SectionId} as employee for assignment {AssignmentId}",
+                command.SectionId, command.AssignmentId);
+            return Result.Success("Section completed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing section {SectionId} as employee for assignment {AssignmentId}",
+                command.SectionId, command.AssignmentId);
+            return Result.Fail("Failed to complete section: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(CompleteBulkSectionsAsEmployeeCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.CompleteBulkSectionsAsEmployee(command.SectionIds);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            return Result.Success("Sections completed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing sections as employee for assignment {AssignmentId}",
+                command.AssignmentId);
+            return Result.Fail("Failed to complete sections: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(CompleteSectionAsManagerCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Manager completing section {SectionId} for assignment {AssignmentId}",
+                command.SectionId, command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.CompleteSectionAsManager(command.SectionId);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully completed section {SectionId} as manager for assignment {AssignmentId}",
+                command.SectionId, command.AssignmentId);
+            return Result.Success("Section completed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing section {SectionId} as manager for assignment {AssignmentId}",
+                command.SectionId, command.AssignmentId);
+            return Result.Fail("Failed to complete section: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(CompleteBulkSectionsAsManagerCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.CompleteBulkSectionsAsManager(command.SectionIds);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            return Result.Success("Sections completed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error completing sections as manager for assignment {AssignmentId}",
+                command.AssignmentId);
+            return Result.Fail("Failed to complete sections: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(SubmitEmployeeQuestionnaireCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Employee submitting questionnaire for assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                command.ExpectedVersion,
+                cancellationToken);
+            assignment.SubmitEmployeeQuestionnaire(command.SubmittedBy);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully submitted employee questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Employee questionnaire submitted");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error submitting employee questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to submit employee questionnaire: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(SubmitManagerQuestionnaireCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Manager submitting questionnaire for assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                command.ExpectedVersion,
+                cancellationToken);
+            assignment.SubmitManagerQuestionnaire(command.SubmittedBy);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully submitted manager questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Manager questionnaire submitted");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error submitting manager questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to submit manager questionnaire: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(InitiateReviewCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Initiating review for assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.InitiateReview(command.InitiatedBy);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully initiated review for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Review initiated");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error initiating review for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to initiate review: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(EditAnswerDuringReviewCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Editing answer during review for assignment {AssignmentId}", command.AssignmentId);
+
+            // 1. Raise audit event on assignment aggregate
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
+            assignment.EditAnswerAsManagerDuringReview(
+                command.SectionId,
+                command.QuestionId,
+                command.OriginalCompletionRole,
+                command.Answer,
+                command.EditedBy);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            // 2. Update the actual answer in the response aggregate
+            var response = await responseRepository.FindByAssignmentIdAsync(command.AssignmentId, cancellationToken);
+            if (response == null)
+            {
+                logger.LogError("QuestionnaireResponse not found for assignment {AssignmentId}", command.AssignmentId);
+                return Result.Fail("Response not found", 404);
+            }
+
+            // Get current section responses for this role
+            var currentSectionResponses = new Dictionary<Guid, object>();
+            if (response.SectionResponses.TryGetValue(command.SectionId, out var roleResponses) &&
+                roleResponses.TryGetValue(command.OriginalCompletionRole, out var existingQuestions))
+            {
+                // Copy existing responses
+                currentSectionResponses = new Dictionary<Guid, object>(existingQuestions);
+            }
+
+            // Update or add the specific question answer
+            currentSectionResponses[command.QuestionId] = command.Answer;
+
+            // Record the updated section response
+            response.RecordSectionResponse(command.SectionId, command.OriginalCompletionRole, currentSectionResponses);
+            await responseRepository.StoreAsync(response, cancellationToken);
+
+            logger.LogInformation("Successfully edited answer during review for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Answer edited");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error editing answer during review for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to edit answer: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(FinishReviewMeetingCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Manager finishing review meeting for assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                command.ExpectedVersion,
+                cancellationToken);
+            assignment.FinishReviewMeeting(command.FinishedBy, command.ReviewSummary);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully finished review meeting for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Review meeting finished");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error finishing review meeting for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to finish review meeting: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(ConfirmReviewOutcomeAsEmployeeCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Employee confirming review outcome for assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                command.ExpectedVersion,
+                cancellationToken);
+
+            logger.LogInformation("Assignment {AssignmentId} loaded with workflow state: {WorkflowState}, IsLocked: {IsLocked}",
+                command.AssignmentId, assignment.WorkflowState, assignment.IsLocked);
+
+            assignment.ConfirmReviewOutcomeAsEmployee(command.ConfirmedBy, command.EmployeeComments);
+
+            logger.LogInformation("After ConfirmReviewOutcomeAsEmployee, workflow state: {WorkflowState}", assignment.WorkflowState);
+
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully confirmed review outcome for assignment {AssignmentId}, new state: {WorkflowState}",
+                command.AssignmentId, assignment.WorkflowState);
+            return Result.Success("Review outcome confirmed");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error confirming review outcome for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to confirm review outcome: " + ex.Message, 500);
+        }
+    }
+
+    public async Task<Result> HandleAsync(FinalizeQuestionnaireAsManagerCommand command, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            logger.LogInformation("Manager finalizing questionnaire for assignment {AssignmentId}", command.AssignmentId);
+
+            var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.AssignmentId,
+                command.ExpectedVersion,
+                cancellationToken);
+            assignment.FinalizeAsManager(command.FinalizedBy, command.ManagerFinalNotes);
+            await repository.StoreAsync(assignment, cancellationToken);
+
+            logger.LogInformation("Successfully finalized questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Success("Questionnaire finalized");
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error finalizing questionnaire for assignment {AssignmentId}", command.AssignmentId);
+            return Result.Fail("Failed to finalize questionnaire: " + ex.Message, 500);
         }
     }
 

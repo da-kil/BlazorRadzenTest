@@ -2,26 +2,44 @@
 
 namespace ti8m.BeachBreak.Application.Query.Queries;
 
-public class Result<TPayload>
+public class Result
 {
-    public TPayload? Payload { get; }
     public string? Message { get; }
     public bool Succeeded { get; }
     public int StatusCode { get; }
 
-    public Result(TPayload payload, string message, int statusCode, bool succeeded)
+    protected Result(string message, int statusCode, bool succeeded)
     {
-        Payload = payload;
         Message = message;
         StatusCode = statusCode;
         Succeeded = succeeded;
     }
 
-    public Result(TPayload payload, bool succeeded, int statusCode)
+    public static Result Success(string? message = null)
+    {
+        return new Result(message ?? string.Empty, StatusCodes.Status200OK, true);
+    }
+
+    public static Result Fail(string message, int statusCode)
+    {
+        return new Result(message, statusCode, false);
+    }
+}
+
+public class Result<TPayload> : Result
+{
+    public TPayload? Payload { get; }
+
+    private Result(TPayload payload, string message, int statusCode, bool succeeded)
+        : base(message, statusCode, succeeded)
     {
         Payload = payload;
-        Succeeded = succeeded;
-        StatusCode = statusCode;
+    }
+
+    private Result(TPayload payload, bool succeeded, int statusCode)
+        : base(string.Empty, statusCode, succeeded)
+    {
+        Payload = payload;
     }
 
     public static Result<TPayload> Success(TPayload payload)
@@ -34,7 +52,7 @@ public class Result<TPayload>
         return new Result<TPayload>(payload, true, statusCode);
     }
 
-    public static Result<TPayload> Fail(string message, int statusCode)
+    public new static Result<TPayload> Fail(string message, int statusCode)
     {
         return new Result<TPayload>(default!, message, statusCode, false);
     }

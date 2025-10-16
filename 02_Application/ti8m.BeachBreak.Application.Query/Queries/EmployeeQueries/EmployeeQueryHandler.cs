@@ -83,7 +83,8 @@ public class EmployeeQueryHandler :
                 EmployeeNumber = e.EmployeeId, // Using EmployeeId as EmployeeNumber
                 OrganizationNumber = e.OrganizationNumber,
                 Organization = string.Empty, // TODO: Look up organization name
-                IsDeleted = e.IsDeleted
+                IsDeleted = e.IsDeleted,
+                ApplicationRole = e.ApplicationRole
             }).ToList();
 
             logger.LogEmployeeListQuerySucceeded(employees.Count);
@@ -136,7 +137,8 @@ public class EmployeeQueryHandler :
                     EmployeeNumber = employeeReadModel.EmployeeId, // Using EmployeeId as EmployeeNumber
                     OrganizationNumber = employeeReadModel.OrganizationNumber,
                     Organization = string.Empty, // TODO: Look up organization name
-                    IsDeleted = employeeReadModel.IsDeleted
+                    IsDeleted = employeeReadModel.IsDeleted,
+                    ApplicationRole = employeeReadModel.ApplicationRole
                 };
 
                 logger.LogEmployeeQuerySucceeded(query.EmployeeId);

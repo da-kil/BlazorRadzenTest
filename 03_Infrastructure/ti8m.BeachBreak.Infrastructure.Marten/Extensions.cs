@@ -1,10 +1,12 @@
 using JasperFx;
+using JasperFx.Events.Projections;
 using Marten;
 using Marten.Events.Projections;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ti8m.BeachBreak.Application.Query.Projections;
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Services;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
+using ti8m.BeachBreak.Infrastructure.Marten.Projections;
 using ti8m.BeachBreak.Infrastructure.Marten.Services;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten;
@@ -38,6 +40,11 @@ public static class Extensions
             options.Projections.Snapshot<QuestionnaireTemplateReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<EmployeeReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<OrganizationReadModel>(SnapshotLifecycle.Inline);
+            options.Projections.Snapshot<QuestionnaireAssignmentReadModel>(SnapshotLifecycle.Inline);
+            options.Projections.Snapshot<QuestionnaireResponseReadModel>(SnapshotLifecycle.Inline);
+
+            // Event-based projections for review change tracking
+            options.Projections.Add<ReviewChangeLogProjection>(ProjectionLifecycle.Inline);
 
         }).UseLightweightSessions().UseNpgsqlDataSource();
 

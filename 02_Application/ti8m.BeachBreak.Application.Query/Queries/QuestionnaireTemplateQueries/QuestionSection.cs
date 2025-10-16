@@ -7,5 +7,6 @@ public class QuestionSection
     public string Description { get; set; } = string.Empty;
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
+    public string CompletionRole { get; set; } = "Employee";
     public List<QuestionItem> Questions { get; set; } = new();
 }

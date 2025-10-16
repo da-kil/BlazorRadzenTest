@@ -1,0 +1,194 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Questions
+@inject DialogService DialogService
+
+<style>
+    .edit-answer-dialog {
+        padding: 1rem;
+        min-height: 400px;
+        max-height: 550px;
+        overflow-y: auto;
+    }
+
+    .question-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #667eea;
+    }
+
+    .role-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+        margin-top: 0.5rem;
+    }
+
+    .answer-editor {
+        margin-bottom: 1rem;
+        padding: 0 0.5rem;
+    }
+
+    .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+        position: sticky;
+        bottom: 0;
+        background: white;
+        margin: 0 -1rem -1rem -1rem;
+        padding: 1rem;
+    }
+
+    /* Ensure competency cards fit well in dialog */
+    .answer-editor .rz-card {
+        margin-bottom: 0 !important;
+    }
+
+    .answer-editor .competency-card {
+        margin-bottom: 1rem !important;
+    }
+</style>
+
+<div class="edit-answer-dialog">
+    <div class="question-info">
+        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+            @Question.Title
+        </RadzenText>
+        @if (!string.IsNullOrWhiteSpace(Question.Description))
+        {
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                @Question.Description
+            </RadzenText>
+        }
+        <div class="role-indicator">
+            <RadzenIcon Icon="@GetRoleIcon()" />
+            Editing @CompletionRole's Answer
+        </div>
+    </div>
+
+    <div class="answer-editor">
+        @if (Question.Type == QuestionType.TextQuestion)
+        {
+            <RadzenTextArea @bind-Value="@editResponse.TextValue"
+                           Placeholder="Enter your answer here..."
+                           Rows="10"
+                           Style="width: 100%;" />
+        }
+        else if (Question.Type == QuestionType.SelfAssessment)
+        {
+            <OptimizedSelfAssessmentQuestion Question="@Question"
+                                           Response="@editResponse"
+                                           OnResponseChanged="@HandleResponseChanged"
+                                           IsReadOnly="false" />
+        }
+        else if (Question.Type == QuestionType.GoalAchievement)
+        {
+            <OptimizedGoalQuestion Question="@Question"
+                                  Response="@editResponse"
+                                  OnResponseChanged="@HandleResponseChanged"
+                                  IsReadOnly="false" />
+        }
+        else
+        {
+            <RadzenTextBox @bind-Value="@editResponse.TextValue"
+                          Placeholder="Enter your answer..."
+                          Style="width: 100%;" />
+        }
+    </div>
+
+    <div class="dialog-actions">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel" />
+        <RadzenButton Text="Save Changes"
+                     ButtonStyle="ButtonStyle.Success"
+                     Icon="save"
+                     Click="@SaveChanges" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionItem Question { get; set; } = null!;
+    [Parameter] public object? CurrentAnswer { get; set; }
+    [Parameter] public CompletionRole CompletionRole { get; set; }
+
+    private QuestionResponse editResponse = new();
+
+    protected override void OnInitialized()
+    {
+        editResponse = new QuestionResponse
+        {
+            QuestionId = Question.Id,
+            LastModified = DateTime.Now
+        };
+
+        if (CurrentAnswer != null)
+        {
+            if (CurrentAnswer is string str)
+            {
+                editResponse.TextValue = str;
+            }
+            else if (CurrentAnswer is int numValue)
+            {
+                editResponse.NumericValue = numValue;
+            }
+            else if (CurrentAnswer is Dictionary<string, object> complexValue)
+            {
+                editResponse.ComplexValue = new Dictionary<string, object>(complexValue);
+            }
+            else
+            {
+                editResponse.Value = CurrentAnswer;
+            }
+        }
+    }
+
+    private async Task HandleResponseChanged(QuestionResponse response)
+    {
+        // Update is already handled by the component
+        // This is just to track changes
+        await Task.CompletedTask;
+    }
+
+    private string GetRoleIcon()
+    {
+        return CompletionRole switch
+        {
+            CompletionRole.Employee => "person",
+            CompletionRole.Manager => "supervisor_account",
+            CompletionRole.Both => "groups",
+            _ => "help"
+        };
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private void SaveChanges()
+    {
+        // Return the edited response based on question type
+        object? result = Question.Type switch
+        {
+            QuestionType.TextQuestion => editResponse.TextValue,
+            QuestionType.SelfAssessment => editResponse.ComplexValue,
+            QuestionType.GoalAchievement => editResponse.ComplexValue,
+            _ => editResponse.TextValue ?? editResponse.Value
+        };
+
+        DialogService.Close(result);
+    }
+}

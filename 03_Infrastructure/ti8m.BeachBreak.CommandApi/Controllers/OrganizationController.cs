@@ -33,7 +33,7 @@ public class OrganizationController : BaseController
     }
 
     [HttpPost("bulk-update")]
-    [Authorize(Policy = "DataImportPolicy")]
+    [Authorize(Roles = "DataImportPolicy")]
     public async Task<IActionResult> BulkUpdateOrganizations([FromBody] IEnumerable<SyncOrganizationDto> organizations)
     {
         Result result = await commandDispatcher.SendAsync(new BulkUpdateOrganizationsCommand(
@@ -49,7 +49,7 @@ public class OrganizationController : BaseController
     }
 
     [HttpPost("bulk-delete")]
-    [Authorize(Policy = "DataImportPolicy")]
+    [Authorize(Roles = "DataImportPolicy")]
     public async Task<IActionResult> BulkDeleteOrganizations([FromBody] IEnumerable<SyncDeletedOrganizationDto> organizations)
     {
         Result result = await commandDispatcher.SendAsync(new BulkDeleteOrganizationsCommand(

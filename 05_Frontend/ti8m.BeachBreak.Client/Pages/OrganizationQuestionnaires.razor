@@ -6,124 +6,85 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
-@inherits OptimizedComponentBase
+@inherits BaseQuestionnaireListPage
 @inject IHRQuestionnaireService HRQuestionnaireService
 @inject IOrganizationApiService OrganizationService
 @inject IQuestionnaireTemplateService TemplateService
-@inject ICategoryApiService CategoryService
-@inject NotificationService NotificationService
 
 <PageTitle>Organization Questionnaires</PageTitle>
 
 @if (configuration != null && dataService != null)
 {
-    <GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
+	<GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
 }
 else if (isLoading)
 {
-    <div class="text-center p-5">
-        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading organization data...</RadzenText>
-    </div>
+	<div class="text-center p-5">
+		<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+		<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading organization data...</RadzenText>
+	</div>
 }
 
 @code {
-    private QuestionnairePageConfiguration? configuration;
-    private IQuestionnaireDataService? dataService;
+	// HR-specific state
+	private List<QuestionnaireAssignment> allAssignments = new();
+	private List<EmployeeDto> allEmployees = new();
+	private List<Organization> allOrganizations = new();
+	private List<QuestionnaireTemplate> allTemplates = new();
 
-    private List<QuestionnaireAssignment> allAssignments = new();
-    private List<EmployeeDto> allEmployees = new();
-    private List<Organization> allOrganizations = new();
-    private List<QuestionnaireTemplate> allTemplates = new();
-    private List<Category> categories = new();
-    private bool isLoading = false;
+	protected override string GetInitializationContext() => "InitializeOrganizationQuestionnaires";
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadInitialData();
-        SetupConfiguration();
-    }
+	protected override async Task LoadRoleSpecificDataAsync()
+	{
+		// Create the data service
+		dataService = new HRQuestionnaireDataService(HRQuestionnaireService, TemplateService);
 
-    private async Task LoadInitialData()
-    {
-        SetLoading(true);
+		// Load data in parallel
+		var assignmentsTask = HRQuestionnaireService.GetAllAssignmentsAsync();
+		var employeesTask = HRQuestionnaireService.GetAllEmployeesAsync();
+		var organizationsTask = OrganizationService.GetAllOrganizationsAsync(includeDeleted: false, includeIgnored: false);
+		var templatesTask = TemplateService.GetAllTemplatesAsync();
 
-        try
-        {
-            // Create the data service
-            dataService = new HRQuestionnaireDataService(HRQuestionnaireService, TemplateService);
+		await Task.WhenAll(assignmentsTask, employeesTask, organizationsTask, templatesTask);
 
-            // Load data to setup configuration
-            var assignmentsTask = HRQuestionnaireService.GetAllAssignmentsAsync();
-            var employeesTask = HRQuestionnaireService.GetAllEmployeesAsync();
-            var organizationsTask = OrganizationService.GetAllOrganizationsAsync(includeDeleted: false, includeIgnored: false);
-            var templatesTask = TemplateService.GetAllTemplatesAsync();
-            var categoriesTask = CategoryService.GetAllCategoriesAsync();
+		allAssignments = assignmentsTask.Result;
+		allEmployees = employeesTask.Result;
+		allOrganizations = organizationsTask.Result;
+		allTemplates = templatesTask.Result;
+	}
 
-            await Task.WhenAll(assignmentsTask, employeesTask, organizationsTask, templatesTask, categoriesTask);
+	protected override QuestionnairePageConfiguration CreateConfiguration()
+	{
+		return QuestionnairePageConfigurationFactory.CreateHRConfiguration(
+			allAssignments,
+			allEmployees,
+			allOrganizations,
+			allTemplates,
+			categories);
+	}
 
-            allAssignments = assignmentsTask.Result;
-            allEmployees = employeesTask.Result;
-            allOrganizations = organizationsTask.Result;
-            allTemplates = templatesTask.Result;
-            categories = categoriesTask.Result;
-        }
-        catch (Exception ex)
-        {
-            HandleError(ex, "loading organization data");
-        }
-        finally
-        {
-            SetLoading(false);
-        }
-    }
+	protected override void ConfigureActions()
+	{
+		var exportAction = configuration?.Actions.FirstOrDefault(a => a.Id == "export");
+		if (exportAction != null)
+		{
+			exportAction.OnClick = ExportOrganizationReport;
+		}
 
-    private void SetupConfiguration()
-    {
-        configuration = QuestionnairePageConfigurationFactory.CreateHRConfiguration(
-            allAssignments,
-            allEmployees,
-            allOrganizations,
-            allTemplates,
-            categories);
+		var analyticsAction = configuration?.Actions.FirstOrDefault(a => a.Id == "analytics");
+		if (analyticsAction != null)
+		{
+			analyticsAction.OnClick = OpenAnalyticsDashboard;
+		}
+	}
 
-        // Add custom action handlers
-        var exportAction = configuration.Actions.FirstOrDefault(a => a.Id == "export");
-        if (exportAction != null)
-        {
-            exportAction.OnClick = ExportOrganizationReport;
-        }
+	private async Task ExportOrganizationReport()
+	{
+		ShowInfo("Organization report export functionality would be implemented here");
+	}
 
-        var analyticsAction = configuration.Actions.FirstOrDefault(a => a.Id == "analytics");
-        if (analyticsAction != null)
-        {
-            analyticsAction.OnClick = OpenAnalyticsDashboard;
-        }
-    }
-
-    private async Task ExportOrganizationReport()
-    {
-        ShowInfo("Organization report export functionality would be implemented here");
-    }
-
-    private async Task OpenAnalyticsDashboard()
-    {
-        ShowInfo("Analytics dashboard functionality would be implemented here");
-    }
-
-    private void SetLoading(bool loading)
-    {
-        isLoading = loading;
-        NotifyStateChanged();
-    }
-
-    private void HandleError(Exception ex, string context)
-    {
-        NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed {context}: {ex.Message}");
-    }
-
-    private void ShowInfo(string message)
-    {
-        NotificationService.Notify(NotificationSeverity.Info, "Information", message);
-    }
+	private async Task OpenAnalyticsDashboard()
+	{
+		ShowInfo("Analytics dashboard functionality would be implemented here");
+	}
 }

@@ -1,3 +1,5 @@
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
+
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
 public class EmployeeDto
@@ -17,4 +19,5 @@ public class EmployeeDto
     public int OrganizationNumber { get; set; }
     public string Organization { get; set; } = string.Empty;
     public bool IsDeleted { get; set; }
+    public ApplicationRole ApplicationRole { get; set; }
 }

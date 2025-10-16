@@ -1,0 +1,216 @@
+@using ti8m.BeachBreak.Client.Models
+@using Radzen
+@using Radzen.Blazor
+
+@if (ShouldShowComments())
+{
+    <RadzenCard Class="review-comments-card mb-4">
+        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+            <RadzenIcon Icon="comment" Class="me-2" />
+            Review Comments
+        </RadzenText>
+
+        @if (ShouldShowManagerReviewSummary())
+        {
+            <div class="comment-section manager-comment mb-3">
+                <div class="comment-header">
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Manager Review Summary" Class="mb-2" />
+                    @if (Assignment?.ManagerReviewFinishedDate.HasValue == true)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            @Assignment.ManagerReviewFinishedDate.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm")
+                        </RadzenText>
+                    }
+                </div>
+                <RadzenCard Class="comment-content p-3 bg-light">
+                    @if (!string.IsNullOrWhiteSpace(Assignment?.ManagerReviewSummary))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
+                            @Assignment.ManagerReviewSummary
+                        </RadzenText>
+                    }
+                    else
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted fst-italic">
+                            No review summary provided
+                        </RadzenText>
+                    }
+                </RadzenCard>
+            </div>
+        }
+
+        @if (ShouldShowEmployeeComments())
+        {
+            <div class="comment-section employee-comment mb-3">
+                <div class="comment-header">
+                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Employee Comments" Class="mb-2" />
+                    @if (Assignment?.EmployeeReviewConfirmedDate.HasValue == true)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            @Assignment.EmployeeReviewConfirmedDate.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm")
+                        </RadzenText>
+                    }
+                </div>
+                <RadzenCard Class="comment-content p-3 bg-light">
+                    @if (!string.IsNullOrWhiteSpace(Assignment?.EmployeeReviewComments))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
+                            @Assignment.EmployeeReviewComments
+                        </RadzenText>
+                    }
+                    else
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted fst-italic">
+                            No comments provided
+                        </RadzenText>
+                    }
+                </RadzenCard>
+            </div>
+        }
+
+        @if (ShouldShowManagerFinalNotes())
+        {
+            <div class="comment-section manager-final mb-3">
+                <div class="comment-header">
+                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Manager Final Notes" Class="mb-2" />
+                    @if (Assignment?.FinalizedDate.HasValue == true)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            @Assignment.FinalizedDate.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm")
+                        </RadzenText>
+                    }
+                </div>
+                <RadzenCard Class="comment-content p-3 bg-light">
+                    @if (!string.IsNullOrWhiteSpace(Assignment?.ManagerFinalNotes))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
+                            @Assignment.ManagerFinalNotes
+                        </RadzenText>
+                    }
+                    else
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted fst-italic">
+                            No final notes provided
+                        </RadzenText>
+                    }
+                </RadzenCard>
+            </div>
+        }
+    </RadzenCard>
+}
+
+<style>
+    .review-comments-card {
+        border-left: 4px solid #667eea;
+        background: #f8f9fa;
+        margin-top: 2rem;
+    }
+
+    .comment-section {
+        margin-bottom: 1rem;
+    }
+
+    .comment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .comment-content {
+        border-left: 3px solid #dee2e6;
+    }
+
+    .manager-comment .comment-content {
+        border-left-color: #0dcaf0;
+    }
+
+    .employee-comment .comment-content {
+        border-left-color: #198754;
+    }
+
+    .manager-final .comment-content {
+        border-left-color: #ffc107;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public QuestionnaireAssignment? Assignment { get; set; }
+
+    [Parameter]
+    public bool IsEmployee { get; set; }
+
+    [Parameter]
+    public bool IsManager { get; set; }
+
+    private bool ShouldShowComments()
+    {
+        if (Assignment == null) return false;
+
+        // Show comments in ManagerReviewConfirmed, EmployeeReviewConfirmed, or Finalized states
+        return Assignment.WorkflowState is
+            WorkflowState.ManagerReviewConfirmed or
+            WorkflowState.EmployeeReviewConfirmed or
+            WorkflowState.Finalized;
+    }
+
+    private bool ShouldShowManagerReviewSummary()
+    {
+        if (Assignment == null) return false;
+
+        // Employee must NEVER see manager review summary
+        if (IsEmployee && !IsManager)
+        {
+            return false;
+        }
+
+        // Manager can see their review summary in these states
+        if (IsManager && Assignment.WorkflowState is
+            WorkflowState.ManagerReviewConfirmed or
+            WorkflowState.EmployeeReviewConfirmed or
+            WorkflowState.Finalized)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool ShouldShowEmployeeComments()
+    {
+        if (Assignment == null) return false;
+
+        // Requirement 1: After employee sign-off, manager needs to see employee's comment
+        // Requirement 2: After employee sign-off, employee needs to see own comment
+        // Requirement 3: After finalization, everyone sees all comments
+
+        if (Assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed)
+        {
+            // Employee has signed off - both manager and employee see employee's comments
+            return true;
+        }
+
+        if (Assignment.WorkflowState == WorkflowState.Finalized)
+        {
+            // Everyone sees all comments after finalization
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool ShouldShowManagerFinalNotes()
+    {
+        if (Assignment == null) return false;
+
+        // Employee must NEVER see manager final notes
+        if (IsEmployee && !IsManager)
+        {
+            return false;
+        }
+
+        // Only show manager final notes to managers after finalization
+        return IsManager && Assignment.WorkflowState == WorkflowState.Finalized;
+    }
+}

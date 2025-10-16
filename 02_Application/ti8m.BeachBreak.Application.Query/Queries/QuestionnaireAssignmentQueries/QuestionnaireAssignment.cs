@@ -1,4 +1,6 @@
-﻿namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+﻿using ti8m.BeachBreak.Core.Domain.SharedKernel;
+
+namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
 public class QuestionnaireAssignment
 {
@@ -15,7 +17,36 @@ public class QuestionnaireAssignment
     public DateTime? WithdrawnDate { get; set; }
     public string? WithdrawnBy { get; set; }
     public string? WithdrawalReason { get; set; }
-    public AssignmentStatus Status { get; set; } = AssignmentStatus.Assigned;
     public string? AssignedBy { get; set; }
     public string? Notes { get; set; }
+
+    // Denormalized template metadata (populated in query handler)
+    public string TemplateName { get; set; } = string.Empty;
+    public Guid? TemplateCategoryId { get; set; }
+
+    // Workflow properties
+    public WorkflowState WorkflowState { get; set; } = WorkflowState.Assigned;
+    public List<SectionProgressDto> SectionProgress { get; set; } = new();
+
+    // Submission phase
+    public DateTime? EmployeeSubmittedDate { get; set; }
+    public string? EmployeeSubmittedBy { get; set; }
+    public DateTime? ManagerSubmittedDate { get; set; }
+    public string? ManagerSubmittedBy { get; set; }
+
+    // Review phase
+    public DateTime? ReviewInitiatedDate { get; set; }
+    public string? ReviewInitiatedBy { get; set; }
+    public DateTime? ManagerReviewFinishedDate { get; set; }
+    public string? ManagerReviewFinishedBy { get; set; }
+    public string? ManagerReviewSummary { get; set; }
+    public DateTime? EmployeeReviewConfirmedDate { get; set; }
+    public string? EmployeeReviewConfirmedBy { get; set; }
+    public string? EmployeeReviewComments { get; set; }
+
+    // Final state
+    public DateTime? FinalizedDate { get; set; }
+    public string? FinalizedBy { get; set; }
+    public string? ManagerFinalNotes { get; set; }
+    public bool IsLocked { get; set; }
 }

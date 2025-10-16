@@ -1,5 +1,6 @@
-using ti8m.BeachBreak.Domain.QuestionnaireAggregate.Events;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+using QuestionnaireTemplateDomain = ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -91,7 +92,23 @@ public class QuestionnaireTemplateReadModel
         IsDeleted = true;
     }
 
-    private static List<QuestionSection> MapDomainSectionsToQuerySections(List<Domain.QuestionnaireAggregate.QuestionSection> domainSections)
+    public void Apply(QuestionnaireTemplateCloned @event)
+    {
+        Id = @event.NewTemplateId;
+        Name = @event.Name;
+        Description = @event.Description;
+        CategoryId = @event.CategoryId;
+        Sections = MapDomainSectionsToQuerySections(@event.Sections);
+        Settings = MapDomainSettingsToQuerySettings(@event.Settings);
+        Status = TemplateStatus.Draft;
+        CreatedDate = @event.CreatedDate;
+        PublishedDate = null;
+        LastPublishedDate = null;
+        PublishedBy = string.Empty;
+        IsDeleted = false;
+    }
+
+    private static List<QuestionSection> MapDomainSectionsToQuerySections(List<Domain.QuestionnaireTemplateAggregate.QuestionSection> domainSections)
     {
         return domainSections.Select(ds => new QuestionSection
         {
@@ -100,6 +117,7 @@ public class QuestionnaireTemplateReadModel
             Description = ds.Description,
             Order = ds.Order,
             IsRequired = ds.IsRequired,
+            CompletionRole = ds.CompletionRole.ToString(),
             Questions = ds.Questions.Select(dq => new QuestionItem
             {
                 Id = dq.Id,
@@ -114,7 +132,7 @@ public class QuestionnaireTemplateReadModel
         }).ToList();
     }
 
-    private static QuestionnaireSettings MapDomainSettingsToQuerySettings(Domain.QuestionnaireAggregate.QuestionnaireSettings domainSettings)
+    private static QuestionnaireSettings MapDomainSettingsToQuerySettings(QuestionnaireTemplateDomain.QuestionnaireSettings domainSettings)
     {
         return new QuestionnaireSettings
         {

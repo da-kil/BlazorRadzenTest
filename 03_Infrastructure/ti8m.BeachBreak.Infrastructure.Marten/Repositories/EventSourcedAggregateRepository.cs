@@ -26,7 +26,21 @@ public class EventSourcedAggregateRepository : IAggregateRepository
         using var session = store.LightweightSession();
 
         IEnumerable<IDomainEvent> domainEvents = aggregateRootEntity.UncommittedEvents.ToList();
-        session.Events.Append(aggregateRootEntity.Id, aggregateRootEntity.Version, domainEvents);
+
+        // For new aggregates (version == event count), don't specify expected version
+        // For existing aggregates, specify the version before new events for optimistic concurrency
+        var expectedVersion = aggregateRootEntity.Version - domainEvents.Count();
+
+        if (expectedVersion == 0)
+        {
+            // New stream - use overload without version
+            session.Events.Append(aggregateRootEntity.Id, domainEvents);
+        }
+        else
+        {
+            // Existing stream - use optimistic concurrency
+            session.Events.Append(aggregateRootEntity.Id, aggregateRootEntity.Version, domainEvents);
+        }
 
         logger.LogSaveEventStream(domainEvents.Count(), aggregateRootEntity.Id);
 

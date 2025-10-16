@@ -9,7 +9,7 @@ public class QuestionSection
     public bool IsRequired { get; set; } = true;
 
     // Role assignment for dual completion workflow
-    public CompletionRole AssignedTo { get; set; } = CompletionRole.Employee;
+    public CompletionRole CompletionRole { get; set; } = CompletionRole.Employee;
     public bool IsEmployeeCompleted { get; set; } = false;
     public bool IsManagerCompleted { get; set; } = false;
     public DateTime? EmployeeCompletedDate { get; set; }
@@ -136,7 +136,7 @@ public class QuestionSection
 
     public bool IsFullyCompleted()
     {
-        return AssignedTo switch
+        return CompletionRole switch
         {
             CompletionRole.Employee => IsEmployeeCompleted,
             CompletionRole.Manager => IsManagerCompleted,
@@ -147,7 +147,7 @@ public class QuestionSection
 
     public string GetCompletionStatusText()
     {
-        return AssignedTo switch
+        return CompletionRole switch
         {
             CompletionRole.Employee => IsEmployeeCompleted ? "Completed by Employee" : "Pending Employee",
             CompletionRole.Manager => IsManagerCompleted ? "Completed by Manager" : "Pending Manager",
@@ -164,7 +164,7 @@ public class QuestionSection
 
     public string GetRoleIcon()
     {
-        return AssignedTo switch
+        return CompletionRole switch
         {
             CompletionRole.Employee => "person",
             CompletionRole.Manager => "supervisor_account",
@@ -175,7 +175,7 @@ public class QuestionSection
 
     public string GetRoleColor()
     {
-        return AssignedTo switch
+        return CompletionRole switch
         {
             CompletionRole.Employee => "#0F60FF", // Blue
             CompletionRole.Manager => "#00E6C8", // Green

@@ -1,9 +1,12 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using Microsoft.AspNetCore.Components.Authorization
 @inject NotificationService NotificationService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <style>
     .questionnaire-completion {
@@ -76,7 +79,7 @@
     }
 
     .section-header {
-        margin-bottom: 2.5rem;
+        margin-bottom: 2rem;
         padding-bottom: 1.5rem;
         border-bottom: 1px solid var(--border-light);
     }
@@ -96,11 +99,14 @@
     }
 
     .question-container {
-        margin-bottom: 3rem;
-        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .question-content {
         background: var(--bg-light);
         border-radius: 6px;
         border-left: 4px solid var(--primary-color);
+        padding: 1.5rem;
     }
 
     .question-header {
@@ -274,10 +280,33 @@
         background: #fef2f2;
         border: 1px solid #fecaca;
         color: #dc2626;
-        padding: 0.75rem;
+        padding: 1rem;
         border-radius: 4px;
         font-size: 0.875rem;
         margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+
+    .validation-error strong {
+        flex-shrink: 0;
+        font-weight: 700;
+    }
+
+    .validation-error ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        flex: 1;
+    }
+
+    .validation-error li {
+        padding: 0.125rem 0;
+    }
+
+    .validation-error li::before {
+        content: "• ";
     }
 
     @@media (max-width: 768px) {
@@ -352,8 +381,7 @@
 
             <div class="progress-header">
                 <div class="section-progress">
-                    Section @(currentSectionIndex + 1) of @template.Sections.Count:
-                    <strong>@currentSection.Title</strong>
+                    Section @(currentSectionIndex + 1) of @template.Sections.Count
                 </div>
             <div class="progress-info">
                 <RadzenProgressBar Value="@progressPercentage" Max="100" ShowValue="true" />
@@ -371,7 +399,7 @@
         {
             <div class="validation-error">
                 <strong>Please fix the following issues:</strong>
-                <ul class="mt-2 mb-0">
+                <ul>
                     @foreach (var error in validationErrors)
                     {
                         <li>@error</li>
@@ -392,19 +420,12 @@
             @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
             {
                 <div class="question-container">
-                    <div class="question-header">
-                        <div class="question-label">
-                            @GetQuestionTypeLabel(question)
-                            @if (question.IsRequired)
-                            {
-                                <span class="required-indicator">*</span>
-                            }
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(question.Description))
-                        {
+                    @if (!string.IsNullOrWhiteSpace(question.Description))
+                    {
+                        <div class="question-header">
                             <p class="question-description">@question.Description</p>
-                        }
-                    </div>
+                        </div>
+                    }
                     <div class="question-content">
                         @GetQuestionInput(question)
                     </div>
@@ -438,13 +459,14 @@
                 @if (template != null && currentSectionIndex < template.Sections.Count - 1)
                 {
                     <RadzenButton Text="Next" ButtonStyle="ButtonStyle.Primary"
-                                  Icon="arrow_forward" Click="@NextSection" Class="nav-button" />
+                                  Icon="arrow_forward" Click="@NextSection" Class="nav-button"
+                                  Disabled="@(!canEdit)" />
                 }
-                else
+                else if (CanShowSubmitButton())
                 {
                     <RadzenButton Text="Submit" ButtonStyle="ButtonStyle.Success"
                                   Icon="send" Click="@SubmitQuestionnaire" Class="nav-button"
-                                  Disabled="@isSaving" />
+                                  Disabled="@(isSaving || !canEdit)" />
                 }
             </div>
         </div>
@@ -467,6 +489,10 @@
     private bool isSaving = false;
     private bool isLoading = true;
     private DateTime? lastSavedTime;
+    private string currentUserRole = "Employee";
+    private bool isEmployee = false;
+    private bool isManager = false;
+    private bool canEdit = false;
 
     // Auto-save timer
     private Timer? autoSaveTimer;
@@ -477,12 +503,63 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await DetermineUserRole();
         await LoadTemplate();
         await LoadExistingResponses();
         InitializeResponses();
         SetupAutoSave();
         isLoading = false;
         StateHasChanged();
+    }
+
+    private async Task DetermineUserRole()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        // Managers are TeamLead, HR, HRLead, or Admin
+        isManager = user.IsInRole("TeamLead") || user.IsInRole("HR") || user.IsInRole("HRLead") || user.IsInRole("Admin");
+        isEmployee = !isManager;
+        currentUserRole = isManager ? "Manager" : "Employee";
+
+        // Determine if editing is allowed based on workflow state
+        UpdateCanEdit();
+    }
+
+    private void UpdateCanEdit()
+    {
+        if (Assignment == null)
+        {
+            canEdit = false;
+            return;
+        }
+
+        // Check workflow state to determine if editing is allowed
+        if (isEmployee && !isManager)
+        {
+            canEdit = WorkflowStateHelper.CanEmployeeEdit(Assignment);
+        }
+        else if (isManager)
+        {
+            canEdit = WorkflowStateHelper.CanManagerEdit(Assignment) ||
+                      WorkflowStateHelper.CanManagerEditDuringReview(Assignment);
+        }
+    }
+
+    private bool CanShowSubmitButton()
+    {
+        if (Assignment == null) return false;
+
+        if (isEmployee && !isManager)
+        {
+            return WorkflowStateHelper.CanEmployeeSubmit(Assignment);
+        }
+        else if (isManager)
+        {
+            return WorkflowStateHelper.CanManagerSubmit(Assignment);
+        }
+
+        return false;
     }
 
     private async Task LoadTemplate()
@@ -536,16 +613,22 @@
                 responses[section.Id] = new SectionResponse
                 {
                     SectionId = section.Id,
-                    QuestionResponses = new Dictionary<Guid, QuestionResponse>()
+                    RoleResponses = new Dictionary<string, Dictionary<Guid, QuestionResponse>>()
                 };
             }
 
-            // Initialize question responses
+            // Ensure role dictionary exists
+            if (!responses[section.Id].RoleResponses.ContainsKey(currentUserRole))
+            {
+                responses[section.Id].RoleResponses[currentUserRole] = new Dictionary<Guid, QuestionResponse>();
+            }
+
+            // Initialize question responses for current user's role
             foreach (var question in section.Questions)
             {
-                if (!responses[section.Id].QuestionResponses.ContainsKey(question.Id))
+                if (!responses[section.Id].RoleResponses[currentUserRole].ContainsKey(question.Id))
                 {
-                    responses[section.Id].QuestionResponses[question.Id] = new QuestionResponse
+                    responses[section.Id].RoleResponses[currentUserRole][question.Id] = new QuestionResponse
                     {
                         QuestionId = question.Id,
                         QuestionType = question.Type,
@@ -637,10 +720,37 @@
 
             try
             {
-                await ResponseService.SubmitResponseAsync(Assignment.Id);
-                isCompleted = true;
-                NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
-                StateHasChanged();
+                // Use workflow-aware submission based on role
+                bool success;
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var userName = authState.User.Identity?.Name ?? "Unknown";
+
+                if (isEmployee && !isManager && WorkflowStateHelper.CanEmployeeSubmit(Assignment))
+                {
+                    success = await AssignmentService.SubmitEmployeeQuestionnaireAsync(Assignment.Id, userName);
+                }
+                else if (isManager && WorkflowStateHelper.CanManagerSubmit(Assignment))
+                {
+                    success = await AssignmentService.SubmitManagerQuestionnaireAsync(Assignment.Id, userName);
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Warning, "Cannot Submit",
+                        "You cannot submit this questionnaire in its current workflow state.");
+                    return;
+                }
+
+                if (success)
+                {
+                    isCompleted = true;
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
+                    StateHasChanged();
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, "Submission Failed",
+                        "Could not submit questionnaire. Please try again.");
+                }
             }
             catch (Exception ex)
             {
@@ -654,9 +764,17 @@
         validationErrors.Clear();
         var section = currentSection;
 
+        if (!responses[section.Id].RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+            return false;
+
         foreach (var question in section.Questions.Where(q => q.IsRequired))
         {
-            var response = responses[section.Id].QuestionResponses[question.Id];
+            if (!roleQuestions.TryGetValue(question.Id, out var response))
+            {
+                validationErrors.Add($"'{GetQuestionTypeLabel(question)}' is required");
+                continue;
+            }
+
             if (!IsQuestionAnswered(question, response))
             {
                 validationErrors.Add($"'{GetQuestionTypeLabel(question)}' is required");
@@ -674,10 +792,13 @@
 
         foreach (var section in template.Sections)
         {
+            if (!responses[section.Id].RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+                continue;
+
             foreach (var question in section.Questions.Where(q => q.IsRequired))
             {
-                var response = responses[section.Id].QuestionResponses[question.Id];
-                if (!IsQuestionAnswered(question, response))
+                if (!roleQuestions.TryGetValue(question.Id, out var response) ||
+                    !IsQuestionAnswered(question, response))
                 {
                     validationErrors.Add($"'{GetQuestionTypeLabel(question)}' in section '{section.Title}' is required");
                 }
@@ -757,7 +878,7 @@
         var scaleLowLabel = GetScaleLowLabelFromQuestion(question);
         var scaleHighLabel = GetScaleHighLabelFromQuestion(question);
         var sectionResponse = responses[currentSection.Id];
-        var questionResponse = sectionResponse.QuestionResponses[question.Id];
+        var questionResponse = sectionResponse.RoleResponses[currentUserRole][question.Id];
 
         return @<div class="self-assessment-input">
             @foreach (var competency in competencies)
@@ -785,6 +906,7 @@
                         {
                             <RadzenRating @bind-Value="ratingValue"
                                           Stars="@ratingScale"
+                                          Disabled="@(!canEdit)"
                                           Change="@(async () => await OnCompetencyRatingChange(questionResponse, competency.Key, ratingValue))" />
                         }
                         else
@@ -792,7 +914,8 @@
                             <input type="number" value="@ratingValue"
                                    @onchange="@(async (ChangeEventArgs e) => await OnCompetencyRatingChange(questionResponse, competency.Key, int.TryParse(e.Value?.ToString(), out var r) ? r : 0))"
                                    class="form-input" style="width: 100px;"
-                                   min="1" max="@ratingScale" />
+                                   min="1" max="@ratingScale"
+                                   disabled="@(!canEdit)" />
                             <span>/ @ratingScale</span>
                         }
 
@@ -812,7 +935,8 @@
                     <textarea value="@commentsValue"
                               @onchange="@(async (ChangeEventArgs e) => await OnCompetencyCommentsChange(questionResponse, competency.Key, e.Value?.ToString() ?? ""))"
                               class="text-input" placeholder="Optional comments..."
-                              style="min-height: 80px;"></textarea>
+                              style="min-height: 80px;"
+                              disabled="@(!canEdit)"></textarea>
                 </div>
             }
         </div>;
@@ -821,7 +945,7 @@
     private RenderFragment GetGoalAchievementInput(QuestionItem question)
     {
         var sectionResponse = responses[currentSection.Id];
-        var questionResponse = sectionResponse.QuestionResponses[question.Id];
+        var questionResponse = sectionResponse.RoleResponses[currentUserRole][question.Id];
 
         return @<div class="goal-achievement-input">
             @{
@@ -838,7 +962,8 @@
                           @onchange="@(async (ChangeEventArgs e) => await OnGoalFieldChange(questionResponse, "GoalDescription", e.Value?.ToString() ?? ""))"
                           class="text-input"
                           placeholder="Describe your goal in detail..."
-                          required></textarea>
+                          required
+                          disabled="@(!canEdit)"></textarea>
             </div>
 
             <div class="goal-row">
@@ -846,13 +971,15 @@
                     <label class="goal-field-label">Start Date</label>
                     <input type="date" value="@(startDate?.ToString("yyyy-MM-dd"))"
                            @onchange="@(async (ChangeEventArgs e) => await OnGoalDateChange(questionResponse, "StartDate", DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null))"
-                           class="form-input" />
+                           class="form-input"
+                           disabled="@(!canEdit)" />
                 </div>
                 <div class="goal-field">
                     <label class="goal-field-label">Target End Date</label>
                     <input type="date" value="@(endDate?.ToString("yyyy-MM-dd"))"
                            @onchange="@(async (ChangeEventArgs e) => await OnGoalDateChange(questionResponse, "EndDate", DateTime.TryParse(e.Value?.ToString(), out var d) ? d : null))"
-                           class="form-input" />
+                           class="form-input"
+                           disabled="@(!canEdit)" />
                 </div>
             </div>
 
@@ -861,7 +988,8 @@
                 <input type="text" value="@successCriteria"
                        @onchange="@(async (ChangeEventArgs e) => await OnGoalFieldChange(questionResponse, "SuccessCriteria", e.Value?.ToString() ?? ""))"
                        class="form-input"
-                       placeholder="How will you measure success?" />
+                       placeholder="How will you measure success?"
+                       disabled="@(!canEdit)" />
             </div>
 
             <div class="goal-field">
@@ -869,7 +997,8 @@
                 <input type="number" value="@achievementPercentage"
                        @onchange="@(async (ChangeEventArgs e) => await OnGoalNumberChange(questionResponse, "AchievementPercentage", int.TryParse(e.Value?.ToString(), out var n) ? n : 0))"
                        class="form-input"
-                       min="0" max="100" placeholder="0" />
+                       min="0" max="100" placeholder="0"
+                       disabled="@(!canEdit)" />
             </div>
         </div>;
     }
@@ -877,7 +1006,7 @@
     private RenderFragment GetTextQuestionInput(QuestionItem question)
     {
         var sectionResponse = responses[currentSection.Id];
-        var questionResponse = sectionResponse.QuestionResponses[question.Id];
+        var questionResponse = sectionResponse.RoleResponses[currentUserRole][question.Id];
 
         return @<div class="text-question-input">
             @{
@@ -887,7 +1016,8 @@
                       @onchange="@(async (ChangeEventArgs e) => await OnTextResponseChange(questionResponse, e.Value?.ToString() ?? ""))"
                       class="text-input"
                       placeholder="Enter your response here..."
-                      rows="8"></textarea>
+                      rows="8"
+                      disabled="@(!canEdit)"></textarea>
         </div>;
     }
 

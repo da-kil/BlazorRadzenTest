@@ -1,0 +1,120 @@
+@using Radzen
+@using Radzen.Blazor
+@inject DialogService DialogService
+
+<style>
+    .finish-review-dialog {
+        padding: 1.5rem;
+        min-width: 550px;
+    }
+
+    .review-header {
+        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #4CAF50;
+    }
+
+    .summary-section {
+        margin-bottom: 1rem;
+    }
+
+    .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .icon-box {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+<div class="finish-review-dialog">
+    <div class="review-header">
+        <div class="text-center">
+            <RadzenIcon Icon="event_available" Style="font-size: 3rem; margin-bottom: 1rem;" />
+            <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
+                Finish Review Meeting
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                You are about to complete the review meeting. The questionnaire will move to the next phase where the employee must confirm the review outcome.
+            </RadzenText>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="icon-box">
+            <RadzenIcon Icon="info" Style="color: #4CAF50;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                What happens next?
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            After finishing the review meeting:
+        </RadzenText>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">All sections become read-only for both parties</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Employee will be notified to confirm the review outcome</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">You will be able to finalize after employee confirmation</RadzenText></li>
+        </ul>
+    </div>
+
+    <div class="summary-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+            Review Summary (Optional)
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+            Summarize the key points discussed during the review meeting, any action items, or important observations:
+        </RadzenText>
+        <RadzenTextArea @bind-Value="@reviewSummary"
+                       Placeholder="Enter review summary here... (optional)"
+                       Rows="8"
+                       Style="width: 100%;"
+                       MaxLength="5000" />
+        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+            @(reviewSummary?.Length ?? 0) / 5000 characters
+        </RadzenText>
+    </div>
+
+    <div class="dialog-actions">
+        <RadzenButton Text="Cancel"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel"
+                     Size="ButtonSize.Medium" />
+        <RadzenButton Text="Finish Review Meeting"
+                     ButtonStyle="ButtonStyle.Success"
+                     Icon="event_available"
+                     Click="@FinishReview"
+                     Size="ButtonSize.Medium" />
+    </div>
+</div>
+
+@code {
+    private string? reviewSummary;
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private void FinishReview()
+    {
+        // Return the review summary (return empty string if null to distinguish from cancellation)
+        DialogService.Close(reviewSummary ?? string.Empty);
+    }
+}

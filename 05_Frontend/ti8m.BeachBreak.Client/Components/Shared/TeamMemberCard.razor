@@ -1,0 +1,204 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<RadzenCard Class="team-member-card mb-3">
+    <div class="d-flex align-items-start justify-content-between mb-3">
+        <div class="d-flex align-items-center flex-grow-1">
+            <div class="team-member-avatar me-3">
+                <RadzenIcon Icon="person" Style="font-size: 2rem;" Class="text-primary" />
+            </div>
+            <div>
+                <RadzenText TextStyle="TextStyle.H6" Class="mb-1">@TeamMember.FirstName @TeamMember.LastName</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-1">@TeamMember.EMail</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    <RadzenIcon Icon="badge" Style="font-size: 0.875rem;" Class="me-1" />
+                    @TeamMember.Role
+                </RadzenText>
+            </div>
+        </div>
+        <div class="text-end">
+            <RadzenBadge Text="@($"{CompletedCount}/{TotalCount}")"
+                        BadgeStyle="@GetProgressBadgeStyle()"
+                        Class="px-3 py-2" />
+        </div>
+    </div>
+
+    @if (Assignments.Any())
+    {
+        <div class="assignments-summary mb-3">
+            <div class="row g-2">
+                <div class="col-3 text-center">
+                    <div class="stat-box p-2 border rounded">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-warning mb-1">@PendingCount</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Pending</RadzenText>
+                    </div>
+                </div>
+                <div class="col-3 text-center">
+                    <div class="stat-box p-2 border rounded">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-info mb-1">@InProgressCount</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">In Progress</RadzenText>
+                    </div>
+                </div>
+                <div class="col-3 text-center">
+                    <div class="stat-box p-2 border rounded">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-success mb-1">@CompletedCount</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Completed</RadzenText>
+                    </div>
+                </div>
+                <div class="col-3 text-center">
+                    <div class="stat-box p-2 border rounded">
+                        <RadzenText TextStyle="TextStyle.H6" Class="text-danger mb-1">@OverdueCount</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overdue</RadzenText>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overall Progress</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@ProgressPercentage%</RadzenText>
+            </div>
+            <RadzenProgressBar Value="@ProgressPercentage" ShowValue="false" Style="height: 8px;" />
+        </div>
+
+        <!-- Assignments List - Always Visible, Aligned with Questionnaire View -->
+        <div class="assignments-list mt-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary">
+                    <RadzenIcon Icon="touch_app" Style="font-size: 1rem;" Class="me-1" />
+                    Click to Review & Complete
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @Assignments.Count @(Assignments.Count == 1 ? "assignment" : "assignments")
+                </RadzenText>
+            </div>
+            <div class="assignment-details-list">
+                @foreach (var assignment in Assignments.Take(10))
+                {
+                    <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetBorderClass(assignment)"
+                         style="cursor: pointer;"
+                         @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
+                        <div class="flex-grow-1">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
+                                <RadzenIcon Icon="description" Style="font-size: 0.875rem;" Class="me-1" />
+                                @assignment.TemplateName
+                            </RadzenText>
+                            @if (assignment.DueDate.HasValue)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Class="@GetDueDateClass(assignment)">
+                                    <RadzenIcon Icon="event" Style="font-size: 0.75rem;" />
+                                    Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
+                                    @if (assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
+                                    {
+                                        <span class="text-danger fw-bold"> (Overdue by @((DateTime.Now - assignment.DueDate.Value).Days) days)</span>
+                                    }
+                                </RadzenText>
+                            }
+                        </div>
+                        <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
+                                    BadgeStyle="BadgeStyle.Light"
+                                    Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")"
+                                    Class="ms-2" />
+                    </div>
+                }
+                @if (Assignments.Count > 10)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted text-center mt-2">
+                        +@(Assignments.Count - 10) more assignments
+                    </RadzenText>
+                }
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        @if (OnSendReminder.HasDelegate && (PendingCount > 0 || InProgressCount > 0))
+        {
+            <div class="d-flex gap-2 mt-3">
+                <RadzenButton Text="Send Reminder"
+                             Icon="notifications"
+                             ButtonStyle="ButtonStyle.Secondary"
+                             Size="ButtonSize.Small"
+                             Click="@(() => OnSendReminder.InvokeAsync(TeamMember))" />
+            </div>
+        }
+    }
+    else
+    {
+        <div class="text-center p-3">
+            <RadzenIcon Icon="assignment" Class="text-muted mb-2" Style="font-size: 2rem;" />
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">No assignments yet</RadzenText>
+        </div>
+    }
+</RadzenCard>
+
+@code {
+    [Parameter, EditorRequired] public EmployeeDto TeamMember { get; set; } = default!;
+    [Parameter, EditorRequired] public List<QuestionnaireAssignment> Assignments { get; set; } = new();
+    [Parameter] public EventCallback<EmployeeDto> OnSendReminder { get; set; }
+    [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
+
+    private int TotalCount => Assignments.Count;
+    // Completed: BothSubmitted onwards (includes review and finalized states)
+    private int CompletedCount => Assignments.Count(a =>
+        a.WorkflowState is WorkflowState.BothSubmitted or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed
+        or WorkflowState.ManagerReviewConfirmed or WorkflowState.Finalized);
+    // Pending: Just assigned, not started yet
+    private int PendingCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Assigned);
+    // In Progress: Work started but not both submitted (includes submission states where one party submitted)
+    private int InProgressCount => Assignments.Count(a =>
+        a.WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress
+        or WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted);
+    private int OverdueCount => Assignments.Count(a =>
+        a.DueDate.HasValue &&
+        a.DueDate.Value < DateTime.Now &&
+        a.WorkflowState != WorkflowState.Finalized);
+
+    private double ProgressPercentage => TotalCount > 0 ? Math.Round((double)CompletedCount / TotalCount * 100, 1) : 0;
+
+    private BadgeStyle GetProgressBadgeStyle()
+    {
+        if (OverdueCount > 0) return BadgeStyle.Danger;
+        if (ProgressPercentage >= 100) return BadgeStyle.Success;
+        if (ProgressPercentage >= 50) return BadgeStyle.Info;
+        return BadgeStyle.Warning;
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(WorkflowState state)
+    {
+        return state switch
+        {
+            WorkflowState.Assigned => BadgeStyle.Secondary,
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => BadgeStyle.Info,
+            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => BadgeStyle.Primary,
+            WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => BadgeStyle.Warning,
+            WorkflowState.Finalized => BadgeStyle.Success,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private string GetBorderClass(QuestionnaireAssignment assignment)
+    {
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
+            return "border-danger";
+
+        return assignment.WorkflowState switch
+        {
+            WorkflowState.Assigned => "border-warning",
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "border-info",
+            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted => "border-info",
+            WorkflowState.BothSubmitted or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "border-primary",
+            WorkflowState.Finalized => "border-success",
+            _ => "border-secondary"
+        };
+    }
+
+    private string GetDueDateClass(QuestionnaireAssignment assignment)
+    {
+        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
+            return "text-danger fw-bold";
+        return "text-muted";
+    }
+}

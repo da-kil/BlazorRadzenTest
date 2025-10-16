@@ -50,20 +50,20 @@
 
     private bool CanEdit()
     {
-        return Assignment.Status != AssignmentStatus.Completed &&
-               Assignment.Status != AssignmentStatus.Cancelled;
+        return Assignment.WorkflowState != WorkflowState.Finalized;
     }
 
     private bool CanSendReminder()
     {
-        return Assignment.Status == AssignmentStatus.Assigned ||
-               Assignment.Status == AssignmentStatus.InProgress;
+        return Assignment.WorkflowState == WorkflowState.Assigned ||
+               Assignment.WorkflowState == WorkflowState.EmployeeInProgress ||
+               Assignment.WorkflowState == WorkflowState.ManagerInProgress ||
+               Assignment.WorkflowState == WorkflowState.BothInProgress;
     }
 
     private bool CanCancel()
     {
-        return Assignment.Status != AssignmentStatus.Completed &&
-               Assignment.Status != AssignmentStatus.Cancelled;
+        return Assignment.WorkflowState != WorkflowState.Finalized;
     }
 
     public class AssignmentActionEventArgs

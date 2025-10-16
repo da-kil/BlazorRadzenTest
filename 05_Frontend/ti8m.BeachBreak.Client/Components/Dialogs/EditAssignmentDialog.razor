@@ -71,7 +71,7 @@
     {
         editModel = new EditAssignmentModel
         {
-            Status = Assignment.Status,
+            WorkflowState = Assignment.WorkflowState,
             DueDate = Assignment.DueDate,
             Notes = Assignment.Notes ?? string.Empty,
             AssignedBy = Assignment.AssignedBy ?? string.Empty
@@ -192,22 +192,22 @@
             </div>
 
             <div class="form-field">
-                <span class="form-label">Current Status *</span>
+                <span class="form-label">Current Workflow State *</span>
                 <div class="status-options">
-                    @foreach (var status in GetAvailableStatuses())
+                    @foreach (var state in GetAvailableStates())
                     {
-                        <div class="status-option @(editModel.Status == status.Value ? "selected" : "") status-@status.Value.ToString().ToLower()"
-                             @onclick="() => editModel.Status = status.Value">
+                        <div class="status-option @(editModel.WorkflowState == state.Value ? "selected" : "") status-@state.Value.ToString().ToLower()"
+                             @onclick="() => editModel.WorkflowState = state.Value">
                             <div class="status-indicator"></div>
-                            <span>@status.Text</span>
+                            <span>@state.Text</span>
                         </div>
                     }
                 </div>
-                @if (validationErrors.ContainsKey("Status"))
+                @if (validationErrors.ContainsKey("WorkflowState"))
                 {
                     <div class="validation-error">
                         <RadzenIcon Icon="error" />
-                        @validationErrors["Status"]
+                        @validationErrors["WorkflowState"]
                     </div>
                 }
             </div>
@@ -373,20 +373,22 @@
         StateHasChanged();
     }
 
-    private List<StatusOption> GetAvailableStatuses()
+    private List<WorkflowStateOption> GetAvailableStates()
     {
-        var options = new List<StatusOption>
+        var options = new List<WorkflowStateOption>
         {
-            new("Assigned", AssignmentStatus.Assigned),
-            new("In Progress", AssignmentStatus.InProgress),
-            new("Completed", AssignmentStatus.Completed),
-            new("Cancelled", AssignmentStatus.Cancelled)
+            new("Assigned", WorkflowState.Assigned),
+            new("Employee In Progress", WorkflowState.EmployeeInProgress),
+            new("Manager In Progress", WorkflowState.ManagerInProgress),
+            new("Both In Progress", WorkflowState.BothInProgress),
+            new("Employee Submitted", WorkflowState.EmployeeSubmitted),
+            new("Manager Submitted", WorkflowState.ManagerSubmitted),
+            new("Both Submitted", WorkflowState.BothSubmitted),
+            new("In Review", WorkflowState.InReview),
+            new("Employee Review Confirmed", WorkflowState.EmployeeReviewConfirmed),
+            new("Manager Review Confirmed", WorkflowState.ManagerReviewConfirmed),
+            new("Finalized", WorkflowState.Finalized)
         };
-
-        if (Assignment.DueDate.HasValue && Assignment.DueDate < DateTime.Now)
-        {
-            options.Add(new("Overdue", AssignmentStatus.Overdue));
-        }
 
         return options;
     }
@@ -400,9 +402,9 @@
             validationErrors["Employees"] = "At least one employee must be selected";
         }
 
-        if (editModel.Status == default)
+        if (editModel.WorkflowState == default)
         {
-            validationErrors["Status"] = "Status is required";
+            validationErrors["WorkflowState"] = "Workflow state is required";
         }
 
         return !validationErrors.Any();
@@ -410,7 +412,7 @@
 
     private bool HasChanges()
     {
-        var hasDetailChanges = editModel.Status != Assignment.Status ||
+        var hasDetailChanges = editModel.WorkflowState != Assignment.WorkflowState ||
                                editModel.DueDate != Assignment.DueDate ||
                                editModel.Notes != (Assignment.Notes ?? string.Empty) ||
                                editModel.AssignedBy != (Assignment.AssignedBy ?? string.Empty);
@@ -447,9 +449,9 @@
         }
 
         // Detail changes
-        if (editModel.Status != Assignment.Status)
+        if (editModel.WorkflowState != Assignment.WorkflowState)
         {
-            changes.Add($"Status: {Assignment.Status} → {editModel.Status}");
+            changes.Add($"Workflow State: {Assignment.WorkflowState} → {editModel.WorkflowState}");
         }
 
         if (editModel.DueDate != Assignment.DueDate)
@@ -488,22 +490,22 @@
 
     public class EditAssignmentModel
     {
-        public AssignmentStatus Status { get; set; }
+        public WorkflowState WorkflowState { get; set; }
         public DateTime? DueDate { get; set; }
         public string Notes { get; set; } = string.Empty;
         public string AssignedBy { get; set; } = string.Empty;
         public List<string> SelectedEmployeeIds { get; set; } = new();
     }
 
-    public class StatusOption
+    public class WorkflowStateOption
     {
-        public StatusOption(string text, AssignmentStatus value)
+        public WorkflowStateOption(string text, WorkflowState value)
         {
             Text = text;
             Value = value;
         }
 
         public string Text { get; set; }
-        public AssignmentStatus Value { get; set; }
+        public WorkflowState Value { get; set; }
     }
 }

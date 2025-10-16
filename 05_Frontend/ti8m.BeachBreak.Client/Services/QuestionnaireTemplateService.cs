@@ -1,4 +1,6 @@
+using System.Net.Http.Json;
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.Dto;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -75,7 +77,7 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
         }
     }
 
-    public async Task<List<QuestionnaireTemplate>> GetInactiveTemplatesAsync()
+    public async Task<List<QuestionnaireTemplate>> GetArchivedTemplatesAsync()
     {
         try
         {
@@ -84,7 +86,7 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
         }
         catch (Exception ex)
         {
-            LogError("Error fetching inactive templates", ex);
+            LogError("Error fetching archived templates", ex);
             return new List<QuestionnaireTemplate>();
         }
     }
@@ -105,14 +107,42 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
         return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "unpublish", null, TemplateQueryEndpoint);
     }
 
-    public async Task<QuestionnaireTemplate?> ActivateTemplateAsync(Guid templateId)
+    public async Task<QuestionnaireTemplate?> ArchiveTemplateAsync(Guid templateId)
     {
-        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "activate", null, TemplateQueryEndpoint);
+        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "archive", null, TemplateQueryEndpoint);
     }
 
-    public async Task<QuestionnaireTemplate?> DeactivateTemplateAsync(Guid templateId)
+    public async Task<QuestionnaireTemplate?> RestoreTemplateAsync(Guid templateId)
     {
-        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "deactivate", null, TemplateQueryEndpoint);
+        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "restore", null, TemplateQueryEndpoint);
+    }
+
+    // Template cloning
+    public async Task<Guid?> CloneTemplateAsync(Guid templateId, string? namePrefix = null)
+    {
+        try
+        {
+            var requestDto = new CloneTemplateRequestDto { NamePrefix = namePrefix };
+
+            var response = await HttpCommandClient.PostAsJsonAsync(
+                $"{TemplateCommandEndpoint}/{templateId}/clone",
+                requestDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<CloneTemplateResponseDto>();
+                return result?.NewTemplateId;
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            LogError($"Failed to clone template {templateId}: {response.StatusCode}", new Exception(errorContent));
+            return null;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error cloning template {templateId}", ex);
+            return null;
+        }
     }
 
     // Template analytics
