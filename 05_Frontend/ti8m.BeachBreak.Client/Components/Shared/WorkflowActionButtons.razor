@@ -20,26 +20,6 @@
             </div>
 
             <div class="button-group">
-                @if (IsEmployee && WorkflowStateHelper.CanEmployeeSubmit(Assignment))
-                {
-                    <RadzenButton Text="Submit Questionnaire"
-                                  Icon="send"
-                                  ButtonStyle="ButtonStyle.Success"
-                                  Click="@SubmitEmployeeQuestionnaire"
-                                  Disabled="@isProcessing"
-                                  Size="ButtonSize.Medium" />
-                }
-
-                @if (IsManager && WorkflowStateHelper.CanManagerSubmit(Assignment))
-                {
-                    <RadzenButton Text="Submit Questionnaire"
-                                  Icon="send"
-                                  ButtonStyle="ButtonStyle.Success"
-                                  Click="@SubmitManagerQuestionnaire"
-                                  Disabled="@isProcessing"
-                                  Size="ButtonSize.Medium" />
-                }
-
                 @if (IsManager && WorkflowStateHelper.CanInitiateReview(Assignment))
                 {
                     <RadzenButton Text="Initiate Review Meeting"
@@ -185,80 +165,6 @@
     public EventCallback OnActionCompleted { get; set; }
 
     private bool isProcessing = false;
-
-    private async Task SubmitEmployeeQuestionnaire()
-    {
-        if (Assignment == null) return;
-
-        isProcessing = true;
-        try
-        {
-            var success = await AssignmentService.SubmitEmployeeQuestionnaireAsync(Assignment.Id, UserName);
-            if (success)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Success",
-                    Detail = "Employee questionnaire submitted successfully",
-                    Duration = 4000
-                });
-                await OnActionCompleted.InvokeAsync();
-                StateHasChanged(); // Force re-render after assignment is reloaded
-            }
-            else
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Failed to submit questionnaire",
-                    Duration = 4000
-                });
-            }
-        }
-        finally
-        {
-            isProcessing = false;
-        }
-    }
-
-    private async Task SubmitManagerQuestionnaire()
-    {
-        if (Assignment == null) return;
-
-        isProcessing = true;
-        try
-        {
-            var success = await AssignmentService.SubmitManagerQuestionnaireAsync(Assignment.Id, UserName);
-            if (success)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Success",
-                    Detail = "Manager questionnaire submitted successfully",
-                    Duration = 4000
-                });
-                await OnActionCompleted.InvokeAsync();
-                StateHasChanged(); // Force re-render after assignment is reloaded
-            }
-            else
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Failed to submit questionnaire",
-                    Duration = 4000
-                });
-            }
-        }
-        finally
-        {
-            isProcessing = false;
-        }
-    }
 
     private async Task InitiateReview()
     {
