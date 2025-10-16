@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.Dto;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -10,6 +11,7 @@ public interface IEmployeeApiService
     Task<List<EmployeeDto>> GetEmployeesByDepartmentAsync(string department);
     Task<List<EmployeeDto>> SearchEmployeesAsync(string searchTerm);
     Task<bool> ChangeApplicationRoleAsync(Guid employeeId, ApplicationRole newRole);
+    Task<EmployeeDashboardDto?> GetMyDashboardAsync();
 }
 
 public class EmployeeApiService : BaseApiService, IEmployeeApiService
@@ -52,6 +54,19 @@ public class EmployeeApiService : BaseApiService, IEmployeeApiService
         {
             LogError($"Error changing application role for employee {employeeId}", ex);
             return false;
+        }
+    }
+
+    public async Task<EmployeeDashboardDto?> GetMyDashboardAsync()
+    {
+        try
+        {
+            return await HttpQueryClient.GetFromJsonAsync<EmployeeDashboardDto>($"{BaseEndpoint}/me/dashboard");
+        }
+        catch (Exception ex)
+        {
+            LogError("Error retrieving employee dashboard", ex);
+            return null;
         }
     }
 }

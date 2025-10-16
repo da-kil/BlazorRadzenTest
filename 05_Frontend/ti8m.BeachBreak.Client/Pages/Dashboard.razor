@@ -1,0 +1,215 @@
+@page "/dashboard"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@inject IEmployeeApiService EmployeeApiService
+@inject NavigationManager NavigationManager
+@inject NotificationService NotificationService
+
+<link href="css/dashboard.css" rel="stylesheet" />
+
+<PageTitle>Dashboard</PageTitle>
+
+<!-- Page Header -->
+<div class="mb-4">
+    <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-2">Dashboard</RadzenText>
+    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Overview of your questionnaire assignments</RadzenText>
+</div>
+
+@if (isLoading)
+{
+    <div class="text-center p-5">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading dashboard...</RadzenText>
+    </div>
+}
+else if (dashboard != null)
+{
+    <!-- Metrics Cards Row -->
+    <RadzenRow Gap="1rem" Class="rz-mb-4">
+        <!-- Pending Card -->
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer;"
+                        @onclick="@(() => NavigateToMyQuestionnaires())">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Pending</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.PendingCount</RadzenText>
+                    </div>
+                    <RadzenIcon Icon="pending_actions" Style="font-size: 3rem; opacity: 0.3;" />
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <!-- In Progress Card -->
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; cursor: pointer;"
+                        @onclick="@(() => NavigateToMyQuestionnaires())">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">In Progress</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.InProgressCount</RadzenText>
+                    </div>
+                    <RadzenIcon Icon="edit_note" Style="font-size: 3rem; opacity: 0.3;" />
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <!-- Completed Card -->
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; cursor: pointer;"
+                        @onclick="@(() => NavigateToMyQuestionnaires())">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Completed</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.CompletedCount</RadzenText>
+                    </div>
+                    <RadzenIcon Icon="check_circle" Style="font-size: 3rem; opacity: 0.3;" />
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Urgent Assignments Section -->
+    @if (dashboard.UrgentAssignments.Any())
+    {
+        <RadzenCard Class="rz-mb-4">
+            <div class="d-flex align-items-center rz-mb-3">
+                <RadzenIcon Icon="warning" Style="color: #ff6b6b; font-size: 1.5rem; margin-right: 0.5rem;" />
+                <RadzenText TextStyle="TextStyle.H5" Class="mb-0">Urgent Assignments</RadzenText>
+                <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@dashboard.UrgentAssignments.Count.ToString()" Class="ms-2" />
+            </div>
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted rz-mb-3">
+                These assignments are due within 3 days or are overdue
+            </RadzenText>
+
+            <RadzenDataList Data="@dashboard.UrgentAssignments" TItem="UrgentAssignmentDto">
+                <Template Context="urgent">
+                    <RadzenCard Class="rz-mb-2" Style="@(urgent.IsOverdue ? "border-left: 4px solid #ff6b6b;" : "border-left: 4px solid #ffa500;")">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center rz-mb-2">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-0">
+                                        @urgent.QuestionnaireTemplateName
+                                    </RadzenText>
+                                    @if (urgent.IsOverdue)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Overdue" Class="ms-2" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Due Soon" Class="ms-2" />
+                                    }
+                                </div>
+                                <div class="d-flex align-items-center text-muted">
+                                    <RadzenIcon Icon="event" Style="font-size: 1rem; margin-right: 0.25rem;" />
+                                    <RadzenText TextStyle="TextStyle.Caption">
+                                        Due: @urgent.DueDate.ToString("MMM dd, yyyy")
+                                        @if (urgent.IsOverdue)
+                                        {
+                                            <span style="color: #ff6b6b;"> (@GetDaysOverdue(urgent.DueDate) days overdue)</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="color: #ffa500;"> (@GetDaysUntilDue(urgent.DueDate) days remaining)</span>
+                                        }
+                                    </RadzenText>
+                                </div>
+                            </div>
+                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                          Click="@(() => NavigateToQuestionnaire(urgent.AssignmentId))" />
+                        </div>
+                    </RadzenCard>
+                </Template>
+            </RadzenDataList>
+        </RadzenCard>
+    }
+    else
+    {
+        <RadzenCard>
+            <div class="text-center p-4">
+                <RadzenIcon Icon="check_circle" Style="font-size: 3rem; color: #51cf66; opacity: 0.5;" />
+                <RadzenText TextStyle="TextStyle.H6" Class="rz-mt-3">All Clear!</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">You have no urgent assignments at this time.</RadzenText>
+            </div>
+        </RadzenCard>
+    }
+
+    <!-- Last Updated -->
+    <div class="text-end text-muted rz-mt-3">
+        <RadzenText TextStyle="TextStyle.Caption">
+            Last updated: @dashboard.LastUpdated.ToLocalTime().ToString("MMM dd, yyyy HH:mm")
+        </RadzenText>
+    </div>
+}
+else
+{
+    <RadzenCard>
+        <div class="text-center p-4">
+            <RadzenIcon Icon="dashboard" Style="font-size: 3rem; color: #adb5bd;" />
+            <RadzenText TextStyle="TextStyle.H6" Class="rz-mt-3">No Dashboard Data</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Unable to load dashboard information.</RadzenText>
+            <RadzenButton Text="Retry" Icon="refresh" ButtonStyle="ButtonStyle.Primary" Class="rz-mt-3"
+                          Click="@LoadDashboardAsync" />
+        </div>
+    </RadzenCard>
+}
+
+@code {
+    private EmployeeDashboardDto? dashboard;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardAsync();
+    }
+
+    private async Task LoadDashboardAsync()
+    {
+        isLoading = true;
+        try
+        {
+            dashboard = await EmployeeApiService.GetMyDashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard: {ex.Message}");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Failed to load dashboard data",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToMyQuestionnaires()
+    {
+        NavigationManager.NavigateTo("/my-questionnaires");
+    }
+
+    private void NavigateToQuestionnaire(Guid assignmentId)
+    {
+        NavigationManager.NavigateTo($"/questionnaire/{assignmentId}");
+    }
+
+    private int GetDaysOverdue(DateTime dueDate)
+    {
+        var timeSpan = DateTime.UtcNow - dueDate;
+        return (int)Math.Ceiling(timeSpan.TotalDays);
+    }
+
+    private int GetDaysUntilDue(DateTime dueDate)
+    {
+        var timeSpan = dueDate - DateTime.UtcNow;
+        return (int)Math.Ceiling(timeSpan.TotalDays);
+    }
+}
