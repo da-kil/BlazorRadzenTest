@@ -74,6 +74,12 @@
 }
 
 /* Employee text styles */
+.employee-details {
+    flex: 1;
+    min-width: 0; /* Critical for text truncation to work in flexbox */
+    overflow: hidden;
+}
+
 .employee-details h6 {
     margin: 0;
     font-size: 0.875rem;
@@ -84,6 +90,23 @@
     margin: 0;
     font-size: 0.75rem;
     color: #6c757d;
+}
+
+/* Email truncation wrapper */
+.employee-email {
+    /* Text truncation with ellipsis */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.employee-email p,
+.employee-email .rz-text {
+    /* Ensure nested elements don't break truncation */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
 }
 
 .employee-meta {

@@ -17,7 +17,9 @@
         </div>
         <div class="employee-details">
             <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@Employee.FullName</RadzenText>
-            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@Employee.EMail</RadzenText>
+            <div class="employee-email" title="@Employee.EMail">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@Employee.EMail</RadzenText>
+            </div>
         </div>
     </div>
 
