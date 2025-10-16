@@ -340,11 +340,13 @@
                                           WorkflowState.EmployeeReviewConfirmed or
                                           WorkflowState.Finalized);
 
-        // Employees awaiting sign-off (ManagerReviewConfirmed) should also see ALL sections
-        var isEmployeeAwaitingSignOff = assignment != null && isEmployee && !isManager &&
-            assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+        // Employees in post-review states should also see ALL sections (including manager sections)
+        var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.EmployeeReviewConfirmed or
+                                         WorkflowState.Finalized);
 
-        if (isManagerPostReviewReadOnly || isEmployeeAwaitingSignOff)
+        if (isManagerPostReviewReadOnly || isEmployeePostReview)
         {
             // Show ALL sections in read-only view
             visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
@@ -504,13 +506,15 @@
         {
             QuestionnaireResponse? existingResponse = null;
 
-            // Check if employee is awaiting sign-off - they need to see ALL responses
-            var isEmployeeAwaitingSignOff = assignment != null && isEmployee && !isManager &&
-                assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+            // Check if employee is awaiting sign-off or has already signed off - they need to see ALL responses
+            var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+                (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                             WorkflowState.EmployeeReviewConfirmed or
+                                             WorkflowState.Finalized);
 
-            if (isEmployeeAwaitingSignOff || isManager)
+            if (isEmployeePostReview || isManager)
             {
-                // Managers and employees awaiting sign-off load ALL role responses
+                // Managers and employees in post-review states load ALL role responses
                 existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignmentId.Value);
             }
             else if (isEmployee && !isManager)
@@ -530,16 +534,16 @@
                 if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
                 {
                     // For managers in post-review read-only mode, load ALL role responses (Employee + Manager)
-                    // For employees awaiting sign-off, also load ALL role responses so they can see manager's answers
+                    // For employees in post-review states, also load ALL role responses so they can see manager's answers
                     // For normal mode, only load current user's role responses
                     var isPostReviewReadOnly = assignment != null && isManager &&
                         (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                                       WorkflowState.EmployeeReviewConfirmed or
                                                       WorkflowState.Finalized);
 
-                    // Use the isEmployeeAwaitingSignOff variable already declared at the start of this method
+                    // Use the isEmployeePostReview variable already declared at the start of this method
 
-                    if ((isPostReviewReadOnly || isEmployeeAwaitingSignOff) && sectionKvp.Value.RoleResponses != null)
+                    if ((isPostReviewReadOnly || isEmployeePostReview) && sectionKvp.Value.RoleResponses != null)
                     {
                         // Load ALL role responses (Employee, Manager, Both)
                         foreach (var roleKvp in sectionKvp.Value.RoleResponses)
@@ -582,8 +586,7 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Could not load existing response: {ex.Message}");
-            // Continue with new response
+            // Could not load existing response - continue with new response
         }
     }
 
@@ -888,20 +891,22 @@
 
         // Determine which role's responses to fetch based on section's CompletionRole
         // In read-only mode after review, managers view responses based on who originally completed the section
-        // Employees awaiting sign-off also need to view responses based on section's CompletionRole
+        // Employees in post-review states also need to view responses based on section's CompletionRole
         var isPostReviewReadOnly = assignment != null && isManager &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                           WorkflowState.EmployeeReviewConfirmed or
                                           WorkflowState.Finalized);
 
-        var isEmployeeAwaitingSignOff = assignment != null && isEmployee && !isManager &&
-            assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+        var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.EmployeeReviewConfirmed or
+                                         WorkflowState.Finalized);
 
         string roleToFetch = currentUserRole;
 
-        if (isPostReviewReadOnly || isEmployeeAwaitingSignOff)
+        if (isPostReviewReadOnly || isEmployeePostReview)
         {
-            // In post-review read-only mode or employee awaiting sign-off, fetch responses based on section's CompletionRole
+            // In post-review states, fetch responses based on section's CompletionRole
             roleToFetch = currentSection.CompletionRole switch
             {
                 CompletionRole.Employee => "Employee",
@@ -1731,7 +1736,7 @@
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[DynamicQuestionnaire] Failed to deserialize competencies: {ex.Message}");
+                // Failed to deserialize competencies - will use defaults
             }
         }
 

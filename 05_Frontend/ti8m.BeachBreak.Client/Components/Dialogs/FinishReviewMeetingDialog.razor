@@ -114,7 +114,7 @@
 
     private void FinishReview()
     {
-        // Return the review summary (can be null or empty string)
-        DialogService.Close(reviewSummary);
+        // Return the review summary (return empty string if null to distinguish from cancellation)
+        DialogService.Close(reviewSummary ?? string.Empty);
     }
 }

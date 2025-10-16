@@ -132,7 +132,7 @@
 
     private void FinalizeQuestionnaire()
     {
-        // Return the final notes (can be null or empty string)
-        DialogService.Close(finalNotes);
+        // Return the final notes (return empty string if null to distinguish from cancellation)
+        DialogService.Close(finalNotes ?? string.Empty);
     }
 }

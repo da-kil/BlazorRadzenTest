@@ -114,7 +114,8 @@
 
     private void ConfirmReview()
     {
-        // Return the comments (can be null or empty string)
-        DialogService.Close(employeeComments);
+        // Return the comments (return empty string if null to distinguish from cancellation)
+        var result = employeeComments ?? string.Empty;
+        DialogService.Close(result);
     }
 }

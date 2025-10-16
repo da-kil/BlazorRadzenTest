@@ -390,10 +390,18 @@ public class QuestionnaireAssignmentCommandHandler :
                 command.AssignmentId,
                 command.ExpectedVersion,
                 cancellationToken);
+
+            logger.LogInformation("Assignment {AssignmentId} loaded with workflow state: {WorkflowState}, IsLocked: {IsLocked}",
+                command.AssignmentId, assignment.WorkflowState, assignment.IsLocked);
+
             assignment.ConfirmReviewOutcomeAsEmployee(command.ConfirmedBy, command.EmployeeComments);
+
+            logger.LogInformation("After ConfirmReviewOutcomeAsEmployee, workflow state: {WorkflowState}", assignment.WorkflowState);
+
             await repository.StoreAsync(assignment, cancellationToken);
 
-            logger.LogInformation("Successfully confirmed review outcome for assignment {AssignmentId}", command.AssignmentId);
+            logger.LogInformation("Successfully confirmed review outcome for assignment {AssignmentId}, new state: {WorkflowState}",
+                command.AssignmentId, assignment.WorkflowState);
             return Result.Success("Review outcome confirmed");
         }
         catch (Exception ex)
