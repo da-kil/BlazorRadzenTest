@@ -110,14 +110,9 @@
                                 
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CreatedDate)" Title="Created" Width="120px" FormatString="{0:dd/MM/yyyy}" />
                                                                 
-                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="200px" TextAlign="TextAlign.Center">
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="160px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
                                         <div class="d-flex gap-1">
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                         Icon="preview"
-                                                         Size="ButtonSize.Small"
-                                                         Title="Preview"
-                                                         Click="@(() => PreviewTemplate(template))" />
                                             <RadzenButton ButtonStyle="ButtonStyle.Light"
                                                          Icon="edit"
                                                          Size="ButtonSize.Small"
@@ -128,11 +123,6 @@
                                                          Size="ButtonSize.Small"
                                                          Title="Clone"
                                                          Click="@(() => CloneTemplate(template))" />
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                         Icon="assignment"
-                                                         Size="ButtonSize.Small"
-                                                         Title="Assign"
-                                                         Click="@(() => AssignTemplate(template))" />
                                             <RadzenButton ButtonStyle="@GetToggleButtonStyle(template.Status)"
                                                          Icon="@GetToggleButtonIcon(template.Status)"
                                                          Size="ButtonSize.Small"
@@ -292,11 +282,6 @@
         StateHasChanged();
     }
 
-    private async Task PreviewTemplate(QuestionnaireTemplate template)
-    {
-        NavigationManager.NavigateTo($"/questionnaire/{template.Id}");
-    }
-
     private void EditTemplate(QuestionnaireTemplate template)
     {
         NavigationManager.NavigateTo($"/questionnaire-builder/{template.Id}");
@@ -344,11 +329,6 @@
         {
             NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error cloning template: {ex.Message}");
         }
-    }
-
-    private async Task AssignTemplate(QuestionnaireTemplate template)
-    {
-        NotificationService.Notify(NotificationSeverity.Info, "Assign", $"Assignment dialog for '{template.Name}' would open here");
     }
 
     private async Task ToggleTemplateStatus(QuestionnaireTemplate template)
