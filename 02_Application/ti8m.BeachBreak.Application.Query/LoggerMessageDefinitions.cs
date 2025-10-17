@@ -315,4 +315,29 @@ public static partial class LoggerMessageDefinitions
         Level = LogLevel.Error,
         Message = "Failed to retrieve manager dashboard for ManagerId: {ManagerId}")]
     public static partial void LogManagerDashboardQueryFailed(this ILogger logger, Guid managerId, Exception exception);
+
+    // HR Dashboard Query Operations
+    [LoggerMessage(
+        EventId = 4052,
+        Level = LogLevel.Information,
+        Message = "Starting HR dashboard query")]
+    public static partial void LogHRDashboardQueryStarting(this ILogger logger);
+
+    [LoggerMessage(
+        EventId = 4053,
+        Level = LogLevel.Information,
+        Message = "HR dashboard query completed successfully")]
+    public static partial void LogHRDashboardQuerySucceeded(this ILogger logger);
+
+    [LoggerMessage(
+        EventId = 4054,
+        Level = LogLevel.Warning,
+        Message = "HR dashboard not found")]
+    public static partial void LogHRDashboardNotFound(this ILogger logger);
+
+    [LoggerMessage(
+        EventId = 4055,
+        Level = LogLevel.Error,
+        Message = "Failed to retrieve HR dashboard")]
+    public static partial void LogHRDashboardQueryFailed(this ILogger logger, Exception exception);
 }

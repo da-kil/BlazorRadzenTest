@@ -1,0 +1,372 @@
+@page "/hr-dashboard"
+@using Microsoft.AspNetCore.Authorization
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@inject IHRApiService HRService
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = "HR,HRLead,Admin")]
+
+<RadzenStack Gap="1.5rem">
+    <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">HR Dashboard</RadzenText>
+
+    @if (isLoading)
+    {
+        <RadzenCard>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                <RadzenText>Loading dashboard...</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else if (dashboard == null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+            No dashboard data available. This is expected for a new system.
+        </RadzenAlert>
+    }
+    else
+    {
+        <!-- Organization-wide Metrics -->
+        <RadzenText TextStyle="TextStyle.H5" Class="rz-mb-2">Organization Overview</RadzenText>
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Total Employees</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TotalEmployees</RadzenText>
+                        </div>
+                        <RadzenIcon Icon="group" Style="font-size: 3rem; opacity: 0.3;" />
+                    </div>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Managers</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TotalManagers</RadzenText>
+                        </div>
+                        <RadzenIcon Icon="supervised_user_circle" Style="font-size: 3rem; opacity: 0.3;" />
+                    </div>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Total Assignments</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TotalAssignments</RadzenText>
+                        </div>
+                        <RadzenIcon Icon="assignment" Style="font-size: 3rem; opacity: 0.3;" />
+                    </div>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Completion Rate</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.OverallCompletionRate.ToString("F1")%</RadzenText>
+                        </div>
+                        <RadzenIcon Icon="trending_up" Style="font-size: 3rem; opacity: 0.3;" />
+                    </div>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Assignment Status Metrics -->
+        <RadzenRow Gap="1rem" Class="rz-mt-2">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="status-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Pending</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H4">@dashboard.TotalPendingAssignments</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="status-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">In Progress</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H4">@dashboard.TotalInProgressAssignments</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="status-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Completed</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H4">@dashboard.TotalCompletedAssignments</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="status-card" Style="@(dashboard.TotalOverdueAssignments > 0 ? "border-left: 4px solid var(--rz-danger);" : "")">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Overdue</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H4" Style="@(dashboard.TotalOverdueAssignments > 0 ? "color: var(--rz-danger);" : "")">@dashboard.TotalOverdueAssignments</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Recent Activity -->
+        <RadzenRow Gap="1rem" Class="rz-mt-2">
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenCard Class="status-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Created (Last 7 Days)</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H5">@dashboard.AssignmentsCreatedLast7Days</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenCard Class="status-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Completed (Last 7 Days)</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H5">@dashboard.AssignmentsCompletedLast7Days</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="4">
+                <RadzenCard Class="status-card">
+                    <RadzenStack Gap="0.5rem">
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Avg. Completion Time</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H5">@dashboard.AverageCompletionTimeInDays.ToString("F1") days</RadzenText>
+                    </RadzenStack>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Organizations -->
+        @if (dashboard.Organizations.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Organizations</RadzenText>
+            <RadzenCard>
+                <RadzenDataList Data="@dashboard.Organizations.OrderByDescending(o => o.TotalAssignments)" TItem="OrganizationMetricsDto" AllowPaging="true" PageSize="5">
+                    <Template Context="org">
+                        <RadzenCard Class="rz-shadow-0 rz-border-base-300" Style="margin-bottom: 0.5rem;">
+                            <RadzenStack Gap="0.75rem">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-mb-0">@org.OrganizationName</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@org.EmployeeCount employees</RadzenText>
+                                    </div>
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@($"{org.CompletionRate:F1}% complete")" />
+                                </div>
+                                <RadzenRow Gap="0.5rem">
+                                    <RadzenColumn Size="3">
+                                        <div class="metric-small">
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Total</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@org.TotalAssignments</RadzenText>
+                                        </div>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="3">
+                                        <div class="metric-small">
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Pending</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@org.PendingCount</RadzenText>
+                                        </div>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="3">
+                                        <div class="metric-small">
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Active</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@org.InProgressCount</RadzenText>
+                                        </div>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="3">
+                                        <div class="metric-small">
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Done</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@org.CompletedCount</RadzenText>
+                                        </div>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </Template>
+                </RadzenDataList>
+            </RadzenCard>
+        }
+
+        <!-- Managers -->
+        @if (dashboard.Managers.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Managers</RadzenText>
+            <RadzenCard>
+                <RadzenDataList Data="@dashboard.Managers" TItem="ManagerOverviewDto" AllowPaging="true" PageSize="10">
+                    <Template Context="manager">
+                        <RadzenCard Class="rz-shadow-0 rz-border-base-300" Style="margin-bottom: 0.5rem;">
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap" Gap="1rem">
+                                <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="rz-mb-0">@manager.ManagerName</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@manager.ManagerEmail</RadzenText>
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center">
+                                    <div class="metric-inline">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Team Size</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="rz-mb-0">@manager.TeamSize</RadzenText>
+                                    </div>
+                                    <div class="metric-inline">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Assignments</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="rz-mb-0">@manager.TotalAssignments</RadzenText>
+                                    </div>
+                                    <div class="metric-inline">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Completed</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="rz-mb-0">@manager.CompletedAssignments</RadzenText>
+                                    </div>
+                                    <div class="metric-inline">
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Rate</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="rz-mb-0">@manager.CompletionRate.ToString("F1")%</RadzenText>
+                                    </div>
+                                    @if (manager.OverdueAssignments > 0)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@($"{manager.OverdueAssignments} Overdue")" />
+                                    }
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </Template>
+                </RadzenDataList>
+            </RadzenCard>
+        }
+
+        <!-- Urgent Assignments -->
+        @if (dashboard.UrgentAssignments.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Urgent Assignments</RadzenText>
+            <RadzenCard>
+                <RadzenDataList Data="@dashboard.UrgentAssignments" TItem="UrgentAssignmentDto" AllowPaging="true" PageSize="10">
+                    <Template Context="assignment">
+                        <RadzenCard Class="rz-shadow-0 rz-border-base-300" Style="margin-bottom: 0.5rem;">
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+                                <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="rz-mb-0">@assignment.QuestionnaireTemplateName</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        @assignment.EmployeeName (@assignment.OrganizationName) - Manager: @assignment.ManagerName
+                                    </RadzenText>
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                    @if (assignment.IsOverdue)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Overdue" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
+                                            Due @assignment.DueDate.ToString("MMM dd, yyyy")
+                                        </RadzenText>
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@($"{assignment.DaysUntilDue}d left")" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-warning);">
+                                            Due @assignment.DueDate.ToString("MMM dd, yyyy")
+                                        </RadzenText>
+                                    }
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@assignment.WorkflowState" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </Template>
+                </RadzenDataList>
+            </RadzenCard>
+        }
+
+        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);" Class="rz-mt-3">
+            Last updated: @dashboard.LastUpdated.ToString("MMM dd, yyyy HH:mm")
+        </RadzenText>
+    }
+</RadzenStack>
+
+@code {
+    private HRDashboardDto? dashboard;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardAsync();
+    }
+
+    private async Task LoadDashboardAsync()
+    {
+        isLoading = true;
+        try
+        {
+            dashboard = await HRService.GetHRDashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading HR dashboard: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+<style>
+    .metric-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    .status-card {
+        transition: transform 0.2s ease;
+    }
+
+    .status-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .metric-small {
+        text-align: center;
+        padding: 0.5rem;
+        background: var(--rz-base-100);
+        border-radius: var(--rz-border-radius);
+    }
+
+    .metric-inline {
+        text-align: center;
+        min-width: 80px;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .d-flex {
+        display: flex;
+    }
+
+    .justify-content-between {
+        justify-content: space-between;
+    }
+
+    .align-items-center {
+        align-items: center;
+    }
+
+    .align-items-start {
+        align-items: flex-start;
+    }
+</style>

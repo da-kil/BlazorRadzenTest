@@ -47,7 +47,8 @@
       "Bash(del \"C:\\projects\\BlazorRadzenTest\\02_Application\\ti8m.BeachBreak.Application.Command\\Commands\\QuestionnaireTemplateCommands\\DeactivateQuestionnaireTemplateCommand.cs\")",
       "Bash(powershell -Command \"cd ''C:\\projects\\BlazorRadzenTest''; dotnet build ti8m.BeachBreak.sln 2>&1 | Select-String -Pattern ''(error |warning |Build succeeded|Build FAILED)'' -Context 0,1\")",
       "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.Infrastructure.Marten\\Projections\\EmployeeDashboardProjection.cs\" -Force)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(git mv:*)"
     ],
     "deny": [],
     "ask": []

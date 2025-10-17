@@ -210,6 +210,7 @@ public class Program
         builder.Services.AddScoped<IEmployeeQuestionnaireService, EmployeeQuestionnaireService>();
         builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
+        builder.Services.AddScoped<IHRApiService, HRApiService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();
