@@ -10,6 +10,7 @@ public class QuestionnaireTemplateReadModel
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
+    public bool RequiresManagerReview { get; set; } = true;
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }
     public DateTime? LastPublishedDate { get; set; }
@@ -29,6 +30,7 @@ public class QuestionnaireTemplateReadModel
         Name = @event.Name;
         Description = @event.Description;
         CategoryId = @event.CategoryId;
+        RequiresManagerReview = @event.RequiresManagerReview;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
         Settings = MapDomainSettingsToQuerySettings(@event.Settings);
         Status = TemplateStatus.Draft;
@@ -49,6 +51,11 @@ public class QuestionnaireTemplateReadModel
     public void Apply(QuestionnaireTemplateCategoryChanged @event)
     {
         CategoryId = @event.CategoryId;
+    }
+
+    public void Apply(QuestionnaireTemplateReviewRequirementChanged @event)
+    {
+        RequiresManagerReview = @event.RequiresManagerReview;
     }
 
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
@@ -98,6 +105,7 @@ public class QuestionnaireTemplateReadModel
         Name = @event.Name;
         Description = @event.Description;
         CategoryId = @event.CategoryId;
+        RequiresManagerReview = @event.RequiresManagerReview;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
         Settings = MapDomainSettingsToQuerySettings(@event.Settings);
         Status = TemplateStatus.Draft;

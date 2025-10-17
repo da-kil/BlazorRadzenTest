@@ -49,8 +49,15 @@
         <div class="header-content-row">
             <div class="role-assignment-section">
                 <RadzenText TextStyle="TextStyle.Caption" Class="role-label">Who completes this section?</RadzenText>
+                @if (!Template.RequiresManagerReview)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-warning d-block mb-2">
+                        <RadzenIcon Icon="info" Style="font-size: 0.875rem;" />
+                        Manager review disabled - sections must be completed by employees only
+                    </RadzenText>
+                }
                 <RadzenRadioButtonList @bind-Value="@Section.CompletionRole"
-                                       Data="@roleOptions"
+                                       Data="@GetFilteredRoleOptions()"
                                        TextProperty="Text"
                                        ValueProperty="Value"
                                        Orientation="Radzen.Orientation.Horizontal"
@@ -966,6 +973,21 @@
         new() { Value = CompletionRole.Manager, Text = "Manager", Icon = "supervisor_account" },
         new() { Value = CompletionRole.Both, Text = "Both", Icon = "groups" }
     };
+
+    private List<RoleOption> GetFilteredRoleOptions()
+    {
+        // If manager review is not required, only allow Employee role
+        if (!Template.RequiresManagerReview)
+        {
+            // Ensure section is set to Employee
+            if (Section.CompletionRole != CompletionRole.Employee)
+            {
+                Section.CompletionRole = CompletionRole.Employee;
+            }
+            return roleOptions.Where(r => r.Value == CompletionRole.Employee).ToList();
+        }
+        return roleOptions;
+    }
 
     private string GetCompletionRoleText()
     {

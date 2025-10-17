@@ -39,6 +39,15 @@
 
     <div class="settings-section mt-4 p-3 bg-light rounded">
         <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Settings</RadzenText>
+        <div class="mb-4 p-3 bg-white rounded border">
+            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Workflow Configuration</RadzenText>
+            <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
+            <RadzenLabel Text="Requires Manager Review" Component="requiresManagerReview" Style="font-weight: 500;" />
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
+                When unchecked, the questionnaire will be automatically finalized after employee submission without manager review.
+                All sections must be completed by employees only.
+            </RadzenText>
+        </div>
         <RadzenRow>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenCheckBox @bind-Value="@Template.Settings.AllowSaveProgress" Name="allowSave" Disabled="@(!Template.IsAvailableForEditing)" />

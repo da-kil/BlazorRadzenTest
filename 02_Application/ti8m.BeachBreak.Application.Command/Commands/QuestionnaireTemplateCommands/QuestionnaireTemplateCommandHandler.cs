@@ -89,6 +89,12 @@ public class QuestionnaireTemplateCommandHandler :
             questionnaireTemplate.ChangeDescription(command.QuestionnaireTemplate.Description);
             questionnaireTemplate.ChangeCategory(command.QuestionnaireTemplate.CategoryId);
 
+            // Handle RequiresManagerReview change (validates no active assignments exist)
+            await questionnaireTemplate.ChangeReviewRequirementAsync(
+                command.QuestionnaireTemplate.RequiresManagerReview,
+                assignmentService,
+                cancellationToken);
+
             var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
             var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
 

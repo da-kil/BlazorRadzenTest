@@ -61,7 +61,7 @@ public class QuestionnaireTemplate : AggregateRoot
 
         if (!string.Equals(Name, name, StringComparison.Ordinal))
         {
-            RaiseEvent(new QuestionnaireTemplateNameChanged(Id, name));
+            RaiseEvent(new QuestionnaireTemplateNameChanged(name));
         }
     }
 
@@ -73,7 +73,7 @@ public class QuestionnaireTemplate : AggregateRoot
         var newDescription = description ?? string.Empty;
         if (!string.Equals(Description, newDescription, StringComparison.Ordinal))
         {
-            RaiseEvent(new QuestionnaireTemplateDescriptionChanged(Id, newDescription));
+            RaiseEvent(new QuestionnaireTemplateDescriptionChanged(newDescription));
         }
     }
 
@@ -84,7 +84,30 @@ public class QuestionnaireTemplate : AggregateRoot
 
         if (CategoryId != categoryId)
         {
-            RaiseEvent(new QuestionnaireTemplateCategoryChanged(Id, categoryId));
+            RaiseEvent(new QuestionnaireTemplateCategoryChanged(categoryId));
+        }
+    }
+
+    public async Task ChangeReviewRequirementAsync(
+        bool requiresManagerReview,
+        IQuestionnaireAssignmentService assignmentService,
+        CancellationToken cancellationToken = default)
+    {
+        if (!CanBeEdited())
+            throw new InvalidOperationException("Template cannot be edited in current status");
+
+        // If RequiresManagerReview is being changed, check for existing assignments
+        if (RequiresManagerReview != requiresManagerReview)
+        {
+            if (await assignmentService.HasActiveAssignmentsAsync(Id, cancellationToken))
+            {
+                var assignmentCount = await assignmentService.GetActiveAssignmentCountAsync(Id, cancellationToken);
+                throw new InvalidOperationException(
+                    $"Cannot change review requirement: {assignmentCount} active assignment(s) exist. " +
+                    "Complete or withdraw these assignments first, or create a new template with the desired setting.");
+            }
+
+            RaiseEvent(new QuestionnaireTemplateReviewRequirementChanged(requiresManagerReview));
         }
     }
 
@@ -93,7 +116,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
-        RaiseEvent(new QuestionnaireTemplateSectionsChanged(Id, sections ?? new()));
+        RaiseEvent(new QuestionnaireTemplateSectionsChanged(sections ?? new()));
     }
 
     public void UpdateSettings(QuestionnaireSettings settings)
@@ -101,7 +124,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
-        RaiseEvent(new QuestionnaireTemplateSettingsChanged(Id, settings ?? new()));
+        RaiseEvent(new QuestionnaireTemplateSettingsChanged(settings ?? new()));
     }
 
     public void Publish(string publishedBy)
@@ -118,7 +141,7 @@ public class QuestionnaireTemplate : AggregateRoot
         var now = DateTime.UtcNow;
         var publishedDate = PublishedDate ?? now;
 
-        RaiseEvent(new QuestionnaireTemplatePublished(Id, publishedBy, publishedDate, now));
+        RaiseEvent(new QuestionnaireTemplatePublished(publishedBy, publishedDate, now));
     }
 
     public async Task UnpublishToDraftAsync(IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
@@ -133,7 +156,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (Status != TemplateStatus.Published)
             throw new InvalidOperationException("Only published templates can be unpublished to draft");
 
-        RaiseEvent(new QuestionnaireTemplateUnpublishedToDraft(Id));
+        RaiseEvent(new QuestionnaireTemplateUnpublishedToDraft());
     }
 
     public void Archive()
@@ -141,7 +164,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (Status == TemplateStatus.Archived)
             throw new InvalidOperationException("Template is already archived");
 
-        RaiseEvent(new QuestionnaireTemplateArchived(Id));
+        RaiseEvent(new QuestionnaireTemplateArchived());
     }
 
     public void RestoreFromArchive()
@@ -149,7 +172,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (Status != TemplateStatus.Archived)
             throw new InvalidOperationException("Only archived templates can be restored");
 
-        RaiseEvent(new QuestionnaireTemplateRestoredFromArchive(Id));
+        RaiseEvent(new QuestionnaireTemplateRestoredFromArchive());
     }
 
     public async Task DeleteAsync(IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
@@ -162,7 +185,7 @@ public class QuestionnaireTemplate : AggregateRoot
                 "Complete or cancel these assignments first, or archive the template instead.");
         }
 
-        RaiseEvent(new QuestionnaireTemplateDeleted(Id));
+        RaiseEvent(new QuestionnaireTemplateDeleted());
     }
 
     public bool CanBeDeleted()
@@ -296,6 +319,11 @@ public class QuestionnaireTemplate : AggregateRoot
     public void Apply(QuestionnaireTemplateCategoryChanged @event)
     {
         CategoryId = @event.CategoryId;
+    }
+
+    public void Apply(QuestionnaireTemplateReviewRequirementChanged @event)
+    {
+        RequiresManagerReview = @event.RequiresManagerReview;
     }
 
     public void Apply(QuestionnaireTemplateSectionsChanged @event)

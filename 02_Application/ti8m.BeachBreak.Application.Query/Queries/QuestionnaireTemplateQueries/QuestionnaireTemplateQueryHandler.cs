@@ -148,6 +148,7 @@ public class QuestionnaireTemplateQueryHandler :
             Name = readModel.Name,
             Description = readModel.Description,
             CategoryId = readModel.CategoryId,
+            RequiresManagerReview = readModel.RequiresManagerReview,
             CreatedDate = readModel.CreatedDate,
             Status = readModel.Status,
             PublishedDate = readModel.PublishedDate,

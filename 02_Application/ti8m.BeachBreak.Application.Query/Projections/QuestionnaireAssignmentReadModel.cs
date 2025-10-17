@@ -8,6 +8,7 @@ public class QuestionnaireAssignmentReadModel
 {
     public Guid Id { get; set; }
     public Guid TemplateId { get; set; }
+    public bool RequiresManagerReview { get; set; } = true;
     public Guid EmployeeId { get; set; }
     public string EmployeeName { get; set; } = string.Empty;
     public string EmployeeEmail { get; set; } = string.Empty;
@@ -53,6 +54,7 @@ public class QuestionnaireAssignmentReadModel
     {
         Id = @event.AggregateId;
         TemplateId = @event.TemplateId;
+        RequiresManagerReview = @event.RequiresManagerReview;
         EmployeeId = @event.EmployeeId;
         EmployeeName = @event.EmployeeName;
         EmployeeEmail = @event.EmployeeEmail;
@@ -182,6 +184,14 @@ public class QuestionnaireAssignmentReadModel
         FinalizedDate = @event.FinalizedDate;
         FinalizedBy = @event.FinalizedBy;
         ManagerFinalNotes = @event.ManagerFinalNotes;
+    }
+
+    public void Apply(QuestionnaireAutoFinalized @event)
+    {
+        WorkflowState = WorkflowState.Finalized;
+        FinalizedDate = @event.FinalizedDate;
+        FinalizedBy = @event.FinalizedBy;
+        ManagerFinalNotes = @event.Reason;
     }
 
     private void UpdateWorkflowState()
