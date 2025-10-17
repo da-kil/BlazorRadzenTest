@@ -3,19 +3,94 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits OptimizedComponentBase
 
-<RadzenCard Class="assessment-question">
-    <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
-        <RadzenIcon Icon="self_improvement" Class="me-2" />
-        @Question.Title
-        @if (Question.IsRequired) { <span class="text-danger">*</span> }
-    </RadzenText>
+@if (!HideHeader)
+{
+    <RadzenCard Class="assessment-question">
+        <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
+            <RadzenIcon Icon="self_improvement" Class="me-2" />
+            @Question.Title
+            @if (Question.IsRequired) { <span class="text-danger">*</span> }
+        </RadzenText>
 
-    @if (!string.IsNullOrWhiteSpace(Question.Description))
-    {
-        <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
-    }
+        @if (!string.IsNullOrWhiteSpace(Question.Description))
+        {
+            <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
+        }
 
-    <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+        <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+            <RadzenText TextStyle="TextStyle.Body2">
+                <strong>Rating Scale:</strong> @GetRatingScaleDescription()
+            </RadzenText>
+        </RadzenAlert>
+
+        <div class="competencies-container">
+        @if (!competencies.Any())
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    <strong>Configuration Error:</strong> No competencies are defined for this question. Please check the question configuration.
+                </RadzenText>
+            </RadzenAlert>
+        }
+        else
+        {
+            @foreach (var competency in competencies)
+            {
+                var competencyKey = competency.Key;
+                var currentRating = GetCompetencyRating(competencyKey);
+                var currentComment = GetCompetencyComment(competencyKey);
+                var ratingText = GetRatingText(currentRating);
+
+                <div class="competency-card mb-3 p-3 border rounded" @key="@competencyKey">
+                    <RadzenRow>
+                        <RadzenColumn Size="12" SizeMD="8">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                                @competency.Title
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                                @competency.Description
+                            </RadzenText>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="4" Class="text-end">
+                            <div class="rating-section">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
+                                <RadzenRating Value="@currentRating"
+                                            ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
+                                            Stars="@ratingScale"
+                                            Disabled="@IsReadOnly"
+                                            Class="mb-2" />
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
+                                    @ratingText
+                                </RadzenText>
+                            </div>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    @if (!IsReadOnly)
+                    {
+                        <RadzenTextArea Value="@currentComment"
+                                      ValueChanged="@((string value) => SetCompetencyComment(competencyKey, value))"
+                                      Placeholder="Optional: Add your comments here..."
+                                      Rows="2"
+                                      Class="w-100 mt-2"
+                                      Disabled="@IsReadOnly" />
+                    }
+                    else if (!string.IsNullOrEmpty(currentComment))
+                    {
+                        <div class="mt-2 p-2 bg-light rounded">
+                            <small class="text-muted d-block mb-1">Comment:</small>
+                            <span>@currentComment</span>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        </div>
+    </RadzenCard>
+}
+else
+{
+    <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-3" ShowIcon="true">
         <RadzenText TextStyle="TextStyle.Body2">
             <strong>Rating Scale:</strong> @GetRatingScaleDescription()
         </RadzenText>
@@ -84,13 +159,14 @@
             }
         }
     </div>
-</RadzenCard>
+}
 
 @code {
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
+    [Parameter] public bool HideHeader { get; set; } = false;
 
     private List<CompetencyDefinition> competencies = new();
     private int ratingScale = 4;

@@ -767,12 +767,13 @@
         var currentAnswer = GetAnswer(currentSection!.Id, question.Id, originalRole);
 
         var result = await DialogService.OpenAsync<EditAnswerDialog>(
-            $"Edit Answer: {question.Title}",
+            $"Edit Answer: {currentSection!.Title}",
             new Dictionary<string, object>
             {
                 { "Question", question },
                 { "CurrentAnswer", currentAnswer },
-                { "CompletionRole", originalRole }
+                { "CompletionRole", originalRole },
+                { "SectionTitle", currentSection.Title }
             },
             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
         );

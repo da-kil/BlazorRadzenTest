@@ -3,18 +3,109 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits OptimizedComponentBase
 
-<RadzenCard Class="goal-achievement-question">
-    <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
-        <RadzenIcon Icon="track_changes" Class="me-2" />
-        @Question.Title
-        @if (Question.IsRequired) { <span class="text-danger">*</span> }
-    </RadzenText>
+@if (!HideHeader)
+{
+    <RadzenCard Class="goal-achievement-question">
+        <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
+            <RadzenIcon Icon="track_changes" Class="me-2" />
+            @Question.Title
+            @if (Question.IsRequired) { <span class="text-danger">*</span> }
+        </RadzenText>
 
-    @if (!string.IsNullOrWhiteSpace(Question.Description))
-    {
-        <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
-    }
+        @if (!string.IsNullOrWhiteSpace(Question.Description))
+        {
+            <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
+        }
 
+        <RadzenCard Class="goal-card mb-3 p-3 border">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                Goal Assessment
+            </RadzenText>
+        </div>
+
+        <div class="mb-3">
+            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Goal Description</RadzenText>
+            @if (!IsReadOnly)
+            {
+                <RadzenTextArea Value="@GetGoalDescription()"
+                              ValueChanged="@SetGoalDescription"
+                              Placeholder="Describe the goal that was set..."
+                              Rows="3"
+                              Class="w-100"
+                              Disabled="@IsReadOnly" />
+            }
+            else if (!string.IsNullOrEmpty(GetGoalDescription()))
+            {
+                <div class="readonly-text p-3 bg-light rounded">
+                    @GetGoalDescription()
+                </div>
+            }
+        </div>
+
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Percentage</RadzenText>
+                <div class="d-flex align-items-center">
+                    @if (!IsReadOnly)
+                    {
+                        <RadzenNumeric TValue="int"
+                                     Value="@GetGoalAchievementPercentage()"
+                                     ValueChanged="@SetGoalAchievementPercentage"
+                                     Min="0"
+                                     Max="100"
+                                     Step="5"
+                                     Format="0"
+                                     Class="flex-grow-1 me-2"
+                                     Disabled="@IsReadOnly" />
+                    }
+                    else
+                    {
+                        <div class="readonly-percentage p-2 bg-light rounded flex-grow-1 me-2">
+                            @GetGoalAchievementPercentage()
+                        </div>
+                    }
+                    <RadzenText TextStyle="TextStyle.Body1">%</RadzenText>
+                </div>
+                <RadzenProgressBar Value="@GetGoalAchievementPercentage()"
+                                 Max="100"
+                                 Class="mt-2"
+                                 ProgressBarStyle="@GetProgressStyle(GetGoalAchievementPercentage())" />
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Status</RadzenText>
+                <div class="status-indicator p-2 rounded" style="@GetStatusStyle(GetGoalAchievementPercentage())">
+                    <RadzenIcon Icon="@GetStatusIcon(GetGoalAchievementPercentage())" Class="me-2" />
+                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
+                        @GetStatusText(GetGoalAchievementPercentage())
+                    </RadzenText>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <div class="mt-3">
+            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Reasoning/Justification</RadzenText>
+            @if (!IsReadOnly)
+            {
+                <RadzenTextArea Value="@GetGoalJustification()"
+                              ValueChanged="@SetGoalJustification"
+                              Placeholder="Explain your achievement percentage. What factors contributed to your success or challenges?"
+                              Rows="4"
+                              Class="w-100"
+                              Disabled="@IsReadOnly" />
+            }
+            else if (!string.IsNullOrEmpty(GetGoalJustification()))
+            {
+                <div class="readonly-text p-3 bg-light rounded">
+                    @GetGoalJustification()
+                </div>
+            }
+        </div>
+        </RadzenCard>
+    </RadzenCard>
+}
+else
+{
     <RadzenCard Class="goal-card mb-3 p-3 border">
         <div class="d-flex justify-content-between align-items-start mb-3">
             <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
@@ -100,13 +191,14 @@
             }
         </div>
     </RadzenCard>
-</RadzenCard>
+}
 
 @code {
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
+    [Parameter] public bool HideHeader { get; set; } = false;
 
     protected override bool HasStateChanged()
     {

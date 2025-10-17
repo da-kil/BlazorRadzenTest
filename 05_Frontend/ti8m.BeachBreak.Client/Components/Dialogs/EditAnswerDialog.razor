@@ -77,16 +77,7 @@
 </style>
 
 <div class="edit-answer-dialog">
-    <div class="question-info">
-        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
-            @Question.Title
-        </RadzenText>
-        @if (!string.IsNullOrWhiteSpace(Question.Description))
-        {
-            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                @Question.Description
-            </RadzenText>
-        }
+    <div class="mb-3">
         <div class="role-indicator">
             <RadzenIcon Icon="@GetRoleIcon()" />
             Editing @CompletionRole's Answer
@@ -135,14 +126,16 @@
             <OptimizedAssessmentQuestion Question="@Question"
                                         Response="@editResponse"
                                         OnResponseChanged="@HandleResponseChanged"
-                                        IsReadOnly="false" />
+                                        IsReadOnly="false"
+                                        HideHeader="true" />
         }
         else if (Question.Type == QuestionType.GoalAchievement)
         {
             <OptimizedGoalQuestion Question="@Question"
                                   Response="@editResponse"
                                   OnResponseChanged="@HandleResponseChanged"
-                                  IsReadOnly="false" />
+                                  IsReadOnly="false"
+                                  HideHeader="true" />
         }
         else
         {
@@ -167,6 +160,7 @@
     [Parameter] public QuestionItem Question { get; set; } = null!;
     [Parameter] public object? CurrentAnswer { get; set; }
     [Parameter] public CompletionRole CompletionRole { get; set; }
+    [Parameter] public string SectionTitle { get; set; } = string.Empty;
 
     private QuestionResponse editResponse = new();
 
