@@ -17,7 +17,6 @@ public class QuestionnaireTemplate : AggregateRoot
     public string PublishedBy { get; private set; } = string.Empty;
 
     public List<QuestionSection> Sections { get; private set; } = new();
-    public QuestionnaireSettings Settings { get; private set; } = new();
 
     public DateTime CreatedDate { get; private set; }
     public bool IsDeleted { get; private set; }
@@ -30,8 +29,7 @@ public class QuestionnaireTemplate : AggregateRoot
         string description,
         Guid categoryId,
         bool requiresManagerReview = true,
-        List<QuestionSection>? sections = null,
-        QuestionnaireSettings? settings = null)
+        List<QuestionSection>? sections = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required", nameof(name));
@@ -43,7 +41,6 @@ public class QuestionnaireTemplate : AggregateRoot
             categoryId,
             requiresManagerReview,
             sections ?? new(),
-            settings ?? new(),
             DateTime.UtcNow));
     }
 
@@ -119,13 +116,6 @@ public class QuestionnaireTemplate : AggregateRoot
         RaiseEvent(new QuestionnaireTemplateSectionsChanged(sections ?? new()));
     }
 
-    public void UpdateSettings(QuestionnaireSettings settings)
-    {
-        if (!CanBeEdited())
-            throw new InvalidOperationException("Template cannot be edited in current status");
-
-        RaiseEvent(new QuestionnaireTemplateSettingsChanged(settings ?? new()));
-    }
 
     public void Publish(string publishedBy)
     {
@@ -263,13 +253,6 @@ public class QuestionnaireTemplate : AggregateRoot
             );
         }).ToList();
 
-        // Clone settings (value object, already immutable)
-        var clonedSettings = new QuestionnaireSettings(
-            source.Settings.SuccessMessage,
-            source.Settings.IncompleteMessage,
-            source.Settings.TimeLimit
-        );
-
         // Create new aggregate instance
         var clonedTemplate = new QuestionnaireTemplate();
         clonedTemplate.RaiseEvent(new QuestionnaireTemplateCloned(
@@ -280,7 +263,6 @@ public class QuestionnaireTemplate : AggregateRoot
             source.CategoryId,
             source.RequiresManagerReview,
             clonedSections,
-            clonedSettings,
             DateTime.UtcNow
         ));
 
@@ -296,7 +278,6 @@ public class QuestionnaireTemplate : AggregateRoot
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         Sections = @event.Sections;
-        Settings = @event.Settings;
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
         IsDeleted = false;
@@ -325,11 +306,6 @@ public class QuestionnaireTemplate : AggregateRoot
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
     {
         Sections = @event.Sections;
-    }
-
-    public void Apply(QuestionnaireTemplateSettingsChanged @event)
-    {
-        Settings = @event.Settings;
     }
 
     public void Apply(QuestionnaireTemplatePublished @event)
@@ -371,7 +347,6 @@ public class QuestionnaireTemplate : AggregateRoot
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         Sections = @event.Sections;
-        Settings = @event.Settings;
         Status = TemplateStatus.Draft;  // Always draft
         CreatedDate = @event.CreatedDate;
         PublishedDate = null;  // Reset publication data

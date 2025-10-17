@@ -14,7 +14,6 @@ public class QuestionnaireTemplateDto
     public string PublishedBy { get; set; } = string.Empty; // Who published it
 
     public List<QuestionSectionDto> Sections { get; set; } = new();
-    public QuestionnaireSettingsDto Settings { get; set; } = new();
 }
 
 public enum TemplateStatus

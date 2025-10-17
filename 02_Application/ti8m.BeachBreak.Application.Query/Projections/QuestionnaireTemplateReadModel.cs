@@ -1,5 +1,4 @@
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
-using QuestionnaireTemplateDomain = ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
@@ -16,7 +15,6 @@ public class QuestionnaireTemplateReadModel
     public DateTime? LastPublishedDate { get; set; }
     public string PublishedBy { get; set; } = string.Empty;
     public List<QuestionSection> Sections { get; set; } = new();
-    public QuestionnaireSettings Settings { get; set; } = new();
     public DateTime CreatedDate { get; set; }
     public bool IsDeleted { get; set; }
 
@@ -32,7 +30,6 @@ public class QuestionnaireTemplateReadModel
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
-        Settings = MapDomainSettingsToQuerySettings(@event.Settings);
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
         IsDeleted = false;
@@ -61,11 +58,6 @@ public class QuestionnaireTemplateReadModel
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
     {
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
-    }
-
-    public void Apply(QuestionnaireTemplateSettingsChanged @event)
-    {
-        Settings = MapDomainSettingsToQuerySettings(@event.Settings);
     }
 
     public void Apply(QuestionnaireTemplatePublished @event)
@@ -107,7 +99,6 @@ public class QuestionnaireTemplateReadModel
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
-        Settings = MapDomainSettingsToQuerySettings(@event.Settings);
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
         PublishedDate = null;
@@ -138,16 +129,6 @@ public class QuestionnaireTemplateReadModel
                 Options = dq.Options
             }).ToList()
         }).ToList();
-    }
-
-    private static QuestionnaireSettings MapDomainSettingsToQuerySettings(QuestionnaireTemplateDomain.QuestionnaireSettings domainSettings)
-    {
-        return new QuestionnaireSettings
-        {
-            SuccessMessage = domainSettings.SuccessMessage,
-            IncompleteMessage = domainSettings.IncompleteMessage,
-            TimeLimit = domainSettings.TimeLimit
-        };
     }
 }
 

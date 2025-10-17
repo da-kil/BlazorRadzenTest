@@ -405,7 +405,6 @@
             Id = TemplateId.Value,
             Name = "Employee Performance Review",
             Description = "Annual performance evaluation questionnaire",
-            Settings = new QuestionnaireSettings(),
             Sections = new List<QuestionSection>
             {
                 new QuestionSection
@@ -1430,7 +1429,7 @@
     {
         if (!CanSubmit())
         {
-            NotificationService.Notify(NotificationSeverity.Warning, "Incomplete", template!.Settings.IncompleteMessage);
+            NotificationService.Notify(NotificationSeverity.Warning, "Incomplete", "Please complete all required sections.");
             return;
         }
 
@@ -1463,7 +1462,7 @@
                     assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
                     StateHasChanged(); // Force UI update with new workflow state
 
-                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", template!.Settings.SuccessMessage);
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
                     NavigationManager.NavigateTo("/team/questionnaires");
                 }
                 else
@@ -1486,7 +1485,7 @@
                     assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
                     StateHasChanged(); // Force UI update with new workflow state
 
-                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", template!.Settings.SuccessMessage);
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
                     NavigationManager.NavigateTo("/my-questionnaires");
                 }
                 else

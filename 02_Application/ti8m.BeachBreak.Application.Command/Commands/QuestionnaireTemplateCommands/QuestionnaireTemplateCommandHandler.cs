@@ -43,7 +43,6 @@ public class QuestionnaireTemplateCommandHandler :
             logger.LogCreateQuestionnaireTemplate(templateId, command.QuestionnaireTemplate.Name);
 
             var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
-            var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
 
             // Create the questionnaire template using the domain aggregate
             var questionnaireTemplate = new DomainQuestionnaireTemplate(
@@ -52,8 +51,7 @@ public class QuestionnaireTemplateCommandHandler :
                 command.QuestionnaireTemplate.Description,
                 command.QuestionnaireTemplate.CategoryId,
                 command.QuestionnaireTemplate.RequiresManagerReview,
-                sections,
-                settings);
+                sections);
 
             // Validate that section completion roles match review requirement
             questionnaireTemplate.ValidateSectionCompletionRoles();
@@ -96,10 +94,8 @@ public class QuestionnaireTemplateCommandHandler :
                 cancellationToken);
 
             var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
-            var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
 
             questionnaireTemplate.UpdateSections(sections);
-            questionnaireTemplate.UpdateSettings(settings);
 
             // Validate that section completion roles match review requirement
             questionnaireTemplate.ValidateSectionCompletionRoles();
@@ -371,15 +367,6 @@ public class QuestionnaireTemplateCommandHandler :
             item.Configuration,
             item.Options
         )).ToList();
-    }
-
-    private static QuestionnaireSettings MapToQuestionnaireSettings(CommandQuestionnaireSettings commandSettings)
-    {
-        return new QuestionnaireSettings(
-            commandSettings.SuccessMessage,
-            commandSettings.IncompleteMessage,
-            commandSettings.TimeLimit
-        );
     }
 
     private static Domain.QuestionnaireTemplateAggregate.QuestionType MapQuestionType(QuestionType dtoType) => dtoType switch

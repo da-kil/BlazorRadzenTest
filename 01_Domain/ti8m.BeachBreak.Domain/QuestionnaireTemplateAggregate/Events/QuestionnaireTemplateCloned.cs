@@ -10,7 +10,6 @@ public record QuestionnaireTemplateCloned(
     Guid CategoryId,
     bool RequiresManagerReview,
     List<QuestionSection> Sections,
-    QuestionnaireSettings Settings,
     DateTime CreatedDate
 ) : IDomainEvent
 {

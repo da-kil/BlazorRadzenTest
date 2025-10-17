@@ -14,7 +14,6 @@ public class QuestionnaireTemplate
     public string PublishedBy { get; set; } = string.Empty; // Who published it
 
     public List<QuestionSection> Sections { get; set; } = new();
-    public QuestionnaireSettings Settings { get; set; } = new();
 
     // Business logic properties derived from status
     public bool CanBeAssigned => Status == TemplateStatus.Published;

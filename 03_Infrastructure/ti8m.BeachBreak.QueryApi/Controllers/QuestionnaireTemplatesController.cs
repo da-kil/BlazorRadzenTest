@@ -194,13 +194,7 @@ public class QuestionnaireTemplatesController : BaseController
                     Configuration = question.Configuration,
                     Options = question.Options
                 }).ToList()
-            }).ToList(),
-            Settings = new QuestionnaireSettingsDto
-            {
-                SuccessMessage = template.Settings.SuccessMessage,
-                IncompleteMessage = template.Settings.IncompleteMessage,
-                TimeLimit = template.Settings.TimeLimit
-            }
+            }).ToList()
         };
     }
 

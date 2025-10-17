@@ -8,5 +8,4 @@ public class CommandQuestionnaireTemplate
     public Guid CategoryId { get; set; }
     public bool RequiresManagerReview { get; set; } = true;
     public List<CommandQuestionSection> Sections { get; set; } = new();
-    public CommandQuestionnaireSettings Settings { get; set; } = new();
 }

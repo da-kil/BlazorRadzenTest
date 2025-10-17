@@ -103,8 +103,7 @@ public class ModernQuestionnaireApiService : ModernBaseApiService
                 template.PublishedDate,
                 template.LastPublishedDate,
                 template.PublishedBy,
-                template.Sections,
-                template.Settings
+                template.Sections
             };
 
             var result = await CreateWithResultAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, createRequest);

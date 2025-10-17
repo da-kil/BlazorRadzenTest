@@ -154,8 +154,7 @@ public class QuestionnaireTemplateQueryHandler :
             PublishedDate = readModel.PublishedDate,
             LastPublishedDate = readModel.LastPublishedDate,
             PublishedBy = readModel.PublishedBy,
-            Sections = readModel.Sections,
-            Settings = readModel.Settings
+            Sections = readModel.Sections
         };
     }
 }

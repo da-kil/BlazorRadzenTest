@@ -60,13 +60,7 @@ public class QuestionnaireTemplatesController : BaseController
                         Title = question.Title,
                         Type = MapQuestionType(question.Type)
                     }).ToList()
-                }).ToList(),
-                Settings = new CommandQuestionnaireSettings
-                {
-                    SuccessMessage = questionnaireTemplate.Settings.SuccessMessage,
-                    IncompleteMessage = questionnaireTemplate.Settings.IncompleteMessage,
-                    TimeLimit = questionnaireTemplate.Settings.TimeLimit
-                }
+                }).ToList()
             };
 
             Result result = await commandDispatcher.SendAsync(new CreateQuestionnaireTemplateCommand(commandTemplate));
@@ -115,13 +109,7 @@ public class QuestionnaireTemplatesController : BaseController
                         Title = question.Title,
                         Type = MapQuestionType(question.Type)
                     }).ToList()
-                }).ToList(),
-                Settings = new CommandQuestionnaireSettings
-                {
-                    SuccessMessage = questionnaireTemplate.Settings.SuccessMessage,
-                    IncompleteMessage = questionnaireTemplate.Settings.IncompleteMessage,
-                    TimeLimit = questionnaireTemplate.Settings.TimeLimit
-                }
+                }).ToList()
             };
 
             Result result = await commandDispatcher.SendAsync(new UpdateQuestionnaireTemplateCommand(id, commandTemplate));
