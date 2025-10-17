@@ -125,8 +125,7 @@ public class QuestionnaireTemplateReadModel
                 Type = (QuestionType)(int)dq.Type,
                 IsRequired = dq.IsRequired,
                 Order = dq.Order,
-                Configuration = dq.Configuration,
-                Options = dq.Options
+                Configuration = dq.Configuration
             }).ToList()
         }).ToList();
     }

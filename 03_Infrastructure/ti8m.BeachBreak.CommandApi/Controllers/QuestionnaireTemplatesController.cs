@@ -55,7 +55,6 @@ public class QuestionnaireTemplatesController : BaseController
                         Description = question.Description,
                         Id = question.Id,
                         IsRequired = question.IsRequired,
-                        Options = question.Options,
                         Order = question.Order,
                         Title = question.Title,
                         Type = MapQuestionType(question.Type)
@@ -104,7 +103,6 @@ public class QuestionnaireTemplatesController : BaseController
                         Description = question.Description,
                         Id = question.Id,
                         IsRequired = question.IsRequired,
-                        Options = question.Options,
                         Order = question.Order,
                         Title = question.Title,
                         Type = MapQuestionType(question.Type)

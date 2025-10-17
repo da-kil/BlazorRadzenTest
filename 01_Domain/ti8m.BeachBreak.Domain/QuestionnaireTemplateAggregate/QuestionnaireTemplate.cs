@@ -237,8 +237,7 @@ public class QuestionnaireTemplate : AggregateRoot
                     question.Type,
                     question.Order,
                     question.IsRequired,
-                    new Dictionary<string, object>(question.Configuration),  // Deep copy
-                    new List<string>(question.Options)  // Deep copy
+                    new Dictionary<string, object>(question.Configuration)  // Deep copy
                 )
             ).ToList();
 

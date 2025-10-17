@@ -364,8 +364,7 @@ public class QuestionnaireTemplateCommandHandler :
             MapQuestionType(item.Type),
             item.Order,
             item.IsRequired,
-            item.Configuration,
-            item.Options
+            item.Configuration
         )).ToList();
     }
 
