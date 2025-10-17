@@ -1237,28 +1237,39 @@
         var competencies = GetCompetenciesForQuestion(question);
         if (competencies.Count == 0) return true;
 
-        // Check that at least one competency has been rated in the ComplexValue
         if (questionResponse.ComplexValue == null) return false;
 
-        return competencies.Any(c =>
+        // Get only required competencies
+        var requiredCompetencies = competencies.Where(c => c.IsRequired).ToList();
+
+        // If no required competencies exist, check if at least one competency is rated
+        if (!requiredCompetencies.Any())
         {
-            if (questionResponse.ComplexValue.TryGetValue($"rating_{c.Key}", out var value))
+            return competencies.Any(c => HasCompetencyRating(questionResponse, c.Key));
+        }
+
+        // Check that ALL required competencies have been rated
+        return requiredCompetencies.All(c => HasCompetencyRating(questionResponse, c.Key));
+    }
+
+    private bool HasCompetencyRating(QuestionResponse questionResponse, string competencyKey)
+    {
+        if (questionResponse.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
+        {
+            // Handle JsonElement from deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
             {
-                // Handle JsonElement from deserialization
-                if (value is System.Text.Json.JsonElement jsonElement)
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
                 {
-                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
-                    {
-                        return jsonElement.GetInt32() > 0;
-                    }
-                }
-                else if (value is int intValue)
-                {
-                    return intValue > 0;
+                    return jsonElement.GetInt32() > 0;
                 }
             }
-            return false;
-        });
+            else if (value is int intValue)
+            {
+                return intValue > 0;
+            }
+        }
+        return false;
     }
 
     private bool IsSectionCompleted(Guid sectionId)
