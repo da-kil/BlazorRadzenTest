@@ -660,6 +660,7 @@
                                 <RadzenColumn Size="12" SizeMD="8">
                                     <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
                                         @competency.Title
+                                        @if (competency.IsRequired) { <span class="text-danger">*</span> }
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
                                         @competency.Description
