@@ -443,8 +443,10 @@
         // Handle complex value (dictionary with text sections)
         if (answer is Dictionary<string, object> complexValue)
         {
+            var textSections = GetTextSectionsFromQuestion(currentSection!.Questions.FirstOrDefault(q => q.Type == QuestionType.TextQuestion));
+
             return @<div>
-                @foreach (var kvp in complexValue.Where(k => k.Key.StartsWith("text_")))
+                @foreach (var kvp in complexValue.Where(k => k.Key.StartsWith("text_")).OrderBy(k => k.Key))
                 {
                     var textSectionKey = kvp.Key.Replace("text_", "");
 
@@ -459,12 +461,33 @@
                         textValue = kvp.Value?.ToString() ?? "";
                     }
 
-                    if (!string.IsNullOrWhiteSpace(textValue))
-                    {
-                        <div class="mb-3 p-2 border rounded">
-                            <div style="white-space: pre-wrap;">@textValue</div>
+                    // Get text section title - match by order
+                    var textSection = textSections.FirstOrDefault(ts => ts.Order.ToString() == textSectionKey);
+                    var sectionTitle = textSection?.Title ?? textSectionKey;
+
+                    <div class="mb-3 p-2 border rounded">
+                        <div class="fw-bold mb-2">
+                            @sectionTitle
+                            @if (textSection?.IsRequired == true)
+                            {
+                                <span class="text-danger">*</span>
+                            }
                         </div>
-                    }
+                        @if (!string.IsNullOrWhiteSpace(textSection?.Description))
+                        {
+                            <div class="text-muted small mb-2">@textSection.Description</div>
+                        }
+                        <div style="white-space: pre-wrap; color: #212529;">
+                            @if (!string.IsNullOrWhiteSpace(textValue))
+                            {
+                                @textValue
+                            }
+                            else
+                            {
+                                <span class="text-muted fst-italic">No answer provided</span>
+                            }
+                        </div>
+                    </div>
                 }
             </div>;
         }
@@ -472,6 +495,44 @@
         // Handle simple text value
         var text = answer?.ToString() ?? "";
         return @<div style="white-space: pre-wrap;">@text</div>;
+    }
+
+    private List<TextSection> GetTextSectionsFromQuestion(QuestionItem? question)
+    {
+        if (question?.Configuration?.ContainsKey("TextSections") != true)
+        {
+            return new List<TextSection>();
+        }
+
+        var textSectionsValue = question.Configuration["TextSections"];
+
+        // Handle direct List<TextSection>
+        if (textSectionsValue is List<TextSection> sections)
+        {
+            return sections;
+        }
+
+        // Handle JsonElement (from API deserialization)
+        if (textSectionsValue is System.Text.Json.JsonElement jsonElement)
+        {
+            try
+            {
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var textSections = System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(
+                    jsonElement.GetRawText(),
+                    options
+                );
+
+                return textSections ?? new List<TextSection>();
+            }
+            catch { /* Skip deserialization errors */ }
+        }
+
+        return new List<TextSection>();
     }
 
     private RenderFragment RenderAssessmentAnswer(object answer, QuestionItem question)

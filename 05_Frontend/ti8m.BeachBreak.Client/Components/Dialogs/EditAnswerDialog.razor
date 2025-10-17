@@ -82,10 +82,39 @@
     <div class="answer-editor">
         @if (Question.Type == QuestionType.TextQuestion)
         {
-            <RadzenTextArea @bind-Value="@editResponse.TextValue"
-                           Placeholder="Enter your answer here..."
-                           Rows="10"
-                           Style="width: 100%;" />
+            var textSections = GetTextSectionsFromQuestion();
+            if (textSections.Any())
+            {
+                @foreach (var textSection in textSections.OrderBy(ts => ts.Order))
+                {
+                    var currentValue = GetTextSectionValue(textSection.Order);
+                    <div class="mb-3 p-3 border rounded">
+                        <div class="fw-bold mb-2 text-primary">
+                            @textSection.Title
+                            @if (textSection.IsRequired)
+                            {
+                                <span class="text-danger">*</span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(textSection.Description))
+                        {
+                            <div class="text-muted small mb-2" style="font-style: italic;">@textSection.Description</div>
+                        }
+                        <RadzenTextArea Value="@currentValue"
+                                       ValueChanged="@((string value) => UpdateTextSectionValue(textSection.Order, value))"
+                                       Placeholder="Enter your answer here..."
+                                       Rows="5"
+                                       Style="width: 100%;" />
+                    </div>
+                }
+            }
+            else
+            {
+                <RadzenTextArea @bind-Value="@editResponse.TextValue"
+                               Placeholder="Enter your answer here..."
+                               Rows="10"
+                               Style="width: 100%;" />
+            }
         }
         else if (Question.Type == QuestionType.Assessment)
         {
@@ -154,6 +183,80 @@
                 editResponse.Value = CurrentAnswer;
             }
         }
+        else if (Question.Type == QuestionType.TextQuestion)
+        {
+            // Initialize empty ComplexValue for text sections
+            editResponse.ComplexValue = new Dictionary<string, object>();
+        }
+    }
+
+    private List<TextSection> GetTextSectionsFromQuestion()
+    {
+        if (Question?.Configuration?.ContainsKey("TextSections") != true)
+        {
+            return new List<TextSection>();
+        }
+
+        var textSectionsValue = Question.Configuration["TextSections"];
+
+        // Handle direct List<TextSection>
+        if (textSectionsValue is List<TextSection> sections)
+        {
+            return sections;
+        }
+
+        // Handle JsonElement (from API deserialization)
+        if (textSectionsValue is System.Text.Json.JsonElement jsonElement)
+        {
+            try
+            {
+                var options = new System.Text.Json.JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                var textSections = System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(
+                    jsonElement.GetRawText(),
+                    options
+                );
+
+                return textSections ?? new List<TextSection>();
+            }
+            catch { /* Skip deserialization errors */ }
+        }
+
+        return new List<TextSection>();
+    }
+
+    private string GetTextSectionValue(int sectionOrder)
+    {
+        if (editResponse.ComplexValue == null)
+            return "";
+
+        var textKey = $"text_{sectionOrder}";
+        if (editResponse.ComplexValue.ContainsKey(textKey))
+        {
+            var value = editResponse.ComplexValue[textKey];
+            if (value is System.Text.Json.JsonElement jsonElement &&
+                jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+            {
+                return jsonElement.GetString() ?? "";
+            }
+            return value?.ToString() ?? "";
+        }
+
+        return "";
+    }
+
+    private void UpdateTextSectionValue(int sectionOrder, string value)
+    {
+        if (editResponse.ComplexValue == null)
+        {
+            editResponse.ComplexValue = new Dictionary<string, object>();
+        }
+
+        var textKey = $"text_{sectionOrder}";
+        editResponse.ComplexValue[textKey] = value;
     }
 
     private async Task HandleResponseChanged(QuestionResponse response)
@@ -191,7 +294,7 @@
         // Return the edited response based on question type
         object? result = Question.Type switch
         {
-            QuestionType.TextQuestion => editResponse.TextValue,
+            QuestionType.TextQuestion => GetTextQuestionResult(),
             QuestionType.Assessment => editResponse.ComplexValue,
             QuestionType.GoalAchievement => editResponse.ComplexValue,
             _ => editResponse.TextValue ?? editResponse.Value
@@ -200,11 +303,45 @@
         DialogService.Close(result);
     }
 
+    private object? GetTextQuestionResult()
+    {
+        // Return ComplexValue with text sections if available
+        if (editResponse.ComplexValue != null && editResponse.ComplexValue.Any(kvp => kvp.Key.StartsWith("text_")))
+        {
+            return editResponse.ComplexValue;
+        }
+
+        // Fallback to simple text value
+        return editResponse.TextValue;
+    }
+
     private bool IsAnswerValid()
     {
+        if (Question.Type == QuestionType.TextQuestion)
+        {
+            var textSections = GetTextSectionsFromQuestion();
+            if (textSections.Any())
+            {
+                // Check if all required text sections have values
+                foreach (var textSection in textSections.Where(ts => ts.IsRequired))
+                {
+                    var value = GetTextSectionValue(textSection.Order);
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            else
+            {
+                // Fallback: check simple text value
+                return !string.IsNullOrWhiteSpace(editResponse.TextValue);
+            }
+        }
+
         return Question.Type switch
         {
-            QuestionType.TextQuestion => !string.IsNullOrWhiteSpace(editResponse.TextValue),
             QuestionType.Assessment => editResponse.ComplexValue != null &&
                                       editResponse.ComplexValue.Any(kvp => kvp.Key.StartsWith("rating_") &&
                                                                            kvp.Value != null &&
