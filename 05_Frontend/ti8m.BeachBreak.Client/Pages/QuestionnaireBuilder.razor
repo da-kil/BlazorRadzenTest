@@ -168,7 +168,7 @@
 	// Editable question type labels
 	private Dictionary<QuestionType, string> questionTypeLabels = new()
 	{
-		{ QuestionType.SelfAssessment, "Self-Assessment" },
+		{ QuestionType.Assessment, "Assessment" },
 		{ QuestionType.GoalAchievement, "Goal Achievement" },
 		{ QuestionType.TextQuestion, "Text Question" }
 	};
@@ -335,7 +335,7 @@
 	{
 		return type switch
 		{
-			QuestionType.SelfAssessment => "Self-Assessment",
+			QuestionType.Assessment => "Competency Assessment",
 			QuestionType.GoalAchievement => "Goal Achievement Review",
 			QuestionType.TextQuestion => "Open-Ended Questions",
 			_ => $"Section {State.Template.Sections.Count + 1}"
@@ -499,7 +499,7 @@
 	{
 		return type switch
 		{
-			QuestionType.SelfAssessment => "self_improvement",
+			QuestionType.Assessment => "self_improvement",
 			QuestionType.GoalAchievement => "track_changes",
 			QuestionType.TextQuestion => "psychology",
 			_ => "help"

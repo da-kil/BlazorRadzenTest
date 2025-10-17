@@ -373,7 +373,7 @@ public class QuestionnaireTemplateCommandHandler :
     private static Domain.QuestionnaireTemplateAggregate.QuestionType MapQuestionType(QuestionType dtoType) => dtoType switch
     {
         QuestionType.TextQuestion => Domain.QuestionnaireTemplateAggregate.QuestionType.TextQuestion,
-        QuestionType.SelfAssessment => Domain.QuestionnaireTemplateAggregate.QuestionType.SelfAssessment,
+        QuestionType.Assessment => Domain.QuestionnaireTemplateAggregate.QuestionType.Assessment,
         QuestionType.GoalAchievement => Domain.QuestionnaireTemplateAggregate.QuestionType.GoalAchievement,
         _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
     };

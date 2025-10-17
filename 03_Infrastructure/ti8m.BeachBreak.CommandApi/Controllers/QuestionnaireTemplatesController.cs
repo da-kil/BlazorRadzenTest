@@ -274,7 +274,7 @@ public class QuestionnaireTemplatesController : BaseController
     private static QuestionType MapQuestionType(QuestionTypeDto dtoType) => dtoType switch
     {
         QuestionTypeDto.TextQuestion => QuestionType.TextQuestion,
-        QuestionTypeDto.SelfAssessment => QuestionType.SelfAssessment,
+        QuestionTypeDto.Assessment => QuestionType.Assessment,
         QuestionTypeDto.GoalAchievement => QuestionType.GoalAchievement,
         _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
     };

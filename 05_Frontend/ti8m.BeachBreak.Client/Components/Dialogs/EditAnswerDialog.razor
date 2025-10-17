@@ -86,12 +86,12 @@
                            Rows="10"
                            Style="width: 100%;" />
         }
-        else if (Question.Type == QuestionType.SelfAssessment)
+        else if (Question.Type == QuestionType.Assessment)
         {
-            <OptimizedSelfAssessmentQuestion Question="@Question"
-                                           Response="@editResponse"
-                                           OnResponseChanged="@HandleResponseChanged"
-                                           IsReadOnly="false" />
+            <OptimizedAssessmentQuestion Question="@Question"
+                                        Response="@editResponse"
+                                        OnResponseChanged="@HandleResponseChanged"
+                                        IsReadOnly="false" />
         }
         else if (Question.Type == QuestionType.GoalAchievement)
         {
@@ -184,7 +184,7 @@
         object? result = Question.Type switch
         {
             QuestionType.TextQuestion => editResponse.TextValue,
-            QuestionType.SelfAssessment => editResponse.ComplexValue,
+            QuestionType.Assessment => editResponse.ComplexValue,
             QuestionType.GoalAchievement => editResponse.ComplexValue,
             _ => editResponse.TextValue ?? editResponse.Value
         };

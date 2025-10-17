@@ -232,7 +232,7 @@
 
     private string GetQuestionTypeIcon(QuestionType type) => type switch
     {
-        QuestionType.SelfAssessment => "self_improvement",
+        QuestionType.Assessment => "self_improvement",
         QuestionType.GoalAchievement => "track_changes",
         QuestionType.TextQuestion => "psychology",
         _ => "help"
@@ -258,16 +258,16 @@
     {
         return question.Type switch
         {
-            QuestionType.SelfAssessment => GetSelfAssessmentPreview(question),
+            QuestionType.Assessment => GetAssessmentPreview(question),
             QuestionType.GoalAchievement => GetGoalAchievementPreview(),
             QuestionType.TextQuestion => GetTextQuestionPreview(question),
             _ => @<RadzenTextBox Placeholder="Preview not available" Disabled="true" Class="w-100" />
         };
     }
 
-    private RenderFragment GetSelfAssessmentPreview(QuestionItem question)
+    private RenderFragment GetAssessmentPreview(QuestionItem question)
     {
-        return @<div class="self-assessment-preview">
+        return @<div class="assessment-preview">
             @{
                 var competencies = GetCompetenciesFromConfiguration(question);
             }

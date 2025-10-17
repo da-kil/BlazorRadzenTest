@@ -10,8 +10,8 @@
     {
         @switch (Question.Type)
         {
-            case QuestionType.SelfAssessment:
-                @RenderSelfAssessmentOptimized()
+            case QuestionType.Assessment:
+                @RenderAssessmentOptimized()
                 break;
             case QuestionType.TextQuestion:
                 @RenderTextQuestionOptimized()
@@ -69,12 +69,12 @@
         return $"{Response.QuestionId}|{Response.TextValue}|{Response.NumericValue}|{Response.DateValue}|{Response.ComplexValue?.Count ?? 0}";
     }
 
-    private RenderFragment RenderSelfAssessmentOptimized() => __builder =>
+    private RenderFragment RenderAssessmentOptimized() => __builder =>
     {
-        <OptimizedSelfAssessmentQuestion Question="@Question"
-                                        Response="@Response"
-                                        OnResponseChanged="@OnResponseChanged"
-                                        IsReadOnly="@IsReadOnly" />
+        <OptimizedAssessmentQuestion Question="@Question"
+                                    Response="@Response"
+                                    OnResponseChanged="@OnResponseChanged"
+                                    IsReadOnly="@IsReadOnly" />
     };
 
     private RenderFragment RenderTextQuestionOptimized() => __builder =>

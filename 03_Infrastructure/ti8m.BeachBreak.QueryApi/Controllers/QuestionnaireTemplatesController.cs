@@ -233,6 +233,6 @@ public class QuestionnaireTemplatesController : BaseController
         {
             { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.TextQuestion, QueryApi.Dto.QuestionType.TextQuestion },
             { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.GoalAchievement, QueryApi.Dto.QuestionType.GoalAchievement },
-            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.SelfAssessment, QueryApi.Dto.QuestionType.SelfAssessment }
+            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.Assessment, QueryApi.Dto.QuestionType.Assessment }
         };
 }

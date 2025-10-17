@@ -82,8 +82,8 @@
                           Rows="3" />
         </div>
 
-        <!-- Rating Scale Configuration - only for Self-Assessment sections -->
-        @if (Section.Questions.Any() && Section.Questions.First().Type == QuestionType.SelfAssessment)
+        <!-- Rating Scale Configuration - only for Assessment sections -->
+        @if (Section.Questions.Any() && Section.Questions.First().Type == QuestionType.Assessment)
         {
             var firstQuestion = Section.Questions.First();
             <div class="rating-scale-config-modern">
@@ -183,30 +183,30 @@
                     <div class="p-4">
                         <div class="row g-3">
                             <div class="col-md-4">
-                                <div class="question-type-card self-assessment h-100 p-4 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
+                                <div class="question-type-card assessment h-100 p-4 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
                                      style="transition: all 0.15s ease-in-out; transform: scale(1);"
-                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.SelfAssessment)"
+                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.Assessment)"
                                      onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(15, 105, 255, 0.15)'; this.style.borderColor='var(--primary-color)'"
                                      onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='var(--primary-color)'"
                                      onmousedown="this.style.transform='scale(0.98)'"
                                      onmouseup="this.style.transform='scale(1.02)'"
                                      tabindex="0"
                                      role="button"
-                                     aria-label="Add Self-Assessment Question">
+                                     aria-label="Add Assessment Question">
                                     <div class="position-absolute top-0 start-50 translate-middle">
-                                        <div class="bg-self-assessment text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
+                                        <div class="bg-assessment text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 24px; height: 24px; font-size: 0.75rem;">
                                             <RadzenIcon Icon="add" />
                                         </div>
                                     </div>
-                                    <RadzenIcon Icon="self_improvement" Class="question-self-assessment fs-1 mb-3 mt-2" />
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-self-assessment mb-2">
-                                        Self-Assessment
+                                    <RadzenIcon Icon="self_improvement" Class="question-assessment fs-1 mb-3 mt-2" />
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-assessment mb-2">
+                                        Assessment
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
                                         Rate competencies and skills on a scale
                                     </RadzenText>
                                     <div class="mt-3">
-                                        <span class="badge badge-self-assessment px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
+                                        <span class="badge badge-assessment px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
                                     </div>
                                 </div>
                             </div>
@@ -707,7 +707,7 @@
         {
             switch (question.Type)
             {
-                case QuestionType.SelfAssessment:
+                case QuestionType.Assessment:
                     if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
                     {
                         if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
@@ -765,7 +765,7 @@
     {
         return Section.Questions.FirstOrDefault()?.Type switch
         {
-            QuestionType.SelfAssessment => "self_improvement",
+            QuestionType.Assessment => "self_improvement",
             QuestionType.GoalAchievement => "track_changes",
             QuestionType.TextQuestion => "psychology",
             _ => "help"
@@ -776,7 +776,7 @@
     {
         return Section.Questions.FirstOrDefault()?.Type switch
         {
-            QuestionType.SelfAssessment => "Self-Assessment",
+            QuestionType.Assessment => "Assessment",
             QuestionType.GoalAchievement => "Goal Achievement",
             QuestionType.TextQuestion => "Text Question",
             _ => "Unknown"
@@ -787,7 +787,7 @@
     {
         return Section.Questions.FirstOrDefault()?.Type switch
         {
-            QuestionType.SelfAssessment => "#0F60FF",
+            QuestionType.Assessment => "#0F60FF",
             QuestionType.GoalAchievement => "#00E6C8",
             QuestionType.TextQuestion => "#935BA9",
             _ => "#6c757d"
@@ -807,7 +807,7 @@
         {
             switch (question.Type)
             {
-                case QuestionType.SelfAssessment:
+                case QuestionType.Assessment:
                     if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
                     {
                         if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
@@ -896,7 +896,7 @@
         return requiredItems;
     }
 
-    // Rating scale configuration methods for Self-Assessment sections
+    // Rating scale configuration methods for Assessment sections
     private int GetRatingScale(QuestionItem question)
     {
         if (question.Configuration.TryGetValue("RatingScale", out var scale))
@@ -914,7 +914,7 @@
     {
         question.Configuration["RatingScale"] = value;
         // Apply to all questions in the section
-        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.SelfAssessment))
+        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.Assessment))
         {
             q.Configuration["RatingScale"] = value;
         }
@@ -933,7 +933,7 @@
     private void SetScaleLowLabel(QuestionItem question, string value)
     {
         // Apply to all questions in the section
-        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.SelfAssessment))
+        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.Assessment))
         {
             q.Configuration["ScaleLowLabel"] = value ?? "Poor";
         }
@@ -952,7 +952,7 @@
     private void SetScaleHighLabel(QuestionItem question, string value)
     {
         // Apply to all questions in the section
-        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.SelfAssessment))
+        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.Assessment))
         {
             q.Configuration["ScaleHighLabel"] = value ?? "Excellent";
         }

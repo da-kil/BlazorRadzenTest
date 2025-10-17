@@ -11,11 +11,11 @@
                 </RadzenText>
             </div>
             <div class="d-flex gap-2">
-                <RadzenButton Text="Self-Assessment"
+                <RadzenButton Text="Assessment"
                              ButtonStyle="ButtonStyle.Primary"
                              Icon="self_improvement"
                              Size="ButtonSize.Small"
-                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.SelfAssessment))"
+                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Assessment))"
                              Title="Add rating-based competency assessment"
                              Disabled="@(!Template.IsAvailableForEditing)" />
                 <RadzenButton Text="Goal Achievement"
@@ -200,7 +200,7 @@
                 {
                     switch (question.Type)
                     {
-                        case QuestionType.SelfAssessment:
+                        case QuestionType.Assessment:
                             if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
                             {
                                 if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)

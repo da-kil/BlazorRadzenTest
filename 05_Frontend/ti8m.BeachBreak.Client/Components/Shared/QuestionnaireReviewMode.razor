@@ -445,7 +445,7 @@
         return question.Type switch
         {
             QuestionType.TextQuestion => RenderTextAnswer(answer),
-            QuestionType.SelfAssessment => RenderSelfAssessmentAnswer(answer, question),
+            QuestionType.Assessment => RenderAssessmentAnswer(answer, question),
             QuestionType.GoalAchievement => RenderGoalAnswer(answer),
             _ => @<span>@answer.ToString()</span>
         };
@@ -457,7 +457,7 @@
         return @<div style="white-space: pre-wrap;">@text</div>;
     }
 
-    private RenderFragment RenderSelfAssessmentAnswer(object answer, QuestionItem question)
+    private RenderFragment RenderAssessmentAnswer(object answer, QuestionItem question)
     {
         if (answer is not Dictionary<string, object> complexValue)
         {
@@ -659,7 +659,7 @@
             // Convert answer to string format expected by API
             string answerString;
 
-            if (questionType is QuestionType.SelfAssessment or QuestionType.GoalAchievement)
+            if (questionType is QuestionType.Assessment or QuestionType.GoalAchievement)
             {
                 // For complex types, serialize to JSON
                 answerString = System.Text.Json.JsonSerializer.Serialize(newAnswer);

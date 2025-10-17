@@ -48,7 +48,8 @@
       "Bash(powershell -Command \"cd ''C:\\projects\\BlazorRadzenTest''; dotnet build ti8m.BeachBreak.sln 2>&1 | Select-String -Pattern ''(error |warning |Build succeeded|Build FAILED)'' -Context 0,1\")",
       "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.Infrastructure.Marten\\Projections\\EmployeeDashboardProjection.cs\" -Force)",
       "Bash(powershell:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(Remove-Item -Path \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Services\\QuestionHandlers\\SelfAssessmentQuestionHandler.cs\" -Force)"
     ],
     "deny": [],
     "ask": []

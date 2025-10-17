@@ -53,7 +53,7 @@ public class QuestionnaireValidationService
                 }
 
                 // Validate question content based on type
-                if (question.Type == QuestionType.SelfAssessment)
+                if (question.Type == QuestionType.Assessment)
                 {
                     var competencies = configurationService.GetCompetencies(question);
                     if (competencies.Count == 0)

@@ -442,7 +442,7 @@
                         {
                             Id = Guid.NewGuid(),
                             Title = "How would you rate your overall performance this year?",
-                            Type = QuestionType.SelfAssessment,
+                            Type = QuestionType.Assessment,
                             Order = 0,
                             IsRequired = true
                         },
@@ -644,7 +644,7 @@
         
         return question.Type switch
         {
-            QuestionType.SelfAssessment => RenderRatingQuestion(question, questionResponse),
+            QuestionType.Assessment => RenderRatingQuestion(question, questionResponse),
             QuestionType.TextQuestion => RenderTextQuestion(question, questionResponse),
             QuestionType.GoalAchievement => RenderGoalQuestion(question, questionResponse),
             _ => @<div class="alert alert-warning">Question type @question.Type not implemented</div>
@@ -653,8 +653,8 @@
 
     private RenderFragment RenderRatingQuestion(QuestionItem question, QuestionResponse response)
     {
-        return @<div class="self-assessment-question">
-            <RadzenCard Class="self-assessment-step">
+        return @<div class="assessment-question">
+            <RadzenCard Class="assessment-step">
                 <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
                     <RadzenIcon Icon="self_improvement" Class="me-2" />
                     @question.Title
@@ -1248,14 +1248,14 @@
     {
         return question.Type switch
         {
-            QuestionType.SelfAssessment => IsSelfAssessmentCompleted(question, questionResponse),
+            QuestionType.Assessment => IsAssessmentCompleted(question, questionResponse),
             QuestionType.TextQuestion => !string.IsNullOrWhiteSpace(questionResponse.TextValue),
             QuestionType.GoalAchievement => !string.IsNullOrWhiteSpace(GetGoalDescription(question.Id)),
             _ => true
         };
     }
 
-    private bool IsSelfAssessmentCompleted(QuestionItem question, QuestionResponse questionResponse)
+    private bool IsAssessmentCompleted(QuestionItem question, QuestionResponse questionResponse)
     {
         var competencies = GetCompetenciesForQuestion(question);
         if (competencies.Count == 0) return true;

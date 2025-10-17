@@ -87,8 +87,8 @@
 </style>
 
 <div class="competencies-container">
-        <!-- Self-Assessment Configuration -->
-        @if (Question.Type == QuestionType.SelfAssessment)
+        <!-- Assessment Configuration -->
+        @if (Question.Type == QuestionType.Assessment)
         {
             var competencies = GetOrderedCompetencies();
             <div class="competencies-config">
@@ -403,7 +403,7 @@
         // Validate question content based on type
         bool contentValid = true;
 
-        if (Question.Type == QuestionType.SelfAssessment)
+        if (Question.Type == QuestionType.Assessment)
         {
             var competencies = GetOrderedCompetencies();
             for (int i = 0; i < competencies.Count; i++)
@@ -535,14 +535,14 @@
 
     private string GetQuestionTypeIcon(QuestionType type) => type switch
     {
-        QuestionType.SelfAssessment => "self_improvement",
+        QuestionType.Assessment => "self_improvement",
         QuestionType.GoalAchievement => "track_changes",
         QuestionType.TextQuestion => "psychology",
         _ => "help"
     };
 
 
-    // Self-Assessment methods
+    // Assessment methods
     private List<CompetencyDefinition> GetCompetenciesFromConfiguration()
     {
         if (Question.Configuration.ContainsKey("Competencies"))
