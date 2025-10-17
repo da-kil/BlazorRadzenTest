@@ -8,6 +8,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 public class QuestionnaireAssignment : AggregateRoot
 {
     public Guid TemplateId { get; private set; }
+    public bool RequiresManagerReview { get; private set; } = true;
     public Guid EmployeeId { get; private set; }
     public string EmployeeName { get; private set; }
     public string EmployeeEmail { get; private set; }
@@ -53,6 +54,7 @@ public class QuestionnaireAssignment : AggregateRoot
     public QuestionnaireAssignment(
         Guid id,
         Guid templateId,
+        bool requiresManagerReview,
         Guid employeeId,
         string employeeName,
         string employeeEmail,
@@ -64,6 +66,7 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new QuestionnaireAssignmentAssigned(
             id,
             templateId,
+            requiresManagerReview,
             employeeId,
             employeeName,
             employeeEmail,
@@ -281,6 +284,16 @@ public class QuestionnaireAssignment : AggregateRoot
             throw new InvalidOperationException("Employee must have started filling sections before submitting");
 
         RaiseEvent(new EmployeeQuestionnaireSubmitted(DateTime.UtcNow, submittedBy));
+
+        // Auto-finalize if manager review is not required
+        if (!RequiresManagerReview)
+        {
+            RaiseEvent(new QuestionnaireAutoFinalized(
+                Id,
+                DateTime.UtcNow,
+                "System",
+                "Auto-finalized: Manager review not required"));
+        }
     }
 
     public void SubmitManagerQuestionnaire(string submittedBy)
@@ -394,6 +407,7 @@ public class QuestionnaireAssignment : AggregateRoot
     {
         Id = @event.AggregateId;
         TemplateId = @event.TemplateId;
+        RequiresManagerReview = @event.RequiresManagerReview;
         EmployeeId = @event.EmployeeId;
         EmployeeName = @event.EmployeeName;
         EmployeeEmail = @event.EmployeeEmail;
@@ -517,6 +531,14 @@ public class QuestionnaireAssignment : AggregateRoot
         FinalizedDate = @event.FinalizedDate;
         FinalizedBy = @event.FinalizedBy;
         ManagerFinalNotes = @event.ManagerFinalNotes;
+    }
+
+    public void Apply(QuestionnaireAutoFinalized @event)
+    {
+        WorkflowState = WorkflowState.Finalized;
+        FinalizedDate = @event.FinalizedDate;
+        FinalizedBy = @event.FinalizedBy;
+        ManagerFinalNotes = @event.Reason; // Store reason in notes
     }
 
     private void UpdateWorkflowState()

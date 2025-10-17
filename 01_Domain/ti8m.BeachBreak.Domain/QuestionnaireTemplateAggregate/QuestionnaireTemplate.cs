@@ -9,6 +9,7 @@ public class QuestionnaireTemplate : AggregateRoot
     public string Name { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
     public Guid CategoryId { get; private set; }
+    public bool RequiresManagerReview { get; private set; } = true;
 
     public TemplateStatus Status { get; private set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; private set; }
@@ -28,6 +29,7 @@ public class QuestionnaireTemplate : AggregateRoot
         string name,
         string description,
         Guid categoryId,
+        bool requiresManagerReview = true,
         List<QuestionSection>? sections = null,
         QuestionnaireSettings? settings = null)
     {
@@ -39,6 +41,7 @@ public class QuestionnaireTemplate : AggregateRoot
             name,
             description ?? string.Empty,
             categoryId,
+            requiresManagerReview,
             sections ?? new(),
             settings ?? new(),
             DateTime.UtcNow));
@@ -169,6 +172,30 @@ public class QuestionnaireTemplate : AggregateRoot
     }
 
     /// <summary>
+    /// Validates that section completion roles match the review requirement.
+    /// When RequiresManagerReview is false, all sections must be Employee-only.
+    /// </summary>
+    public void ValidateSectionCompletionRoles()
+    {
+        if (!RequiresManagerReview)
+        {
+            var nonEmployeeSections = Sections
+                .Where(s => s.CompletionRole != CompletionRole.Employee)
+                .ToList();
+
+            if (nonEmployeeSections.Any())
+            {
+                var sectionTitles = string.Join(", ", nonEmployeeSections.Select(s =>
+                    string.IsNullOrWhiteSpace(s.Title) ? $"Section {s.Order + 1}" : s.Title));
+
+                throw new InvalidOperationException(
+                    $"When manager review is not required, all sections must be completed by Employee only. " +
+                    $"Found {nonEmployeeSections.Count} section(s) with Manager or Both completion roles: {sectionTitles}");
+            }
+        }
+    }
+
+    /// <summary>
     /// Creates a clone of an existing questionnaire template with new IDs.
     /// The cloned template is always in Draft status with reset timestamps.
     /// </summary>
@@ -232,6 +259,7 @@ public class QuestionnaireTemplate : AggregateRoot
             clonedName,
             source.Description,
             source.CategoryId,
+            source.RequiresManagerReview,
             clonedSections,
             clonedSettings,
             DateTime.UtcNow
@@ -247,6 +275,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Name = @event.Name;
         Description = @event.Description;
         CategoryId = @event.CategoryId;
+        RequiresManagerReview = @event.RequiresManagerReview;
         Sections = @event.Sections;
         Settings = @event.Settings;
         Status = TemplateStatus.Draft;
@@ -316,6 +345,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Name = @event.Name;
         Description = @event.Description;
         CategoryId = @event.CategoryId;
+        RequiresManagerReview = @event.RequiresManagerReview;
         Sections = @event.Sections;
         Settings = @event.Settings;
         Status = TemplateStatus.Draft;  // Always draft

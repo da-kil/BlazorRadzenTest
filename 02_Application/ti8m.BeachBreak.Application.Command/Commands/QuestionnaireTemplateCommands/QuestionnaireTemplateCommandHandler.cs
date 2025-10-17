@@ -51,8 +51,12 @@ public class QuestionnaireTemplateCommandHandler :
                 command.QuestionnaireTemplate.Name,
                 command.QuestionnaireTemplate.Description,
                 command.QuestionnaireTemplate.CategoryId,
+                command.QuestionnaireTemplate.RequiresManagerReview,
                 sections,
                 settings);
+
+            // Validate that section completion roles match review requirement
+            questionnaireTemplate.ValidateSectionCompletionRoles();
 
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
@@ -90,6 +94,9 @@ public class QuestionnaireTemplateCommandHandler :
 
             questionnaireTemplate.UpdateSections(sections);
             questionnaireTemplate.UpdateSettings(settings);
+
+            // Validate that section completion roles match review requirement
+            questionnaireTemplate.ValidateSectionCompletionRoles();
 
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
@@ -154,6 +161,9 @@ public class QuestionnaireTemplateCommandHandler :
                 logger.LogQuestionnaireTemplateNotFound(command.Id);
                 return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
+
+            // Validate that section completion roles match review requirement before publishing
+            questionnaireTemplate.ValidateSectionCompletionRoles();
 
             questionnaireTemplate.Publish(command.PublishedBy);
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);

@@ -198,6 +198,7 @@ public class AssignmentsController : BaseController
             Id = assignment.Id,
             Notes = assignment.Notes,
             TemplateId = assignment.TemplateId,
+            RequiresManagerReview = assignment.RequiresManagerReview,
             TemplateName = assignment.TemplateName,
             TemplateCategoryId = assignment.TemplateCategoryId,
 

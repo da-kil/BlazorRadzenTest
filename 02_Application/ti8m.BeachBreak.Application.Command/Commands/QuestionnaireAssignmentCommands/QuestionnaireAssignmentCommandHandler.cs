@@ -53,6 +53,7 @@ public class QuestionnaireAssignmentCommandHandler :
                 var assignment = new Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment(
                     assignmentId,
                     command.TemplateId,
+                    command.RequiresManagerReview,
                     employeeData.EmployeeId,
                     employeeData.EmployeeName,
                     employeeData.EmployeeEmail,

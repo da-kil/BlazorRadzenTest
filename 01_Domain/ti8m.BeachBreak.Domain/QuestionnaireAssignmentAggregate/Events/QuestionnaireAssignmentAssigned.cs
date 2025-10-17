@@ -5,6 +5,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 public record QuestionnaireAssignmentAssigned(
     Guid AggregateId,
     Guid TemplateId,
+    bool RequiresManagerReview,
     Guid EmployeeId,
     string EmployeeName,
     string EmployeeEmail,

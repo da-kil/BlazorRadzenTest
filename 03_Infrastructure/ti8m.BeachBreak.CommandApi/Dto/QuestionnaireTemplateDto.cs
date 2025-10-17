@@ -6,6 +6,7 @@ public class QuestionnaireTemplateDto
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
+    public bool RequiresManagerReview { get; set; } = true;
 
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }        // First publish timestamp

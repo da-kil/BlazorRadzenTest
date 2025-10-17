@@ -40,6 +40,7 @@ public class QuestionnaireTemplatesController : BaseController
                 CategoryId = questionnaireTemplate.CategoryId,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
+                RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     Description = section.Description,
@@ -98,6 +99,7 @@ public class QuestionnaireTemplatesController : BaseController
                 CategoryId = questionnaireTemplate.CategoryId,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
+                RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     Description = section.Description,
