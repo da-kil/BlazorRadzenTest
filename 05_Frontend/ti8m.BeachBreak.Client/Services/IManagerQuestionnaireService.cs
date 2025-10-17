@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.Dto;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -12,6 +13,7 @@ public interface IManagerQuestionnaireService
     Task<List<QuestionnaireAssignment>> GetAssignmentsByEmployeeAsync(string employeeId);
     Task<bool> SendReminderAsync(Guid assignmentId, string message);
     Task<TeamPerformanceReport> GenerateTeamReportAsync(DateTime? fromDate = null, DateTime? toDate = null);
+    Task<ManagerDashboardDto?> GetMyDashboardAsync();
 }
 
 public class TeamAnalytics

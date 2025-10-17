@@ -11,13 +11,13 @@ public class QuestionHandlerFactory
     private readonly Dictionary<QuestionType, IQuestionTypeHandler> handlers;
 
     public QuestionHandlerFactory(
-        SelfAssessmentQuestionHandler selfAssessmentHandler,
+        AssessmentQuestionHandler assessmentHandler,
         GoalAchievementQuestionHandler goalAchievementHandler,
         TextQuestionHandler textQuestionHandler)
     {
         handlers = new Dictionary<QuestionType, IQuestionTypeHandler>
         {
-            { QuestionType.SelfAssessment, selfAssessmentHandler },
+            { QuestionType.Assessment, assessmentHandler },
             { QuestionType.GoalAchievement, goalAchievementHandler },
             { QuestionType.TextQuestion, textQuestionHandler }
         };

@@ -3,19 +3,19 @@ using ti8m.BeachBreak.Client.Models;
 namespace ti8m.BeachBreak.Client.Services.QuestionHandlers;
 
 /// <summary>
-/// Handler for Self-Assessment question type.
-/// Manages competencies with rating scales.
+/// Handler for Assessment question type.
+/// Manages competencies with rating scales - can be completed by employee or manager.
 /// </summary>
-public class SelfAssessmentQuestionHandler : IQuestionTypeHandler
+public class AssessmentQuestionHandler : IQuestionTypeHandler
 {
     private readonly QuestionConfigurationService configService;
 
-    public SelfAssessmentQuestionHandler(QuestionConfigurationService configService)
+    public AssessmentQuestionHandler(QuestionConfigurationService configService)
     {
         this.configService = configService;
     }
 
-    public QuestionType SupportedType => QuestionType.SelfAssessment;
+    public QuestionType SupportedType => QuestionType.Assessment;
 
     public void InitializeQuestion(QuestionItem question)
     {
@@ -102,6 +102,6 @@ public class SelfAssessmentQuestionHandler : IQuestionTypeHandler
 
     public string GetDefaultTitle()
     {
-        return "Self-Assessment of Competencies";
+        return "Competency Assessment";
     }
 }

@@ -20,7 +20,7 @@
     --light-color: var(--light-blue);
 
     /* Question type specific colors */
-    --question-self-assessment: var(--blue-new);
+    --question-assessment: var(--blue-new);
     --question-goal-achievement: var(--golden-milk);
     --question-text-response: var(--purple-rain);
 }

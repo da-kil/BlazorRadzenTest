@@ -27,7 +27,7 @@ public class QuestionSection
     {
         return QuestionType switch
         {
-            QuestionType.SelfAssessment => GetCompetencies().Count,
+            QuestionType.Assessment => GetCompetencies().Count,
             QuestionType.GoalAchievement => GetGoalCategories().Count,
             QuestionType.TextQuestion => GetTextSections().Count,
             _ => 0
@@ -38,7 +38,7 @@ public class QuestionSection
     {
         return QuestionType switch
         {
-            QuestionType.SelfAssessment => GetCompetencies().Count(c => c.IsRequired),
+            QuestionType.Assessment => GetCompetencies().Count(c => c.IsRequired),
             QuestionType.GoalAchievement => GetGoalCategories().Count(g => g.IsRequired),
             QuestionType.TextQuestion => GetTextSections().Count(t => t.IsRequired),
             _ => 0
@@ -94,7 +94,7 @@ public class QuestionSection
     {
         return QuestionType switch
         {
-            QuestionType.SelfAssessment => "self_improvement",
+            QuestionType.Assessment => "self_improvement",
             QuestionType.GoalAchievement => "track_changes",
             QuestionType.TextQuestion => "psychology",
             _ => "help"
@@ -105,7 +105,7 @@ public class QuestionSection
     {
         return QuestionType switch
         {
-            QuestionType.SelfAssessment => "Self-Assessment",
+            QuestionType.Assessment => "Assessment",
             QuestionType.GoalAchievement => "Goal Achievement",
             QuestionType.TextQuestion => "Text Question",
             _ => "Unknown"
@@ -116,7 +116,7 @@ public class QuestionSection
     {
         return QuestionType switch
         {
-            QuestionType.SelfAssessment => "#0F60FF", // primary-color
+            QuestionType.Assessment => "#0F60FF", // primary-color
             QuestionType.GoalAchievement => "#00E6C8", // success-color
             QuestionType.TextQuestion => "#935BA9", // purple-rain
             _ => "#6c757d"

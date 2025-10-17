@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.Dto;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -47,6 +48,20 @@ public class ManagerQuestionnaireService : BaseApiService, IManagerQuestionnaire
         {
             LogError("Error fetching team analytics", ex);
             return new TeamAnalytics();
+        }
+    }
+
+    public async Task<ManagerDashboardDto?> GetMyDashboardAsync()
+    {
+        // Uses authenticated manager ID from UserContext on backend
+        try
+        {
+            return await HttpQueryClient.GetFromJsonAsync<ManagerDashboardDto>($"{ManagerEndpoint}/me/dashboard");
+        }
+        catch (Exception ex)
+        {
+            LogError("Error retrieving manager dashboard", ex);
+            return null;
         }
     }
 

@@ -812,7 +812,7 @@
     {
         return question.Type switch
         {
-            QuestionType.SelfAssessment => IsCompetencyAssessmentComplete(question, response),
+            QuestionType.Assessment => IsCompetencyAssessmentComplete(question, response),
             QuestionType.GoalAchievement => IsGoalAchievementComplete(response),
             QuestionType.TextQuestion => !string.IsNullOrWhiteSpace(response.TextValue),
             _ => false
@@ -864,14 +864,14 @@
     {
         return question.Type switch
         {
-            QuestionType.SelfAssessment => GetSelfAssessmentInput(question),
+            QuestionType.Assessment => GetAssessmentInput(question),
             QuestionType.GoalAchievement => GetGoalAchievementInput(question),
             QuestionType.TextQuestion => GetTextQuestionInput(question),
             _ => @<div>Unsupported question type</div>
         };
     }
 
-    private RenderFragment GetSelfAssessmentInput(QuestionItem question)
+    private RenderFragment GetAssessmentInput(QuestionItem question)
     {
         var competencies = GetCompetenciesFromConfiguration(question);
         var ratingScale = GetRatingScaleFromQuestion(question);
@@ -880,7 +880,7 @@
         var sectionResponse = responses[currentSection.Id];
         var questionResponse = sectionResponse.RoleResponses[currentUserRole][question.Id];
 
-        return @<div class="self-assessment-input">
+        return @<div class="assessment-input">
             @foreach (var competency in competencies)
             {
                 <div class="competency-item">

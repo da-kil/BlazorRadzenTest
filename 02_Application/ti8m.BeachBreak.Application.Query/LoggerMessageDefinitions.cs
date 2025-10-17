@@ -265,4 +265,79 @@ public static partial class LoggerMessageDefinitions
         Level = LogLevel.Error,
         Message = "Failed to retrieve assignable questionnaire templates")]
     public static partial void LogAssignableQuestionnaireTemplatesQueryFailed(this ILogger logger, Exception exception);
+
+    // Employee Dashboard Query Operations
+    [LoggerMessage(
+        EventId = 4044,
+        Level = LogLevel.Information,
+        Message = "Starting employee dashboard query for EmployeeId: {EmployeeId}")]
+    public static partial void LogEmployeeDashboardQueryStarting(this ILogger logger, Guid employeeId);
+
+    [LoggerMessage(
+        EventId = 4045,
+        Level = LogLevel.Information,
+        Message = "Employee dashboard query completed successfully for EmployeeId: {EmployeeId}")]
+    public static partial void LogEmployeeDashboardQuerySucceeded(this ILogger logger, Guid employeeId);
+
+    [LoggerMessage(
+        EventId = 4046,
+        Level = LogLevel.Warning,
+        Message = "Employee dashboard not found for EmployeeId: {EmployeeId}")]
+    public static partial void LogEmployeeDashboardNotFound(this ILogger logger, Guid employeeId);
+
+    [LoggerMessage(
+        EventId = 4047,
+        Level = LogLevel.Error,
+        Message = "Failed to retrieve employee dashboard for EmployeeId: {EmployeeId}")]
+    public static partial void LogEmployeeDashboardQueryFailed(this ILogger logger, Guid employeeId, Exception exception);
+
+    // Manager Dashboard Query Operations
+    [LoggerMessage(
+        EventId = 4048,
+        Level = LogLevel.Information,
+        Message = "Starting manager dashboard query for ManagerId: {ManagerId}")]
+    public static partial void LogManagerDashboardQueryStarting(this ILogger logger, Guid managerId);
+
+    [LoggerMessage(
+        EventId = 4049,
+        Level = LogLevel.Information,
+        Message = "Manager dashboard query completed successfully for ManagerId: {ManagerId}")]
+    public static partial void LogManagerDashboardQuerySucceeded(this ILogger logger, Guid managerId);
+
+    [LoggerMessage(
+        EventId = 4050,
+        Level = LogLevel.Warning,
+        Message = "Manager dashboard not found for ManagerId: {ManagerId}")]
+    public static partial void LogManagerDashboardNotFound(this ILogger logger, Guid managerId);
+
+    [LoggerMessage(
+        EventId = 4051,
+        Level = LogLevel.Error,
+        Message = "Failed to retrieve manager dashboard for ManagerId: {ManagerId}")]
+    public static partial void LogManagerDashboardQueryFailed(this ILogger logger, Guid managerId, Exception exception);
+
+    // HR Dashboard Query Operations
+    [LoggerMessage(
+        EventId = 4052,
+        Level = LogLevel.Information,
+        Message = "Starting HR dashboard query")]
+    public static partial void LogHRDashboardQueryStarting(this ILogger logger);
+
+    [LoggerMessage(
+        EventId = 4053,
+        Level = LogLevel.Information,
+        Message = "HR dashboard query completed successfully")]
+    public static partial void LogHRDashboardQuerySucceeded(this ILogger logger);
+
+    [LoggerMessage(
+        EventId = 4054,
+        Level = LogLevel.Warning,
+        Message = "HR dashboard not found")]
+    public static partial void LogHRDashboardNotFound(this ILogger logger);
+
+    [LoggerMessage(
+        EventId = 4055,
+        Level = LogLevel.Error,
+        Message = "Failed to retrieve HR dashboard")]
+    public static partial void LogHRDashboardQueryFailed(this ILogger logger, Exception exception);
 }

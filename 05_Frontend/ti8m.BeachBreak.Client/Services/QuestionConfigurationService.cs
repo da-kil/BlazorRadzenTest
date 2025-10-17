@@ -132,7 +132,7 @@ public class QuestionConfigurationService
     {
         return question.Type switch
         {
-            QuestionType.SelfAssessment => GetCompetencies(question).Any(),
+            QuestionType.Assessment => GetCompetencies(question).Any(),
             QuestionType.GoalAchievement => GetGoalCategories(question).Any(),
             QuestionType.TextQuestion => GetTextSections(question).Any(),
             _ => false
@@ -146,7 +146,7 @@ public class QuestionConfigurationService
     {
         return question.Type switch
         {
-            QuestionType.SelfAssessment => GetCompetencies(question).Count,
+            QuestionType.Assessment => GetCompetencies(question).Count,
             QuestionType.GoalAchievement => GetGoalCategories(question).Count,
             QuestionType.TextQuestion => GetTextSections(question).Count,
             _ => 0

@@ -1,0 +1,280 @@
+@page "/manager-dashboard"
+@using Microsoft.AspNetCore.Authorization
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@inject IManagerQuestionnaireService ManagerService
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles = "TeamLead")]
+
+<RadzenStack Gap="1.5rem">
+    <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">Manager Dashboard</RadzenText>
+
+    @if (isLoading)
+    {
+        <RadzenCard>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                <RadzenText>Loading dashboard...</RadzenText>
+            </RadzenStack>
+        </RadzenCard>
+    }
+    else if (dashboard == null)
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+            No dashboard data available. You may not have any team members assigned yet.
+        </RadzenAlert>
+    }
+    else
+    {
+        <!-- Team-wide Metrics -->
+        <RadzenText TextStyle="TextStyle.H5" Class="rz-mb-2">Team Overview</RadzenText>
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer;"
+                            @onclick="@(() => NavigateToTeamQuestionnaires())">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Team Pending</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TeamPendingCount</RadzenText>
+                        </div>
+                        <RadzenIcon Icon="pending_actions" Style="font-size: 3rem; opacity: 0.3;" />
+                    </div>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; cursor: pointer;"
+                            @onclick="@(() => NavigateToTeamQuestionnaires())">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Team In Progress</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TeamInProgressCount</RadzenText>
+                        </div>
+                        <RadzenIcon Icon="hourglass_top" Style="font-size: 3rem; opacity: 0.3;" />
+                    </div>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; cursor: pointer;"
+                            @onclick="@(() => NavigateToTeamQuestionnaires())">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Team Completed</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TeamCompletedCount</RadzenText>
+                        </div>
+                        <RadzenIcon Icon="check_circle" Style="font-size: 3rem; opacity: 0.3;" />
+                    </div>
+                </RadzenCard>
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Team Members</RadzenText>
+                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TeamMemberCount</RadzenText>
+                        </div>
+                        <RadzenIcon Icon="group" Style="font-size: 3rem; opacity: 0.3;" />
+                    </div>
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <!-- Team Members Section -->
+        @if (dashboard.TeamMembers.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Team Members</RadzenText>
+            <RadzenRow Gap="1rem">
+                @foreach (var member in dashboard.TeamMembers)
+                {
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="4">
+                        <RadzenCard Class="team-member-card">
+                            <RadzenStack Gap="0.75rem">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-mb-0">@member.EmployeeName</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@member.EmployeeEmail</RadzenText>
+                                    </div>
+                                    @if (member.HasOverdueItems)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Overdue" />
+                                    }
+                                    else if (member.UrgentCount > 0)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@($"{member.UrgentCount} Urgent")" />
+                                    }
+                                </div>
+
+                                <RadzenRow Gap="0.5rem">
+                                    <RadzenColumn Size="4">
+                                        <div class="metric-small">
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Pending</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@member.PendingCount</RadzenText>
+                                        </div>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="4">
+                                        <div class="metric-small">
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Active</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@member.InProgressCount</RadzenText>
+                                        </div>
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="4">
+                                        <div class="metric-small">
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Done</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@member.CompletedCount</RadzenText>
+                                        </div>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </RadzenColumn>
+                }
+            </RadzenRow>
+        }
+
+        <!-- Urgent Assignments Section -->
+        @if (dashboard.UrgentAssignments.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Urgent Assignments</RadzenText>
+            <RadzenCard>
+                <RadzenDataList Data="@dashboard.UrgentAssignments" TItem="TeamUrgentAssignmentDto" AllowPaging="true" PageSize="5">
+                    <Template Context="assignment">
+                        <RadzenCard Class="rz-shadow-0 rz-border-base-300" Style="margin-bottom: 0.5rem;">
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
+                                <RadzenStack Gap="0.25rem" Style="flex: 1;">
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="rz-mb-0">@assignment.QuestionnaireTemplateName</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
+                                        @assignment.EmployeeName
+                                    </RadzenText>
+                                </RadzenStack>
+
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                    @if (assignment.IsOverdue)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@($"Overdue")" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
+                                            Due @assignment.DueDate.ToString("MMM dd, yyyy")
+                                        </RadzenText>
+                                    }
+                                    else
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@($"{assignment.DaysUntilDue}d left")" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-warning);">
+                                            Due @assignment.DueDate.ToString("MMM dd, yyyy")
+                                        </RadzenText>
+                                    }
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@assignment.WorkflowState" />
+                                </RadzenStack>
+                            </RadzenStack>
+                        </RadzenCard>
+                    </Template>
+                </RadzenDataList>
+            </RadzenCard>
+        }
+        else if (dashboard.TeamMembers.Any())
+        {
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Urgent Assignments</RadzenText>
+            <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
+                No urgent assignments at this time. Great work, team!
+            </RadzenAlert>
+        }
+
+        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);" Class="rz-mt-3">
+            Last updated: @dashboard.LastUpdated.ToString("MMM dd, yyyy HH:mm")
+        </RadzenText>
+    }
+</RadzenStack>
+
+@code {
+    private ManagerDashboardDto? dashboard;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardAsync();
+    }
+
+    private async Task LoadDashboardAsync()
+    {
+        isLoading = true;
+        try
+        {
+            dashboard = await ManagerService.GetMyDashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            // Log error - could add notification here
+            Console.WriteLine($"Error loading dashboard: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateToTeamQuestionnaires()
+    {
+        NavigationManager.NavigateTo("/team-questionnaires");
+    }
+}
+
+<style>
+    .metric-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        animation: fadeInUp 0.5s ease-out;
+    }
+
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+
+    .team-member-card {
+        border-left: 4px solid var(--rz-primary);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .team-member-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+
+    .metric-small {
+        text-align: center;
+        padding: 0.5rem;
+        background: var(--rz-base-100);
+        border-radius: var(--rz-border-radius);
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .d-flex {
+        display: flex;
+    }
+
+    .justify-content-between {
+        justify-content: space-between;
+    }
+
+    .justify-content-start {
+        justify-content: flex-start;
+    }
+
+    .align-items-center {
+        align-items: center;
+    }
+
+    .align-items-start {
+        align-items: flex-start;
+    }
+</style>

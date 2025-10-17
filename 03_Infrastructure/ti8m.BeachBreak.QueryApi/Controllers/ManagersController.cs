@@ -28,6 +28,103 @@ public class ManagersController : BaseController
     }
 
     /// <summary>
+    /// Gets the dashboard metrics for the authenticated manager.
+    /// Uses authorization service to get the manager ID securely.
+    /// Returns team-wide metrics, individual team member metrics, and urgent assignments.
+    /// </summary>
+    [HttpGet("me/dashboard")]
+    [ProducesResponseType(typeof(ManagerDashboardDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyDashboard()
+    {
+        Guid managerId;
+        try
+        {
+            managerId = await authorizationService.GetCurrentManagerIdAsync();
+            logger.LogInformation("Received GetMyDashboard request for authenticated ManagerId: {ManagerId}", managerId);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            logger.LogWarning("GetMyDashboard failed: {Message}", ex.Message);
+            return Unauthorized(ex.Message);
+        }
+
+        try
+        {
+            var result = await queryDispatcher.QueryAsync(new ManagerDashboardQuery(managerId));
+
+            if (result?.Payload == null)
+            {
+                logger.LogInformation("Dashboard not found for ManagerId: {ManagerId} - this is expected for new managers or managers with no team", managerId);
+
+                // Return empty dashboard for managers with no team yet
+                return Ok(new ManagerDashboardDto
+                {
+                    ManagerId = managerId,
+                    ManagerFullName = string.Empty,
+                    ManagerEmail = string.Empty,
+                    TeamMemberCount = 0,
+                    TeamPendingCount = 0,
+                    TeamInProgressCount = 0,
+                    TeamCompletedCount = 0,
+                    TeamMembers = new List<TeamMemberMetricsDto>(),
+                    UrgentAssignments = new List<TeamUrgentAssignmentDto>(),
+                    LastUpdated = DateTime.UtcNow
+                });
+            }
+
+            if (result.Succeeded)
+            {
+                logger.LogInformation("GetMyDashboard completed successfully for ManagerId: {ManagerId}", managerId);
+            }
+            else
+            {
+                logger.LogWarning("GetMyDashboard failed for ManagerId: {ManagerId}, Error: {ErrorMessage}", managerId, result.Message);
+            }
+
+            return CreateResponse(result, dashboard => new ManagerDashboardDto
+            {
+                ManagerId = dashboard.ManagerId,
+                ManagerFullName = dashboard.ManagerFullName,
+                ManagerEmail = dashboard.ManagerEmail,
+                TeamPendingCount = dashboard.TeamPendingCount,
+                TeamInProgressCount = dashboard.TeamInProgressCount,
+                TeamCompletedCount = dashboard.TeamCompletedCount,
+                TeamMemberCount = dashboard.TeamMemberCount,
+                TeamMembers = dashboard.TeamMembers.Select(tm => new TeamMemberMetricsDto
+                {
+                    EmployeeId = tm.EmployeeId,
+                    EmployeeName = tm.EmployeeName,
+                    EmployeeEmail = tm.EmployeeEmail,
+                    PendingCount = tm.PendingCount,
+                    InProgressCount = tm.InProgressCount,
+                    CompletedCount = tm.CompletedCount,
+                    UrgentCount = tm.UrgentCount,
+                    HasOverdueItems = tm.HasOverdueItems
+                }).ToList(),
+                UrgentAssignments = dashboard.UrgentAssignments.Select(ua => new TeamUrgentAssignmentDto
+                {
+                    AssignmentId = ua.AssignmentId,
+                    EmployeeId = ua.EmployeeId,
+                    EmployeeName = ua.EmployeeName,
+                    QuestionnaireTemplateName = ua.QuestionnaireTemplateName,
+                    DueDate = ua.DueDate,
+                    WorkflowState = ua.WorkflowState,
+                    IsOverdue = ua.IsOverdue,
+                    DaysUntilDue = ua.DaysUntilDue
+                }).ToList(),
+                LastUpdated = dashboard.LastUpdated
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving dashboard for manager {ManagerId}", managerId);
+            return StatusCode(500, "An error occurred while retrieving your dashboard");
+        }
+    }
+
+    /// <summary>
     /// Gets all team members (direct reports) for the authenticated manager.
     /// Uses authorization service to get the manager ID securely.
     /// </summary>

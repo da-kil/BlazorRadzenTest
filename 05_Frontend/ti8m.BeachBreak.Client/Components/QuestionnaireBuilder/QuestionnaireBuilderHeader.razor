@@ -31,10 +31,10 @@
 				@switch (currentStatus)
 				{
 					case TemplateStatus.Draft:
-						<RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" />
-						<RadzenButton Text="Save" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@OnSave" />
-						<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@OnPublish" />
-						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" />
+						<RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" Disabled="@IsSaving" />
+						<RadzenButton Text="@(IsSaving ? "Saving..." : "Save")" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@OnSave" Disabled="@IsSaving" />
+						<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@OnPublish" Disabled="@IsSaving" />
+						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" Disabled="@IsSaving" />
 						break;
 					case TemplateStatus.Published:
 						<RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" />
@@ -54,6 +54,7 @@
 @code {
 	[Parameter] public bool IsEditMode { get; set; }
 	[Parameter] public TemplateStatus Status { get; set; }
+	[Parameter] public bool IsSaving { get; set; }
 
 	[Parameter] public EventCallback OnSave { get; set; }
 	[Parameter] public EventCallback OnPublish { get; set; }

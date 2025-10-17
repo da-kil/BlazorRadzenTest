@@ -1,26 +1,26 @@
 /* Question Type Specific Styling */
 
-/* Self-Assessment Question Colors */
-.question-self-assessment,
-.text-self-assessment {
-    color: var(--question-self-assessment) !important;
+/* Assessment Question Colors */
+.question-assessment,
+.text-assessment {
+    color: var(--question-assessment) !important;
 }
 
-.bg-self-assessment {
-    background-color: var(--question-self-assessment) !important;
+.bg-assessment {
+    background-color: var(--question-assessment) !important;
 }
 
-.bg-self-assessment-opacity {
+.bg-assessment-opacity {
     background-color: rgba(15, 105, 255, 0.1) !important;
 }
 
-.border-self-assessment {
-    border-color: var(--question-self-assessment) !important;
+.border-assessment {
+    border-color: var(--question-assessment) !important;
 }
 
-.badge-self-assessment {
+.badge-assessment {
     background-color: rgba(15, 105, 255, 0.1) !important;
-    color: var(--question-self-assessment) !important;
+    color: var(--question-assessment) !important;
 }
 
 /* Goal Achievement Question Colors */
@@ -70,14 +70,14 @@
 }
 
 /* Question Type Cards */
-.question-type-card.self-assessment {
-    border-color: var(--question-self-assessment) !important;
+.question-type-card.assessment {
+    border-color: var(--question-assessment) !important;
     background-color: rgba(15, 105, 255, 0.05) !important;
 }
 
-.question-type-card.self-assessment:hover {
+.question-type-card.assessment:hover {
     box-shadow: 0 8px 25px rgba(15, 105, 255, 0.15) !important;
-    border-color: var(--question-self-assessment) !important;
+    border-color: var(--question-assessment) !important;
 }
 
 .question-type-card.goal-achievement {
@@ -102,20 +102,20 @@
 
 /* Competency Styling */
 .competency-item {
-    border-color: var(--question-self-assessment) !important;
+    border-color: var(--question-assessment) !important;
     background-color: rgba(15, 105, 255, 0.05) !important;
 }
 
 .competency-item .competency-title {
-    color: var(--question-self-assessment) !important;
+    color: var(--question-assessment) !important;
 }
 
 .border-competency {
-    border-color: var(--question-self-assessment) !important;
+    border-color: var(--question-assessment) !important;
 }
 
 .bg-competency {
-    background-color: var(--question-self-assessment) !important;
+    background-color: var(--question-assessment) !important;
 }
 
 .bg-competency-opacity {
@@ -123,7 +123,7 @@
 }
 
 .text-competency {
-    color: var(--question-self-assessment) !important;
+    color: var(--question-assessment) !important;
 }
 
 /* Goal Category Styling */
