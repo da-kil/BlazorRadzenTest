@@ -3,6 +3,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Questions
 @inject DialogService DialogService
+@inject NotificationService NotificationService
 
 <style>
     .edit-answer-dialog {
@@ -180,6 +181,13 @@
 
     private void SaveChanges()
     {
+        // Validate required field
+        if (Question.IsRequired && !IsAnswerValid())
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Required Field", "This field is required and cannot be empty.");
+            return;
+        }
+
         // Return the edited response based on question type
         object? result = Question.Type switch
         {
@@ -190,5 +198,21 @@
         };
 
         DialogService.Close(result);
+    }
+
+    private bool IsAnswerValid()
+    {
+        return Question.Type switch
+        {
+            QuestionType.TextQuestion => !string.IsNullOrWhiteSpace(editResponse.TextValue),
+            QuestionType.Assessment => editResponse.ComplexValue != null &&
+                                      editResponse.ComplexValue.Any(kvp => kvp.Key.StartsWith("rating_") &&
+                                                                           kvp.Value != null &&
+                                                                           !kvp.Value.Equals(0)),
+            QuestionType.GoalAchievement => editResponse.ComplexValue != null &&
+                                           editResponse.ComplexValue.ContainsKey("Description") &&
+                                           !string.IsNullOrWhiteSpace(editResponse.ComplexValue["Description"]?.ToString()),
+            _ => !string.IsNullOrWhiteSpace(editResponse.TextValue) || editResponse.Value != null
+        };
     }
 }

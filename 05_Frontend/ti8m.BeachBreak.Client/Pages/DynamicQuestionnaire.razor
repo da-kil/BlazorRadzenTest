@@ -130,10 +130,11 @@
                 <div class="d-flex gap-2">
                     @if (!IsQuestionnaireCompleted())
                     {
-                        <RadzenButton Text="Save Progress"
+                        <RadzenButton Text="@(isSaving ? "Saving..." : "Save Progress")"
                                      ButtonStyle="ButtonStyle.Info"
-                                     Icon="save"
-                                     Click="@SaveProgress" />
+                                     Icon="@(isSaving ? "hourglass_empty" : "save")"
+                                     Click="@SaveProgress"
+                                     Disabled="@isSaving" />
 
                         @if (currentSectionIndex == visibleSections.Count - 1)
                         {
@@ -195,6 +196,7 @@
     private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
     private bool isSubmitting = false;
     private bool isProcessing = false;
+    private bool isSaving = false;
 
     private bool IsQuestionnaireCompleted()
     {
@@ -247,7 +249,9 @@
     {
         return HasParameterChanged(nameof(currentSectionIndex), currentSectionIndex) ||
                HasParameterChanged(nameof(response.ProgressPercentage), response.ProgressPercentage) ||
-               HasParameterChanged(nameof(template), template);
+               HasParameterChanged(nameof(template), template) ||
+               HasParameterChanged(nameof(isSaving), isSaving) ||
+               HasParameterChanged(nameof(isSubmitting), isSubmitting);
     }
 
     private async Task DetermineUserRole()
@@ -1364,8 +1368,16 @@
             return;
         }
 
+        if (isSaving)
+        {
+            return; // Prevent double save
+        }
+
         try
         {
+            isSaving = true;
+            StateHasChanged(); // Update UI to show saving state
+
             if (isEmployee && !isManager)
             {
                 // Employees save responses and complete any finished sections
@@ -1395,6 +1407,11 @@
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Save Failed", $"Failed to save progress: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged(); // Reset UI state
         }
     }
 

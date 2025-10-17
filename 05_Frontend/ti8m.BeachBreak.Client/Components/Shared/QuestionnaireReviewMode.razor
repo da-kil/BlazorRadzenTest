@@ -22,14 +22,14 @@
     .review-header {
         text-align: center;
         margin-bottom: 2rem;
-        padding: 2rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 12px;
+        padding: 1.5rem 0;
     }
 
-    .review-progress {
-        margin-bottom: 2rem;
+    .section-counter {
+        text-align: right;
+        margin-bottom: 1rem;
+        color: #6c757d;
+        font-size: 0.875rem;
     }
 
     .section-review-card {
@@ -202,29 +202,24 @@
     }
     else
     {
+        <!-- Section Counter -->
+        <div class="section-counter">
+            Section @(currentSectionIndex + 1) of @template.Sections.Count
+        </div>
+
         <!-- Review Header -->
         <div class="review-header">
             <RadzenText TextStyle="TextStyle.H3" Class="mb-2">
                 <RadzenIcon Icon="rate_review" Class="me-2" />
                 Review Meeting: @template.Name
             </RadzenText>
-            <RadzenText TextStyle="TextStyle.H6" Style="opacity: 0.9;">
+            <RadzenText TextStyle="TextStyle.H6" Class="text-muted">
                 Employee: @Assignment.EmployeeName
             </RadzenText>
-            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.8;" Class="mt-2">
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">
                 <RadzenIcon Icon="info" Class="me-1" />
                 You can view and edit all answers during this review meeting. All changes are tracked.
             </RadzenText>
-        </div>
-
-        <!-- Progress Indicator -->
-        <div class="review-progress">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                    Section @(currentSectionIndex + 1) of @template.Sections.Count
-                </RadzenText>
-            </div>
-            <RadzenProgressBar Value="@(((double)(currentSectionIndex + 1) / template.Sections.Count) * 100)" Max="100" ShowValue="true" />
         </div>
 
         <!-- Current Section Review -->
@@ -253,14 +248,6 @@
                 @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
                 {
                     <div class="question-review-container">
-                        <div class="question-title">
-                            @question.Title
-                            @if (question.IsRequired)
-                            {
-                                <span class="text-danger">*</span>
-                            }
-                        </div>
-
                         @if (!string.IsNullOrWhiteSpace(question.Description))
                         {
                             <div class="question-description">@question.Description</div>
@@ -453,6 +440,36 @@
 
     private RenderFragment RenderTextAnswer(object answer)
     {
+        // Handle complex value (dictionary with text sections)
+        if (answer is Dictionary<string, object> complexValue)
+        {
+            return @<div>
+                @foreach (var kvp in complexValue.Where(k => k.Key.StartsWith("text_")))
+                {
+                    var textSectionKey = kvp.Key.Replace("text_", "");
+
+                    // Get text value, handle JsonElement
+                    string textValue = "";
+                    if (kvp.Value is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        textValue = jsonElement.GetString() ?? "";
+                    }
+                    else
+                    {
+                        textValue = kvp.Value?.ToString() ?? "";
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(textValue))
+                    {
+                        <div class="mb-3 p-2 border rounded">
+                            <div style="white-space: pre-wrap;">@textValue</div>
+                        </div>
+                    }
+                }
+            </div>;
+        }
+
+        // Handle simple text value
         var text = answer?.ToString() ?? "";
         return @<div style="white-space: pre-wrap;">@text</div>;
     }
