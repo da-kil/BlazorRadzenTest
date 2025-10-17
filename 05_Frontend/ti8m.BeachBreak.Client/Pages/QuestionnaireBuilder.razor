@@ -80,8 +80,10 @@
 			{
 				<div class="step-content-modern">
 					<div class="step-header">
-						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Template Information</RadzenText>
-						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">@GetStatusDescription()</RadzenText>
+						<div class="d-flex flex-column">
+							<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Template Information</RadzenText>
+							<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">@GetStatusDescription()</RadzenText>
+						</div>
 					</div>
 					<BasicInfoTab Template="@State.Template" Categories="@categories" />
 					<div class="step-navigation mt-4 d-flex justify-content-end">
@@ -93,8 +95,10 @@
 			{
 				<div class="step-content-modern">
 					<div class="step-header">
-						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Build Sections</RadzenText>
-						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Organize your assessment into logical sections and configure questions</RadzenText>
+						<div class="d-flex flex-column">
+							<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Build Sections</RadzenText>
+							<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Organize your assessment into logical sections and configure questions</RadzenText>
+						</div>
 					</div>
 					<QuestionsTab Template="@State.Template"
 								  ShowQuestionTypeSelection="@State.ShowQuestionTypeSelection"
@@ -122,8 +126,10 @@
 			{
 				<div class="step-content-modern">
 					<div class="step-header">
-						<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Review & Publish</RadzenText>
-						<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Review your questionnaire and make it available for assignments</RadzenText>
+						<div class="d-flex flex-column">
+							<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Review & Publish</RadzenText>
+							<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Review your questionnaire and make it available for assignments</RadzenText>
+						</div>
 					</div>
 					<PreviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" />
 					<div class="step-navigation mt-4 d-flex justify-content-between">
