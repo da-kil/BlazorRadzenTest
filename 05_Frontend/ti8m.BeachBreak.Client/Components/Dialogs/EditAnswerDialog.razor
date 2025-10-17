@@ -88,8 +88,8 @@
                 @foreach (var textSection in textSections.OrderBy(ts => ts.Order))
                 {
                     var currentValue = GetTextSectionValue(textSection.Order);
-                    <div class="mb-3 p-3 border rounded">
-                        <div class="fw-bold mb-2 text-primary">
+                    <div class="mb-4">
+                        <div class="fw-bold mb-1" style="font-size: 1rem;">
                             @textSection.Title
                             @if (textSection.IsRequired)
                             {
@@ -98,7 +98,7 @@
                         </div>
                         @if (!string.IsNullOrWhiteSpace(textSection.Description))
                         {
-                            <div class="text-muted small mb-2" style="font-style: italic;">@textSection.Description</div>
+                            <div class="text-muted mb-2" style="font-size: 0.875rem;">@textSection.Description</div>
                         }
                         <RadzenTextArea Value="@currentValue"
                                        ValueChanged="@((string value) => UpdateTextSectionValue(textSection.Order, value))"

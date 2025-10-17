@@ -465,8 +465,8 @@
                     var textSection = textSections.FirstOrDefault(ts => ts.Order.ToString() == textSectionKey);
                     var sectionTitle = textSection?.Title ?? textSectionKey;
 
-                    <div class="mb-3 p-2 border rounded">
-                        <div class="fw-bold mb-2">
+                    <div class="mb-3">
+                        <div class="fw-bold mb-1" style="font-size: 1rem;">
                             @sectionTitle
                             @if (textSection?.IsRequired == true)
                             {
@@ -475,9 +475,9 @@
                         </div>
                         @if (!string.IsNullOrWhiteSpace(textSection?.Description))
                         {
-                            <div class="text-muted small mb-2">@textSection.Description</div>
+                            <div class="text-muted mb-2" style="font-size: 0.875rem;">@textSection.Description</div>
                         }
-                        <div style="white-space: pre-wrap; color: #212529;">
+                        <div class="p-3 border rounded" style="white-space: pre-wrap; background: #f8f9fa;">
                             @if (!string.IsNullOrWhiteSpace(textValue))
                             {
                                 @textValue
@@ -578,18 +578,28 @@
                     }
                 }
 
-                // Get competency title
+                // Get competency details
                 var competency = competencies.FirstOrDefault(c => c.Key == competencyKey);
                 var competencyTitle = competency?.Title ?? competencyKey;
+                var competencyDescription = competency?.Description ?? "";
 
-                <div class="mb-3 p-2 border rounded">
-                    <div class="d-flex align-items-center mb-2">
-                        <strong class="me-2">@competencyTitle:</strong>
-                        <RadzenRating Value="@ratingValue" Stars="@ratingScale" ReadOnly="true" />
+                <div class="mb-3 p-3 border rounded">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div class="flex-grow-1">
+                            <div class="fw-bold mb-1" style="font-size: 1rem;">@competencyTitle</div>
+                            @if (!string.IsNullOrWhiteSpace(competencyDescription))
+                            {
+                                <div class="text-muted" style="font-size: 0.875rem;">@competencyDescription</div>
+                            }
+                        </div>
+                        <div class="text-end ms-3">
+                            <div class="text-muted small mb-1">Rate your satisfaction:</div>
+                            <RadzenRating Value="@ratingValue" Stars="@ratingScale" ReadOnly="true" />
+                        </div>
                     </div>
                     @if (!string.IsNullOrWhiteSpace(comment))
                     {
-                        <div class="text-muted" style="font-size: 0.875rem; padding-left: 1rem; border-left: 2px solid #dee2e6;">
+                        <div class="p-2 border rounded mt-2" style="background: #f8f9fa; font-size: 0.875rem;">
                             @comment
                         </div>
                     }
