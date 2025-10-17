@@ -197,13 +197,9 @@ public class QuestionnaireTemplatesController : BaseController
             }).ToList(),
             Settings = new QuestionnaireSettingsDto
             {
-                AllowSaveProgress = template.Settings.AllowSaveProgress,
-                ShowProgressBar = template.Settings.ShowProgressBar,
-                RequireAllSections = template.Settings.RequireAllSections,
                 SuccessMessage = template.Settings.SuccessMessage,
                 IncompleteMessage = template.Settings.IncompleteMessage,
-                TimeLimit = template.Settings.TimeLimit,
-                AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
+                TimeLimit = template.Settings.TimeLimit
             }
         };
     }

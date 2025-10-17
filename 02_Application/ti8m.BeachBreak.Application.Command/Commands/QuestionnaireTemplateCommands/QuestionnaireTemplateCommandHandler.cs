@@ -376,13 +376,9 @@ public class QuestionnaireTemplateCommandHandler :
     private static QuestionnaireSettings MapToQuestionnaireSettings(CommandQuestionnaireSettings commandSettings)
     {
         return new QuestionnaireSettings(
-            commandSettings.AllowSaveProgress,
-            commandSettings.ShowProgressBar,
-            commandSettings.RequireAllSections,
             commandSettings.SuccessMessage,
             commandSettings.IncompleteMessage,
-            commandSettings.TimeLimit,
-            commandSettings.AllowReviewBeforeSubmit
+            commandSettings.TimeLimit
         );
     }
 

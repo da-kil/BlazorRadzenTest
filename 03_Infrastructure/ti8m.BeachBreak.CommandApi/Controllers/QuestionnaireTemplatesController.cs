@@ -63,12 +63,8 @@ public class QuestionnaireTemplatesController : BaseController
                 }).ToList(),
                 Settings = new CommandQuestionnaireSettings
                 {
-                    AllowReviewBeforeSubmit = questionnaireTemplate.Settings.AllowReviewBeforeSubmit,
-                    AllowSaveProgress = questionnaireTemplate.Settings.AllowSaveProgress,
-                    IncompleteMessage = questionnaireTemplate.Settings.IncompleteMessage,
-                    RequireAllSections = questionnaireTemplate.Settings.RequireAllSections,
-                    ShowProgressBar = questionnaireTemplate.Settings.ShowProgressBar,
                     SuccessMessage = questionnaireTemplate.Settings.SuccessMessage,
+                    IncompleteMessage = questionnaireTemplate.Settings.IncompleteMessage,
                     TimeLimit = questionnaireTemplate.Settings.TimeLimit
                 }
             };
@@ -122,12 +118,8 @@ public class QuestionnaireTemplatesController : BaseController
                 }).ToList(),
                 Settings = new CommandQuestionnaireSettings
                 {
-                    AllowReviewBeforeSubmit = questionnaireTemplate.Settings.AllowReviewBeforeSubmit,
-                    AllowSaveProgress = questionnaireTemplate.Settings.AllowSaveProgress,
-                    IncompleteMessage = questionnaireTemplate.Settings.IncompleteMessage,
-                    RequireAllSections = questionnaireTemplate.Settings.RequireAllSections,
-                    ShowProgressBar = questionnaireTemplate.Settings.ShowProgressBar,
                     SuccessMessage = questionnaireTemplate.Settings.SuccessMessage,
+                    IncompleteMessage = questionnaireTemplate.Settings.IncompleteMessage,
                     TimeLimit = questionnaireTemplate.Settings.TimeLimit
                 }
             };

@@ -144,13 +144,9 @@ public class QuestionnaireTemplateReadModel
     {
         return new QuestionnaireSettings
         {
-            AllowSaveProgress = domainSettings.AllowSaveProgress,
-            ShowProgressBar = domainSettings.ShowProgressBar,
-            RequireAllSections = domainSettings.RequireAllSections,
             SuccessMessage = domainSettings.SuccessMessage,
             IncompleteMessage = domainSettings.IncompleteMessage,
-            TimeLimit = domainSettings.TimeLimit,
-            AllowReviewBeforeSubmit = domainSettings.AllowReviewBeforeSubmit
+            TimeLimit = domainSettings.TimeLimit
         };
     }
 }

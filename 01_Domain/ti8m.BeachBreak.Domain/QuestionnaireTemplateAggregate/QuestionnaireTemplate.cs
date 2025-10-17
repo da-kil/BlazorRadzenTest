@@ -265,13 +265,9 @@ public class QuestionnaireTemplate : AggregateRoot
 
         // Clone settings (value object, already immutable)
         var clonedSettings = new QuestionnaireSettings(
-            source.Settings.AllowSaveProgress,
-            source.Settings.ShowProgressBar,
-            source.Settings.RequireAllSections,
             source.Settings.SuccessMessage,
             source.Settings.IncompleteMessage,
-            source.Settings.TimeLimit,
-            source.Settings.AllowReviewBeforeSubmit
+            source.Settings.TimeLimit
         );
 
         // Create new aggregate instance
