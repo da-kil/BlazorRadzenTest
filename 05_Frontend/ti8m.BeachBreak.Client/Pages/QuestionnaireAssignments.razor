@@ -635,7 +635,8 @@
                 assignmentNotes
             );
 
-            if (newAssignments.Any())
+            // Handle null or empty results
+            if (newAssignments != null && newAssignments.Any())
             {
                 assignments.AddRange(newAssignments);
                 FilterAssignments();
@@ -664,8 +665,9 @@
         {
             NotificationService.Notify(NotificationSeverity.Error,
                 "Assignment Creation Failed",
-                "An error occurred while creating assignments. Please try again.");
+                $"An error occurred while creating assignments: {ex.Message}");
             Console.WriteLine($"Error creating assignments: {ex.Message}");
+            Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
         finally
         {

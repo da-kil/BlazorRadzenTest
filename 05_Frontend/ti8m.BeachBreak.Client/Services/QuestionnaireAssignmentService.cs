@@ -52,26 +52,39 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             Notes = notes
         };
 
-        // Create the bulk assignments - HR/Admin endpoint
-        var result = await CreateWithResponseAsync<CreateBulkAssignmentsDto, object>($"{AssignmentCommandEndpoint}/bulk", createRequest);
-
-        if (result == null)
+        try
         {
-            return new List<QuestionnaireAssignment>();
+            // Create the bulk assignments - HR/Admin endpoint
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/bulk", createRequest);
+
+            // Check if request was successful
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Failed to create assignments: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                return new List<QuestionnaireAssignment>();
+            }
+
+            // Query back all assignments to get the newly created ones
+            // This is necessary because the command API only returns Result, not the created assignments
+            // Note: /assignments/template/{id} endpoint doesn't exist, so we fetch all and filter client-side
+            var allAssignments = await GetAllAssignmentsAsync();
+
+            // Filter to assignments created for the specific employees and template (best effort to return the new ones)
+            var employeeIds = employees.Select(e => e.Id).ToList();
+            var newAssignments = allAssignments.Where(a =>
+                a.TemplateId == templateId &&
+                employeeIds.Contains(a.EmployeeId) &&
+                a.AssignedDate >= DateTime.UtcNow.AddMinutes(-1) // Recently created
+            ).ToList();
+
+            return newAssignments.Any() ? newAssignments.Where(a => a.TemplateId == templateId && employeeIds.Contains(a.EmployeeId)).ToList() : new List<QuestionnaireAssignment>();
         }
-
-        // Query back the assignments for this template to get the newly created ones
-        // This is necessary because the command API only returns Result, not the created assignments
-        var allAssignments = await GetAssignmentsByTemplateAsync(templateId);
-
-        // Filter to assignments created for the specific employees (best effort to return the new ones)
-        var employeeIds = employees.Select(e => e.Id).ToList();
-        var newAssignments = allAssignments.Where(a =>
-            employeeIds.Contains(a.EmployeeId) &&
-            a.AssignedDate >= DateTime.UtcNow.AddMinutes(-1) // Recently created
-        ).ToList();
-
-        return newAssignments.Any() ? newAssignments : allAssignments.Where(a => employeeIds.Contains(a.EmployeeId)).ToList();
+        catch (Exception ex)
+        {
+            LogError("Error creating bulk assignments", ex);
+            throw;
+        }
     }
 
     /// <summary>
@@ -99,25 +112,38 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             Notes = notes
         };
 
-        // Create the bulk assignments - Manager endpoint with authorization checks
-        var result = await CreateWithResponseAsync<CreateBulkAssignmentsDto, object>($"{AssignmentCommandEndpoint}/manager/bulk", createRequest);
-
-        if (result == null)
+        try
         {
-            return new List<QuestionnaireAssignment>();
+            // Create the bulk assignments - Manager endpoint with authorization checks
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/manager/bulk", createRequest);
+
+            // Check if request was successful
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Failed to create manager assignments: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                return new List<QuestionnaireAssignment>();
+            }
+
+            // Query back all assignments to get the newly created ones
+            // Note: /assignments/template/{id} endpoint doesn't exist, so we fetch all and filter client-side
+            var allAssignments = await GetAllAssignmentsAsync();
+
+            // Filter to assignments created for the specific employees and template (best effort to return the new ones)
+            var employeeIds = employees.Select(e => e.Id).ToList();
+            var newAssignments = allAssignments.Where(a =>
+                a.TemplateId == templateId &&
+                employeeIds.Contains(a.EmployeeId) &&
+                a.AssignedDate >= DateTime.UtcNow.AddMinutes(-1) // Recently created
+            ).ToList();
+
+            return newAssignments.Any() ? newAssignments.Where(a => a.TemplateId == templateId && employeeIds.Contains(a.EmployeeId)).ToList() : new List<QuestionnaireAssignment>();
         }
-
-        // Query back the assignments for this template to get the newly created ones
-        var allAssignments = await GetAssignmentsByTemplateAsync(templateId);
-
-        // Filter to assignments created for the specific employees (best effort to return the new ones)
-        var employeeIds = employees.Select(e => e.Id).ToList();
-        var newAssignments = allAssignments.Where(a =>
-            employeeIds.Contains(a.EmployeeId) &&
-            a.AssignedDate >= DateTime.UtcNow.AddMinutes(-1) // Recently created
-        ).ToList();
-
-        return newAssignments.Any() ? newAssignments : allAssignments.Where(a => employeeIds.Contains(a.EmployeeId)).ToList();
+        catch (Exception ex)
+        {
+            LogError("Error creating manager bulk assignments", ex);
+            throw;
+        }
     }
 
     public async Task<QuestionnaireAssignment?> UpdateAssignmentWorkflowStateAsync(Guid id, WorkflowState workflowState)
