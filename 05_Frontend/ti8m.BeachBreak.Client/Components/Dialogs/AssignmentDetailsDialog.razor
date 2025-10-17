@@ -509,11 +509,6 @@
 
     private int GetEstimatedDuration()
     {
-        if (Questionnaire?.Settings?.TimeLimit.HasValue == true)
-        {
-            return (int)Questionnaire.Settings.TimeLimit.Value.TotalMinutes;
-        }
-
         var totalQuestions = GetTotalQuestions();
         return Math.Max(5, totalQuestions * 2);
     }

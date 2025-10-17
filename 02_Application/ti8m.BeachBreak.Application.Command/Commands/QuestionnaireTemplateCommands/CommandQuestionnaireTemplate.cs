@@ -6,6 +6,6 @@ public class CommandQuestionnaireTemplate
     public string Name { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
+    public bool RequiresManagerReview { get; set; } = true;
     public List<CommandQuestionSection> Sections { get; set; } = new();
-    public CommandQuestionnaireSettings Settings { get; set; } = new();
 }

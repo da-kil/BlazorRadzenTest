@@ -8,8 +8,8 @@ public record QuestionnaireTemplateCloned(
     string Name,
     string Description,
     Guid CategoryId,
+    bool RequiresManagerReview,
     List<QuestionSection> Sections,
-    QuestionnaireSettings Settings,
     DateTime CreatedDate
 ) : IDomainEvent
 {

@@ -9,6 +9,7 @@ public class QuestionnaireTemplate : AggregateRoot
     public string Name { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
     public Guid CategoryId { get; private set; }
+    public bool RequiresManagerReview { get; private set; } = true;
 
     public TemplateStatus Status { get; private set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; private set; }
@@ -16,7 +17,6 @@ public class QuestionnaireTemplate : AggregateRoot
     public string PublishedBy { get; private set; } = string.Empty;
 
     public List<QuestionSection> Sections { get; private set; } = new();
-    public QuestionnaireSettings Settings { get; private set; } = new();
 
     public DateTime CreatedDate { get; private set; }
     public bool IsDeleted { get; private set; }
@@ -28,8 +28,8 @@ public class QuestionnaireTemplate : AggregateRoot
         string name,
         string description,
         Guid categoryId,
-        List<QuestionSection>? sections = null,
-        QuestionnaireSettings? settings = null)
+        bool requiresManagerReview = true,
+        List<QuestionSection>? sections = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name is required", nameof(name));
@@ -39,8 +39,8 @@ public class QuestionnaireTemplate : AggregateRoot
             name,
             description ?? string.Empty,
             categoryId,
+            requiresManagerReview,
             sections ?? new(),
-            settings ?? new(),
             DateTime.UtcNow));
     }
 
@@ -58,7 +58,7 @@ public class QuestionnaireTemplate : AggregateRoot
 
         if (!string.Equals(Name, name, StringComparison.Ordinal))
         {
-            RaiseEvent(new QuestionnaireTemplateNameChanged(Id, name));
+            RaiseEvent(new QuestionnaireTemplateNameChanged(name));
         }
     }
 
@@ -70,7 +70,7 @@ public class QuestionnaireTemplate : AggregateRoot
         var newDescription = description ?? string.Empty;
         if (!string.Equals(Description, newDescription, StringComparison.Ordinal))
         {
-            RaiseEvent(new QuestionnaireTemplateDescriptionChanged(Id, newDescription));
+            RaiseEvent(new QuestionnaireTemplateDescriptionChanged(newDescription));
         }
     }
 
@@ -81,7 +81,30 @@ public class QuestionnaireTemplate : AggregateRoot
 
         if (CategoryId != categoryId)
         {
-            RaiseEvent(new QuestionnaireTemplateCategoryChanged(Id, categoryId));
+            RaiseEvent(new QuestionnaireTemplateCategoryChanged(categoryId));
+        }
+    }
+
+    public async Task ChangeReviewRequirementAsync(
+        bool requiresManagerReview,
+        IQuestionnaireAssignmentService assignmentService,
+        CancellationToken cancellationToken = default)
+    {
+        if (!CanBeEdited())
+            throw new InvalidOperationException("Template cannot be edited in current status");
+
+        // If RequiresManagerReview is being changed, check for existing assignments
+        if (RequiresManagerReview != requiresManagerReview)
+        {
+            if (await assignmentService.HasActiveAssignmentsAsync(Id, cancellationToken))
+            {
+                var assignmentCount = await assignmentService.GetActiveAssignmentCountAsync(Id, cancellationToken);
+                throw new InvalidOperationException(
+                    $"Cannot change review requirement: {assignmentCount} active assignment(s) exist. " +
+                    "Complete or withdraw these assignments first, or create a new template with the desired setting.");
+            }
+
+            RaiseEvent(new QuestionnaireTemplateReviewRequirementChanged(requiresManagerReview));
         }
     }
 
@@ -90,16 +113,9 @@ public class QuestionnaireTemplate : AggregateRoot
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
-        RaiseEvent(new QuestionnaireTemplateSectionsChanged(Id, sections ?? new()));
+        RaiseEvent(new QuestionnaireTemplateSectionsChanged(sections ?? new()));
     }
 
-    public void UpdateSettings(QuestionnaireSettings settings)
-    {
-        if (!CanBeEdited())
-            throw new InvalidOperationException("Template cannot be edited in current status");
-
-        RaiseEvent(new QuestionnaireTemplateSettingsChanged(Id, settings ?? new()));
-    }
 
     public void Publish(string publishedBy)
     {
@@ -115,7 +131,7 @@ public class QuestionnaireTemplate : AggregateRoot
         var now = DateTime.UtcNow;
         var publishedDate = PublishedDate ?? now;
 
-        RaiseEvent(new QuestionnaireTemplatePublished(Id, publishedBy, publishedDate, now));
+        RaiseEvent(new QuestionnaireTemplatePublished(publishedBy, publishedDate, now));
     }
 
     public async Task UnpublishToDraftAsync(IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
@@ -130,7 +146,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (Status != TemplateStatus.Published)
             throw new InvalidOperationException("Only published templates can be unpublished to draft");
 
-        RaiseEvent(new QuestionnaireTemplateUnpublishedToDraft(Id));
+        RaiseEvent(new QuestionnaireTemplateUnpublishedToDraft());
     }
 
     public void Archive()
@@ -138,7 +154,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (Status == TemplateStatus.Archived)
             throw new InvalidOperationException("Template is already archived");
 
-        RaiseEvent(new QuestionnaireTemplateArchived(Id));
+        RaiseEvent(new QuestionnaireTemplateArchived());
     }
 
     public void RestoreFromArchive()
@@ -146,7 +162,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (Status != TemplateStatus.Archived)
             throw new InvalidOperationException("Only archived templates can be restored");
 
-        RaiseEvent(new QuestionnaireTemplateRestoredFromArchive(Id));
+        RaiseEvent(new QuestionnaireTemplateRestoredFromArchive());
     }
 
     public async Task DeleteAsync(IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
@@ -159,13 +175,37 @@ public class QuestionnaireTemplate : AggregateRoot
                 "Complete or cancel these assignments first, or archive the template instead.");
         }
 
-        RaiseEvent(new QuestionnaireTemplateDeleted(Id));
+        RaiseEvent(new QuestionnaireTemplateDeleted());
     }
 
     public bool CanBeDeleted()
     {
         // Template can only be deleted if it's not archived (archived templates should stay for audit purposes)
         return Status != TemplateStatus.Archived;
+    }
+
+    /// <summary>
+    /// Validates that section completion roles match the review requirement.
+    /// When RequiresManagerReview is false, all sections must be Employee-only.
+    /// </summary>
+    public void ValidateSectionCompletionRoles()
+    {
+        if (!RequiresManagerReview)
+        {
+            var nonEmployeeSections = Sections
+                .Where(s => s.CompletionRole != CompletionRole.Employee)
+                .ToList();
+
+            if (nonEmployeeSections.Any())
+            {
+                var sectionTitles = string.Join(", ", nonEmployeeSections.Select(s =>
+                    string.IsNullOrWhiteSpace(s.Title) ? $"Section {s.Order + 1}" : s.Title));
+
+                throw new InvalidOperationException(
+                    $"When manager review is not required, all sections must be completed by Employee only. " +
+                    $"Found {nonEmployeeSections.Count} section(s) with Manager or Both completion roles: {sectionTitles}");
+            }
+        }
     }
 
     /// <summary>
@@ -197,8 +237,7 @@ public class QuestionnaireTemplate : AggregateRoot
                     question.Type,
                     question.Order,
                     question.IsRequired,
-                    new Dictionary<string, object>(question.Configuration),  // Deep copy
-                    new List<string>(question.Options)  // Deep copy
+                    new Dictionary<string, object>(question.Configuration)  // Deep copy
                 )
             ).ToList();
 
@@ -213,17 +252,6 @@ public class QuestionnaireTemplate : AggregateRoot
             );
         }).ToList();
 
-        // Clone settings (value object, already immutable)
-        var clonedSettings = new QuestionnaireSettings(
-            source.Settings.AllowSaveProgress,
-            source.Settings.ShowProgressBar,
-            source.Settings.RequireAllSections,
-            source.Settings.SuccessMessage,
-            source.Settings.IncompleteMessage,
-            source.Settings.TimeLimit,
-            source.Settings.AllowReviewBeforeSubmit
-        );
-
         // Create new aggregate instance
         var clonedTemplate = new QuestionnaireTemplate();
         clonedTemplate.RaiseEvent(new QuestionnaireTemplateCloned(
@@ -232,8 +260,8 @@ public class QuestionnaireTemplate : AggregateRoot
             clonedName,
             source.Description,
             source.CategoryId,
+            source.RequiresManagerReview,
             clonedSections,
-            clonedSettings,
             DateTime.UtcNow
         ));
 
@@ -247,8 +275,8 @@ public class QuestionnaireTemplate : AggregateRoot
         Name = @event.Name;
         Description = @event.Description;
         CategoryId = @event.CategoryId;
+        RequiresManagerReview = @event.RequiresManagerReview;
         Sections = @event.Sections;
-        Settings = @event.Settings;
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
         IsDeleted = false;
@@ -269,14 +297,14 @@ public class QuestionnaireTemplate : AggregateRoot
         CategoryId = @event.CategoryId;
     }
 
+    public void Apply(QuestionnaireTemplateReviewRequirementChanged @event)
+    {
+        RequiresManagerReview = @event.RequiresManagerReview;
+    }
+
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
     {
         Sections = @event.Sections;
-    }
-
-    public void Apply(QuestionnaireTemplateSettingsChanged @event)
-    {
-        Settings = @event.Settings;
     }
 
     public void Apply(QuestionnaireTemplatePublished @event)
@@ -316,8 +344,8 @@ public class QuestionnaireTemplate : AggregateRoot
         Name = @event.Name;
         Description = @event.Description;
         CategoryId = @event.CategoryId;
+        RequiresManagerReview = @event.RequiresManagerReview;
         Sections = @event.Sections;
-        Settings = @event.Settings;
         Status = TemplateStatus.Draft;  // Always draft
         CreatedDate = @event.CreatedDate;
         PublishedDate = null;  // Reset publication data

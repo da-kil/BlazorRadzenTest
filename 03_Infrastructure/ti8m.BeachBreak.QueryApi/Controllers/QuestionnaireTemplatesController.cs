@@ -169,6 +169,7 @@ public class QuestionnaireTemplatesController : BaseController
             Name = template.Name,
             Description = template.Description,
             CategoryId = template.CategoryId,
+            RequiresManagerReview = template.RequiresManagerReview,
             CreatedDate = template.CreatedDate,
             Status = MapToStatusDto(template.Status),
             PublishedDate = template.PublishedDate,
@@ -190,20 +191,9 @@ public class QuestionnaireTemplatesController : BaseController
                     Type = MapQuestionTypeToDto[question.Type],
                     Order = question.Order,
                     IsRequired = question.IsRequired,
-                    Configuration = question.Configuration,
-                    Options = question.Options
+                    Configuration = question.Configuration
                 }).ToList()
-            }).ToList(),
-            Settings = new QuestionnaireSettingsDto
-            {
-                AllowSaveProgress = template.Settings.AllowSaveProgress,
-                ShowProgressBar = template.Settings.ShowProgressBar,
-                RequireAllSections = template.Settings.RequireAllSections,
-                SuccessMessage = template.Settings.SuccessMessage,
-                IncompleteMessage = template.Settings.IncompleteMessage,
-                TimeLimit = template.Settings.TimeLimit,
-                AllowReviewBeforeSubmit = template.Settings.AllowReviewBeforeSubmit
-            }
+            }).ToList()
         };
     }
 

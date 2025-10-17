@@ -40,6 +40,7 @@ public class QuestionnaireTemplatesController : BaseController
                 CategoryId = questionnaireTemplate.CategoryId,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
+                RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     Description = section.Description,
@@ -54,22 +55,11 @@ public class QuestionnaireTemplatesController : BaseController
                         Description = question.Description,
                         Id = question.Id,
                         IsRequired = question.IsRequired,
-                        Options = question.Options,
                         Order = question.Order,
                         Title = question.Title,
                         Type = MapQuestionType(question.Type)
                     }).ToList()
-                }).ToList(),
-                Settings = new CommandQuestionnaireSettings
-                {
-                    AllowReviewBeforeSubmit = questionnaireTemplate.Settings.AllowReviewBeforeSubmit,
-                    AllowSaveProgress = questionnaireTemplate.Settings.AllowSaveProgress,
-                    IncompleteMessage = questionnaireTemplate.Settings.IncompleteMessage,
-                    RequireAllSections = questionnaireTemplate.Settings.RequireAllSections,
-                    ShowProgressBar = questionnaireTemplate.Settings.ShowProgressBar,
-                    SuccessMessage = questionnaireTemplate.Settings.SuccessMessage,
-                    TimeLimit = questionnaireTemplate.Settings.TimeLimit
-                }
+                }).ToList()
             };
 
             Result result = await commandDispatcher.SendAsync(new CreateQuestionnaireTemplateCommand(commandTemplate));
@@ -98,6 +88,7 @@ public class QuestionnaireTemplatesController : BaseController
                 CategoryId = questionnaireTemplate.CategoryId,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,
+                RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     Description = section.Description,
@@ -112,22 +103,11 @@ public class QuestionnaireTemplatesController : BaseController
                         Description = question.Description,
                         Id = question.Id,
                         IsRequired = question.IsRequired,
-                        Options = question.Options,
                         Order = question.Order,
                         Title = question.Title,
                         Type = MapQuestionType(question.Type)
                     }).ToList()
-                }).ToList(),
-                Settings = new CommandQuestionnaireSettings
-                {
-                    AllowReviewBeforeSubmit = questionnaireTemplate.Settings.AllowReviewBeforeSubmit,
-                    AllowSaveProgress = questionnaireTemplate.Settings.AllowSaveProgress,
-                    IncompleteMessage = questionnaireTemplate.Settings.IncompleteMessage,
-                    RequireAllSections = questionnaireTemplate.Settings.RequireAllSections,
-                    ShowProgressBar = questionnaireTemplate.Settings.ShowProgressBar,
-                    SuccessMessage = questionnaireTemplate.Settings.SuccessMessage,
-                    TimeLimit = questionnaireTemplate.Settings.TimeLimit
-                }
+                }).ToList()
             };
 
             Result result = await commandDispatcher.SendAsync(new UpdateQuestionnaireTemplateCommand(id, commandTemplate));

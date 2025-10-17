@@ -9,5 +9,4 @@ public class CommandQuestionItem
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
     public Dictionary<string, object> Configuration { get; set; } = new();
-    public List<string> Options { get; set; } = new();
 }

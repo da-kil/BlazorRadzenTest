@@ -43,7 +43,6 @@ public class QuestionnaireTemplateCommandHandler :
             logger.LogCreateQuestionnaireTemplate(templateId, command.QuestionnaireTemplate.Name);
 
             var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
-            var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
 
             // Create the questionnaire template using the domain aggregate
             var questionnaireTemplate = new DomainQuestionnaireTemplate(
@@ -51,8 +50,11 @@ public class QuestionnaireTemplateCommandHandler :
                 command.QuestionnaireTemplate.Name,
                 command.QuestionnaireTemplate.Description,
                 command.QuestionnaireTemplate.CategoryId,
-                sections,
-                settings);
+                command.QuestionnaireTemplate.RequiresManagerReview,
+                sections);
+
+            // Validate that section completion roles match review requirement
+            questionnaireTemplate.ValidateSectionCompletionRoles();
 
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
@@ -85,11 +87,18 @@ public class QuestionnaireTemplateCommandHandler :
             questionnaireTemplate.ChangeDescription(command.QuestionnaireTemplate.Description);
             questionnaireTemplate.ChangeCategory(command.QuestionnaireTemplate.CategoryId);
 
+            // Handle RequiresManagerReview change (validates no active assignments exist)
+            await questionnaireTemplate.ChangeReviewRequirementAsync(
+                command.QuestionnaireTemplate.RequiresManagerReview,
+                assignmentService,
+                cancellationToken);
+
             var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
-            var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
 
             questionnaireTemplate.UpdateSections(sections);
-            questionnaireTemplate.UpdateSettings(settings);
+
+            // Validate that section completion roles match review requirement
+            questionnaireTemplate.ValidateSectionCompletionRoles();
 
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
@@ -154,6 +163,9 @@ public class QuestionnaireTemplateCommandHandler :
                 logger.LogQuestionnaireTemplateNotFound(command.Id);
                 return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
+
+            // Validate that section completion roles match review requirement before publishing
+            questionnaireTemplate.ValidateSectionCompletionRoles();
 
             questionnaireTemplate.Publish(command.PublishedBy);
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
@@ -352,22 +364,8 @@ public class QuestionnaireTemplateCommandHandler :
             MapQuestionType(item.Type),
             item.Order,
             item.IsRequired,
-            item.Configuration,
-            item.Options
+            item.Configuration
         )).ToList();
-    }
-
-    private static QuestionnaireSettings MapToQuestionnaireSettings(CommandQuestionnaireSettings commandSettings)
-    {
-        return new QuestionnaireSettings(
-            commandSettings.AllowSaveProgress,
-            commandSettings.ShowProgressBar,
-            commandSettings.RequireAllSections,
-            commandSettings.SuccessMessage,
-            commandSettings.IncompleteMessage,
-            commandSettings.TimeLimit,
-            commandSettings.AllowReviewBeforeSubmit
-        );
     }
 
     private static Domain.QuestionnaireTemplateAggregate.QuestionType MapQuestionType(QuestionType dtoType) => dtoType switch

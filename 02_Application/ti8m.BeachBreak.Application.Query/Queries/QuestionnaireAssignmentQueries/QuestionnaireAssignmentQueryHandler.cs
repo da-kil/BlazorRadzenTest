@@ -138,6 +138,7 @@ public class QuestionnaireAssignmentQueryHandler :
         {
             Id = readModel.Id,
             TemplateId = readModel.TemplateId,
+            RequiresManagerReview = readModel.RequiresManagerReview,
             EmployeeId = readModel.EmployeeId,
             EmployeeName = readModel.EmployeeName,
             EmployeeEmail = readModel.EmployeeEmail,

@@ -4,6 +4,7 @@ using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
+using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
@@ -57,6 +58,16 @@ public class AssignmentsController : BaseController
             if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
                 return BadRequest("At least one employee assignment is required");
 
+            // Load template to get RequiresManagerReview flag
+            var templateResult = await queryDispatcher.QueryAsync(
+                new QuestionnaireTemplateQuery(bulkAssignmentDto.TemplateId),
+                HttpContext.RequestAborted);
+
+            if (templateResult?.Succeeded != true || templateResult.Payload == null)
+            {
+                return BadRequest($"Template {bulkAssignmentDto.TemplateId} not found");
+            }
+
             // Get current user's name from UserContext
             var assignedBy = "";
             if (Guid.TryParse(userContext.Id, out var userId))
@@ -78,6 +89,7 @@ public class AssignmentsController : BaseController
 
             var command = new CreateBulkAssignmentsCommand(
                 bulkAssignmentDto.TemplateId,
+                templateResult.Payload.RequiresManagerReview,
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
                 assignedBy,
@@ -111,6 +123,16 @@ public class AssignmentsController : BaseController
 
             if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
                 return BadRequest("At least one employee assignment is required");
+
+            // Load template to get RequiresManagerReview flag
+            var templateResult = await queryDispatcher.QueryAsync(
+                new QuestionnaireTemplateQuery(bulkAssignmentDto.TemplateId),
+                HttpContext.RequestAborted);
+
+            if (templateResult?.Succeeded != true || templateResult.Payload == null)
+            {
+                return BadRequest($"Template {bulkAssignmentDto.TemplateId} not found");
+            }
 
             // Get authenticated manager ID using authorization service
             Guid managerId;
@@ -154,6 +176,7 @@ public class AssignmentsController : BaseController
 
             var command = new CreateBulkAssignmentsCommand(
                 bulkAssignmentDto.TemplateId,
+                templateResult.Payload.RequiresManagerReview,
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
                 assignedBy,

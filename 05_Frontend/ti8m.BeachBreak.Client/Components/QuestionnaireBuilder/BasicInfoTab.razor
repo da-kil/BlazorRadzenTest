@@ -38,25 +38,15 @@
     </div>
 
     <div class="settings-section mt-4 p-3 bg-light rounded">
-        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Settings</RadzenText>
-        <RadzenRow>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenCheckBox @bind-Value="@Template.Settings.AllowSaveProgress" Name="allowSave" Disabled="@(!Template.IsAvailableForEditing)" />
-                <RadzenLabel Text="Allow Save Progress" Component="allowSave" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenCheckBox @bind-Value="@Template.Settings.ShowProgressBar" Name="showProgress" Disabled="@(!Template.IsAvailableForEditing)" />
-                <RadzenLabel Text="Show Progress Bar" Component="showProgress" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenCheckBox @bind-Value="@Template.Settings.RequireAllSections" Name="requireAll" Disabled="@(!Template.IsAvailableForEditing)" />
-                <RadzenLabel Text="Require All Sections" Component="requireAll" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenCheckBox @bind-Value="@Template.Settings.AllowReviewBeforeSubmit" Name="allowReview" Disabled="@(!Template.IsAvailableForEditing)" />
-                <RadzenLabel Text="Allow Review Before Submit" Component="allowReview" />
-            </RadzenColumn>
-        </RadzenRow>
+        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Workflow Configuration</RadzenText>
+        <div class="mb-4 p-3 bg-white rounded border">
+            <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
+            <RadzenLabel Text="Requires Manager Review" Component="requiresManagerReview" Style="font-weight: 500;" />
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
+                When unchecked, the questionnaire will be automatically finalized after employee submission without manager review.
+                All sections must be completed by employees only.
+            </RadzenText>
+        </div>
     </div>
 </div>
 

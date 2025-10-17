@@ -77,14 +77,11 @@
                 </RadzenAlert>
             }
 
-            @if (template.Settings.ShowProgressBar)
-            {
-                <div class="section-counter mb-4">
-                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted text-end">
-                        Section @(currentSectionIndex + 1) of @visibleSections.Count
-                    </RadzenText>
-                </div>
-            }
+            <div class="section-counter mb-4">
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted text-end">
+                    Section @(currentSectionIndex + 1) of @visibleSections.Count
+                </RadzenText>
+            </div>
 
             <RadzenSteps Value="@currentSectionIndex" Change="@OnSectionChanged" Class="mb-4" ShowStepsButtons="false">
                 @for (int i = 0; i < visibleSections.Count; i++)
@@ -133,32 +130,18 @@
                 <div class="d-flex gap-2">
                     @if (!IsQuestionnaireCompleted())
                     {
-                        @if (template.Settings.AllowSaveProgress)
-                        {
-                            <RadzenButton Text="Save Progress"
-                                         ButtonStyle="ButtonStyle.Info"
-                                         Icon="save"
-                                         Click="@SaveProgress" />
-                        }
+                        <RadzenButton Text="Save Progress"
+                                     ButtonStyle="ButtonStyle.Info"
+                                     Icon="save"
+                                     Click="@SaveProgress" />
 
                         @if (currentSectionIndex == visibleSections.Count - 1)
                         {
-                            @if (template.Settings.AllowReviewBeforeSubmit)
-                            {
-                                <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
-                                             ButtonStyle="ButtonStyle.Success"
-                                             Icon="send"
-                                             Click="@ShowReview"
-                                             Disabled="@(!CanSubmit() || isSubmitting)" />
-                            }
-                            else
-                            {
-                                <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
-                                             ButtonStyle="ButtonStyle.Success"
-                                             Icon="send"
-                                             Click="@SubmitQuestionnaire"
-                                             Disabled="@(!CanSubmit() || isSubmitting)" />
-                            }
+                            <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
+                                         ButtonStyle="ButtonStyle.Success"
+                                         Icon="send"
+                                         Click="@ShowReview"
+                                         Disabled="@(!CanSubmit() || isSubmitting)" />
                         }
                         else
                         {
@@ -422,12 +405,6 @@
             Id = TemplateId.Value,
             Name = "Employee Performance Review",
             Description = "Annual performance evaluation questionnaire",
-            Settings = new QuestionnaireSettings
-            {
-                ShowProgressBar = true,
-                AllowSaveProgress = true,
-                AllowReviewBeforeSubmit = true
-            },
             Sections = new List<QuestionSection>
             {
                 new QuestionSection
@@ -1452,7 +1429,7 @@
     {
         if (!CanSubmit())
         {
-            NotificationService.Notify(NotificationSeverity.Warning, "Incomplete", template!.Settings.IncompleteMessage);
+            NotificationService.Notify(NotificationSeverity.Warning, "Incomplete", "Please complete all required sections.");
             return;
         }
 
@@ -1485,7 +1462,7 @@
                     assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
                     StateHasChanged(); // Force UI update with new workflow state
 
-                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", template!.Settings.SuccessMessage);
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
                     NavigationManager.NavigateTo("/team/questionnaires");
                 }
                 else
@@ -1508,7 +1485,7 @@
                     assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
                     StateHasChanged(); // Force UI update with new workflow state
 
-                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", template!.Settings.SuccessMessage);
+                    NotificationService.Notify(NotificationSeverity.Success, "Submitted", "Questionnaire submitted successfully!");
                     NavigationManager.NavigateTo("/my-questionnaires");
                 }
                 else

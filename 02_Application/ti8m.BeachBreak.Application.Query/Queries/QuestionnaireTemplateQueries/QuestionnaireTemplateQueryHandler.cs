@@ -148,13 +148,13 @@ public class QuestionnaireTemplateQueryHandler :
             Name = readModel.Name,
             Description = readModel.Description,
             CategoryId = readModel.CategoryId,
+            RequiresManagerReview = readModel.RequiresManagerReview,
             CreatedDate = readModel.CreatedDate,
             Status = readModel.Status,
             PublishedDate = readModel.PublishedDate,
             LastPublishedDate = readModel.LastPublishedDate,
             PublishedBy = readModel.PublishedBy,
-            Sections = readModel.Sections,
-            Settings = readModel.Settings
+            Sections = readModel.Sections
         };
     }
 }

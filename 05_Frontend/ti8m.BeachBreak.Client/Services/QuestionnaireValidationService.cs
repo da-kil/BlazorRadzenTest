@@ -29,6 +29,26 @@ public class QuestionnaireValidationService
             validationErrors.Add("Template name is required");
         }
 
+        // Validate workflow configuration
+        if (!template.RequiresManagerReview)
+        {
+            // When manager review is not required, all sections must be employee-only
+            var nonEmployeeSections = template.Sections
+                .Where(s => s.CompletionRole != CompletionRole.Employee)
+                .ToList();
+
+            if (nonEmployeeSections.Any())
+            {
+                foreach (var section in nonEmployeeSections)
+                {
+                    var sectionName = string.IsNullOrWhiteSpace(section.Title)
+                        ? $"Section {section.Order + 1}"
+                        : section.Title;
+                    validationErrors.Add($"'{sectionName}' must be completed by Employee only when manager review is not required");
+                }
+            }
+        }
+
         // Validate sections and questions
         foreach (var section in template.Sections)
         {
