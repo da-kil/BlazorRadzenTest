@@ -28,13 +28,55 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
 
     public async Task<QuestionnaireTemplate> CreateTemplateAsync(QuestionnaireTemplate template)
     {
-        var result = await CreateWithResponseAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, template);
-        return result ?? throw new Exception("Failed to create template");
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync(TemplateCommandEndpoint, template);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // The backend doesn't return the created template, so we refetch
+                // Match by name and most recent creation date for better reliability
+                var templates = await GetAllTemplatesAsync();
+                var createdTemplate = templates
+                    .Where(t => t.Name == template.Name)
+                    .OrderByDescending(t => t.CreatedDate)
+                    .FirstOrDefault();
+
+                return createdTemplate ?? throw new Exception("Failed to retrieve created template");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            LogError($"Failed to create template: {response.StatusCode}", new Exception(errorContent));
+            throw new Exception($"Failed to create template: {response.StatusCode} - {errorContent}");
+        }
+        catch (Exception ex)
+        {
+            LogError("Error creating template", ex);
+            throw;
+        }
     }
 
     public async Task<QuestionnaireTemplate?> UpdateTemplateAsync(QuestionnaireTemplate template)
     {
-        return await UpdateWithResponseAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, template.Id, template);
+        try
+        {
+            var response = await HttpCommandClient.PutAsJsonAsync($"{TemplateCommandEndpoint}/{template.Id}", template);
+
+            if (response.IsSuccessStatusCode)
+            {
+                // Refetch the updated template from the Query API
+                return await GetTemplateByIdAsync(template.Id);
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            LogError($"Failed to update template {template.Id}: {response.StatusCode}", new Exception(errorContent));
+            return null;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error updating template {template.Id}", ex);
+            return null;
+        }
     }
 
     public async Task<bool> DeleteTemplateAsync(Guid id)
