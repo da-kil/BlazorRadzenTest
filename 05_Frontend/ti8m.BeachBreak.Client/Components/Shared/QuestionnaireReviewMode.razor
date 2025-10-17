@@ -32,6 +32,40 @@
         font-size: 0.875rem;
     }
 
+    /* Common Question Item Styles */
+    .question-item-card {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+    }
+
+    .question-item-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: #212529;
+    }
+
+    .question-item-description {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .question-item-content {
+        margin-top: 0.75rem;
+    }
+
+    .question-answer-box {
+        padding: 0.75rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        background: #f8f9fa;
+        white-space: pre-wrap;
+        font-size: 0.875rem;
+    }
+
     .section-review-card {
         background: white;
         border-radius: 12px;
@@ -465,8 +499,8 @@
                     var textSection = textSections.FirstOrDefault(ts => ts.Order.ToString() == textSectionKey);
                     var sectionTitle = textSection?.Title ?? textSectionKey;
 
-                    <div class="mb-3">
-                        <div class="fw-bold mb-1" style="font-size: 1rem;">
+                    <div class="question-item-card">
+                        <div class="question-item-title">
                             @sectionTitle
                             @if (textSection?.IsRequired == true)
                             {
@@ -475,9 +509,9 @@
                         </div>
                         @if (!string.IsNullOrWhiteSpace(textSection?.Description))
                         {
-                            <div class="text-muted mb-2" style="font-size: 0.875rem;">@textSection.Description</div>
+                            <div class="question-item-description">@textSection.Description</div>
                         }
-                        <div class="p-3 border rounded" style="white-space: pre-wrap; background: #f8f9fa;">
+                        <div class="question-answer-box">
                             @if (!string.IsNullOrWhiteSpace(textValue))
                             {
                                 @textValue
@@ -583,13 +617,13 @@
                 var competencyTitle = competency?.Title ?? competencyKey;
                 var competencyDescription = competency?.Description ?? "";
 
-                <div class="mb-3 p-3 border rounded">
+                <div class="question-item-card">
                     <div class="d-flex justify-content-between align-items-start mb-2">
                         <div class="flex-grow-1">
-                            <div class="fw-bold mb-1" style="font-size: 1rem;">@competencyTitle</div>
+                            <div class="question-item-title">@competencyTitle</div>
                             @if (!string.IsNullOrWhiteSpace(competencyDescription))
                             {
-                                <div class="text-muted" style="font-size: 0.875rem;">@competencyDescription</div>
+                                <div class="question-item-description">@competencyDescription</div>
                             }
                         </div>
                         <div class="text-end ms-3">
@@ -599,7 +633,7 @@
                     </div>
                     @if (!string.IsNullOrWhiteSpace(comment))
                     {
-                        <div class="p-2 border rounded mt-2" style="background: #f8f9fa; font-size: 0.875rem;">
+                        <div class="question-answer-box mt-2">
                             @comment
                         </div>
                     }
@@ -664,23 +698,32 @@
             return @<span class="empty-answer">No goal information provided</span>;
         }
 
-        return @<div>
+        return @<div class="question-item-card">
             @if (complexValue.ContainsKey("Description"))
             {
-                <div class="mb-2">
-                    <strong>Goal:</strong> @complexValue["Description"]?.ToString()
+                <div class="mb-3">
+                    <div class="question-item-title">Goal Description</div>
+                    <div class="question-answer-box">
+                        @complexValue["Description"]?.ToString()
+                    </div>
                 </div>
             }
             @if (complexValue.ContainsKey("AchievementPercentage"))
             {
-                <div class="mb-2">
-                    <strong>Achievement:</strong> @complexValue["AchievementPercentage"]?.ToString()%
+                <div class="mb-3">
+                    <div class="question-item-title">Achievement Percentage</div>
+                    <div class="question-answer-box">
+                        @complexValue["AchievementPercentage"]?.ToString()%
+                    </div>
                 </div>
             }
             @if (complexValue.ContainsKey("Justification"))
             {
-                <div class="mb-2">
-                    <strong>Justification:</strong> @complexValue["Justification"]?.ToString()
+                <div class="mb-3">
+                    <div class="question-item-title">Justification</div>
+                    <div class="question-answer-box">
+                        @complexValue["Justification"]?.ToString()
+                    </div>
                 </div>
             }
         </div>;

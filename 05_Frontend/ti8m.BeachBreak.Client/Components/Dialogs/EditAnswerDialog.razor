@@ -60,6 +60,20 @@
     .answer-editor .competency-card {
         margin-bottom: 1rem !important;
     }
+
+    /* Common Question Item Styles - Reused from Review Mode */
+    .question-item-title {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+        color: #212529;
+    }
+
+    .question-item-description {
+        color: #6c757d;
+        font-size: 0.875rem;
+        margin-bottom: 0.75rem;
+    }
 </style>
 
 <div class="edit-answer-dialog">
@@ -89,7 +103,7 @@
                 {
                     var currentValue = GetTextSectionValue(textSection.Order);
                     <div class="mb-4">
-                        <div class="fw-bold mb-1" style="font-size: 1rem;">
+                        <div class="question-item-title">
                             @textSection.Title
                             @if (textSection.IsRequired)
                             {
@@ -98,7 +112,7 @@
                         </div>
                         @if (!string.IsNullOrWhiteSpace(textSection.Description))
                         {
-                            <div class="text-muted mb-2" style="font-size: 0.875rem;">@textSection.Description</div>
+                            <div class="question-item-description">@textSection.Description</div>
                         }
                         <RadzenTextArea Value="@currentValue"
                                        ValueChanged="@((string value) => UpdateTextSectionValue(textSection.Order, value))"
