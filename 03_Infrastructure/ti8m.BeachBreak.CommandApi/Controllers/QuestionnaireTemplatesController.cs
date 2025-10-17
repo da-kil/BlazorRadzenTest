@@ -36,7 +36,7 @@ public class QuestionnaireTemplatesController : BaseController
 
             var commandTemplate = new CommandQuestionnaireTemplate
             {
-                Id = Guid.NewGuid(),
+                Id = questionnaireTemplate.Id,
                 CategoryId = questionnaireTemplate.CategoryId,
                 Description = questionnaireTemplate.Description,
                 Name = questionnaireTemplate.Name,

@@ -26,6 +26,7 @@
 <QuestionnaireBuilderHeader
 	IsEditMode="@State.IsEditMode"
 	Status="@State.Template.Status"
+	IsSaving="@isSaving"
 	OnSave="@SaveQuestionnaire"
 	OnPublish="@PublishQuestionnaire"
 	OnArchive="@ArchiveQuestionnaire"
@@ -134,8 +135,8 @@
 							@switch (stepNavStatus)
 							{
 								case TemplateStatus.Draft:
-									<RadzenButton Text="Save Draft" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" />
-									<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" />
+									<RadzenButton Text="@(isSaving ? "Saving..." : "Save Draft")" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" />
+									<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" />
 									break;
 								case TemplateStatus.Published:
 									<RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@UnpublishQuestionnaire" />
@@ -156,6 +157,7 @@
 	[Parameter] public Guid? TemplateId { get; set; }
 
 	private bool IsEditMode => TemplateId.HasValue;
+	private bool isSaving = false;
 
 	// Editable question type labels
 	private Dictionary<QuestionType, string> questionTypeLabels = new()
@@ -189,6 +191,7 @@
 				// Initialize empty template with default values
 				State.Template = new QuestionnaireTemplate
 				{
+					Id = Guid.NewGuid(), // Generate ID upfront for efficient refetch after create
 					Name = "",
 					Description = "",
 					CategoryId = Guid.Empty,
@@ -506,6 +509,7 @@
 			return;
 		}
 
+		isSaving = true;
 		try
 		{
 			if (IsEditMode)
@@ -528,11 +532,18 @@
 				State.Template.Id = created.Id; // Update with the server-generated ID
 				State.MarkAsClean();
 				NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
+
+				// Navigate to edit mode to prevent duplicate creation on subsequent saves
+				NavigationManager.NavigateTo($"/questionnaire-builder/{created.Id}", forceLoad: false);
 			}
 		}
 		catch (Exception ex)
 		{
 			NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save template: {ex.Message}");
+		}
+		finally
+		{
+			isSaving = false;
 		}
 	}
 

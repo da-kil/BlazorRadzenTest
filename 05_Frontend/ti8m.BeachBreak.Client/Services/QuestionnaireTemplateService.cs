@@ -34,13 +34,9 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
 
             if (response.IsSuccessStatusCode)
             {
-                // The backend doesn't return the created template, so we refetch
-                // Match by name and most recent creation date for better reliability
-                var templates = await GetAllTemplatesAsync();
-                var createdTemplate = templates
-                    .Where(t => t.Name == template.Name)
-                    .OrderByDescending(t => t.CreatedDate)
-                    .FirstOrDefault();
+                // The backend doesn't return the created template, so we refetch by known ID
+                // The template ID is generated on the client before creating for efficient refetch
+                var createdTemplate = await GetTemplateByIdAsync(template.Id);
 
                 return createdTemplate ?? throw new Exception("Failed to retrieve created template");
             }

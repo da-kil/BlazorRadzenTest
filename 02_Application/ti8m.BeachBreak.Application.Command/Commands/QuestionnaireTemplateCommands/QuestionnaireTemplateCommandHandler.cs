@@ -35,14 +35,19 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            logger.LogCreateQuestionnaireTemplate(command.QuestionnaireTemplate.Id, command.QuestionnaireTemplate.Name);
+            // Generate ID if not provided (allows client to provide ID for efficient refetch)
+            var templateId = command.QuestionnaireTemplate.Id != Guid.Empty
+                ? command.QuestionnaireTemplate.Id
+                : Guid.NewGuid();
+
+            logger.LogCreateQuestionnaireTemplate(templateId, command.QuestionnaireTemplate.Name);
 
             var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
             var settings = MapToQuestionnaireSettings(command.QuestionnaireTemplate.Settings);
 
             // Create the questionnaire template using the domain aggregate
             var questionnaireTemplate = new DomainQuestionnaireTemplate(
-                command.QuestionnaireTemplate.Id,
+                templateId,
                 command.QuestionnaireTemplate.Name,
                 command.QuestionnaireTemplate.Description,
                 command.QuestionnaireTemplate.CategoryId,
@@ -51,7 +56,7 @@ public class QuestionnaireTemplateCommandHandler :
 
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
-            logger.LogQuestionnaireTemplateCreated(command.QuestionnaireTemplate.Id);
+            logger.LogQuestionnaireTemplateCreated(templateId);
             return Result.Success();
         }
         catch (Exception ex)
