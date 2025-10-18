@@ -47,41 +47,9 @@ public class QuestionnaireResponseReadModel
         LastModified = @event.RecordedDate;
     }
 
-    public void Apply(ManagerEditedAnswerDuringReview @event)
-    {
-        // Ensure the section exists in the dictionary
-        if (!SectionResponses.ContainsKey(@event.SectionId))
-        {
-            SectionResponses[@event.SectionId] = new Dictionary<CompletionRole, Dictionary<Guid, object>>();
-        }
-
-        // Ensure the role exists in the section
-        if (!SectionResponses[@event.SectionId].ContainsKey(@event.OriginalCompletionRole))
-        {
-            SectionResponses[@event.SectionId][@event.OriginalCompletionRole] = new Dictionary<Guid, object>();
-        }
-
-        // Deserialize the answer if it's a JSON string (for complex types like Assessment, GoalAchievement, TextQuestion with sections)
-        object answerValue = @event.NewAnswer;
-        if (@event.NewAnswer.StartsWith("{") || @event.NewAnswer.StartsWith("["))
-        {
-            try
-            {
-                var deserializedValue = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(@event.NewAnswer);
-                if (deserializedValue != null)
-                {
-                    answerValue = deserializedValue;
-                }
-            }
-            catch
-            {
-                // If deserialization fails, store as string
-                answerValue = @event.NewAnswer;
-            }
-        }
-
-        // Update the answer for the specific question
-        SectionResponses[@event.SectionId][@event.OriginalCompletionRole][@event.QuestionId] = answerValue;
-        LastModified = @event.EditedDate;
-    }
+    // NOTE: We do NOT apply ManagerEditedAnswerDuringReview here!
+    // That event is raised on the QuestionnaireAssignment aggregate for audit purposes.
+    // The actual answer changes are applied via SectionResponseRecorded events on the QuestionnaireResponse aggregate.
+    // If we had an Apply method here, Marten would try to process events from the Assignment stream
+    // and create duplicate documents with AssignmentId as the document Id.
 }

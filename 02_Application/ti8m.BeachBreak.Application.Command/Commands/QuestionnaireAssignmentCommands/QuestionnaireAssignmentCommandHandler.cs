@@ -341,8 +341,37 @@ public class QuestionnaireAssignmentCommandHandler :
                 currentSectionResponses = new Dictionary<Guid, object>(existingQuestions);
             }
 
+            // Parse the answer - it might be a JSON string that needs deserialization
+            object answerValue = command.Answer;
+
+            // Try to parse as JSON if it looks like a JSON object or array
+            if (command.Answer is string answerString &&
+                (answerString.TrimStart().StartsWith("{") || answerString.TrimStart().StartsWith("[")))
+            {
+                try
+                {
+                    // Deserialize JSON string to object/dictionary
+                    var deserializedValue = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(
+                        answerString,
+                        new System.Text.Json.JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
+
+                    if (deserializedValue != null)
+                    {
+                        answerValue = deserializedValue;
+                    }
+                }
+                catch
+                {
+                    // If deserialization fails, keep as string
+                    answerValue = answerString;
+                }
+            }
+
             // Update or add the specific question answer
-            currentSectionResponses[command.QuestionId] = command.Answer;
+            currentSectionResponses[command.QuestionId] = answerValue;
 
             // Record the updated section response
             response.RecordSectionResponse(command.SectionId, command.OriginalCompletionRole, currentSectionResponses);

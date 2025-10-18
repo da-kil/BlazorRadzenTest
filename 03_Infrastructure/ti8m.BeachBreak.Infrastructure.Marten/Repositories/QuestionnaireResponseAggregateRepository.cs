@@ -17,12 +17,16 @@ public class QuestionnaireResponseAggregateRepository : EventSourcedAggregateRep
         using var session = store.LightweightSession();
 
         // Query the read model to find the aggregate ID
+        // IMPORTANT: Filter out invalid/duplicate documents by checking that EmployeeId is not empty
+        // Order by CreatedAt to ensure we get the original document if duplicates exist
         var readModel = await session.Query<QuestionnaireResponseReadModel>()
-            .Where(r => r.AssignmentId == assignmentId)
+            .Where(r => r.AssignmentId == assignmentId && r.EmployeeId != Guid.Empty)
+            .OrderBy(r => r.CreatedAt)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (readModel == null)
         {
+            logger.LogWarning("No QuestionnaireResponseReadModel found for AssignmentId {AssignmentId}", assignmentId);
             return null;
         }
 
