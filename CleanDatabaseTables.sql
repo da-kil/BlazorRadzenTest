@@ -8,3 +8,8 @@ DELETE FROM readmodels.mt_doc_organizationreadmodel;
 DELETE FROM readmodels.mt_doc_questionnaireassignmentreadmodel;
 DELETE FROM readmodels.mt_doc_questionnaireresponsereadmodel;
 DELETE FROM readmodels.mt_doc_questionnairetemplatereadmodel;
+
+
+powershell.exe -ExecutionPolicy Bypass -File C:\Path\To\YourScript.ps1
+or
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy Unrestricted

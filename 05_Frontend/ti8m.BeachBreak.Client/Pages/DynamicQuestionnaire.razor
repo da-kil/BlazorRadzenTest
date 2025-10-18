@@ -19,9 +19,11 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inherits OptimizedComponentBase
 
+<link href="css/questionnaire-unified.css" rel="stylesheet" />
+
 <PageTitle>@(template?.Name ?? "Questionnaire")</PageTitle>
 
-<div class="container-fluid">
+<div class="container-fluid questionnaire-unified-container">
     @if (template == null)
     {
         <div class="text-center p-5">
@@ -36,15 +38,15 @@
     }
     else
     {
-        <RadzenCard Class="p-4">
-            <div class="text-center mb-4">
-                <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
+        <RadzenCard Class="questionnaire-main-card p-4">
+            <div class="questionnaire-header text-center mb-4">
+                <RadzenText TextStyle="TextStyle.H3" Class="questionnaire-title text-primary">
                     <RadzenIcon Icon="quiz" Class="me-2" />
                     @template.Name
                 </RadzenText>
                 @if (!string.IsNullOrWhiteSpace(template.Description))
                 {
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="questionnaire-subtitle text-muted">
                         @template.Description
                     </RadzenText>
                 }
@@ -62,7 +64,7 @@
 
             @if (IsQuestionnaireCompleted())
             {
-                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="mb-4" ShowIcon="true">
+                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                     <RadzenText TextStyle="TextStyle.Body1">
                         <strong>This questionnaire has been completed and is now read-only.</strong>
                         @if (assignment?.WorkflowState == WorkflowState.Finalized)
@@ -97,16 +99,26 @@
                 @if (currentSection != null)
                 {
                     <RadzenCard Class="section-card p-4">
-                        <RadzenText TextStyle="TextStyle.H4" Class="text-primary mb-3">
-                            @currentSection.Title
-                        </RadzenText>
-                        
-                        @if (!string.IsNullOrWhiteSpace(currentSection.Description))
-                        {
-                            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">
-                                @currentSection.Description
-                            </RadzenText>
-                        }
+                        <div class="section-card-header">
+                            <div class="section-title-container flex-grow-1">
+                                <RadzenText TextStyle="TextStyle.H4" Class="section-title text-primary mb-2">
+                                    @currentSection.Title
+                                </RadzenText>
+                                @if (!string.IsNullOrWhiteSpace(currentSection.Description))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body1" Class="section-description text-muted">
+                                        @currentSection.Description
+                                    </RadzenText>
+                                }
+                            </div>
+                            @if (currentSection.CompletionRole != CompletionRole.Both)
+                            {
+                                <div class="completion-role-badge @GetRoleBadgeClass(currentSection.CompletionRole)">
+                                    <RadzenIcon Icon="@GetRoleIconForSection(currentSection.CompletionRole)" />
+                                    @currentSection.CompletionRole.ToString()
+                                </div>
+                            }
+                        </div>
 
                         <div class="questions-container">
                             @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
@@ -120,14 +132,14 @@
                 }
             </div>
 
-            <div class="d-flex justify-content-between mt-4">
+            <div class="navigation-footer d-flex justify-content-between mt-4">
                 <RadzenButton Text="Previous"
                              ButtonStyle="ButtonStyle.Light"
                              Icon="arrow_back"
                              Click="@PreviousSection"
                              Disabled="@(currentSectionIndex == 0)" />
 
-                <div class="d-flex gap-2">
+                <div class="navigation-actions d-flex gap-2">
                     @if (!IsQuestionnaireCompleted())
                     {
                         <RadzenButton Text="@(isSaving ? "Saving..." : "Save Progress")"
@@ -1984,5 +1996,28 @@
         response.ComplexValue[$"text_{sectionOrder}"] = value ?? "";
         response.LastModified = DateTime.Now;
         UpdateProgress();
+    }
+
+    // Helper methods for unified styling
+    private string GetRoleBadgeClass(CompletionRole role)
+    {
+        return role switch
+        {
+            CompletionRole.Employee => "role-employee",
+            CompletionRole.Manager => "role-manager",
+            CompletionRole.Both => "role-both",
+            _ => ""
+        };
+    }
+
+    private string GetRoleIconForSection(CompletionRole role)
+    {
+        return role switch
+        {
+            CompletionRole.Employee => "person",
+            CompletionRole.Manager => "supervisor_account",
+            CompletionRole.Both => "groups",
+            _ => "help"
+        };
     }
 }
