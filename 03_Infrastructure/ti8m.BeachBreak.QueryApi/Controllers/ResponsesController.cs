@@ -261,11 +261,46 @@ public class ResponsesController : BaseController
 
                     if (responseValue is System.Text.Json.JsonElement qJsonElement)
                     {
-                        var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
-                        if (questionResponse != null)
+                        // Try to deserialize as QuestionResponseDto first
+                        try
                         {
-                            questionResponsesForRole[questionId] = questionResponse;
+                            var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
+                            if (questionResponse != null && questionResponse.QuestionId != Guid.Empty)
+                            {
+                                // Successfully deserialized as structured response
+                                questionResponsesForRole[questionId] = questionResponse;
+                            }
+                            else
+                            {
+                                // Failed to deserialize as QuestionResponseDto - might be raw dictionary
+                                var rawDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(qJsonElement.GetRawText());
+                                questionResponsesForRole[questionId] = new QuestionResponseDto
+                                {
+                                    QuestionId = questionId,
+                                    ComplexValue = rawDict,
+                                    Value = rawDict
+                                };
+                            }
                         }
+                        catch
+                        {
+                            // Fallback: treat as raw value
+                            questionResponsesForRole[questionId] = new QuestionResponseDto
+                            {
+                                QuestionId = questionId,
+                                Value = qJsonElement
+                            };
+                        }
+                    }
+                    else if (responseValue is Dictionary<string, object> dict)
+                    {
+                        // Raw dictionary (from edited answers during review)
+                        questionResponsesForRole[questionId] = new QuestionResponseDto
+                        {
+                            QuestionId = questionId,
+                            ComplexValue = dict,
+                            Value = dict
+                        };
                     }
                     else
                     {
@@ -334,11 +369,46 @@ public class ResponsesController : BaseController
 
                     if (responseValue is System.Text.Json.JsonElement qJsonElement)
                     {
-                        var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
-                        if (questionResponse != null)
+                        // Try to deserialize as QuestionResponseDto first
+                        try
                         {
-                            questionResponsesForEmployee[questionId] = questionResponse;
+                            var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
+                            if (questionResponse != null && questionResponse.QuestionId != Guid.Empty)
+                            {
+                                // Successfully deserialized as structured response
+                                questionResponsesForEmployee[questionId] = questionResponse;
+                            }
+                            else
+                            {
+                                // Failed to deserialize as QuestionResponseDto - might be raw dictionary
+                                var rawDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(qJsonElement.GetRawText());
+                                questionResponsesForEmployee[questionId] = new QuestionResponseDto
+                                {
+                                    QuestionId = questionId,
+                                    ComplexValue = rawDict,
+                                    Value = rawDict
+                                };
+                            }
                         }
+                        catch
+                        {
+                            // Fallback: treat as raw value
+                            questionResponsesForEmployee[questionId] = new QuestionResponseDto
+                            {
+                                QuestionId = questionId,
+                                Value = qJsonElement
+                            };
+                        }
+                    }
+                    else if (responseValue is Dictionary<string, object> dict)
+                    {
+                        // Raw dictionary (from edited answers during review)
+                        questionResponsesForEmployee[questionId] = new QuestionResponseDto
+                        {
+                            QuestionId = questionId,
+                            ComplexValue = dict,
+                            Value = dict
+                        };
                     }
                     else
                     {
