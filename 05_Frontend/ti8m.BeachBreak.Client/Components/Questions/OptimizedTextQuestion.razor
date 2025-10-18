@@ -80,7 +80,8 @@
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(Response.TextValue), Response.TextValue) ||
+        var simpleValue = Response.ComplexValue?.TryGetValue("value", out var val) == true ? val?.ToString() : "";
+        return HasParameterChanged("SimpleValue", simpleValue) ||
                HasParameterChanged(nameof(Response.ComplexValue), Response.ComplexValue?.Count ?? 0);
     }
 
@@ -145,11 +146,11 @@
     {
         if (textSections.Count == 1)
         {
-            // Single section uses TextValue directly
-            return Response.TextValue ?? "";
+            // Single section uses "value" key in ComplexValue
+            return Response.ComplexValue?.TryGetValue("value", out var val) == true ? val?.ToString() ?? "" : "";
         }
 
-        // Multiple sections use ComplexValue
+        // Multiple sections use ComplexValue with section keys
         return Response.ComplexValue?.TryGetValue(sectionKey, out var value) == true
             ? value.ToString() ?? ""
             : "";
@@ -161,8 +162,9 @@
 
         if (textSections.Count == 1)
         {
-            // Single section uses TextValue directly
-            Response.TextValue = value;
+            // Single section uses "value" key in ComplexValue
+            if (Response.ComplexValue == null) Response.ComplexValue = new Dictionary<string, object>();
+            Response.ComplexValue["value"] = value;
         }
         else
         {

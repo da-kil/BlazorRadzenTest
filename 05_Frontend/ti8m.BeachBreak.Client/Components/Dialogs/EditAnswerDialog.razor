@@ -128,7 +128,7 @@
             }
             else
             {
-                <RadzenTextArea @bind-Value="@editResponse.TextValue"
+                <RadzenTextArea @bind-Value="@SimpleTextValue"
                                Placeholder="Enter your answer here..."
                                Rows="10"
                                Style="width: 100%;" />
@@ -152,7 +152,7 @@
         }
         else
         {
-            <RadzenTextBox @bind-Value="@editResponse.TextValue"
+            <RadzenTextBox @bind-Value="@SimpleTextValue"
                           Placeholder="Enter your answer..."
                           Style="width: 100%;" />
         }
@@ -177,32 +177,30 @@
 
     private QuestionResponse editResponse = new();
 
+    // Helper property for simple text binding
+    private string SimpleTextValue
+    {
+        get => editResponse.ComplexValue?.TryGetValue("value", out var val) == true ? val?.ToString() ?? "" : "";
+        set
+        {
+            if (editResponse.ComplexValue == null)
+                editResponse.ComplexValue = new Dictionary<string, object>();
+            editResponse.ComplexValue["value"] = value;
+        }
+    }
+
     protected override void OnInitialized()
     {
         editResponse = new QuestionResponse
         {
             QuestionId = Question.Id,
+            QuestionType = Question.Type,
             LastModified = DateTime.Now
         };
 
-        if (CurrentAnswer != null)
+        if (CurrentAnswer is Dictionary<string, object> complexValue)
         {
-            if (CurrentAnswer is string str)
-            {
-                editResponse.TextValue = str;
-            }
-            else if (CurrentAnswer is int numValue)
-            {
-                editResponse.NumericValue = numValue;
-            }
-            else if (CurrentAnswer is Dictionary<string, object> complexValue)
-            {
-                editResponse.ComplexValue = new Dictionary<string, object>(complexValue);
-            }
-            else
-            {
-                editResponse.Value = CurrentAnswer;
-            }
+            editResponse.ComplexValue = new Dictionary<string, object>(complexValue);
         }
         else if (Question.Type == QuestionType.TextQuestion)
         {
@@ -317,24 +315,9 @@
         {
             QuestionId = Question.Id,
             QuestionType = Question.Type,
-            LastModified = DateTime.Now
+            LastModified = DateTime.Now,
+            ComplexValue = editResponse.ComplexValue
         };
-
-        // Populate the appropriate field based on question type
-        switch (Question.Type)
-        {
-            case QuestionType.TextQuestion:
-                questionResponse.ComplexValue = GetTextQuestionResult() as Dictionary<string, object>;
-                break;
-            case QuestionType.Assessment:
-            case QuestionType.GoalAchievement:
-                questionResponse.ComplexValue = editResponse.ComplexValue;
-                break;
-            default:
-                questionResponse.TextValue = editResponse.TextValue;
-                questionResponse.Value = editResponse.Value;
-                break;
-        }
 
         DialogService.Close(questionResponse);
     }
@@ -347,8 +330,8 @@
             return editResponse.ComplexValue;
         }
 
-        // Fallback to simple text value
-        return editResponse.TextValue;
+        // Fallback to simple text value from ComplexValue
+        return editResponse.ComplexValue?.TryGetValue("value", out var val) == true ? val?.ToString() : null;
     }
 
     private bool IsAnswerValid()
@@ -371,8 +354,8 @@
             }
             else
             {
-                // Fallback: check simple text value
-                return !string.IsNullOrWhiteSpace(editResponse.TextValue);
+                // Fallback: check simple text value from ComplexValue
+                return !string.IsNullOrWhiteSpace(SimpleTextValue);
             }
         }
 
@@ -385,7 +368,7 @@
             QuestionType.GoalAchievement => editResponse.ComplexValue != null &&
                                            editResponse.ComplexValue.ContainsKey("Description") &&
                                            !string.IsNullOrWhiteSpace(editResponse.ComplexValue["Description"]?.ToString()),
-            _ => !string.IsNullOrWhiteSpace(editResponse.TextValue) || editResponse.Value != null
+            _ => !string.IsNullOrWhiteSpace(SimpleTextValue) || editResponse.ComplexValue != null
         };
     }
 }

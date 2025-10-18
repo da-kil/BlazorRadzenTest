@@ -272,43 +272,43 @@ public class ResponsesController : BaseController
                             }
                             else
                             {
-                                // Failed to deserialize as QuestionResponseDto - might be raw dictionary
+                                // Failed to deserialize as QuestionResponseDto - treat as raw dictionary
                                 var rawDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(qJsonElement.GetRawText());
                                 questionResponsesForRole[questionId] = new QuestionResponseDto
                                 {
                                     QuestionId = questionId,
-                                    ComplexValue = rawDict,
-                                    Value = rawDict
+                                    ComplexValue = rawDict
                                 };
                             }
                         }
                         catch
                         {
-                            // Fallback: treat as raw value
+                            // Fallback: wrap as ComplexValue
+                            var fallbackDict = new Dictionary<string, object> { { "value", qJsonElement } };
                             questionResponsesForRole[questionId] = new QuestionResponseDto
                             {
                                 QuestionId = questionId,
-                                Value = qJsonElement
+                                ComplexValue = fallbackDict
                             };
                         }
                     }
                     else if (responseValue is Dictionary<string, object> dict)
                     {
-                        // Raw dictionary (from edited answers during review)
+                        // Raw dictionary
                         questionResponsesForRole[questionId] = new QuestionResponseDto
                         {
                             QuestionId = questionId,
-                            ComplexValue = dict,
-                            Value = dict
+                            ComplexValue = dict
                         };
                     }
                     else
                     {
-                        // Fallback: create a simple response
+                        // Fallback: wrap any other type in ComplexValue
+                        var valueDict = new Dictionary<string, object> { { "value", responseValue } };
                         questionResponsesForRole[questionId] = new QuestionResponseDto
                         {
                             QuestionId = questionId,
-                            Value = responseValue
+                            ComplexValue = valueDict
                         };
                     }
                 }
@@ -380,43 +380,43 @@ public class ResponsesController : BaseController
                             }
                             else
                             {
-                                // Failed to deserialize as QuestionResponseDto - might be raw dictionary
+                                // Failed to deserialize as QuestionResponseDto - treat as raw dictionary
                                 var rawDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(qJsonElement.GetRawText());
                                 questionResponsesForEmployee[questionId] = new QuestionResponseDto
                                 {
                                     QuestionId = questionId,
-                                    ComplexValue = rawDict,
-                                    Value = rawDict
+                                    ComplexValue = rawDict
                                 };
                             }
                         }
                         catch
                         {
-                            // Fallback: treat as raw value
+                            // Fallback: wrap as ComplexValue
+                            var fallbackDict = new Dictionary<string, object> { { "value", qJsonElement } };
                             questionResponsesForEmployee[questionId] = new QuestionResponseDto
                             {
                                 QuestionId = questionId,
-                                Value = qJsonElement
+                                ComplexValue = fallbackDict
                             };
                         }
                     }
                     else if (responseValue is Dictionary<string, object> dict)
                     {
-                        // Raw dictionary (from edited answers during review)
+                        // Raw dictionary
                         questionResponsesForEmployee[questionId] = new QuestionResponseDto
                         {
                             QuestionId = questionId,
-                            ComplexValue = dict,
-                            Value = dict
+                            ComplexValue = dict
                         };
                     }
                     else
                     {
-                        // Fallback: create a simple response
+                        // Fallback: wrap any other type in ComplexValue
+                        var valueDict = new Dictionary<string, object> { { "value", responseValue } };
                         questionResponsesForEmployee[questionId] = new QuestionResponseDto
                         {
                             QuestionId = questionId,
-                            Value = responseValue
+                            ComplexValue = valueDict
                         };
                     }
                 }

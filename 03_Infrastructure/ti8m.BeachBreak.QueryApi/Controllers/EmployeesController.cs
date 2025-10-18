@@ -500,10 +500,14 @@ public class EmployeesController : BaseController
                         else
                         {
                             // Fallback: create a simple response with just the value
+                            var complexValue = questionKvp.Value is Dictionary<string, object> dict
+                                ? dict
+                                : new Dictionary<string, object> { { "value", questionKvp.Value } };
+
                             questionResponsesDict[questionKvp.Key] = new QuestionResponseDto
                             {
                                 QuestionId = questionKvp.Key,
-                                Value = questionKvp.Value
+                                ComplexValue = complexValue
                             };
                         }
                     }

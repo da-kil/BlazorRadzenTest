@@ -584,17 +584,8 @@
         {
             if (roleQuestions.TryGetValue(questionId, out var questionResponse))
             {
-                // Return whatever value is available (could be TextValue, NumericValue, or ComplexValue)
-                if (!string.IsNullOrEmpty(questionResponse.TextValue))
-                    return questionResponse.TextValue;
-
-                if (questionResponse.NumericValue.HasValue)
-                    return questionResponse.NumericValue.Value;
-
-                if (questionResponse.ComplexValue != null && questionResponse.ComplexValue.Count > 0)
-                    return questionResponse.ComplexValue;
-
-                return questionResponse.Value;
+                // Return ComplexValue which contains all answer data
+                return questionResponse.ComplexValue;
             }
         }
 
@@ -680,26 +671,9 @@
             {
                 QuestionId = question.Id,
                 QuestionType = question.Type,
-                LastModified = DateTime.Now
+                LastModified = DateTime.Now,
+                ComplexValue = sourceAnswer as Dictionary<string, object>
             };
-
-            // Populate appropriate field based on question type
-            if (sourceAnswer is Dictionary<string, object> complexAnswer)
-            {
-                questionResponse.ComplexValue = complexAnswer;
-            }
-            else if (sourceAnswer is string textAnswer)
-            {
-                questionResponse.TextValue = textAnswer;
-            }
-            else if (sourceAnswer is int or long or double or decimal)
-            {
-                questionResponse.NumericValue = Convert.ToInt32(sourceAnswer);
-            }
-            else
-            {
-                questionResponse.Value = sourceAnswer;
-            }
 
             await SaveEditedAnswer(currentSection.Id, toRole, questionResponse);
         }

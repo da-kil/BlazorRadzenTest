@@ -819,7 +819,7 @@
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
             }
             <RadzenToggleButton Value="@GetBooleanValue(question.Id)"
-                              ValueChanged="@(value => SetBooleanValue(question.Id, value))"
+                              ValueChanged="@(value => SetSimpleValue(question.Id, value))"
                               Text="@(GetBooleanValue(question.Id) ? "Yes" : "No")"
                               Disabled="@IsQuestionnaireCompleted()"
                               ButtonStyle="@(GetBooleanValue(question.Id) ? ButtonStyle.Success : ButtonStyle.Secondary)" />
@@ -838,7 +838,7 @@
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
             }
             <RadzenDatePicker Value="@GetDateValue(question.Id)"
-                            ValueChanged="@(value => SetDateValue(question.Id, value))"
+                            ValueChanged="@(value => SetSimpleValue(question.Id, value))"
                             TValue="DateTime?"
                             ShowTime="false"
                             DateFormat="dd/MM/yyyy"
@@ -859,7 +859,7 @@
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
             }
             <RadzenNumeric Value="@GetNumericValue(question.Id)"
-                         ValueChanged="@(value => SetNumericValue(question.Id, value))"
+                         ValueChanged="@(value => SetSimpleValue(question.Id, value))"
                          TValue="int"
                          Disabled="@IsQuestionnaireCompleted()"
                          Class="w-100" />
@@ -913,7 +913,7 @@
     private void UpdateQuestionResponse(Guid questionId, int value)
     {
         var questionResponse = GetQuestionResponse(questionId);
-        questionResponse.NumericValue = value;
+        questionResponse.ComplexValue = new Dictionary<string, object> { { "value", value } };
         questionResponse.LastModified = DateTime.Now;
         UpdateProgress();
         NotifyStateChanged();
@@ -922,7 +922,7 @@
     private void UpdateQuestionResponseText(Guid questionId, string value)
     {
         var questionResponse = GetQuestionResponse(questionId);
-        questionResponse.TextValue = value;
+        questionResponse.ComplexValue = new Dictionary<string, object> { { "value", value } };
         questionResponse.LastModified = DateTime.Now;
         UpdateProgress();
         NotifyStateChangedDebounced(200);
@@ -1031,19 +1031,26 @@
     private bool GetBooleanValue(Guid questionId)
     {
         var response = GetQuestionResponse(questionId);
-        return response.TextValue == "true";
+        return response.ComplexValue?.TryGetValue("value", out var value) == true && value?.ToString() == "true";
     }
 
     private DateTime? GetDateValue(Guid questionId)
     {
         var response = GetQuestionResponse(questionId);
-        return response.DateValue;
+        if (response.ComplexValue?.TryGetValue("value", out var value) == true && value is DateTime dateValue)
+            return dateValue;
+        return null;
     }
 
     private int GetNumericValue(Guid questionId)
     {
         var response = GetQuestionResponse(questionId);
-        return response.NumericValue ?? 0;
+        if (response.ComplexValue?.TryGetValue("value", out var value) == true)
+        {
+            if (value is int intValue) return intValue;
+            if (int.TryParse(value?.ToString(), out var parsed)) return parsed;
+        }
+        return 0;
     }
 
     // Setter methods for goal questions
@@ -1112,26 +1119,21 @@
         UpdateProgress();
     }
 
-    private void SetBooleanValue(Guid questionId, bool value)
+    private void SetSimpleValue(Guid questionId, object? value)
     {
         var response = GetQuestionResponse(questionId);
-        response.TextValue = value.ToString().ToLower();
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
+        if (value != null)
+        {
+            // For bool, store as lowercase string "true"/"false" for consistency
+            if (value is bool boolValue)
+                value = boolValue.ToString().ToLower();
 
-    private void SetDateValue(Guid questionId, DateTime? value)
-    {
-        var response = GetQuestionResponse(questionId);
-        response.DateValue = value;
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetNumericValue(Guid questionId, int value)
-    {
-        var response = GetQuestionResponse(questionId);
-        response.NumericValue = value;
+            response.ComplexValue = new Dictionary<string, object> { { "value", value } };
+        }
+        else
+        {
+            response.ComplexValue = null;
+        }
         response.LastModified = DateTime.Now;
         UpdateProgress();
     }
