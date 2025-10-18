@@ -341,37 +341,35 @@ public class QuestionnaireAssignmentCommandHandler :
                 currentSectionResponses = new Dictionary<Guid, object>(existingQuestions);
             }
 
-            // Parse the answer - it might be a JSON string that needs deserialization
-            object answerValue = command.Answer;
+            // Parse the answer - frontend now sends complete QuestionResponse structure as JSON
+            object questionResponseStructure = command.Answer;
 
-            // Try to parse as JSON if it looks like a JSON object or array
-            if (command.Answer is string answerString &&
-                (answerString.TrimStart().StartsWith("{") || answerString.TrimStart().StartsWith("[")))
+            // Deserialize the JSON string to a dictionary (QuestionResponse structure from frontend)
+            if (command.Answer is string answerString && answerString.TrimStart().StartsWith("{"))
             {
                 try
                 {
-                    // Deserialize JSON string to object/dictionary
-                    var deserializedValue = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(
+                    var deserialized = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(
                         answerString,
                         new System.Text.Json.JsonSerializerOptions
                         {
                             PropertyNameCaseInsensitive = true
                         });
 
-                    if (deserializedValue != null)
+                    if (deserialized != null)
                     {
-                        answerValue = deserializedValue;
+                        questionResponseStructure = deserialized;
                     }
                 }
                 catch
                 {
-                    // If deserialization fails, keep as string
-                    answerValue = answerString;
+                    // If deserialization fails, keep as string (fallback for unexpected format)
+                    questionResponseStructure = answerString;
                 }
             }
 
-            // Update or add the specific question answer
-            currentSectionResponses[command.QuestionId] = answerValue;
+            // Update or add the question answer (frontend provides complete structure)
+            currentSectionResponses[command.QuestionId] = questionResponseStructure;
 
             // Record the updated section response
             response.RecordSectionResponse(command.SectionId, command.OriginalCompletionRole, currentSectionResponses);

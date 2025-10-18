@@ -312,16 +312,31 @@
             return;
         }
 
-        // Return the edited response based on question type
-        object? result = Question.Type switch
+        // Build complete QuestionResponse structure (same as regular questionnaire)
+        var questionResponse = new QuestionResponse
         {
-            QuestionType.TextQuestion => GetTextQuestionResult(),
-            QuestionType.Assessment => editResponse.ComplexValue,
-            QuestionType.GoalAchievement => editResponse.ComplexValue,
-            _ => editResponse.TextValue ?? editResponse.Value
+            QuestionId = Question.Id,
+            QuestionType = Question.Type,
+            LastModified = DateTime.Now
         };
 
-        DialogService.Close(result);
+        // Populate the appropriate field based on question type
+        switch (Question.Type)
+        {
+            case QuestionType.TextQuestion:
+                questionResponse.ComplexValue = GetTextQuestionResult() as Dictionary<string, object>;
+                break;
+            case QuestionType.Assessment:
+            case QuestionType.GoalAchievement:
+                questionResponse.ComplexValue = editResponse.ComplexValue;
+                break;
+            default:
+                questionResponse.TextValue = editResponse.TextValue;
+                questionResponse.Value = editResponse.Value;
+                break;
+        }
+
+        DialogService.Close(questionResponse);
     }
 
     private object? GetTextQuestionResult()

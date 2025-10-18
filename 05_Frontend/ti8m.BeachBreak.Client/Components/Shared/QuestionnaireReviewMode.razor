@@ -617,36 +617,25 @@
             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
         );
 
-        if (result != null)
+        if (result is QuestionResponse questionResponse)
         {
-            await SaveEditedAnswer(currentSection.Id, question.Id, originalRole, result, question.Type);
+            await SaveEditedAnswer(currentSection.Id, originalRole, questionResponse);
         }
     }
 
-    private async Task SaveEditedAnswer(Guid sectionId, Guid questionId, CompletionRole originalRole, object newAnswer, QuestionType questionType)
+    private async Task SaveEditedAnswer(Guid sectionId, CompletionRole originalRole, QuestionResponse questionResponse)
     {
         try
         {
-            // Convert answer to string format expected by API
-            string answerString;
-
-            if (questionType is QuestionType.Assessment or QuestionType.GoalAchievement)
-            {
-                // For complex types, serialize to JSON
-                answerString = System.Text.Json.JsonSerializer.Serialize(newAnswer);
-            }
-            else
-            {
-                // For simple types, just convert to string
-                answerString = newAnswer?.ToString() ?? "";
-            }
+            // Serialize the complete QuestionResponse to JSON
+            string answerJson = System.Text.Json.JsonSerializer.Serialize(questionResponse);
 
             var success = await AssignmentService.EditAnswerDuringReviewAsync(
                 Assignment.Id,
                 sectionId,
-                questionId,
+                questionResponse.QuestionId,
                 originalRole,
-                answerString,
+                answerJson,
                 currentManagerName
             );
 
@@ -686,7 +675,33 @@
 
         if (confirmed == true)
         {
-            await SaveEditedAnswer(currentSection.Id, question.Id, toRole, sourceAnswer, question.Type);
+            // Build QuestionResponse from source answer
+            var questionResponse = new QuestionResponse
+            {
+                QuestionId = question.Id,
+                QuestionType = question.Type,
+                LastModified = DateTime.Now
+            };
+
+            // Populate appropriate field based on question type
+            if (sourceAnswer is Dictionary<string, object> complexAnswer)
+            {
+                questionResponse.ComplexValue = complexAnswer;
+            }
+            else if (sourceAnswer is string textAnswer)
+            {
+                questionResponse.TextValue = textAnswer;
+            }
+            else if (sourceAnswer is int or long or double or decimal)
+            {
+                questionResponse.NumericValue = Convert.ToInt32(sourceAnswer);
+            }
+            else
+            {
+                questionResponse.Value = sourceAnswer;
+            }
+
+            await SaveEditedAnswer(currentSection.Id, toRole, questionResponse);
         }
     }
 
