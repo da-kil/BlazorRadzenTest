@@ -64,19 +64,31 @@
 
             @if (IsQuestionnaireCompleted())
             {
-                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
-                    <RadzenText TextStyle="TextStyle.Body1">
-                        <strong>This questionnaire has been completed and is now read-only.</strong>
-                        @if (assignment?.WorkflowState == WorkflowState.Finalized)
-                        {
-                            <span> The questionnaire has been finalized.</span>
-                        }
-                        else
-                        {
-                            <span> You can review your responses below, but cannot make changes.</span>
-                        }
-                    </RadzenText>
-                </RadzenAlert>
+                @if (isManager && template != null && !template.RequiresManagerReview)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            <strong>Viewing employee questionnaire in read-only mode.</strong>
+                            <span> This questionnaire does not require manager input. You can view the employee's responses for monitoring purposes.</span>
+                        </RadzenText>
+                    </RadzenAlert>
+                }
+                else
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
+                        <RadzenText TextStyle="TextStyle.Body1">
+                            <strong>This questionnaire has been completed and is now read-only.</strong>
+                            @if (assignment?.WorkflowState == WorkflowState.Finalized)
+                            {
+                                <span> The questionnaire has been finalized.</span>
+                            }
+                            else
+                            {
+                                <span> You can review your responses below, but cannot make changes.</span>
+                            }
+                        </RadzenText>
+                    </RadzenAlert>
+                }
             }
 
             <div class="section-counter mb-4">
@@ -223,6 +235,12 @@
         // After review confirmation states (waiting for finalization)
         var isPostReviewConfirmation = assignment.WorkflowState is WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed;
 
+        // Managers/HR viewing employee-only questionnaires should always see read-only
+        if (isManager && template != null && !template.RequiresManagerReview)
+        {
+            return true;
+        }
+
         // Determine read-only based on user role and workflow state
         if (isEmployee && !isManager)
         {
@@ -353,7 +371,10 @@
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
 
-        if (isManagerPostReviewReadOnly || isEmployeePostReview)
+        // Managers/HR can view employee-only questionnaires in read-only mode
+        var isManagerViewingEmployeeOnlyQuestionnaire = isManager && !template.RequiresManagerReview;
+
+        if (isManagerPostReviewReadOnly || isEmployeePostReview || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // Show ALL sections in read-only view
             visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
