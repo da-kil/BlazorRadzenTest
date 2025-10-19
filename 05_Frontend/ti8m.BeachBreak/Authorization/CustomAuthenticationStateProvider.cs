@@ -119,10 +119,10 @@ public class CustomAuthenticationStateProvider : RevalidatingServerAuthenticatio
             var json = await response.Content.ReadAsStringAsync();
             var roleData = JsonDocument.Parse(json);
 
-            if (!roleData.RootElement.TryGetProperty("applicationRole", out var roleProperty) ||
-                !roleData.RootElement.TryGetProperty("employeeId", out var employeeIdProperty))
+            if (!roleData.RootElement.TryGetProperty("ApplicationRole", out var roleProperty) ||
+                !roleData.RootElement.TryGetProperty("EmployeeId", out var employeeIdProperty))
             {
-                logger.LogWarning("ApplicationRole or EmployeeId not found in response");
+                logger.LogWarning("ApplicationRole or EmployeeId not found in response. JSON: {Json}", json);
                 return null;
             }
 
