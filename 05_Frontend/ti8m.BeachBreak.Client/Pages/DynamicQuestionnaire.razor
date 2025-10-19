@@ -601,15 +601,18 @@
                 {
                     // For managers in post-review read-only mode, load ALL role responses (Employee + Manager)
                     // For employees in post-review states, also load ALL role responses so they can see manager's answers
+                    // For managers viewing employee-only questionnaires, load ALL responses regardless of workflow state
                     // For normal mode, only load current user's role responses
                     var isPostReviewReadOnly = assignment != null && isManager &&
                         (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                                       WorkflowState.EmployeeReviewConfirmed or
                                                       WorkflowState.Finalized);
 
+                    var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
+
                     // Use the isEmployeePostReview variable already declared at the start of this method
 
-                    if ((isPostReviewReadOnly || isEmployeePostReview) && sectionKvp.Value.RoleResponses != null)
+                    if ((isPostReviewReadOnly || isEmployeePostReview || isManagerViewingEmployeeOnlyQuestionnaire) && sectionKvp.Value.RoleResponses != null)
                     {
                         // Load ALL role responses (Employee, Manager, Both)
                         foreach (var roleKvp in sectionKvp.Value.RoleResponses)
@@ -941,6 +944,7 @@
         // Determine which role's responses to fetch based on section's CompletionRole
         // In read-only mode after review, managers view responses based on who originally completed the section
         // Employees in post-review states also need to view responses based on section's CompletionRole
+        // Managers viewing employee-only questionnaires view employee responses regardless of workflow state
         var isPostReviewReadOnly = assignment != null && isManager &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                           WorkflowState.EmployeeReviewConfirmed or
@@ -951,11 +955,14 @@
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
 
+        var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
+
         string roleToFetch = currentUserRole;
 
-        if (isPostReviewReadOnly || isEmployeePostReview)
+        if (isPostReviewReadOnly || isEmployeePostReview || isManagerViewingEmployeeOnlyQuestionnaire)
         {
-            // In post-review states, fetch responses based on section's CompletionRole
+            // In post-review states or when manager views employee-only questionnaire,
+            // fetch responses based on section's CompletionRole
             roleToFetch = currentSection.CompletionRole switch
             {
                 CompletionRole.Employee => "Employee",
