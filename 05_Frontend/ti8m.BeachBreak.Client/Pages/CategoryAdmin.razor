@@ -51,7 +51,7 @@
                         <RadzenText TextStyle="TextStyle.Body1">@category.NameEn</RadzenText>
                     </Template>
                     <EditTemplate Context="category">
-                        <RadzenTextBox @bind-Value="category.NameEn" Class="w-100" />
+                        <RadzenTextBox @bind-Value="category.NameEn" Placeholder="Enter English name" Class="w-100" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
@@ -60,7 +60,7 @@
                         <RadzenText TextStyle="TextStyle.Body1">@category.NameDe</RadzenText>
                     </Template>
                     <EditTemplate Context="category">
-                        <RadzenTextBox @bind-Value="category.NameDe" Class="w-100" />
+                        <RadzenTextBox @bind-Value="category.NameDe" Placeholder="Deutschen Namen eingeben" Class="w-100" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
@@ -69,7 +69,7 @@
                         <RadzenText TextStyle="TextStyle.Body2">@category.DescriptionEn</RadzenText>
                     </Template>
                     <EditTemplate Context="category">
-                        <RadzenTextArea @bind-Value="category.DescriptionEn" Rows="2" Class="w-100" />
+                        <RadzenTextArea @bind-Value="category.DescriptionEn" Placeholder="Enter English description (optional)" Rows="2" Class="w-100" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
@@ -78,7 +78,7 @@
                         <RadzenText TextStyle="TextStyle.Body2">@category.DescriptionDe</RadzenText>
                     </Template>
                     <EditTemplate Context="category">
-                        <RadzenTextArea @bind-Value="category.DescriptionDe" Rows="2" Class="w-100" />
+                        <RadzenTextArea @bind-Value="category.DescriptionDe" Placeholder="Deutsche Beschreibung eingeben (optional)" Rows="2" Class="w-100" />
                     </EditTemplate>
                 </RadzenDataGridColumn>
 
@@ -212,8 +212,8 @@
         var newCategory = new Category
         {
             Id = Guid.NewGuid(),
-            NameEn = "New Category",
-            NameDe = "Neue Kategorie",
+            NameEn = "",
+            NameDe = "",
             DescriptionEn = "",
             DescriptionDe = "",
             IsActive = true,
