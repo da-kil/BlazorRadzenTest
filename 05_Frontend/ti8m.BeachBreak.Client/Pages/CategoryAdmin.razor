@@ -158,6 +158,7 @@
     private string searchText = "";
     private bool showInactiveCategories = false;
     private Category? categoryBeingEdited;
+    private HashSet<Guid> newCategoryIds = new(); // Track IDs of newly created categories
 
     protected override async Task OnInitializedAsync()
     {
@@ -223,6 +224,9 @@
             CreatedDate = DateTime.Now
         };
 
+        // Track this as a new category
+        newCategoryIds.Add(newCategory.Id);
+
         // Add to local collections without API call
         categories.Add(newCategory);
         FilterCategories();
@@ -257,16 +261,17 @@
         {
             category.LastModified = DateTime.Now;
 
-            // Check if this is a new category (not yet persisted to database)
-            bool isNewCategory = categoryBeingEdited?.CreatedDate == category.CreatedDate &&
-                                categoryBeingEdited?.Id == category.Id &&
-                                !categories.Any(c => c.Id == category.Id && c != category);
+            // Check if this is a new category using the tracked IDs
+            bool isNewCategory = newCategoryIds.Contains(category.Id);
 
             if (isNewCategory)
             {
                 // Create new category
                 await CategoryService.CreateCategoryAsync(category);
                 NotificationService.Notify(NotificationSeverity.Success, "Success", "Category created successfully");
+
+                // Remove from new category tracking
+                newCategoryIds.Remove(category.Id);
 
                 // Reload categories to get the actual data from API
                 await LoadCategories();
@@ -291,13 +296,14 @@
     {
         if (categoryBeingEdited != null)
         {
-            // Check if this is a new category that was just added to UI
-            bool isNewCategory = categoryBeingEdited.CreatedDate == category.CreatedDate &&
-                                categoryBeingEdited.Id == category.Id &&
-                                categories.Contains(category);
+            // Check if this is a new category using tracked IDs
+            bool isNewCategory = newCategoryIds.Contains(category.Id);
 
             if (isNewCategory)
             {
+                // Remove from tracking set
+                newCategoryIds.Remove(category.Id);
+
                 // Remove the new category from local collections
                 categories.Remove(category);
                 FilterCategories();
