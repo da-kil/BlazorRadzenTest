@@ -15,13 +15,22 @@ public static class Extensions
 {
     public static void AddMartenInfrastructure(this IHostApplicationBuilder builder, bool includeWolverine = false)
     {
-        // Add NpgsqlDataSource from Aspire.Npgsql 
+        // Add NpgsqlDataSource from Aspire.Npgsql
         builder.AddNpgsqlDataSource(connectionName: "beachbreakdb");
+
+        // Configure global System.Text.Json options for PascalCase
+        var jsonOptions = new System.Text.Json.JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null // null means PascalCase
+        };
 
         var expr = builder.Services.AddMarten(options =>
         {
-            // Specify that we want to use STJ as our serializer
-            options.UseSystemTextJsonForSerialization();
+            // Specify that we want to use STJ as our serializer with custom options
+            options.UseSystemTextJsonForSerialization(configure: opts =>
+            {
+                opts.PropertyNamingPolicy = null; // PascalCase
+            });
 
             // If we're running in development mode, let Marten just take care
             // of all necessary schema building and patching behind the scenes

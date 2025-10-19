@@ -133,6 +133,17 @@ namespace ti8m.BeachBreak.CommandApi
             // Register manager authorization service for command operations
             builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
 
+            // Configure JSON serialization to use PascalCase (C# naming conventions)
+            builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
+            {
+                options.SerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+            });
+
+            builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+            });
+
             var app = builder.Build();
 
             app.MapDefaultEndpoints();
