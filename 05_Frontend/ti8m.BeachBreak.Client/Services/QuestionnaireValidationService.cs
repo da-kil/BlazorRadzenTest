@@ -48,6 +48,18 @@ public class QuestionnaireValidationService
                 }
             }
         }
+        else
+        {
+            // When manager review is required, at least one section must involve the manager
+            var managerSections = template.Sections
+                .Where(s => s.CompletionRole == CompletionRole.Manager || s.CompletionRole == CompletionRole.Both)
+                .ToList();
+
+            if (!managerSections.Any())
+            {
+                validationErrors.Add("When manager review is required, at least one section must be completed by 'Manager' or 'Both'");
+            }
+        }
 
         // Validate sections and questions
         foreach (var section in template.Sections)
