@@ -6,21 +6,6 @@
 @inject NotificationService NotificationService
 
 <style>
-    /* Override Radzen dialog padding for this specific dialog */
-    .edit-answer-dialog {
-        padding: 1rem 1rem 0 1rem;
-        margin: -1.5rem -1.5rem -1.5rem -1.5rem;
-        padding: 1.5rem 1.5rem 5rem 1.5rem;
-    }
-
-    .question-info {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-left: 4px solid #667eea;
-    }
-
     .role-indicator {
         display: inline-flex;
         align-items: center;
@@ -31,38 +16,11 @@
         font-weight: 600;
         background: rgba(102, 126, 234, 0.1);
         color: #667eea;
-        margin-top: 0.5rem;
+        margin-bottom: 1rem;
     }
 
     .answer-editor {
-        margin-bottom: 1rem;
         padding: 0 0.5rem;
-    }
-
-    .dialog-actions {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 1rem;
-        position: sticky;
-        bottom: 0;
-        background: white;
-        margin: 1rem -1.5rem -5rem -1.5rem;
-        padding: 1rem 1.5rem;
-        min-height: 5rem;
-        box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
-        z-index: 10;
-    }
-
-    .dialog-actions::after {
-        content: '';
-        position: absolute;
-        bottom: -1.5rem;
-        left: 0;
-        right: 0;
-        height: 5rem;
-        background: white;
-        z-index: -1;
     }
 
     /* Ensure competency cards fit well in dialog */
@@ -89,15 +47,14 @@
     }
 </style>
 
-<div class="edit-answer-dialog">
-    <div class="mb-3">
+<RadzenStack Gap="0" Style="height: 100%; min-height: 500px; display: flex; flex-direction: column;" JustifyContent="JustifyContent.SpaceBetween">
+    <RadzenStack Gap="1rem" Style="flex: 1; overflow-y: auto;">
         <div class="role-indicator">
             <RadzenIcon Icon="@GetRoleIcon()" />
             Editing @CompletionRole's Answer
         </div>
-    </div>
 
-    <div class="answer-editor">
+        <div class="answer-editor">
         @if (Question.Type == QuestionType.TextQuestion)
         {
             var textSections = GetTextSectionsFromQuestion();
@@ -156,9 +113,10 @@
                           Placeholder="Enter your answer..."
                           Style="width: 100%;" />
         }
-    </div>
+        </div>
+    </RadzenStack>
 
-    <div class="dialog-actions">
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="padding-top: 1rem; border-top: 1px solid #e9ecef; flex-shrink: 0;">
         <RadzenButton Text="Cancel"
                      ButtonStyle="ButtonStyle.Light"
                      Click="@Cancel" />
@@ -166,8 +124,8 @@
                      ButtonStyle="ButtonStyle.Success"
                      Icon="save"
                      Click="@SaveChanges" />
-    </div>
-</div>
+    </RadzenStack>
+</RadzenStack>
 
 @code {
     [Parameter] public QuestionItem Question { get; set; } = null!;
