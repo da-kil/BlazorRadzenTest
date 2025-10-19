@@ -29,7 +29,8 @@ public static class Extensions
             // Specify that we want to use STJ as our serializer with custom options
             options.UseSystemTextJsonForSerialization(configure: opts =>
             {
-                opts.PropertyNamingPolicy = null; // PascalCase
+                opts.PropertyNamingPolicy = null; // PascalCase for new data
+                opts.PropertyNameCaseInsensitive = true; // Allow reading both camelCase and PascalCase
             });
 
             // If we're running in development mode, let Marten just take care
