@@ -123,32 +123,35 @@
         <div class="d-flex gap-2">
             @if (GetActiveAssignments().Any())
             {
-                <RadzenButton Text="Send Reminder"
-                             Icon="email"
-                             ButtonStyle="ButtonStyle.Info"
-                             Click="@SendReminder"
-                             Size="ButtonSize.Medium" />
+                <AsyncButton Text="Send Reminder"
+                            ProcessingText="Sending"
+                            Icon="email"
+                            ButtonStyle="ButtonStyle.Info"
+                            Click="@SendReminder"
+                            Size="ButtonSize.Medium" />
             }
             @if (GetOverdueAssignments().Any())
             {
-                <RadzenButton Text="Escalate Overdue"
-                             Icon="priority_high"
-                             ButtonStyle="ButtonStyle.Warning"
-                             Click="@EscalateOverdue"
-                             Size="ButtonSize.Medium" />
+                <AsyncButton Text="Escalate Overdue"
+                            ProcessingText="Escalating"
+                            Icon="priority_high"
+                            ButtonStyle="ButtonStyle.Warning"
+                            Click="@EscalateOverdue"
+                            Size="ButtonSize.Medium" />
             }
         </div>
         <div class="d-flex gap-2">
-            <RadzenButton Text="Export Report"
-                         Icon="download"
-                         ButtonStyle="ButtonStyle.Light"
-                         Click="@ExportMemberReport"
-                         Size="ButtonSize.Medium" />
-            <RadzenButton Text="Close"
-                         Icon="close"
-                         ButtonStyle="ButtonStyle.Secondary"
-                         Click="@Close"
-                         Size="ButtonSize.Medium" />
+            <AsyncButton Text="Export Report"
+                        ProcessingText="Exporting"
+                        Icon="download"
+                        ButtonStyle="ButtonStyle.Light"
+                        Click="@ExportMemberReport"
+                        Size="ButtonSize.Medium" />
+            <AsyncButton Text="Close"
+                        Icon="close"
+                        ButtonStyle="ButtonStyle.Secondary"
+                        Click="@Close"
+                        Size="ButtonSize.Medium" />
         </div>
     </div>
 </RadzenCard>
@@ -229,19 +232,19 @@
                 <div class="assignment-actions">
                     @if (assignment.WorkflowState != WorkflowState.Finalized)
                     {
-                        <RadzenButton Text="View"
-                                     Icon="visibility"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Click="@(() => ViewAssignment(assignment))"
-                                     Size="ButtonSize.Small" />
+                        <AsyncButton Text="View"
+                                    Icon="visibility"
+                                    ButtonStyle="ButtonStyle.Light"
+                                    Click="@(() => ViewAssignment(assignment))"
+                                    Size="ButtonSize.Small" />
                     }
                     else if (assignment.WorkflowState == WorkflowState.Finalized)
                     {
-                        <RadzenButton Text="Results"
-                                     Icon="analytics"
-                                     ButtonStyle="ButtonStyle.Success"
-                                     Click="@(() => ViewResults(assignment))"
-                                     Size="ButtonSize.Small" />
+                        <AsyncButton Text="Results"
+                                    Icon="analytics"
+                                    ButtonStyle="ButtonStyle.Success"
+                                    Click="@(() => ViewResults(assignment))"
+                                    Size="ButtonSize.Small" />
                     }
                 </div>
             </div>

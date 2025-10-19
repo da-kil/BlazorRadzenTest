@@ -5,6 +5,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
 @inject IEmployeeApiService EmployeeApiService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
@@ -119,8 +120,8 @@ else if (dashboard != null)
                                     </RadzenText>
                                 </div>
                             </div>
-                            <RadzenButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                          Click="@(() => NavigateToQuestionnaire(urgent.AssignmentId))" />
+                            <AsyncButton Icon="arrow_forward" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                        Click="@(() => NavigateToQuestionnaire(urgent.AssignmentId))" />
                         </div>
                     </RadzenCard>
                 </Template>
@@ -152,8 +153,8 @@ else
             <RadzenIcon Icon="dashboard" Style="font-size: 3rem; color: #adb5bd;" />
             <RadzenText TextStyle="TextStyle.H6" Class="rz-mt-3">No Dashboard Data</RadzenText>
             <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Unable to load dashboard information.</RadzenText>
-            <RadzenButton Text="Retry" Icon="refresh" ButtonStyle="ButtonStyle.Primary" Class="rz-mt-3"
-                          Click="@LoadDashboardAsync" />
+            <AsyncButton Text="Retry" ProcessingText="Loading" Icon="refresh" ButtonStyle="ButtonStyle.Primary" Class="rz-mt-3"
+                        Click="@LoadDashboardAsync" />
         </div>
     </RadzenCard>
 }

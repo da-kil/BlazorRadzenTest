@@ -26,10 +26,10 @@
                 </RadzenText>
             </div>
             <div class="d-flex gap-2">
-                <RadzenButton Text="Add New Category"
-                             ButtonStyle="ButtonStyle.Primary"
-                             Icon="add"
-                             Click="@ShowAddCategoryDialog" />
+                <AsyncButton Text="Add New Category"
+                            ButtonStyle="ButtonStyle.Primary"
+                            Icon="add"
+                            Click="@ShowAddCategoryDialog" />
             </div>
         </div>
 
@@ -116,30 +116,32 @@
                 <RadzenDataGridColumn TItem="Category" Filterable="false" Sortable="false" Width="180px" Title="Actions">
                     <Template Context="category">
                         <div class="d-flex gap-1">
-                            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                         Icon="edit"
-                                         Size="ButtonSize.ExtraSmall"
-                                         Click="@(() => EditRow(category))"
-                                         Tooltip="Edit Category" />
-                            <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                         Icon="delete"
-                                         Size="ButtonSize.ExtraSmall"
-                                         Click="@(() => DeleteCategory(category))"
-                                         Tooltip="Delete Category" />
+                            <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                        Icon="edit"
+                                        Size="ButtonSize.ExtraSmall"
+                                        Click="@(() => EditRow(category))"
+                                        Tooltip="Edit Category" />
+                            <AsyncButton ButtonStyle="ButtonStyle.Danger"
+                                        ProcessingText="Deleting"
+                                        Icon="delete"
+                                        Size="ButtonSize.ExtraSmall"
+                                        Click="@(() => DeleteCategory(category))"
+                                        Tooltip="Delete Category" />
                         </div>
                     </Template>
                     <EditTemplate Context="category">
                         <div class="d-flex gap-1">
-                            <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                         Icon="save"
-                                         Size="ButtonSize.ExtraSmall"
-                                         Click="@(() => SaveRow(category))"
-                                         Tooltip="Save Changes" />
-                            <RadzenButton ButtonStyle="ButtonStyle.Secondary"
-                                         Icon="cancel"
-                                         Size="ButtonSize.ExtraSmall"
-                                         Click="@(() => CancelEdit(category))"
-                                         Tooltip="Cancel Edit" />
+                            <AsyncButton ButtonStyle="ButtonStyle.Success"
+                                        ProcessingText="Saving"
+                                        Icon="save"
+                                        Size="ButtonSize.ExtraSmall"
+                                        Click="@(() => SaveRow(category))"
+                                        Tooltip="Save Changes" />
+                            <AsyncButton ButtonStyle="ButtonStyle.Secondary"
+                                        Icon="cancel"
+                                        Size="ButtonSize.ExtraSmall"
+                                        Click="@(() => CancelEdit(category))"
+                                        Tooltip="Cancel Edit" />
                         </div>
                     </EditTemplate>
                 </RadzenDataGridColumn>

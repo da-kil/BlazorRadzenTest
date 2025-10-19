@@ -384,17 +384,19 @@
         </div>
     </Content>
     <ActionsContent>
-        <RadzenButton Text="Cancel"
-                     ButtonStyle="ButtonStyle.Light"
-                     Icon="close"
-                     Click="@Close" />
+        <AsyncButton Text="Cancel"
+                    ButtonStyle="ButtonStyle.Light"
+                    Icon="close"
+                    Click="@Close" />
 
-        <RadzenButton Text="@(isLoading ? "Creating Assignment..." : "Create Assignment")"
-                     ButtonStyle="ButtonStyle.Primary"
-                     Icon="@(isLoading ? "hourglass_empty" : "assignment_turned_in")"
-                     ButtonType="ButtonType.Submit"
-                     Disabled="@(!IsReadyToAssign() || isLoading)"
-                     Style="min-width: 180px;" />
+        <AsyncButton Text="Create Assignment"
+                    ProcessingText="Creating Assignment"
+                    ButtonStyle="ButtonStyle.Primary"
+                    Icon="assignment_turned_in"
+                    ProcessingIcon="hourglass_empty"
+                    ButtonType="ButtonType.Submit"
+                    Disabled="@(!IsReadyToAssign() || isLoading)"
+                    Style="min-width: 180px;" />
     </ActionsContent>
 </BaseDialog>
 

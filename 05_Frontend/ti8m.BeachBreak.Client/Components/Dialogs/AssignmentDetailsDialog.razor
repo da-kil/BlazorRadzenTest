@@ -442,24 +442,24 @@
     <div class="action-bar">
         @if (Assignment.WorkflowState != WorkflowState.Finalized)
         {
-            <RadzenButton Text="Assign to More"
-                         ButtonStyle="ButtonStyle.Secondary"
-                         Icon="group_add"
-                         Click="@OnAssignToMoreClick"
-                         Size="ButtonSize.Medium" />
+            <AsyncButton Text="Assign to More"
+                        ButtonStyle="ButtonStyle.Secondary"
+                        Icon="group_add"
+                        Click="@OnAssignToMoreClick"
+                        Size="ButtonSize.Medium" />
 
-            <RadzenButton Text="Edit Assignment"
-                         ButtonStyle="ButtonStyle.Primary"
-                         Icon="edit"
-                         Click="@OnEditClick"
-                         Size="ButtonSize.Medium" />
+            <AsyncButton Text="Edit Assignment"
+                        ButtonStyle="ButtonStyle.Primary"
+                        Icon="edit"
+                        Click="@OnEditClick"
+                        Size="ButtonSize.Medium" />
         }
 
-        <RadzenButton Text="Close"
-                     ButtonStyle="ButtonStyle.Light"
-                     Icon="close"
-                     Click="@OnCloseClick"
-                     Size="ButtonSize.Medium" />
+        <AsyncButton Text="Close"
+                    ButtonStyle="ButtonStyle.Light"
+                    Icon="close"
+                    Click="@OnCloseClick"
+                    Size="ButtonSize.Medium" />
     </div>
 </div>
 

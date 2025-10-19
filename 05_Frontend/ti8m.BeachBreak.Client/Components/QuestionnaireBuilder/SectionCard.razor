@@ -1,6 +1,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@using ti8m.BeachBreak.Client.Components.Shared
 @using System.Collections
 
 <div class="modern-section-card mb-4">
@@ -21,27 +22,28 @@
 
             <!-- Action Buttons - moved to dedicated area -->
             <div class="section-actions">
-                <RadzenButton ButtonStyle="ButtonStyle.Light"
-                             Icon="keyboard_arrow_up"
-                             Size="ButtonSize.Small"
-                             Click="@(() => OnMoveUpClick())"
-                             Disabled="@(!CanMoveUp || !Template.IsAvailableForEditing)"
-                             Title="Move section up"
-                             Class="action-btn" />
-                <RadzenButton ButtonStyle="ButtonStyle.Light"
-                             Icon="keyboard_arrow_down"
-                             Size="ButtonSize.Small"
-                             Click="@(() => OnMoveDownClick())"
-                             Disabled="@(!CanMoveDown || !Template.IsAvailableForEditing)"
-                             Title="Move section down"
-                             Class="action-btn" />
-                <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                             Icon="delete_outline"
-                             Size="ButtonSize.Small"
-                             Click="@(() => OnDeleteClick())"
-                             Title="Delete section"
-                             Class="action-btn action-btn-danger"
-                             Disabled="@(!Template.IsAvailableForEditing)" />
+                <AsyncButton ButtonStyle="ButtonStyle.Light"
+                            Icon="keyboard_arrow_up"
+                            Size="ButtonSize.Small"
+                            Click="@(() => OnMoveUpClick())"
+                            Disabled="@(!CanMoveUp || !Template.IsAvailableForEditing)"
+                            Title="Move section up"
+                            Class="action-btn" />
+                <AsyncButton ButtonStyle="ButtonStyle.Light"
+                            Icon="keyboard_arrow_down"
+                            Size="ButtonSize.Small"
+                            Click="@(() => OnMoveDownClick())"
+                            Disabled="@(!CanMoveDown || !Template.IsAvailableForEditing)"
+                            Title="Move section down"
+                            Class="action-btn" />
+                <AsyncButton ButtonStyle="ButtonStyle.Danger"
+                            ProcessingText="Deleting"
+                            Icon="delete_outline"
+                            Size="ButtonSize.Small"
+                            Click="@(() => OnDeleteClick())"
+                            Title="Delete section"
+                            Class="action-btn action-btn-danger"
+                            Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </div>
 
@@ -154,12 +156,12 @@
                     <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"color: {GetSectionTypeColor()};")" Class="me-2" />
                     @GetSectionTypeName() Items
                 </RadzenText>
-                <RadzenButton Text="Add Item"
-                             ButtonStyle="ButtonStyle.Primary"
-                             Icon="add_circle_outline"
-                             Size="ButtonSize.Small"
-                             Click="@(() => OnAddItemClick())"
-                             Disabled="@(!Template.IsAvailableForEditing)" />
+                <AsyncButton Text="Add Item"
+                            ButtonStyle="ButtonStyle.Primary"
+                            Icon="add_circle_outline"
+                            Size="ButtonSize.Small"
+                            Click="@(() => OnAddItemClick())"
+                            Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </div>
 
@@ -180,11 +182,11 @@
                                     Select the type of question you want to add to this section
                                 </RadzenText>
                             </div>
-                            <RadzenButton Icon="close"
-                                         ButtonStyle="ButtonStyle.Light"
-                                         Size="ButtonSize.Small"
-                                         Click="@(() => OnCancelQuestionTypeSelection())"
-                                         Title="Cancel" />
+                            <AsyncButton Icon="close"
+                                        ButtonStyle="ButtonStyle.Light"
+                                        Size="ButtonSize.Small"
+                                        Click="@(() => OnCancelQuestionTypeSelection())"
+                                        Title="Cancel" />
                         </div>
                     </div>
                     <div class="p-4">

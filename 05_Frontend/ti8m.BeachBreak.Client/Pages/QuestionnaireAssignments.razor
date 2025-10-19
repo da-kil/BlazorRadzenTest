@@ -136,12 +136,12 @@
                                                          @oninput="@(async (args) => { employeeSearchText = args.Value?.ToString() ?? ""; FilterEmployees(); })" />
 
                                             <div class="d-flex gap-2 mb-2">
-                                                <RadzenButton Text="Select All Filtered"
+                                                <AsyncButton Text="Select All Filtered"
                                                             ButtonStyle="ButtonStyle.Secondary"
                                                             Size="ButtonSize.Small"
                                                             Icon="select_all"
                                                             Click="@SelectAllFilteredEmployees" />
-                                                <RadzenButton Text="Clear Selection"
+                                                <AsyncButton Text="Clear Selection"
                                                             ButtonStyle="ButtonStyle.Light"
                                                             Size="ButtonSize.Small"
                                                             Icon="clear"
@@ -285,9 +285,11 @@
 
                             <!-- Create Assignment Button -->
                             <div class="text-center mt-4">
-                                <RadzenButton Text="@(isCreatingAssignment ? "Creating Assignments..." : "Create Assignment")"
+                                <AsyncButton Text="Create Assignment"
+                                            ProcessingText="Creating Assignments"
                                             ButtonStyle="ButtonStyle.Primary"
-                                            Icon="@(isCreatingAssignment ? "hourglass_empty" : "assignment_turned_in")"
+                                            Icon="assignment_turned_in"
+                                            ProcessingIcon="hourglass_empty"
                                             Size="ButtonSize.Large"
                                             Disabled="@(!CanCreateAssignment() || isCreatingAssignment)"
                                             Click="@CreateAssignment"
@@ -323,7 +325,8 @@
                                                   Class="w-100" />
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="3">
-                                    <RadzenButton Text="Refresh"
+                                    <AsyncButton Text="Refresh"
+                                                ProcessingText="Loading"
                                                 ButtonStyle="ButtonStyle.Secondary"
                                                 Icon="refresh"
                                                 Click="@(() => LoadAssignments())"

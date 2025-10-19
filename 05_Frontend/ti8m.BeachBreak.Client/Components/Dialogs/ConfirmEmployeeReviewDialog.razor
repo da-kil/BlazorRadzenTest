@@ -1,5 +1,6 @@
 @using Radzen
 @using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
 @inject DialogService DialogService
 
 <style>
@@ -92,15 +93,16 @@
     </div>
 
     <div class="dialog-actions">
-        <RadzenButton Text="Cancel"
-                     ButtonStyle="ButtonStyle.Light"
-                     Click="@Cancel"
-                     Size="ButtonSize.Medium" />
-        <RadzenButton Text="Sign Off on Review"
-                     ButtonStyle="ButtonStyle.Success"
-                     Icon="verified"
-                     Click="@ConfirmReview"
-                     Size="ButtonSize.Medium" />
+        <AsyncButton Text="Cancel"
+                    ButtonStyle="ButtonStyle.Light"
+                    Click="@Cancel"
+                    Size="ButtonSize.Medium" />
+        <AsyncButton Text="Sign Off on Review"
+                    ProcessingText="Signing Off"
+                    ButtonStyle="ButtonStyle.Success"
+                    Icon="verified"
+                    Click="@ConfirmReview"
+                    Size="ButtonSize.Medium" />
     </div>
 </div>
 

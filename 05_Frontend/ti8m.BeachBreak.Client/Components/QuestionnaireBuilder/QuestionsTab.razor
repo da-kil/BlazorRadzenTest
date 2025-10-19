@@ -1,6 +1,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@using ti8m.BeachBreak.Client.Components.Shared
 
 <div class="questions-tab-content">
     <div class="mb-4">
@@ -11,27 +12,27 @@
                 </RadzenText>
             </div>
             <div class="d-flex gap-2">
-                <RadzenButton Text="Assessment"
-                             ButtonStyle="ButtonStyle.Primary"
-                             Icon="self_improvement"
-                             Size="ButtonSize.Small"
-                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Assessment))"
-                             Title="Add rating-based competency assessment"
-                             Disabled="@(!Template.IsAvailableForEditing)" />
-                <RadzenButton Text="Goal Achievement"
-                             ButtonStyle="ButtonStyle.Success"
-                             Icon="track_changes"
-                             Size="ButtonSize.Small"
-                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.GoalAchievement))"
-                             Title="Add goal and achievement review"
-                             Disabled="@(!Template.IsAvailableForEditing)" />
-                <RadzenButton Text="Text Question"
-                             ButtonStyle="ButtonStyle.Secondary"
-                             Icon="psychology"
-                             Size="ButtonSize.Small"
-                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
-                             Title="Add open-ended text responses"
-                             Disabled="@(!Template.IsAvailableForEditing)" />
+                <AsyncButton Text="Assessment"
+                            ButtonStyle="ButtonStyle.Primary"
+                            Icon="self_improvement"
+                            Size="ButtonSize.Small"
+                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Assessment))"
+                            Title="Add rating-based competency assessment"
+                            Disabled="@(!Template.IsAvailableForEditing)" />
+                <AsyncButton Text="Goal Achievement"
+                            ButtonStyle="ButtonStyle.Success"
+                            Icon="track_changes"
+                            Size="ButtonSize.Small"
+                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.GoalAchievement))"
+                            Title="Add goal and achievement review"
+                            Disabled="@(!Template.IsAvailableForEditing)" />
+                <AsyncButton Text="Text Question"
+                            ButtonStyle="ButtonStyle.Secondary"
+                            Icon="psychology"
+                            Size="ButtonSize.Small"
+                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
+                            Title="Add open-ended text responses"
+                            Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </div>
 

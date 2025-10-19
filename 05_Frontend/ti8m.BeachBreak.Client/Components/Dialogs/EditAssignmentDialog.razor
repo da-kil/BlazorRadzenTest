@@ -42,12 +42,14 @@
         </div>
     </HeaderActions>
     <FooterEndActions>
-        <RadzenButton Text="@(IsLoading ? "Saving..." : "Save Changes")"
-                     ButtonStyle="ButtonStyle.Success"
-                     Icon="@(IsLoading ? "hourglass_empty" : "save")"
-                     Click="@(() => HandleSave(editModel))"
-                     Disabled="@(IsLoading || !IsValid() || !HasChanges())"
-                     Size="ButtonSize.Medium" />
+        <AsyncButton Text="Save Changes"
+                    ProcessingText="Saving"
+                    ButtonStyle="ButtonStyle.Success"
+                    Icon="save"
+                    ProcessingIcon="hourglass_empty"
+                    Click="@(() => HandleSave(editModel))"
+                    Disabled="@(IsLoading || !IsValid() || !HasChanges())"
+                    Size="ButtonSize.Medium" />
     </FooterEndActions>
 </TabbedDialog>
 
@@ -127,14 +129,14 @@
                               Icon="search" />
             </div>
             <div>
-                <RadzenButton Text="Select All Filtered"
+                <AsyncButton Text="Select All Filtered"
                             ButtonStyle="ButtonStyle.Secondary"
                             Size="ButtonSize.Small"
                             Icon="select_all"
                             Click="@SelectAllFilteredEmployees" />
             </div>
             <div>
-                <RadzenButton Text="Clear Selection"
+                <AsyncButton Text="Clear Selection"
                             ButtonStyle="ButtonStyle.Light"
                             Size="ButtonSize.Small"
                             Icon="clear"

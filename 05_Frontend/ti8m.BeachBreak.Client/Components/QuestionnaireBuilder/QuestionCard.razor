@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
 @inject DialogService DialogService
 
 <style>
@@ -119,24 +120,25 @@
                                     </RadzenText>
                                 </div>
                                 <div class="d-flex gap-1">
-                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                 Icon="keyboard_arrow_up"
-                                                 Size="ButtonSize.ExtraSmall"
-                                                 Click="@(() => MoveCompetencyUp(competencyIndex))"
-                                                 Disabled="@(competencyIndex == 0 || !Template.IsAvailableForEditing)"
-                                                 Title="Move up" />
-                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                 Icon="keyboard_arrow_down"
-                                                 Size="ButtonSize.ExtraSmall"
-                                                 Click="@(() => MoveCompetencyDown(competencyIndex))"
-                                                 Disabled="@(competencyIndex == competencies.Count - 1 || !Template.IsAvailableForEditing)"
-                                                 Title="Move down" />
-                                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                                 Icon="delete_outline"
-                                                 Size="ButtonSize.ExtraSmall"
-                                                 Click="@(() => RemoveCompetency(competencyIndex))"
-                                                 Title="Delete competency"
-                                                 Disabled="@(!Template.IsAvailableForEditing)" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                                Icon="keyboard_arrow_up"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => MoveCompetencyUp(competencyIndex))"
+                                                Disabled="@(competencyIndex == 0 || !Template.IsAvailableForEditing)"
+                                                Title="Move up" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                                Icon="keyboard_arrow_down"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => MoveCompetencyDown(competencyIndex))"
+                                                Disabled="@(competencyIndex == competencies.Count - 1 || !Template.IsAvailableForEditing)"
+                                                Title="Move down" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Danger"
+                                                ProcessingText="Deleting"
+                                                Icon="delete_outline"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => RemoveCompetency(competencyIndex))"
+                                                Title="Delete competency"
+                                                Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
                             <div class="competency-input-row">
@@ -201,24 +203,25 @@
                                     Goal Category @(categoryIndex + 1)
                                 </RadzenText>
                                 <div class="d-flex gap-1">
-                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                 Icon="keyboard_arrow_up"
-                                                 Size="ButtonSize.ExtraSmall"
-                                                 Click="@(() => MoveGoalCategoryUp(categoryIndex))"
-                                                 Disabled="@(categoryIndex == 0 || !Template.IsAvailableForEditing)"
-                                                 Title="Move up" />
-                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                 Icon="keyboard_arrow_down"
-                                                 Size="ButtonSize.ExtraSmall"
-                                                 Click="@(() => MoveGoalCategoryDown(categoryIndex))"
-                                                 Disabled="@(categoryIndex == goalCategories.Count - 1 || !Template.IsAvailableForEditing)"
-                                                 Title="Move down" />
-                                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                                 Icon="delete"
-                                                 Size="ButtonSize.ExtraSmall"
-                                                 Click="@(() => RemoveGoalCategory(categoryIndex))"
-                                                 Title="Delete"
-                                                 Disabled="@(!Template.IsAvailableForEditing)" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                                Icon="keyboard_arrow_up"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => MoveGoalCategoryUp(categoryIndex))"
+                                                Disabled="@(categoryIndex == 0 || !Template.IsAvailableForEditing)"
+                                                Title="Move up" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                                Icon="keyboard_arrow_down"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => MoveGoalCategoryDown(categoryIndex))"
+                                                Disabled="@(categoryIndex == goalCategories.Count - 1 || !Template.IsAvailableForEditing)"
+                                                Title="Move down" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Danger"
+                                                ProcessingText="Deleting"
+                                                Icon="delete"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => RemoveGoalCategory(categoryIndex))"
+                                                Title="Delete"
+                                                Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
                             <div class="goal-category-input-row">
@@ -283,24 +286,25 @@
                                     Text Section @(sectionIndex + 1)
                                 </RadzenText>
                                 <div class="d-flex gap-1">
-                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                 Icon="keyboard_arrow_up"
-                                                 Size="ButtonSize.ExtraSmall"
-                                                 Click="@(() => MoveTextSectionUp(sectionIndex))"
-                                                 Disabled="@(sectionIndex == 0 || !Template.IsAvailableForEditing)"
-                                                 Title="Move up" />
-                                    <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                 Icon="keyboard_arrow_down"
-                                                 Size="ButtonSize.ExtraSmall"
-                                                 Click="@(() => MoveTextSectionDown(sectionIndex))"
-                                                 Disabled="@(sectionIndex == textSections.Count - 1 || !Template.IsAvailableForEditing)"
-                                                 Title="Move down" />
-                                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                                 Icon="delete"
-                                                 Size="ButtonSize.ExtraSmall"
-                                                 Click="@(() => RemoveTextSection(sectionIndex))"
-                                                 Title="Delete"
-                                                 Disabled="@(!Template.IsAvailableForEditing)" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                                Icon="keyboard_arrow_up"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => MoveTextSectionUp(sectionIndex))"
+                                                Disabled="@(sectionIndex == 0 || !Template.IsAvailableForEditing)"
+                                                Title="Move up" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                                Icon="keyboard_arrow_down"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => MoveTextSectionDown(sectionIndex))"
+                                                Disabled="@(sectionIndex == textSections.Count - 1 || !Template.IsAvailableForEditing)"
+                                                Title="Move down" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Danger"
+                                                ProcessingText="Deleting"
+                                                Icon="delete"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => RemoveTextSection(sectionIndex))"
+                                                Title="Delete"
+                                                Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
                             <div class="text-section-input-row">

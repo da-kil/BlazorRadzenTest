@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
 
 <!-- Header -->
 <div class="page-header-modern">
@@ -31,19 +32,19 @@
 				@switch (currentStatus)
 				{
 					case TemplateStatus.Draft:
-						<RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" Disabled="@IsSaving" />
-						<RadzenButton Text="@(IsSaving ? "Saving..." : "Save")" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@OnSave" Disabled="@IsSaving" />
-						<RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@OnPublish" Disabled="@IsSaving" />
-						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" Disabled="@IsSaving" />
+						<AsyncButton Text="Clone" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" Disabled="@IsSaving" />
+						<AsyncButton Text="Save" ProcessingText="Saving" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@OnSave" Disabled="@IsSaving" />
+						<AsyncButton Text="Publish" ProcessingText="Publishing" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@OnPublish" Disabled="@IsSaving" />
+						<AsyncButton Text="Archive" ProcessingText="Archiving" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" Disabled="@IsSaving" />
 						break;
 					case TemplateStatus.Published:
-						<RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" />
-						<RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@OnUnpublish" />
-						<RadzenButton Text="Archive" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" />
+						<AsyncButton Text="Clone" ProcessingText="Cloning" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" />
+						<AsyncButton Text="Unpublish" ProcessingText="Unpublishing" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@OnUnpublish" />
+						<AsyncButton Text="Archive" ProcessingText="Archiving" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" />
 						break;
 					case TemplateStatus.Archived:
-						<RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" />
-						<RadzenButton Text="Restore" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@OnRestore" />
+						<AsyncButton Text="Clone" ProcessingText="Cloning" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" />
+						<AsyncButton Text="Restore" ProcessingText="Restoring" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@OnRestore" />
 						break;
 				}
 			</div>

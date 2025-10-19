@@ -117,13 +117,14 @@
     </RadzenStack>
 
     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="padding-top: 1rem; border-top: 1px solid #e9ecef; flex-shrink: 0;">
-        <RadzenButton Text="Cancel"
-                     ButtonStyle="ButtonStyle.Light"
-                     Click="@Cancel" />
-        <RadzenButton Text="Save Changes"
-                     ButtonStyle="ButtonStyle.Success"
-                     Icon="save"
-                     Click="@SaveChanges" />
+        <AsyncButton Text="Cancel"
+                    ButtonStyle="ButtonStyle.Light"
+                    Click="@Cancel" />
+        <AsyncButton Text="Save Changes"
+                    ProcessingText="Saving"
+                    ButtonStyle="ButtonStyle.Success"
+                    Icon="save"
+                    Click="@SaveChanges" />
     </RadzenStack>
 </RadzenStack>
 

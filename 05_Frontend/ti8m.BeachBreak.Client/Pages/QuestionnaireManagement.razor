@@ -27,10 +27,10 @@
                     Manage your questionnaire templates and view responses
                 </RadzenText>
             </div>
-            <RadzenButton Text="Create New"
-                         ButtonStyle="ButtonStyle.Primary"
-                         Icon="add"
-                         Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
+            <AsyncButton Text="Create New"
+                        ButtonStyle="ButtonStyle.Primary"
+                        Icon="add"
+                        Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
         </div>
 
         <RadzenTabs>
@@ -108,44 +108,48 @@
                                 <RadzenDataGridColumn Filterable="false" Sortable="false" Width="240px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
                                         <div class="d-flex gap-1">
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                         Icon="edit"
-                                                         Size="ButtonSize.Small"
-                                                         Title="Edit"
-                                                         Click="@(() => EditTemplate(template))" />
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
-                                                         Icon="content_copy"
-                                                         Size="ButtonSize.Small"
-                                                         Title="Clone"
-                                                         Click="@(() => CloneTemplate(template))" />
+                                            <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                                        Icon="edit"
+                                                        Size="ButtonSize.Small"
+                                                        Title="Edit"
+                                                        Click="@(() => EditTemplate(template))" />
+                                            <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                                        ProcessingText="Cloning"
+                                                        Icon="content_copy"
+                                                        Size="ButtonSize.Small"
+                                                        Title="Clone"
+                                                        Click="@(() => CloneTemplate(template))" />
                                             @if (template.Status == TemplateStatus.Draft)
                                             {
-                                                <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                                             Icon="publish"
-                                                             Size="ButtonSize.Small"
-                                                             Title="Publish"
-                                                             Click="@(() => PublishTemplate(template))" />
+                                                <AsyncButton ButtonStyle="ButtonStyle.Success"
+                                                            ProcessingText="Publishing"
+                                                            Icon="publish"
+                                                            Size="ButtonSize.Small"
+                                                            Title="Publish"
+                                                            Click="@(() => PublishTemplate(template))" />
                                             }
                                             else if (template.Status == TemplateStatus.Published)
                                             {
-                                                <RadzenButton ButtonStyle="ButtonStyle.Warning"
-                                                             Icon="unpublished"
-                                                             Size="ButtonSize.Small"
-                                                             Title="Unpublish"
-                                                             Click="@(() => UnpublishTemplate(template))" />
+                                                <AsyncButton ButtonStyle="ButtonStyle.Warning"
+                                                            ProcessingText="Unpublishing"
+                                                            Icon="unpublished"
+                                                            Size="ButtonSize.Small"
+                                                            Title="Unpublish"
+                                                            Click="@(() => UnpublishTemplate(template))" />
                                             }
-                                            <RadzenButton ButtonStyle="@GetToggleButtonStyle(template.Status)"
-                                                         Icon="@GetToggleButtonIcon(template.Status)"
-                                                         Size="ButtonSize.Small"
-                                                         Title="@GetToggleButtonTitle(template.Status)"
-                                                         Click="@(() => ToggleTemplateStatus(template))" />
+                                            <AsyncButton ButtonStyle="@GetToggleButtonStyle(template.Status)"
+                                                        Icon="@GetToggleButtonIcon(template.Status)"
+                                                        Size="ButtonSize.Small"
+                                                        Title="@GetToggleButtonTitle(template.Status)"
+                                                        Click="@(() => ToggleTemplateStatus(template))" />
                                             @if (template.Status != TemplateStatus.Archived)
                                             {
-                                                <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                                             Icon="delete"
-                                                             Size="ButtonSize.Small"
-                                                             Title="Delete"
-                                                             Click="@(() => DeleteTemplate(template))" />
+                                                <AsyncButton ButtonStyle="ButtonStyle.Danger"
+                                                            ProcessingText="Deleting"
+                                                            Icon="delete"
+                                                            Size="ButtonSize.Small"
+                                                            Title="Delete"
+                                                            Click="@(() => DeleteTemplate(template))" />
                                             }
                                         </div>
                                     </Template>
@@ -194,10 +198,11 @@
                         </RadzenRow>
 
                         <div class="mt-4">
-                            <RadzenButton Text="Save Settings" 
-                                         ButtonStyle="ButtonStyle.Primary" 
-                                         Icon="save"
-                                         Click="@SaveSettings" />
+                            <AsyncButton Text="Save Settings"
+                                        ProcessingText="Saving"
+                                        ButtonStyle="ButtonStyle.Primary"
+                                        Icon="save"
+                                        Click="@SaveSettings" />
                         </div>
                     </div>
                 </RadzenTabsItem>

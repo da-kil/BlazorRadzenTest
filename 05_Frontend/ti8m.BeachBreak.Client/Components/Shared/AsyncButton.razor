@@ -1,0 +1,172 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenButton
+    Text="@GetButtonText()"
+    Icon="@GetButtonIcon()"
+    ButtonStyle="@ButtonStyle"
+    Size="@Size"
+    Click="@HandleClick"
+    Disabled="@GetDisabledState()"
+    IsBusy="@(ShowBusyIndicator && IsProcessing)"
+    BusyText="@BusyText"
+    Class="@Class"
+    Style="@Style"
+    Tooltip="@Tooltip"
+    Title="@Title"
+    Variant="@Variant"
+    Shade="@Shade"
+    ButtonType="@ButtonType" />
+
+@code {
+    /// <summary>
+    /// Button text to display. Leave empty/null for icon-only buttons.
+    /// </summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>
+    /// Text to display when processing (e.g., "Saving..."). If not specified, defaults to "{Text}..."
+    /// </summary>
+    [Parameter] public string? ProcessingText { get; set; }
+
+    /// <summary>
+    /// Material icon name (e.g., "save", "delete", "edit")
+    /// </summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>
+    /// Icon to show when processing. If null, uses the same icon
+    /// </summary>
+    [Parameter] public string? ProcessingIcon { get; set; }
+
+    /// <summary>
+    /// Button style (Primary, Secondary, Success, Danger, Warning, Info, Light, Dark)
+    /// </summary>
+    [Parameter] public ButtonStyle ButtonStyle { get; set; } = ButtonStyle.Primary;
+
+    /// <summary>
+    /// Button size (ExtraSmall, Small, Medium, Large)
+    /// </summary>
+    [Parameter] public ButtonSize Size { get; set; } = ButtonSize.Medium;
+
+    /// <summary>
+    /// Synchronous click handler (will be awaited internally if returns Task)
+    /// </summary>
+    [Parameter] public EventCallback<MouseEventArgs> Click { get; set; }
+
+    /// <summary>
+    /// Asynchronous click handler (preferred for async operations)
+    /// </summary>
+    [Parameter] public Func<Task>? ClickAsync { get; set; }
+
+    /// <summary>
+    /// External disabled state (will be combined with internal processing state)
+    /// </summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes
+    /// </summary>
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>
+    /// Inline styles
+    /// </summary>
+    [Parameter] public string? Style { get; set; }
+
+    /// <summary>
+    /// Tooltip text (shows on hover)
+    /// </summary>
+    [Parameter] public string? Tooltip { get; set; }
+
+    /// <summary>
+    /// Title attribute (alternative to Tooltip)
+    /// </summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>
+    /// Whether to change button text during processing. Default: true
+    /// </summary>
+    [Parameter] public bool ShowProcessingIndicator { get; set; } = true;
+
+    /// <summary>
+    /// Whether to show Radzen's built-in busy spinner. Default: false (we use text change instead)
+    /// </summary>
+    [Parameter] public bool ShowBusyIndicator { get; set; } = false;
+
+    /// <summary>
+    /// Text to show in busy indicator
+    /// </summary>
+    [Parameter] public string? BusyText { get; set; }
+
+    /// <summary>
+    /// Radzen button variant (Filled, Flat, Outlined, Text)
+    /// </summary>
+    [Parameter] public Variant Variant { get; set; } = Variant.Filled;
+
+    /// <summary>
+    /// Radzen button shade (Default, Lighter, Light, Dark, Darker)
+    /// </summary>
+    [Parameter] public Shade Shade { get; set; } = Shade.Default;
+
+    /// <summary>
+    /// Button type (Button, Submit, Reset)
+    /// </summary>
+    [Parameter] public ButtonType ButtonType { get; set; } = ButtonType.Button;
+
+    private bool IsProcessing { get; set; }
+
+    private string? GetButtonText()
+    {
+        // If no text is provided, this is an icon-only button
+        if (string.IsNullOrEmpty(Text))
+        {
+            return null;
+        }
+
+        if (IsProcessing && ShowProcessingIndicator)
+        {
+            return ProcessingText ?? $"{Text}...";
+        }
+        return Text;
+    }
+
+    private string? GetButtonIcon()
+    {
+        if (IsProcessing && ProcessingIcon != null)
+        {
+            return ProcessingIcon;
+        }
+        return Icon;
+    }
+
+    private bool GetDisabledState()
+    {
+        return Disabled || IsProcessing;
+    }
+
+    private async Task HandleClick(MouseEventArgs args)
+    {
+        if (IsProcessing) return;
+
+        IsProcessing = true;
+        StateHasChanged();
+
+        try
+        {
+            if (ClickAsync != null)
+            {
+                await ClickAsync();
+            }
+            else if (Click.HasDelegate)
+            {
+                await Click.InvokeAsync(args);
+            }
+        }
+        finally
+        {
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+}

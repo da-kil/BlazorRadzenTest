@@ -68,16 +68,16 @@
         </div>
     </Content>
     <ActionsContent>
-        <RadzenButton Text="@CancelText"
-                     ButtonStyle="ButtonStyle.Light"
-                     Click="@HandleCancel"
-                     Size="ButtonSize.Medium" />
+        <AsyncButton Text="@CancelText"
+                    ButtonStyle="ButtonStyle.Light"
+                    Click="@HandleCancel"
+                    Size="ButtonSize.Medium" />
 
-        <RadzenButton Text="@ConfirmText"
-                     ButtonStyle="@GetConfirmButtonStyle()"
-                     Click="@HandleConfirm"
-                     Size="ButtonSize.Medium"
-                     Icon="@ConfirmIcon" />
+        <AsyncButton Text="@ConfirmText"
+                    ButtonStyle="@GetConfirmButtonStyle()"
+                    Click="@HandleConfirm"
+                    Size="ButtonSize.Medium"
+                    Icon="@ConfirmIcon" />
     </ActionsContent>
 </BaseDialog>
 

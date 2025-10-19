@@ -1,6 +1,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Components.Shared
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject NotificationService NotificationService
 @inject DialogService DialogService
@@ -22,42 +23,46 @@
             <div class="button-group">
                 @if (IsManager && WorkflowStateHelper.CanInitiateReview(Assignment))
                 {
-                    <RadzenButton Text="Initiate Review Meeting"
-                                  Icon="rate_review"
-                                  ButtonStyle="ButtonStyle.Primary"
-                                  Click="@InitiateReview"
-                                  Disabled="@isProcessing"
-                                  Size="ButtonSize.Medium" />
+                    <AsyncButton Text="Initiate Review Meeting"
+                                 ProcessingText="Initiating"
+                                 Icon="rate_review"
+                                 ButtonStyle="ButtonStyle.Primary"
+                                 Click="@InitiateReview"
+                                 Disabled="@isProcessing"
+                                 Size="ButtonSize.Medium" />
                 }
 
                 @if (IsEmployee && WorkflowStateHelper.CanEmployeeConfirmReview(Assignment))
                 {
-                    <RadzenButton Text="Sign Off on Review"
-                                  Icon="verified"
-                                  ButtonStyle="ButtonStyle.Success"
-                                  Click="@ConfirmEmployeeReview"
-                                  Disabled="@isProcessing"
-                                  Size="ButtonSize.Medium" />
+                    <AsyncButton Text="Sign Off on Review"
+                                 ProcessingText="Signing Off"
+                                 Icon="verified"
+                                 ButtonStyle="ButtonStyle.Success"
+                                 Click="@ConfirmEmployeeReview"
+                                 Disabled="@isProcessing"
+                                 Size="ButtonSize.Medium" />
                 }
 
                 @if (IsManager && WorkflowStateHelper.CanManagerFinishReviewMeeting(Assignment))
                 {
-                    <RadzenButton Text="Finish Review Meeting"
-                                  Icon="event_available"
-                                  ButtonStyle="ButtonStyle.Success"
-                                  Click="@FinishReviewMeeting"
-                                  Disabled="@isProcessing"
-                                  Size="ButtonSize.Medium" />
+                    <AsyncButton Text="Finish Review Meeting"
+                                 ProcessingText="Finishing"
+                                 Icon="event_available"
+                                 ButtonStyle="ButtonStyle.Success"
+                                 Click="@FinishReviewMeeting"
+                                 Disabled="@isProcessing"
+                                 Size="ButtonSize.Medium" />
                 }
 
                 @if (IsManager && WorkflowStateHelper.CanManagerFinalize(Assignment))
                 {
-                    <RadzenButton Text="Finalize Questionnaire"
-                                  Icon="lock"
-                                  ButtonStyle="ButtonStyle.Warning"
-                                  Click="@FinalizeQuestionnaire"
-                                  Disabled="@isProcessing"
-                                  Size="ButtonSize.Medium" />
+                    <AsyncButton Text="Finalize Questionnaire"
+                                 ProcessingText="Finalizing"
+                                 Icon="lock"
+                                 ButtonStyle="ButtonStyle.Warning"
+                                 Click="@FinalizeQuestionnaire"
+                                 Disabled="@isProcessing"
+                                 Size="ButtonSize.Medium" />
                 }
             </div>
         </div>
