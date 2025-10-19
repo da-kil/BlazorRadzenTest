@@ -75,19 +75,63 @@
                 }
                 else
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
-                        <RadzenText TextStyle="TextStyle.Body1">
-                            <strong>This questionnaire has been completed and is now read-only.</strong>
-                            @if (assignment?.WorkflowState == WorkflowState.Finalized)
-                            {
-                                <span> The questionnaire has been finalized.</span>
-                            }
-                            else
-                            {
+                    @* Show specific banner message based on workflow state *@
+                    @if (assignment?.WorkflowState == WorkflowState.Finalized)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                <strong>This questionnaire has been finalized and is now locked.</strong>
+                                <span> No further changes can be made. You can review the final responses below.</span>
+                            </RadzenText>
+                        </RadzenAlert>
+                    }
+                    else if (assignment?.WorkflowState == WorkflowState.ManagerReviewConfirmed)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                <strong>Awaiting employee sign-off.</strong>
+                                <span> The manager has confirmed the review. Waiting for the employee to sign off before finalization.</span>
+                            </RadzenText>
+                        </RadzenAlert>
+                    }
+                    else if (assignment?.WorkflowState == WorkflowState.EmployeeReviewConfirmed)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                <strong>Ready to finalize.</strong>
+                                <span> The employee has signed off. Waiting for final confirmation to complete the questionnaire.</span>
+                            </RadzenText>
+                        </RadzenAlert>
+                    }
+                    else if (assignment?.WorkflowState == WorkflowState.InReview)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                <strong>Review meeting in progress.</strong>
+                                <span> This questionnaire is currently in review. Responses are temporarily read-only during the review phase.</span>
+                            </RadzenText>
+                        </RadzenAlert>
+                    }
+                    else if (assignment?.WorkflowState == WorkflowState.EmployeeSubmitted ||
+                             assignment?.WorkflowState == WorkflowState.ManagerSubmitted ||
+                             assignment?.WorkflowState == WorkflowState.BothSubmitted)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                <strong>Questionnaire submitted.</strong>
+                                <span> Your responses have been submitted and are now read-only. Waiting for the next phase of the workflow.</span>
+                            </RadzenText>
+                        </RadzenAlert>
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
+                            <RadzenText TextStyle="TextStyle.Body1">
+                                <strong>This questionnaire is now read-only.</strong>
                                 <span> You can review your responses below, but cannot make changes.</span>
-                            }
-                        </RadzenText>
-                    </RadzenAlert>
+                            </RadzenText>
+                        </RadzenAlert>
+                    }
                 }
             }
 
