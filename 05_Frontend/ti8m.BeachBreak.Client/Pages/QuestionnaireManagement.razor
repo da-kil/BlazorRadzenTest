@@ -105,7 +105,7 @@
                                 
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CreatedDate)" Title="Created" Width="120px" FormatString="{0:dd/MM/yyyy}" />
                                                                 
-                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="200px" TextAlign="TextAlign.Center">
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="240px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
                                         <div class="d-flex gap-1">
                                             <RadzenButton ButtonStyle="ButtonStyle.Light"
@@ -139,6 +139,14 @@
                                                          Size="ButtonSize.Small"
                                                          Title="@GetToggleButtonTitle(template.Status)"
                                                          Click="@(() => ToggleTemplateStatus(template))" />
+                                            @if (template.Status != TemplateStatus.Archived)
+                                            {
+                                                <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                                             Icon="delete"
+                                                             Size="ButtonSize.Small"
+                                                             Title="Delete"
+                                                             Click="@(() => DeleteTemplate(template))" />
+                                            }
                                         </div>
                                     </Template>
                                 </RadzenDataGridColumn>
@@ -469,6 +477,49 @@
             // Revert status on exception
             template.Status = TemplateStatus.Published;
             NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteTemplate(QuestionnaireTemplate template)
+    {
+        try
+        {
+            // Show confirmation dialog with warning
+            var confirmed = await DialogService.Confirm(
+                $"Are you sure you want to permanently delete '{template.Name}'? " +
+                "This action cannot be undone. The template can only be deleted if it has no active assignments.",
+                "Delete Template",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Delete",
+                    CancelButtonText = "Cancel"
+                });
+
+            if (confirmed != true)
+                return;
+
+            NotificationService.Notify(NotificationSeverity.Info, "Deleting", "Deleting template...");
+
+            // Call API to delete
+            var success = await ApiService.DeleteTemplateAsync(template.Id);
+
+            if (success)
+            {
+                // Remove from local list
+                templates.Remove(template);
+
+                NotificationService.Notify(NotificationSeverity.Success, "Deleted", $"Template '{template.Name}' has been permanently deleted");
+                FilterTemplates();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error",
+                    "Failed to delete template. It may have active assignments or cannot be deleted while archived.");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to delete template: {ex.Message}");
         }
     }
 
