@@ -105,7 +105,7 @@
                                 
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CreatedDate)" Title="Created" Width="120px" FormatString="{0:dd/MM/yyyy}" />
                                                                 
-                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="160px" TextAlign="TextAlign.Center">
+                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="200px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
                                         <div class="d-flex gap-1">
                                             <RadzenButton ButtonStyle="ButtonStyle.Light"
@@ -118,6 +118,22 @@
                                                          Size="ButtonSize.Small"
                                                          Title="Clone"
                                                          Click="@(() => CloneTemplate(template))" />
+                                            @if (template.Status == TemplateStatus.Draft)
+                                            {
+                                                <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                                             Icon="publish"
+                                                             Size="ButtonSize.Small"
+                                                             Title="Publish"
+                                                             Click="@(() => PublishTemplate(template))" />
+                                            }
+                                            else if (template.Status == TemplateStatus.Published)
+                                            {
+                                                <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                                             Icon="unpublished"
+                                                             Size="ButtonSize.Small"
+                                                             Title="Unpublish"
+                                                             Click="@(() => UnpublishTemplate(template))" />
+                                            }
                                             <RadzenButton ButtonStyle="@GetToggleButtonStyle(template.Status)"
                                                          Icon="@GetToggleButtonIcon(template.Status)"
                                                          Size="ButtonSize.Small"
@@ -362,6 +378,97 @@
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to update template: {ex.Message}");
+        }
+    }
+
+    private async Task PublishTemplate(QuestionnaireTemplate template)
+    {
+        try
+        {
+            // Show confirmation dialog
+            var confirmed = await DialogService.Confirm(
+                $"Publish '{template.Name}'? It will become available for assignment.",
+                "Publish Template",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Publish",
+                    CancelButtonText = "Cancel"
+                });
+
+            if (confirmed != true)
+                return;
+
+            NotificationService.Notify(NotificationSeverity.Info, "Publishing", "Publishing template...");
+
+            // Call API to publish
+            var publishedTemplate = await ApiService.PublishTemplateAsync(template.Id, "");
+
+            if (publishedTemplate != null)
+            {
+                // Update local template
+                template.Status = publishedTemplate.Status;
+                template.PublishedDate = publishedTemplate.PublishedDate;
+                template.LastPublishedDate = publishedTemplate.LastPublishedDate;
+
+                NotificationService.Notify(NotificationSeverity.Success, "Published", $"Template '{template.Name}' is now published and available for assignments");
+                FilterTemplates();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
+        }
+    }
+
+    private async Task UnpublishTemplate(QuestionnaireTemplate template)
+    {
+        try
+        {
+            // Show confirmation dialog
+            var confirmed = await DialogService.Confirm(
+                $"Unpublish '{template.Name}'? It will no longer be available for new assignments.",
+                "Unpublish Template",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Unpublish",
+                    CancelButtonText = "Cancel"
+                });
+
+            if (confirmed != true)
+                return;
+
+            NotificationService.Notify(NotificationSeverity.Info, "Unpublishing", "Unpublishing template...");
+
+            // Set status back to Draft
+            template.Status = TemplateStatus.Draft;
+
+            // Call API to update
+            var updatedTemplate = await ApiService.UpdateTemplateAsync(template);
+
+            if (updatedTemplate != null)
+            {
+                // Update local template
+                template.Status = updatedTemplate.Status;
+
+                NotificationService.Notify(NotificationSeverity.Success, "Unpublished", $"Template '{template.Name}' has been unpublished");
+                FilterTemplates();
+            }
+            else
+            {
+                // Revert status on failure
+                template.Status = TemplateStatus.Published;
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unpublish template");
+            }
+        }
+        catch (Exception ex)
+        {
+            // Revert status on exception
+            template.Status = TemplateStatus.Published;
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
         }
     }
 

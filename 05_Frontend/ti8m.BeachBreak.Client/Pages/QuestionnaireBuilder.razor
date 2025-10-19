@@ -559,10 +559,32 @@
 			return;
 		}
 
+		isSaving = true;
 		try
 		{
-			// Save the template first
-			await SaveQuestionnaire();
+			// Save the template first (without setting isSaving again)
+			if (IsEditMode)
+			{
+				var updated = await ApiService.UpdateTemplateAsync(State.Template);
+				if (updated != null)
+				{
+					State.Template = updated;
+					State.MarkAsClean();
+				}
+				else
+				{
+					NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update template - no response from server");
+					return;
+				}
+			}
+			else
+			{
+				var created = await ApiService.CreateTemplateAsync(State.Template);
+				State.Template.Id = created.Id;
+				State.MarkAsClean();
+				// Navigate to edit mode to prevent duplicate creation
+				NavigationManager.NavigateTo($"/questionnaire-builder/{created.Id}", forceLoad: false);
+			}
 
 			// Set as published
 			State.Template.Status = TemplateStatus.Published;
@@ -574,30 +596,19 @@
 				State.Template.PublishedDate = DateTime.Now;
 			}
 
-			// TODO: Set PublishedBy when user context is available
-			// State.Template.PublishedBy = currentUser.Name;
-
 			// Update the template with published status
-			if (IsEditMode)
+			var publishedTemplate = await ApiService.PublishTemplateAsync(State.Template.Id, "");
+			if (publishedTemplate != null)
 			{
-				var updated = await ApiService.PublishTemplateAsync(State.Template.Id, "");
-				if (updated != null)
-				{
-					State.Template = updated;
-					NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template is now published and available for assignments");
-				}
-				else
-				{
-					NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
-					// Revert on failure
-					State.Template.Status = TemplateStatus.Draft;
-					State.Template.LastPublishedDate = null;
-				}
+				State.Template = publishedTemplate;
+				NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template is now published and available for assignments");
 			}
 			else
 			{
-				// For new templates, properties are already set, just show success
-				NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template created and published successfully");
+				NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
+				// Revert on failure
+				State.Template.Status = TemplateStatus.Draft;
+				State.Template.LastPublishedDate = null;
 			}
 		}
 		catch (Exception ex)
@@ -606,6 +617,10 @@
 			// Revert on failure
 			State.Template.Status = TemplateStatus.Draft;
 			State.Template.LastPublishedDate = null;
+		}
+		finally
+		{
+			isSaving = false;
 		}
 	}
 

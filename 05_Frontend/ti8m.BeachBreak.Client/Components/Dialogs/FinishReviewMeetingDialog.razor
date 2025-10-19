@@ -107,13 +107,30 @@
 @code {
     private string? reviewSummary;
 
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("[FinishReviewMeetingDialog] OnInitialized");
+        base.OnInitialized();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Console.WriteLine("[FinishReviewMeetingDialog] First render completed");
+        }
+        base.OnAfterRender(firstRender);
+    }
+
     private void Cancel()
     {
+        Console.WriteLine("[FinishReviewMeetingDialog] Cancel clicked");
         DialogService.Close(null);
     }
 
     private void FinishReview()
     {
+        Console.WriteLine($"[FinishReviewMeetingDialog] FinishReview clicked, summary length: {reviewSummary?.Length ?? 0}");
         // Return the review summary (return empty string if null to distinguish from cancellation)
         DialogService.Close(reviewSummary ?? string.Empty);
     }

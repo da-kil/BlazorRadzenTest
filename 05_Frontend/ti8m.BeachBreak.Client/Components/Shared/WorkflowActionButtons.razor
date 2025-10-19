@@ -266,35 +266,60 @@
 
     private async Task FinishReviewMeeting()
     {
-        if (Assignment == null) return;
-
-        // Open dialog to collect optional review summary
-        var result = await DialogService.OpenAsync<FinishReviewMeetingDialog>(
-            "Finish Review Meeting",
-            new Dictionary<string, object>(),
-            new DialogOptions
-            {
-                Width = "650px",
-                Resizable = false,
-                Draggable = true
-            });
-
-        // If dialog was cancelled, return
-        if (result == null)
+        if (Assignment == null)
         {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Warning",
+                Detail = "No assignment found",
+                Duration = 3000
+            });
             return;
         }
 
+        Console.WriteLine($"[FinishReviewMeeting] Starting - Assignment: {Assignment.Id}, State: {Assignment.WorkflowState}");
+
         isProcessing = true;
+        StateHasChanged(); // Update UI to show button is disabled
+
         try
         {
+            Console.WriteLine("[FinishReviewMeeting] Opening dialog...");
+
+            // Open dialog to collect optional review summary
+            var result = await DialogService.OpenAsync<FinishReviewMeetingDialog>(
+                "Finish Review Meeting",
+                new Dictionary<string, object>(),
+                new DialogOptions
+                {
+                    Width = "650px",
+                    Height = "600px",
+                    Resizable = false,
+                    Draggable = true,
+                    ShowClose = true
+                });
+
+            Console.WriteLine($"[FinishReviewMeeting] Dialog closed with result: {result}");
+
+            // If dialog was cancelled, return
+            if (result == null)
+            {
+                Console.WriteLine("[FinishReviewMeeting] Dialog was cancelled");
+                return;
+            }
+
             // Result is the review summary (can be null or empty string)
             var reviewSummary = result as string;
+
+            Console.WriteLine($"[FinishReviewMeeting] Calling API with summary length: {reviewSummary?.Length ?? 0}");
 
             var success = await AssignmentService.FinishReviewMeetingAsync(
                 Assignment.Id,
                 UserName,
                 string.IsNullOrWhiteSpace(reviewSummary) ? null : reviewSummary);
+
+            Console.WriteLine($"[FinishReviewMeeting] API call result: {success}");
 
             if (success)
             {
@@ -319,9 +344,24 @@
                 });
             }
         }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[FinishReviewMeeting] Exception: {ex.Message}");
+            Console.WriteLine($"[FinishReviewMeeting] Stack trace: {ex.StackTrace}");
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Error finishing review meeting: {ex.Message}",
+                Duration = 4000
+            });
+        }
         finally
         {
             isProcessing = false;
+            StateHasChanged(); // Update UI to re-enable button
+            Console.WriteLine("[FinishReviewMeeting] Completed");
         }
     }
 

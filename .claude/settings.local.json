@@ -50,7 +50,10 @@
       "Bash(powershell:*)",
       "Bash(git mv:*)",
       "Bash(Remove-Item -Path \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Services\\QuestionHandlers\\SelfAssessmentQuestionHandler.cs\" -Force)",
-      "Bash(pwsh -Command:*)"
+      "Bash(pwsh -Command:*)",
+      "Bash(Select-String -Pattern \"(error |warning |Build succeeded|Build FAILED)\" -Context 0,2)",
+      "WebFetch(domain:blazor.radzen.com)",
+      "WebFetch(domain:github.com)"
     ],
     "deny": [],
     "ask": []
