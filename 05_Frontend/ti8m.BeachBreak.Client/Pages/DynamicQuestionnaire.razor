@@ -236,8 +236,10 @@
                 </div>
             </div>
 
-            @* Review Comments Display - Below Questionnaire *@
-            @if (assignment != null)
+            @* Review Comments Display - Below Questionnaire (only after employee has signed off, as that's when comments can be added) *@
+            @if (assignment != null && template != null && template.RequiresManagerReview &&
+                 (assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
+                  assignment.WorkflowState == WorkflowState.Finalized))
             {
                 <ReviewComments Assignment="@assignment"
                                IsEmployee="@isEmployee"

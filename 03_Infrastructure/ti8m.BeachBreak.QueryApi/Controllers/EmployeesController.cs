@@ -253,13 +253,37 @@ public class EmployeesController : BaseController
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
                     TemplateId = assignment.TemplateId,
+                    RequiresManagerReview = assignment.RequiresManagerReview,
                     TemplateName = assignment.TemplateName,
+                    TemplateCategoryId = assignment.TemplateCategoryId,
                     WorkflowState = assignment.WorkflowState,
+                    SectionProgress = assignment.SectionProgress,
                     AssignedDate = assignment.AssignedDate,
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
                     AssignedBy = assignment.AssignedBy,
-                    Notes = assignment.Notes
+                    Notes = assignment.Notes,
+
+                    // Submission phase
+                    EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
+                    EmployeeSubmittedBy = assignment.EmployeeSubmittedBy,
+                    ManagerSubmittedDate = assignment.ManagerSubmittedDate,
+                    ManagerSubmittedBy = assignment.ManagerSubmittedBy,
+
+                    // Review phase
+                    ReviewInitiatedDate = assignment.ReviewInitiatedDate,
+                    ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+                    ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
+                    ManagerReviewFinishedBy = assignment.ManagerReviewFinishedBy,
+                    ManagerReviewSummary = assignment.ManagerReviewSummary,
+                    EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
+                    EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
+                    EmployeeReviewComments = assignment.EmployeeReviewComments,
+
+                    // Final state
+                    FinalizedDate = assignment.FinalizedDate,
+                    FinalizedBy = assignment.FinalizedBy,
+                    ManagerFinalNotes = assignment.ManagerFinalNotes
                 });
             });
         }
@@ -392,7 +416,7 @@ public class EmployeesController : BaseController
             logger.LogInformation("GetMyAssignmentById completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
                 employeeId, assignmentId);
 
-            // Map to DTO (same as GetMyAssignments)
+            // Map to DTO with complete workflow properties
             var dto = new QuestionnaireAssignmentDto
             {
                 Id = assignment.Id,
@@ -400,12 +424,37 @@ public class EmployeesController : BaseController
                 EmployeeName = assignment.EmployeeName,
                 EmployeeEmail = assignment.EmployeeEmail,
                 TemplateId = assignment.TemplateId,
+                RequiresManagerReview = assignment.RequiresManagerReview,
+                TemplateName = assignment.TemplateName,
+                TemplateCategoryId = assignment.TemplateCategoryId,
                 WorkflowState = assignment.WorkflowState,
+                SectionProgress = assignment.SectionProgress,
                 AssignedDate = assignment.AssignedDate,
                 DueDate = assignment.DueDate,
                 CompletedDate = assignment.CompletedDate,
                 AssignedBy = assignment.AssignedBy,
-                Notes = assignment.Notes
+                Notes = assignment.Notes,
+
+                // Submission phase
+                EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
+                EmployeeSubmittedBy = assignment.EmployeeSubmittedBy,
+                ManagerSubmittedDate = assignment.ManagerSubmittedDate,
+                ManagerSubmittedBy = assignment.ManagerSubmittedBy,
+
+                // Review phase
+                ReviewInitiatedDate = assignment.ReviewInitiatedDate,
+                ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+                ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
+                ManagerReviewFinishedBy = assignment.ManagerReviewFinishedBy,
+                ManagerReviewSummary = assignment.ManagerReviewSummary,
+                EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
+                EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
+                EmployeeReviewComments = assignment.EmployeeReviewComments,
+
+                // Final state
+                FinalizedDate = assignment.FinalizedDate,
+                FinalizedBy = assignment.FinalizedBy,
+                ManagerFinalNotes = assignment.ManagerFinalNotes
             };
 
             return Ok(dto);
