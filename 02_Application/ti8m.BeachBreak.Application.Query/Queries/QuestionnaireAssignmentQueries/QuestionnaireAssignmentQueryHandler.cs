@@ -10,15 +10,18 @@ public class QuestionnaireAssignmentQueryHandler :
 {
     private readonly IQuestionnaireAssignmentRepository repository;
     private readonly IQuestionnaireTemplateRepository templateRepository;
+    private readonly IEmployeeRepository employeeRepository;
     private readonly ILogger<QuestionnaireAssignmentQueryHandler> logger;
 
     public QuestionnaireAssignmentQueryHandler(
         IQuestionnaireAssignmentRepository repository,
         IQuestionnaireTemplateRepository templateRepository,
+        IEmployeeRepository employeeRepository,
         ILogger<QuestionnaireAssignmentQueryHandler> logger)
     {
         this.repository = repository;
         this.templateRepository = templateRepository;
+        this.employeeRepository = employeeRepository;
         this.logger = logger;
     }
 
@@ -29,7 +32,7 @@ public class QuestionnaireAssignmentQueryHandler :
             logger.LogInformation("Retrieving all questionnaire assignments");
 
             var assignmentReadModels = await repository.GetAllAssignmentsAsync(cancellationToken);
-            var assignments = await EnrichWithTemplateMetadataAsync(assignmentReadModels, cancellationToken);
+            var assignments = await EnrichAssignmentsAsync(assignmentReadModels, cancellationToken);
 
             logger.LogInformation("Retrieved {AssignmentCount} assignments", assignments.Count());
             return Result<IEnumerable<QuestionnaireAssignment>>.Success(assignments);
@@ -50,7 +53,7 @@ public class QuestionnaireAssignmentQueryHandler :
             var assignmentReadModel = await repository.GetAssignmentByIdAsync(query.Id, cancellationToken);
             if (assignmentReadModel != null)
             {
-                var assignments = await EnrichWithTemplateMetadataAsync(new[] { assignmentReadModel }, cancellationToken);
+                var assignments = await EnrichAssignmentsAsync(new[] { assignmentReadModel }, cancellationToken);
                 var assignment = assignments.First();
                 logger.LogInformation("Retrieved assignment {AssignmentId}", assignment.Id);
                 return Result<QuestionnaireAssignment>.Success(assignment);
@@ -73,7 +76,7 @@ public class QuestionnaireAssignmentQueryHandler :
             logger.LogInformation("Retrieving assignments for employee {EmployeeId}", query.EmployeeId);
 
             var assignmentReadModels = await repository.GetAssignmentsByEmployeeIdAsync(query.EmployeeId, cancellationToken);
-            var assignments = await EnrichWithTemplateMetadataAsync(assignmentReadModels, cancellationToken);
+            var assignments = await EnrichAssignmentsAsync(assignmentReadModels, cancellationToken);
 
             logger.LogInformation("Retrieved {AssignmentCount} assignments for employee {EmployeeId}", assignments.Count(), query.EmployeeId);
             return Result<IEnumerable<QuestionnaireAssignment>>.Success(assignments);
@@ -86,10 +89,10 @@ public class QuestionnaireAssignmentQueryHandler :
     }
 
     /// <summary>
-    /// Enriches assignments with template metadata (name and category).
-    /// Only fetches templates referenced by the assignments to minimize data transfer.
+    /// Enriches assignments with template metadata (name and category) and employee names.
+    /// Only fetches templates and employees referenced by the assignments to minimize data transfer.
     /// </summary>
-    private async Task<IEnumerable<QuestionnaireAssignment>> EnrichWithTemplateMetadataAsync(
+    private async Task<IEnumerable<QuestionnaireAssignment>> EnrichAssignmentsAsync(
         IEnumerable<Projections.QuestionnaireAssignmentReadModel> readModels,
         CancellationToken cancellationToken)
     {
@@ -105,6 +108,32 @@ public class QuestionnaireAssignmentQueryHandler :
         // Fetch only the templates we need
         var templates = await templateRepository.GetByIdsAsync(templateIds, cancellationToken);
         var templateLookup = templates.ToDictionary(t => t.Id, t => (t.Name, t.CategoryId));
+
+        // Get unique employee IDs that need to be resolved
+        var employeeIds = readModelsList
+            .SelectMany(rm => new[] {
+                rm.WithdrawnByEmployeeId,
+                rm.EmployeeSubmittedByEmployeeId,
+                rm.ManagerSubmittedByEmployeeId,
+                rm.ReviewInitiatedByEmployeeId,
+                rm.ManagerReviewFinishedByEmployeeId,
+                rm.EmployeeReviewConfirmedByEmployeeId,
+                rm.FinalizedByEmployeeId
+            })
+            .Where(id => id.HasValue)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        // Batch fetch employees if there are any to fetch
+        var employeeLookup = new Dictionary<Guid, string>();
+        if (employeeIds.Any())
+        {
+            var employees = await employeeRepository.GetEmployeesAsync(cancellationToken: cancellationToken);
+            employeeLookup = employees
+                .Where(e => employeeIds.Contains(e.Id))
+                .ToDictionary(e => e.Id, e => $"{e.FirstName} {e.LastName}");
+        }
 
         // Map and enrich
         return readModelsList.Select(readModel =>
@@ -124,6 +153,49 @@ public class QuestionnaireAssignmentQueryHandler :
                     readModel.TemplateId, readModel.Id);
                 assignment.TemplateName = "Unknown Template";
                 assignment.TemplateCategoryId = null;
+            }
+
+            // Resolve employee names
+            if (readModel.WithdrawnByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.WithdrawnByEmployeeId.Value, out var withdrawnByName))
+            {
+                assignment.WithdrawnByEmployeeName = withdrawnByName;
+            }
+
+            if (readModel.EmployeeSubmittedByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.EmployeeSubmittedByEmployeeId.Value, out var employeeSubmittedByName))
+            {
+                assignment.EmployeeSubmittedByEmployeeName = employeeSubmittedByName;
+            }
+
+            if (readModel.ManagerSubmittedByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.ManagerSubmittedByEmployeeId.Value, out var managerSubmittedByName))
+            {
+                assignment.ManagerSubmittedByEmployeeName = managerSubmittedByName;
+            }
+
+            if (readModel.ReviewInitiatedByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.ReviewInitiatedByEmployeeId.Value, out var reviewInitiatedByName))
+            {
+                assignment.ReviewInitiatedByEmployeeName = reviewInitiatedByName;
+            }
+
+            if (readModel.ManagerReviewFinishedByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.ManagerReviewFinishedByEmployeeId.Value, out var managerReviewFinishedByName))
+            {
+                assignment.ManagerReviewFinishedByEmployeeName = managerReviewFinishedByName;
+            }
+
+            if (readModel.EmployeeReviewConfirmedByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.EmployeeReviewConfirmedByEmployeeId.Value, out var employeeReviewConfirmedByName))
+            {
+                assignment.EmployeeReviewConfirmedByEmployeeName = employeeReviewConfirmedByName;
+            }
+
+            if (readModel.FinalizedByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.FinalizedByEmployeeId.Value, out var finalizedByName))
+            {
+                assignment.FinalizedByEmployeeName = finalizedByName;
             }
 
             return assignment;
@@ -146,7 +218,7 @@ public class QuestionnaireAssignmentQueryHandler :
             CompletedDate = readModel.CompletedDate,
             IsWithdrawn = readModel.IsWithdrawn,
             WithdrawnDate = readModel.WithdrawnDate,
-            WithdrawnBy = readModel.WithdrawnBy,
+            WithdrawnByEmployeeId = readModel.WithdrawnByEmployeeId,
             WithdrawalReason = readModel.WithdrawalReason,
             AssignedBy = readModel.AssignedBy,
             Notes = readModel.Notes,
@@ -157,23 +229,23 @@ public class QuestionnaireAssignmentQueryHandler :
 
             // Submission phase
             EmployeeSubmittedDate = readModel.EmployeeSubmittedDate,
-            EmployeeSubmittedBy = readModel.EmployeeSubmittedBy,
+            EmployeeSubmittedByEmployeeId = readModel.EmployeeSubmittedByEmployeeId,
             ManagerSubmittedDate = readModel.ManagerSubmittedDate,
-            ManagerSubmittedBy = readModel.ManagerSubmittedBy,
+            ManagerSubmittedByEmployeeId = readModel.ManagerSubmittedByEmployeeId,
 
             // Review phase
             ReviewInitiatedDate = readModel.ReviewInitiatedDate,
-            ReviewInitiatedBy = readModel.ReviewInitiatedBy,
+            ReviewInitiatedByEmployeeId = readModel.ReviewInitiatedByEmployeeId,
             ManagerReviewFinishedDate = readModel.ManagerReviewFinishedDate,
-            ManagerReviewFinishedBy = readModel.ManagerReviewFinishedBy,
+            ManagerReviewFinishedByEmployeeId = readModel.ManagerReviewFinishedByEmployeeId,
             ManagerReviewSummary = readModel.ManagerReviewSummary,
             EmployeeReviewConfirmedDate = readModel.EmployeeReviewConfirmedDate,
-            EmployeeReviewConfirmedBy = readModel.EmployeeReviewConfirmedBy,
+            EmployeeReviewConfirmedByEmployeeId = readModel.EmployeeReviewConfirmedByEmployeeId,
             EmployeeReviewComments = readModel.EmployeeReviewComments,
 
             // Final state
             FinalizedDate = readModel.FinalizedDate,
-            FinalizedBy = readModel.FinalizedBy,
+            FinalizedByEmployeeId = readModel.FinalizedByEmployeeId,
             ManagerFinalNotes = readModel.ManagerFinalNotes,
             IsLocked = readModel.IsLocked
         };

@@ -8,6 +8,6 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 /// </summary>
 public record FinalizeQuestionnaireAsManagerCommand(
     Guid AssignmentId,
-    string FinalizedBy,
+    Guid FinalizedByEmployeeId,
     string? ManagerFinalNotes,
     int? ExpectedVersion = null) : ICommand<Result>;

@@ -331,7 +331,7 @@ public class AssignmentsController : BaseController
 
             var command = new WithdrawAssignmentCommand(
                 withdrawDto.AssignmentId,
-                withdrawDto.WithdrawnBy,
+                managerId,
                 withdrawDto.WithdrawalReason);
 
             var result = await commandDispatcher.SendAsync(command);
@@ -422,9 +422,16 @@ public class AssignmentsController : BaseController
     {
         try
         {
+            // Get employee ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var employeeId))
+            {
+                logger.LogWarning("SubmitEmployeeQuestionnaire failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
             var command = new SubmitEmployeeQuestionnaireCommand(
                 assignmentId,
-                submitDto.SubmittedBy,
+                employeeId,
                 submitDto.ExpectedVersion);
             var result = await commandDispatcher.SendAsync(command);
             return CreateResponse(result);
@@ -442,9 +449,16 @@ public class AssignmentsController : BaseController
     {
         try
         {
+            // Get manager ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var managerId))
+            {
+                logger.LogWarning("SubmitManagerQuestionnaire failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
             var command = new SubmitManagerQuestionnaireCommand(
                 assignmentId,
-                submitDto.SubmittedBy,
+                managerId,
                 submitDto.ExpectedVersion);
             var result = await commandDispatcher.SendAsync(command);
             return CreateResponse(result);
@@ -458,11 +472,18 @@ public class AssignmentsController : BaseController
 
     [HttpPost("{assignmentId}/initiate-review")]
     [Authorize(Roles = "TeamLead")]
-    public async Task<IActionResult> InitiateReview(Guid assignmentId, [FromBody] InitiateReviewDto initiateDto)
+    public async Task<IActionResult> InitiateReview(Guid assignmentId)
     {
         try
         {
-            var command = new InitiateReviewCommand(assignmentId, initiateDto.InitiatedBy);
+            // Get manager ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var managerId))
+            {
+                logger.LogWarning("InitiateReview failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            var command = new InitiateReviewCommand(assignmentId, managerId);
             var result = await commandDispatcher.SendAsync(command);
             return CreateResponse(result);
         }
@@ -481,13 +502,20 @@ public class AssignmentsController : BaseController
             if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(editDto.OriginalCompletionRole, out var completionRole))
                 return BadRequest("Invalid CompletionRole value");
 
+            // Get user ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("EditAnswerDuringReview failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
             var command = new EditAnswerDuringReviewCommand(
                 assignmentId,
                 editDto.SectionId,
                 editDto.QuestionId,
                 completionRole,
                 editDto.Answer,
-                editDto.EditedBy);
+                userId);
             var result = await commandDispatcher.SendAsync(command);
             return CreateResponse(result);
         }
@@ -514,9 +542,16 @@ public class AssignmentsController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Get manager ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var managerId))
+            {
+                logger.LogWarning("FinishReviewMeeting failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
             var command = new FinishReviewMeetingCommand(
                 assignmentId,
-                finishDto.FinishedBy,
+                managerId,
                 finishDto.ReviewSummary,
                 finishDto.ExpectedVersion);
 
@@ -544,9 +579,16 @@ public class AssignmentsController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Get employee ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var employeeId))
+            {
+                logger.LogWarning("ConfirmReviewOutcomeAsEmployee failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
             var command = new ConfirmReviewOutcomeAsEmployeeCommand(
                 assignmentId,
-                confirmDto.ConfirmedBy,
+                employeeId,
                 confirmDto.EmployeeComments,
                 confirmDto.ExpectedVersion);
 
@@ -576,9 +618,16 @@ public class AssignmentsController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Get manager ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var managerId))
+            {
+                logger.LogWarning("FinalizeQuestionnaireAsManager failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
             var command = new FinalizeQuestionnaireAsManagerCommand(
                 assignmentId,
-                finalizeDto.FinalizedBy,
+                managerId,
                 finalizeDto.ManagerFinalNotes,
                 finalizeDto.ExpectedVersion);
 
@@ -604,10 +653,17 @@ public class AssignmentsController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Get manager ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var managerId))
+            {
+                logger.LogWarning("SendReminder failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
             var command = new SendAssignmentReminderCommand(
                 reminderDto.AssignmentId,
                 reminderDto.Message,
-                reminderDto.SentBy);
+                managerId);
 
             var result = await commandDispatcher.SendAsync(command);
             return CreateResponse(result);

@@ -10,6 +10,6 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 public record QuestionnaireAutoFinalized(
     Guid AggregateId,
     DateTime FinalizedDate,
-    string FinalizedBy,
+    Guid FinalizedByEmployeeId,
     string Reason
 ) : IDomainEvent;

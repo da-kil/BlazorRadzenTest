@@ -4,4 +4,4 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
 public record ReviewInitiated(
     DateTime InitiatedDate,
-    string InitiatedBy) : IDomainEvent;
+    Guid InitiatedByEmployeeId) : IDomainEvent;

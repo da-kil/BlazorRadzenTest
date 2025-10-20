@@ -4,5 +4,5 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
 public record AssignmentWithdrawn(
     DateTime WithdrawnDate,
-    string WithdrawnBy,
+    Guid WithdrawnByEmployeeId,
     string? WithdrawalReason) : IDomainEvent;

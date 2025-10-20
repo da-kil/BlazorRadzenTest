@@ -8,9 +8,6 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 /// </summary>
 public class FinalizeAsManagerDto
 {
-    [Required]
-    public string FinalizedBy { get; set; } = string.Empty;
-
     /// <summary>
     /// Optional final notes from manager before archiving
     /// </summary>

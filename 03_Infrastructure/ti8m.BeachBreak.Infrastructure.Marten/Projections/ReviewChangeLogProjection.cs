@@ -76,7 +76,7 @@ public class ReviewChangeLogProjection : EventProjection
             OldValue = oldValue,
             NewValue = @event.NewAnswer,
             ChangedAt = @event.EditedDate,
-            ChangedBy = @event.EditedBy
+            ChangedByEmployeeId = @event.EditedByEmployeeId
         };
 
         // Store the new document

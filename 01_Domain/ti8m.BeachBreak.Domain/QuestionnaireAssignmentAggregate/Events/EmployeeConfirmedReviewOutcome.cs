@@ -11,6 +11,6 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 public record EmployeeConfirmedReviewOutcome(
     Guid AggregateId,
     DateTime ConfirmedDate,
-    string ConfirmedBy,
+    Guid ConfirmedByEmployeeId,
     string? EmployeeComments
 ) : IDomainEvent;

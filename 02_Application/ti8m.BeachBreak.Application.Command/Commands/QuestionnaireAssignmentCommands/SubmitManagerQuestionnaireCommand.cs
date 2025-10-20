@@ -2,5 +2,5 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 
 public record SubmitManagerQuestionnaireCommand(
     Guid AssignmentId,
-    string SubmittedBy,
+    Guid SubmittedByEmployeeId,
     int ExpectedVersion) : ICommand<Result>;

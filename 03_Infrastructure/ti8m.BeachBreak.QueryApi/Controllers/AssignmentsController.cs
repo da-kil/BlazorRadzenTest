@@ -208,23 +208,23 @@ public class AssignmentsController : BaseController
 
             // Submission phase
             EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
-            EmployeeSubmittedBy = assignment.EmployeeSubmittedBy,
+            EmployeeSubmittedBy = assignment.EmployeeSubmittedByEmployeeName,
             ManagerSubmittedDate = assignment.ManagerSubmittedDate,
-            ManagerSubmittedBy = assignment.ManagerSubmittedBy,
+            ManagerSubmittedBy = assignment.ManagerSubmittedByEmployeeName,
 
             // Review phase
             ReviewInitiatedDate = assignment.ReviewInitiatedDate,
-            ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+            ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
             ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
-            ManagerReviewFinishedBy = assignment.ManagerReviewFinishedBy,
+            ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
             ManagerReviewSummary = assignment.ManagerReviewSummary,
             EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
-            EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
+            EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
             EmployeeReviewComments = assignment.EmployeeReviewComments,
 
             // Final state
             FinalizedDate = assignment.FinalizedDate,
-            FinalizedBy = assignment.FinalizedBy,
+            FinalizedBy = assignment.FinalizedByEmployeeName,
             ManagerFinalNotes = assignment.ManagerFinalNotes,
             IsLocked = assignment.IsLocked
         };
@@ -269,6 +269,25 @@ public class AssignmentsController : BaseController
             }
 
             var result = await queryDispatcher.QueryAsync(new Application.Query.Queries.ReviewQueries.GetReviewChangesQuery(id));
+
+            // Batch fetch employee names for all changes
+            var employeeIds = result.Select(c => c.ChangedByEmployeeId).Distinct().ToList();
+            var employeeNames = new Dictionary<Guid, string>();
+
+            foreach (var employeeId in employeeIds)
+            {
+                var employeeResult = await queryDispatcher.QueryAsync(new EmployeeQuery(employeeId));
+                if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
+                {
+                    var employee = employeeResult.Payload;
+                    employeeNames[employeeId] = $"{employee.FirstName} {employee.LastName}";
+                }
+                else
+                {
+                    employeeNames[employeeId] = "Unknown";
+                }
+            }
+
             return CreateResponse(Result<List<Application.Query.Projections.ReviewChangeLogReadModel>>.Success(result), changes =>
             {
                 return changes.Select(c => new ReviewChangeDto
@@ -283,7 +302,7 @@ public class AssignmentsController : BaseController
                     OldValue = c.OldValue,
                     NewValue = c.NewValue,
                     ChangedAt = c.ChangedAt,
-                    ChangedBy = c.ChangedBy
+                    ChangedBy = employeeNames.TryGetValue(c.ChangedByEmployeeId, out var name) ? name : "Unknown"
                 });
             });
         }

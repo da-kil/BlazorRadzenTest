@@ -2,5 +2,5 @@ namespace ti8m.BeachBreak.Client.Models.Dto;
 
 public class InitiateReviewDto
 {
-    public string InitiatedBy { get; set; } = string.Empty;
+    // DTO is now empty but kept for future extensibility (e.g., adding meeting notes)
 }

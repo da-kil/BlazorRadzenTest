@@ -20,8 +20,8 @@ public class SendAssignmentReminderCommandHandler : ICommandHandler<SendAssignme
     {
         try
         {
-            logger.LogInformation("Sending reminder for assignment {AssignmentId} by {SentBy}",
-                command.AssignmentId, command.SentBy);
+            logger.LogInformation("Sending reminder for assignment {AssignmentId} by {SentByEmployeeId}",
+                command.AssignmentId, command.SentByEmployeeId);
 
             // Load the assignment to ensure it exists
             var assignment = await repository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(

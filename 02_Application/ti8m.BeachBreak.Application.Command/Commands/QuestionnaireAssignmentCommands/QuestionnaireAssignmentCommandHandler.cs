@@ -147,7 +147,7 @@ public class QuestionnaireAssignmentCommandHandler :
             logger.LogInformation("Withdrawing assignment {AssignmentId}", command.AssignmentId);
 
             var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
-            assignment.Withdraw(command.WithdrawnBy, command.WithdrawalReason);
+            assignment.Withdraw(command.WithdrawnByEmployeeId, command.WithdrawalReason);
             await repository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully withdrew assignment {AssignmentId}", command.AssignmentId);
@@ -252,7 +252,7 @@ public class QuestionnaireAssignmentCommandHandler :
                 command.AssignmentId,
                 command.ExpectedVersion,
                 cancellationToken);
-            assignment.SubmitEmployeeQuestionnaire(command.SubmittedBy);
+            assignment.SubmitEmployeeQuestionnaire(command.SubmittedByEmployeeId);
             await repository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully submitted employee questionnaire for assignment {AssignmentId}", command.AssignmentId);
@@ -275,7 +275,7 @@ public class QuestionnaireAssignmentCommandHandler :
                 command.AssignmentId,
                 command.ExpectedVersion,
                 cancellationToken);
-            assignment.SubmitManagerQuestionnaire(command.SubmittedBy);
+            assignment.SubmitManagerQuestionnaire(command.SubmittedByEmployeeId);
             await repository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully submitted manager questionnaire for assignment {AssignmentId}", command.AssignmentId);
@@ -295,7 +295,7 @@ public class QuestionnaireAssignmentCommandHandler :
             logger.LogInformation("Initiating review for assignment {AssignmentId}", command.AssignmentId);
 
             var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(command.AssignmentId, cancellationToken: cancellationToken);
-            assignment.InitiateReview(command.InitiatedBy);
+            assignment.InitiateReview(command.InitiatedByEmployeeId);
             await repository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully initiated review for assignment {AssignmentId}", command.AssignmentId);
@@ -321,7 +321,7 @@ public class QuestionnaireAssignmentCommandHandler :
                 command.QuestionId,
                 command.OriginalCompletionRole,
                 command.Answer,
-                command.EditedBy);
+                command.EditedByEmployeeId);
             await repository.StoreAsync(assignment, cancellationToken);
 
             // 2. Update the actual answer in the response aggregate
@@ -398,7 +398,7 @@ public class QuestionnaireAssignmentCommandHandler :
                 command.AssignmentId,
                 command.ExpectedVersion,
                 cancellationToken);
-            assignment.FinishReviewMeeting(command.FinishedBy, command.ReviewSummary);
+            assignment.FinishReviewMeeting(command.FinishedByEmployeeId, command.ReviewSummary);
             await repository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully finished review meeting for assignment {AssignmentId}", command.AssignmentId);
@@ -425,7 +425,7 @@ public class QuestionnaireAssignmentCommandHandler :
             logger.LogInformation("Assignment {AssignmentId} loaded with workflow state: {WorkflowState}, IsLocked: {IsLocked}",
                 command.AssignmentId, assignment.WorkflowState, assignment.IsLocked);
 
-            assignment.ConfirmReviewOutcomeAsEmployee(command.ConfirmedBy, command.EmployeeComments);
+            assignment.ConfirmReviewOutcomeAsEmployee(command.ConfirmedByEmployeeId, command.EmployeeComments);
 
             logger.LogInformation("After ConfirmReviewOutcomeAsEmployee, workflow state: {WorkflowState}", assignment.WorkflowState);
 
@@ -452,7 +452,7 @@ public class QuestionnaireAssignmentCommandHandler :
                 command.AssignmentId,
                 command.ExpectedVersion,
                 cancellationToken);
-            assignment.FinalizeAsManager(command.FinalizedBy, command.ManagerFinalNotes);
+            assignment.FinalizeAsManager(command.FinalizedByEmployeeId, command.ManagerFinalNotes);
             await repository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully finalized questionnaire for assignment {AssignmentId}", command.AssignmentId);

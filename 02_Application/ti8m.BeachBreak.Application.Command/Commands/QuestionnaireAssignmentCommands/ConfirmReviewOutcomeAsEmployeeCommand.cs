@@ -7,6 +7,6 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 /// </summary>
 public record ConfirmReviewOutcomeAsEmployeeCommand(
     Guid AssignmentId,
-    string ConfirmedBy,
+    Guid ConfirmedByEmployeeId,
     string? EmployeeComments,
     int? ExpectedVersion = null) : ICommand<Result>;

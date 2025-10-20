@@ -7,4 +7,4 @@ public record AnswerEditedDuringReview(
     Guid QuestionId,
     string Answer,
     DateTime EditedDate,
-    string EditedBy) : IDomainEvent;
+    Guid EditedByEmployeeId) : IDomainEvent;

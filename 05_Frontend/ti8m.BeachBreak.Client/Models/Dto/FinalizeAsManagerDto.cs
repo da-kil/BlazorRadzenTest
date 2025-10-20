@@ -6,7 +6,6 @@ namespace ti8m.BeachBreak.Client.Models.Dto;
 /// </summary>
 public class FinalizeAsManagerDto
 {
-    public string FinalizedBy { get; set; } = string.Empty;
     public string? ManagerFinalNotes { get; set; }
     public int? ExpectedVersion { get; set; }
 }

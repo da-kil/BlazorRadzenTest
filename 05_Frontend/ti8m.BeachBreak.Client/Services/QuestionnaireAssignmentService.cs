@@ -265,7 +265,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     {
         try
         {
-            var dto = new SubmitQuestionnaireDto { SubmittedBy = submittedBy };
+            var dto = new SubmitQuestionnaireDto();
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/submit-employee", dto);
             return response.IsSuccessStatusCode;
         }
@@ -280,7 +280,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     {
         try
         {
-            var dto = new SubmitQuestionnaireDto { SubmittedBy = submittedBy };
+            var dto = new SubmitQuestionnaireDto();
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/submit-manager", dto);
             return response.IsSuccessStatusCode;
         }
@@ -295,7 +295,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     {
         try
         {
-            var dto = new FinishReviewMeetingDto { FinishedBy = finishedBy, ReviewSummary = reviewSummary };
+            var dto = new FinishReviewMeetingDto { ReviewSummary = reviewSummary };
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/finish", dto);
             return response.IsSuccessStatusCode;
         }
@@ -310,7 +310,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     {
         try
         {
-            var dto = new InitiateReviewDto { InitiatedBy = initiatedBy };
+            var dto = new InitiateReviewDto();
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/initiate-review", dto);
             return response.IsSuccessStatusCode;
         }
@@ -330,8 +330,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
                 SectionId = sectionId,
                 QuestionId = questionId,
                 OriginalCompletionRole = originalCompletionRole.ToString(),
-                Answer = answer,
-                EditedBy = editedBy
+                Answer = answer
             };
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/edit-answer", dto);
             return response.IsSuccessStatusCode;
@@ -347,7 +346,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     {
         try
         {
-            var dto = new ConfirmReviewOutcomeDto { ConfirmedBy = confirmedBy, EmployeeComments = comments };
+            var dto = new ConfirmReviewOutcomeDto { EmployeeComments = comments };
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/confirm-employee", dto);
             return response.IsSuccessStatusCode;
         }

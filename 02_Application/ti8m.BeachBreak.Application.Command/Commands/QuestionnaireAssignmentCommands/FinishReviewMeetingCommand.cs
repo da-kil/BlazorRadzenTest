@@ -7,6 +7,6 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 /// </summary>
 public record FinishReviewMeetingCommand(
     Guid AssignmentId,
-    string FinishedBy,
+    Guid FinishedByEmployeeId,
     string? ReviewSummary,
     int? ExpectedVersion = null) : ICommand<Result>;

@@ -251,7 +251,7 @@ public class QuestionnaireResponseCommandHandler :
             }
 
             // Submit via assignment aggregate (which manages workflow state)
-            assignment.SubmitEmployeeQuestionnaire(command.EmployeeId.ToString());
+            assignment.SubmitEmployeeQuestionnaire(command.EmployeeId);
             await assignmentRepository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully submitted employee questionnaire for AssignmentId: {AssignmentId}, new state: {WorkflowState}",

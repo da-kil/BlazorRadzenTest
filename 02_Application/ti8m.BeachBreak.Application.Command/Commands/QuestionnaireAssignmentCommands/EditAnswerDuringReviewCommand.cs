@@ -8,4 +8,4 @@ public record EditAnswerDuringReviewCommand(
     Guid QuestionId,
     CompletionRole OriginalCompletionRole,
     string Answer,
-    string EditedBy) : ICommand<Result>;
+    Guid EditedByEmployeeId) : ICommand<Result>;

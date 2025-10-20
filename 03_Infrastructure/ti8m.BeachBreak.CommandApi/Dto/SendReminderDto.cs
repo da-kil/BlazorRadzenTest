@@ -10,7 +10,4 @@ public class SendReminderDto
     [Required]
     [StringLength(1000, MinimumLength = 1)]
     public string Message { get; set; } = string.Empty;
-
-    [Required]
-    public string SentBy { get; set; } = string.Empty;
 }

@@ -14,5 +14,5 @@ public record ManagerEditedAnswerDuringReview(
     CompletionRole OriginalCompletionRole,  // Who was supposed to complete this originally
     string NewAnswer,
     DateTime EditedDate,
-    string EditedBy
+    Guid EditedByEmployeeId
 ) : IDomainEvent;

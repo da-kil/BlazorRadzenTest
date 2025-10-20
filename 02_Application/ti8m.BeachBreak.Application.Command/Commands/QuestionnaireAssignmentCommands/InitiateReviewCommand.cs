@@ -2,4 +2,4 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 
 public record InitiateReviewCommand(
     Guid AssignmentId,
-    string InitiatedBy) : ICommand<Result>;
+    Guid InitiatedByEmployeeId) : ICommand<Result>;

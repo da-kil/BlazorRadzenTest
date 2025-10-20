@@ -29,5 +29,5 @@ public class ReviewChangeLogReadModel
     public string NewValue { get; set; } = string.Empty;
 
     public DateTime ChangedAt { get; set; }
-    public string ChangedBy { get; set; } = string.Empty;
+    public Guid ChangedByEmployeeId { get; set; }
 }

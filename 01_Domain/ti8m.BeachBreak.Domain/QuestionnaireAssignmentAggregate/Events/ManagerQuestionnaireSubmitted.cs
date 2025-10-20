@@ -4,4 +4,4 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
 public record ManagerQuestionnaireSubmitted(
     DateTime SubmittedDate,
-    string SubmittedBy) : IDomainEvent;
+    Guid SubmittedByEmployeeId) : IDomainEvent;

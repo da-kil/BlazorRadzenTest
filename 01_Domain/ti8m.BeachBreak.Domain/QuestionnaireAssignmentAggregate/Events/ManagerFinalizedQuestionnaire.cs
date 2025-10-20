@@ -11,6 +11,6 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 public record ManagerFinalizedQuestionnaire(
     Guid AggregateId,
     DateTime FinalizedDate,
-    string FinalizedBy,
+    Guid FinalizedByEmployeeId,
     string? ManagerFinalNotes
 ) : IDomainEvent;

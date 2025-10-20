@@ -6,7 +6,6 @@ namespace ti8m.BeachBreak.Client.Models.Dto;
 /// </summary>
 public class ConfirmReviewOutcomeDto
 {
-    public string ConfirmedBy { get; set; } = string.Empty;
     public string? EmployeeComments { get; set; }
     public int? ExpectedVersion { get; set; }
 }

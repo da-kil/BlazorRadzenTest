@@ -8,9 +8,6 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 /// </summary>
 public class FinishReviewMeetingDto
 {
-    [Required]
-    public string FinishedBy { get; set; } = string.Empty;
-
     /// <summary>
     /// Optional summary of the review meeting discussion
     /// </summary>

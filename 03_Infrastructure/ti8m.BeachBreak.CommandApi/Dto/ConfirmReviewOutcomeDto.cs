@@ -8,9 +8,6 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 /// </summary>
 public class ConfirmReviewOutcomeDto
 {
-    [Required]
-    public string ConfirmedBy { get; set; } = string.Empty;
-
     /// <summary>
     /// Optional comments from employee about the review
     /// </summary>

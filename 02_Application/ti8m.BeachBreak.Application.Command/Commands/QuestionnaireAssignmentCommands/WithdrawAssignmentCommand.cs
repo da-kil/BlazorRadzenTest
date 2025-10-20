@@ -3,13 +3,13 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 public class WithdrawAssignmentCommand : ICommand<Result>
 {
     public Guid AssignmentId { get; init; }
-    public string WithdrawnBy { get; init; }
+    public Guid WithdrawnByEmployeeId { get; init; }
     public string? WithdrawalReason { get; init; }
 
-    public WithdrawAssignmentCommand(Guid assignmentId, string withdrawnBy, string? withdrawalReason = null)
+    public WithdrawAssignmentCommand(Guid assignmentId, Guid withdrawnByEmployeeId, string? withdrawalReason = null)
     {
         AssignmentId = assignmentId;
-        WithdrawnBy = withdrawnBy;
+        WithdrawnByEmployeeId = withdrawnByEmployeeId;
         WithdrawalReason = withdrawalReason;
     }
 }

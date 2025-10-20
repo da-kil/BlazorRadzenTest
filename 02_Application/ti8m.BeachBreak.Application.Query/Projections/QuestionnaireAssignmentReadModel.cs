@@ -20,7 +20,7 @@ public class QuestionnaireAssignmentReadModel
     public DateTime? CompletedDate { get; set; }
     public bool IsWithdrawn { get; set; }
     public DateTime? WithdrawnDate { get; set; }
-    public string? WithdrawnBy { get; set; }
+    public Guid? WithdrawnByEmployeeId { get; set; }
     public string? WithdrawalReason { get; set; }
 
     // Workflow properties
@@ -29,23 +29,23 @@ public class QuestionnaireAssignmentReadModel
 
     // Submission phase
     public DateTime? EmployeeSubmittedDate { get; set; }
-    public string? EmployeeSubmittedBy { get; set; }
+    public Guid? EmployeeSubmittedByEmployeeId { get; set; }
     public DateTime? ManagerSubmittedDate { get; set; }
-    public string? ManagerSubmittedBy { get; set; }
+    public Guid? ManagerSubmittedByEmployeeId { get; set; }
 
     // Review phase
     public DateTime? ReviewInitiatedDate { get; set; }
-    public string? ReviewInitiatedBy { get; set; }
+    public Guid? ReviewInitiatedByEmployeeId { get; set; }
     public DateTime? ManagerReviewFinishedDate { get; set; }
-    public string? ManagerReviewFinishedBy { get; set; }
+    public Guid? ManagerReviewFinishedByEmployeeId { get; set; }
     public string? ManagerReviewSummary { get; set; }
     public DateTime? EmployeeReviewConfirmedDate { get; set; }
-    public string? EmployeeReviewConfirmedBy { get; set; }
+    public Guid? EmployeeReviewConfirmedByEmployeeId { get; set; }
     public string? EmployeeReviewComments { get; set; }
 
     // Final state
     public DateTime? FinalizedDate { get; set; }
-    public string? FinalizedBy { get; set; }
+    public Guid? FinalizedByEmployeeId { get; set; }
     public string? ManagerFinalNotes { get; set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
@@ -83,7 +83,7 @@ public class QuestionnaireAssignmentReadModel
     {
         IsWithdrawn = true;
         WithdrawnDate = @event.WithdrawnDate;
-        WithdrawnBy = @event.WithdrawnBy;
+        WithdrawnByEmployeeId = @event.WithdrawnByEmployeeId;
         WithdrawalReason = @event.WithdrawalReason;
     }
 
@@ -132,21 +132,21 @@ public class QuestionnaireAssignmentReadModel
     public void Apply(EmployeeQuestionnaireSubmitted @event)
     {
         EmployeeSubmittedDate = @event.SubmittedDate;
-        EmployeeSubmittedBy = @event.SubmittedBy;
+        EmployeeSubmittedByEmployeeId = @event.SubmittedByEmployeeId;
         UpdateWorkflowStateOnSubmission();
     }
 
     public void Apply(ManagerQuestionnaireSubmitted @event)
     {
         ManagerSubmittedDate = @event.SubmittedDate;
-        ManagerSubmittedBy = @event.SubmittedBy;
+        ManagerSubmittedByEmployeeId = @event.SubmittedByEmployeeId;
         UpdateWorkflowStateOnSubmission();
     }
 
     public void Apply(ReviewInitiated @event)
     {
         ReviewInitiatedDate = @event.InitiatedDate;
-        ReviewInitiatedBy = @event.InitiatedBy;
+        ReviewInitiatedByEmployeeId = @event.InitiatedByEmployeeId;
         WorkflowState = WorkflowState.InReview;
     }
 
@@ -166,7 +166,7 @@ public class QuestionnaireAssignmentReadModel
     {
         WorkflowState = WorkflowState.ManagerReviewConfirmed;
         ManagerReviewFinishedDate = @event.FinishedDate;
-        ManagerReviewFinishedBy = @event.FinishedBy;
+        ManagerReviewFinishedByEmployeeId = @event.FinishedByEmployeeId;
         ManagerReviewSummary = @event.ReviewSummary;
     }
 
@@ -174,7 +174,7 @@ public class QuestionnaireAssignmentReadModel
     {
         WorkflowState = WorkflowState.EmployeeReviewConfirmed;
         EmployeeReviewConfirmedDate = @event.ConfirmedDate;
-        EmployeeReviewConfirmedBy = @event.ConfirmedBy;
+        EmployeeReviewConfirmedByEmployeeId = @event.ConfirmedByEmployeeId;
         EmployeeReviewComments = @event.EmployeeComments;
     }
 
@@ -182,7 +182,7 @@ public class QuestionnaireAssignmentReadModel
     {
         WorkflowState = WorkflowState.Finalized;
         FinalizedDate = @event.FinalizedDate;
-        FinalizedBy = @event.FinalizedBy;
+        FinalizedByEmployeeId = @event.FinalizedByEmployeeId;
         ManagerFinalNotes = @event.ManagerFinalNotes;
     }
 
@@ -190,7 +190,7 @@ public class QuestionnaireAssignmentReadModel
     {
         WorkflowState = WorkflowState.Finalized;
         FinalizedDate = @event.FinalizedDate;
-        FinalizedBy = @event.FinalizedBy;
+        FinalizedByEmployeeId = @event.FinalizedByEmployeeId;
         ManagerFinalNotes = @event.Reason;
     }
 

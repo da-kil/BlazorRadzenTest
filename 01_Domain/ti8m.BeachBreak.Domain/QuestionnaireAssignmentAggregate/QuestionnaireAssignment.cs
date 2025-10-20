@@ -20,7 +20,7 @@ public class QuestionnaireAssignment : AggregateRoot
     public DateTime? CompletedDate { get; private set; }
     public bool IsWithdrawn { get; private set; }
     public DateTime? WithdrawnDate { get; private set; }
-    public string? WithdrawnBy { get; private set; }
+    public Guid? WithdrawnByEmployeeId { get; private set; }
     public string? WithdrawalReason { get; private set; }
 
     // Workflow properties
@@ -29,23 +29,23 @@ public class QuestionnaireAssignment : AggregateRoot
 
     // Submission phase
     public DateTime? EmployeeSubmittedDate { get; private set; }
-    public string? EmployeeSubmittedBy { get; private set; }
+    public Guid? EmployeeSubmittedByEmployeeId { get; private set; }
     public DateTime? ManagerSubmittedDate { get; private set; }
-    public string? ManagerSubmittedBy { get; private set; }
+    public Guid? ManagerSubmittedByEmployeeId { get; private set; }
 
     // Review phase
     public DateTime? ReviewInitiatedDate { get; private set; }
-    public string? ReviewInitiatedBy { get; private set; }
+    public Guid? ReviewInitiatedByEmployeeId { get; private set; }
     public DateTime? ManagerReviewFinishedDate { get; private set; }
-    public string? ManagerReviewFinishedBy { get; private set; }
+    public Guid? ManagerReviewFinishedByEmployeeId { get; private set; }
     public string? ManagerReviewSummary { get; private set; }
     public DateTime? EmployeeReviewConfirmedDate { get; private set; }
-    public string? EmployeeReviewConfirmedBy { get; private set; }
+    public Guid? EmployeeReviewConfirmedByEmployeeId { get; private set; }
     public string? EmployeeReviewComments { get; private set; }
 
     // Final state
     public DateTime? FinalizedDate { get; private set; }
-    public string? FinalizedBy { get; private set; }
+    public Guid? FinalizedByEmployeeId { get; private set; }
     public string? ManagerFinalNotes { get; private set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
@@ -121,7 +121,7 @@ public class QuestionnaireAssignment : AggregateRoot
         }
     }
 
-    public void Withdraw(string withdrawnBy, string? withdrawalReason = null)
+    public void Withdraw(Guid withdrawnByEmployeeId, string? withdrawalReason = null)
     {
         if (IsWithdrawn)
             throw new InvalidOperationException("Assignment is already withdrawn");
@@ -129,7 +129,7 @@ public class QuestionnaireAssignment : AggregateRoot
         if (CompletedDate.HasValue)
             throw new InvalidOperationException("Cannot withdraw a completed assignment");
 
-        RaiseEvent(new AssignmentWithdrawn(DateTime.UtcNow, withdrawnBy, withdrawalReason));
+        RaiseEvent(new AssignmentWithdrawn(DateTime.UtcNow, withdrawnByEmployeeId, withdrawalReason));
     }
 
     // Workflow state query methods (business rules)
@@ -265,7 +265,7 @@ public class QuestionnaireAssignment : AggregateRoot
     }
 
     // Submit methods (Phase 1)
-    public void SubmitEmployeeQuestionnaire(string submittedBy)
+    public void SubmitEmployeeQuestionnaire(Guid submittedByEmployeeId)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot submit - questionnaire is finalized");
@@ -283,7 +283,7 @@ public class QuestionnaireAssignment : AggregateRoot
             WorkflowState != WorkflowState.ManagerSubmitted)
             throw new InvalidOperationException("Employee must have started filling sections before submitting");
 
-        RaiseEvent(new EmployeeQuestionnaireSubmitted(DateTime.UtcNow, submittedBy));
+        RaiseEvent(new EmployeeQuestionnaireSubmitted(DateTime.UtcNow, submittedByEmployeeId));
 
         // Auto-finalize if manager review is not required
         if (!RequiresManagerReview)
@@ -291,12 +291,12 @@ public class QuestionnaireAssignment : AggregateRoot
             RaiseEvent(new QuestionnaireAutoFinalized(
                 Id,
                 DateTime.UtcNow,
-                "System",
+                submittedByEmployeeId,
                 "Auto-finalized: Manager review not required"));
         }
     }
 
-    public void SubmitManagerQuestionnaire(string submittedBy)
+    public void SubmitManagerQuestionnaire(Guid submittedByEmployeeId)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot submit - questionnaire is finalized");
@@ -314,10 +314,10 @@ public class QuestionnaireAssignment : AggregateRoot
             WorkflowState != WorkflowState.EmployeeSubmitted)
             throw new InvalidOperationException("Manager must have started filling sections before submitting");
 
-        RaiseEvent(new ManagerQuestionnaireSubmitted(DateTime.UtcNow, submittedBy));
+        RaiseEvent(new ManagerQuestionnaireSubmitted(DateTime.UtcNow, submittedByEmployeeId));
     }
 
-    public void InitiateReview(string initiatedBy)
+    public void InitiateReview(Guid initiatedByEmployeeId)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot initiate review - questionnaire is finalized");
@@ -328,7 +328,7 @@ public class QuestionnaireAssignment : AggregateRoot
         if (WorkflowState != WorkflowState.BothSubmitted)
             throw new InvalidOperationException("Both employee and manager must submit their questionnaires before review");
 
-        RaiseEvent(new ReviewInitiated(DateTime.UtcNow, initiatedBy));
+        RaiseEvent(new ReviewInitiated(DateTime.UtcNow, initiatedByEmployeeId));
     }
 
     public void EditAnswerAsManagerDuringReview(
@@ -336,7 +336,7 @@ public class QuestionnaireAssignment : AggregateRoot
         Guid questionId,
         CompletionRole originalCompletionRole,
         string newAnswer,
-        string editedBy)
+        Guid editedByEmployeeId)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot edit answer - questionnaire is finalized");
@@ -351,11 +351,11 @@ public class QuestionnaireAssignment : AggregateRoot
             originalCompletionRole,
             newAnswer,
             DateTime.UtcNow,
-            editedBy
+            editedByEmployeeId
         ));
     }
 
-    public void FinishReviewMeeting(string finishedBy, string? reviewSummary)
+    public void FinishReviewMeeting(Guid finishedByEmployeeId, string? reviewSummary)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot finish review - questionnaire is finalized");
@@ -366,12 +366,12 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new ManagerReviewMeetingFinished(
             Id,
             DateTime.UtcNow,
-            finishedBy,
+            finishedByEmployeeId,
             reviewSummary
         ));
     }
 
-    public void ConfirmReviewOutcomeAsEmployee(string confirmedBy, string? comments)
+    public void ConfirmReviewOutcomeAsEmployee(Guid confirmedByEmployeeId, string? comments)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot confirm review - questionnaire is finalized");
@@ -382,12 +382,12 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new EmployeeConfirmedReviewOutcome(
             Id,
             DateTime.UtcNow,
-            confirmedBy,
+            confirmedByEmployeeId,
             comments
         ));
     }
 
-    public void FinalizeAsManager(string finalizedBy, string? finalNotes)
+    public void FinalizeAsManager(Guid finalizedByEmployeeId, string? finalNotes)
     {
         if (IsLocked)
             throw new InvalidOperationException("Questionnaire is already finalized");
@@ -398,7 +398,7 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new ManagerFinalizedQuestionnaire(
             Id,
             DateTime.UtcNow,
-            finalizedBy,
+            finalizedByEmployeeId,
             finalNotes
         ));
     }
@@ -437,7 +437,7 @@ public class QuestionnaireAssignment : AggregateRoot
     {
         IsWithdrawn = true;
         WithdrawnDate = @event.WithdrawnDate;
-        WithdrawnBy = @event.WithdrawnBy;
+        WithdrawnByEmployeeId = @event.WithdrawnByEmployeeId;
         WithdrawalReason = @event.WithdrawalReason;
     }
 
@@ -478,21 +478,21 @@ public class QuestionnaireAssignment : AggregateRoot
     public void Apply(EmployeeQuestionnaireSubmitted @event)
     {
         EmployeeSubmittedDate = @event.SubmittedDate;
-        EmployeeSubmittedBy = @event.SubmittedBy;
+        EmployeeSubmittedByEmployeeId = @event.SubmittedByEmployeeId;
         UpdateWorkflowStateOnSubmission();
     }
 
     public void Apply(ManagerQuestionnaireSubmitted @event)
     {
         ManagerSubmittedDate = @event.SubmittedDate;
-        ManagerSubmittedBy = @event.SubmittedBy;
+        ManagerSubmittedByEmployeeId = @event.SubmittedByEmployeeId;
         UpdateWorkflowStateOnSubmission();
     }
 
     public void Apply(ReviewInitiated @event)
     {
         ReviewInitiatedDate = @event.InitiatedDate;
-        ReviewInitiatedBy = @event.InitiatedBy;
+        ReviewInitiatedByEmployeeId = @event.InitiatedByEmployeeId;
         WorkflowState = WorkflowState.InReview;
     }
 
@@ -513,7 +513,7 @@ public class QuestionnaireAssignment : AggregateRoot
     {
         WorkflowState = WorkflowState.ManagerReviewConfirmed;
         ManagerReviewFinishedDate = @event.FinishedDate;
-        ManagerReviewFinishedBy = @event.FinishedBy;
+        ManagerReviewFinishedByEmployeeId = @event.FinishedByEmployeeId;
         ManagerReviewSummary = @event.ReviewSummary;
     }
 
@@ -521,7 +521,7 @@ public class QuestionnaireAssignment : AggregateRoot
     {
         WorkflowState = WorkflowState.EmployeeReviewConfirmed;
         EmployeeReviewConfirmedDate = @event.ConfirmedDate;
-        EmployeeReviewConfirmedBy = @event.ConfirmedBy;
+        EmployeeReviewConfirmedByEmployeeId = @event.ConfirmedByEmployeeId;
         EmployeeReviewComments = @event.EmployeeComments;
     }
 
@@ -529,7 +529,7 @@ public class QuestionnaireAssignment : AggregateRoot
     {
         WorkflowState = WorkflowState.Finalized;
         FinalizedDate = @event.FinalizedDate;
-        FinalizedBy = @event.FinalizedBy;
+        FinalizedByEmployeeId = @event.FinalizedByEmployeeId;
         ManagerFinalNotes = @event.ManagerFinalNotes;
     }
 
@@ -537,7 +537,7 @@ public class QuestionnaireAssignment : AggregateRoot
     {
         WorkflowState = WorkflowState.Finalized;
         FinalizedDate = @event.FinalizedDate;
-        FinalizedBy = @event.FinalizedBy;
+        FinalizedByEmployeeId = @event.FinalizedByEmployeeId;
         ManagerFinalNotes = @event.Reason; // Store reason in notes
     }
 

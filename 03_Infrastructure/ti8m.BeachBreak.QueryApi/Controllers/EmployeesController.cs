@@ -266,23 +266,23 @@ public class EmployeesController : BaseController
 
                     // Submission phase
                     EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
-                    EmployeeSubmittedBy = assignment.EmployeeSubmittedBy,
+                    EmployeeSubmittedBy = assignment.EmployeeSubmittedByEmployeeName,
                     ManagerSubmittedDate = assignment.ManagerSubmittedDate,
-                    ManagerSubmittedBy = assignment.ManagerSubmittedBy,
+                    ManagerSubmittedBy = assignment.ManagerSubmittedByEmployeeName,
 
                     // Review phase
                     ReviewInitiatedDate = assignment.ReviewInitiatedDate,
-                    ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+                    ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
                     ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
-                    ManagerReviewFinishedBy = assignment.ManagerReviewFinishedBy,
+                    ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
                     ManagerReviewSummary = assignment.ManagerReviewSummary,
                     EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
-                    EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
+                    EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
                     EmployeeReviewComments = assignment.EmployeeReviewComments,
 
                     // Final state
                     FinalizedDate = assignment.FinalizedDate,
-                    FinalizedBy = assignment.FinalizedBy,
+                    FinalizedBy = assignment.FinalizedByEmployeeName,
                     ManagerFinalNotes = assignment.ManagerFinalNotes
                 });
             });
@@ -437,23 +437,23 @@ public class EmployeesController : BaseController
 
                 // Submission phase
                 EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
-                EmployeeSubmittedBy = assignment.EmployeeSubmittedBy,
+                EmployeeSubmittedBy = assignment.EmployeeSubmittedByEmployeeName,
                 ManagerSubmittedDate = assignment.ManagerSubmittedDate,
-                ManagerSubmittedBy = assignment.ManagerSubmittedBy,
+                ManagerSubmittedBy = assignment.ManagerSubmittedByEmployeeName,
 
                 // Review phase
                 ReviewInitiatedDate = assignment.ReviewInitiatedDate,
-                ReviewInitiatedBy = assignment.ReviewInitiatedBy,
+                ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
                 ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
-                ManagerReviewFinishedBy = assignment.ManagerReviewFinishedBy,
+                ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
                 ManagerReviewSummary = assignment.ManagerReviewSummary,
                 EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
-                EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedBy,
+                EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
                 EmployeeReviewComments = assignment.EmployeeReviewComments,
 
                 // Final state
                 FinalizedDate = assignment.FinalizedDate,
-                FinalizedBy = assignment.FinalizedBy,
+                FinalizedBy = assignment.FinalizedByEmployeeName,
                 ManagerFinalNotes = assignment.ManagerFinalNotes
             };
 

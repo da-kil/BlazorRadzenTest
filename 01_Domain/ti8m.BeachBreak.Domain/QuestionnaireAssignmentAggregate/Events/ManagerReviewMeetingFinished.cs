@@ -10,6 +10,6 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 public record ManagerReviewMeetingFinished(
     Guid AggregateId,
     DateTime FinishedDate,
-    string FinishedBy,
+    Guid FinishedByEmployeeId,
     string? ReviewSummary
 ) : IDomainEvent;
