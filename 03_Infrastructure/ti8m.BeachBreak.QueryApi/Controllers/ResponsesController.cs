@@ -209,7 +209,7 @@ public class ResponsesController : BaseController
         }
     }
 
-    private static QuestionnaireResponseDto MapToDto(QuestionnaireResponse response)
+    private QuestionnaireResponseDto MapToDto(QuestionnaireResponse response)
     {
         return new QuestionnaireResponseDto
         {
@@ -222,7 +222,7 @@ public class ResponsesController : BaseController
         };
     }
 
-    private static Dictionary<Guid, SectionResponseDto> MapSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
+    private Dictionary<Guid, SectionResponseDto> MapSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
     {
         var result = new Dictionary<Guid, SectionResponseDto>();
 
@@ -281,9 +281,12 @@ public class ResponsesController : BaseController
                                 };
                             }
                         }
-                        catch
+                        catch (System.Text.Json.JsonException jsonEx)
                         {
-                            // Fallback: wrap as ComplexValue
+                            // Fallback: wrap as ComplexValue on JSON deserialization failure
+                            _logger.LogWarning(jsonEx,
+                                "Failed to deserialize question response for question {QuestionId} in section {SectionId}. Using fallback.",
+                                questionId, sectionKvp.Key);
                             var fallbackDict = new Dictionary<string, object> { { "value", qJsonElement } };
                             questionResponsesForRole[questionId] = new QuestionResponseDto
                             {
@@ -333,7 +336,7 @@ public class ResponsesController : BaseController
         return result;
     }
 
-    private static Dictionary<Guid, SectionResponseDto> MapEmployeeSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
+    private Dictionary<Guid, SectionResponseDto> MapEmployeeSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
     {
         var result = new Dictionary<Guid, SectionResponseDto>();
 
@@ -389,9 +392,12 @@ public class ResponsesController : BaseController
                                 };
                             }
                         }
-                        catch
+                        catch (System.Text.Json.JsonException jsonEx)
                         {
-                            // Fallback: wrap as ComplexValue
+                            // Fallback: wrap as ComplexValue on JSON deserialization failure
+                            _logger.LogWarning(jsonEx,
+                                "Failed to deserialize employee question response for question {QuestionId}. Using fallback.",
+                                questionId);
                             var fallbackDict = new Dictionary<string, object> { { "value", qJsonElement } };
                             questionResponsesForEmployee[questionId] = new QuestionResponseDto
                             {

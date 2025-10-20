@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
@@ -14,7 +15,8 @@ namespace ti8m.BeachBreak.Application.Query.Services;
 /// </summary>
 public class EmployeeVisibilityService(
     IEmployeeRepository employeeRepository,
-    IQueryDispatcher queryDispatcher)
+    IQueryDispatcher queryDispatcher,
+    ILogger<EmployeeVisibilityService> logger)
 {
     /// <summary>
     /// Gets all employees visible to the current user based on their role.
@@ -69,8 +71,16 @@ public class EmployeeVisibilityService(
 
             return roleResult?.ApplicationRole ?? ApplicationRole.Employee;
         }
-        catch
+        catch (Exception ex)
         {
+            // LogWarning (not LogError) because:
+            // 1. System gracefully degrades with a security-first fallback (Employee = most restrictive)
+            // 2. User can still access their own data, no critical feature is broken
+            // 3. Prevents alert fatigue while still capturing diagnostic information
+            // Monitor: If this warning appears frequently, investigate database connectivity or role data integrity
+            logger.LogWarning(ex,
+                "Failed to retrieve role for user {UserId}. Defaulting to Employee role for security.",
+                userId.Value);
             return ApplicationRole.Employee; // Default to most restrictive on error
         }
     }

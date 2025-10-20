@@ -104,8 +104,9 @@ public static class AssignmentValidationExtensions
             var emailAttribute = new EmailAddressAttribute();
             return emailAttribute.IsValid(email);
         }
-        catch
+        catch (ArgumentException)
         {
+            // Email validation can throw ArgumentException for invalid formats
             return false;
         }
     }
