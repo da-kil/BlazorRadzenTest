@@ -6,6 +6,7 @@
 @using Microsoft.AspNetCore.Components
 @inject NavigationManager NavigationManager
 @inherits OptimizedComponentBase
+@inject IJSRuntime JSRuntime
 
 <div class="container-fluid">
     <div class="row">
@@ -100,6 +101,9 @@
     // Team view specific state
     private string teamMemberSortBy = "Name";
     private readonly List<string> teamSortOptions = new() { "Name", "Progress", "Overdue", "Assignments" };
+    private List<EmployeeDto> filteredTeamMembers = new();
+    private Dictionary<Guid, List<QuestionnaireAssignment>> memberAssignmentsCache = new();
+    private int filterChangeCounter = 0; // Counter to force component re-render on filter changes
 
     // Questionnaire view specific state
     private string questionnaireSortBy = "Name";
@@ -115,7 +119,13 @@
         return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
                HasParameterChanged(nameof(isLoading), isLoading) ||
                HasParameterChanged(nameof(isLoadingMore), isLoadingMore) ||
-               HasParameterChanged(nameof(selectedTabIndex), selectedTabIndex);
+               HasParameterChanged(nameof(selectedTabIndex), selectedTabIndex) ||
+               HasParameterChanged(nameof(filteredTeamMembers), filteredTeamMembers.Count) ||
+               HasParameterChanged(nameof(filterChangeCounter), filterChangeCounter) ||
+               HasParameterChanged(nameof(statusFilter), statusFilter) ||
+               HasParameterChanged(nameof(templateFilter), templateFilter?.ToString() ?? "") ||
+               HasParameterChanged(nameof(teamMemberSortBy), teamMemberSortBy) ||
+               HasParameterChanged(nameof(memberAssignmentsCache), memberAssignmentsCache.Count);
     }
 
     private async Task LoadData()
@@ -168,6 +178,9 @@
 
                 employees = employeesTask.Result;
                 additionalData = additionalDataTask.Result;
+
+                // Initialize filtered lists after data is loaded
+                UpdateFilteredTeamMembers();
             }, "LoadData");
         }
         finally
@@ -214,20 +227,22 @@
                 break;
 
             case QuestionnaireFilterType.Template:
-                <RadzenDropDown @bind-Value="templateFilter"
+                <RadzenDropDown TValue="Guid?"
+                               Value="@templateFilter"
                                Data="@filter.TemplateOptions"
                                TextProperty="Name"
                                ValueProperty="Id"
-                               Change="@ApplyFilters"
+                               ValueChanged="@OnTemplateFilterChanged"
                                Placeholder="All Questionnaires"
                                AllowClear="true"
                                Class="w-100" />
                 break;
 
             case QuestionnaireFilterType.Status:
-                <RadzenDropDown @bind-Value="statusFilter"
+                <RadzenDropDown TValue="string"
+                               Value="@statusFilter"
                                Data="@filter.Options"
-                               Change="@ApplyFilters"
+                               ValueChanged="@((string value) => { statusFilter = value; ApplyFilters(); })"
                                Placeholder="All Status"
                                Class="w-100" />
                 break;
@@ -457,20 +472,29 @@
             <div class="team-view-container">
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <RadzenText TextStyle="TextStyle.Subtitle1">
-                        Showing @GetFilteredTeamMembers().Count of @employees.Count team members
+                        Showing @filteredTeamMembers.Count of @employees.Count team members
                     </RadzenText>
-                    <RadzenDropDown @bind-Value="teamMemberSortBy"
-                                   Data="@teamSortOptions"
-                                   Change="@(() => NotifyStateChanged())"
-                                   Placeholder="Sort by..."
-                                   Class="w-auto"
-                                   Style="min-width: 200px;" />
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">Sort by:</RadzenText>
+                        <RadzenDropDown TValue="string"
+                                       Value="@teamMemberSortBy"
+                                       Data="@teamSortOptions"
+                                       ValueChanged="@((string value) => { teamMemberSortBy = value; ApplyFilters(); })"
+                                       Placeholder="Name"
+                                       Class="w-auto"
+                                       Style="min-width: 150px;" />
+                    </div>
                 </div>
 
-                @foreach (var member in GetFilteredTeamMembers())
+                @foreach (var member in filteredTeamMembers)
                 {
-                    var memberAssignments = allAssignments.Where(a => a.EmployeeId.ToString() == member.Id.ToString()).ToList();
-                    <TeamMemberCard TeamMember="@member"
+                    // Create a NEW List instance every time to force Blazor to detect the change
+                    var memberAssignments = memberAssignmentsCache.TryGetValue(member.Id, out var assignments)
+                        ? new List<QuestionnaireAssignment>(assignments)
+                        : new List<QuestionnaireAssignment>();
+                    JSRuntime.InvokeVoidAsync("console.log", $"[Render] Rendering {member.FirstName} with {memberAssignments.Count} assignments, key: {member.Id}_{filterChangeCounter}");
+                    <TeamMemberCard @key="@($"{member.Id}_{filterChangeCounter}")"
+                                   TeamMember="@member"
                                    Assignments="@memberAssignments"
                                    OnSendReminder="@HandleSendReminder"
                                    OnAssignmentClick="@HandleAssignmentClick" />
@@ -503,12 +527,15 @@
                     <RadzenText TextStyle="TextStyle.Subtitle1">
                         Showing @GetGroupedQuestionnaires().Count questionnaire @(GetGroupedQuestionnaires().Count == 1 ? "template" : "templates")
                     </RadzenText>
-                    <RadzenDropDown @bind-Value="questionnaireSortBy"
-                                   Data="@questionnaireSortOptions"
-                                   Change="@(() => NotifyStateChanged())"
-                                   Placeholder="Sort by..."
-                                   Class="w-auto"
-                                   Style="min-width: 200px;" />
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">Sort by:</RadzenText>
+                        <RadzenDropDown @bind-Value="questionnaireSortBy"
+                                       Data="@questionnaireSortOptions"
+                                       Change="@(() => NotifyStateChanged())"
+                                       Placeholder="Name"
+                                       Class="w-auto"
+                                       Style="min-width: 150px;" />
+                    </div>
                 </div>
 
                 @foreach (var questionnaireGroup in GetGroupedQuestionnaires())
@@ -682,10 +709,94 @@
         }
     }
 
+    private void OnTemplateFilterChanged(Guid? value)
+    {
+        Console.WriteLine($"[OnTemplateFilterChanged] Template filter changed from {templateFilter} to {value}");
+        JSRuntime.InvokeVoidAsync("console.log", $"[OnTemplateFilterChanged] Template filter changed from {templateFilter} to {value}");
+        templateFilter = value;
+        ApplyFilters();
+    }
+
     private void ApplyFilters()
     {
-        // Debounce filter application to avoid excessive API calls
-        NotifyStateChangedDebounced(300);
+        Console.WriteLine($"[ApplyFilters] Called - statusFilter: '{statusFilter}', templateFilter: {templateFilter}, sortBy: '{teamMemberSortBy}'");
+        JSRuntime.InvokeVoidAsync("console.log", $"[ApplyFilters] Called - statusFilter: '{statusFilter}', templateFilter: {templateFilter}, sortBy: '{teamMemberSortBy}'");
+
+        // Increment counter to force component re-render
+        filterChangeCounter++;
+
+        // Recompute filtered/sorted lists when filters change
+        UpdateFilteredTeamMembers();
+
+        Console.WriteLine($"[ApplyFilters] After filtering - showing {filteredTeamMembers.Count} of {employees.Count} members, counter: {filterChangeCounter}");
+        JSRuntime.InvokeVoidAsync("console.log", $"[ApplyFilters] After filtering - showing {filteredTeamMembers.Count} of {employees.Count} members, counter: {filterChangeCounter}");
+
+        // Force immediate synchronous state change
+        StateHasChanged();
+    }
+
+    private void UpdateFilteredTeamMembers()
+    {
+        filteredTeamMembers = ComputeFilteredTeamMembers();
+
+        // Pre-compute assignments for all filtered members
+        memberAssignmentsCache.Clear();
+        foreach (var member in filteredTeamMembers)
+        {
+            var assignments = GetFilteredAssignmentsForMember(member);
+            memberAssignmentsCache[member.Id] = assignments;
+            JSRuntime.InvokeVoidAsync("console.log", $"[UpdateFilteredTeamMembers] Cached {assignments.Count} assignments for {member.FirstName}");
+        }
+    }
+
+    private List<EmployeeDto> ComputeFilteredTeamMembers()
+    {
+        JSRuntime.InvokeVoidAsync("console.log", $"[ComputeFilteredTeamMembers] Starting with {employees.Count} employees");
+        JSRuntime.InvokeVoidAsync("console.log", $"[ComputeFilteredTeamMembers] Filters: status='{statusFilter}', template={templateFilter}, sort='{teamMemberSortBy}'");
+        Console.WriteLine($"[ComputeFilteredTeamMembers] Starting with {employees.Count} employees");
+        Console.WriteLine($"[ComputeFilteredTeamMembers] Filters: status='{statusFilter}', template={templateFilter}, sort='{teamMemberSortBy}'");
+        var filteredMembers = employees.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(searchFilter))
+        {
+            filteredMembers = filteredMembers.Where(e =>
+                $"{e.FirstName} {e.LastName}".Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ||
+                e.EMail.Contains(searchFilter, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Apply department filter
+        if (!string.IsNullOrEmpty(departmentFilter))
+        {
+            var selectedOrgNumber = ExtractOrganizationNumber(departmentFilter);
+            if (selectedOrgNumber.HasValue)
+            {
+                filteredMembers = filteredMembers.Where(e => e.OrganizationNumber == selectedOrgNumber.Value);
+            }
+        }
+
+        // Filter members who have assignments matching current filters
+        // Only apply assignment filtering if we have actual filter values (not "All" for status)
+        if ((!string.IsNullOrEmpty(statusFilter) && statusFilter != "All") || templateFilter.HasValue)
+        {
+            filteredMembers = filteredMembers
+                .Where(member => GetFilteredAssignmentsForMember(member).Any());
+        }
+
+        // Apply sorting
+        var sortedMembers = teamMemberSortBy switch
+        {
+            "Name" => filteredMembers.OrderBy(e => e.LastName).ThenBy(e => e.FirstName),
+            "Progress" => filteredMembers.OrderByDescending(e => GetMemberProgressPercentage(e)),
+            "Overdue" => filteredMembers.OrderByDescending(e => GetMemberOverdueCount(e)),
+            "Assignments" => filteredMembers.OrderByDescending(e => GetMemberAssignmentCount(e)),
+            _ => filteredMembers.OrderBy(e => e.LastName)
+        };
+
+        var result = sortedMembers.ToList();
+        Console.WriteLine($"[ComputeFilteredTeamMembers] Result: {result.Count} members - {string.Join(", ", result.Select(e => $"{e.FirstName} {e.LastName}"))}");
+        JSRuntime.InvokeVoidAsync("console.log", $"[ComputeFilteredTeamMembers] Result: {result.Count} members - {string.Join(", ", result.Select(e => $"{e.FirstName} {e.LastName}"))}");
+        return result;
     }
 
     private List<QuestionnaireAssignment> ApplyFilteringToAssignments(List<QuestionnaireAssignment> assignments)
@@ -847,39 +958,49 @@
     }
 
     // Team view helper methods
-    private List<EmployeeDto> GetFilteredTeamMembers()
+
+    private List<QuestionnaireAssignment> GetFilteredAssignmentsForMember(EmployeeDto member)
     {
-        var filteredMembers = employees.AsEnumerable();
+        Console.WriteLine($"[GetFilteredAssignmentsForMember] Member: {member.FirstName} {member.LastName}, statusFilter: '{statusFilter}', templateFilter: {templateFilter}");
 
-        // Apply search filter
-        if (!string.IsNullOrEmpty(searchFilter))
-        {
-            filteredMembers = filteredMembers.Where(e =>
-                $"{e.FirstName} {e.LastName}".Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ||
-                e.EMail.Contains(searchFilter, StringComparison.OrdinalIgnoreCase));
-        }
+        // Get all assignments for this member
+        var memberAssignments = allAssignments
+            .Where(a => a.EmployeeId.ToString() == member.Id.ToString())
+            .AsEnumerable();
 
-        // Apply department filter
-        if (!string.IsNullOrEmpty(departmentFilter))
+        Console.WriteLine($"[GetFilteredAssignmentsForMember] Found {memberAssignments.Count()} total assignments for {member.FirstName}");
+
+        // Apply status filter
+        if (!string.IsNullOrEmpty(statusFilter) && statusFilter != "All")
         {
-            var selectedOrgNumber = ExtractOrganizationNumber(departmentFilter);
-            if (selectedOrgNumber.HasValue)
+            memberAssignments = statusFilter switch
             {
-                filteredMembers = filteredMembers.Where(e => e.OrganizationNumber == selectedOrgNumber.Value);
-            }
+                "Pending" => memberAssignments.Where(a => a.WorkflowState != WorkflowState.Finalized),
+                "In Progress" => memberAssignments.Where(a =>
+                    a.WorkflowState is WorkflowState.EmployeeInProgress
+                    or WorkflowState.ManagerInProgress
+                    or WorkflowState.BothInProgress
+                    or WorkflowState.EmployeeSubmitted
+                    or WorkflowState.ManagerSubmitted),
+                "Completed" => memberAssignments.Where(a => a.WorkflowState == WorkflowState.Finalized),
+                "Overdue" => memberAssignments.Where(a =>
+                    a.DueDate.HasValue &&
+                    a.DueDate.Value < DateTime.Now &&
+                    a.WorkflowState != WorkflowState.Finalized),
+                _ => memberAssignments
+            };
         }
 
-        // Apply sorting
-        filteredMembers = teamMemberSortBy switch
+        // Apply questionnaire/template filter
+        if (templateFilter.HasValue)
         {
-            "Name" => filteredMembers.OrderBy(e => e.LastName).ThenBy(e => e.FirstName),
-            "Progress" => filteredMembers.OrderByDescending(e => GetMemberProgressPercentage(e)),
-            "Overdue" => filteredMembers.OrderByDescending(e => GetMemberOverdueCount(e)),
-            "Assignments" => filteredMembers.OrderByDescending(e => GetMemberAssignmentCount(e)),
-            _ => filteredMembers.OrderBy(e => e.LastName)
-        };
+            memberAssignments = memberAssignments.Where(a => a.TemplateId == templateFilter.Value);
+        }
 
-        return filteredMembers.ToList();
+        var result = memberAssignments.ToList();
+        Console.WriteLine($"[GetFilteredAssignmentsForMember] Returning {result.Count} assignments for {member.FirstName}: {string.Join(", ", result.Select(a => a.TemplateName))}");
+        JSRuntime.InvokeVoidAsync("console.log", $"[GetFilteredAssignmentsForMember] Returning {result.Count} assignments for {member.FirstName}: {string.Join(", ", result.Select(a => a.TemplateName))}");
+        return result;
     }
 
     private int GetMemberAssignmentCount(EmployeeDto member)

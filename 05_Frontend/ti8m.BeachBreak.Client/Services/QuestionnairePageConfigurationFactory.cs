@@ -188,7 +188,7 @@ public static class QuestionnairePageConfigurationFactory
 
             StatsConfig = new QuestionnaireStatsConfig
             {
-                Columns = 4,
+                Columns = 6,
                 StatCards = new List<StatCardConfiguration>
                 {
                     new()
@@ -202,30 +202,57 @@ public static class QuestionnairePageConfigurationFactory
                     },
                     new()
                     {
-                        Id = "pending",
-                        Label = "Pending",
-                        Icon = "pending_actions",
-                        IconClass = "text-warning",
-                        CssClass = "stats-pending",
-                        ValueCalculator = () => allAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized)
-                    },
-                    new()
-                    {
-                        Id = "completed",
-                        Label = "Completed",
-                        Icon = "task_alt",
-                        IconClass = "text-success",
-                        CssClass = "stats-completed",
-                        ValueCalculator = () => allAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized)
+                        Id = "total-assignments",
+                        Label = "Total Assignments",
+                        Icon = "assignment",
+                        IconClass = "text-secondary",
+                        CssClass = "stats-total",
+                        ValueCalculator = () => allAssignments.Count
                     },
                     new()
                     {
                         Id = "overdue",
-                        Label = "Overdue",
+                        Label = "⚠️ Overdue",
                         Icon = "warning",
                         IconClass = "text-danger",
                         CssClass = "stats-overdue",
                         ValueCalculator = () => allAssignments.Count(a => a.DueDate.HasValue && a.DueDate.Value < DateTime.Now && a.WorkflowState != WorkflowState.Finalized)
+                    },
+                    new()
+                    {
+                        Id = "not-started",
+                        Label = "Not Started",
+                        Icon = "schedule",
+                        IconClass = "text-warning",
+                        CssClass = "stats-not-started",
+                        ValueCalculator = () => allAssignments.Count(a => a.WorkflowState == WorkflowState.Assigned)
+                    },
+                    new()
+                    {
+                        Id = "in-progress",
+                        Label = "In Progress",
+                        Icon = "pending_actions",
+                        IconClass = "text-info",
+                        CssClass = "stats-in-progress",
+                        ValueCalculator = () => allAssignments.Count(a =>
+                            a.WorkflowState is WorkflowState.EmployeeInProgress
+                            or WorkflowState.ManagerInProgress
+                            or WorkflowState.BothInProgress
+                            or WorkflowState.EmployeeSubmitted
+                            or WorkflowState.ManagerSubmitted
+                            or WorkflowState.BothSubmitted
+                            or WorkflowState.InReview
+                            or WorkflowState.EmployeeReviewConfirmed
+                            or WorkflowState.ManagerReviewConfirmed)
+                    },
+                    new()
+                    {
+                        Id = "finalized",
+                        Label = "✓ Finalized",
+                        Icon = "task_alt",
+                        IconClass = "text-success",
+                        CssClass = "stats-finalized",
+                        ValueCalculator = () => allAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized)
                     }
                 }
             }

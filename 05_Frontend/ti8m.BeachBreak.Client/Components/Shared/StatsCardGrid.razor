@@ -4,8 +4,7 @@
     @foreach (var stat in Stats)
     {
         <div class="col-md-@GetColumnSize() col-sm-6 mb-3">
-            <RadzenCard Class="@($"text-center stats-card {stat.CssClass}")"
-                        Click="@(() => OnStatCardClick.InvokeAsync(stat))">
+            <RadzenCard Class="@($"text-center stats-card {stat.CssClass}")" Style="cursor: default; transition: none !important; transform: none !important;">
                 <RadzenIcon Icon="@stat.Icon"
                            Size="@IconSize"
                            Class="@($"{stat.IconClass} mb-2")" />

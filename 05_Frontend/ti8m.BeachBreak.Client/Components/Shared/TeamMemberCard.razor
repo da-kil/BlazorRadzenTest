@@ -18,50 +18,41 @@
             </div>
         </div>
         <div class="text-end">
-            <RadzenBadge Text="@($"{CompletedCount}/{TotalCount}")"
+            <RadzenBadge Text="@($"{CompletedCount} of {TotalCount} Finalized")"
                         BadgeStyle="@GetProgressBadgeStyle()"
-                        Class="px-3 py-2" />
+                        Class="px-3 py-2"
+                        data-toggle="tooltip"
+                        title="@($"{CompletedCount} questionnaires finalized out of {TotalCount} total assignments")" />
         </div>
     </div>
 
     @if (Assignments.Any())
     {
-        <div class="assignments-summary mb-3">
-            <div class="row g-2">
-                <div class="col-3 text-center">
-                    <div class="stat-box p-2 border rounded">
-                        <RadzenText TextStyle="TextStyle.H6" Class="text-warning mb-1">@PendingCount</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Pending</RadzenText>
-                    </div>
-                </div>
-                <div class="col-3 text-center">
-                    <div class="stat-box p-2 border rounded">
-                        <RadzenText TextStyle="TextStyle.H6" Class="text-info mb-1">@InProgressCount</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">In Progress</RadzenText>
-                    </div>
-                </div>
-                <div class="col-3 text-center">
-                    <div class="stat-box p-2 border rounded">
-                        <RadzenText TextStyle="TextStyle.H6" Class="text-success mb-1">@CompletedCount</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Completed</RadzenText>
-                    </div>
-                </div>
-                <div class="col-3 text-center">
-                    <div class="stat-box p-2 border rounded">
-                        <RadzenText TextStyle="TextStyle.H6" Class="text-danger mb-1">@OverdueCount</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overdue</RadzenText>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Progress Bar -->
+        <!-- Simplified Summary Line -->
         <div class="mb-3">
-            <div class="d-flex justify-content-between mb-1">
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overall Progress</RadzenText>
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@ProgressPercentage%</RadzenText>
+            <div class="d-flex align-items-center gap-3 flex-wrap">
+                @if (OverdueCount > 0)
+                {
+                    <RadzenBadge Text="@($"⚠️ {OverdueCount} Overdue")"
+                                BadgeStyle="BadgeStyle.Danger"
+                                Class="px-2 py-1" />
+                }
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">
+                    <RadzenIcon Icon="task_alt" Style="font-size: 0.875rem;" Class="text-success me-1" />
+                    @CompletedCount Finalized
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">
+                    <RadzenIcon Icon="pending_actions" Style="font-size: 0.875rem;" Class="text-info me-1" />
+                    @InProgressCount In Progress
+                </RadzenText>
+                @if (PendingCount > 0)
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">
+                        <RadzenIcon Icon="schedule" Style="font-size: 0.875rem;" Class="text-warning me-1" />
+                        @PendingCount Not Started
+                    </RadzenText>
+                }
             </div>
-            <RadzenProgressBar Value="@ProgressPercentage" ShowValue="false" Style="height: 8px;" />
         </div>
 
         <!-- Assignments List - Always Visible, Aligned with Questionnaire View -->
@@ -78,10 +69,8 @@
             <div class="assignment-details-list">
                 @foreach (var assignment in Assignments.Take(10))
                 {
-                    <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetBorderClass(assignment)"
-                         style="cursor: pointer;"
-                         @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
-                        <div class="flex-grow-1">
+                    <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetBorderClass(assignment)">
+                        <div class="flex-grow-1" style="cursor: pointer;" @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
                             <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
                                 <RadzenIcon Icon="description" Style="font-size: 0.875rem;" Class="me-1" />
                                 @assignment.TemplateName
@@ -98,10 +87,22 @@
                                 </RadzenText>
                             }
                         </div>
-                        <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
-                                    BadgeStyle="BadgeStyle.Light"
-                                    Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")"
-                                    Class="ms-2" />
+                        <div class="d-flex align-items-center gap-2">
+                            <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
+                                        BadgeStyle="BadgeStyle.Light"
+                                        Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
+                            @if (OnSendReminder.HasDelegate && assignment.WorkflowState != WorkflowState.Finalized)
+                            {
+                                <RadzenButton Icon="notifications"
+                                            ButtonStyle="ButtonStyle.Secondary"
+                                            Size="ButtonSize.Small"
+                                            Variant="Variant.Outlined"
+                                            Click="@((args) => OnSendReminderForAssignment(assignment))"
+                                            title="Send reminder for this questionnaire"
+                                            @onclick:stopPropagation="true"
+                                            Style="min-width: 32px; padding: 4px 8px;" />
+                            }
+                        </div>
                     </div>
                 }
                 @if (Assignments.Count > 10)
@@ -112,18 +113,6 @@
                 }
             </div>
         </div>
-
-        <!-- Action Buttons -->
-        @if (OnSendReminder.HasDelegate && (PendingCount > 0 || InProgressCount > 0))
-        {
-            <div class="d-flex gap-2 mt-3">
-                <RadzenButton Text="Send Reminder"
-                             Icon="notifications"
-                             ButtonStyle="ButtonStyle.Secondary"
-                             Size="ButtonSize.Small"
-                             Click="@(() => OnSendReminder.InvokeAsync(TeamMember))" />
-            </div>
-        }
     }
     else
     {
@@ -141,16 +130,21 @@
     [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
 
     private int TotalCount => Assignments.Count;
-    // Completed: BothSubmitted onwards (includes review and finalized states)
-    private int CompletedCount => Assignments.Count(a =>
-        a.WorkflowState is WorkflowState.BothSubmitted or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed
-        or WorkflowState.ManagerReviewConfirmed or WorkflowState.Finalized);
+    // Completed: ONLY Finalized state (consistent with employee view)
+    private int CompletedCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
     // Pending: Just assigned, not started yet
     private int PendingCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Assigned);
-    // In Progress: Work started but not both submitted (includes submission states where one party submitted)
+    // In Progress: Work started but not finalized (includes all working, submitted, and review states)
     private int InProgressCount => Assignments.Count(a =>
-        a.WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress
-        or WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted);
+        a.WorkflowState is WorkflowState.EmployeeInProgress
+        or WorkflowState.ManagerInProgress
+        or WorkflowState.BothInProgress
+        or WorkflowState.EmployeeSubmitted
+        or WorkflowState.ManagerSubmitted
+        or WorkflowState.BothSubmitted
+        or WorkflowState.InReview
+        or WorkflowState.EmployeeReviewConfirmed
+        or WorkflowState.ManagerReviewConfirmed);
     private int OverdueCount => Assignments.Count(a =>
         a.DueDate.HasValue &&
         a.DueDate.Value < DateTime.Now &&
@@ -200,5 +194,12 @@
         if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
             return "text-danger fw-bold";
         return "text-muted";
+    }
+
+    private async Task OnSendReminderForAssignment(QuestionnaireAssignment assignment)
+    {
+        // Invoke the reminder callback with the employee for this specific assignment
+        // The parent component will handle showing the message
+        await OnSendReminder.InvokeAsync(TeamMember);
     }
 }
