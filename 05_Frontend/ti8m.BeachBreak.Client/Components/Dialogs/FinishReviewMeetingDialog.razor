@@ -3,52 +3,10 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inject DialogService DialogService
 
-<style>
-    .finish-review-dialog {
-        padding: 1.5rem;
-        min-width: 550px;
-    }
-
-    .review-header {
-        background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .info-section {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-left: 4px solid #4CAF50;
-    }
-
-    .summary-section {
-        margin-bottom: 1rem;
-    }
-
-    .dialog-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid #e9ecef;
-    }
-
-    .icon-box {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-</style>
-
-<div class="finish-review-dialog">
-    <div class="review-header">
+<div class="dialog-container">
+    <div class="dialog-review-info success">
         <div class="text-center">
-            <RadzenIcon Icon="event_available" Style="font-size: 3rem; margin-bottom: 1rem;" />
+            <RadzenIcon Icon="event_available" Class="dialog-header-icon" />
             <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
                 Finish Review Meeting
             </RadzenText>
@@ -75,7 +33,7 @@
         </ul>
     </div>
 
-    <div class="summary-section">
+    <div class="dialog-content-section">
         <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
             Review Summary (Optional)
         </RadzenText>

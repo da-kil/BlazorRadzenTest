@@ -3,52 +3,10 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inject DialogService DialogService
 
-<style>
-    .confirm-review-dialog {
-        padding: 1.5rem;
-        min-width: 500px;
-    }
-
-    .review-info {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-    }
-
-    .info-section {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        border-left: 4px solid #667eea;
-    }
-
-    .comments-section {
-        margin-bottom: 1rem;
-    }
-
-    .dialog-actions {
-        display: flex;
-        justify-content: flex-end;
-        gap: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid #e9ecef;
-    }
-
-    .icon-box {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
-    }
-</style>
-
-<div class="confirm-review-dialog">
-    <div class="review-info">
+<div class="dialog-container">
+    <div class="dialog-review-info">
         <div class="text-center">
-            <RadzenIcon Icon="verified" Style="font-size: 3rem; margin-bottom: 1rem;" />
+            <RadzenIcon Icon="verified" Class="dialog-header-icon" />
             <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
                 Employee Sign-Off
             </RadzenText>
@@ -75,7 +33,7 @@
         </ul>
     </div>
 
-    <div class="comments-section">
+    <div class="dialog-content-section">
         <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
             Comments (Optional)
         </RadzenText>

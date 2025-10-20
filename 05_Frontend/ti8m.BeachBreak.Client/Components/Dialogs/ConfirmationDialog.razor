@@ -2,45 +2,6 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Components.Shared
 
-<style>
-    .confirmation-dialog {
-        max-width: 450px;
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-
-    .dialog-header {
-        background: linear-gradient(135deg, var(--danger-color), var(--danger-color-dark));
-        color: white;
-        padding: 1.5rem;
-        border-radius: 12px 12px 0 0;
-        margin: -1.5rem -1.5rem 1rem -1.5rem;
-    }
-
-    .dialog-header.warning {
-        background: linear-gradient(135deg, var(--warning-color), var(--warning-color-dark));
-    }
-
-    .dialog-header.info {
-        background: linear-gradient(135deg, var(--info-color), var(--info-color-dark));
-    }
-
-    .warning-icon {
-        font-size: 3rem;
-        color: rgba(255, 255, 255, 0.9);
-        margin-bottom: 0.5rem;
-    }
-
-    :root {
-        --danger-color: #dc3545;
-        --danger-color-dark: #c82333;
-        --warning-color: #fd7e14;
-        --warning-color-dark: #e8690b;
-        --info-color: #0f69ff;
-        --info-color-dark: #0056d1;
-    }
-</style>
-
 <BaseDialog TModel="object"
             @bind-IsVisible="@isVisible"
             Title=""
@@ -49,10 +10,10 @@
             Width="450px"
             ShowCloseIcon="false">
     <Content>
-        <div class="confirmation-dialog">
+        <div class="dialog-container">
             <div class="dialog-header @GetHeaderClass()">
                 <div class="text-center">
-                    <RadzenIcon Icon="@GetHeaderIcon()" Class="warning-icon" />
+                    <RadzenIcon Icon="@GetHeaderIcon()" Class="dialog-header-icon" />
                     <RadzenText TextStyle="TextStyle.H5" Class="mb-0">@Title</RadzenText>
                 </div>
             </div>

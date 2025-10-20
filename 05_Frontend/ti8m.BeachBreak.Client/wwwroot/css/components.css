@@ -723,3 +723,163 @@
         color: #fff;
     }
 }
+
+/* =============================================
+   DIALOG COMPONENTS - Common Patterns
+   Extracted from inline styles across dialog components
+   ============================================= */
+
+/* Dialog Container */
+.dialog-container {
+    padding: 1.5rem;
+    min-width: 450px;
+}
+
+/* Dialog Headers */
+.dialog-header {
+    background: linear-gradient(135deg, var(--danger-color), var(--danger-color-dark));
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px 12px 0 0;
+    margin: -1.5rem -1.5rem 1rem -1.5rem;
+    text-align: center;
+}
+
+.dialog-header.warning {
+    background: linear-gradient(135deg, var(--warning-color), var(--warning-color-dark));
+}
+
+.dialog-header.info {
+    background: linear-gradient(135deg, var(--info-color), var(--info-color-dark));
+}
+
+.dialog-header.success {
+    background: linear-gradient(135deg, #4CAF50, #45a049);
+}
+
+.dialog-header.primary {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-color-dark));
+}
+
+/* Dialog Header Icon */
+.dialog-header-icon {
+    font-size: 3rem;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 0.5rem;
+}
+
+/* Dialog Actions (Footer buttons) */
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    margin-top: 1.5rem;
+}
+
+/* Info/Warning Sections */
+.info-section {
+    background: var(--background-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    border-left: 4px solid var(--primary-color);
+}
+
+.info-section.warning {
+    border-left-color: var(--warning-color);
+    background: var(--warning-color-bg);
+}
+
+.info-section.success {
+    border-left-color: var(--success-color);
+    background: var(--success-color-bg);
+}
+
+/* Icon Box (Icon + Text combo) */
+.icon-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Dialog Content Sections */
+.dialog-content-section {
+    margin-bottom: 1.5rem;
+}
+
+.dialog-content-section:last-child {
+    margin-bottom: 0;
+}
+
+/* Summary/Comments Sections */
+.dialog-summary-section {
+    margin-bottom: 1rem;
+}
+
+.dialog-summary-section textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.dialog-summary-section .character-count {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    text-align: right;
+}
+
+/* Dialog Review Info */
+.dialog-review-info {
+    background: linear-gradient(135deg, var(--secondary-gradient-start) 0%, var(--secondary-gradient-end) 100%);
+    color: white;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    text-align: center;
+}
+
+.dialog-review-info.success {
+    background: linear-gradient(135deg, var(--success-gradient-start) 0%, var(--success-gradient-end) 100%);
+}
+
+.dialog-review-info.warning {
+    background: linear-gradient(135deg, var(--warning-gradient-start) 0%, var(--warning-gradient-end) 100%);
+}
+
+.dialog-review-info.info {
+    background: linear-gradient(135deg, var(--info-gradient-start) 0%, var(--info-gradient-end) 100%);
+}
+
+.dialog-review-info.danger {
+    background: linear-gradient(135deg, var(--danger-gradient-start) 0%, var(--danger-gradient-end) 100%);
+}
+
+/* Dialog List Items */
+.dialog-info-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.5rem 0 0 0;
+}
+
+.dialog-info-list li {
+    padding: 0.25rem 0;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.dialog-info-list li::before {
+    content: "•";
+    position: absolute;
+    left: 0.5rem;
+    color: currentColor;
+    font-weight: bold;
+    opacity: 0.7;
+}
