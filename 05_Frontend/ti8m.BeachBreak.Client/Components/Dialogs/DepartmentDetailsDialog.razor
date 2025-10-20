@@ -607,144 +607,18 @@
 }
 
 <style>
+    /* Component-specific styles */
     .department-details-dialog {
         min-width: 900px;
         max-width: 1200px;
-    }
-
-    .department-icon-large {
-        width: 80px;
-        height: 80px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, var(--light-blue), var(--primary-color));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .stats-card {
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        padding: 1.5rem;
-        transition: all 0.3s ease;
-    }
-
-    .stats-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    .stats-employees {
-        border-left: 4px solid var(--primary-color);
-    }
-
-    .stats-assignments {
-        border-left: 4px solid var(--info-color);
-    }
-
-    .stats-completed {
-        border-left: 4px solid var(--success-color);
-    }
-
-    .stats-progress {
-        border-left: 4px solid var(--purple-rain);
     }
 
     .text-purple {
         color: var(--purple-rain) !important;
     }
 
-    .department-performance-overview {
-        background: linear-gradient(135deg, rgba(15, 105, 255, 0.05), rgba(0, 230, 200, 0.05));
-        border: 1px solid rgba(15, 105, 255, 0.1);
-    }
-
-    .employee-card {
-        border: 1px solid #e9ecef;
-        transition: all 0.3s ease;
-        border-radius: 12px;
-        padding: 1rem;
-    }
-
-    .employee-card:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    .employee-normal {
-        border-left: 4px solid var(--primary-color);
-    }
-
-    .employee-completed {
-        border-left: 4px solid var(--success-color);
-        background: linear-gradient(135deg, rgba(0, 230, 200, 0.02), rgba(0, 230, 200, 0.05));
-    }
-
-    .employee-overdue {
-        border-left: 4px solid var(--danger-color);
-        background: linear-gradient(135deg, rgba(240, 128, 128, 0.02), rgba(240, 128, 128, 0.05));
-    }
-
-    .employee-avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--light-blue), var(--primary-color));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto;
-    }
-
-    .performer-avatar {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--light-blue), var(--primary-color));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .assignment-summary-card {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 1rem;
-        height: 100%;
-    }
-
     .category-stats-card {
-        border: 1px solid #e9ecef;
-        border-radius: 12px;
-        border-left: 4px solid var(--purple-rain);
-    }
-
-    .insights-list .insight-item {
-        display: flex;
-        align-items: flex-start;
-        padding: 0.5rem;
-        border-radius: 6px;
-        background: rgba(248, 249, 250, 0.3);
-    }
-
-    .metric-item {
-        padding: 0.75rem;
-        background: rgba(248, 249, 250, 0.5);
-        border-radius: 8px;
-        border-left: 3px solid var(--primary-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .trend-chart-placeholder {
-        height: 200px;
-        background: rgba(248, 249, 250, 0.5);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px dashed #ddd;
+        border-left-color: var(--purple-rain);
     }
 
     @@media (max-width: 768px) {
@@ -763,3 +637,4 @@
         }
     }
 </style>
+<!-- Shared dashboard patterns loaded from dashboard-patterns.css -->

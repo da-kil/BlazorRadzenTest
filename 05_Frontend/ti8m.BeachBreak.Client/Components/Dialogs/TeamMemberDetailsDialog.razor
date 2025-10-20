@@ -498,133 +498,10 @@
 }
 
 <style>
+    /* Component-specific styles */
     .team-member-details-dialog {
         min-width: 800px;
         max-width: 1000px;
-    }
-
-    .member-avatar-large {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, var(--light-blue), var(--primary-color));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .stats-mini-card {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        padding: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .stats-mini-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    }
-
-    .performance-overview {
-        background: linear-gradient(135deg, rgba(15, 105, 255, 0.05), rgba(0, 230, 200, 0.05));
-        border: 1px solid rgba(15, 105, 255, 0.1);
-    }
-
-    .assignment-detail-card {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .assignment-detail-card:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-    }
-
-    .assignment-assigned {
-        border-left: 4px solid var(--primary-color);
-    }
-
-    .assignment-inprogress {
-        border-left: 4px solid var(--info-color);
-        background: linear-gradient(135deg, rgba(15, 105, 255, 0.02), rgba(15, 105, 255, 0.05));
-    }
-
-    .assignment-completed {
-        border-left: 4px solid var(--success-color);
-        background: linear-gradient(135deg, rgba(0, 230, 200, 0.02), rgba(0, 230, 200, 0.05));
-    }
-
-    .assignment-overdue {
-        border-left: 4px solid var(--danger-color);
-        background: linear-gradient(135deg, rgba(240, 128, 128, 0.02), rgba(240, 128, 128, 0.05));
-    }
-
-    .assignment-timeline {
-        background: rgba(248, 249, 250, 0.5);
-        border-radius: 6px;
-        padding: 1rem;
-        margin-top: 1rem;
-    }
-
-    .timeline {
-        position: relative;
-        padding-left: 2rem;
-    }
-
-    .timeline::before {
-        content: '';
-        position: absolute;
-        left: 1rem;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: linear-gradient(to bottom, var(--primary-color), var(--light-blue));
-    }
-
-    .timeline-item {
-        position: relative;
-        margin-bottom: 1.5rem;
-    }
-
-    .timeline-marker {
-        position: absolute;
-        left: -2rem;
-        top: 0.5rem;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .timeline-completed {
-        background: var(--success-color);
-        color: white;
-    }
-
-    .timeline-overdue {
-        background: var(--danger-color);
-        color: white;
-    }
-
-    .timeline-inprogress {
-        background: var(--info-color);
-        color: white;
-    }
-
-    .timeline-assigned {
-        background: var(--primary-color);
-        color: white;
-    }
-
-    .timeline-card {
-        margin-left: 1rem;
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
     }
 
     @@media (max-width: 768px) {
@@ -643,3 +520,4 @@
         }
     }
 </style>
+<!-- Shared dashboard patterns loaded from dashboard-patterns.css -->

@@ -1,0 +1,421 @@
+/*
+ * Dashboard Patterns - Shared CSS for Dashboard Components
+ * Consolidates metric cards, performance sections, and timeline patterns
+ */
+
+/* ========================================
+   Metric & Stats Cards
+   ======================================== */
+
+/* Primary metric card with gradient animation */
+.metric-card {
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* Standard stats card */
+.stats-card {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    transition: all var(--transition-normal);
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Stats card with colored left border variants */
+.stats-employees {
+    border-left: 4px solid var(--primary-color);
+}
+
+.stats-assignments,
+.stats-assigned {
+    border-left: 4px solid var(--info-color);
+}
+
+.stats-completed {
+    border-left: 4px solid var(--success-color);
+}
+
+.stats-progress,
+.stats-rate {
+    border-left: 4px solid var(--info-color);
+}
+
+.stats-time {
+    border-left: 4px solid var(--warning-color);
+}
+
+/* Mini stats card */
+.stats-mini-card {
+    text-align: center;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.stats-mini-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Small metric display (inline) */
+.metric-small {
+    text-align: center;
+    padding: var(--spacing-sm);
+    background: var(--background-light);
+    border-radius: var(--radius-md);
+}
+
+/* Inline metric (horizontal layout) */
+.metric-inline {
+    text-align: center;
+    min-width: 80px;
+}
+
+/* Status card (simple) */
+.status-card {
+    transition: transform var(--transition-fast);
+}
+
+.status-card:hover {
+    transform: translateY(-2px);
+}
+
+/* ========================================
+   Performance Overview Sections
+   ======================================== */
+
+.performance-overview,
+.department-performance-overview {
+    background: linear-gradient(135deg, rgba(15, 105, 255, 0.05), rgba(0, 230, 200, 0.05));
+    border: 1px solid rgba(15, 105, 255, 0.1);
+}
+
+.performance-analysis {
+    background: linear-gradient(135deg, rgba(147, 91, 169, 0.05), rgba(15, 105, 255, 0.05));
+    border: 1px solid rgba(147, 91, 169, 0.1);
+}
+
+/* ========================================
+   Team Member & Employee Cards
+   ======================================== */
+
+.team-member-card,
+.employee-card {
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-normal);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-md);
+}
+
+.team-member-card:hover,
+.employee-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.team-member-card {
+    border-left: 4px solid var(--primary-color);
+}
+
+/* Employee card state variants */
+.employee-normal {
+    border-left: 4px solid var(--primary-color);
+}
+
+.employee-completed {
+    border-left: 4px solid var(--success-color);
+    background: linear-gradient(135deg, rgba(0, 230, 200, 0.02), rgba(0, 230, 200, 0.05));
+}
+
+.employee-overdue {
+    border-left: 4px solid var(--danger-color);
+    background: linear-gradient(135deg, rgba(240, 128, 128, 0.02), rgba(240, 128, 128, 0.05));
+}
+
+/* ========================================
+   Assignment Cards
+   ======================================== */
+
+.assignment-detail-card,
+.assignment-analytics-card,
+.assignment-summary-card {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+}
+
+.assignment-detail-card:hover,
+.assignment-analytics-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.assignment-summary-card {
+    padding: var(--spacing-md);
+    height: 100%;
+}
+
+/* Assignment state variants */
+.assignment-assigned,
+.assignment-active {
+    border-left: 4px solid var(--primary-color);
+}
+
+.assignment-inprogress {
+    border-left: 4px solid var(--info-color);
+    background: linear-gradient(135deg, rgba(15, 105, 255, 0.02), rgba(15, 105, 255, 0.05));
+}
+
+.assignment-completed {
+    border-left: 4px solid var(--success-color);
+    background: linear-gradient(135deg, rgba(0, 230, 200, 0.02), rgba(0, 230, 200, 0.05));
+}
+
+.assignment-overdue {
+    border-left: 4px solid var(--danger-color);
+    background: linear-gradient(135deg, rgba(240, 128, 128, 0.02), rgba(240, 128, 128, 0.05));
+}
+
+/* ========================================
+   Assignment Timeline
+   ======================================== */
+
+.assignment-timeline {
+    background: rgba(248, 249, 250, 0.5);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-top: var(--spacing-md);
+}
+
+.assignment-timeline .timeline-item {
+    flex: 1;
+    min-width: 80px;
+}
+
+/* ========================================
+   Timeline Component
+   ======================================== */
+
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--primary-color), var(--primary-color-light));
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: var(--spacing-lg);
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    top: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--background-color);
+    box-shadow: var(--shadow-md);
+}
+
+/* Timeline marker state variants */
+.timeline-completed {
+    background: var(--success-color);
+    color: var(--text-white);
+}
+
+.timeline-overdue {
+    background: var(--danger-color);
+    color: var(--text-white);
+}
+
+.timeline-inprogress {
+    background: var(--info-color);
+    color: var(--text-white);
+}
+
+.timeline-assigned {
+    background: var(--primary-color);
+    color: var(--text-white);
+}
+
+.timeline-card {
+    margin-left: var(--spacing-md);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+}
+
+/* ========================================
+   Department & Category Cards
+   ======================================== */
+
+.department-breakdown-card,
+.category-stats-card {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    border-left: 4px solid var(--primary-color);
+}
+
+/* ========================================
+   Avatars
+   ======================================== */
+
+.member-avatar-large,
+.department-icon-large,
+.questionnaire-icon-large {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(135deg, var(--primary-color-light), var(--primary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.employee-avatar,
+.member-avatar-large {
+    border-radius: 50%;
+}
+
+.employee-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-color-light), var(--primary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.performer-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color-light), var(--primary-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ========================================
+   Insights & Statistics
+   ======================================== */
+
+.insights-list .insight-item {
+    display: flex;
+    align-items: flex-start;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    background: rgba(248, 249, 250, 0.3);
+}
+
+.statistics-list .statistic-item,
+.metric-item {
+    padding: var(--spacing-md);
+    background: rgba(248, 249, 250, 0.5);
+    border-radius: var(--radius-lg);
+    border-left: 3px solid var(--primary-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.statistics-list .statistic-item {
+    margin-bottom: var(--spacing-md);
+}
+
+.metric-item {
+    margin-bottom: var(--spacing-md);
+}
+
+/* ========================================
+   Completion Info
+   ======================================== */
+
+.completion-info {
+    background: rgba(0, 230, 200, 0.1);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-sm);
+    text-align: center;
+}
+
+/* ========================================
+   Grid Layouts
+   ======================================== */
+
+.assignments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-md);
+}
+
+/* ========================================
+   Placeholder Elements
+   ======================================== */
+
+.trend-chart-placeholder {
+    height: 200px;
+    background: rgba(248, 249, 250, 0.5);
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--border-color);
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+    .assignments-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .assignment-timeline {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .assignment-timeline .timeline-item {
+        min-width: unset;
+    }
+}
