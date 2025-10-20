@@ -114,11 +114,17 @@
 
     protected override bool HasStateChanged()
     {
+        // For filteredTeamMembers, track the actual list to detect order changes during sorting
+        // (tracking count alone won't detect sort order changes)
+        var filteredMembersIdentity = filteredTeamMembers.Count > 0
+            ? string.Join(",", filteredTeamMembers.Select(m => m.Id))
+            : "";
+
         return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
                HasParameterChanged(nameof(isLoading), isLoading) ||
                HasParameterChanged(nameof(isLoadingMore), isLoadingMore) ||
                HasParameterChanged(nameof(selectedTabIndex), selectedTabIndex) ||
-               HasParameterChanged(nameof(filteredTeamMembers), filteredTeamMembers.Count) ||
+               HasParameterChanged(nameof(filteredTeamMembers), filteredMembersIdentity) ||
                HasParameterChanged(nameof(statusFilter), statusFilter) ||
                HasParameterChanged(nameof(templateFilter), templateFilter?.ToString() ?? "") ||
                HasParameterChanged(nameof(teamMemberSortBy), teamMemberSortBy) ||
