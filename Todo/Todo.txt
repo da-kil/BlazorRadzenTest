@@ -1,21 +1,11 @@
 Goal übernehmen
-Questionnaires ohne review Prozess
+
 HR Funktionalitäten prüfen
 
 Dashboard Inhalt ist noch nicht korrekt
 
-
--> should be solve -> test
-Template:
-{
-                "order": 1,
-                "title": "Gibt es Bereiche, in denen sich dein/e Vorgesetzte/n verbessern könnte? Wo benötigst du mehr Unterstützung von deinem/r Vorgesetzten?",
-                "isRequired": false,
-                "description": ""
-              }
-
-
-
 CSS in pages/components
 
-should we store Enum values as int instead of string?
+my questionnaires:
+- current, upcoming, completed tabs funktionieren nicht
+

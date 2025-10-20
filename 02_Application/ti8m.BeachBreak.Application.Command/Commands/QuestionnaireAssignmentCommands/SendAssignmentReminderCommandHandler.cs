@@ -1,18 +1,22 @@
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Repositories;
+using ti8m.BeachBreak.Core.Infrastructure.Services;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
 public class SendAssignmentReminderCommandHandler : ICommandHandler<SendAssignmentReminderCommand, Result>
 {
     private readonly IQuestionnaireAssignmentAggregateRepository repository;
+    private readonly INotificationService notificationService;
     private readonly ILogger<SendAssignmentReminderCommandHandler> logger;
 
     public SendAssignmentReminderCommandHandler(
         IQuestionnaireAssignmentAggregateRepository repository,
+        INotificationService notificationService,
         ILogger<SendAssignmentReminderCommandHandler> logger)
     {
         this.repository = repository;
+        this.notificationService = notificationService;
         this.logger = logger;
     }
 
@@ -23,7 +27,7 @@ public class SendAssignmentReminderCommandHandler : ICommandHandler<SendAssignme
             logger.LogInformation("Sending reminder for assignment {AssignmentId} by {SentByEmployeeId}",
                 command.AssignmentId, command.SentByEmployeeId);
 
-            // Load the assignment to ensure it exists
+            // Load the assignment to get employee details
             var assignment = await repository.LoadAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
                 command.AssignmentId,
                 cancellationToken: cancellationToken);
@@ -34,15 +38,37 @@ public class SendAssignmentReminderCommandHandler : ICommandHandler<SendAssignme
                 return Result.Fail($"Assignment {command.AssignmentId} not found", 404);
             }
 
-            // TODO: Implement actual notification service integration
-            // For now, we just log the reminder
-            // In production, this would:
-            // 1. Send email notification to employee
-            // 2. Create in-app notification
-            // 3. Track reminder history
+            // Validate assignment is not already completed or withdrawn
+            if (assignment.IsWithdrawn)
+            {
+                logger.LogWarning("Cannot send reminder for withdrawn assignment {AssignmentId}", command.AssignmentId);
+                return Result.Fail("Cannot send reminder for withdrawn assignment", 400);
+            }
 
-            logger.LogInformation("Reminder sent successfully for assignment {AssignmentId}. Message: {Message}",
-                command.AssignmentId, command.Message);
+            if (assignment.CompletedDate.HasValue)
+            {
+                logger.LogWarning("Cannot send reminder for completed assignment {AssignmentId}", command.AssignmentId);
+                return Result.Fail("Cannot send reminder for completed assignment", 400);
+            }
+
+            // Send notification to employee
+            var subject = "Reminder: Questionnaire Assignment";
+            var notificationSent = await notificationService.SendNotificationAsync(
+                assignment.EmployeeEmail,
+                subject,
+                command.Message,
+                cancellationToken);
+
+            if (!notificationSent)
+            {
+                logger.LogError("Failed to send reminder notification for assignment {AssignmentId} to {Email}",
+                    command.AssignmentId, assignment.EmployeeEmail);
+                return Result.Fail("Failed to send reminder notification", 500);
+            }
+
+            logger.LogInformation(
+                "Reminder sent successfully for assignment {AssignmentId} to {EmployeeName} ({Email}). Message: {Message}",
+                command.AssignmentId, assignment.EmployeeName, assignment.EmployeeEmail, command.Message);
 
             return Result.Success("Reminder sent successfully");
         }

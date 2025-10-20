@@ -10,17 +10,20 @@ public class EmployeeQueryHandler :
     IQueryHandler<EmployeeQuery, Result<Employee?>>
 {
     private readonly IEmployeeRepository repository;
+    private readonly IOrganizationRepository organizationRepository;
     private readonly ILogger<EmployeeQueryHandler> logger;
     private readonly IHttpContextAccessor httpContextAccessor;
     private readonly EmployeeVisibilityService visibilityService;
 
     public EmployeeQueryHandler(
         IEmployeeRepository repository,
+        IOrganizationRepository organizationRepository,
         ILogger<EmployeeQueryHandler> logger,
         IHttpContextAccessor httpContextAccessor,
         EmployeeVisibilityService visibilityService)
     {
         this.repository = repository;
+        this.organizationRepository = organizationRepository;
         this.logger = logger;
         this.httpContextAccessor = httpContextAccessor;
         this.visibilityService = visibilityService;
@@ -66,6 +69,39 @@ public class EmployeeQueryHandler :
                 filteredEmployees = filteredEmployees.Where(e => e.ManagerId == managerIdStr);
             }
 
+            // Collect all unique manager IDs for batch lookup
+            var managerIds = filteredEmployees
+                .Where(e => !string.IsNullOrEmpty(e.ManagerId))
+                .Select(e => Guid.Parse(e.ManagerId!))
+                .Distinct()
+                .ToList();
+
+            // Batch fetch manager names
+            var managerLookup = new Dictionary<Guid, string>();
+            if (managerIds.Any())
+            {
+                var managers = await repository.GetEmployeesAsync(cancellationToken: cancellationToken);
+                managerLookup = managers
+                    .Where(m => managerIds.Contains(m.Id))
+                    .ToDictionary(m => m.Id, m => $"{m.FirstName} {m.LastName}");
+            }
+
+            // Collect all unique organization numbers for batch lookup
+            var organizationNumbers = filteredEmployees
+                .Select(e => e.OrganizationNumber)
+                .Distinct()
+                .ToList();
+
+            // Batch fetch organization names
+            var organizationLookup = new Dictionary<int, string>();
+            if (organizationNumbers.Any())
+            {
+                var organizations = await organizationRepository.GetAllOrganizationsAsync(includeDeleted: false, includeIgnored: false, cancellationToken);
+                organizationLookup = organizations
+                    .Where(o => !string.IsNullOrEmpty(o.Number) && int.TryParse(o.Number, out _))
+                    .ToDictionary(o => int.Parse(o.Number), o => o.Name);
+            }
+
             // Map to Employee query model
             var employees = filteredEmployees.Select(e => new Employee
             {
@@ -78,11 +114,12 @@ public class EmployeeQueryHandler :
                 EndDate = e.EndDate,
                 LastStartDate = e.LastStartDate,
                 ManagerId = string.IsNullOrEmpty(e.ManagerId) ? null : Guid.Parse(e.ManagerId),
-                Manager = e.ManagerId ?? string.Empty, // TODO: Look up manager name
+                Manager = string.IsNullOrEmpty(e.ManagerId) ? string.Empty :
+                    (managerLookup.TryGetValue(Guid.Parse(e.ManagerId), out var managerName) ? managerName : string.Empty),
                 LoginName = e.LoginName,
                 EmployeeNumber = e.EmployeeId, // Using EmployeeId as EmployeeNumber
                 OrganizationNumber = e.OrganizationNumber,
-                Organization = string.Empty, // TODO: Look up organization name
+                Organization = organizationLookup.TryGetValue(e.OrganizationNumber, out var orgName) ? orgName : string.Empty,
                 IsDeleted = e.IsDeleted,
                 ApplicationRole = e.ApplicationRole
             }).ToList();
@@ -121,6 +158,31 @@ public class EmployeeQueryHandler :
 
             if (employeeReadModel != null)
             {
+                // Resolve manager name if manager ID exists
+                string managerName = string.Empty;
+                if (!string.IsNullOrEmpty(employeeReadModel.ManagerId))
+                {
+                    var managerId = Guid.Parse(employeeReadModel.ManagerId);
+                    var manager = await repository.GetEmployeeByIdAsync(managerId, cancellationToken);
+                    if (manager != null)
+                    {
+                        managerName = $"{manager.FirstName} {manager.LastName}";
+                    }
+                }
+
+                // Resolve organization name
+                string organizationName = string.Empty;
+                var organizations = await organizationRepository.GetAllOrganizationsAsync(includeDeleted: false, includeIgnored: false, cancellationToken);
+                var organization = organizations.FirstOrDefault(o =>
+                    !string.IsNullOrEmpty(o.Number) &&
+                    int.TryParse(o.Number, out var orgNum) &&
+                    orgNum == employeeReadModel.OrganizationNumber);
+
+                if (organization != null)
+                {
+                    organizationName = organization.Name;
+                }
+
                 var employee = new Employee
                 {
                     Id = employeeReadModel.Id,
@@ -132,11 +194,11 @@ public class EmployeeQueryHandler :
                     EndDate = employeeReadModel.EndDate,
                     LastStartDate = employeeReadModel.LastStartDate,
                     ManagerId = string.IsNullOrEmpty(employeeReadModel.ManagerId) ? null : Guid.Parse(employeeReadModel.ManagerId),
-                    Manager = employeeReadModel.ManagerId ?? string.Empty, // TODO: Look up manager name
+                    Manager = managerName,
                     LoginName = employeeReadModel.LoginName,
                     EmployeeNumber = employeeReadModel.EmployeeId, // Using EmployeeId as EmployeeNumber
                     OrganizationNumber = employeeReadModel.OrganizationNumber,
-                    Organization = string.Empty, // TODO: Look up organization name
+                    Organization = organizationName,
                     IsDeleted = employeeReadModel.IsDeleted,
                     ApplicationRole = employeeReadModel.ApplicationRole
                 };

@@ -5,6 +5,7 @@ using Marten.Events.Projections;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
 using ti8m.BeachBreak.Infrastructure.Marten.Projections;
 using ti8m.BeachBreak.Infrastructure.Marten.Services;
@@ -65,5 +66,8 @@ public static class Extensions
 
         // Register domain services
         builder.Services.AddScoped<IQuestionnaireAssignmentService, QuestionnaireAssignmentService>();
+
+        // Register notification service
+        builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
     }
 }
