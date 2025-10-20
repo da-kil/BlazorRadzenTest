@@ -135,9 +135,9 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
     }
 
     // Template status operations
-    public async Task<QuestionnaireTemplate?> PublishTemplateAsync(Guid templateId, string publishedBy)
+    public async Task<QuestionnaireTemplate?> PublishTemplateAsync(Guid templateId)
     {
-        return await PostActionAndRefetchAsync<string, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "publish", publishedBy, TemplateQueryEndpoint);
+        return await PostActionAndRefetchAsync<object, QuestionnaireTemplate>(TemplateCommandEndpoint, templateId, "publish", null, TemplateQueryEndpoint);
     }
 
     public async Task<QuestionnaireTemplate?> UnpublishTemplateAsync(Guid templateId)

@@ -24,7 +24,7 @@ public interface IQuestionnaireTemplateService
     Task<List<QuestionnaireTemplate>> GetAllPublishedTemplatesAsync();
 
     // Template status operations
-    Task<QuestionnaireTemplate?> PublishTemplateAsync(Guid templateId, string publishedBy);
+    Task<QuestionnaireTemplate?> PublishTemplateAsync(Guid templateId);
     Task<QuestionnaireTemplate?> UnpublishTemplateAsync(Guid templateId);
     Task<QuestionnaireTemplate?> ArchiveTemplateAsync(Guid templateId);
     Task<QuestionnaireTemplate?> RestoreTemplateAsync(Guid templateId);

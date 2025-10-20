@@ -104,7 +104,33 @@
                                 </RadzenDataGridColumn>
                                 
                                 <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CreatedDate)" Title="Created" Width="120px" FormatString="{0:dd/MM/yyyy}" />
-                                                                
+
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.LastPublishedDate)" Title="Published" Width="120px" FormatString="{0:dd/MM/yyyy}">
+                                    <Template Context="template">
+                                        @if (template.LastPublishedDate.HasValue)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2">@template.LastPublishedDate.Value.ToString("dd/MM/yyyy")</RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">-</RadzenText>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.PublishedByEmployeeName)" Title="Published By" Width="150px">
+                                    <Template Context="template">
+                                        @if (!string.IsNullOrEmpty(template.PublishedByEmployeeName))
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2">@template.PublishedByEmployeeName</RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">-</RadzenText>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+
                                 <RadzenDataGridColumn Filterable="false" Sortable="false" Width="240px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
                                         <div class="d-flex gap-1">
@@ -414,7 +440,7 @@
             NotificationService.Notify(NotificationSeverity.Info, "Publishing", "Publishing template...");
 
             // Call API to publish
-            var publishedTemplate = await ApiService.PublishTemplateAsync(template.Id, "");
+            var publishedTemplate = await ApiService.PublishTemplateAsync(template.Id);
 
             if (publishedTemplate != null)
             {

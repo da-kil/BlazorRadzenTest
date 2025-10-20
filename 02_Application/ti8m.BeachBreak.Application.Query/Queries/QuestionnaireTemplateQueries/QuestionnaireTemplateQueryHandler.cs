@@ -13,11 +13,16 @@ public class QuestionnaireTemplateQueryHandler :
     IQueryHandler<AssignableQuestionnaireTemplatesQuery, Result<IEnumerable<QuestionnaireTemplate>>>
 {
     private readonly IQuestionnaireTemplateRepository repository;
+    private readonly IEmployeeRepository employeeRepository;
     private readonly ILogger<QuestionnaireTemplateQueryHandler> logger;
 
-    public QuestionnaireTemplateQueryHandler(IQuestionnaireTemplateRepository repository, ILogger<QuestionnaireTemplateQueryHandler> logger)
+    public QuestionnaireTemplateQueryHandler(
+        IQuestionnaireTemplateRepository repository,
+        IEmployeeRepository employeeRepository,
+        ILogger<QuestionnaireTemplateQueryHandler> logger)
     {
         this.repository = repository;
+        this.employeeRepository = employeeRepository;
         this.logger = logger;
     }
 
@@ -28,9 +33,9 @@ public class QuestionnaireTemplateQueryHandler :
         try
         {
             var readModels = await repository.GetAllAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel).ToList();
+            var templates = await EnrichWithEmployeeNamesAsync(readModels, cancellationToken);
 
-            logger.LogQuestionnaireTemplateListQuerySucceeded(templates.Count);
+            logger.LogQuestionnaireTemplateListQuerySucceeded(templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -53,7 +58,8 @@ public class QuestionnaireTemplateQueryHandler :
                 return Result<QuestionnaireTemplate>.Fail($"Questionnaire template with ID {query.Id} not found", 404);
             }
 
-            var template = MapToQueryModel(readModel);
+            var templates = await EnrichWithEmployeeNamesAsync(new[] { readModel }, cancellationToken);
+            var template = templates.First();
             logger.LogQuestionnaireTemplateQuerySucceeded(query.Id);
             return Result<QuestionnaireTemplate>.Success(template);
         }
@@ -71,9 +77,9 @@ public class QuestionnaireTemplateQueryHandler :
         try
         {
             var readModels = await repository.GetPublishedAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel).ToList();
+            var templates = await EnrichWithEmployeeNamesAsync(readModels, cancellationToken);
 
-            logger.LogPublishedQuestionnaireTemplatesQuerySucceeded(templates.Count);
+            logger.LogPublishedQuestionnaireTemplatesQuerySucceeded(templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -90,9 +96,9 @@ public class QuestionnaireTemplateQueryHandler :
         try
         {
             var readModels = await repository.GetDraftAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel).ToList();
+            var templates = await EnrichWithEmployeeNamesAsync(readModels, cancellationToken);
 
-            logger.LogDraftQuestionnaireTemplatesQuerySucceeded(templates.Count);
+            logger.LogDraftQuestionnaireTemplatesQuerySucceeded(templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -109,9 +115,9 @@ public class QuestionnaireTemplateQueryHandler :
         try
         {
             var readModels = await repository.GetArchivedAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel).ToList();
+            var templates = await EnrichWithEmployeeNamesAsync(readModels, cancellationToken);
 
-            logger.LogArchivedQuestionnaireTemplatesQuerySucceeded(templates.Count);
+            logger.LogArchivedQuestionnaireTemplatesQuerySucceeded(templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -128,9 +134,9 @@ public class QuestionnaireTemplateQueryHandler :
         try
         {
             var readModels = await repository.GetAssignableAsync(cancellationToken);
-            var templates = readModels.Select(MapToQueryModel).ToList();
+            var templates = await EnrichWithEmployeeNamesAsync(readModels, cancellationToken);
 
-            logger.LogAssignableQuestionnaireTemplatesQuerySucceeded(templates.Count);
+            logger.LogAssignableQuestionnaireTemplatesQuerySucceeded(templates.Count());
             return Result<IEnumerable<QuestionnaireTemplate>>.Success(templates);
         }
         catch (Exception ex)
@@ -138,6 +144,53 @@ public class QuestionnaireTemplateQueryHandler :
             logger.LogAssignableQuestionnaireTemplatesQueryFailed(ex);
             return Result<IEnumerable<QuestionnaireTemplate>>.Fail($"Failed to retrieve assignable questionnaire templates: {ex.Message}", 500);
         }
+    }
+
+    /// <summary>
+    /// Enriches templates with employee names by looking up PublishedByEmployeeId.
+    /// Performs a single batch lookup for all unique employee IDs to minimize database queries.
+    /// </summary>
+    private async Task<IEnumerable<QuestionnaireTemplate>> EnrichWithEmployeeNamesAsync(
+        IEnumerable<QuestionnaireTemplateReadModel> readModels,
+        CancellationToken cancellationToken)
+    {
+        var readModelsList = readModels.ToList();
+        if (!readModelsList.Any())
+        {
+            return Enumerable.Empty<QuestionnaireTemplate>();
+        }
+
+        // Get unique employee IDs that need to be resolved
+        var employeeIds = readModelsList
+            .Where(rm => rm.PublishedByEmployeeId.HasValue)
+            .Select(rm => rm.PublishedByEmployeeId!.Value)
+            .Distinct()
+            .ToList();
+
+        // Batch fetch employees if there are any to fetch
+        var employeeLookup = new Dictionary<Guid, string>();
+        if (employeeIds.Any())
+        {
+            var employees = await employeeRepository.GetEmployeesAsync(cancellationToken: cancellationToken);
+            employeeLookup = employees
+                .Where(e => employeeIds.Contains(e.Id))
+                .ToDictionary(e => e.Id, e => $"{e.FirstName} {e.LastName}");
+        }
+
+        // Map and enrich
+        return readModelsList.Select(readModel =>
+        {
+            var template = MapToQueryModel(readModel);
+
+            // Resolve employee name
+            if (readModel.PublishedByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.PublishedByEmployeeId.Value, out var employeeName))
+            {
+                template.PublishedByEmployeeName = employeeName;
+            }
+
+            return template;
+        });
     }
 
     private static QuestionnaireTemplate MapToQueryModel(QuestionnaireTemplateReadModel readModel)
@@ -153,7 +206,7 @@ public class QuestionnaireTemplateQueryHandler :
             Status = readModel.Status,
             PublishedDate = readModel.PublishedDate,
             LastPublishedDate = readModel.LastPublishedDate,
-            PublishedBy = readModel.PublishedBy,
+            PublishedByEmployeeId = readModel.PublishedByEmployeeId,
             Sections = readModel.Sections
         };
     }

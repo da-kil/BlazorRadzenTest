@@ -6,6 +6,7 @@ public interface IQuestionnaireTemplateRepository : IRepository
 {
     Task<QuestionnaireTemplateReadModel?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<QuestionnaireTemplateReadModel>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<QuestionnaireTemplateReadModel>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default);
     Task<IEnumerable<QuestionnaireTemplateReadModel>> GetPublishedAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<QuestionnaireTemplateReadModel>> GetDraftAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<QuestionnaireTemplateReadModel>> GetArchivedAsync(CancellationToken cancellationToken = default);

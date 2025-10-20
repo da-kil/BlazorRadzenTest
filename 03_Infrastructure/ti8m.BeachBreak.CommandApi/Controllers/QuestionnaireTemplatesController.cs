@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -12,13 +13,16 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 public class QuestionnaireTemplatesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
+    private readonly UserContext userContext;
     private readonly ILogger<QuestionnaireTemplatesController> logger;
 
     public QuestionnaireTemplatesController(
         ICommandDispatcher commandDispatcher,
+        UserContext userContext,
         ILogger<QuestionnaireTemplatesController> logger)
     {
         this.commandDispatcher = commandDispatcher;
+        this.userContext = userContext;
         this.logger = logger;
     }
 
@@ -146,17 +150,19 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpPost("{id:guid}/publish")]
-    public async Task<IActionResult> PublishTemplate(Guid id, [FromBody] string publishedBy)
+    public async Task<IActionResult> PublishTemplate(Guid id)
     {
         try
         {
-            //Todo: replace
-            if (string.IsNullOrWhiteSpace(publishedBy))
+            // Extract publisher employee ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var publishedByEmployeeId))
             {
-                publishedBy = "Test";
+                logger.LogWarning("Cannot publish template {TemplateId}: unable to parse user ID from context", id);
+                return Unauthorized("User identity could not be determined");
             }
 
-            Result result = await commandDispatcher.SendAsync(new PublishQuestionnaireTemplateCommand(id, publishedBy));
+            // Pass employee ID to command (userContext.Id is the Azure AD object ID, which matches employee ID)
+            Result result = await commandDispatcher.SendAsync(new PublishQuestionnaireTemplateCommand(id, publishedByEmployeeId));
 
             return CreateResponse(result);
         }

@@ -13,7 +13,7 @@ public class QuestionnaireTemplateReadModel
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }
     public DateTime? LastPublishedDate { get; set; }
-    public string PublishedBy { get; set; } = string.Empty;
+    public Guid? PublishedByEmployeeId { get; set; }
     public List<QuestionSection> Sections { get; set; } = new();
     public DateTime CreatedDate { get; set; }
     public bool IsDeleted { get; set; }
@@ -63,7 +63,7 @@ public class QuestionnaireTemplateReadModel
     public void Apply(QuestionnaireTemplatePublished @event)
     {
         Status = TemplateStatus.Published;
-        PublishedBy = @event.PublishedBy;
+        PublishedByEmployeeId = @event.PublishedByEmployeeId;
         LastPublishedDate = @event.LastPublishedDate;
 
         if (PublishedDate == null)
@@ -73,7 +73,7 @@ public class QuestionnaireTemplateReadModel
     public void Apply(QuestionnaireTemplateUnpublishedToDraft @event)
     {
         Status = TemplateStatus.Draft;
-        PublishedBy = string.Empty;
+        PublishedByEmployeeId = null;
     }
 
     public void Apply(QuestionnaireTemplateArchived @event)
@@ -103,7 +103,7 @@ public class QuestionnaireTemplateReadModel
         CreatedDate = @event.CreatedDate;
         PublishedDate = null;
         LastPublishedDate = null;
-        PublishedBy = string.Empty;
+        PublishedByEmployeeId = null;
         IsDeleted = false;
     }
 

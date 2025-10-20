@@ -103,10 +103,8 @@ public class QuestionnaireAssignmentQueryHandler :
         var templateIds = readModelsList.Select(a => a.TemplateId).Distinct().ToList();
 
         // Fetch only the templates we need
-        var templates = await templateRepository.GetAllAsync(cancellationToken);
-        var templateLookup = templates
-            .Where(t => templateIds.Contains(t.Id))
-            .ToDictionary(t => t.Id, t => (t.Name, t.CategoryId));
+        var templates = await templateRepository.GetByIdsAsync(templateIds, cancellationToken);
+        var templateLookup = templates.ToDictionary(t => t.Id, t => (t.Name, t.CategoryId));
 
         // Map and enrich
         return readModelsList.Select(readModel =>

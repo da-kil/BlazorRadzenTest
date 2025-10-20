@@ -154,7 +154,7 @@ public class QuestionnaireTemplateCommandHandler :
     {
         try
         {
-            logger.LogPublishQuestionnaireTemplate(command.Id, command.PublishedBy);
+            logger.LogPublishQuestionnaireTemplate(command.Id, command.PublishedByEmployeeId.ToString());
 
             var questionnaireTemplate = await repository.LoadAsync<DomainQuestionnaireTemplate>(command.Id, cancellationToken: cancellationToken);
 
@@ -167,7 +167,8 @@ public class QuestionnaireTemplateCommandHandler :
             // Validate that section completion roles match review requirement before publishing
             questionnaireTemplate.ValidateSectionCompletionRoles();
 
-            questionnaireTemplate.Publish(command.PublishedBy);
+            // Pass employee ID directly to domain (now accepts Guid)
+            questionnaireTemplate.Publish(command.PublishedByEmployeeId);
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
 
             logger.LogQuestionnaireTemplatePublished(command.Id);

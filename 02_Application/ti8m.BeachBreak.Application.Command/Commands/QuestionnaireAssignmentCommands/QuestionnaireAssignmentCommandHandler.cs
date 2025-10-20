@@ -361,9 +361,12 @@ public class QuestionnaireAssignmentCommandHandler :
                         questionResponseStructure = deserialized;
                     }
                 }
-                catch
+                catch (System.Text.Json.JsonException jsonEx)
                 {
                     // If deserialization fails, keep as string (fallback for unexpected format)
+                    logger.LogWarning(jsonEx,
+                        "Failed to deserialize answer JSON for assignment {AssignmentId}, question {QuestionId}. Using string fallback.",
+                        command.AssignmentId, command.QuestionId);
                     questionResponseStructure = answerString;
                 }
             }

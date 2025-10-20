@@ -24,6 +24,18 @@ internal class QuestionnaireTemplateRepository(IDocumentStore store) : IQuestion
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<QuestionnaireTemplateReadModel>> GetByIdsAsync(IEnumerable<Guid> ids, CancellationToken cancellationToken = default)
+    {
+        if (ids == null || !ids.Any())
+            return Enumerable.Empty<QuestionnaireTemplateReadModel>();
+
+        var idList = ids.ToList();
+        using var session = await store.LightweightSerializableSessionAsync();
+        return await session.Query<QuestionnaireTemplateReadModel>()
+            .Where(x => idList.Contains(x.Id) && !x.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<IEnumerable<QuestionnaireTemplateReadModel>> GetPublishedAsync(CancellationToken cancellationToken = default)
     {
         using var session = await store.LightweightSerializableSessionAsync();

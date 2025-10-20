@@ -3,11 +3,11 @@
 public class PublishQuestionnaireTemplateCommand : ICommand<Result>
 {
     public Guid Id { get; init; }
-    public string PublishedBy { get; init; }
+    public Guid PublishedByEmployeeId { get; init; }
 
-    public PublishQuestionnaireTemplateCommand(Guid id, string publishedBy)
+    public PublishQuestionnaireTemplateCommand(Guid id, Guid publishedByEmployeeId)
     {
         Id = id;
-        PublishedBy = publishedBy;
+        PublishedByEmployeeId = publishedByEmployeeId;
     }
 }

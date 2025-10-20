@@ -14,7 +14,7 @@ public class QuestionnaireTemplate : AggregateRoot
     public TemplateStatus Status { get; private set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; private set; }
     public DateTime? LastPublishedDate { get; private set; }
-    public string PublishedBy { get; private set; } = string.Empty;
+    public Guid? PublishedByEmployeeId { get; private set; }
 
     public List<QuestionSection> Sections { get; private set; } = new();
 
@@ -117,10 +117,10 @@ public class QuestionnaireTemplate : AggregateRoot
     }
 
 
-    public void Publish(string publishedBy)
+    public void Publish(Guid publishedByEmployeeId)
     {
-        if (string.IsNullOrWhiteSpace(publishedBy))
-            throw new ArgumentException("Publisher name is required", nameof(publishedBy));
+        if (publishedByEmployeeId == Guid.Empty)
+            throw new ArgumentException("Publisher employee ID is required", nameof(publishedByEmployeeId));
 
         if (Status == TemplateStatus.Archived)
             throw new InvalidOperationException("Cannot publish an archived template");
@@ -131,7 +131,7 @@ public class QuestionnaireTemplate : AggregateRoot
         var now = DateTime.UtcNow;
         var publishedDate = PublishedDate ?? now;
 
-        RaiseEvent(new QuestionnaireTemplatePublished(publishedBy, publishedDate, now));
+        RaiseEvent(new QuestionnaireTemplatePublished(publishedByEmployeeId, publishedDate, now));
     }
 
     public async Task UnpublishToDraftAsync(IQuestionnaireAssignmentService assignmentService, CancellationToken cancellationToken = default)
@@ -310,7 +310,7 @@ public class QuestionnaireTemplate : AggregateRoot
     public void Apply(QuestionnaireTemplatePublished @event)
     {
         Status = TemplateStatus.Published;
-        PublishedBy = @event.PublishedBy;
+        PublishedByEmployeeId = @event.PublishedByEmployeeId;
         LastPublishedDate = @event.LastPublishedDate;
 
         if (PublishedDate == null)
@@ -320,7 +320,7 @@ public class QuestionnaireTemplate : AggregateRoot
     public void Apply(QuestionnaireTemplateUnpublishedToDraft @event)
     {
         Status = TemplateStatus.Draft;
-        PublishedBy = string.Empty;
+        PublishedByEmployeeId = null;
     }
 
     public void Apply(QuestionnaireTemplateArchived @event)
@@ -350,7 +350,7 @@ public class QuestionnaireTemplate : AggregateRoot
         CreatedDate = @event.CreatedDate;
         PublishedDate = null;  // Reset publication data
         LastPublishedDate = null;
-        PublishedBy = string.Empty;
+        PublishedByEmployeeId = null;
         IsDeleted = false;
     }
 }

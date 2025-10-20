@@ -597,7 +597,7 @@
 			}
 
 			// Update the template with published status
-			var publishedTemplate = await ApiService.PublishTemplateAsync(State.Template.Id, "");
+			var publishedTemplate = await ApiService.PublishTemplateAsync(State.Template.Id);
 			if (publishedTemplate != null)
 			{
 				State.Template = publishedTemplate;

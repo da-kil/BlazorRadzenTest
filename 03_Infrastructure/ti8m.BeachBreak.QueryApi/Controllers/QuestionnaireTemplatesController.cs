@@ -142,24 +142,6 @@ public class QuestionnaireTemplatesController : BaseController
         }
     }
 
-    //[HttpGet("{id:guid}/analytics")]
-    //public async Task<ActionResult<Dictionary<string, object>>> GetTemplateAnalytics(Guid id)
-    //{
-    //    try
-    //    {
-    //        var template = await _questionnaireService.GetTemplateByIdAsync(id);
-    //        if (template == null)
-    //            return NotFound($"Template with ID {id} not found");
-
-    //        var analytics = await _questionnaireService.GetTemplateAnalyticsAsync(id);
-    //        return Ok(analytics);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        logger.LogError(ex, "Error retrieving analytics for template {TemplateId}", id);
-    //        return StatusCode(500, "An error occurred while retrieving analytics");
-    //    }
-    //}
 
     private static QuestionnaireTemplateDto MapToDto(Application.Query.Queries.QuestionnaireTemplateQueries.QuestionnaireTemplate template)
     {
@@ -174,7 +156,8 @@ public class QuestionnaireTemplatesController : BaseController
             Status = MapToStatusDto(template.Status),
             PublishedDate = template.PublishedDate,
             LastPublishedDate = template.LastPublishedDate,
-            PublishedBy = template.PublishedBy,
+            PublishedByEmployeeId = template.PublishedByEmployeeId,
+            PublishedByEmployeeName = template.PublishedByEmployeeName,
             Sections = template.Sections.Select(section => new QuestionSectionDto
             {
                 Id = section.Id,

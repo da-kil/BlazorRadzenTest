@@ -11,7 +11,8 @@ public class QuestionnaireTemplateDto
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }        // First publish timestamp
     public DateTime? LastPublishedDate { get; set; }    // Most recent publish
-    public string PublishedBy { get; set; } = string.Empty; // Who published it
+    public Guid? PublishedByEmployeeId { get; set; }    // Employee who published it
+    public string? PublishedByEmployeeName { get; set; } // Resolved employee name for display
 
     public List<QuestionSectionDto> Sections { get; set; } = new();
 

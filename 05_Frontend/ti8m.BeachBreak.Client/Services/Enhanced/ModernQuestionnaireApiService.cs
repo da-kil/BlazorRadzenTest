@@ -102,7 +102,7 @@ public class ModernQuestionnaireApiService : ModernBaseApiService
                 template.Status,
                 template.PublishedDate,
                 template.LastPublishedDate,
-                template.PublishedBy,
+                template.PublishedByEmployeeId,
                 template.Sections
             };
 

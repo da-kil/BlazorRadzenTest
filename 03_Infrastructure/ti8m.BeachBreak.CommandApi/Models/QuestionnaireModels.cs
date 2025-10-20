@@ -11,7 +11,7 @@ public class QuestionnaireTemplate
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }
     public DateTime? LastPublishedDate { get; set; }
-    public string PublishedBy { get; set; } = string.Empty;
+    public Guid? PublishedByEmployeeId { get; set; }
     public List<QuestionSection> Sections { get; set; } = new();
     public QuestionnaireSettings Settings { get; set; } = new();
 }
