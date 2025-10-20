@@ -1,7 +1,13 @@
+using Marten;
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
+using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Domain.SharedKernel;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;
@@ -10,15 +16,24 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
 {
     private readonly IQuestionnaireAssignmentRepository assignmentRepository;
     private readonly IEmployeeRepository employeeRepository;
+    private readonly IQueryDispatcher queryDispatcher;
+    private readonly IProgressCalculationService progressCalculationService;
+    private readonly IDocumentStore documentStore;
     private readonly ILogger<GetTeamProgressQueryHandler> logger;
 
     public GetTeamProgressQueryHandler(
         IQuestionnaireAssignmentRepository assignmentRepository,
         IEmployeeRepository employeeRepository,
+        IQueryDispatcher queryDispatcher,
+        IProgressCalculationService progressCalculationService,
+        IDocumentStore documentStore,
         ILogger<GetTeamProgressQueryHandler> logger)
     {
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
+        this.queryDispatcher = queryDispatcher;
+        this.progressCalculationService = progressCalculationService;
+        this.documentStore = documentStore;
         this.logger = logger;
     }
 
@@ -47,14 +62,41 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
 
                 foreach (var assignment in employeeAssignments.Where(a => !a.IsWithdrawn))
                 {
-                    // TODO: Calculate actual progress from responses when IQuestionnaireResponseRepository is available
-                    // For now, use section progress from assignment read model
-                    var totalSections = assignment.SectionProgress?.Count ?? 0;
-                    var completedSections = assignment.SectionProgress?.Count(sp => sp.IsEmployeeCompleted) ?? 0;
+                    // Calculate actual progress from responses using ReadModel
+                    var progressPercentage = 0;
+                    var totalQuestions = 0;
+                    var answeredQuestions = 0;
 
-                    var progressPercentage = totalSections > 0
-                        ? (int)((double)completedSections / totalSections * 100)
-                        : 0;
+                    try
+                    {
+                        // Load ReadModel to get typed SectionResponses for progress calculation
+                        using var session = documentStore.LightweightSession();
+                        var readModel = await session.Query<QuestionnaireResponseReadModel>()
+                            .Where(r => r.AssignmentId == assignment.Id)
+                            .FirstOrDefaultAsync(cancellationToken);
+
+                        if (readModel != null)
+                        {
+                            // Get template for progress calculation
+                            var templateQuery = new QuestionnaireTemplateQuery(assignment.TemplateId);
+                            var templateResult = await queryDispatcher.QueryAsync(templateQuery, cancellationToken);
+                            var template = templateResult?.Payload;
+
+                            if (template != null)
+                            {
+                                var progress = progressCalculationService.Calculate(template, readModel.SectionResponses);
+
+                                // Use overall progress for manager view (includes both employee and manager sections)
+                                progressPercentage = (int)Math.Round(progress.OverallProgress);
+                                totalQuestions = progress.EmployeeTotalQuestions + progress.ManagerTotalQuestions;
+                                answeredQuestions = progress.EmployeeAnsweredQuestions + progress.ManagerAnsweredQuestions;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Failed to calculate progress for assignment {AssignmentId}, defaulting to 0", assignment.Id);
+                    }
 
                     var isCompleted = assignment.WorkflowState == WorkflowState.Finalized;
 
@@ -69,8 +111,8 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
                         AssignmentId = assignment.Id,
                         TemplateId = assignment.TemplateId,
                         ProgressPercentage = progressPercentage,
-                        TotalQuestions = totalSections, // Using sections as proxy for questions
-                        AnsweredQuestions = completedSections,
+                        TotalQuestions = totalQuestions,
+                        AnsweredQuestions = answeredQuestions,
                         LastModified = assignment.StartedDate ?? assignment.AssignedDate,
                         IsCompleted = isCompleted,
                         TimeSpent = timeSpent

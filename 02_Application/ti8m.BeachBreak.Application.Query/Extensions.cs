@@ -17,6 +17,9 @@ public static class Extensions
         // Register authorization services
         services.AddScoped<Services.EmployeeVisibilityService>();
 
+        // Register progress calculation service
+        services.AddScoped<Services.IProgressCalculationService, Services.ProgressCalculationService>();
+
         return services;
     }
 
