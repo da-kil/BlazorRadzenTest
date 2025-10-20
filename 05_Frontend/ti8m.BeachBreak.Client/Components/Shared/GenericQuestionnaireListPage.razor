@@ -71,6 +71,8 @@
     </div>
 </div>
 
+@implements IDisposable
+
 @code {
     [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
     [Parameter, EditorRequired] public IQuestionnaireDataService DataService { get; set; } = default!;
@@ -93,6 +95,15 @@
     private Guid? templateFilter = null;
     private string statusFilter = "";
     private string departmentFilter = "";
+    private DateTime? dateRangeFrom = null;
+    private DateTime? dateRangeTo = null;
+
+    // Search debouncing
+    private CancellationTokenSource? searchCancellationTokenSource;
+    private const int SearchDebounceMs = 300; // Wait 300ms after last keystroke
+
+    // Department expansion state
+    private HashSet<Guid> expandedDepartments = new();
 
     private int selectedTabIndex = 0;
     private bool isLoading = false;
@@ -120,6 +131,11 @@
             ? string.Join(",", filteredTeamMembers.Select(m => m.Id))
             : "";
 
+        // Track expanded departments state
+        var expandedDepartmentsState = expandedDepartments.Count > 0
+            ? string.Join(",", expandedDepartments.OrderBy(x => x))
+            : "";
+
         return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
                HasParameterChanged(nameof(isLoading), isLoading) ||
                HasParameterChanged(nameof(isLoadingMore), isLoadingMore) ||
@@ -128,7 +144,10 @@
                HasParameterChanged(nameof(statusFilter), statusFilter) ||
                HasParameterChanged(nameof(templateFilter), templateFilter?.ToString() ?? "") ||
                HasParameterChanged(nameof(teamMemberSortBy), teamMemberSortBy) ||
-               HasParameterChanged(nameof(memberAssignmentsCache), memberAssignmentsCache.Count);
+               HasParameterChanged(nameof(memberAssignmentsCache), memberAssignmentsCache.Count) ||
+               HasParameterChanged(nameof(dateRangeFrom), dateRangeFrom?.ToString() ?? "") ||
+               HasParameterChanged(nameof(dateRangeTo), dateRangeTo?.ToString() ?? "") ||
+               HasParameterChanged(nameof(expandedDepartments), expandedDepartmentsState);
     }
 
     private async Task LoadData()
@@ -199,10 +218,21 @@
         @switch (filter.Type)
         {
             case QuestionnaireFilterType.Search:
-                <RadzenTextBox @bind-Value="searchFilter"
-                              Placeholder="Search..."
-                              Class="w-100"
-                              oninput="@(() => ApplyFilters())" />
+                <div class="position-relative">
+                    <RadzenTextBox @bind-Value="searchFilter"
+                                  @oninput="@(async (ChangeEventArgs e) => await OnSearchChanged(e.Value?.ToString() ?? string.Empty))"
+                                  Placeholder="Search employees, emails, questionnaires..."
+                                  Class="w-100" />
+                    @if (!string.IsNullOrEmpty(searchFilter))
+                    {
+                        <RadzenButton Icon="close"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Size="ButtonSize.ExtraSmall"
+                                     Click="@ClearSearch"
+                                     Style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 10;"
+                                     title="Clear search" />
+                    }
+                </div>
                 break;
 
             case QuestionnaireFilterType.Category:
@@ -248,9 +278,27 @@
                 break;
 
             case QuestionnaireFilterType.DateRange:
-                <div class="d-flex gap-2">
-                    <RadzenDatePicker TValue="DateTime?" Class="w-50" Placeholder="From" />
-                    <RadzenDatePicker TValue="DateTime?" Class="w-50" Placeholder="To" />
+                <div>
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-1">
+                        <RadzenIcon Icon="event" Style="font-size: 0.875rem;" Class="me-1" />
+                        Filter by questionnaire due date
+                    </RadzenText>
+                    <div class="d-flex gap-2">
+                        <RadzenDatePicker TValue="DateTime?"
+                                         @bind-Value="dateRangeFrom"
+                                         Change="@ApplyFilters"
+                                         Class="w-50"
+                                         Placeholder="From Date"
+                                         ShowTime="false"
+                                         DateFormat="dd/MM/yyyy" />
+                        <RadzenDatePicker TValue="DateTime?"
+                                         @bind-Value="dateRangeTo"
+                                         Change="@ApplyFilters"
+                                         Class="w-50"
+                                         Placeholder="To Date"
+                                         ShowTime="false"
+                                         DateFormat="dd/MM/yyyy" />
+                    </div>
                 </div>
                 break;
         }
@@ -633,8 +681,23 @@
                             </div>
 
                             <!-- Department Team Members -->
-                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary mb-2">Team Members</RadzenText>
-                            @foreach (var member in dept.Members.Take(5))
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary mb-0">Team Members</RadzenText>
+                                @if (dept.Members.Count > 5)
+                                {
+                                    <RadzenButton Text="@(expandedDepartments.Contains(dept.OrganizationId) ? "Show Less" : $"Show All ({dept.Members.Count})")"
+                                                 Icon="@(expandedDepartments.Contains(dept.OrganizationId) ? "expand_less" : "expand_more")"
+                                                 ButtonStyle="ButtonStyle.Light"
+                                                 Size="ButtonSize.Small"
+                                                 Click="@(() => ToggleDepartmentExpansion(dept.OrganizationId))" />
+                                }
+                            </div>
+                            @{
+                                var membersToShow = expandedDepartments.Contains(dept.OrganizationId)
+                                    ? dept.Members
+                                    : dept.Members.Take(5);
+                            }
+                            @foreach (var member in membersToShow)
                             {
                                 var memberAssignments = memberAssignmentsCache.TryGetValue(member.Id, out var assignments)
                                     ? assignments
@@ -645,11 +708,17 @@
                                                OnSendReminder="@HandleSendReminder"
                                                OnAssignmentClick="@HandleAssignmentClick" />
                             }
-                            @if (dept.Members.Count > 5)
+                            @if (dept.Members.Count > 5 && !expandedDepartments.Contains(dept.OrganizationId))
                             {
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted text-center mt-2">
-                                    +@(dept.Members.Count - 5) more team members
-                                </RadzenText>
+                                <div class="text-center p-3 border rounded bg-light">
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">
+                                        <RadzenIcon Icon="expand_more" Style="font-size: 1.25rem;" Class="me-1" />
+                                        +@(dept.Members.Count - 5) more team member@(dept.Members.Count - 5 == 1 ? "" : "s")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                        Click "Show All" button above to view all members
+                                    </RadzenText>
+                                </div>
                             }
                         </RadzenCard>
                     }
@@ -908,6 +977,57 @@
         }
     }
 
+    private async Task OnSearchChanged(string value)
+    {
+        searchFilter = value;
+
+        // Cancel any existing search operation
+        searchCancellationTokenSource?.Cancel();
+        searchCancellationTokenSource?.Dispose();
+        searchCancellationTokenSource = new CancellationTokenSource();
+
+        try
+        {
+            // Wait for the debounce delay
+            await Task.Delay(SearchDebounceMs, searchCancellationTokenSource.Token);
+
+            // If we get here, the delay completed without cancellation
+            // Apply filters on the UI thread
+            await InvokeAsync(() =>
+            {
+                ApplyFilters();
+                StateHasChanged();
+            });
+        }
+        catch (TaskCanceledException)
+        {
+            // Expected when user types again before delay completes
+            // Do nothing - the new keystroke will start a new delay
+        }
+    }
+
+    private void ClearSearch()
+    {
+        searchFilter = "";
+        ApplyFilters();
+        StateHasChanged();
+    }
+
+    private void ToggleDepartmentExpansion(Guid departmentId)
+    {
+        if (expandedDepartments.Contains(departmentId))
+        {
+            expandedDepartments.Remove(departmentId);
+        }
+        else
+        {
+            expandedDepartments.Add(departmentId);
+        }
+
+        // Force state update
+        NotifyStateChanged();
+    }
+
     private void OnTemplateFilterChanged(Guid? value)
     {
         templateFilter = value;
@@ -1041,6 +1161,21 @@
         {
             filteredAssignments = filteredAssignments.Where(a =>
                 a.TemplateId == templateFilter.Value);
+        }
+
+        // Apply date range filter (filter by DueDate)
+        if (dateRangeFrom.HasValue)
+        {
+            filteredAssignments = filteredAssignments.Where(a =>
+                a.DueDate.HasValue && a.DueDate.Value >= dateRangeFrom.Value);
+        }
+
+        if (dateRangeTo.HasValue)
+        {
+            // Set to end of day for "To" date
+            var endOfDay = dateRangeTo.Value.Date.AddDays(1).AddTicks(-1);
+            filteredAssignments = filteredAssignments.Where(a =>
+                a.DueDate.HasValue && a.DueDate.Value <= endOfDay);
         }
 
         return filteredAssignments.ToList();
@@ -1419,5 +1554,13 @@
                 a.DueDate.HasValue &&
                 a.DueDate.Value < DateTime.Now &&
                 a.WorkflowState != WorkflowState.Finalized);
+    }
+
+    // IDisposable implementation - override base to add cancellation token cleanup
+    public override void Dispose()
+    {
+        searchCancellationTokenSource?.Cancel();
+        searchCancellationTokenSource?.Dispose();
+        base.Dispose();
     }
 }
