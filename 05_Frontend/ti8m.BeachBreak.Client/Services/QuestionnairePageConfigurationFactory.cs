@@ -6,9 +6,9 @@ public static class QuestionnairePageConfigurationFactory
 {
     public static QuestionnairePageConfiguration CreateEmployeeConfiguration(
         List<QuestionnaireAssignment> allAssignments,
-        List<QuestionnaireAssignment> currentAssignments,
-        List<QuestionnaireAssignment> upcomingAssignments,
-        List<QuestionnaireAssignment> completedAssignments,
+        List<QuestionnaireAssignment> upcomingAssignments,  // newQuestionnaires (Assigned)
+        List<QuestionnaireAssignment> currentAssignments,    // inProgressQuestionnaires (working/review)
+        List<QuestionnaireAssignment> completedAssignments,  // completedQuestionnaires (Finalized)
         List<QuestionnaireAssignment> overdueAssignments,
         List<Category> categories)
     {
@@ -19,6 +19,12 @@ public static class QuestionnairePageConfigurationFactory
             PageDescription = "View and complete your assigned questionnaires",
             PageIcon = "assignment",
             PageType = QuestionnairePageType.Employee,
+
+            // Store pre-categorized lists (order matches what MyQuestionnaires.razor passes)
+            CurrentAssignments = currentAssignments,
+            UpcomingAssignments = upcomingAssignments,
+            CompletedAssignments = completedAssignments,
+            OverdueAssignments = overdueAssignments,
 
             Tabs = new List<QuestionnairePageTab>
             {

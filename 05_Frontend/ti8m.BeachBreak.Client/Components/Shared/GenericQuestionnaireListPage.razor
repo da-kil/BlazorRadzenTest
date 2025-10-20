@@ -120,6 +120,23 @@
 
     private async Task LoadData()
     {
+        // For employee view, data is already pre-categorized and passed via Configuration
+        // No need to reload from API - this prevents overwriting the correct categorization
+        if (Configuration != null && Configuration.PageType == QuestionnairePageType.Employee)
+        {
+            // Just populate allAssignments for backward compatibility with filters
+            // Combine all categorized lists
+            allAssignments = Configuration.CurrentAssignments
+                .Concat(Configuration.UpcomingAssignments)
+                .Concat(Configuration.CompletedAssignments)
+                .Concat(Configuration.OverdueAssignments)
+                .Distinct()
+                .ToList();
+
+            return;
+        }
+
+        // For Manager/HR views, load data from API as before
         isLoading = true;
         NotifyStateChanged();
 
@@ -294,7 +311,7 @@
         else
         {
             <!-- Use VirtualizedQuestionnaireList for high-performance rendering -->
-            <VirtualizedQuestionnaireList AllAssignments="@allAssignments"
+            <VirtualizedQuestionnaireList AllAssignments="@assignments"
                                         ContainerHeight="600px"
                                         OnItemClick="@((assignment) => NavigateToQuestionnaire(assignment))"
                                         DataLoader="@GetAssignmentsPaginated"
@@ -518,31 +535,48 @@
     // Filter and data manipulation methods
     private List<QuestionnaireAssignment> GetCurrentAssignments()
     {
-        var baseAssignments = allAssignments.Where(a =>
-            a.WorkflowState != WorkflowState.Finalized).ToList();
+        // For employee view, use pre-categorized lists (they've already been filtered correctly)
+        // For manager/HR views, use allAssignments with fallback filtering
+        var baseAssignments = Configuration.PageType == QuestionnairePageType.Employee
+            ? Configuration.CurrentAssignments
+            : allAssignments.Where(a => a.WorkflowState != WorkflowState.Finalized).ToList();
+
         return ApplyFilteringToAssignments(baseAssignments);
     }
 
     private List<QuestionnaireAssignment> GetUpcomingAssignments()
     {
-        var baseAssignments = allAssignments.Where(a =>
-            a.WorkflowState == WorkflowState.Assigned &&
-            a.AssignedDate > DateTime.Now.AddDays(-1)).ToList();
+        // For employee view, use pre-categorized lists (they've already been filtered correctly)
+        // For manager/HR views, use allAssignments with fallback filtering
+        var baseAssignments = Configuration.PageType == QuestionnairePageType.Employee
+            ? Configuration.UpcomingAssignments
+            : allAssignments.Where(a =>
+                a.WorkflowState == WorkflowState.Assigned &&
+                a.AssignedDate > DateTime.Now.AddDays(-1)).ToList();
         return ApplyFilteringToAssignments(baseAssignments);
     }
 
     private List<QuestionnaireAssignment> GetCompletedAssignments()
     {
-        var baseAssignments = allAssignments.Where(a => a.WorkflowState == WorkflowState.Finalized).ToList();
+        // For employee view, use pre-categorized lists (they've already been filtered correctly)
+        // For manager/HR views, use allAssignments with fallback filtering
+        var baseAssignments = Configuration.PageType == QuestionnairePageType.Employee
+            ? Configuration.CompletedAssignments
+            : allAssignments.Where(a => a.WorkflowState == WorkflowState.Finalized).ToList();
+
         return ApplyFilteringToAssignments(baseAssignments);
     }
 
     private List<QuestionnaireAssignment> GetOverdueAssignments()
     {
-        var baseAssignments = allAssignments.Where(a =>
-            a.DueDate.HasValue &&
-            a.DueDate.Value < DateTime.Now &&
-            a.WorkflowState != WorkflowState.Finalized).ToList();
+        // For employee view, use pre-categorized lists (they've already been filtered correctly)
+        // For manager/HR views, use allAssignments with fallback filtering
+        var baseAssignments = Configuration.PageType == QuestionnairePageType.Employee
+            ? Configuration.OverdueAssignments
+            : allAssignments.Where(a =>
+                a.DueDate.HasValue &&
+                a.DueDate.Value < DateTime.Now &&
+                a.WorkflowState != WorkflowState.Finalized).ToList();
         return ApplyFilteringToAssignments(baseAssignments);
     }
 

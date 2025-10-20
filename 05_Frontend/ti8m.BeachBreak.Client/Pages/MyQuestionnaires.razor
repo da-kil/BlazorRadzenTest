@@ -108,20 +108,25 @@ else
 	{
 		var now = DateTime.Now;
 
-		// New: Assignments that haven't been started yet
+		// Upcoming: Assigned but not yet started by employee
 		newQuestionnaires = allAssignments.Where(a =>
 			a.WorkflowState == WorkflowState.Assigned).ToList();
 
-		// In Progress: Employee is working or has submitted and waiting for manager
-		// According to workflow diagram, employee can see these as "in progress" until both submit
-		// Also includes ManagerSubmitted (manager submitted but employee still needs to submit)
+		// Current: Employee is working, submitted, or in review process
+		// Includes all states where employee might still need to take action or is waiting
 		inProgressQuestionnaires = allAssignments.Where(a =>
-			a.WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.BothInProgress or WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted).ToList();
+			a.WorkflowState is WorkflowState.EmployeeInProgress
+			or WorkflowState.BothInProgress
+			or WorkflowState.EmployeeSubmitted
+			or WorkflowState.ManagerSubmitted
+			or WorkflowState.BothSubmitted
+			or WorkflowState.InReview
+			or WorkflowState.EmployeeReviewConfirmed
+			or WorkflowState.ManagerReviewConfirmed).ToList();
 
-		// Completed: From BothSubmitted onwards (includes all review and finalized states)
+		// Completed: ONLY finalized questionnaires
 		completedQuestionnaires = allAssignments.Where(a =>
-			a.WorkflowState is WorkflowState.BothSubmitted or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed
-			or WorkflowState.ManagerReviewConfirmed or WorkflowState.Finalized).ToList();
+			a.WorkflowState == WorkflowState.Finalized).ToList();
 
 		// Overdue: Any non-completed assignment past due date
 		overdueQuestionnaires = allAssignments.Where(a =>

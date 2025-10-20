@@ -12,4 +12,10 @@ public class QuestionnairePageConfiguration
     public List<QuestionnairePageFilter> Filters { get; set; } = new();
     public List<QuestionnairePageAction> Actions { get; set; } = new();
     public QuestionnaireStatsConfig StatsConfig { get; set; } = new();
+
+    // Pre-categorized assignment lists for employee view
+    public List<QuestionnaireAssignment> CurrentAssignments { get; set; } = new();
+    public List<QuestionnaireAssignment> UpcomingAssignments { get; set; } = new();
+    public List<QuestionnaireAssignment> CompletedAssignments { get; set; } = new();
+    public List<QuestionnaireAssignment> OverdueAssignments { get; set; } = new();
 }
