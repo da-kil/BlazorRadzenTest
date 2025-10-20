@@ -36,9 +36,6 @@ else if (isLoading)
 
 	protected override async Task LoadRoleSpecificDataAsync()
 	{
-		// Create the data service
-		dataService = new HRQuestionnaireDataService(HRQuestionnaireService, TemplateService);
-
 		// Load data in parallel
 		var assignmentsTask = HRQuestionnaireService.GetAllAssignmentsAsync();
 		var employeesTask = HRQuestionnaireService.GetAllEmployeesAsync();
@@ -51,6 +48,9 @@ else if (isLoading)
 		allEmployees = employeesTask.Result;
 		allOrganizations = organizationsTask.Result;
 		allTemplates = templatesTask.Result;
+
+		// Create the data service with organizations
+		dataService = new HRQuestionnaireDataService(HRQuestionnaireService, TemplateService, allOrganizations);
 	}
 
 	protected override QuestionnairePageConfiguration CreateConfiguration()

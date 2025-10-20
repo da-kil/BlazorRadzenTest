@@ -6,6 +6,8 @@ namespace ti8m.BeachBreak.Client.Services;
 public class HRQuestionnaireService : BaseApiService, IHRQuestionnaireService
 {
     private const string HREndpoint = "q/api/v1/hr";
+    private const string EmployeesEndpoint = "q/api/v1/employees";
+    private const string AssignmentsEndpoint = "q/api/v1/assignments";
     private readonly string currentHRUserId;
 
     public HRQuestionnaireService(IHttpClientFactory factory) : base(factory)
@@ -16,12 +18,14 @@ public class HRQuestionnaireService : BaseApiService, IHRQuestionnaireService
 
     public async Task<List<EmployeeDto>> GetAllEmployeesAsync()
     {
-        return await GetHRResourceAsync<EmployeeDto>(HREndpoint, "employees");
+        // Use the employees endpoint directly, not HR sub-path
+        return await GetAllAsync<EmployeeDto>(EmployeesEndpoint);
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAllAssignmentsAsync()
     {
-        return await GetHRResourceAsync<QuestionnaireAssignment>(HREndpoint, "assignments");
+        // Use the assignments endpoint directly, not HR sub-path
+        return await GetAllAsync<QuestionnaireAssignment>(AssignmentsEndpoint);
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsByDepartmentAsync(string department)

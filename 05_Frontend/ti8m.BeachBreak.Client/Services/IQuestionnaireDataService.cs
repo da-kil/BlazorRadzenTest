@@ -82,13 +82,16 @@ public class HRQuestionnaireDataService : IQuestionnaireDataService
 {
     private readonly IHRQuestionnaireService _hrService;
     private readonly IQuestionnaireTemplateService _templateService;
+    private readonly List<Organization>? _organizations;
 
     public HRQuestionnaireDataService(
         IHRQuestionnaireService hrService,
-        IQuestionnaireTemplateService templateService)
+        IQuestionnaireTemplateService templateService,
+        List<Organization>? organizations = null)
     {
         _hrService = hrService;
         _templateService = templateService;
+        _organizations = organizations;
     }
 
     public async Task<List<QuestionnaireAssignment>> GetAssignmentsAsync()
@@ -108,6 +111,11 @@ public class HRQuestionnaireDataService : IQuestionnaireDataService
 
     public async Task<object?> GetAdditionalDataAsync()
     {
+        // Return organizations if available, otherwise return analytics
+        if (_organizations != null && _organizations.Any())
+        {
+            return _organizations;
+        }
         return await _hrService.GetOrganizationAnalyticsAsync();
     }
 }

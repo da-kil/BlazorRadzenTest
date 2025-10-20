@@ -157,28 +157,15 @@
         {
             await ExecuteSafelyAsync(async () =>
             {
-                // Load initial page of data using lazy loading
-                var pagedResult = await PerformanceOptimizer.LazyLoader.LoadPagedDataAsync(
-                    async (page, size) => await GetAssignmentsPaginated(page, size),
-                    1,
-                    pageSize,
-                    async () => await GetAssignmentsTotalCount()
-                );
-
-                if (pagedResult.IsSuccess)
-                {
-                    allAssignments = pagedResult.Data;
-                    hasMoreData = pagedResult.HasNextPage;
-                    currentPage = 1;
-                }
-
-                // Load other data in parallel
-                // Note: Templates are now denormalized in assignments, no need to fetch separately
+                // Load ALL data in parallel for Manager/HR views
+                // These views need complete data to calculate department/team stats
+                var assignmentsTask = DataService.GetAssignmentsAsync();
                 var employeesTask = DataService.GetEmployeesAsync();
                 var additionalDataTask = DataService.GetAdditionalDataAsync();
 
-                await Task.WhenAll(employeesTask, additionalDataTask);
+                await Task.WhenAll(assignmentsTask, employeesTask, additionalDataTask);
 
+                allAssignments = assignmentsTask.Result;
                 employees = employeesTask.Result;
                 additionalData = additionalDataTask.Result;
 
@@ -299,6 +286,18 @@
 
             case QuestionnaireTabType.Analytics:
                 @RenderAnalyticsView()
+                break;
+
+            case QuestionnaireTabType.DepartmentOverview:
+                @RenderDepartmentOverview()
+                break;
+
+            case QuestionnaireTabType.EmployeeStatus:
+                @RenderEmployeeStatus()
+                break;
+
+            case QuestionnaireTabType.QuestionnairePerformance:
+                @RenderQuestionnairePerformance()
                 break;
 
             default:
@@ -558,6 +557,205 @@
         <div class="text-center p-5">
             <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Analytics view implementation would go here.</RadzenText>
         </div>
+    };
+
+    private RenderFragment RenderDepartmentOverview() => __builder =>
+    {
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading department data...</RadzenText>
+            </div>
+        }
+        else
+        {
+            var departmentGroups = GetDepartmentGroups();
+
+            @if (!departmentGroups.Any())
+            {
+                <div class="text-center p-5">
+                    <RadzenIcon Icon="corporate_fare" Size="4rem" Class="text-muted mb-3" />
+                    <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No departments found</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Department data will appear here once available.</RadzenText>
+                </div>
+            }
+            else
+            {
+                <div class="department-overview-container">
+                    @foreach (var dept in departmentGroups)
+                    {
+                        <RadzenCard Class="mb-4">
+                            <!-- Department Header -->
+                            <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
+                                <div>
+                                    <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-2">
+                                        <RadzenIcon Icon="corporate_fare" Class="me-2" />
+                                        @dept.OrganizationName
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-muted">
+                                        @dept.EmployeeCount team @(dept.EmployeeCount == 1 ? "member" : "members") • @dept.TotalAssignments @(dept.TotalAssignments == 1 ? "assignment" : "assignments")
+                                    </RadzenText>
+                                </div>
+                                <div class="text-end">
+                                    <RadzenBadge Text="@($"{dept.CompletedCount} of {dept.TotalAssignments} Complete")"
+                                                BadgeStyle="@(dept.OverdueCount > 0 ? BadgeStyle.Danger : dept.CompletionPercentage == 100 ? BadgeStyle.Success : BadgeStyle.Info)"
+                                                Class="px-3 py-2" />
+                                </div>
+                            </div>
+
+                            <!-- Department Stats Mini Grid -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-3">
+                                    <div class="stat-mini-box p-2 text-center border rounded">
+                                        <RadzenText TextStyle="TextStyle.H6" Class="text-warning mb-1">@dept.NotStartedCount</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Not Started</RadzenText>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-mini-box p-2 text-center border rounded">
+                                        <RadzenText TextStyle="TextStyle.H6" Class="text-info mb-1">@dept.InProgressCount</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">In Progress</RadzenText>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-mini-box p-2 text-center border rounded">
+                                        <RadzenText TextStyle="TextStyle.H6" Class="text-success mb-1">@dept.CompletedCount</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Completed</RadzenText>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="stat-mini-box p-2 text-center border rounded">
+                                        <RadzenText TextStyle="TextStyle.H6" Class="text-danger mb-1">@dept.OverdueCount</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overdue</RadzenText>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Department Team Members -->
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary mb-2">Team Members</RadzenText>
+                            @foreach (var member in dept.Members.Take(5))
+                            {
+                                var memberAssignments = memberAssignmentsCache.TryGetValue(member.Id, out var assignments)
+                                    ? assignments
+                                    : dept.Assignments.Where(a => a.EmployeeId == member.Id).ToList();
+                                <TeamMemberCard @key="@member.Id"
+                                               TeamMember="@member"
+                                               Assignments="@memberAssignments"
+                                               OnSendReminder="@HandleSendReminder"
+                                               OnAssignmentClick="@HandleAssignmentClick" />
+                            }
+                            @if (dept.Members.Count > 5)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted text-center mt-2">
+                                    +@(dept.Members.Count - 5) more team members
+                                </RadzenText>
+                            }
+                        </RadzenCard>
+                    }
+                </div>
+            }
+        }
+    };
+
+    private RenderFragment RenderEmployeeStatus() => __builder =>
+    {
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading employee data...</RadzenText>
+            </div>
+        }
+        else if (!employees.Any())
+        {
+            <div class="text-center p-5">
+                <RadzenIcon Icon="people" Size="4rem" Class="text-muted mb-3" />
+                <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No employees found</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Employee data will appear here once available.</RadzenText>
+            </div>
+        }
+        else
+        {
+            <div class="employee-status-container">
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <RadzenText TextStyle="TextStyle.Subtitle1">
+                        Showing @filteredTeamMembers.Count of @employees.Count employees
+                    </RadzenText>
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">Sort by:</RadzenText>
+                        <RadzenDropDown TValue="string"
+                                       Value="@teamMemberSortBy"
+                                       Data="@teamSortOptions"
+                                       ValueChanged="@((string value) => { teamMemberSortBy = value; ApplyFilters(); })"
+                                       Placeholder="Name"
+                                       Class="w-auto"
+                                       Style="min-width: 150px;" />
+                    </div>
+                </div>
+
+                @foreach (var member in filteredTeamMembers)
+                {
+                    var memberAssignments = memberAssignmentsCache.TryGetValue(member.Id, out var assignments)
+                        ? assignments
+                        : new List<QuestionnaireAssignment>();
+                    <TeamMemberCard @key="@member.Id"
+                                   TeamMember="@member"
+                                   Assignments="@memberAssignments"
+                                   OnSendReminder="@HandleSendReminder"
+                                   OnAssignmentClick="@HandleAssignmentClick" />
+                }
+            </div>
+        }
+    };
+
+    private RenderFragment RenderQuestionnairePerformance() => __builder =>
+    {
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading questionnaire data...</RadzenText>
+            </div>
+        }
+        else if (!allAssignments.Any())
+        {
+            <div class="text-center p-5">
+                <RadzenIcon Icon="quiz" Size="4rem" Class="text-muted mb-3" />
+                <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No questionnaires assigned</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Questionnaire assignments will appear here once available.</RadzenText>
+            </div>
+        }
+        else
+        {
+            <div class="questionnaire-performance-container">
+                <div class="mb-3 d-flex justify-content-between align-items-center">
+                    <RadzenText TextStyle="TextStyle.Subtitle1">
+                        Showing @GetGroupedQuestionnaires().Count questionnaire @(GetGroupedQuestionnaires().Count == 1 ? "template" : "templates")
+                    </RadzenText>
+                    <div class="d-flex align-items-center gap-2">
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">Sort by:</RadzenText>
+                        <RadzenDropDown @bind-Value="questionnaireSortBy"
+                                       Data="@questionnaireSortOptions"
+                                       Change="@(() => NotifyStateChanged())"
+                                       Placeholder="Name"
+                                       Class="w-auto"
+                                       Style="min-width: 150px;" />
+                    </div>
+                </div>
+
+                @foreach (var questionnaireGroup in GetGroupedQuestionnaires())
+                {
+                    <QuestionnaireTemplateCard TemplateId="@questionnaireGroup.TemplateId"
+                                              TemplateName="@questionnaireGroup.TemplateName"
+                                              CategoryName="@questionnaireGroup.CategoryName"
+                                              Assignments="@questionnaireGroup.Assignments"
+                                              OnSendReminders="@HandleSendQuestionnaireReminders"
+                                              OnViewAnalytics="@HandleViewQuestionnaireAnalytics"
+                                              OnAssignmentClick="@HandleAssignmentClick" />
+                }
+            </div>
+        }
     };
 
     // Filter and data manipulation methods
@@ -1094,6 +1292,104 @@
             ShowInfo($"Viewing analytics for '{questionnaire.TemplateName}'...");
             // TODO: Implement analytics view
         }
+    }
+
+    // Department overview helper methods
+    private List<DepartmentGroup> GetDepartmentGroups()
+    {
+        // Get organizations from additionalData if available
+        var organizations = new List<Organization>();
+        if (additionalData is List<Organization> orgList)
+        {
+            organizations = orgList;
+        }
+
+        if (!organizations.Any())
+        {
+            // No organizations, return empty list
+            return new List<DepartmentGroup>();
+        }
+
+        // Apply filters to get the filtered assignments
+        var filteredAssignments = ApplyFilteringToAssignments(allAssignments);
+
+        // Get employees who have filtered assignments (respect filters)
+        var employeesWithFilteredAssignments = filteredTeamMembers;
+
+        // Group employees by organization
+        var departmentGroups = organizations
+            .Where(org => !org.IsDeleted && !org.IsIgnored)
+            .Select(org =>
+            {
+                // Parse organization number - handle both int and string formats
+                int orgNumber;
+                if (!int.TryParse(org.Number, out orgNumber))
+                {
+                    // If parsing fails, skip this organization
+                    return null;
+                }
+
+                // Use filtered employees instead of all employees
+                var orgEmployees = employeesWithFilteredAssignments
+                    .Where(e => e.OrganizationNumber == orgNumber)
+                    .ToList();
+
+                // Use filtered assignments instead of all assignments
+                var orgAssignments = filteredAssignments
+                    .Where(a => orgEmployees.Any(e => e.Id == a.EmployeeId))
+                    .ToList();
+
+                return new DepartmentGroup
+                {
+                    OrganizationId = org.Id,
+                    OrganizationName = org.DisplayName,
+                    Members = orgEmployees,
+                    Assignments = orgAssignments
+                };
+            })
+            .Where(dg => dg != null && dg.Members.Any()) // Only include departments with employees
+            .Cast<DepartmentGroup>()
+            .OrderBy(dg => dg.OrganizationName)
+            .ToList();
+
+        return departmentGroups;
+    }
+
+    // Helper class for department grouping
+    private class DepartmentGroup
+    {
+        public Guid OrganizationId { get; set; }
+        public string OrganizationName { get; set; } = string.Empty;
+        public List<EmployeeDto> Members { get; set; } = new();
+        public List<QuestionnaireAssignment> Assignments { get; set; } = new();
+
+        public int EmployeeCount => Members.Count;
+        public int TotalAssignments => Assignments.Count;
+
+        public int NotStartedCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Assigned);
+
+        public int InProgressCount => Assignments.Count(a =>
+            a.WorkflowState is WorkflowState.EmployeeInProgress
+            or WorkflowState.ManagerInProgress
+            or WorkflowState.BothInProgress
+            or WorkflowState.EmployeeSubmitted
+            or WorkflowState.ManagerSubmitted
+            or WorkflowState.BothSubmitted
+            or WorkflowState.InReview
+            or WorkflowState.EmployeeReviewConfirmed
+            or WorkflowState.ManagerReviewConfirmed);
+
+        public int CompletedCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
+
+        public int OverdueCount => Assignments.Count(a =>
+            a.DueDate.HasValue &&
+            a.DueDate.Value < DateTime.Now &&
+            a.WorkflowState != WorkflowState.Finalized);
+
+        public double CompletionPercentage =>
+            TotalAssignments > 0
+                ? Math.Round((double)CompletedCount / TotalAssignments * 100, 1)
+                : 0;
     }
 
     // Helper class for questionnaire grouping
