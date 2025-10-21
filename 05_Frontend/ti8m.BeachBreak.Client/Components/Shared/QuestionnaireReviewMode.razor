@@ -46,8 +46,8 @@
                 <div class="questionnaire-info-banner">
                     <RadzenIcon Icon="info" />
                     <div>
-                        <strong>Employee:</strong> @Assignment.EmployeeName &nbsp;|&nbsp;
-                        You can view and edit all answers during this review meeting. All changes are tracked.
+                        <strong>Reviewing Employee:</strong> @Assignment.EmployeeName &nbsp;|&nbsp;
+                        As the manager, you can view and edit all answers during this review meeting. All changes are tracked.
                     </div>
                 </div>
             </div>
@@ -699,18 +699,54 @@
 
     private async Task FinishReview()
     {
-        var confirmed = await DialogService.Confirm(
-            "Are you sure you want to finish this review meeting? The employee will be able to review the outcome.",
-            "Finish Review",
-            new ConfirmOptions { OkButtonText = "Yes, Finish", CancelButtonText = "Continue Reviewing" }
-        );
-
-        if (confirmed == true)
+        try
         {
-            if (OnReviewFinished.HasDelegate)
+            // Open dialog to collect optional review summary
+            var result = await DialogService.OpenAsync<FinishReviewMeetingDialog>(
+                "Finish Review Meeting",
+                new Dictionary<string, object>(),
+                new DialogOptions
+                {
+                    Width = "650px",
+                    Height = "600px",
+                    Resizable = false,
+                    Draggable = true,
+                    ShowClose = true
+                });
+
+            // If dialog was cancelled, return
+            if (result == null)
             {
-                await OnReviewFinished.InvokeAsync();
+                return;
             }
+
+            // Result is the review summary (can be null or empty string)
+            var reviewSummary = result as string;
+
+            // Call API to finish review meeting with summary
+            var success = await AssignmentService.FinishReviewMeetingAsync(
+                Assignment.Id,
+                currentManagerName,
+                string.IsNullOrWhiteSpace(reviewSummary) ? null : reviewSummary);
+
+            if (success)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Success", "Review meeting finished successfully");
+
+                // Trigger the callback to reload assignment
+                if (OnReviewFinished.HasDelegate)
+                {
+                    await OnReviewFinished.InvokeAsync();
+                }
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to finish review meeting");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error finishing review meeting: {ex.Message}");
         }
     }
 

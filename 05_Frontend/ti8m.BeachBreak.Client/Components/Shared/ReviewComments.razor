@@ -14,7 +14,12 @@
         {
             <div class="comment-section manager-comment mb-3">
                 <div class="comment-header">
-                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Manager Review Summary" Class="mb-2" />
+                    <div>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Manager Review Summary" Class="mb-1" />
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block">
+                            Added by @(Assignment?.ManagerReviewFinishedBy ?? "manager") after finishing the review meeting
+                        </RadzenText>
+                    </div>
                     @if (Assignment?.ManagerReviewFinishedDate.HasValue == true)
                     {
                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
@@ -43,7 +48,12 @@
         {
             <div class="comment-section employee-comment mb-3">
                 <div class="comment-header">
-                    <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Employee Comments" Class="mb-2" />
+                    <div>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Success" Text="Employee Comments" Class="mb-1" />
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block">
+                            Added by @Assignment?.EmployeeName when confirming the review outcome
+                        </RadzenText>
+                    </div>
                     @if (Assignment?.EmployeeReviewConfirmedDate.HasValue == true)
                     {
                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
@@ -72,7 +82,12 @@
         {
             <div class="comment-section manager-final mb-3">
                 <div class="comment-header">
-                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Manager Final Notes" Class="mb-2" />
+                    <div>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Manager Final Notes" Class="mb-1" />
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block">
+                            Added by @(Assignment?.FinalizedBy ?? "manager") when finalizing the questionnaire (internal notes, not visible to employee)
+                        </RadzenText>
+                    </div>
                     @if (Assignment?.FinalizedDate.HasValue == true)
                     {
                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
@@ -159,14 +174,9 @@
     {
         if (Assignment == null) return false;
 
-        // Employee must NEVER see manager review summary
-        if (IsEmployee && !IsManager)
-        {
-            return false;
-        }
-
-        // Manager can see their review summary in these states
-        if (IsManager && Assignment.WorkflowState is
+        // Show manager review summary after manager has finished the review meeting
+        // Both employees and managers should see it in these states
+        if (Assignment.WorkflowState is
             WorkflowState.ManagerReviewConfirmed or
             WorkflowState.EmployeeReviewConfirmed or
             WorkflowState.Finalized)
