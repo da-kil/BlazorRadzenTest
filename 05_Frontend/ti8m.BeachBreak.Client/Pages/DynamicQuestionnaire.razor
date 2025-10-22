@@ -4,6 +4,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Components
+@using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
@@ -17,6 +18,7 @@
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject QuestionConfigurationService ConfigService
 @inherits OptimizedComponentBase
 
 <link href="css/questionnaire-unified.css" rel="stylesheet" />
@@ -89,8 +91,16 @@
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body1">
-                                <strong>Awaiting employee sign-off.</strong>
-                                <span> The manager has confirmed the review. Waiting for the employee to sign off before finalization.</span>
+                                @if (isManager)
+                                {
+                                    <strong>Awaiting employee sign-off.</strong>
+                                    <span> You have confirmed the review. Waiting for the employee to sign off before finalization.</span>
+                                }
+                                else
+                                {
+                                    <strong>Manager review confirmed.</strong>
+                                    <span> The manager has confirmed the review. You can now sign off on the review outcome.</span>
+                                }
                             </RadzenText>
                         </RadzenAlert>
                     }
@@ -98,8 +108,16 @@
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body1">
-                                <strong>Ready to finalize.</strong>
-                                <span> The employee has signed off. Waiting for final confirmation to complete the questionnaire.</span>
+                                @if (isManager)
+                                {
+                                    <strong>Ready to finalize.</strong>
+                                    <span> The employee has signed off. You can now finalize the questionnaire.</span>
+                                }
+                                else
+                                {
+                                    <strong>Review signed off.</strong>
+                                    <span> You have signed off on the review. Waiting for final confirmation to complete the questionnaire.</span>
+                                }
                             </RadzenText>
                         </RadzenAlert>
                     }
@@ -133,6 +151,16 @@
                         </RadzenAlert>
                     }
                 }
+            }
+
+            @* Show review changes summary after review meeting finishes *@
+            @if (assignment != null && assignmentId.HasValue && response != null &&
+                 template != null && template.RequiresManagerReview &&
+                 (assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed ||
+                  assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
+                  assignment.WorkflowState == WorkflowState.Finalized))
+            {
+                <ReviewChangesSummary Response="@response" AssignmentId="@assignmentId.Value" />
             }
 
             <div class="section-counter mb-4">
@@ -236,9 +264,11 @@
                 </div>
             </div>
 
-            @* Review Comments Display - Below Questionnaire (only after employee has signed off, as that's when comments can be added) *@
+            @* Review Comments Display - Below Questionnaire *@
+            @* Show after review meeting finishes so employee can see manager's summary before signing off *@
             @if (assignment != null && template != null && template.RequiresManagerReview &&
-                 (assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
+                 (assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed ||
+                  assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
                   assignment.WorkflowState == WorkflowState.Finalized))
             {
                 <ReviewComments Assignment="@assignment"
@@ -405,14 +435,9 @@
             return;
         }
 
-        // After review confirmation, managers see ALL sections in read-only mode
-        var isManagerPostReviewReadOnly = assignment != null && isManager &&
-            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
-                                          WorkflowState.EmployeeReviewConfirmed or
-                                          WorkflowState.Finalized);
-
-        // Employees in post-review states should also see ALL sections (including manager sections)
-        var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+        // After review meeting finishes, EVERYONE sees ALL sections (employee, manager, and both)
+        // This ensures transparency - both parties can see what was discussed and agreed upon
+        var isPostReviewState = assignment != null &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
@@ -420,7 +445,7 @@
         // Managers/HR can view employee-only questionnaires in read-only mode
         var isManagerViewingEmployeeOnlyQuestionnaire = isManager && !template.RequiresManagerReview;
 
-        if (isManagerPostReviewReadOnly || isEmployeePostReview || isManagerViewingEmployeeOnlyQuestionnaire)
+        if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // Show ALL sections in read-only view
             visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
@@ -574,20 +599,20 @@
         {
             QuestionnaireResponse? existingResponse = null;
 
-            // Check if employee is awaiting sign-off or has already signed off - they need to see ALL responses
-            var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+            // After review meeting, everyone loads ALL role responses for full transparency
+            var isPostReviewState = assignment != null &&
                 (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                              WorkflowState.EmployeeReviewConfirmed or
                                              WorkflowState.Finalized);
 
-            if (isEmployeePostReview || isManager)
+            if (isPostReviewState || isManager)
             {
-                // Managers and employees in post-review states load ALL role responses
+                // Post-review or managers: load ALL role responses (Employee + Manager + Both)
                 existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignmentId.Value);
             }
-            else if (isEmployee && !isManager)
+            else if (isEmployee)
             {
-                // Regular employees load only their own responses
+                // Regular employees during questionnaire: load only their own responses
                 existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
             }
 
@@ -601,20 +626,12 @@
             {
                 if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
                 {
-                    // For managers in post-review read-only mode, load ALL role responses (Employee + Manager)
-                    // For employees in post-review states, also load ALL role responses so they can see manager's answers
-                    // For managers viewing employee-only questionnaires, load ALL responses regardless of workflow state
-                    // For normal mode, only load current user's role responses
-                    var isPostReviewReadOnly = assignment != null && isManager &&
-                        (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
-                                                      WorkflowState.EmployeeReviewConfirmed or
-                                                      WorkflowState.Finalized);
-
+                    // After review meeting: load ALL role responses for full transparency
+                    // Managers viewing employee-only questionnaires: load ALL responses
+                    // Normal mode: only load current user's role responses
                     var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
 
-                    // Use the isEmployeePostReview variable already declared at the start of this method
-
-                    if ((isPostReviewReadOnly || isEmployeePostReview || isManagerViewingEmployeeOnlyQuestionnaire) && sectionKvp.Value.RoleResponses != null)
+                    if ((isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire) && sectionKvp.Value.RoleResponses != null)
                     {
                         // Load ALL role responses (Employee, Manager, Both)
                         foreach (var roleKvp in sectionKvp.Value.RoleResponses)
@@ -703,240 +720,90 @@
 
     private RenderFragment RenderQuestion(QuestionItem question)
     {
-        var questionResponse = GetQuestionResponse(question.Id);
-        
-        return question.Type switch
+        // Check if we're in post-review state and section is "Both"
+        var isPostReviewState = assignment != null &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.EmployeeReviewConfirmed or
+                                         WorkflowState.Finalized);
+
+        var isBothSection = currentSection?.CompletionRole == CompletionRole.Both;
+
+        // In post-review state for "Both" sections, show BOTH employee and manager responses
+        if (isPostReviewState && isBothSection)
         {
-            QuestionType.Assessment => RenderRatingQuestion(question, questionResponse),
-            QuestionType.TextQuestion => RenderTextQuestion(question, questionResponse),
-            QuestionType.GoalAchievement => RenderGoalQuestion(question, questionResponse),
-            _ => @<div class="alert alert-warning">Question type @question.Type not implemented</div>
-        };
-    }
+            var employeeResponse = GetQuestionResponseForRole(question.Id, "Employee");
+            var managerResponse = GetQuestionResponseForRole(question.Id, "Manager");
 
-    private RenderFragment RenderRatingQuestion(QuestionItem question, QuestionResponse response)
-    {
-        return @<div class="assessment-question">
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@question.Description</RadzenText>
-            }
-
-            <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
-                <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Rating Scale:</strong> 1 (Not satisfied) - 2 (Somewhat satisfied) - 3 (Satisfied) - 4 (Very satisfied)
-                </RadzenText>
-            </RadzenAlert>
-
-            <div class="competencies-container">
-                @{
-                    var competencies = GetCompetenciesForQuestion(question);
-                }
-                @foreach (var competency in competencies)
-                {
-                    <RadzenCard Class="competency-card mb-3 p-3 border">
-                        <RadzenRow>
-                            <RadzenColumn Size="12" SizeMD="8">
-                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
-                                    @competency.Title
-                                    @if (competency.IsRequired) { <span class="text-danger">*</span> }
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                                    @competency.Description
-                                </RadzenText>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4" Class="text-end">
-                                <div class="rating-section">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
-                                    <RadzenRating Value="@GetCompetencyRating(question.Id, competency.Key)"
-                                                ValueChanged="@((int value) => SetCompetencyRating(question.Id, competency.Key, value))"
-                                                Stars="4"
-                                                ReadOnly="@IsQuestionnaireCompleted()"
-                                                Class="mb-2" />
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
-                                        @GetRatingText(GetCompetencyRating(question.Id, competency.Key))
-                                    </RadzenText>
-                                </div>
-                            </RadzenColumn>
-                        </RadzenRow>
-                        <RadzenTextArea Value="@GetCompetencyComment(question.Id, competency.Key)"
-                                      ValueChanged="@((string value) => SetCompetencyComment(question.Id, competency.Key, value))"
-                                      Placeholder="Optional: Add your comments here..."
-                                      Rows="2"
-                                      Disabled="@IsQuestionnaireCompleted()"
-                                      Class="w-100 mt-2" />
-                    </RadzenCard>
-                }
-            </div>
-        </div>;
-    }
-
-    private RenderFragment RenderTextQuestion(QuestionItem question, QuestionResponse response)
-    {
-        var textSections = GetTextSectionsForQuestion(question);
-
-        return @<div class="text-question">
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@question.Description</RadzenText>
-            }
-
-            <div class="planning-sections">
-                @foreach (var textSection in textSections.OrderBy(ts => ts.Order))
-                {
-                    <RadzenCard Class="planning-card mb-4 p-3 border">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold text-competency mb-3">
-                            <RadzenIcon Icon="timeline" Class="me-2" />
-                            @textSection.Title
-                            @if (textSection.IsRequired) { <span class="text-danger">*</span> }
-                        </RadzenText>
-                        @if (!string.IsNullOrWhiteSpace(textSection.Description))
-                        {
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                                @textSection.Description
-                            </RadzenText>
-                        }
-                        <RadzenTextArea Value="@GetTextSectionResponse(question.Id, textSection.Order)"
-                                      ValueChanged="@(value => SetTextSectionResponse(question.Id, textSection.Order, value))"
-                                      Placeholder="Describe this text section..."
-                                      Rows="4"
-                                      Disabled="@IsQuestionnaireCompleted()"
-                                      Class="w-100" />
-                    </RadzenCard>
-                }
-            </div>
-        </div>;
-    }
-
-    private RenderFragment RenderGoalQuestion(QuestionItem question, QuestionResponse response)
-    {
-        return @<div class="goal-achievement-question">
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@question.Description</RadzenText>
-            }
-
-            <RadzenCard Class="goal-card mb-3 p-3 border">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
-                            Goal 1
-                        </RadzenText>
+            return @<div>
+                @* Employee's Answer *@
+                <div class="role-response-section mb-4">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-success mb-2">
+                        <RadzenIcon Icon="person" Class="me-1" />
+                        EMPLOYEE'S ANSWER
+                    </RadzenText>
+                    <div class="ps-3 border-start border-success border-3">
+                        <OptimizedQuestionRenderer
+                            Question="@question"
+                            Response="@employeeResponse"
+                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                            IsReadOnly="true"
+                            HideHeader="true" />
                     </div>
+                </div>
 
-                    <div class="mb-3">
-                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Goal Description</RadzenText>
-                        <RadzenTextArea Value="@GetGoalDescription(question.Id)"
-                                      ValueChanged="@(value => SetGoalDescription(question.Id, value))"
-                                      Placeholder="Describe the goal that was set for 2023..."
-                                      Rows="3"
-                                      Disabled="@IsQuestionnaireCompleted()"
-                                      Class="w-100" />
+                @* Manager's Answer *@
+                <div class="role-response-section">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info mb-2">
+                        <RadzenIcon Icon="manage_accounts" Class="me-1" />
+                        MANAGER'S ANSWER
+                    </RadzenText>
+                    <div class="ps-3 border-start border-info border-3">
+                        <OptimizedQuestionRenderer
+                            Question="@question"
+                            Response="@managerResponse"
+                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                            IsReadOnly="true"
+                            HideHeader="true" />
                     </div>
+                </div>
+            </div>;
+        }
 
-                    <RadzenRow Gap="1rem">
-                        <RadzenColumn Size="12" SizeMD="6">
-                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Percentage</RadzenText>
-                            <div class="d-flex align-items-center">
-                                <RadzenNumeric TValue="int"
-                                             Value="@GetGoalAchievementPercentage(question.Id)"
-                                             ValueChanged="@((int value) => SetGoalAchievementPercentage(question.Id, value))"
-                                             Min="0"
-                                             Max="100"
-                                             Step="5"
-                                             Format="0"
-                                             Disabled="@IsQuestionnaireCompleted()"
-                                             Class="flex-grow-1 me-2" />
-                                <RadzenText TextStyle="TextStyle.Body1">%</RadzenText>
-                            </div>
-                            <RadzenProgressBar Value="@GetGoalAchievementPercentage(question.Id)" 
-                                             Max="100" 
-                                             Class="mt-2"
-                                             ProgressBarStyle="@GetProgressStyle(GetGoalAchievementPercentage(question.Id))" />
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="6">
-                            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Status</RadzenText>
-                            <div class="status-indicator p-2 rounded" style="@GetStatusStyle(GetGoalAchievementPercentage(question.Id))">
-                                <RadzenIcon Icon="@GetStatusIcon(GetGoalAchievementPercentage(question.Id))" Class="me-2" />
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
-                                    @GetStatusText(GetGoalAchievementPercentage(question.Id))
-                                </RadzenText>
-                            </div>
-                        </RadzenColumn>
-                    </RadzenRow>
+        // Normal rendering for non-Both sections or during active questionnaire
+        var questionResponse = GetQuestionResponse(question.Id);
 
-                    <div class="mt-3">
-                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Your Reasoning/Justification</RadzenText>
-                        <RadzenTextArea Value="@GetGoalJustification(question.Id)"
-                                      ValueChanged="@(value => SetGoalJustification(question.Id, value))"
-                                      Placeholder="Explain why you achieved this percentage. What factors contributed to your success or challenges?"
-                                      Rows="4"
-                                      Disabled="@IsQuestionnaireCompleted()"
-                                      Class="w-100" />
-                    </div>
-                </RadzenCard>
-        </div>;
+        return @<OptimizedQuestionRenderer
+            Question="@question"
+            Response="@questionResponse"
+            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+            IsReadOnly="@IsQuestionnaireCompleted()" />;
     }
 
-    private RenderFragment RenderYesNoQuestion(QuestionItem question, QuestionResponse response)
+    private async Task HandleQuestionResponseChangedDynamic(QuestionResponse updatedResponse)
     {
-        return @<div class="yesno-question">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
-                @question.Title
-                @if (question.IsRequired) { <span class="text-danger">*</span> }
-            </RadzenText>
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
-            }
-            <RadzenToggleButton Value="@GetBooleanValue(question.Id)"
-                              ValueChanged="@(value => SetSimpleValue(question.Id, value))"
-                              Text="@(GetBooleanValue(question.Id) ? "Yes" : "No")"
-                              Disabled="@IsQuestionnaireCompleted()"
-                              ButtonStyle="@(GetBooleanValue(question.Id) ? ButtonStyle.Success : ButtonStyle.Secondary)" />
-        </div>;
-    }
-
-    private RenderFragment RenderDateQuestion(QuestionItem question, QuestionResponse response)
-    {
-        return @<div class="date-question">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
-                @question.Title
-                @if (question.IsRequired) { <span class="text-danger">*</span> }
-            </RadzenText>
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
-            }
-            <RadzenDatePicker Value="@GetDateValue(question.Id)"
-                            ValueChanged="@(value => SetSimpleValue(question.Id, value))"
-                            TValue="DateTime?"
-                            ShowTime="false"
-                            DateFormat="dd/MM/yyyy"
-                            Disabled="@IsQuestionnaireCompleted()"
-                            Class="w-100" />
-        </div>;
-    }
-
-    private RenderFragment RenderNumberQuestion(QuestionItem question, QuestionResponse response)
-    {
-        return @<div class="number-question">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
-                @question.Title
-                @if (question.IsRequired) { <span class="text-danger">*</span> }
-            </RadzenText>
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
-            }
-            <RadzenNumeric Value="@GetNumericValue(question.Id)"
-                         ValueChanged="@(value => SetSimpleValue(question.Id, value))"
-                         TValue="int"
-                         Disabled="@IsQuestionnaireCompleted()"
-                         Class="w-100" />
-        </div>;
+        // Response object is already updated by reference
+        // Trigger validation and progress update
+        UpdateProgress();
+        await InvokeAsync(StateHasChanged);
     }
 
     // Helper methods for question responses
+    private QuestionResponse GetQuestionResponseForRole(Guid questionId, string roleName)
+    {
+        if (currentSection == null) return new QuestionResponse { QuestionId = questionId };
+
+        var sectionResponse = response.SectionResponses[currentSection.Id];
+
+        // Access responses for the specified role
+        if (sectionResponse.RoleResponses.TryGetValue(roleName, out var roleQuestions) &&
+            roleQuestions.TryGetValue(questionId, out var questionResponse))
+        {
+            return questionResponse;
+        }
+
+        return new QuestionResponse { QuestionId = questionId };
+    }
+
     private QuestionResponse GetQuestionResponse(Guid questionId)
     {
         if (currentSection == null) return new QuestionResponse { QuestionId = questionId };
@@ -946,22 +813,17 @@
         // Determine which role's responses to fetch based on section's CompletionRole
         // In read-only mode after review, managers view responses based on who originally completed the section
         // Employees in post-review states also need to view responses based on section's CompletionRole
-        // Managers viewing employee-only questionnaires view employee responses regardless of workflow state
-        var isPostReviewReadOnly = assignment != null && isManager &&
+        // After review meeting or when viewing employee-only questionnaires
+        var isPostReviewState = assignment != null &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                           WorkflowState.EmployeeReviewConfirmed or
                                           WorkflowState.Finalized);
-
-        var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
-            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
-                                         WorkflowState.EmployeeReviewConfirmed or
-                                         WorkflowState.Finalized);
 
         var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
 
         string roleToFetch = currentUserRole;
 
-        if (isPostReviewReadOnly || isEmployeePostReview || isManagerViewingEmployeeOnlyQuestionnaire)
+        if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // In post-review states or when manager views employee-only questionnaire,
             // fetch responses based on section's CompletionRole
@@ -1031,18 +893,6 @@
     {
         var response = GetQuestionResponse(questionId);
         return response.ComplexValue?.TryGetValue("Justification", out var value) == true ? value.ToString() ?? "" : "";
-    }
-
-    private string GetRatingText(int rating)
-    {
-        return rating switch
-        {
-            1 => "Not satisfied",
-            2 => "Somewhat satisfied", 
-            3 => "Satisfied",
-            4 => "Very satisfied",
-            _ => "Not rated"
-        };
     }
 
     private ProgressBarStyle GetProgressStyle(int percentage)
@@ -1309,35 +1159,50 @@
 
     private bool IsTextQuestionCompleted(QuestionItem question, QuestionResponse questionResponse)
     {
-        var textSections = GetTextSectionsForQuestion(question);
+        var textSections = ConfigService.GetTextSections(question);
         if (textSections.Count == 0) return true;
 
         if (questionResponse.ComplexValue == null) return false;
 
+        // Match the key format used by OptimizedTextQuestion
+        if (textSections.Count == 1)
+        {
+            // Single section uses "value" key
+            var hasValue = questionResponse.ComplexValue.TryGetValue("value", out var val) &&
+                          !string.IsNullOrWhiteSpace(val?.ToString());
+            return hasValue;
+        }
+
+        // Multiple sections use "section_0", "section_1", etc.
         // Get only required text sections
         var requiredTextSections = textSections.Where(ts => ts.IsRequired).ToList();
 
         // If no required text sections exist, check if at least one section has content
         if (!requiredTextSections.Any())
         {
-            return textSections.Any(ts =>
+            return textSections.Select((ts, index) => index).Any(index =>
             {
-                var response = GetTextSectionResponse(question.Id, ts.Order);
-                return !string.IsNullOrWhiteSpace(response);
+                var sectionKey = $"section_{index}";
+                var hasValue = questionResponse.ComplexValue.TryGetValue(sectionKey, out var val) &&
+                              !string.IsNullOrWhiteSpace(val?.ToString());
+                return hasValue;
             });
         }
 
         // Check that ALL required text sections have non-empty values
         return requiredTextSections.All(ts =>
         {
-            var response = GetTextSectionResponse(question.Id, ts.Order);
-            return !string.IsNullOrWhiteSpace(response);
+            var index = textSections.IndexOf(ts);
+            var sectionKey = $"section_{index}";
+            var hasValue = questionResponse.ComplexValue.TryGetValue(sectionKey, out var val) &&
+                          !string.IsNullOrWhiteSpace(val?.ToString());
+            return hasValue;
         });
     }
 
     private bool IsAssessmentCompleted(QuestionItem question, QuestionResponse questionResponse)
     {
-        var competencies = GetCompetenciesForQuestion(question);
+        var competencies = ConfigService.GetCompetencies(question);
         if (competencies.Count == 0) return true;
 
         if (questionResponse.ComplexValue == null) return false;
@@ -1710,6 +1575,8 @@
 
     private async Task OnReviewFinished()
     {
+        // This callback is invoked by QuestionnaireReviewMode after successfully finishing the review
+        // The API call has already been made by QuestionnaireReviewMode, so we just handle the navigation here
         if (!assignmentId.HasValue)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Error", "No assignment ID available");
@@ -1718,27 +1585,15 @@
 
         try
         {
-            // Call the API to finish the manager review meeting
-            var success = await AssignmentService.FinishReviewMeetingAsync(assignmentId.Value, currentUserName, null);
+            // Reload assignment to get updated workflow state
+            await OnWorkflowActionCompleted();
 
-            if (success)
-            {
-                // Reload assignment to get updated workflow state
-                await OnWorkflowActionCompleted();
-
-                // Navigate back to team questionnaires
-                NotificationService.Notify(NotificationSeverity.Success, "Review Complete",
-                    "The review meeting has been completed. The employee can now confirm the review outcome.");
-                NavigationManager.NavigateTo("/team/questionnaires");
-            }
-            else
-            {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to finish review meeting");
-            }
+            // Navigate back to team questionnaires
+            NavigationManager.NavigateTo("/team/questionnaires");
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to finish review meeting: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to reload assignment: {ex.Message}");
         }
     }
 
@@ -1806,85 +1661,6 @@
     }
 
     // Competency-specific helper methods
-    private List<CompetencyDefinition> GetCompetenciesForQuestion(QuestionItem question)
-    {
-        if (!question.Configuration.ContainsKey("Competencies"))
-        {
-            // Return default competencies if none configured
-            return new List<CompetencyDefinition>
-            {
-                new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities.", false)
-            };
-        }
-
-        var competenciesValue = question.Configuration["Competencies"];
-
-        // Handle direct List<CompetencyDefinition>
-        if (competenciesValue is List<CompetencyDefinition> comps)
-        {
-            return comps;
-        }
-
-        // Handle JsonElement (from API deserialization)
-        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var options = new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-                };
-
-                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
-                    jsonElement.GetRawText(),
-                    options
-                );
-
-                if (competencies != null && competencies.Any())
-                {
-                    return competencies;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Failed to deserialize competencies - will use defaults
-            }
-        }
-
-        // Handle IEnumerable<object> or other list types
-        if (competenciesValue is IEnumerable<object> enumerable)
-        {
-            var result = new List<CompetencyDefinition>();
-            foreach (var item in enumerable)
-            {
-                if (item is CompetencyDefinition compDef)
-                {
-                    result.Add(compDef);
-                }
-                else if (item is System.Text.Json.JsonElement itemJson)
-                {
-                    try
-                    {
-                        var deserializedComp = System.Text.Json.JsonSerializer.Deserialize<CompetencyDefinition>(
-                            itemJson.GetRawText(),
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                        );
-                        if (deserializedComp != null) result.Add(deserializedComp);
-                    }
-                    catch { /* Skip invalid items */ }
-                }
-            }
-            if (result.Any()) return result;
-        }
-
-        // Return default competencies if deserialization failed
-        return new List<CompetencyDefinition>
-        {
-            new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities.", false)
-        };
-    }
-
     private int GetCompetencyRating(Guid questionId, string competencyKey)
     {
         var response = GetQuestionResponse(questionId);
@@ -1955,123 +1731,6 @@
             return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
         }
         return "Where do you see yourself long-term in your professional career?";
-    }
-
-    private List<TextSection> GetTextSectionsForQuestion(QuestionItem question)
-    {
-        if (!question.Configuration.ContainsKey("TextSections"))
-        {
-            // Return default text section if none configured
-            return new List<TextSection>
-            {
-                new TextSection
-                {
-                    Title = "Career Ambitions",
-                    Description = "Where do you see yourself long-term in your professional career?",
-                    IsRequired = false,
-                    Order = 0
-                }
-            };
-        }
-
-        var textSectionsValue = question.Configuration["TextSections"];
-
-        // Handle direct List<TextSection>
-        if (textSectionsValue is List<TextSection> sections)
-        {
-            return sections;
-        }
-
-        // Handle JsonElement (from API deserialization)
-        if (textSectionsValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var options = new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-
-                var textSections = System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(
-                    jsonElement.GetRawText(),
-                    options
-                );
-
-                if (textSections != null && textSections.Any())
-                {
-                    return textSections;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Failed to deserialize text sections - will use defaults
-            }
-        }
-
-        // Handle IEnumerable<object> or other list types
-        if (textSectionsValue is IEnumerable<object> enumerable)
-        {
-            var result = new List<TextSection>();
-            foreach (var item in enumerable)
-            {
-                if (item is TextSection section)
-                {
-                    result.Add(section);
-                }
-                else if (item is System.Text.Json.JsonElement itemJson)
-                {
-                    try
-                    {
-                        var deserializedSection = System.Text.Json.JsonSerializer.Deserialize<TextSection>(
-                            itemJson.GetRawText(),
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                        );
-                        if (deserializedSection != null) result.Add(deserializedSection);
-                    }
-                    catch { /* Skip invalid items */ }
-                }
-            }
-            if (result.Any()) return result;
-        }
-
-        // Return default text section if deserialization failed
-        return new List<TextSection>
-        {
-            new TextSection
-            {
-                Title = "Career Ambitions",
-                Description = "Where do you see yourself long-term in your professional career?",
-                IsRequired = false,
-                Order = 0
-            }
-        };
-    }
-
-    private string GetTextSectionResponse(Guid questionId, int sectionOrder)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue($"text_{sectionOrder}", out var value) == true)
-        {
-            // Handle JsonElement from deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
-                {
-                    return jsonElement.GetString() ?? "";
-                }
-            }
-            return value.ToString() ?? "";
-        }
-        return "";
-    }
-
-    private void SetTextSectionResponse(Guid questionId, int sectionOrder, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"text_{sectionOrder}"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
     }
 
     // Helper methods for unified styling

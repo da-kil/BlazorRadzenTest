@@ -10,6 +10,7 @@
             <RadzenIcon Icon="self_improvement" Class="me-2" />
             @Question.Title
             @if (Question.IsRequired) { <span class="text-danger">*</span> }
+            <EditedDuringReviewBadge Response="@Response" />
         </RadzenText>
 
         @if (!string.IsNullOrWhiteSpace(Question.Description))
@@ -57,7 +58,7 @@
                                 <RadzenRating Value="@currentRating"
                                             ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
                                             Stars="@ratingScale"
-                                            Disabled="@IsReadOnly"
+                                            ReadOnly="@IsReadOnly"
                                             Class="mb-2" />
                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
                                     @ratingText
@@ -130,7 +131,7 @@ else
                                 <RadzenRating Value="@currentRating"
                                             ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
                                             Stars="@ratingScale"
-                                            Disabled="@IsReadOnly"
+                                            ReadOnly="@IsReadOnly"
                                             Class="mb-2" />
                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
                                     @ratingText
@@ -173,25 +174,26 @@ else
     private string scaleLowLabel = "Poor";
     private string scaleHighLabel = "Excellent";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         // Always load configuration on initialization
         // This ensures the component works correctly when used in dialogs or other contexts
         // where parameter change detection might not work as expected
-        LoadConfiguration();
+        LoadConfigurationAsync();
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (HasParameterChanged(nameof(Question), Question))
         {
-            LoadConfiguration();
+            LoadConfigurationAsync();
         }
+        await base.OnParametersSetAsync();
     }
 
-    private void LoadConfiguration()
+    private void LoadConfigurationAsync()
     {
         competencies = GetCompetenciesFromConfiguration();
         ratingScale = GetRatingScaleFromConfiguration();
@@ -275,26 +277,79 @@ else
 
     private int GetRatingScaleFromConfiguration()
     {
-        if (Question.Configuration?.ContainsKey("RatingScale") == true &&
-            int.TryParse(Question.Configuration["RatingScale"].ToString(), out int scale))
+        if (Question.Configuration?.ContainsKey("RatingScale") == true)
         {
-            return scale;
+            var value = Question.Configuration["RatingScale"];
+
+            if (value == null)
+            {
+                return 4;
+            }
+
+            try
+            {
+                // Try Convert.ToInt32 which handles many types including JsonElement
+                return Convert.ToInt32(value);
+            }
+            catch
+            {
+                // Fallback: Handle JsonElement explicitly
+                if (value is System.Text.Json.JsonElement jsonElement)
+                {
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                    {
+                        return jsonElement.GetInt32();
+                    }
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        if (int.TryParse(jsonElement.GetString(), out int parsed))
+                        {
+                            return parsed;
+                        }
+                    }
+                }
+
+                // Fallback: Try parsing string representation
+                if (int.TryParse(value.ToString(), out int scale))
+                {
+                    return scale;
+                }
+            }
         }
+
         return 4;
     }
 
     private string GetScaleLowLabelFromConfiguration()
     {
-        return Question.Configuration?.TryGetValue("ScaleLowLabel", out var value) == true
-            ? value.ToString() ?? "Poor"
-            : "Poor";
+        if (Question.Configuration?.TryGetValue("ScaleLowLabel", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? "Poor"
+                    : "Poor";
+            }
+            return value.ToString() ?? "Poor";
+        }
+        return "Poor";
     }
 
     private string GetScaleHighLabelFromConfiguration()
     {
-        return Question.Configuration?.TryGetValue("ScaleHighLabel", out var value) == true
-            ? value.ToString() ?? "Excellent"
-            : "Excellent";
+        if (Question.Configuration?.TryGetValue("ScaleHighLabel", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? "Excellent"
+                    : "Excellent";
+            }
+            return value.ToString() ?? "Excellent";
+        }
+        return "Excellent";
     }
 
     private string GetRatingScaleDescription()

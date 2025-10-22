@@ -31,6 +31,7 @@
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
+    [Parameter] public bool HideHeader { get; set; } = false;
 
     private bool shouldRender = true;
     private string? lastQuestionHash;
@@ -66,8 +67,31 @@
     private string ComputeResponseHash()
     {
         // Create hash based on response properties that affect rendering
-        var simpleValue = Response.ComplexValue?.TryGetValue("value", out var val) == true ? val?.ToString() : "";
-        return $"{Response.QuestionId}|{simpleValue}|{Response.ComplexValue?.Count ?? 0}";
+        if (Response.ComplexValue == null || !Response.ComplexValue.Any())
+        {
+            return $"{Response.QuestionId}|empty";
+        }
+
+        // Include ALL key-value pairs in the hash to detect any changes
+        var valueHash = string.Join("|",
+            Response.ComplexValue
+                .OrderBy(kvp => kvp.Key)
+                .Select(kvp => $"{kvp.Key}:{SerializeValue(kvp.Value)}"));
+
+        return $"{Response.QuestionId}|{valueHash}";
+    }
+
+    private string SerializeValue(object? value)
+    {
+        if (value == null) return "null";
+
+        // Handle nested dictionaries (for complex structures)
+        if (value is Dictionary<string, object> dict)
+        {
+            return string.Join(",", dict.OrderBy(kvp => kvp.Key).Select(kvp => $"{kvp.Key}={SerializeValue(kvp.Value)}"));
+        }
+
+        return value.ToString() ?? "null";
     }
 
     private RenderFragment RenderAssessmentOptimized() => __builder =>
@@ -75,7 +99,8 @@
         <OptimizedAssessmentQuestion Question="@Question"
                                     Response="@Response"
                                     OnResponseChanged="@OnResponseChanged"
-                                    IsReadOnly="@IsReadOnly" />
+                                    IsReadOnly="@IsReadOnly"
+                                    HideHeader="@HideHeader" />
     };
 
     private RenderFragment RenderTextQuestionOptimized() => __builder =>
@@ -83,7 +108,8 @@
         <OptimizedTextQuestion Question="@Question"
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
-                              IsReadOnly="@IsReadOnly" />
+                              IsReadOnly="@IsReadOnly"
+                              HideHeader="@HideHeader" />
     };
 
     private RenderFragment RenderGoalQuestionOptimized() => __builder =>
@@ -91,7 +117,8 @@
         <OptimizedGoalQuestion Question="@Question"
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
-                              IsReadOnly="@IsReadOnly" />
+                              IsReadOnly="@IsReadOnly"
+                              HideHeader="@HideHeader" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>

@@ -1,0 +1,35 @@
+@using ti8m.BeachBreak.Client.Models
+@using Radzen.Blazor
+
+@if (Response?.EditedDuringReview == true)
+{
+    <RadzenBadge BadgeStyle="BadgeStyle.Warning"
+                 Text="Edited During Review"
+                 Class="ms-2 edited-during-review-badge"
+                 title="@GetTooltipText()" />
+}
+
+<style>
+    .edited-during-review-badge {
+        font-size: 0.75rem;
+        vertical-align: middle;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public QuestionResponse? Response { get; set; }
+
+    private string GetTooltipText()
+    {
+        if (Response?.EditedDuringReview != true)
+            return string.Empty;
+
+        var baseText = "This answer was modified during the review meeting";
+        if (Response.EditedDuringReviewAt.HasValue)
+        {
+            return $"{baseText} on {Response.EditedDuringReviewAt.Value.ToLocalTime():MMM dd, yyyy HH:mm}";
+        }
+        return baseText;
+    }
+}

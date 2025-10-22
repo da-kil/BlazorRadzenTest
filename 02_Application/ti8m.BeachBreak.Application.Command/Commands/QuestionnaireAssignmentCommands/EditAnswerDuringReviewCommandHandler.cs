@@ -76,6 +76,11 @@ public class EditAnswerDuringReviewCommandHandler
 
                     if (deserialized != null)
                     {
+                        // Add metadata to track edit during review
+                        deserialized["EditedDuringReview"] = true;
+                        deserialized["EditedDuringReviewBy"] = command.EditedByEmployeeId.ToString();
+                        deserialized["EditedDuringReviewAt"] = DateTime.UtcNow.ToString("O"); // ISO 8601 format
+
                         questionResponseStructure = deserialized;
                     }
                 }
@@ -89,7 +94,7 @@ public class EditAnswerDuringReviewCommandHandler
                 }
             }
 
-            // Update or add the question answer (frontend provides complete structure)
+            // Update or add the question answer (frontend provides complete structure with metadata)
             currentSectionResponses[command.QuestionId] = questionResponseStructure;
 
             // Record the updated section response
