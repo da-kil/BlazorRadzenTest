@@ -58,39 +58,11 @@
         <div class="answer-editor">
         @if (Question.Type == QuestionType.TextQuestion)
         {
-            var textSections = GetTextSectionsFromQuestion();
-            if (textSections.Any())
-            {
-                @foreach (var textSection in textSections.OrderBy(ts => ts.Order))
-                {
-                    var currentValue = GetTextSectionValue(textSection.Order);
-                    <div class="mb-4">
-                        <div class="question-item-title">
-                            @textSection.Title
-                            @if (textSection.IsRequired)
-                            {
-                                <span class="text-danger">*</span>
-                            }
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(textSection.Description))
-                        {
-                            <div class="question-item-description">@textSection.Description</div>
-                        }
-                        <RadzenTextArea Value="@currentValue"
-                                       ValueChanged="@((string value) => UpdateTextSectionValue(textSection.Order, value))"
-                                       Placeholder="Enter your answer here..."
-                                       Rows="5"
-                                       Style="width: 100%;" />
-                    </div>
-                }
-            }
-            else
-            {
-                <RadzenTextArea @bind-Value="@SimpleTextValue"
-                               Placeholder="Enter your answer here..."
-                               Rows="10"
-                               Style="width: 100%;" />
-            }
+            <OptimizedTextQuestion Question="@Question"
+                                  Response="@editResponse"
+                                  OnResponseChanged="@HandleResponseChanged"
+                                  IsReadOnly="false"
+                                  HideHeader="true" />
         }
         else if (Question.Type == QuestionType.Assessment)
         {
@@ -169,75 +141,6 @@
         }
     }
 
-    private List<TextSection> GetTextSectionsFromQuestion()
-    {
-        if (Question?.Configuration?.ContainsKey("TextSections") != true)
-        {
-            return new List<TextSection>();
-        }
-
-        var textSectionsValue = Question.Configuration["TextSections"];
-
-        // Handle direct List<TextSection>
-        if (textSectionsValue is List<TextSection> sections)
-        {
-            return sections;
-        }
-
-        // Handle JsonElement (from API deserialization)
-        if (textSectionsValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var options = new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-
-                var textSections = System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(
-                    jsonElement.GetRawText(),
-                    options
-                );
-
-                return textSections ?? new List<TextSection>();
-            }
-            catch { /* Skip deserialization errors */ }
-        }
-
-        return new List<TextSection>();
-    }
-
-    private string GetTextSectionValue(int sectionOrder)
-    {
-        if (editResponse.ComplexValue == null)
-            return "";
-
-        var textKey = $"text_{sectionOrder}";
-        if (editResponse.ComplexValue.ContainsKey(textKey))
-        {
-            var value = editResponse.ComplexValue[textKey];
-            if (value is System.Text.Json.JsonElement jsonElement &&
-                jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
-            {
-                return jsonElement.GetString() ?? "";
-            }
-            return value?.ToString() ?? "";
-        }
-
-        return "";
-    }
-
-    private void UpdateTextSectionValue(int sectionOrder, string value)
-    {
-        if (editResponse.ComplexValue == null)
-        {
-            editResponse.ComplexValue = new Dictionary<string, object>();
-        }
-
-        var textKey = $"text_{sectionOrder}";
-        editResponse.ComplexValue[textKey] = value;
-    }
-
     private async Task HandleResponseChanged(QuestionResponse response)
     {
         // Update is already handled by the component
@@ -282,41 +185,29 @@
         DialogService.Close(questionResponse);
     }
 
-    private object? GetTextQuestionResult()
-    {
-        // Return ComplexValue with text sections if available
-        if (editResponse.ComplexValue != null && editResponse.ComplexValue.Any(kvp => kvp.Key.StartsWith("text_")))
-        {
-            return editResponse.ComplexValue;
-        }
-
-        // Fallback to simple text value from ComplexValue
-        return editResponse.ComplexValue?.TryGetValue("value", out var val) == true ? val?.ToString() : null;
-    }
-
     private bool IsAnswerValid()
     {
         if (Question.Type == QuestionType.TextQuestion)
         {
-            var textSections = GetTextSectionsFromQuestion();
-            if (textSections.Any())
+            if (editResponse.ComplexValue == null || !editResponse.ComplexValue.Any())
+                return false;
+
+            // Check for single section format ("value" key)
+            if (editResponse.ComplexValue.ContainsKey("value"))
             {
-                // Check if all required text sections have values
-                foreach (var textSection in textSections.Where(ts => ts.IsRequired))
-                {
-                    var value = GetTextSectionValue(textSection.Order);
-                    if (string.IsNullOrWhiteSpace(value))
-                    {
-                        return false;
-                    }
-                }
-                return true;
+                return !string.IsNullOrWhiteSpace(editResponse.ComplexValue["value"]?.ToString());
             }
-            else
+
+            // Check for multiple sections format ("section_0", "section_1", etc.)
+            var sectionKeys = editResponse.ComplexValue.Keys.Where(k => k.StartsWith("section_")).ToList();
+            if (sectionKeys.Any())
             {
-                // Fallback: check simple text value from ComplexValue
-                return !string.IsNullOrWhiteSpace(SimpleTextValue);
+                // At least one section must have content
+                return sectionKeys.Any(key =>
+                    !string.IsNullOrWhiteSpace(editResponse.ComplexValue[key]?.ToString()));
             }
+
+            return false;
         }
 
         return Question.Type switch

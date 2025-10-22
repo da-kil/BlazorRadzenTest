@@ -56,7 +56,8 @@
       "WebFetch(domain:github.com)",
       "Bash(test:*)",
       "Bash(for file in \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Components\\Dialogs\\DepartmentDetailsDialog.razor\" \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Components\\Dialogs\\TeamMemberDetailsDialog.razor\" \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Components\\Dialogs\\QuestionnaireAnalyticsDialog.razor\")",
-      "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && head -15 {}')"
+      "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && head -15 {}')",
+      "Bash(Select-String -Pattern \"(error |Build succeeded|Build FAILED)\" -Context 0,1)"
     ],
     "deny": [],
     "ask": []

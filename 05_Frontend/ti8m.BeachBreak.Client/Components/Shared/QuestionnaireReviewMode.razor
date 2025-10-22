@@ -4,6 +4,7 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Components.Questions
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
@@ -127,7 +128,14 @@
                                                     </div>
                                                     <div class="answer-content">
                                                         <div class="answer-value">
-                                                            @RenderAnswerValue(question, CompletionRole.Employee)
+                                                            @{
+                                                                var employeeResponse = GetQuestionResponse(currentSection.Id, question.Id, CompletionRole.Employee);
+                                                            }
+                                                            <OptimizedQuestionRenderer
+                                                                Question="@question"
+                                                                Response="@employeeResponse"
+                                                                IsReadOnly="true"
+                                                                HideHeader="true" />
                                                         </div>
                                                     </div>
                                                     <div class="answer-actions">
@@ -155,7 +163,14 @@
                                                     </div>
                                                     <div class="answer-content">
                                                         <div class="answer-value">
-                                                            @RenderAnswerValue(question, CompletionRole.Manager)
+                                                            @{
+                                                                var managerResponse = GetQuestionResponse(currentSection.Id, question.Id, CompletionRole.Manager);
+                                                            }
+                                                            <OptimizedQuestionRenderer
+                                                                Question="@question"
+                                                                Response="@managerResponse"
+                                                                IsReadOnly="true"
+                                                                HideHeader="true" />
                                                         </div>
                                                     </div>
                                                     <div class="answer-actions">
@@ -186,7 +201,14 @@
                                                 </div>
                                                 <div class="answer-content">
                                                     <div class="answer-value">
-                                                        @RenderAnswerValue(question, currentSection.CompletionRole)
+                                                        @{
+                                                            var singleResponse = GetQuestionResponse(currentSection.Id, question.Id, currentSection.CompletionRole);
+                                                        }
+                                                        <OptimizedQuestionRenderer
+                                                            Question="@question"
+                                                            Response="@singleResponse"
+                                                            IsReadOnly="true"
+                                                            HideHeader="true" />
                                                     </div>
                                                 </div>
                                                 <div class="answer-actions">
@@ -292,303 +314,13 @@
         }
     }
 
-    private RenderFragment RenderAnswerValue(QuestionItem question, CompletionRole role)
-    {
-        var answer = GetAnswer(currentSection!.Id, question.Id, role);
-
-        if (answer == null)
-        {
-            return @<span class="empty-answer">No answer provided</span>;
-        }
-
-        // Handle different question types
-        return question.Type switch
-        {
-            QuestionType.TextQuestion => RenderTextAnswer(answer),
-            QuestionType.Assessment => RenderAssessmentAnswer(answer, question),
-            QuestionType.GoalAchievement => RenderGoalAnswer(answer),
-            _ => @<span>@answer.ToString()</span>
-        };
-    }
-
-    private RenderFragment RenderTextAnswer(object answer)
-    {
-        // Handle complex value (dictionary with text sections)
-        if (answer is Dictionary<string, object> complexValue)
-        {
-            var textSections = GetTextSectionsFromQuestion(currentSection!.Questions.FirstOrDefault(q => q.Type == QuestionType.TextQuestion));
-
-            return @<div>
-                @foreach (var kvp in complexValue.Where(k => k.Key.StartsWith("text_")).OrderBy(k => k.Key))
-                {
-                    var textSectionKey = kvp.Key.Replace("text_", "");
-
-                    // Get text value, handle JsonElement
-                    string textValue = "";
-                    if (kvp.Value is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
-                    {
-                        textValue = jsonElement.GetString() ?? "";
-                    }
-                    else
-                    {
-                        textValue = kvp.Value?.ToString() ?? "";
-                    }
-
-                    // Get text section title - match by order
-                    var textSection = textSections.FirstOrDefault(ts => ts.Order.ToString() == textSectionKey);
-                    var sectionTitle = textSection?.Title ?? textSectionKey;
-
-                    <div class="question-item-card">
-                        <div class="question-item-title">
-                            @sectionTitle
-                            @if (textSection?.IsRequired == true)
-                            {
-                                <span class="text-danger">*</span>
-                            }
-                        </div>
-                        @if (!string.IsNullOrWhiteSpace(textSection?.Description))
-                        {
-                            <div class="question-item-description">@textSection.Description</div>
-                        }
-                        <div class="question-answer-box">
-                            @if (!string.IsNullOrWhiteSpace(textValue))
-                            {
-                                @textValue
-                            }
-                            else
-                            {
-                                <span class="text-muted fst-italic">No answer provided</span>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>;
-        }
-
-        // Handle simple text value
-        var text = answer?.ToString() ?? "";
-        return @<div style="white-space: pre-wrap;">@text</div>;
-    }
-
-    private List<TextSection> GetTextSectionsFromQuestion(QuestionItem? question)
-    {
-        if (question?.Configuration?.ContainsKey("TextSections") != true)
-        {
-            return new List<TextSection>();
-        }
-
-        var textSectionsValue = question.Configuration["TextSections"];
-
-        // Handle direct List<TextSection>
-        if (textSectionsValue is List<TextSection> sections)
-        {
-            return sections;
-        }
-
-        // Handle JsonElement (from API deserialization)
-        if (textSectionsValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var options = new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-
-                var textSections = System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(
-                    jsonElement.GetRawText(),
-                    options
-                );
-
-                return textSections ?? new List<TextSection>();
-            }
-            catch { /* Skip deserialization errors */ }
-        }
-
-        return new List<TextSection>();
-    }
-
-    private RenderFragment RenderAssessmentAnswer(object answer, QuestionItem question)
-    {
-        if (answer is not Dictionary<string, object> complexValue)
-        {
-            return @<span class="empty-answer">No ratings provided</span>;
-        }
-
-        // Get competency definitions from question configuration
-        var competencies = GetCompetenciesFromQuestion(question);
-        var ratingScale = GetRatingScaleFromQuestion(question);
-
-        return @<div>
-            @foreach (var kvp in complexValue.Where(k => k.Key.StartsWith("rating_")))
-            {
-                var competencyKey = kvp.Key.Replace("rating_", "");
-
-                // Get rating value, handle JsonElement
-                int ratingValue = 0;
-                if (kvp.Value is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
-                {
-                    ratingValue = jsonElement.GetInt32();
-                }
-                else if (kvp.Value != null)
-                {
-                    int.TryParse(kvp.Value.ToString(), out ratingValue);
-                }
-
-                // Get comment
-                var commentKey = $"comment_{competencyKey}";
-                var comment = "";
-                if (complexValue.ContainsKey(commentKey))
-                {
-                    var commentValue = complexValue[commentKey];
-                    if (commentValue is System.Text.Json.JsonElement commentJson && commentJson.ValueKind == System.Text.Json.JsonValueKind.String)
-                    {
-                        comment = commentJson.GetString() ?? "";
-                    }
-                    else
-                    {
-                        comment = commentValue?.ToString() ?? "";
-                    }
-                }
-
-                // Get competency details
-                var competency = competencies.FirstOrDefault(c => c.Key == competencyKey);
-                var competencyTitle = competency?.Title ?? competencyKey;
-                var competencyDescription = competency?.Description ?? "";
-
-                <div class="question-item-card">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="flex-grow-1">
-                            <div class="question-item-title">@competencyTitle</div>
-                            @if (!string.IsNullOrWhiteSpace(competencyDescription))
-                            {
-                                <div class="question-item-description">@competencyDescription</div>
-                            }
-                        </div>
-                        <div class="text-end ms-3">
-                            <div class="text-muted small mb-1">Rating:</div>
-                            <RadzenRating Value="@ratingValue" Stars="@ratingScale" ReadOnly="true" />
-                        </div>
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(comment))
-                    {
-                        <div class="question-answer-box mt-2">
-                            @comment
-                        </div>
-                    }
-                </div>
-            }
-        </div>;
-    }
-
-    private List<CompetencyDefinition> GetCompetenciesFromQuestion(QuestionItem question)
-    {
-        if (question.Configuration?.ContainsKey("Competencies") != true)
-        {
-            return new List<CompetencyDefinition>();
-        }
-
-        var competenciesValue = question.Configuration["Competencies"];
-
-        // Handle direct List<CompetencyDefinition>
-        if (competenciesValue is List<CompetencyDefinition> comps)
-        {
-            return comps;
-        }
-
-        // Handle JsonElement (from API deserialization)
-        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var options = new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-                };
-
-                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
-                    jsonElement.GetRawText(),
-                    options
-                );
-
-                return competencies ?? new List<CompetencyDefinition>();
-            }
-            catch { /* Skip deserialization errors */ }
-        }
-
-        return new List<CompetencyDefinition>();
-    }
-
-    private int GetRatingScaleFromQuestion(QuestionItem question)
-    {
-        if (question.Configuration?.ContainsKey("RatingScale") == true)
-        {
-            var value = question.Configuration["RatingScale"];
-
-            // Handle JsonElement from API deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
-                {
-                    return jsonElement.GetInt32();
-                }
-            }
-
-            // Handle direct int or string value
-            if (int.TryParse(value.ToString(), out int scale))
-            {
-                return scale;
-            }
-        }
-        return 4;
-    }
-
-    private RenderFragment RenderGoalAnswer(object answer)
-    {
-        if (answer is not Dictionary<string, object> complexValue)
-        {
-            return @<span class="empty-answer">No goal information provided</span>;
-        }
-
-        return @<div class="question-item-card">
-            @if (complexValue.ContainsKey("Description"))
-            {
-                <div class="mb-3">
-                    <div class="question-item-title">Goal Description</div>
-                    <div class="question-answer-box">
-                        @complexValue["Description"]?.ToString()
-                    </div>
-                </div>
-            }
-            @if (complexValue.ContainsKey("AchievementPercentage"))
-            {
-                <div class="mb-3">
-                    <div class="question-item-title">Achievement Percentage</div>
-                    <div class="question-answer-box">
-                        @complexValue["AchievementPercentage"]?.ToString()%
-                    </div>
-                </div>
-            }
-            @if (complexValue.ContainsKey("Justification"))
-            {
-                <div class="mb-3">
-                    <div class="question-item-title">Justification</div>
-                    <div class="question-answer-box">
-                        @complexValue["Justification"]?.ToString()
-                    </div>
-                </div>
-            }
-        </div>;
-    }
-
-    private object? GetAnswer(Guid sectionId, Guid questionId, CompletionRole role)
+    private QuestionResponse GetQuestionResponse(Guid sectionId, Guid questionId, CompletionRole role)
     {
         if (response?.SectionResponses == null)
-            return null;
+            return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
 
         if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
-            return null;
+            return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
 
         // Use role-based responses structure
         var roleKey = role.ToString();
@@ -598,12 +330,17 @@
         {
             if (roleQuestions.TryGetValue(questionId, out var questionResponse))
             {
-                // Return ComplexValue which contains all answer data
-                return questionResponse.ComplexValue;
+                return questionResponse;
             }
         }
 
-        return null;
+        return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+    }
+
+    private object? GetAnswer(Guid sectionId, Guid questionId, CompletionRole role)
+    {
+        var questionResponse = GetQuestionResponse(sectionId, questionId, role);
+        return questionResponse.ComplexValue;
     }
 
     private async Task EditAnswer(QuestionItem question, CompletionRole originalRole)

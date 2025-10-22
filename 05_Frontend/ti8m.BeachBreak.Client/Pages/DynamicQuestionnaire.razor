@@ -721,65 +721,6 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private RenderFragment RenderYesNoQuestion(QuestionItem question, QuestionResponse response)
-    {
-        return @<div class="yesno-question">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
-                @question.Title
-                @if (question.IsRequired) { <span class="text-danger">*</span> }
-            </RadzenText>
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
-            }
-            <RadzenToggleButton Value="@GetBooleanValue(question.Id)"
-                              ValueChanged="@(value => SetSimpleValue(question.Id, value))"
-                              Text="@(GetBooleanValue(question.Id) ? "Yes" : "No")"
-                              Disabled="@IsQuestionnaireCompleted()"
-                              ButtonStyle="@(GetBooleanValue(question.Id) ? ButtonStyle.Success : ButtonStyle.Secondary)" />
-        </div>;
-    }
-
-    private RenderFragment RenderDateQuestion(QuestionItem question, QuestionResponse response)
-    {
-        return @<div class="date-question">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
-                @question.Title
-                @if (question.IsRequired) { <span class="text-danger">*</span> }
-            </RadzenText>
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
-            }
-            <RadzenDatePicker Value="@GetDateValue(question.Id)"
-                            ValueChanged="@(value => SetSimpleValue(question.Id, value))"
-                            TValue="DateTime?"
-                            ShowTime="false"
-                            DateFormat="dd/MM/yyyy"
-                            Disabled="@IsQuestionnaireCompleted()"
-                            Class="w-100" />
-        </div>;
-    }
-
-    private RenderFragment RenderNumberQuestion(QuestionItem question, QuestionResponse response)
-    {
-        return @<div class="number-question">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">
-                @question.Title
-                @if (question.IsRequired) { <span class="text-danger">*</span> }
-            </RadzenText>
-            @if (!string.IsNullOrWhiteSpace(question.Description))
-            {
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@question.Description</RadzenText>
-            }
-            <RadzenNumeric Value="@GetNumericValue(question.Id)"
-                         ValueChanged="@(value => SetSimpleValue(question.Id, value))"
-                         TValue="int"
-                         Disabled="@IsQuestionnaireCompleted()"
-                         Class="w-100" />
-        </div>;
-    }
-
     // Helper methods for question responses
     private QuestionResponse GetQuestionResponse(Guid questionId)
     {
