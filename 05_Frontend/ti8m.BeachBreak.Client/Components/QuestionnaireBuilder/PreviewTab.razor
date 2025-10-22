@@ -1,5 +1,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@inject QuestionConfigurationService ConfigService
 
 <style>
     .clean-preview {
@@ -269,7 +271,7 @@
     {
         return @<div class="assessment-preview">
             @{
-                var competencies = GetCompetenciesFromConfiguration(question);
+                var competencies = ConfigService.GetCompetencies(question);
             }
             @if (competencies.Count > 0)
             {
@@ -283,9 +285,9 @@
                         }
                         <div class="rating-preview">
                             @{
-                                var ratingScale = GetRatingScaleFromQuestion(question);
-                                var scaleLowLabel = GetScaleLowLabelFromQuestion(question);
-                                var scaleHighLabel = GetScaleHighLabelFromQuestion(question);
+                                var ratingScale = ConfigService.GetRatingScale(question);
+                                var scaleLowLabel = ConfigService.GetScaleLowLabel(question);
+                                var scaleHighLabel = ConfigService.GetScaleHighLabel(question);
                             }
                             @if (ratingScale <= 5)
                             {
@@ -356,52 +358,6 @@
         </div>;
     }
 
-    private List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("Competencies"))
-        {
-            var competenciesObj = question.Configuration["Competencies"];
-
-            // Handle direct cast (when set in editor)
-            if (competenciesObj is List<CompetencyDefinition> competencies)
-            {
-                return competencies;
-            }
-
-            // Handle JSON deserialization (when loaded from API)
-            if (competenciesObj is System.Text.Json.JsonElement jsonElement)
-            {
-                try
-                {
-                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                    {
-                        return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing competencies: {ex.Message}");
-                }
-            }
-
-            // Handle string representation (backup case)
-            if (competenciesObj is string jsonString)
-            {
-                try
-                {
-                    return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonString) ?? new List<CompetencyDefinition>();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing competencies from string: {ex.Message}");
-                }
-            }
-        }
-
-        // Return empty list if none exist
-        return new List<CompetencyDefinition>();
-    }
-
     private string GetTextQuestionSectionTitle(QuestionItem question)
     {
         if (question.Configuration.ContainsKey("SectionTitle"))
@@ -418,49 +374,5 @@
             return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
         }
         return "Where do you see yourself long-term in your professional career?";
-    }
-
-    private int GetRatingScaleFromQuestion(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("RatingScale"))
-        {
-            var value = question.Configuration["RatingScale"];
-
-            // Handle direct int
-            if (value is int scale)
-                return scale;
-
-            // Handle JsonElement from API deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
-                {
-                    return jsonElement.GetInt32();
-                }
-            }
-
-            // Handle string or other types
-            if (int.TryParse(value?.ToString(), out var parsedScale))
-                return parsedScale;
-        }
-        return 4; // Default to 1-4 scale
-    }
-
-    private string GetScaleLowLabelFromQuestion(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("ScaleLowLabel"))
-        {
-            return question.Configuration["ScaleLowLabel"]?.ToString() ?? "";
-        }
-        return "";
-    }
-
-    private string GetScaleHighLabelFromQuestion(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("ScaleHighLabel"))
-        {
-            return question.Configuration["ScaleHighLabel"]?.ToString() ?? "";
-        }
-        return "";
     }
 }
