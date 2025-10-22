@@ -522,10 +522,24 @@
 
     private int GetRatingScaleFromQuestion(QuestionItem question)
     {
-        if (question.Configuration?.ContainsKey("RatingScale") == true &&
-            int.TryParse(question.Configuration["RatingScale"].ToString(), out int scale))
+        if (question.Configuration?.ContainsKey("RatingScale") == true)
         {
-            return scale;
+            var value = question.Configuration["RatingScale"];
+
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    return jsonElement.GetInt32();
+                }
+            }
+
+            // Handle direct int or string value
+            if (int.TryParse(value.ToString(), out int scale))
+            {
+                return scale;
+            }
         }
         return 4;
     }

@@ -3,19 +3,21 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits OptimizedComponentBase
 
-<RadzenCard Class="text-question">
-    <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
-        <RadzenIcon Icon="psychology" Class="me-2" />
-        @Question.Title
-        @if (Question.IsRequired) { <span class="text-danger">*</span> }
-    </RadzenText>
+@if (!HideHeader)
+{
+    <RadzenCard Class="text-question">
+        <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
+            <RadzenIcon Icon="psychology" Class="me-2" />
+            @Question.Title
+            @if (Question.IsRequired) { <span class="text-danger">*</span> }
+        </RadzenText>
 
-    @if (!string.IsNullOrWhiteSpace(Question.Description))
-    {
-        <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
-    }
+        @if (!string.IsNullOrWhiteSpace(Question.Description))
+        {
+            <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
+        }
 
-    <div class="text-sections">
+        <div class="text-sections">
         @foreach (var section in textSections)
         {
             var sectionKey = $"section_{textSections.IndexOf(section)}";
@@ -61,12 +63,47 @@
         }
     </div>
 </RadzenCard>
+}
+else
+{
+    <div class="text-sections">
+        @foreach (var textSection in textSections)
+        {
+            var sectionKey = $"section_{textSections.IndexOf(textSection)}";
+            <RadzenCard Class="text-section-card mb-4 p-3 border-start border-primary border-3" @key="@sectionKey">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                    @textSection.Title
+                    @if (textSection.IsRequired) { <span class="text-danger">*</span> }
+                </RadzenText>
+                @if (!string.IsNullOrWhiteSpace(textSection.Description))
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">@textSection.Description</RadzenText>
+                }
+                @if (!IsReadOnly)
+                {
+                    <RadzenTextArea Value="@GetSectionValue(sectionKey)"
+                                  ValueChanged="@((string value) => SetSectionValue(sectionKey, value))"
+                                  Placeholder="Enter your response..."
+                                  Rows="5"
+                                  Class="w-100" />
+                }
+                else
+                {
+                    <div class="no-response p-3 bg-light rounded text-muted">
+                        <em>No response provided</em>
+                    </div>
+                }
+            </RadzenCard>
+        }
+    </div>
+}
 
 @code {
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
+    [Parameter] public bool HideHeader { get; set; } = false;
 
     private List<TextSectionDefinition> textSections = new();
 

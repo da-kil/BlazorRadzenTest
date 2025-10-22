@@ -31,6 +31,7 @@
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
+    [Parameter] public bool HideHeader { get; set; } = false;
 
     private bool shouldRender = true;
     private string? lastQuestionHash;
@@ -75,7 +76,8 @@
         <OptimizedAssessmentQuestion Question="@Question"
                                     Response="@Response"
                                     OnResponseChanged="@OnResponseChanged"
-                                    IsReadOnly="@IsReadOnly" />
+                                    IsReadOnly="@IsReadOnly"
+                                    HideHeader="@HideHeader" />
     };
 
     private RenderFragment RenderTextQuestionOptimized() => __builder =>
@@ -83,7 +85,8 @@
         <OptimizedTextQuestion Question="@Question"
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
-                              IsReadOnly="@IsReadOnly" />
+                              IsReadOnly="@IsReadOnly"
+                              HideHeader="@HideHeader" />
     };
 
     private RenderFragment RenderGoalQuestionOptimized() => __builder =>
@@ -91,7 +94,8 @@
         <OptimizedGoalQuestion Question="@Question"
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
-                              IsReadOnly="@IsReadOnly" />
+                              IsReadOnly="@IsReadOnly"
+                              HideHeader="@HideHeader" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>

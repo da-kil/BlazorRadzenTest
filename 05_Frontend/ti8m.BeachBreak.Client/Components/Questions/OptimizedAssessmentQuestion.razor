@@ -1,7 +1,9 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Shared
+@using Microsoft.JSInterop
 @inherits OptimizedComponentBase
+@inject IJSRuntime JSRuntime
 
 @if (!HideHeader)
 {
@@ -173,30 +175,47 @@ else
     private string scaleLowLabel = "Poor";
     private string scaleHighLabel = "Excellent";
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         // Always load configuration on initialization
         // This ensures the component works correctly when used in dialogs or other contexts
         // where parameter change detection might not work as expected
-        LoadConfiguration();
+        await LoadConfigurationAsync();
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (HasParameterChanged(nameof(Question), Question))
         {
-            LoadConfiguration();
+            await LoadConfigurationAsync();
         }
+        await base.OnParametersSetAsync();
     }
 
-    private void LoadConfiguration()
+    private async Task LoadConfigurationAsync()
     {
         competencies = GetCompetenciesFromConfiguration();
         ratingScale = GetRatingScaleFromConfiguration();
         scaleLowLabel = GetScaleLowLabelFromConfiguration();
         scaleHighLabel = GetScaleHighLabelFromConfiguration();
+
+        // Debug: Log the loaded values
+        await JSRuntime.InvokeVoidAsync("console.log", $"[OptimizedAssessmentQuestion] Loaded ratingScale: {ratingScale}");
+        if (Question.Configuration != null)
+        {
+            await JSRuntime.InvokeVoidAsync("console.log", $"[OptimizedAssessmentQuestion] Config keys: {string.Join(", ", Question.Configuration.Keys)}");
+            if (Question.Configuration.ContainsKey("RatingScale"))
+            {
+                var rawValue = Question.Configuration["RatingScale"];
+                await JSRuntime.InvokeVoidAsync("console.log", $"[OptimizedAssessmentQuestion] RatingScale raw type: {rawValue?.GetType().Name}, value: {rawValue}");
+            }
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("console.log", "[OptimizedAssessmentQuestion] Question.Configuration is null");
+        }
     }
 
     protected override bool HasStateChanged()
@@ -275,26 +294,92 @@ else
 
     private int GetRatingScaleFromConfiguration()
     {
-        if (Question.Configuration?.ContainsKey("RatingScale") == true &&
-            int.TryParse(Question.Configuration["RatingScale"].ToString(), out int scale))
+        if (Question.Configuration?.ContainsKey("RatingScale") == true)
         {
-            return scale;
+            var value = Question.Configuration["RatingScale"];
+
+            if (value == null)
+            {
+                _ = JSRuntime.InvokeVoidAsync("console.log", "[OptimizedAssessmentQuestion] RatingScale value is null");
+                return 4;
+            }
+
+            try
+            {
+                // Try Convert.ToInt32 which handles many types including JsonElement
+                var result = Convert.ToInt32(value);
+                _ = JSRuntime.InvokeVoidAsync("console.log", $"[OptimizedAssessmentQuestion] Convert.ToInt32 succeeded: {result}");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _ = JSRuntime.InvokeVoidAsync("console.log", $"[OptimizedAssessmentQuestion] Failed to convert RatingScale: {ex.Message}");
+
+                // Fallback: Handle JsonElement explicitly
+                if (value is System.Text.Json.JsonElement jsonElement)
+                {
+                    _ = JSRuntime.InvokeVoidAsync("console.log", $"[OptimizedAssessmentQuestion] Trying JsonElement, ValueKind: {jsonElement.ValueKind}");
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                    {
+                        var result = jsonElement.GetInt32();
+                        _ = JSRuntime.InvokeVoidAsync("console.log", $"[OptimizedAssessmentQuestion] JsonElement.GetInt32: {result}");
+                        return result;
+                    }
+                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        if (int.TryParse(jsonElement.GetString(), out int parsed))
+                        {
+                            _ = JSRuntime.InvokeVoidAsync("console.log", $"[OptimizedAssessmentQuestion] Parsed from JsonElement string: {parsed}");
+                            return parsed;
+                        }
+                    }
+                }
+
+                // Fallback: Try parsing string representation
+                if (int.TryParse(value.ToString(), out int scale))
+                {
+                    _ = JSRuntime.InvokeVoidAsync("console.log", $"[OptimizedAssessmentQuestion] Parsed from ToString: {scale}");
+                    return scale;
+                }
+            }
+        }
+        else
+        {
+            _ = JSRuntime.InvokeVoidAsync("console.log", "[OptimizedAssessmentQuestion] Configuration does not contain RatingScale key");
         }
         return 4;
     }
 
     private string GetScaleLowLabelFromConfiguration()
     {
-        return Question.Configuration?.TryGetValue("ScaleLowLabel", out var value) == true
-            ? value.ToString() ?? "Poor"
-            : "Poor";
+        if (Question.Configuration?.TryGetValue("ScaleLowLabel", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? "Poor"
+                    : "Poor";
+            }
+            return value.ToString() ?? "Poor";
+        }
+        return "Poor";
     }
 
     private string GetScaleHighLabelFromConfiguration()
     {
-        return Question.Configuration?.TryGetValue("ScaleHighLabel", out var value) == true
-            ? value.ToString() ?? "Excellent"
-            : "Excellent";
+        if (Question.Configuration?.TryGetValue("ScaleHighLabel", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? "Excellent"
+                    : "Excellent";
+            }
+            return value.ToString() ?? "Excellent";
+        }
+        return "Excellent";
     }
 
     private string GetRatingScaleDescription()

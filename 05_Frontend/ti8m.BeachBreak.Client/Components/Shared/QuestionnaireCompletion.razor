@@ -1,12 +1,15 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Questions
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.JSInterop
 @inject NotificationService NotificationService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IJSRuntime JSRuntime
 
 <style>
     .questionnaire-completion {
@@ -1159,13 +1162,55 @@
 
     private int GetRatingScaleFromQuestion(QuestionItem question)
     {
+        _ = JSRuntime.InvokeVoidAsync("console.log", "[QuestionnaireCompletion] GetRatingScaleFromQuestion called");
+        _ = JSRuntime.InvokeVoidAsync("console.log", $"[QuestionnaireCompletion] Question.Title: {question.Title}");
+
+        if (question.Configuration != null)
+        {
+            _ = JSRuntime.InvokeVoidAsync("console.log", $"[QuestionnaireCompletion] Config keys: {string.Join(", ", question.Configuration.Keys)}");
+        }
+        else
+        {
+            _ = JSRuntime.InvokeVoidAsync("console.log", "[QuestionnaireCompletion] Configuration is null");
+        }
+
         if (question.Configuration.ContainsKey("RatingScale"))
         {
-            if (question.Configuration["RatingScale"] is int scale)
+            var value = question.Configuration["RatingScale"];
+            _ = JSRuntime.InvokeVoidAsync("console.log", $"[QuestionnaireCompletion] RatingScale raw type: {value?.GetType().Name}, value: {value}");
+
+            // Handle direct int
+            if (value is int scale)
+            {
+                _ = JSRuntime.InvokeVoidAsync("console.log", $"[QuestionnaireCompletion] Direct int: {scale}");
                 return scale;
-            if (int.TryParse(question.Configuration["RatingScale"]?.ToString(), out var parsedScale))
+            }
+
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                _ = JSRuntime.InvokeVoidAsync("console.log", $"[QuestionnaireCompletion] JsonElement ValueKind: {jsonElement.ValueKind}");
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    var result = jsonElement.GetInt32();
+                    _ = JSRuntime.InvokeVoidAsync("console.log", $"[QuestionnaireCompletion] JsonElement.GetInt32: {result}");
+                    return result;
+                }
+            }
+
+            // Handle string or other types
+            if (int.TryParse(value?.ToString(), out var parsedScale))
+            {
+                _ = JSRuntime.InvokeVoidAsync("console.log", $"[QuestionnaireCompletion] Parsed from ToString: {parsedScale}");
                 return parsedScale;
+            }
         }
+        else
+        {
+            _ = JSRuntime.InvokeVoidAsync("console.log", "[QuestionnaireCompletion] RatingScale key not found in configuration");
+        }
+
+        _ = JSRuntime.InvokeVoidAsync("console.log", "[QuestionnaireCompletion] Returning default: 4");
         return 4;
     }
 

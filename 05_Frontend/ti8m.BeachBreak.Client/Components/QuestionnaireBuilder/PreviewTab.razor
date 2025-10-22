@@ -424,9 +424,23 @@
     {
         if (question.Configuration.ContainsKey("RatingScale"))
         {
-            if (question.Configuration["RatingScale"] is int scale)
+            var value = question.Configuration["RatingScale"];
+
+            // Handle direct int
+            if (value is int scale)
                 return scale;
-            if (int.TryParse(question.Configuration["RatingScale"]?.ToString(), out var parsedScale))
+
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    return jsonElement.GetInt32();
+                }
+            }
+
+            // Handle string or other types
+            if (int.TryParse(value?.ToString(), out var parsedScale))
                 return parsedScale;
         }
         return 4; // Default to 1-4 scale

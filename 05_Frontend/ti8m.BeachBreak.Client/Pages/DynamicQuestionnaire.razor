@@ -716,6 +716,10 @@
 
     private RenderFragment RenderRatingQuestion(QuestionItem question, QuestionResponse response)
     {
+        var ratingScale = GetRatingScaleFromQuestion(question);
+        var scaleLowLabel = GetScaleLowLabelFromQuestion(question);
+        var scaleHighLabel = GetScaleHighLabelFromQuestion(question);
+
         return @<div class="assessment-question">
             @if (!string.IsNullOrWhiteSpace(question.Description))
             {
@@ -724,7 +728,7 @@
 
             <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
                 <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Rating Scale:</strong> 1 (Not satisfied) - 2 (Somewhat satisfied) - 3 (Satisfied) - 4 (Very satisfied)
+                    <strong>Rating Scale:</strong> 1 (@scaleLowLabel) - @ratingScale (@scaleHighLabel)
                 </RadzenText>
             </RadzenAlert>
 
@@ -750,11 +754,11 @@
                                     <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
                                     <RadzenRating Value="@GetCompetencyRating(question.Id, competency.Key)"
                                                 ValueChanged="@((int value) => SetCompetencyRating(question.Id, competency.Key, value))"
-                                                Stars="4"
+                                                Stars="@ratingScale"
                                                 ReadOnly="@IsQuestionnaireCompleted()"
                                                 Class="mb-2" />
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
-                                        @GetRatingText(GetCompetencyRating(question.Id, competency.Key))
+                                        @GetRatingText(GetCompetencyRating(question.Id, competency.Key), ratingScale)
                                     </RadzenText>
                                 </div>
                             </RadzenColumn>
@@ -1033,16 +1037,76 @@
         return response.ComplexValue?.TryGetValue("Justification", out var value) == true ? value.ToString() ?? "" : "";
     }
 
-    private string GetRatingText(int rating)
+    private string GetRatingText(int rating, int ratingScale)
     {
-        return rating switch
+        if (rating == 0) return "Not rated";
+
+        var percentage = (double)rating / ratingScale;
+        return percentage switch
         {
-            1 => "Not satisfied",
-            2 => "Somewhat satisfied", 
-            3 => "Satisfied",
-            4 => "Very satisfied",
-            _ => "Not rated"
+            >= 0.75 => "Excellent",
+            >= 0.5 => "Good",
+            >= 0.25 => "Fair",
+            _ => "Poor"
         };
+    }
+
+    private int GetRatingScaleFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration?.ContainsKey("RatingScale") == true)
+        {
+            var value = question.Configuration["RatingScale"];
+
+            // Handle direct int
+            if (value is int scale)
+                return scale;
+
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
+                {
+                    return jsonElement.GetInt32();
+                }
+            }
+
+            // Handle string or other types
+            if (int.TryParse(value?.ToString(), out var parsedScale))
+                return parsedScale;
+        }
+        return 4; // Default
+    }
+
+    private string GetScaleLowLabelFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration?.TryGetValue("ScaleLowLabel", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? "Poor"
+                    : "Poor";
+            }
+            return value?.ToString() ?? "Poor";
+        }
+        return "Poor";
+    }
+
+    private string GetScaleHighLabelFromQuestion(QuestionItem question)
+    {
+        if (question.Configuration?.TryGetValue("ScaleHighLabel", out var value) == true)
+        {
+            // Handle JsonElement from API deserialization
+            if (value is System.Text.Json.JsonElement jsonElement)
+            {
+                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
+                    ? jsonElement.GetString() ?? "Excellent"
+                    : "Excellent";
+            }
+            return value?.ToString() ?? "Excellent";
+        }
+        return "Excellent";
     }
 
     private ProgressBarStyle GetProgressStyle(int percentage)
