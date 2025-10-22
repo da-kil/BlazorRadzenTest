@@ -10,6 +10,7 @@
             <RadzenIcon Icon="psychology" Class="me-2" />
             @Question.Title
             @if (Question.IsRequired) { <span class="text-danger">*</span> }
+            <EditedDuringReviewBadge Response="@Response" />
         </RadzenText>
 
         @if (!string.IsNullOrWhiteSpace(Question.Description))

@@ -91,8 +91,16 @@
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body1">
-                                <strong>Awaiting employee sign-off.</strong>
-                                <span> The manager has confirmed the review. Waiting for the employee to sign off before finalization.</span>
+                                @if (isManager)
+                                {
+                                    <strong>Awaiting employee sign-off.</strong>
+                                    <span> You have confirmed the review. Waiting for the employee to sign off before finalization.</span>
+                                }
+                                else
+                                {
+                                    <strong>Manager review confirmed.</strong>
+                                    <span> The manager has confirmed the review. You can now sign off on the review outcome.</span>
+                                }
                             </RadzenText>
                         </RadzenAlert>
                     }
@@ -100,8 +108,16 @@
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body1">
-                                <strong>Ready to finalize.</strong>
-                                <span> The employee has signed off. Waiting for final confirmation to complete the questionnaire.</span>
+                                @if (isManager)
+                                {
+                                    <strong>Ready to finalize.</strong>
+                                    <span> The employee has signed off. You can now finalize the questionnaire.</span>
+                                }
+                                else
+                                {
+                                    <strong>Review signed off.</strong>
+                                    <span> You have signed off on the review. Waiting for final confirmation to complete the questionnaire.</span>
+                                }
                             </RadzenText>
                         </RadzenAlert>
                     }
@@ -135,6 +151,16 @@
                         </RadzenAlert>
                     }
                 }
+            }
+
+            @* Show review changes summary after review meeting finishes *@
+            @if (assignment != null && assignmentId.HasValue && response != null &&
+                 template != null && template.RequiresManagerReview &&
+                 (assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed ||
+                  assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
+                  assignment.WorkflowState == WorkflowState.Finalized))
+            {
+                <ReviewChangesSummary Response="@response" AssignmentId="@assignmentId.Value" />
             }
 
             <div class="section-counter mb-4">
@@ -238,9 +264,11 @@
                 </div>
             </div>
 
-            @* Review Comments Display - Below Questionnaire (only after employee has signed off, as that's when comments can be added) *@
+            @* Review Comments Display - Below Questionnaire *@
+            @* Show after review meeting finishes so employee can see manager's summary before signing off *@
             @if (assignment != null && template != null && template.RequiresManagerReview &&
-                 (assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
+                 (assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed ||
+                  assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
                   assignment.WorkflowState == WorkflowState.Finalized))
             {
                 <ReviewComments Assignment="@assignment"
@@ -407,14 +435,9 @@
             return;
         }
 
-        // After review confirmation, managers see ALL sections in read-only mode
-        var isManagerPostReviewReadOnly = assignment != null && isManager &&
-            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
-                                          WorkflowState.EmployeeReviewConfirmed or
-                                          WorkflowState.Finalized);
-
-        // Employees in post-review states should also see ALL sections (including manager sections)
-        var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+        // After review meeting finishes, EVERYONE sees ALL sections (employee, manager, and both)
+        // This ensures transparency - both parties can see what was discussed and agreed upon
+        var isPostReviewState = assignment != null &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
@@ -422,7 +445,7 @@
         // Managers/HR can view employee-only questionnaires in read-only mode
         var isManagerViewingEmployeeOnlyQuestionnaire = isManager && !template.RequiresManagerReview;
 
-        if (isManagerPostReviewReadOnly || isEmployeePostReview || isManagerViewingEmployeeOnlyQuestionnaire)
+        if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // Show ALL sections in read-only view
             visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
@@ -576,20 +599,20 @@
         {
             QuestionnaireResponse? existingResponse = null;
 
-            // Check if employee is awaiting sign-off or has already signed off - they need to see ALL responses
-            var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
+            // After review meeting, everyone loads ALL role responses for full transparency
+            var isPostReviewState = assignment != null &&
                 (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                              WorkflowState.EmployeeReviewConfirmed or
                                              WorkflowState.Finalized);
 
-            if (isEmployeePostReview || isManager)
+            if (isPostReviewState || isManager)
             {
-                // Managers and employees in post-review states load ALL role responses
+                // Post-review or managers: load ALL role responses (Employee + Manager + Both)
                 existingResponse = await ResponseService.GetResponseByAssignmentIdAsync(assignmentId.Value);
             }
-            else if (isEmployee && !isManager)
+            else if (isEmployee)
             {
-                // Regular employees load only their own responses
+                // Regular employees during questionnaire: load only their own responses
                 existingResponse = await EmployeeQuestionnaireService.GetMyResponseAsync(assignmentId.Value);
             }
 
@@ -603,20 +626,12 @@
             {
                 if (response.SectionResponses.TryGetValue(sectionKvp.Key, out var sectionResponse))
                 {
-                    // For managers in post-review read-only mode, load ALL role responses (Employee + Manager)
-                    // For employees in post-review states, also load ALL role responses so they can see manager's answers
-                    // For managers viewing employee-only questionnaires, load ALL responses regardless of workflow state
-                    // For normal mode, only load current user's role responses
-                    var isPostReviewReadOnly = assignment != null && isManager &&
-                        (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
-                                                      WorkflowState.EmployeeReviewConfirmed or
-                                                      WorkflowState.Finalized);
-
+                    // After review meeting: load ALL role responses for full transparency
+                    // Managers viewing employee-only questionnaires: load ALL responses
+                    // Normal mode: only load current user's role responses
                     var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
 
-                    // Use the isEmployeePostReview variable already declared at the start of this method
-
-                    if ((isPostReviewReadOnly || isEmployeePostReview || isManagerViewingEmployeeOnlyQuestionnaire) && sectionKvp.Value.RoleResponses != null)
+                    if ((isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire) && sectionKvp.Value.RoleResponses != null)
                     {
                         // Load ALL role responses (Employee, Manager, Both)
                         foreach (var roleKvp in sectionKvp.Value.RoleResponses)
@@ -705,6 +720,56 @@
 
     private RenderFragment RenderQuestion(QuestionItem question)
     {
+        // Check if we're in post-review state and section is "Both"
+        var isPostReviewState = assignment != null &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.EmployeeReviewConfirmed or
+                                         WorkflowState.Finalized);
+
+        var isBothSection = currentSection?.CompletionRole == CompletionRole.Both;
+
+        // In post-review state for "Both" sections, show BOTH employee and manager responses
+        if (isPostReviewState && isBothSection)
+        {
+            var employeeResponse = GetQuestionResponseForRole(question.Id, "Employee");
+            var managerResponse = GetQuestionResponseForRole(question.Id, "Manager");
+
+            return @<div>
+                @* Employee's Answer *@
+                <div class="role-response-section mb-4">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-success mb-2">
+                        <RadzenIcon Icon="person" Class="me-1" />
+                        EMPLOYEE'S ANSWER
+                    </RadzenText>
+                    <div class="ps-3 border-start border-success border-3">
+                        <OptimizedQuestionRenderer
+                            Question="@question"
+                            Response="@employeeResponse"
+                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                            IsReadOnly="true"
+                            HideHeader="true" />
+                    </div>
+                </div>
+
+                @* Manager's Answer *@
+                <div class="role-response-section">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info mb-2">
+                        <RadzenIcon Icon="manage_accounts" Class="me-1" />
+                        MANAGER'S ANSWER
+                    </RadzenText>
+                    <div class="ps-3 border-start border-info border-3">
+                        <OptimizedQuestionRenderer
+                            Question="@question"
+                            Response="@managerResponse"
+                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                            IsReadOnly="true"
+                            HideHeader="true" />
+                    </div>
+                </div>
+            </div>;
+        }
+
+        // Normal rendering for non-Both sections or during active questionnaire
         var questionResponse = GetQuestionResponse(question.Id);
 
         return @<OptimizedQuestionRenderer
@@ -723,6 +788,22 @@
     }
 
     // Helper methods for question responses
+    private QuestionResponse GetQuestionResponseForRole(Guid questionId, string roleName)
+    {
+        if (currentSection == null) return new QuestionResponse { QuestionId = questionId };
+
+        var sectionResponse = response.SectionResponses[currentSection.Id];
+
+        // Access responses for the specified role
+        if (sectionResponse.RoleResponses.TryGetValue(roleName, out var roleQuestions) &&
+            roleQuestions.TryGetValue(questionId, out var questionResponse))
+        {
+            return questionResponse;
+        }
+
+        return new QuestionResponse { QuestionId = questionId };
+    }
+
     private QuestionResponse GetQuestionResponse(Guid questionId)
     {
         if (currentSection == null) return new QuestionResponse { QuestionId = questionId };
@@ -732,22 +813,17 @@
         // Determine which role's responses to fetch based on section's CompletionRole
         // In read-only mode after review, managers view responses based on who originally completed the section
         // Employees in post-review states also need to view responses based on section's CompletionRole
-        // Managers viewing employee-only questionnaires view employee responses regardless of workflow state
-        var isPostReviewReadOnly = assignment != null && isManager &&
+        // After review meeting or when viewing employee-only questionnaires
+        var isPostReviewState = assignment != null &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                           WorkflowState.EmployeeReviewConfirmed or
                                           WorkflowState.Finalized);
-
-        var isEmployeePostReview = assignment != null && isEmployee && !isManager &&
-            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
-                                         WorkflowState.EmployeeReviewConfirmed or
-                                         WorkflowState.Finalized);
 
         var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
 
         string roleToFetch = currentUserRole;
 
-        if (isPostReviewReadOnly || isEmployeePostReview || isManagerViewingEmployeeOnlyQuestionnaire)
+        if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // In post-review states or when manager views employee-only questionnaire,
             // fetch responses based on section's CompletionRole
@@ -1499,6 +1575,8 @@
 
     private async Task OnReviewFinished()
     {
+        // This callback is invoked by QuestionnaireReviewMode after successfully finishing the review
+        // The API call has already been made by QuestionnaireReviewMode, so we just handle the navigation here
         if (!assignmentId.HasValue)
         {
             NotificationService.Notify(NotificationSeverity.Error, "Error", "No assignment ID available");
@@ -1507,27 +1585,15 @@
 
         try
         {
-            // Call the API to finish the manager review meeting
-            var success = await AssignmentService.FinishReviewMeetingAsync(assignmentId.Value, currentUserName, null);
+            // Reload assignment to get updated workflow state
+            await OnWorkflowActionCompleted();
 
-            if (success)
-            {
-                // Reload assignment to get updated workflow state
-                await OnWorkflowActionCompleted();
-
-                // Navigate back to team questionnaires
-                NotificationService.Notify(NotificationSeverity.Success, "Review Complete",
-                    "The review meeting has been completed. The employee can now confirm the review outcome.");
-                NavigationManager.NavigateTo("/team/questionnaires");
-            }
-            else
-            {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to finish review meeting");
-            }
+            // Navigate back to team questionnaires
+            NavigationManager.NavigateTo("/team/questionnaires");
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to finish review meeting: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to reload assignment: {ex.Message}");
         }
     }
 

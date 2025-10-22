@@ -1,0 +1,258 @@
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@using Radzen.Blazor
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject NotificationService NotificationService
+
+<RadzenStack Gap="1rem">
+    @if (isLoading)
+    {
+        <div class="text-center py-5">
+            <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+            <RadzenText TextStyle="TextStyle.Body2" Class="mt-3 text-muted">
+                Loading change history...
+            </RadzenText>
+        </div>
+    }
+    else if (changeLog == null || !changeLog.Any())
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                <RadzenIcon Icon="info" />
+                <RadzenText TextStyle="TextStyle.Body1">
+                    No changes were made during the review meeting.
+                </RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+    }
+    else
+    {
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+            <strong>@changeLog.Count</strong> change@(changeLog.Count == 1 ? "" : "s") recorded during the review meeting
+        </RadzenText>
+
+        <div class="change-timeline">
+            @foreach (var change in changeLog)
+            {
+                <div class="change-item mb-4" @key="@change.Id">
+                    <RadzenCard Class="change-card">
+                        <RadzenStack Gap="0.75rem">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Class="mb-2">
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@change.SectionTitle" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@change.OriginalCompletionRole" Shade="Shade.Lighter" />
+                                    </RadzenStack>
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">
+                                        @change.QuestionTitle
+                                    </RadzenText>
+                                </div>
+                                <RadzenIcon Icon="edit" Class="text-warning" />
+                            </div>
+
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                <RadzenIcon Icon="schedule" Style="font-size: 14px; vertical-align: middle;" Class="me-1" />
+                                Edited by <strong>@change.ChangedBy</strong> on @change.ChangedAt.ToLocalTime().ToString("MMM dd, yyyy 'at' HH:mm")
+                            </RadzenText>
+
+                            <div class="change-comparison">
+                                <div class="change-before">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted mb-2">
+                                        <RadzenIcon Icon="remove_circle_outline" Style="font-size: 14px; vertical-align: middle;" Class="me-1" />
+                                        BEFORE
+                                    </RadzenText>
+                                    <div class="change-value p-3 bg-light rounded">
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
+                                            @(string.IsNullOrWhiteSpace(change.OldValue) ? "(empty)" : FormatValue(change.OldValue))
+                                        </RadzenText>
+                                    </div>
+                                </div>
+
+                                <div class="arrow-container">
+                                    <RadzenIcon Icon="arrow_forward" Class="text-primary" Style="font-size: 24px;" />
+                                </div>
+
+                                <div class="change-after">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted mb-2">
+                                        <RadzenIcon Icon="add_circle_outline" Style="font-size: 14px; vertical-align: middle;" Class="me-1" />
+                                        AFTER
+                                    </RadzenText>
+                                    <div class="change-value p-3 bg-light rounded">
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
+                                            @(string.IsNullOrWhiteSpace(change.NewValue) ? "(empty)" : FormatValue(change.NewValue))
+                                        </RadzenText>
+                                    </div>
+                                </div>
+                            </div>
+                        </RadzenStack>
+                    </RadzenCard>
+                </div>
+            }
+        </div>
+    }
+</RadzenStack>
+
+<style>
+    .change-timeline {
+        position: relative;
+    }
+
+    .change-item::before {
+        content: '';
+        position: absolute;
+        left: -20px;
+        top: 0;
+        bottom: -16px;
+        width: 2px;
+        background: #dee2e6;
+    }
+
+    .change-item:last-child::before {
+        display: none;
+    }
+
+    .change-item {
+        position: relative;
+    }
+
+    .change-card {
+        border-left: 3px solid #ffc107;
+        transition: all 0.2s ease;
+    }
+
+    .change-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+
+    .change-comparison {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 1.5rem;
+        align-items: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .arrow-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .change-before, .change-after {
+        min-width: 0;
+    }
+
+    .change-value {
+        min-height: 60px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+    }
+
+    .change-before .change-value {
+        border-left: 3px solid #dc3545;
+    }
+
+    .change-after .change-value {
+        border-left: 3px solid #28a745;
+    }
+
+    @@media (max-width: 768px) {
+        .change-comparison {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .arrow-container {
+            transform: rotate(90deg);
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public Guid AssignmentId { get; set; }
+
+    private List<ReviewChangeDto>? changeLog;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadChangeLog();
+    }
+
+    private async Task LoadChangeLog()
+    {
+        try
+        {
+            isLoading = true;
+            changeLog = await AssignmentService.GetReviewChangesAsync(AssignmentId);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load change history: {ex.Message}");
+            changeLog = new List<ReviewChangeDto>();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private string FormatValue(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return "(empty)";
+
+        // Try to parse as JSON and format nicely
+        try
+        {
+            var jsonDoc = System.Text.Json.JsonDocument.Parse(value);
+            var root = jsonDoc.RootElement;
+
+            // Check if it's a QuestionResponse with ComplexValue
+            if (root.TryGetProperty("ComplexValue", out var complexValue))
+            {
+                return FormatComplexValue(complexValue);
+            }
+
+            // Otherwise return as-is
+            return value;
+        }
+        catch
+        {
+            // Not JSON or parsing failed, return as-is
+            return value;
+        }
+    }
+
+    private string FormatComplexValue(System.Text.Json.JsonElement complexValue)
+    {
+        var formatted = new System.Text.StringBuilder();
+
+        foreach (var prop in complexValue.EnumerateObject())
+        {
+            var key = prop.Name;
+            var value = prop.Value.GetRawText().Trim('"');
+
+            // Format keys nicely
+            var displayKey = key switch
+            {
+                "value" => "Answer",
+                var k when k.StartsWith("section_") => $"Section {k.Replace("section_", "")}",
+                var k when k.StartsWith("rating_") => $"Rating: {k.Replace("rating_", "")}",
+                var k when k.StartsWith("comment_") => $"Comment: {k.Replace("comment_", "")}",
+                "Description" => "Goal Description",
+                "AchievementPercentage" => "Achievement",
+                "Justification" => "Justification",
+                _ => key
+            };
+
+            formatted.AppendLine($"{displayKey}: {value}");
+        }
+
+        return formatted.ToString().TrimEnd();
+    }
+}

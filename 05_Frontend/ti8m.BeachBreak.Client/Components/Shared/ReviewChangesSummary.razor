@@ -1,0 +1,77 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Dialogs
+@using Radzen.Blazor
+@inject DialogService DialogService
+
+@if (HasChanges())
+{
+    <RadzenCard Class="review-changes-summary mb-4 border-start border-warning border-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="flex-grow-1">
+                <RadzenText TextStyle="TextStyle.H6" Class="mb-2">
+                    <RadzenIcon Icon="edit_note" Class="me-2" />
+                    Changes Made During Review Meeting
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    <strong>@GetChangeCount()</strong> answer@(GetChangeCount() == 1 ? "" : "s") @(GetChangeCount() == 1 ? "was" : "were") modified during the review meeting.
+                    Look for the <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Edited During Review" Class="mx-1" /> badge next to questions.
+                </RadzenText>
+            </div>
+            <RadzenButton Text="View Change History"
+                         Icon="history"
+                         ButtonStyle="ButtonStyle.Secondary"
+                         Variant="Variant.Outlined"
+                         Click="@ShowChangeHistory"
+                         Class="ms-3" />
+        </div>
+    </RadzenCard>
+}
+
+<style>
+    .review-changes-summary {
+        background-color: #fff8e1;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public QuestionnaireResponse? Response { get; set; }
+
+    [Parameter]
+    public Guid AssignmentId { get; set; }
+
+    private bool HasChanges()
+    {
+        if (Response?.SectionResponses == null) return false;
+
+        return Response.SectionResponses.Values
+            .SelectMany(sr => sr.RoleResponses.Values)
+            .SelectMany(rq => rq.Values)
+            .Any(qr => qr.EditedDuringReview);
+    }
+
+    private int GetChangeCount()
+    {
+        if (Response?.SectionResponses == null) return 0;
+
+        return Response.SectionResponses.Values
+            .SelectMany(sr => sr.RoleResponses.Values)
+            .SelectMany(rq => rq.Values)
+            .Count(qr => qr.EditedDuringReview);
+    }
+
+    private async Task ShowChangeHistory()
+    {
+        await DialogService.OpenAsync<ReviewChangeHistoryDialog>(
+            "Review Change History",
+            new Dictionary<string, object> { { "AssignmentId", AssignmentId } },
+            new DialogOptions
+            {
+                Width = "900px",
+                Height = "80vh",
+                Resizable = true,
+                Draggable = true
+            }
+        );
+    }
+}
