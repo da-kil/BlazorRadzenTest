@@ -180,3 +180,182 @@ dotnet run
       Name = i.Name
   }).ToList()
   ```
+
+### 6. Frontend Component Architecture - Questionnaire Rendering
+
+**CRITICAL**: This pattern must be followed for ALL question rendering to prevent code duplication and data inconsistencies.
+
+#### Always Use Optimized Components
+
+**NEVER** write inline question rendering logic. **ALWAYS** use the centralized Optimized components:
+
+```csharp
+// ✅ CORRECT - Use OptimizedQuestionRenderer
+<OptimizedQuestionRenderer
+    Question="@question"
+    Response="@response"
+    OnResponseChanged="@HandleResponseChanged"
+    IsReadOnly="@isReadOnly"
+    HideHeader="@hideHeader" />
+
+// ❌ WRONG - Inline rendering (causes duplication)
+@if (question.Type == QuestionType.Assessment)
+{
+    // DON'T duplicate rendering logic here!
+}
+```
+
+#### Component Locations
+
+- **OptimizedQuestionRenderer.razor**: Master dispatcher for all question types
+  Location: `05_Frontend/ti8m.BeachBreak.Client/Components/Questions/`
+- **OptimizedAssessmentQuestion.razor**: Assessment questions with competency ratings
+- **OptimizedTextQuestion.razor**: Text questions with single or multiple sections
+- **OptimizedGoalQuestion.razor**: Goal achievement questions
+
+#### Data Format Standards (CRITICAL - Prevents Data Loss Bugs)
+
+**Text Question Response Keys**:
+- **Single section**: Use key `"value"`
+- **Multiple sections**: Use keys `"section_0"`, `"section_1"`, `"section_2"`, etc.
+- **NEVER** use old format `"text_0"`, `"text_1"` (deprecated, causes data loss bugs)
+
+**Assessment Response Keys**:
+- **Ratings**: Use key `"rating_{competencyKey}"` (e.g., `"rating_communication"`)
+- **Comments**: Use key `"comment_{competencyKey}"` (e.g., `"comment_communication"`)
+
+**Goal Achievement Response Keys**:
+- **Description**: Use key `"Description"`
+- **Percentage**: Use key `"AchievementPercentage"`
+- **Justification**: Use key `"Justification"`
+
+#### Configuration Parsing
+
+**NEVER** duplicate configuration parsing logic. If you need to parse question configuration:
+
+1. **For rendering**: Use the Optimized components (they handle parsing internally)
+2. **For validation**: Use the same key format as the Optimized components
+3. **Existing duplications**: If you see `GetCompetenciesFromConfiguration()`, `GetRatingScaleFromQuestion()`, `GetTextSectionsFromQuestion()` duplicated across files, consolidate them into a shared service
+
+#### Component Lifecycle Rules
+
+**ALWAYS** initialize data in `OnInitialized()` in addition to `OnParametersSet()`:
+
+```csharp
+// ✅ CORRECT - Handles first render
+protected override void OnInitialized()
+{
+    base.OnInitialized();
+    LoadData(); // Populate data on first render
+}
+
+protected override void OnParametersSet()
+{
+    if (HasParameterChanged(nameof(Question), Question))
+    {
+        LoadData(); // Repopulate when parameters change
+    }
+}
+
+// ❌ WRONG - Only in OnParametersSet (may not fire on first render)
+protected override void OnParametersSet()
+{
+    LoadData(); // This might not execute on first render!
+}
+```
+
+#### Validation Pattern
+
+When validating question responses, **ALWAYS** match the data keys used by the Optimized components:
+
+```csharp
+// ✅ CORRECT - Matches OptimizedTextQuestion format
+private bool IsTextQuestionCompleted(QuestionItem question, QuestionResponse response)
+{
+    if (textSections.Count == 1)
+    {
+        // Single section uses "value" key
+        return response.ComplexValue?.TryGetValue("value", out var val) == true &&
+               !string.IsNullOrWhiteSpace(val?.ToString());
+    }
+
+    // Multiple sections use "section_0", "section_1", etc.
+    for (int i = 0; i < textSections.Count; i++)
+    {
+        var key = $"section_{i}";
+        if (!response.ComplexValue?.TryGetValue(key, out var val) == true ||
+            string.IsNullOrWhiteSpace(val?.ToString()))
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+// ❌ WRONG - Uses old "text_" format (causes validation bugs)
+private bool IsTextQuestionCompleted(QuestionItem question, QuestionResponse response)
+{
+    var key = $"text_{sectionOrder}"; // DON'T USE THIS FORMAT!
+    return response.ComplexValue?.TryGetValue(key, out var val) == true;
+}
+```
+
+#### Triggering Validation Updates
+
+When responses change, **ALWAYS** update validation state:
+
+```csharp
+// ✅ CORRECT - Updates validation and progress
+private async Task HandleQuestionResponseChanged(QuestionResponse updatedResponse)
+{
+    UpdateProgress(); // Recalculate validation state
+    await InvokeAsync(StateHasChanged);
+}
+
+// ❌ WRONG - Only re-renders, doesn't recalculate validation
+private async Task HandleQuestionResponseChanged(QuestionResponse updatedResponse)
+{
+    await InvokeAsync(StateHasChanged); // Submit button won't update!
+}
+```
+
+#### Code Review Checklist for Question Rendering
+
+Before submitting any code that touches question rendering, verify:
+
+- [ ] Uses OptimizedQuestionRenderer (not inline rendering)
+- [ ] Uses correct data key format (`"section_"` not `"text_"`)
+- [ ] No duplicate configuration parsing (GetCompetencies, GetRatingScale, etc.)
+- [ ] Validation matches the data keys used by Optimized components
+- [ ] Component lifecycle properly initializes data in OnInitialized()
+- [ ] Progress/validation updates when responses change (calls UpdateProgress())
+
+#### Known Problem Areas (As of 2025-10-22)
+
+If working with these components, **check for and fix duplications**:
+
+- **QuestionnaireReviewMode.razor**: Has ~350 lines duplicate rendering logic, needs refactoring to use OptimizedQuestionRenderer
+- **EditAnswerDialog.razor**: Has ~50 lines duplicate text question rendering, uses old "text_" key format
+- **PreviewTab.razor**: Has ~100 lines duplicate configuration parsing, acceptable for preview purposes
+- **DynamicQuestionnaire.razor**: Was refactored to use OptimizedQuestionRenderer, may still have some duplicate validation helpers
+
+#### Historical Context: Why These Rules Exist
+
+These rules were established after discovering critical bugs caused by code duplication:
+
+1. **Submit Button Bug**: Button stayed enabled when required fields were cleared (validation not updating)
+2. **Data Key Mismatch Bug**: Review mode couldn't read saved answers due to "text_" vs "section_" key mismatch (data loss)
+3. **Edit Dialog Bug**: Edit dialog overwrote data with wrong keys "text_" instead of "section_" (data corruption)
+4. **Code Duplication**: ~500+ lines of duplicate code across 5+ components made bugs hard to fix
+
+**These were not theoretical concerns - they were real production bugs discovered through architectural review.**
+
+#### When to Break These Rules
+
+**NEVER**. If you think you need to break these rules:
+1. Ask the user first
+2. Document the architectural decision in an ADR
+3. Provide justification for why existing components can't be used
+4. Add comprehensive tests to prevent regressions
+
+The refactoring effort to create the Optimized components was significant. Don't waste it by reintroducing duplication.
