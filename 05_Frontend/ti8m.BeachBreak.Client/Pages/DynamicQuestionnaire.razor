@@ -18,6 +18,7 @@
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject QuestionConfigurationService ConfigService
 @inherits OptimizedComponentBase
 
 <link href="css/questionnaire-unified.css" rel="stylesheet" />
@@ -1082,7 +1083,7 @@
 
     private bool IsTextQuestionCompleted(QuestionItem question, QuestionResponse questionResponse)
     {
-        var textSections = GetTextSectionsForQuestion(question);
+        var textSections = ConfigService.GetTextSections(question);
         if (textSections.Count == 0) return true;
 
         if (questionResponse.ComplexValue == null) return false;
@@ -1125,7 +1126,7 @@
 
     private bool IsAssessmentCompleted(QuestionItem question, QuestionResponse questionResponse)
     {
-        var competencies = GetCompetenciesForQuestion(question);
+        var competencies = ConfigService.GetCompetencies(question);
         if (competencies.Count == 0) return true;
 
         if (questionResponse.ComplexValue == null) return false;
@@ -1594,85 +1595,6 @@
     }
 
     // Competency-specific helper methods
-    private List<CompetencyDefinition> GetCompetenciesForQuestion(QuestionItem question)
-    {
-        if (!question.Configuration.ContainsKey("Competencies"))
-        {
-            // Return default competencies if none configured
-            return new List<CompetencyDefinition>
-            {
-                new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities.", false)
-            };
-        }
-
-        var competenciesValue = question.Configuration["Competencies"];
-
-        // Handle direct List<CompetencyDefinition>
-        if (competenciesValue is List<CompetencyDefinition> comps)
-        {
-            return comps;
-        }
-
-        // Handle JsonElement (from API deserialization)
-        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var options = new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-                };
-
-                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
-                    jsonElement.GetRawText(),
-                    options
-                );
-
-                if (competencies != null && competencies.Any())
-                {
-                    return competencies;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Failed to deserialize competencies - will use defaults
-            }
-        }
-
-        // Handle IEnumerable<object> or other list types
-        if (competenciesValue is IEnumerable<object> enumerable)
-        {
-            var result = new List<CompetencyDefinition>();
-            foreach (var item in enumerable)
-            {
-                if (item is CompetencyDefinition compDef)
-                {
-                    result.Add(compDef);
-                }
-                else if (item is System.Text.Json.JsonElement itemJson)
-                {
-                    try
-                    {
-                        var deserializedComp = System.Text.Json.JsonSerializer.Deserialize<CompetencyDefinition>(
-                            itemJson.GetRawText(),
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                        );
-                        if (deserializedComp != null) result.Add(deserializedComp);
-                    }
-                    catch { /* Skip invalid items */ }
-                }
-            }
-            if (result.Any()) return result;
-        }
-
-        // Return default competencies if deserialization failed
-        return new List<CompetencyDefinition>
-        {
-            new("professional_knowledge", "Professional Knowledge", "Assessment of your own expertise and professional knowledge in relation to your job responsibilities.", false)
-        };
-    }
-
     private int GetCompetencyRating(Guid questionId, string competencyKey)
     {
         var response = GetQuestionResponse(questionId);
@@ -1743,123 +1665,6 @@
             return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
         }
         return "Where do you see yourself long-term in your professional career?";
-    }
-
-    private List<TextSection> GetTextSectionsForQuestion(QuestionItem question)
-    {
-        if (!question.Configuration.ContainsKey("TextSections"))
-        {
-            // Return default text section if none configured
-            return new List<TextSection>
-            {
-                new TextSection
-                {
-                    Title = "Career Ambitions",
-                    Description = "Where do you see yourself long-term in your professional career?",
-                    IsRequired = false,
-                    Order = 0
-                }
-            };
-        }
-
-        var textSectionsValue = question.Configuration["TextSections"];
-
-        // Handle direct List<TextSection>
-        if (textSectionsValue is List<TextSection> sections && sections.Any())
-        {
-            return sections;
-        }
-
-        // Handle JsonElement (from API deserialization)
-        if (textSectionsValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var options = new System.Text.Json.JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-
-                var textSections = System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(
-                    jsonElement.GetRawText(),
-                    options
-                );
-
-                if (textSections != null && textSections.Any())
-                {
-                    return textSections;
-                }
-            }
-            catch (Exception ex)
-            {
-                // Failed to deserialize text sections - will use defaults
-            }
-        }
-
-        // Handle IEnumerable<object> or other list types
-        if (textSectionsValue is IEnumerable<object> enumerable)
-        {
-            var result = new List<TextSection>();
-            foreach (var item in enumerable)
-            {
-                if (item is TextSection section)
-                {
-                    result.Add(section);
-                }
-                else if (item is System.Text.Json.JsonElement itemJson)
-                {
-                    try
-                    {
-                        var deserializedSection = System.Text.Json.JsonSerializer.Deserialize<TextSection>(
-                            itemJson.GetRawText(),
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                        );
-                        if (deserializedSection != null) result.Add(deserializedSection);
-                    }
-                    catch { /* Skip invalid items */ }
-                }
-            }
-            if (result.Any()) return result;
-        }
-
-        // Return default text section if deserialization failed
-        return new List<TextSection>
-        {
-            new TextSection
-            {
-                Title = "Career Ambitions",
-                Description = "Where do you see yourself long-term in your professional career?",
-                IsRequired = false,
-                Order = 0
-            }
-        };
-    }
-
-    private string GetTextSectionResponse(Guid questionId, int sectionOrder)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue($"text_{sectionOrder}", out var value) == true)
-        {
-            // Handle JsonElement from deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
-                {
-                    return jsonElement.GetString() ?? "";
-                }
-            }
-            return value.ToString() ?? "";
-        }
-        return "";
-    }
-
-    private void SetTextSectionResponse(Guid questionId, int sectionOrder, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"text_{sectionOrder}"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
     }
 
     // Helper methods for unified styling
