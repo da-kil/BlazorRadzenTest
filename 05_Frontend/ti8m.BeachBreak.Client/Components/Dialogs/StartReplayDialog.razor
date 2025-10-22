@@ -1,0 +1,133 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
+@inject DialogService DialogService
+
+<style>
+    .replay-dialog-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+        padding: 1.5rem;
+        color: white;
+        border-radius: 8px 8px 0 0;
+    }
+
+    .projection-card {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        background: rgba(102, 126, 234, 0.05);
+    }
+</style>
+
+<div class="replay-dialog-header">
+    <RadzenText TextStyle="TextStyle.H5" Class="mb-1" Style="color: white; font-weight: 600;">
+        <RadzenIcon Icon="replay" Class="me-2" />Start Projection Replay
+    </RadzenText>
+    <RadzenText TextStyle="TextStyle.Body2" Style="color: rgba(255,255,255,0.9);">
+        Select a projection to rebuild from events
+    </RadzenText>
+</div>
+
+<div class="mb-3">
+    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Projection *</RadzenText>
+    <RadzenDropDown @bind-Value="selectedProjectionName"
+                   Data="@Projections"
+                   TextProperty="Name"
+                   ValueProperty="Name"
+                   Placeholder="Select a projection..."
+                   Style="width: 100%;"
+                   Class="w-100" />
+    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+        Choose which projection to rebuild
+    </RadzenText>
+</div>
+
+<div class="mb-3">
+    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Reason *</RadzenText>
+    <RadzenTextArea @bind-Value="reason"
+                   Placeholder="Enter reason for replay (e.g., 'Data inconsistency fix', 'Schema migration')..."
+                   Rows="3"
+                   Style="width: 100%;"
+                   Class="w-100" />
+    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+        Document why this replay is being performed
+    </RadzenText>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(selectedProjectionName))
+{
+    var projection = Projections.FirstOrDefault(p => p.Name == selectedProjectionName);
+    if (projection != null)
+    {
+        <div class="projection-card">
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">Projection Details</RadzenText>
+            <div class="mb-1">
+                <RadzenText TextStyle="TextStyle.Body2"><strong>Description:</strong> @projection.Description</RadzenText>
+            </div>
+            <div class="mb-1">
+                <RadzenText TextStyle="TextStyle.Body2"><strong>Table:</strong> @projection.TableName</RadzenText>
+            </div>
+            <div class="mb-1">
+                <RadzenText TextStyle="TextStyle.Body2"><strong>Current Snapshots:</strong> @projection.CurrentSnapshotCount.ToString("N0")</RadzenText>
+            </div>
+            @if (projection.LastRebuilt.HasValue)
+            {
+                <div class="mb-1">
+                    <RadzenText TextStyle="TextStyle.Body2"><strong>Last Rebuilt:</strong> @projection.LastRebuilt.Value.ToLocalTime().ToString("g")</RadzenText>
+                </div>
+            }
+        </div>
+    }
+}
+
+<RadzenAlert AlertStyle="AlertStyle.Warning" Class="mt-3 mb-3" Variant="Variant.Flat">
+    <RadzenText TextStyle="TextStyle.Body2">
+        <strong>⚠️ Warning:</strong> This operation will delete existing snapshots and rebuild from all events.
+        It may take several minutes depending on event count and cannot be undone.
+    </RadzenText>
+</RadzenAlert>
+
+<div class="d-flex justify-content-end gap-2 mt-4">
+    <RadzenButton Text="Cancel"
+                 Click="@Cancel"
+                 Variant="Variant.Flat"
+                 ButtonStyle="ButtonStyle.Light" />
+    <RadzenButton Text="Start Replay"
+                 Click="@Submit"
+                 Disabled="@(!IsValid)"
+                 ButtonStyle="ButtonStyle.Primary"
+                 Icon="play_arrow" />
+</div>
+
+@code {
+    [Parameter]
+    public List<ProjectionInfo> Projections { get; set; } = new();
+
+    private string selectedProjectionName = string.Empty;
+    private string reason = string.Empty;
+
+    private bool IsValid => !string.IsNullOrWhiteSpace(selectedProjectionName) &&
+                           !string.IsNullOrWhiteSpace(reason);
+
+    private void Submit()
+    {
+        if (IsValid)
+        {
+            var request = new StartProjectionReplayRequestDto
+            {
+                ProjectionName = selectedProjectionName,
+                Reason = reason
+            };
+
+            DialogService.Close(request);
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+}

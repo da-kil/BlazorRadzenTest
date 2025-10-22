@@ -288,4 +288,48 @@ public static partial class LoggerMessageDefinitions
     Level = LogLevel.Warning,
     Message = "Attempted to change application role for deleted employee `{EmployeeId}`.")]
     public static partial void LogChangeRoleForDeletedEmployee(this ILogger logger, Guid employeeId);
+
+    // Projection Replay Operations (8001-8099)
+    [LoggerMessage(
+    EventId = 8001,
+    Level = LogLevel.Information,
+    Message = "Starting projection replay for `{ProjectionName}` initiated by `{InitiatedBy}`.")]
+    public static partial void LogStartProjectionReplay(this ILogger logger, string projectionName, Guid initiatedBy);
+
+    [LoggerMessage(
+    EventId = 8002,
+    Level = LogLevel.Information,
+    Message = "Successfully started projection replay `{ReplayId}` for projection `{ProjectionName}`.")]
+    public static partial void LogProjectionReplayStarted(this ILogger logger, Guid replayId, string projectionName);
+
+    [LoggerMessage(
+    EventId = 8003,
+    Level = LogLevel.Information,
+    Message = "Cancelling projection replay `{ReplayId}` by `{CancelledBy}`.")]
+    public static partial void LogCancelProjectionReplay(this ILogger logger, Guid replayId, Guid cancelledBy);
+
+    [LoggerMessage(
+    EventId = 8004,
+    Level = LogLevel.Information,
+    Message = "Successfully cancelled projection replay `{ReplayId}`.")]
+    public static partial void LogProjectionReplayCancelled(this ILogger logger, Guid replayId);
+
+    [LoggerMessage(
+    EventId = 8005,
+    Level = LogLevel.Error,
+    Message = "Failed to start projection replay for `{ProjectionName}`: {ErrorMessage}")]
+    public static partial void LogStartProjectionReplayFailed(this ILogger logger, string projectionName, string errorMessage, Exception exception);
+
+    [LoggerMessage(
+    EventId = 8006,
+    Level = LogLevel.Error,
+    Message = "Failed to cancel projection replay `{ReplayId}`: {ErrorMessage}")]
+    public static partial void LogCancelProjectionReplayFailed(this ILogger logger, Guid replayId, string errorMessage, Exception exception);
+
+    [LoggerMessage(
+    EventId = 8007,
+    Level = LogLevel.Warning,
+    Message = "Projection `{ProjectionName}` not found or not rebuildable.")]
+    public static partial void LogProjectionNotRebuildable(this ILogger logger, string projectionName);
+
 }

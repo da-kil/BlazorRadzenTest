@@ -181,7 +181,60 @@ dotnet run
   }).ToList()
   ```
 
-### 6. Frontend Component Architecture - Questionnaire Rendering
+### 6. UserContext Pattern for User Identification
+- **ALWAYS** use `UserContext` to get the current user's ID in API controllers
+- **NEVER** use `User.Identity?.Name` or similar ASP.NET Core identity properties directly
+- **INJECT** `UserContext` via dependency injection in controller constructors
+- **USER ID TYPE**: UserContext.Id is a string representation of a GUID - always parse it to Guid when needed for commands
+- **SECURITY**: UserContext is populated by middleware and provides authenticated user information consistently
+
+**EXAMPLE - BAD**:
+```csharp
+[HttpPost("start")]
+public async Task<IActionResult> StartReplay([FromBody] StartReplayDto request)
+{
+    var initiatedBy = User.Identity?.Name ?? "Unknown"; // DON'T DO THIS
+    var command = new StartReplayCommand(request.Name, initiatedBy);
+    // ...
+}
+```
+
+**EXAMPLE - GOOD**:
+```csharp
+public class ReplayController : BaseController
+{
+    private readonly UserContext _userContext;
+
+    public ReplayController(UserContext userContext, /* other dependencies */)
+    {
+        _userContext = userContext;
+    }
+
+    [HttpPost("start")]
+    public async Task<IActionResult> StartReplay([FromBody] StartReplayDto request)
+    {
+        // Parse UserContext.Id (string) to Guid
+        if (!Guid.TryParse(_userContext.Id, out var initiatedBy))
+        {
+            return CreateResponse(Result.Fail("User identification failed", 401));
+        }
+
+        var command = new StartReplayCommand(request.Name, initiatedBy);
+        // ...
+    }
+}
+```
+
+**COMMAND PATTERN**: Commands that track user actions should use `Guid` for user identifiers (InitiatedBy, CancelledBy, CreatedBy, etc.), not strings:
+```csharp
+// CORRECT - Use Guid for user identifiers
+public record StartReplayCommand(string Name, Guid InitiatedBy, string Reason);
+
+// INCORRECT - Don't use string for user identifiers
+public record StartReplayCommand(string Name, string InitiatedBy, string Reason);
+```
+
+### 7. Frontend Component Architecture - Questionnaire Rendering
 
 **CRITICAL**: This pattern must be followed for ALL question rendering to prevent code duplication and data inconsistencies.
 

@@ -211,6 +211,7 @@ public class Program
         builder.Services.AddScoped<IManagerQuestionnaireService, ManagerQuestionnaireService>();
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
         builder.Services.AddScoped<IHRApiService, HRApiService>();
+        builder.Services.AddScoped<IProjectionReplayApiService, ProjectionReplayApiService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();
