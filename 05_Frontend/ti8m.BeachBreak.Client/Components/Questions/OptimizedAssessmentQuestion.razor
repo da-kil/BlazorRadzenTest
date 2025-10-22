@@ -57,7 +57,7 @@
                                 <RadzenRating Value="@currentRating"
                                             ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
                                             Stars="@ratingScale"
-                                            Disabled="@IsReadOnly"
+                                            ReadOnly="@IsReadOnly"
                                             Class="mb-2" />
                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
                                     @ratingText
@@ -130,7 +130,7 @@ else
                                 <RadzenRating Value="@currentRating"
                                             ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
                                             Stars="@ratingScale"
-                                            Disabled="@IsReadOnly"
+                                            ReadOnly="@IsReadOnly"
                                             Class="mb-2" />
                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
                                     @ratingText

@@ -107,6 +107,13 @@ else
 
     private List<TextSectionDefinition> textSections = new();
 
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        // Always populate textSections on first render
+        textSections = GetTextSectionsFromConfiguration();
+    }
+
     protected override void OnParametersSet()
     {
         if (HasParameterChanged(nameof(Question), Question))
@@ -128,7 +135,7 @@ else
         {
             var sectionsObj = Question.Configuration["TextSections"];
 
-            if (sectionsObj is List<TextSectionDefinition> sections)
+            if (sectionsObj is List<TextSectionDefinition> sections && sections.Any())
             {
                 return sections;
             }
@@ -139,10 +146,15 @@ else
             {
                 try
                 {
-                    return System.Text.Json.JsonSerializer.Deserialize<List<TextSectionDefinition>>(
+                    var deserializedSections = System.Text.Json.JsonSerializer.Deserialize<List<TextSectionDefinition>>(
                         jsonElement.GetRawText(),
                         new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
-                    ) ?? new List<TextSectionDefinition>();
+                    );
+
+                    if (deserializedSections != null && deserializedSections.Any())
+                    {
+                        return deserializedSections;
+                    }
                 }
                 catch (Exception)
                 {
@@ -151,7 +163,7 @@ else
             }
         }
 
-        // Legacy format or default
+        // Legacy format or default - always return at least one section
         return new List<TextSectionDefinition>
         {
             new TextSectionDefinition

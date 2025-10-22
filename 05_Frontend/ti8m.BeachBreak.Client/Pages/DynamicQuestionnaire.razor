@@ -717,6 +717,7 @@
     {
         // Response object is already updated by reference
         // Trigger validation and progress update
+        UpdateProgress();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -1145,24 +1146,39 @@
 
         if (questionResponse.ComplexValue == null) return false;
 
+        // Match the key format used by OptimizedTextQuestion
+        if (textSections.Count == 1)
+        {
+            // Single section uses "value" key
+            var hasValue = questionResponse.ComplexValue.TryGetValue("value", out var val) &&
+                          !string.IsNullOrWhiteSpace(val?.ToString());
+            return hasValue;
+        }
+
+        // Multiple sections use "section_0", "section_1", etc.
         // Get only required text sections
         var requiredTextSections = textSections.Where(ts => ts.IsRequired).ToList();
 
         // If no required text sections exist, check if at least one section has content
         if (!requiredTextSections.Any())
         {
-            return textSections.Any(ts =>
+            return textSections.Select((ts, index) => index).Any(index =>
             {
-                var response = GetTextSectionResponse(question.Id, ts.Order);
-                return !string.IsNullOrWhiteSpace(response);
+                var sectionKey = $"section_{index}";
+                var hasValue = questionResponse.ComplexValue.TryGetValue(sectionKey, out var val) &&
+                              !string.IsNullOrWhiteSpace(val?.ToString());
+                return hasValue;
             });
         }
 
         // Check that ALL required text sections have non-empty values
         return requiredTextSections.All(ts =>
         {
-            var response = GetTextSectionResponse(question.Id, ts.Order);
-            return !string.IsNullOrWhiteSpace(response);
+            var index = textSections.IndexOf(ts);
+            var sectionKey = $"section_{index}";
+            var hasValue = questionResponse.ComplexValue.TryGetValue(sectionKey, out var val) &&
+                          !string.IsNullOrWhiteSpace(val?.ToString());
+            return hasValue;
         });
     }
 
@@ -1808,7 +1824,7 @@
         var textSectionsValue = question.Configuration["TextSections"];
 
         // Handle direct List<TextSection>
-        if (textSectionsValue is List<TextSection> sections)
+        if (textSectionsValue is List<TextSection> sections && sections.Any())
         {
             return sections;
         }
