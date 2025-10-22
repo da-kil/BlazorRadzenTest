@@ -59,7 +59,9 @@
       "Bash(xargs -I {} sh -c 'echo \"\"\"\"=== {} ===\"\"\"\" && head -15 {}')",
       "Bash(Select-String -Pattern \"(error |Build succeeded|Build FAILED)\" -Context 0,1)",
       "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Components\\TextQuestion.razor\" -Force)",
-      "Bash(del \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Components\\TextQuestion.razor\")"
+      "Bash(del \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Components\\TextQuestion.razor\")",
+      "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.Infrastructure.Marten\\Replay\\IProjectionRegistry.cs\" -Force)",
+      "Bash(del \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.Infrastructure.Marten\\Replay\\IProjectionRegistry.cs\")"
     ],
     "deny": [],
     "ask": []

@@ -122,6 +122,16 @@
 							<span class="nav-text">Role Management</span>
 						</NavLink>
 					</div>
+					<AuthorizeView Policy="Admin">
+						<Authorized Context="adminContext">
+							<div class="nav-item">
+								<NavLink class="nav-link" href="admin/projection-replay">
+									<span class="nav-icon">🔄</span>
+									<span class="nav-text">Projection Replay</span>
+								</NavLink>
+							</div>
+						</Authorized>
+					</AuthorizeView>
 				</div>
 			</Authorized>
 		</AuthorizeView>

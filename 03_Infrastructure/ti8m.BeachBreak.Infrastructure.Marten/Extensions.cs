@@ -2,9 +2,11 @@ using JasperFx;
 using JasperFx.Events.Projections;
 using Marten;
 using Marten.Events.Projections;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Core.Infrastructure.Configuration;
 using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
 using ti8m.BeachBreak.Infrastructure.Marten.Projections;
@@ -53,6 +55,7 @@ public static class Extensions
             options.Projections.Snapshot<OrganizationReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<QuestionnaireAssignmentReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<QuestionnaireResponseReadModel>(SnapshotLifecycle.Inline);
+            options.Projections.Snapshot<ProjectionReplayReadModel>(SnapshotLifecycle.Inline);
 
             // Event-based projections for review change tracking
             options.Projections.Add<ReviewChangeLogProjection>(ProjectionLifecycle.Inline);
@@ -69,5 +72,17 @@ public static class Extensions
 
         // Register notification service
         builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
+
+        // Register replay configuration
+        builder.Services.Configure<ProjectionReplaySettings>(
+            builder.Configuration.GetSection(ProjectionReplaySettings.SectionName));
+
+        // Register replay services
+        builder.Services.AddSingleton<Application.Query.Services.IProjectionRegistry, Replay.MartenProjectionRegistry>();
+        builder.Services.AddScoped<Replay.IProjectionRebuilder, Replay.MartenProjectionRebuilder>();
+        builder.Services.AddScoped<Application.Command.Services.IProjectionReplayService, Services.ProjectionReplayService>();
+
+        // Register aggregate repositories
+        builder.Services.AddScoped<Application.Command.Repositories.IProjectionReplayAggregateRepository, Repositories.ProjectionReplayAggregateRepository>();
     }
 }
