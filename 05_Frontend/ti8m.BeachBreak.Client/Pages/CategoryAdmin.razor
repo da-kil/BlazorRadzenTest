@@ -11,7 +11,7 @@
 @inject NotificationService NotificationService
 @inherits OptimizedComponentBase
 
-<PageTitle>Category Administration</PageTitle>
+<PageTitle>Questionnaire Type Administration</PageTitle>
 
 <div class="container-fluid">
     <RadzenCard Class="p-4">
@@ -19,14 +19,14 @@
             <div>
                 <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
                     <RadzenIcon Icon="category" Class="me-2" />
-                    Category Administration
+                    Questionnaire Type Administration
                 </RadzenText>
                 <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                    Manage questionnaire categories
+                    Manage questionnaire types (e.g., Annual Reviews, Quarterly Check-ins)
                 </RadzenText>
             </div>
             <div class="d-flex gap-2">
-                <AsyncButton Text="Add New Category"
+                <AsyncButton Text="Add New Type"
                             ButtonStyle="ButtonStyle.Primary"
                             Icon="add"
                             Click="@ShowAddCategoryDialog" />
@@ -35,7 +35,7 @@
 
         <div class="mb-3 d-flex justify-content-between">
             <RadzenTextBox @bind-Value="@searchText"
-                          Placeholder="Search categories..."
+                          Placeholder="Search types..."
                           @oninput="@OnSearchTextChanged" />
             <RadzenToggleButton @bind-Value="@showInactiveCategories"
                                Text="Show Inactive"

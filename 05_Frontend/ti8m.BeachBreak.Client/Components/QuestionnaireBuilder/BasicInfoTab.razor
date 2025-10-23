@@ -15,12 +15,12 @@
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Category</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Questionnaire Type</RadzenText>
                 <RadzenDropDown @bind-Value="@Template.CategoryId"
                                Data="@Categories"
                                TextProperty="NameEn"
                                ValueProperty="Id"
-                               Placeholder="Select category"
+                               Placeholder="Select type (e.g., Annual Review)"
                                AllowClear="true"
                                Class="w-100"
                                Disabled="@(!Template.IsAvailableForEditing)" />

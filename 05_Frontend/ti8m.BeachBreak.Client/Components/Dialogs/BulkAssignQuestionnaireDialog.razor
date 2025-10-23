@@ -5,8 +5,10 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.ValidationHelpers
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Services
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+@inject IQuestionnaireAssignmentService AssignmentService
 @inherits ti8m.BeachBreak.Client.Components.Shared.OptimizedComponentBase
 
 <WizardDialog @ref="wizardDialog"
@@ -52,6 +54,7 @@
     private List<string> selectedEmployeesForRemoval = new();
     private List<string> departments = new();
     private List<string> selectedDepartments = new();
+    private HashSet<Guid> employeesWithExistingAssignments = new();
 
     private string employeeSearchText = "";
     private new bool isLoading = false;
@@ -129,6 +132,9 @@
                 <div class="panel-content">
                     @foreach (var employee in GetFilteredAvailableEmployees())
                     {
+                        var employeeGuid = Guid.TryParse(employee.Id, out var guid) ? guid : Guid.Empty;
+                        var isAlreadyAssigned = employeesWithExistingAssignments.Contains(employeeGuid);
+
                         <div class="employee-item @(selectedEmployeesForTransfer.Contains(employee.Id) ? "selected" : "")"
                              @onclick="() => ToggleEmployeeSelection(employee.Id, true)">
                             <RadzenCheckBox Value="@selectedEmployeesForTransfer.Contains(employee.Id)"
@@ -137,8 +143,16 @@
                                           Class="me-2" />
                             <RadzenGravatar Email="@employee.Email" Size="32" Class="me-2" />
                             <div class="flex-grow-1">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-semibold">@employee.Name</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.Department • @employee.Role</RadzenText>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-semibold">@employee.Name</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.Department • @employee.Role</RadzenText>
+                                    </div>
+                                    @if (isAlreadyAssigned)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Already Assigned" />
+                                    }
+                                </div>
                             </div>
                         </div>
                     }
@@ -176,6 +190,9 @@
                 <div class="panel-content">
                     @foreach (var employee in selectedEmployees)
                     {
+                        var employeeGuid = Guid.TryParse(employee.Id, out var guid) ? guid : Guid.Empty;
+                        var isAlreadyAssigned = employeesWithExistingAssignments.Contains(employeeGuid);
+
                         <div class="employee-item @(selectedEmployeesForRemoval.Contains(employee.Id) ? "selected" : "")"
                              @onclick="() => ToggleEmployeeSelection(employee.Id, false)">
                             <RadzenCheckBox Value="@selectedEmployeesForRemoval.Contains(employee.Id)"
@@ -184,8 +201,16 @@
                                           Class="me-2" />
                             <RadzenGravatar Email="@employee.Email" Size="32" Class="me-2" />
                             <div class="flex-grow-1">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-semibold">@employee.Name</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.Department • @employee.Role</RadzenText>
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-semibold">@employee.Name</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@employee.Department • @employee.Role</RadzenText>
+                                    </div>
+                                    @if (isAlreadyAssigned)
+                                    {
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Already Assigned" />
+                                    }
+                                </div>
                             </div>
                         </div>
                     }
@@ -202,7 +227,7 @@
             @foreach (var questionnaire in availableQuestionnaires)
             {
                 <div class="questionnaire-option @(bulkAssignmentModel.SelectedQuestionnaireId == questionnaire.Id ? "selected" : "")"
-                     @onclick="() => SelectQuestionnaire(questionnaire)">
+                     @onclick="async () => await SelectQuestionnaire(questionnaire)">
                     <div class="questionnaire-check">
                         <RadzenIcon Icon="check" />
                     </div>
@@ -471,11 +496,31 @@
         bulkAssignmentModel.SelectedEmployeeIds = selectedEmployees.Select(e => e.Id).ToList();
     }
 
-    private void SelectQuestionnaire(Questionnaire questionnaire)
+    private async Task SelectQuestionnaire(Questionnaire questionnaire)
     {
         bulkAssignmentModel.SelectedQuestionnaireId = questionnaire.Id;
         bulkAssignmentModel.SelectedQuestionnaireName = questionnaire.Title;
+
+        // Load existing assignments for this questionnaire
+        await LoadExistingAssignments(questionnaire.Id);
+
         StateHasChanged();
+    }
+
+    private async Task LoadExistingAssignments(Guid templateId)
+    {
+        try
+        {
+            var existingAssignments = await AssignmentService.GetAssignmentsByTemplateAsync(templateId);
+            employeesWithExistingAssignments = existingAssignments
+                .Select(a => a.EmployeeId)
+                .ToHashSet();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading existing assignments: {ex.Message}");
+            employeesWithExistingAssignments.Clear();
+        }
     }
 
     private string GetQuestionnaireIcon(string category)

@@ -136,7 +136,7 @@
                                                          @oninput="@(async (args) => { employeeSearchText = args.Value?.ToString() ?? ""; FilterEmployees(); })" />
 
                                             <div class="d-flex gap-2 mb-2">
-                                                <AsyncButton Text="Select All Filtered"
+                                                <AsyncButton Text="@($"Select All Filtered ({filteredEmployees.Count})")"
                                                             ButtonStyle="ButtonStyle.Secondary"
                                                             Size="ButtonSize.Small"
                                                             Icon="select_all"

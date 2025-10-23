@@ -27,6 +27,7 @@
 	IsEditMode="@State.IsEditMode"
 	Status="@State.Template.Status"
 	IsSaving="@isSaving"
+	LastSavedTime="@lastSavedTime"
 	OnSave="@SaveQuestionnaire"
 	OnPublish="@PublishQuestionnaire"
 	OnArchive="@ArchiveQuestionnaire"
@@ -164,6 +165,7 @@
 
 	private bool IsEditMode => TemplateId.HasValue;
 	private bool isSaving = false;
+	private DateTime? lastSavedTime = null;
 
 	// Editable question type labels
 	private Dictionary<QuestionType, string> questionTypeLabels = new()
@@ -524,6 +526,7 @@
 				{
 					State.Template = updated;
 					State.MarkAsClean();
+					lastSavedTime = DateTime.Now;
 					NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template updated successfully");
 				}
 				else
@@ -536,6 +539,7 @@
 				var created = await ApiService.CreateTemplateAsync(State.Template);
 				State.Template.Id = created.Id; // Update with the server-generated ID
 				State.MarkAsClean();
+				lastSavedTime = DateTime.Now;
 				NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
 
 				// Navigate to edit mode to prevent duplicate creation on subsequent saves

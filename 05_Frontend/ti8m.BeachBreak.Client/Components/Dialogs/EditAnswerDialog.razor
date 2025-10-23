@@ -48,13 +48,15 @@
     }
 </style>
 
-<RadzenStack Gap="0" Style="height: 100%; min-height: 500px; display: flex; flex-direction: column;" JustifyContent="JustifyContent.SpaceBetween">
-    <RadzenStack Gap="1rem" Style="flex: 1; overflow-y: auto;">
+<div style="display: flex; flex-direction: column; height: 550px;">
+    <div style="flex: 0 0 auto; margin-bottom: 1rem;">
         <div class="role-indicator">
             <RadzenIcon Icon="@GetRoleIcon()" />
             Editing @CompletionRole's Answer
         </div>
+    </div>
 
+    <div style="flex: 1 1 auto; overflow-y: auto; margin-bottom: 1rem;">
         <div class="answer-editor">
         @if (Question.Type == QuestionType.TextQuestion)
         {
@@ -87,19 +89,21 @@
                           Style="width: 100%;" />
         }
         </div>
-    </RadzenStack>
+    </div>
 
-    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="1rem" Style="padding-top: 1rem; border-top: 1px solid #e9ecef; flex-shrink: 0;">
+    <div style="flex: 0 0 auto; display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
         <AsyncButton Text="Cancel"
                     ButtonStyle="ButtonStyle.Light"
-                    Click="@Cancel" />
+                    Click="@Cancel"
+                    Size="ButtonSize.Medium" />
         <AsyncButton Text="Save Changes"
                     ProcessingText="Saving"
                     ButtonStyle="ButtonStyle.Success"
                     Icon="save"
-                    Click="@SaveChanges" />
-    </RadzenStack>
-</RadzenStack>
+                    Click="@SaveChanges"
+                    Size="ButtonSize.Medium" />
+    </div>
+</div>
 
 @code {
     [Parameter] public QuestionItem Question { get; set; } = null!;

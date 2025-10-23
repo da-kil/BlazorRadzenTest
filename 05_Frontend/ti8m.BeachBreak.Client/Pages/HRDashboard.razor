@@ -71,6 +71,7 @@
                         <div>
                             <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Completion Rate</RadzenText>
                             <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.OverallCompletionRate.ToString("F1")%</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.8; margin-top: 0.25rem;">@dashboard.TotalCompletedAssignments of @dashboard.TotalAssignments assignments</RadzenText>
                         </div>
                         <RadzenIcon Icon="trending_up" Style="font-size: 3rem; opacity: 0.3;" />
                     </div>
@@ -161,7 +162,7 @@
                                         <RadzenText TextStyle="TextStyle.Subtitle1" Class="rz-mb-0">@org.OrganizationName</RadzenText>
                                         <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@org.EmployeeCount employees</RadzenText>
                                     </div>
-                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@($"{org.CompletionRate:F1}% complete")" />
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@($"{org.CompletionRate:F1}% ({org.CompletedCount} of {org.TotalAssignments})")" />
                                 </div>
                                 <RadzenRow Gap="0.5rem">
                                     <RadzenColumn Size="3">
@@ -224,8 +225,8 @@
                                         <RadzenText TextStyle="TextStyle.Body1" Class="rz-mb-0">@manager.CompletedAssignments</RadzenText>
                                     </div>
                                     <div class="metric-inline">
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Rate</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body1" Class="rz-mb-0">@manager.CompletionRate.ToString("F1")%</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Completion</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="rz-mb-0">@manager.CompletionRate.ToString("F1")% (@manager.CompletedAssignments/@manager.TotalAssignments)</RadzenText>
                                     </div>
                                     @if (manager.OverdueAssignments > 0)
                                     {
