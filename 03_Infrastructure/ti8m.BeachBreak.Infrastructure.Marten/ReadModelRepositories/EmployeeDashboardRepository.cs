@@ -1,7 +1,7 @@
 using Marten;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Repositories;
-using ti8m.BeachBreak.Core.Domain.SharedKernel;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.ReadModelRepositories;
 
@@ -9,14 +9,14 @@ internal class EmployeeDashboardRepository(IDocumentStore store) : IEmployeeDash
 {
     public async Task<EmployeeDashboardReadModel?> GetDashboardByEmployeeIdAsync(Guid employeeId, CancellationToken cancellationToken = default)
     {
-        using var session = await store.LightweightSerializableSessionAsync();
+        await using var session = await store.LightweightSerializableSessionAsync();
 
         // Query all assignments for this employee
         var assignments = await session.Query<QuestionnaireAssignmentReadModel>()
             .Where(a => a.EmployeeId == employeeId)
             .ToListAsync(cancellationToken);
 
-        if (!assignments.Any())
+        if (assignments.Count == 0)
         {
             return null; // No assignments yet, return null
         }

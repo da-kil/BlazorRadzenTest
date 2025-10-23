@@ -1,7 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
@@ -22,8 +20,8 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
     private readonly IQueryDispatcher queryDispatcher;
     private readonly ILogger<RoleBasedAuthorizationMiddlewareResultHandler> logger;
 
-    // Policy to ApplicationRole mappings - delegated to shared RoleHierarchyService
-    private static Dictionary<string, ApplicationRole[]> PolicyRoleMappings => RoleHierarchyService.PolicyRoleMappings;
+    // Policy to ApplicationRole mappings - from domain service
+    private static Dictionary<string, ApplicationRole[]> PolicyRoleMappings => ApplicationRoleAuthorizationService.PolicyRoleMappings;
 
     public RoleBasedAuthorizationMiddlewareResultHandler(
         IAuthorizationCacheService cacheService,

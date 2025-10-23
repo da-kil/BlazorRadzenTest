@@ -1,5 +1,5 @@
 ﻿using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
-using ti8m.BeachBreak.Core.Domain.SharedKernel;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 

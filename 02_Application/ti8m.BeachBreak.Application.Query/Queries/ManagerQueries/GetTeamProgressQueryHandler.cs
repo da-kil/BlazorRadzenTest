@@ -1,14 +1,11 @@
 using Marten;
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Query.Projections;
-using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
-using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
-using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Application.Query.Services;
-using ti8m.BeachBreak.Core.Domain.SharedKernel;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;
 

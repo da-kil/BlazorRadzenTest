@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Core.Domain.SharedKernel;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using QuestionnaireAssignmentDto = ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries.QuestionnaireAssignment;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;

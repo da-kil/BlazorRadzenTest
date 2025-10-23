@@ -1,5 +1,4 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
-using ti8m.BeachBreak.Core.Domain.SharedKernel;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 

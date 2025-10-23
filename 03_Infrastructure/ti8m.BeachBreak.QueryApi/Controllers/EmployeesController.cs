@@ -241,7 +241,7 @@ public class EmployeesController : BaseController
                 // Filter by workflow state if provided
                 var filteredAssignments = assignments;
                 if (!string.IsNullOrWhiteSpace(workflowState) &&
-                    Enum.TryParse<Core.Domain.SharedKernel.WorkflowState>(workflowState, true, out var parsedState))
+                    Enum.TryParse<Domain.QuestionnaireAssignmentAggregate.WorkflowState>(workflowState, true, out var parsedState))
                 {
                     filteredAssignments = assignments.Where(a => a.WorkflowState == parsedState);
                 }

@@ -78,7 +78,7 @@ public class EmployeeQueryHandler :
 
             // Batch fetch manager names
             var managerLookup = new Dictionary<Guid, string>();
-            if (managerIds.Any())
+            if (managerIds.Count > 0)
             {
                 var managers = await repository.GetEmployeesAsync(cancellationToken: cancellationToken);
                 managerLookup = managers
