@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Application.Query.Services;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 
@@ -12,20 +13,20 @@ public class EmployeeQueryHandler :
     private readonly IEmployeeRepository repository;
     private readonly IOrganizationRepository organizationRepository;
     private readonly ILogger<EmployeeQueryHandler> logger;
-    private readonly IHttpContextAccessor httpContextAccessor;
+    private readonly UserContext userContext;
     private readonly EmployeeVisibilityService visibilityService;
 
     public EmployeeQueryHandler(
         IEmployeeRepository repository,
         IOrganizationRepository organizationRepository,
         ILogger<EmployeeQueryHandler> logger,
-        IHttpContextAccessor httpContextAccessor,
+        UserContext userContext,
         EmployeeVisibilityService visibilityService)
     {
         this.repository = repository;
         this.organizationRepository = organizationRepository;
         this.logger = logger;
-        this.httpContextAccessor = httpContextAccessor;
+        this.userContext = userContext;
         this.visibilityService = visibilityService;
     }
 
@@ -35,15 +36,14 @@ public class EmployeeQueryHandler :
 
         try
         {
-            var user = httpContextAccessor.HttpContext?.User;
-            if (user == null)
+            if (!Guid.TryParse(userContext.Id, out var userId))
             {
-                logger.LogWarning("No user context available for EmployeeListQuery");
-                return Result<IEnumerable<Employee>>.Fail("Unauthorized", StatusCodes.Status401Unauthorized);
+                logger.LogWarning("Unable to parse user ID from UserContext for EmployeeListQuery");
+                return Result<IEnumerable<Employee>>.Fail("User identification failed", StatusCodes.Status401Unauthorized);
             }
 
             // Use EmployeeVisibilityService to get only employees the user can see
-            var visibleEmployeeReadModels = await visibilityService.GetVisibleEmployeesAsync(user, cancellationToken);
+            var visibleEmployeeReadModels = await visibilityService.GetVisibleEmployeesAsync(userId, cancellationToken);
 
             // Apply additional filters from the query
             var filteredEmployees = visibleEmployeeReadModels.AsEnumerable();
@@ -140,15 +140,14 @@ public class EmployeeQueryHandler :
 
         try
         {
-            var user = httpContextAccessor.HttpContext?.User;
-            if (user == null)
+            if (!Guid.TryParse(userContext.Id, out var userId))
             {
-                logger.LogWarning("No user context available for EmployeeQuery");
-                return Result<Employee?>.Fail("Unauthorized", StatusCodes.Status401Unauthorized);
+                logger.LogWarning("Unable to parse user ID from UserContext for EmployeeQuery");
+                return Result<Employee?>.Fail("User identification failed", StatusCodes.Status401Unauthorized);
             }
 
             // Check if user can view this specific employee
-            if (!await visibilityService.CanViewEmployeeAsync(user, query.EmployeeId, cancellationToken))
+            if (!await visibilityService.CanViewEmployeeAsync(userId, query.EmployeeId, cancellationToken))
             {
                 logger.LogWarning("User not authorized to view employee {EmployeeId}", query.EmployeeId);
                 return Result<Employee?>.Fail("Forbidden", StatusCodes.Status403Forbidden);

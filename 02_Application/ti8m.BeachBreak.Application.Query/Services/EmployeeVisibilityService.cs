@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries;
@@ -11,7 +10,7 @@ namespace ti8m.BeachBreak.Application.Query.Services;
 /// <summary>
 /// Service to determine which employees a user can see based on their ApplicationRole.
 /// Implements the data filtering logic for the 5 user types.
-/// Fetches ApplicationRole from database, not from claims.
+/// Accepts userId (Guid) instead of ClaimsPrincipal to keep Application layer free from HTTP concerns.
 /// </summary>
 public class EmployeeVisibilityService(
     IEmployeeRepository employeeRepository,
@@ -21,19 +20,20 @@ public class EmployeeVisibilityService(
     /// <summary>
     /// Gets all employees visible to the current user based on their role.
     /// </summary>
+    /// <param name="userId">The current user's ID (from UserContext)</param>
     public async Task<IEnumerable<EmployeeReadModel>> GetVisibleEmployeesAsync(
-        ClaimsPrincipal user,
+        Guid userId,
         CancellationToken cancellationToken = default)
     {
-        var role = await GetApplicationRoleAsync(user, cancellationToken);
+        var role = await GetApplicationRoleAsync(userId, cancellationToken);
 
         return role switch
         {
             ApplicationRole.Admin => await GetAllEmployeesAsync(cancellationToken),
             ApplicationRole.HRLead => await GetAllEmployeesAsync(cancellationToken),
             ApplicationRole.HR => await GetAllEmployeesExceptHRAsync(cancellationToken),
-            ApplicationRole.TeamLead => await GetTeamHierarchyAsync(user, cancellationToken),
-            ApplicationRole.Employee => await GetSelfOnlyAsync(user, cancellationToken),
+            ApplicationRole.TeamLead => await GetTeamHierarchyAsync(userId, cancellationToken),
+            ApplicationRole.Employee => await GetSelfOnlyAsync(userId, cancellationToken),
             _ => Enumerable.Empty<EmployeeReadModel>()
         };
     }
@@ -41,12 +41,13 @@ public class EmployeeVisibilityService(
     /// <summary>
     /// Checks if the current user can view a specific employee.
     /// </summary>
+    /// <param name="userId">The current user's ID (from UserContext)</param>
     public async Task<bool> CanViewEmployeeAsync(
-        ClaimsPrincipal user,
+        Guid userId,
         Guid employeeId,
         CancellationToken cancellationToken = default)
     {
-        var visibleEmployees = await GetVisibleEmployeesAsync(user, cancellationToken);
+        var visibleEmployees = await GetVisibleEmployeesAsync(userId, cancellationToken);
         return visibleEmployees.Any(e => e.Id == employeeId);
     }
 
@@ -54,19 +55,13 @@ public class EmployeeVisibilityService(
     /// Gets the ApplicationRole from the database (matching authorization middleware approach).
     /// </summary>
     private async Task<ApplicationRole> GetApplicationRoleAsync(
-        ClaimsPrincipal user,
+        Guid userId,
         CancellationToken cancellationToken)
     {
-        var userId = GetUserId(user);
-        if (!userId.HasValue)
-        {
-            return ApplicationRole.Employee; // Default to most restrictive
-        }
-
         try
         {
             var roleResult = await queryDispatcher.QueryAsync(
-                new GetEmployeeRoleByIdQuery(userId.Value),
+                new GetEmployeeRoleByIdQuery(userId),
                 cancellationToken);
 
             return roleResult?.ApplicationRole ?? ApplicationRole.Employee;
@@ -80,34 +75,9 @@ public class EmployeeVisibilityService(
             // Monitor: If this warning appears frequently, investigate database connectivity or role data integrity
             logger.LogWarning(ex,
                 "Failed to retrieve role for user {UserId}. Defaulting to Employee role for security.",
-                userId.Value);
+                userId);
             return ApplicationRole.Employee; // Default to most restrictive on error
         }
-    }
-
-    /// <summary>
-    /// Gets the user ID from claims (Entra ID object ID).
-    /// </summary>
-    private static Guid? GetUserId(ClaimsPrincipal user)
-    {
-        var userIdClaim = user.FindFirst("oid")?.Value
-                         ?? user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value
-                         ?? user.FindFirst("sub")?.Value;
-
-        return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
-    }
-
-    /// <summary>
-    /// Gets the current user's Employee ID from claims.
-    /// </summary>
-    private Guid? GetEmployeeId(ClaimsPrincipal user)
-    {
-        var employeeIdString = user.FindFirst("EmployeeId")?.Value
-                             ?? user.FindFirst("EmployeeGuid")?.Value;
-
-        return Guid.TryParse(employeeIdString, out var employeeId)
-            ? employeeId
-            : null;
     }
 
     /// <summary>
@@ -141,22 +111,16 @@ public class EmployeeVisibilityService(
     /// TeamLead: Get entire team hierarchy (all direct and indirect reports)
     /// </summary>
     private async Task<IEnumerable<EmployeeReadModel>> GetTeamHierarchyAsync(
-        ClaimsPrincipal user,
+        Guid userId,
         CancellationToken cancellationToken)
     {
-        var currentEmployeeId = GetEmployeeId(user);
-        if (!currentEmployeeId.HasValue)
-        {
-            return Enumerable.Empty<EmployeeReadModel>();
-        }
-
         var allEmployees = await employeeRepository.GetEmployeesAsync(
             includeDeleted: false,
             cancellationToken: cancellationToken);
 
         // Build team hierarchy recursively
         var teamMembers = new HashSet<EmployeeReadModel>();
-        var currentEmployee = allEmployees.FirstOrDefault(e => e.Id == currentEmployeeId.Value);
+        var currentEmployee = allEmployees.FirstOrDefault(e => e.Id == userId);
 
         if (currentEmployee != null)
         {
@@ -194,16 +158,10 @@ public class EmployeeVisibilityService(
     /// Employee: Get only self
     /// </summary>
     private async Task<IEnumerable<EmployeeReadModel>> GetSelfOnlyAsync(
-        ClaimsPrincipal user,
+        Guid userId,
         CancellationToken cancellationToken)
     {
-        var employeeId = GetEmployeeId(user);
-        if (!employeeId.HasValue)
-        {
-            return Enumerable.Empty<EmployeeReadModel>();
-        }
-
-        var employee = await employeeRepository.GetEmployeeByIdAsync(employeeId.Value, cancellationToken);
+        var employee = await employeeRepository.GetEmployeeByIdAsync(userId, cancellationToken);
         return employee != null
             ? new[] { employee }
             : Enumerable.Empty<EmployeeReadModel>();
