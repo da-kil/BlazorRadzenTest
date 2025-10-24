@@ -107,25 +107,25 @@ public class QuestionnaireTemplateReadModel
         IsDeleted = false;
     }
 
-    private static List<QuestionSection> MapDomainSectionsToQuerySections(List<Domain.QuestionnaireTemplateAggregate.QuestionSection> domainSections)
+    private static List<QuestionSection> MapDomainSectionsToQuerySections(List<Domain.QuestionnaireTemplateAggregate.Events.QuestionSectionSnapshot> snapshots)
     {
-        return domainSections.Select(ds => new QuestionSection
+        return snapshots.Select(s => new QuestionSection
         {
-            Id = ds.Id,
-            Title = ds.Title,
-            Description = ds.Description,
-            Order = ds.Order,
-            IsRequired = ds.IsRequired,
-            CompletionRole = ds.CompletionRole.ToString(),
-            Questions = ds.Questions.Select(dq => new QuestionItem
+            Id = s.Id,
+            Title = s.Title,
+            Description = s.Description,
+            Order = s.Order,
+            IsRequired = s.IsRequired,
+            CompletionRole = s.CompletionRole.ToString(),
+            Questions = s.Questions.Select(q => new QuestionItem
             {
-                Id = dq.Id,
-                Title = dq.Title,
-                Description = dq.Description,
-                Type = (QuestionType)(int)dq.Type,
-                IsRequired = dq.IsRequired,
-                Order = dq.Order,
-                Configuration = dq.Configuration
+                Id = q.Id,
+                Title = q.Title,
+                Description = q.Description,
+                Type = (QuestionType)(int)q.Type,
+                IsRequired = q.IsRequired,
+                Order = q.Order,
+                Configuration = q.Configuration
             }).ToList()
         }).ToList();
     }

@@ -40,7 +40,7 @@ public class QuestionnaireTemplate : AggregateRoot
             description ?? string.Empty,
             categoryId,
             requiresManagerReview,
-            sections ?? new(),
+            MapSectionsToSnapshots(sections ?? new()),
             DateTime.UtcNow));
     }
 
@@ -113,7 +113,7 @@ public class QuestionnaireTemplate : AggregateRoot
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
-        RaiseEvent(new QuestionnaireTemplateSectionsChanged(sections ?? new()));
+        RaiseEvent(new QuestionnaireTemplateSectionsChanged(MapSectionsToSnapshots(sections ?? new())));
     }
 
 
@@ -261,7 +261,7 @@ public class QuestionnaireTemplate : AggregateRoot
             source.Description,
             source.CategoryId,
             source.RequiresManagerReview,
-            clonedSections,
+            MapSectionsToSnapshots(clonedSections),
             DateTime.UtcNow
         ));
 
@@ -276,7 +276,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Description = @event.Description;
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
-        Sections = @event.Sections;
+        Sections = MapSnapshotsToSections(@event.Sections);
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
         IsDeleted = false;
@@ -304,7 +304,7 @@ public class QuestionnaireTemplate : AggregateRoot
 
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
     {
-        Sections = @event.Sections;
+        Sections = MapSnapshotsToSections(@event.Sections);
     }
 
     public void Apply(QuestionnaireTemplatePublished @event)
@@ -345,12 +345,55 @@ public class QuestionnaireTemplate : AggregateRoot
         Description = @event.Description;
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
-        Sections = @event.Sections;
+        Sections = MapSnapshotsToSections(@event.Sections);
         Status = TemplateStatus.Draft;  // Always draft
         CreatedDate = @event.CreatedDate;
         PublishedDate = null;  // Reset publication data
         LastPublishedDate = null;
         PublishedByEmployeeId = null;
         IsDeleted = false;
+    }
+
+    // Helper methods for mapping between entities and snapshots
+    private static List<QuestionSectionSnapshot> MapSectionsToSnapshots(List<QuestionSection> sections)
+    {
+        return sections.Select(s => new QuestionSectionSnapshot(
+            s.Id,
+            s.Title,
+            s.Description,
+            s.Order,
+            s.IsRequired,
+            s.CompletionRole,
+            s.Questions.Select(q => new QuestionItemSnapshot(
+                q.Id,
+                q.Title,
+                q.Description,
+                q.Type,
+                q.Order,
+                q.IsRequired,
+                q.Configuration
+            )).ToList()
+        )).ToList();
+    }
+
+    private static List<QuestionSection> MapSnapshotsToSections(List<QuestionSectionSnapshot> snapshots)
+    {
+        return snapshots.Select(s => new QuestionSection(
+            s.Id,
+            s.Title,
+            s.Description,
+            s.Order,
+            s.IsRequired,
+            s.CompletionRole,
+            s.Questions.Select(q => new QuestionItem(
+                q.Id,
+                q.Title,
+                q.Description,
+                q.Type,
+                q.Order,
+                q.IsRequired,
+                q.Configuration
+            )).ToList()
+        )).ToList();
     }
 }
