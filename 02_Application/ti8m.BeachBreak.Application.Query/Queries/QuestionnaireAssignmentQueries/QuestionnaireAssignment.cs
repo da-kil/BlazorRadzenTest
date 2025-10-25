@@ -57,4 +57,11 @@ public class QuestionnaireAssignment
     public string? FinalizedByEmployeeName { get; set; }
     public string? ManagerFinalNotes { get; set; }
     public bool IsLocked { get; set; }
+
+    // Reopen tracking (audit trail)
+    public DateTime? LastReopenedDate { get; set; }
+    public Guid? LastReopenedByEmployeeId { get; set; }
+    public string? LastReopenedByEmployeeName { get; set; }
+    public string? LastReopenedByRole { get; set; }
+    public string? LastReopenReason { get; set; }
 }

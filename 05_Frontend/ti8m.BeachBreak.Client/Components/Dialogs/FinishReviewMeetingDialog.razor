@@ -40,6 +40,20 @@
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
             Summarize the key points discussed during the review meeting, any action items, or important observations:
         </RadzenText>
+        @if (!string.IsNullOrWhiteSpace(ExistingReviewSummary))
+        {
+            <div class="info-section mb-2" style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 0.75rem;">
+                <div class="icon-box">
+                    <RadzenIcon Icon="edit" Style="color: #ff9800;" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-0" Style="color: #856404;">
+                        Existing Summary Loaded
+                    </RadzenText>
+                </div>
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: #856404;">
+                    You can edit or replace the previous review summary below.
+                </RadzenText>
+            </div>
+        }
         <RadzenTextArea @bind-Value="@reviewSummary"
                        Placeholder="Enter review summary here... (optional)"
                        Rows="8"
@@ -65,32 +79,32 @@
 </div>
 
 @code {
+    [Parameter]
+    public string? ExistingReviewSummary { get; set; }
+
     private string? reviewSummary;
 
     protected override void OnInitialized()
     {
-        Console.WriteLine("[FinishReviewMeetingDialog] OnInitialized");
+        // Initialize with existing summary if reopening review
+        reviewSummary = ExistingReviewSummary;
         base.OnInitialized();
     }
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override void OnParametersSet()
     {
-        if (firstRender)
-        {
-            Console.WriteLine("[FinishReviewMeetingDialog] First render completed");
-        }
-        base.OnAfterRender(firstRender);
+        // Update reviewSummary when parameters are set (important for dialog parameters)
+        reviewSummary = ExistingReviewSummary;
+        base.OnParametersSet();
     }
 
     private void Cancel()
     {
-        Console.WriteLine("[FinishReviewMeetingDialog] Cancel clicked");
         DialogService.Close(null);
     }
 
     private void FinishReview()
     {
-        Console.WriteLine($"[FinishReviewMeetingDialog] FinishReview clicked, summary length: {reviewSummary?.Length ?? 0}");
         // Return the review summary (return empty string if null to distinguish from cancellation)
         DialogService.Close(reviewSummary ?? string.Empty);
     }

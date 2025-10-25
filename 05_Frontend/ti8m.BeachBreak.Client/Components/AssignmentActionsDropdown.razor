@@ -75,6 +75,7 @@
     [Parameter] public bool ShowEditAction { get; set; } = true;
     [Parameter] public bool ShowReminderAction { get; set; } = true;
     [Parameter] public bool ShowCancelAction { get; set; } = true;
+    [Parameter] public bool ShowReopenAction { get; set; } = true;
 
     private List<AssignmentAction> GetAvailableActions()
     {
@@ -128,6 +129,18 @@
             });
         }
 
+        if (ShowReopenAction && CanReopen())
+        {
+            actions.Add(new AssignmentAction
+            {
+                Text = "Reopen",
+                Value = "reopen",
+                Icon = "restart_alt",
+                IsDestructive = false,
+                IsEnabled = true
+            });
+        }
+
         return actions.Where(a => a.IsEnabled).ToList();
     }
 
@@ -147,6 +160,17 @@
     private bool CanCancel()
     {
         return Assignment.WorkflowState != WorkflowState.Finalized;
+    }
+
+    private bool CanReopen()
+    {
+        // Can reopen if in a submitted or confirmed state (not Finalized, not in-progress)
+        return Assignment.WorkflowState == WorkflowState.EmployeeSubmitted ||
+               Assignment.WorkflowState == WorkflowState.ManagerSubmitted ||
+               Assignment.WorkflowState == WorkflowState.BothSubmitted ||
+               Assignment.WorkflowState == WorkflowState.InReview ||
+               Assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
+               Assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
     }
 
     private async Task OnActionSelected(object value)

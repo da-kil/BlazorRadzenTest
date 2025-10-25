@@ -44,4 +44,7 @@ public interface IQuestionnaireAssignmentService
 
     // Review changes tracking
     Task<List<ReviewChangeDto>> GetReviewChangesAsync(Guid assignmentId);
+
+    // Workflow reopening
+    Task<bool> ReopenQuestionnaireAsync(Guid assignmentId, WorkflowState targetState, string reopenReason);
 }

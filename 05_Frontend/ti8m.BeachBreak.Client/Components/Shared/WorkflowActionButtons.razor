@@ -43,17 +43,6 @@
                                  Size="ButtonSize.Medium" />
                 }
 
-                @if (IsManager && WorkflowStateHelper.CanManagerFinishReviewMeeting(Assignment))
-                {
-                    <AsyncButton Text="Finish Review Meeting"
-                                 ProcessingText="Finishing"
-                                 Icon="event_available"
-                                 ButtonStyle="ButtonStyle.Success"
-                                 Click="@FinishReviewMeeting"
-                                 Disabled="@isProcessing"
-                                 Size="ButtonSize.Medium" />
-                }
-
                 @if (IsManager && WorkflowStateHelper.CanManagerFinalize(Assignment))
                 {
                     <AsyncButton Text="Finalize Questionnaire"
@@ -168,121 +157,32 @@
                 await OnActionCompleted.InvokeAsync();
                 StateHasChanged(); // Force re-render after assignment is reloaded
             }
-            else
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Failed to confirm review",
-                    Duration = 4000
-                });
-            }
         }
-        finally
+        catch (HttpRequestException ex)
         {
-            isProcessing = false;
-        }
-    }
-
-    private async Task FinishReviewMeeting()
-    {
-        if (Assignment == null)
-        {
+            // Show the specific error message from the server
             NotificationService.Notify(new NotificationMessage
             {
-                Severity = NotificationSeverity.Warning,
-                Summary = "Warning",
-                Detail = "No assignment found",
-                Duration = 3000
+                Severity = NotificationSeverity.Error,
+                Summary = "Cannot Confirm Review",
+                Detail = ex.Message,
+                Duration = 6000
             });
-            return;
-        }
-
-        Console.WriteLine($"[FinishReviewMeeting] Starting - Assignment: {Assignment.Id}, State: {Assignment.WorkflowState}");
-
-        isProcessing = true;
-        StateHasChanged(); // Update UI to show button is disabled
-
-        try
-        {
-            Console.WriteLine("[FinishReviewMeeting] Opening dialog...");
-
-            // Open dialog to collect optional review summary
-            var result = await DialogService.OpenAsync<FinishReviewMeetingDialog>(
-                "Finish Review Meeting",
-                new Dictionary<string, object>(),
-                new DialogOptions
-                {
-                    Width = "650px",
-                    Height = "600px",
-                    Resizable = false,
-                    Draggable = true,
-                    ShowClose = true
-                });
-
-            Console.WriteLine($"[FinishReviewMeeting] Dialog closed with result: {result}");
-
-            // If dialog was cancelled, return
-            if (result == null)
-            {
-                Console.WriteLine("[FinishReviewMeeting] Dialog was cancelled");
-                return;
-            }
-
-            // Result is the review summary (can be null or empty string)
-            var reviewSummary = result as string;
-
-            Console.WriteLine($"[FinishReviewMeeting] Calling API with summary length: {reviewSummary?.Length ?? 0}");
-
-            var success = await AssignmentService.FinishReviewMeetingAsync(
-                Assignment.Id,
-                UserName,
-                string.IsNullOrWhiteSpace(reviewSummary) ? null : reviewSummary);
-
-            Console.WriteLine($"[FinishReviewMeeting] API call result: {success}");
-
-            if (success)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Success",
-                    Detail = "Review meeting finished successfully",
-                    Duration = 4000
-                });
-                await OnActionCompleted.InvokeAsync();
-                StateHasChanged(); // Force re-render after assignment is reloaded
-            }
-            else
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Failed to finish review meeting",
-                    Duration = 4000
-                });
-            }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[FinishReviewMeeting] Exception: {ex.Message}");
-            Console.WriteLine($"[FinishReviewMeeting] Stack trace: {ex.StackTrace}");
-
+            // Generic error handler
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
                 Summary = "Error",
-                Detail = $"Error finishing review meeting: {ex.Message}",
-                Duration = 4000
+                Detail = $"An unexpected error occurred: {ex.Message}",
+                Duration = 6000
             });
         }
         finally
         {
             isProcessing = false;
-            StateHasChanged(); // Update UI to re-enable button
-            Console.WriteLine("[FinishReviewMeeting] Completed");
         }
     }
 

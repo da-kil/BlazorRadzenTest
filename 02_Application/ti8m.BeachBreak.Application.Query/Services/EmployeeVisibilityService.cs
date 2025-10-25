@@ -108,48 +108,88 @@ public class EmployeeVisibilityService(
     }
 
     /// <summary>
-    /// TeamLead: Get entire team hierarchy (all direct and indirect reports)
+    /// TeamLead: Get entire team hierarchy (all direct and indirect reports).
+    /// Optimized to avoid loading all employees into memory.
+    /// Includes cycle detection and depth limits for safety.
     /// </summary>
     private async Task<IEnumerable<EmployeeReadModel>> GetTeamHierarchyAsync(
         Guid userId,
         CancellationToken cancellationToken)
     {
-        var allEmployees = await employeeRepository.GetEmployeesAsync(
-            includeDeleted: false,
-            cancellationToken: cancellationToken);
-
-        // Build team hierarchy recursively
-        var teamMembers = new HashSet<EmployeeReadModel>();
-        var currentEmployee = allEmployees.FirstOrDefault(e => e.Id == userId);
-
-        if (currentEmployee != null)
+        // Get the team lead employee first
+        var teamLead = await employeeRepository.GetEmployeeByIdAsync(userId, cancellationToken);
+        if (teamLead == null)
         {
-            // Add self
-            teamMembers.Add(currentEmployee);
-
-            // Add all direct and indirect reports
-            AddTeamMembers(currentEmployee.Id.ToString(), allEmployees.ToList(), teamMembers);
+            logger.LogWarning("TeamLead with ID {UserId} not found", userId);
+            return Enumerable.Empty<EmployeeReadModel>();
         }
+
+        // Build team hierarchy recursively using efficient queries
+        var teamMembers = new List<EmployeeReadModel> { teamLead }; // Include self
+        var visitedIds = new HashSet<Guid> { userId }; // Track visited to prevent cycles
+
+        await AddTeamMembersRecursivelyAsync(
+            userId.ToString(),
+            teamMembers,
+            visitedIds,
+            cancellationToken,
+            depth: 0);
+
+        logger.LogDebug(
+            "Retrieved team hierarchy for TeamLead {UserId}: {Count} members",
+            userId,
+            teamMembers.Count);
 
         return teamMembers;
     }
 
     /// <summary>
-    /// Recursively adds team members to the set.
+    /// Recursively adds team members by querying direct reports at each level.
+    /// More efficient than loading all employees into memory.
+    /// Includes safety features: cycle detection and depth limits.
     /// </summary>
-    private void AddTeamMembers(
+    private async Task AddTeamMembersRecursivelyAsync(
         string managerId,
-        List<EmployeeReadModel> allEmployees,
-        HashSet<EmployeeReadModel> teamMembers)
+        List<EmployeeReadModel> teamMembers,
+        HashSet<Guid> visitedIds,
+        CancellationToken cancellationToken,
+        int depth = 0)
     {
-        var directReports = allEmployees.Where(e => e.ManagerId == managerId);
+        // Safety limit: max 10 levels deep
+        if (depth > 10)
+        {
+            logger.LogWarning(
+                "Team hierarchy too deep for manager {ManagerId}, stopping at 10 levels",
+                managerId);
+            return;
+        }
+
+        // Get direct reports for this manager (efficient query)
+        var directReports = await employeeRepository.GetEmployeesByManagerIdAsync(
+            managerId,
+            cancellationToken);
 
         foreach (var employee in directReports)
         {
-            if (teamMembers.Add(employee)) // Only process if not already added (avoid cycles)
+            // Prevent cycles: Only process if not already visited
+            if (visitedIds.Add(employee.Id))
             {
-                // Recursively add their reports
-                AddTeamMembers(employee.Id.ToString(), allEmployees, teamMembers);
+                teamMembers.Add(employee);
+
+                // Recursively process this employee's reports
+                await AddTeamMembersRecursivelyAsync(
+                    employee.Id.ToString(),
+                    teamMembers,
+                    visitedIds,
+                    cancellationToken,
+                    depth + 1);
+            }
+            else
+            {
+                logger.LogWarning(
+                    "Cycle detected in manager hierarchy for manager {ManagerId} at employee {EmployeeId}",
+                    managerId,
+                    employee.Id);
             }
         }
     }

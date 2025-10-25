@@ -226,7 +226,13 @@ public class AssignmentsController : BaseController
             FinalizedDate = assignment.FinalizedDate,
             FinalizedBy = assignment.FinalizedByEmployeeName,
             ManagerFinalNotes = assignment.ManagerFinalNotes,
-            IsLocked = assignment.IsLocked
+            IsLocked = assignment.IsLocked,
+
+            // Reopen tracking (audit trail)
+            LastReopenedDate = assignment.LastReopenedDate,
+            LastReopenedBy = assignment.LastReopenedByEmployeeName,
+            LastReopenedByRole = assignment.LastReopenedByRole,
+            LastReopenReason = assignment.LastReopenReason
         };
     }
 

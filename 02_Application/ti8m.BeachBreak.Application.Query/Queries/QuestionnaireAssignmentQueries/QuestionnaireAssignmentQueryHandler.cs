@@ -118,7 +118,8 @@ public class QuestionnaireAssignmentQueryHandler :
                 rm.ReviewInitiatedByEmployeeId,
                 rm.ManagerReviewFinishedByEmployeeId,
                 rm.EmployeeReviewConfirmedByEmployeeId,
-                rm.FinalizedByEmployeeId
+                rm.FinalizedByEmployeeId,
+                rm.LastReopenedByEmployeeId
             })
             .Where(id => id.HasValue)
             .Select(id => id!.Value)
@@ -198,6 +199,12 @@ public class QuestionnaireAssignmentQueryHandler :
                 assignment.FinalizedByEmployeeName = finalizedByName;
             }
 
+            if (readModel.LastReopenedByEmployeeId.HasValue &&
+                employeeLookup.TryGetValue(readModel.LastReopenedByEmployeeId.Value, out var lastReopenedByName))
+            {
+                assignment.LastReopenedByEmployeeName = lastReopenedByName;
+            }
+
             return assignment;
         });
     }
@@ -247,7 +254,13 @@ public class QuestionnaireAssignmentQueryHandler :
             FinalizedDate = readModel.FinalizedDate,
             FinalizedByEmployeeId = readModel.FinalizedByEmployeeId,
             ManagerFinalNotes = readModel.ManagerFinalNotes,
-            IsLocked = readModel.IsLocked
+            IsLocked = readModel.IsLocked,
+
+            // Reopen tracking (audit trail)
+            LastReopenedDate = readModel.LastReopenedDate,
+            LastReopenedByEmployeeId = readModel.LastReopenedByEmployeeId,
+            LastReopenedByRole = readModel.LastReopenedByRole,
+            LastReopenReason = readModel.LastReopenReason
         };
     }
 }

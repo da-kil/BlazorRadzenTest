@@ -121,7 +121,6 @@ public class Program
 
         app.UseHttpsRedirection();
 
-
         app.UseRouting()
                 .UseAuthentication()
                 .UseAuthorization()

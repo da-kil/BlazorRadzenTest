@@ -540,6 +540,132 @@ public class QuestionnaireAssignment : AggregateRoot
         ManagerFinalNotes = @event.Reason; // Store reason in notes
     }
 
+    /// <summary>
+    /// Reopens the workflow to a previous state for corrections.
+    /// Requires Admin, HR, or TeamLead authorization.
+    /// Note: Data-level authorization (TeamLead to their team) must be checked by caller.
+    /// Note: Finalized state CANNOT be reopened - must create new assignment.
+    /// Note: Email notifications will be sent by the application layer.
+    /// </summary>
+    public void ReopenWorkflow(
+        WorkflowState targetState,
+        string reopenReason,
+        Guid reopenedByEmployeeId,
+        string reopenedByRole)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot reopen - questionnaire is finalized and locked permanently. Create a new assignment instead.");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot reopen - assignment is withdrawn");
+
+        if (string.IsNullOrWhiteSpace(reopenReason))
+            throw new ArgumentException("Reopen reason is required and cannot be empty", nameof(reopenReason));
+
+        if (reopenReason.Length < 10)
+            throw new ArgumentException("Reopen reason must be at least 10 characters", nameof(reopenReason));
+
+        var validationResult = WorkflowStateMachine.CanTransitionBackward(
+            WorkflowState,
+            targetState,
+            reopenedByRole,
+            out var failureReason);
+
+        if (validationResult == WorkflowStateMachine.ValidationResult.Invalid)
+        {
+            throw new InvalidWorkflowTransitionException(
+                WorkflowState,
+                targetState,
+                failureReason ?? "Reopen not allowed",
+                isReopenAttempt: true);
+        }
+
+        RaiseEvent(new WorkflowReopened(
+            WorkflowState,
+            targetState,
+            reopenReason,
+            DateTime.UtcNow,
+            reopenedByEmployeeId,
+            reopenedByRole
+        ));
+    }
+
+    public void Apply(WorkflowReopened @event)
+    {
+        WorkflowState = @event.ToState;
+
+        // Reset submission flags based on target state
+        if (@event.ToState == WorkflowState.EmployeeInProgress)
+        {
+            EmployeeSubmittedDate = null;
+            EmployeeSubmittedByEmployeeId = null;
+        }
+        else if (@event.ToState == WorkflowState.ManagerInProgress)
+        {
+            ManagerSubmittedDate = null;
+            ManagerSubmittedByEmployeeId = null;
+        }
+        else if (@event.ToState == WorkflowState.BothInProgress)
+        {
+            EmployeeSubmittedDate = null;
+            EmployeeSubmittedByEmployeeId = null;
+            ManagerSubmittedDate = null;
+            ManagerSubmittedByEmployeeId = null;
+        }
+        else if (@event.ToState == WorkflowState.InReview)
+        {
+            // Reset review confirmation flags (but preserve ManagerReviewSummary for editing)
+            ManagerReviewFinishedDate = null;
+            ManagerReviewFinishedByEmployeeId = null;
+            // NOTE: ManagerReviewSummary is NOT cleared - preserve it so manager can edit
+            EmployeeReviewConfirmedDate = null;
+            EmployeeReviewConfirmedByEmployeeId = null;
+            EmployeeReviewComments = null;
+        }
+    }
+
+    public void Apply(WorkflowStateTransitioned @event)
+    {
+        WorkflowState = @event.ToState;
+    }
+
+    /// <summary>
+    /// Helper method to transition workflow state with validation.
+    /// Raises WorkflowStateTransitioned event if transition is valid.
+    /// </summary>
+    private void TransitionWorkflowState(
+        WorkflowState targetState,
+        string reason,
+        Guid? transitionedBy = null)
+    {
+        if (WorkflowState == targetState)
+        {
+            // No transition needed
+            return;
+        }
+
+        var validationResult = WorkflowStateMachine.CanTransitionForward(
+            WorkflowState,
+            targetState,
+            out var failureReason);
+
+        if (validationResult == WorkflowStateMachine.ValidationResult.Invalid)
+        {
+            throw new InvalidWorkflowTransitionException(
+                WorkflowState,
+                targetState,
+                failureReason ?? "Unknown error");
+        }
+
+        RaiseEvent(new WorkflowStateTransitioned(
+            WorkflowState,
+            targetState,
+            reason,
+            DateTime.UtcNow,
+            transitionedBy
+        ));
+    }
+
     private void UpdateWorkflowState()
     {
         // Don't update state if already in submission, review, or finalization phases
@@ -553,33 +679,32 @@ public class QuestionnaireAssignment : AggregateRoot
         var hasEmployeeProgress = SectionProgressList.Any(p => p.IsEmployeeCompleted);
         var hasManagerProgress = SectionProgressList.Any(p => p.IsManagerCompleted);
 
-        if (hasEmployeeProgress && hasManagerProgress)
+        var newState = WorkflowStateMachine.DetermineProgressState(
+            hasEmployeeProgress,
+            hasManagerProgress,
+            WorkflowState);
+
+        if (newState != WorkflowState)
         {
-            WorkflowState = WorkflowState.BothInProgress;
-        }
-        else if (hasEmployeeProgress)
-        {
-            WorkflowState = WorkflowState.EmployeeInProgress;
-        }
-        else if (hasManagerProgress)
-        {
-            WorkflowState = WorkflowState.ManagerInProgress;
+            TransitionWorkflowState(
+                newState,
+                "Section completion progress update");
         }
     }
 
     private void UpdateWorkflowStateOnSubmission()
     {
-        if (EmployeeSubmittedDate.HasValue && ManagerSubmittedDate.HasValue)
+        var newState = WorkflowStateMachine.DetermineSubmissionState(
+            EmployeeSubmittedDate.HasValue,
+            ManagerSubmittedDate.HasValue,
+            RequiresManagerReview);
+
+        if (newState != WorkflowState)
         {
-            WorkflowState = WorkflowState.BothSubmitted;
-        }
-        else if (EmployeeSubmittedDate.HasValue)
-        {
-            WorkflowState = WorkflowState.EmployeeSubmitted;
-        }
-        else if (ManagerSubmittedDate.HasValue)
-        {
-            WorkflowState = WorkflowState.ManagerSubmitted;
+            TransitionWorkflowState(
+                newState,
+                "Questionnaire submission",
+                EmployeeSubmittedDate.HasValue ? EmployeeSubmittedByEmployeeId : ManagerSubmittedByEmployeeId);
         }
     }
 }

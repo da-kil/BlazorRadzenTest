@@ -4,7 +4,11 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Services.Enhanced
 @using Microsoft.AspNetCore.Components
+@using ti8m.BeachBreak.Client.Components.Dialogs
 @inject NavigationManager NavigationManager
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject IQuestionnaireAssignmentService AssignmentService
 @inherits OptimizedComponentBase
 
 <div class="container-fluid">
@@ -545,7 +549,8 @@
                                    TeamMember="@member"
                                    Assignments="@memberAssignments"
                                    OnSendReminder="@HandleSendReminder"
-                                   OnAssignmentClick="@HandleAssignmentClick" />
+                                   OnAssignmentClick="@HandleAssignmentClick"
+                                   OnReopenClick="@HandleReopenAssignment" />
                 }
             </div>
         }
@@ -772,7 +777,8 @@
                                    TeamMember="@member"
                                    Assignments="@memberAssignments"
                                    OnSendReminder="@HandleSendReminder"
-                                   OnAssignmentClick="@HandleAssignmentClick" />
+                                   OnAssignmentClick="@HandleAssignmentClick"
+                                   OnReopenClick="@HandleReopenAssignment" />
                 }
             </div>
         }
@@ -1338,6 +1344,70 @@
     {
         ShowInfo($"Sending reminder to {member.FirstName} {member.LastName}...");
         // TODO: Implement actual reminder sending logic
+    }
+
+    private async Task HandleReopenAssignment(QuestionnaireAssignment assignment)
+    {
+        try
+        {
+            // Open the reopen dialog
+            var result = await DialogService.OpenAsync<ReopenQuestionnaireDialog>(
+                "Reopen Questionnaire",
+                new Dictionary<string, object>
+                {
+                    { "Assignment", assignment }
+                },
+                new DialogOptions
+                {
+                    Width = "700px",
+                    Height = "auto",
+                    Resizable = true,
+                    Draggable = true
+                });
+
+            if (result is ReopenQuestionnaireDialog.ReopenQuestionnaireResult reopenResult)
+            {
+                // Call the API to reopen
+                var success = await AssignmentService.ReopenQuestionnaireAsync(
+                    assignment.Id,
+                    reopenResult.TargetState,
+                    reopenResult.ReopenReason);
+
+                if (success)
+                {
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Success,
+                        Summary = "Questionnaire Reopened",
+                        Detail = $"Successfully reopened questionnaire for {assignment.EmployeeName}. Email notification has been sent.",
+                        Duration = 5000
+                    });
+
+                    // Reload the assignments
+                    await LoadData();
+                }
+                else
+                {
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Error",
+                        Detail = "Failed to reopen questionnaire. Please try again or contact support.",
+                        Duration = 5000
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to reopen questionnaire: {ex.Message}",
+                Duration = 5000
+            });
+        }
     }
 
     // Questionnaire view helper methods

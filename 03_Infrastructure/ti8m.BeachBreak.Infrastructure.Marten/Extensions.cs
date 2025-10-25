@@ -70,7 +70,10 @@ public static class Extensions
         // Register domain services
         builder.Services.AddScoped<IQuestionnaireAssignmentService, QuestionnaireAssignmentService>();
 
-        // Register notification service
+        // Note: IEmployeeHierarchyService is registered only in CommandApi
+        // It depends on IEmployeeAggregateRepository which is only available on the Command side
+
+        // Register notification service (includes email notifications)
         builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();
 
         // Register replay configuration

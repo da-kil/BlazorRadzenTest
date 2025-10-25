@@ -88,6 +88,12 @@ else
                                   Rows="5"
                                   Class="w-100" />
                 }
+                else if (!string.IsNullOrEmpty(GetSectionValue(sectionKey)))
+                {
+                    <div class="readonly-text p-3 bg-light rounded">
+                        @GetSectionValue(sectionKey)
+                    </div>
+                }
                 else
                 {
                     <div class="no-response p-3 bg-light rounded text-muted">

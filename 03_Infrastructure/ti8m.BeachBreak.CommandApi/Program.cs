@@ -124,6 +124,11 @@ namespace ti8m.BeachBreak.CommandApi
 
             builder.Services.AddScoped<UserContext>();
 
+            // Register EmployeeHierarchyService (Command-side only)
+            // This service depends on IEmployeeAggregateRepository and is used for authorization checks
+            builder.Services.AddScoped<Domain.EmployeeAggregate.Services.IEmployeeHierarchyService,
+                Infrastructure.Marten.Services.EmployeeHierarchyService>();
+
             // Add Command application services
             Application.Command.Extensions.AddApplication(builder.Services, builder.Configuration);
 

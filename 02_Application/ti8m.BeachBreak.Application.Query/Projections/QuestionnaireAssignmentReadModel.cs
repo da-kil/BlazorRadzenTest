@@ -49,6 +49,12 @@ public class QuestionnaireAssignmentReadModel
     public string? ManagerFinalNotes { get; set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
+    // Reopen tracking (audit trail)
+    public DateTime? LastReopenedDate { get; set; }
+    public Guid? LastReopenedByEmployeeId { get; set; }
+    public string? LastReopenedByRole { get; set; }
+    public string? LastReopenReason { get; set; }
+
     // Apply methods for all QuestionnaireAssignment domain events
     public void Apply(QuestionnaireAssignmentAssigned @event)
     {
@@ -192,6 +198,48 @@ public class QuestionnaireAssignmentReadModel
         FinalizedDate = @event.FinalizedDate;
         FinalizedByEmployeeId = @event.FinalizedByEmployeeId;
         ManagerFinalNotes = @event.Reason;
+    }
+
+    public void Apply(WorkflowReopened @event)
+    {
+        // Update workflow state to target state
+        WorkflowState = @event.ToState;
+
+        // Track reopen audit trail
+        LastReopenedDate = @event.ReopenedAt;
+        LastReopenedByEmployeeId = @event.ReopenedByEmployeeId;
+        LastReopenedByRole = @event.ReopenedByRole;
+        LastReopenReason = @event.ReopenReason;
+
+        // Reset submission and review flags based on target state
+        // This mirrors the logic in the aggregate's Apply(WorkflowReopened) method
+        if (@event.ToState == WorkflowState.EmployeeInProgress)
+        {
+            EmployeeSubmittedDate = null;
+            EmployeeSubmittedByEmployeeId = null;
+        }
+        else if (@event.ToState == WorkflowState.ManagerInProgress)
+        {
+            ManagerSubmittedDate = null;
+            ManagerSubmittedByEmployeeId = null;
+        }
+        else if (@event.ToState == WorkflowState.BothInProgress)
+        {
+            EmployeeSubmittedDate = null;
+            EmployeeSubmittedByEmployeeId = null;
+            ManagerSubmittedDate = null;
+            ManagerSubmittedByEmployeeId = null;
+        }
+        else if (@event.ToState == WorkflowState.InReview)
+        {
+            // Reset review confirmation flags (but preserve ManagerReviewSummary for editing)
+            ManagerReviewFinishedDate = null;
+            ManagerReviewFinishedByEmployeeId = null;
+            // NOTE: ManagerReviewSummary is NOT cleared - preserve it so manager can edit
+            EmployeeReviewConfirmedDate = null;
+            EmployeeReviewConfirmedByEmployeeId = null;
+            EmployeeReviewComments = null;
+        }
     }
 
     private void UpdateWorkflowState()

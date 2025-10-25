@@ -348,12 +348,26 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         {
             var dto = new ConfirmReviewOutcomeDto { EmployeeComments = comments };
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/confirm-employee", dto);
-            return response.IsSuccessStatusCode;
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // Extract error message from response to show user
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Error confirming employee review for assignment {assignmentId}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                throw new HttpRequestException($"Unable to confirm review: {errorContent}");
+            }
+
+            return true;
+        }
+        catch (HttpRequestException)
+        {
+            // Re-throw HTTP exceptions so UI can show the error message
+            throw;
         }
         catch (Exception ex)
         {
             LogError($"Error confirming employee review for assignment {assignmentId}", ex);
-            return false;
+            throw new HttpRequestException("An unexpected error occurred while confirming the review. Please try again.");
         }
     }
 
@@ -376,5 +390,37 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     public async Task<List<ReviewChangeDto>> GetReviewChangesAsync(Guid assignmentId)
     {
         return await GetAllAsync<ReviewChangeDto>($"{AssignmentQueryEndpoint}/{assignmentId}/review-changes");
+    }
+
+    /// <summary>
+    /// Reopens a questionnaire assignment to a previous workflow state.
+    /// Only authorized roles (Admin, HR, TeamLead) can reopen assignments.
+    /// </summary>
+    public async Task<bool> ReopenQuestionnaireAsync(Guid assignmentId, WorkflowState targetState, string reopenReason)
+    {
+        try
+        {
+            var dto = new ReopenQuestionnaireDto
+            {
+                TargetState = targetState,
+                ReopenReason = reopenReason
+            };
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/reopen", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Failed to reopen assignment {assignmentId}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error reopening assignment {assignmentId}", ex);
+            return false;
+        }
     }
 }

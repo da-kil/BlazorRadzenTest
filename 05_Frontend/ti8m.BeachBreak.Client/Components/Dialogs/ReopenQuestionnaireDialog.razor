@@ -1,0 +1,283 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Models
+@inject DialogService DialogService
+
+<div class="dialog-container">
+    <div class="dialog-review-info warning">
+        <div class="text-center">
+            <RadzenIcon Icon="restart_alt" Class="dialog-header-icon" />
+            <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
+                Reopen Questionnaire
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                You are about to reopen this questionnaire for corrections. The employee will be notified and will need to make the required changes.
+            </RadzenText>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="icon-box">
+            <RadzenIcon Icon="info" Style="color: #FFA726;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                Assignment Information
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            <strong>Employee:</strong> @Assignment?.EmployeeName (@Assignment?.EmployeeEmail)
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            <strong>Current State:</strong> @GetStateName(Assignment?.WorkflowState)
+        </RadzenText>
+    </div>
+
+    <div class="dialog-content-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+            Target State <span style="color: red;">*</span>
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+            Select the workflow state to reopen to:
+        </RadzenText>
+        <RadzenDropDown @bind-Value="@selectedTargetState"
+                       Data="@GetValidReopenStates()"
+                       TextProperty="DisplayName"
+                       ValueProperty="State"
+                       Placeholder="Select target state..."
+                       Style="width: 100%; margin-bottom: 1rem;" />
+    </div>
+
+    <div class="dialog-content-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+            Reason for Reopening <span style="color: red;">*</span>
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+            Please provide a clear reason for reopening (minimum 10 characters):
+        </RadzenText>
+        <RadzenTextArea @bind-Value="@reopenReason"
+                       Placeholder="e.g., Employee needs to update assessment ratings based on recent performance review..."
+                       Rows="6"
+                       Style="width: 100%;"
+                       MaxLength="1000"
+                       Class="@(showValidationError && !IsReasonValid() ? "has-error" : "")" />
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+            <RadzenText TextStyle="TextStyle.Caption" Class="@(IsReasonValid() ? "text-muted" : "text-danger")">
+                @(reopenReason?.Length ?? 0) / 1000 characters @(IsReasonValid() ? "" : $"(minimum 10 required)")
+            </RadzenText>
+            @if (showValidationError && !IsReasonValid())
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-danger">
+                    <RadzenIcon Icon="error" Style="font-size: 1rem; vertical-align: middle;" /> Reason must be at least 10 characters
+                </RadzenText>
+            }
+        </div>
+    </div>
+
+    <div class="info-section" style="background: rgba(255, 193, 7, 0.05); border-left: 4px solid #FFC107;">
+        <div class="icon-box">
+            <RadzenIcon Icon="mail" Style="color: #FFC107;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                Email Notifications
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            The following people will be notified via email:
+        </RadzenText>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted"><strong>@Assignment?.EmployeeName</strong> (@Assignment?.EmployeeEmail)</RadzenText></li>
+            @if (Assignment?.RequiresManagerReview == true)
+            {
+                <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Manager (if applicable)</RadzenText></li>
+            }
+        </ul>
+    </div>
+
+    <div class="dialog-actions">
+        <AsyncButton Text="Cancel"
+                    ButtonStyle="ButtonStyle.Light"
+                    Click="@Cancel"
+                    Size="ButtonSize.Medium" />
+        <AsyncButton Text="Reopen Questionnaire"
+                    ProcessingText="Reopening"
+                    ButtonStyle="ButtonStyle.Warning"
+                    Icon="restart_alt"
+                    Click="@ReopenQuestionnaire"
+                    Size="ButtonSize.Medium"
+                    Disabled="@(!CanReopen())" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionnaireAssignment? Assignment { get; set; }
+
+    private WorkflowState? selectedTargetState;
+    private string? reopenReason;
+    private bool showValidationError = false;
+
+    protected override void OnInitialized()
+    {
+        Console.WriteLine("[ReopenQuestionnaireDialog] OnInitialized");
+        base.OnInitialized();
+
+        // Pre-select the most common reopen state
+        if (Assignment != null)
+        {
+            var validStates = GetValidReopenStates();
+            selectedTargetState = validStates.FirstOrDefault()?.State;
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Console.WriteLine("[ReopenQuestionnaireDialog] First render completed");
+        }
+        base.OnAfterRender(firstRender);
+    }
+
+    private void Cancel()
+    {
+        Console.WriteLine("[ReopenQuestionnaireDialog] Cancel clicked");
+        DialogService.Close(null);
+    }
+
+    private void ReopenQuestionnaire()
+    {
+        Console.WriteLine($"[ReopenQuestionnaireDialog] ReopenQuestionnaire clicked, target: {selectedTargetState}, reason length: {reopenReason?.Length ?? 0}");
+
+        // Validate
+        if (!CanReopen())
+        {
+            showValidationError = true;
+            StateHasChanged();
+            return;
+        }
+
+        // Return result with target state and reason
+        var result = new ReopenQuestionnaireResult
+        {
+            TargetState = selectedTargetState!.Value,
+            ReopenReason = reopenReason!
+        };
+
+        DialogService.Close(result);
+    }
+
+    private bool CanReopen()
+    {
+        return selectedTargetState.HasValue && IsReasonValid();
+    }
+
+    private bool IsReasonValid()
+    {
+        return !string.IsNullOrWhiteSpace(reopenReason) && reopenReason.Length >= 10;
+    }
+
+    private List<ReopenStateOption> GetValidReopenStates()
+    {
+        if (Assignment == null)
+            return new List<ReopenStateOption>();
+
+        var options = new List<ReopenStateOption>();
+
+        // Based on WorkflowStateMachine.BackwardTransitions
+        switch (Assignment.WorkflowState)
+        {
+            case WorkflowState.EmployeeSubmitted:
+                options.Add(new ReopenStateOption
+                {
+                    State = WorkflowState.EmployeeInProgress,
+                    DisplayName = "Employee In Progress",
+                    Description = "Allow employee to continue editing"
+                });
+                break;
+
+            case WorkflowState.ManagerSubmitted:
+                options.Add(new ReopenStateOption
+                {
+                    State = WorkflowState.ManagerInProgress,
+                    DisplayName = "Manager In Progress",
+                    Description = "Allow manager to continue editing"
+                });
+                break;
+
+            case WorkflowState.BothSubmitted:
+                options.Add(new ReopenStateOption
+                {
+                    State = WorkflowState.BothInProgress,
+                    DisplayName = "Both In Progress",
+                    Description = "Allow both employee and manager to edit"
+                });
+                options.Add(new ReopenStateOption
+                {
+                    State = WorkflowState.EmployeeInProgress,
+                    DisplayName = "Employee In Progress",
+                    Description = "Allow only employee to edit"
+                });
+                options.Add(new ReopenStateOption
+                {
+                    State = WorkflowState.ManagerInProgress,
+                    DisplayName = "Manager In Progress",
+                    Description = "Allow only manager to edit"
+                });
+                break;
+
+            case WorkflowState.InReview:
+                options.Add(new ReopenStateOption
+                {
+                    State = WorkflowState.BothSubmitted,
+                    DisplayName = "Both Submitted",
+                    Description = "Return to submitted state"
+                });
+                break;
+
+            case WorkflowState.ManagerReviewConfirmed:
+            case WorkflowState.EmployeeReviewConfirmed:
+                options.Add(new ReopenStateOption
+                {
+                    State = WorkflowState.InReview,
+                    DisplayName = "In Review",
+                    Description = "Return to review phase"
+                });
+                break;
+        }
+
+        return options;
+    }
+
+    private string GetStateName(WorkflowState? state)
+    {
+        if (!state.HasValue)
+            return "Unknown";
+
+        return state.Value switch
+        {
+            WorkflowState.Assigned => "Assigned",
+            WorkflowState.EmployeeInProgress => "Employee In Progress",
+            WorkflowState.ManagerInProgress => "Manager In Progress",
+            WorkflowState.BothInProgress => "Both In Progress",
+            WorkflowState.EmployeeSubmitted => "Employee Submitted",
+            WorkflowState.ManagerSubmitted => "Manager Submitted",
+            WorkflowState.BothSubmitted => "Both Submitted",
+            WorkflowState.InReview => "In Review",
+            WorkflowState.EmployeeReviewConfirmed => "Employee Review Confirmed",
+            WorkflowState.ManagerReviewConfirmed => "Manager Review Confirmed",
+            WorkflowState.Finalized => "Finalized",
+            _ => state.Value.ToString()
+        };
+    }
+
+    public class ReopenStateOption
+    {
+        public WorkflowState State { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    public class ReopenQuestionnaireResult
+    {
+        public WorkflowState TargetState { get; set; }
+        public string ReopenReason { get; set; } = string.Empty;
+    }
+}

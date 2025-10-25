@@ -693,4 +693,66 @@ public class AssignmentsController : BaseController
                employeeRole.ApplicationRole == ApplicationRole.Admin;
     }
 
+    /// <summary>
+    /// Reopens a questionnaire assignment for corrections.
+    /// Requires Admin, HR, or TeamLead role.
+    /// TeamLead can only reopen questionnaires for their own team members.
+    /// Finalized questionnaires cannot be reopened - create new assignment instead.
+    /// Sends email notifications to affected parties.
+    /// </summary>
+    /// <param name="assignmentId">The assignment to reopen</param>
+    /// <param name="reopenDto">Target state and reason for reopening</param>
+    [HttpPost("{assignmentId}/reopen")]
+    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ReopenQuestionnaire(
+        Guid assignmentId,
+        [FromBody] ReopenQuestionnaireDto reopenDto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Get user ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("ReopenQuestionnaire failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Get user role from cache
+            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(
+                userId,
+                HttpContext.RequestAborted);
+
+            if (employeeRole == null)
+            {
+                logger.LogWarning("ReopenQuestionnaire failed: Unable to retrieve employee role for user {UserId}", userId);
+                return Unauthorized("User role not found");
+            }
+
+            // Map ApplicationRole enum to string for command
+            var roleString = employeeRole.ApplicationRole.ToString();
+
+            var command = new ReopenQuestionnaireCommand(
+                assignmentId,
+                reopenDto.TargetState,
+                reopenDto.ReopenReason,
+                userId,
+                roleString);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error reopening assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while reopening questionnaire");
+        }
+    }
+
 }

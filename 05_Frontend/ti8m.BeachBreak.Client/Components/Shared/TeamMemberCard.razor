@@ -91,6 +91,17 @@
                             <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
                                         BadgeStyle="BadgeStyle.Light"
                                         Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
+                            @if (CanReopen(assignment))
+                            {
+                                <RadzenButton Icon="restart_alt"
+                                            ButtonStyle="ButtonStyle.Warning"
+                                            Size="ButtonSize.Small"
+                                            Variant="Variant.Outlined"
+                                            Click="@((args) => OnReopenAssignment(assignment))"
+                                            title="Reopen this questionnaire for corrections"
+                                            @onclick:stopPropagation="true"
+                                            Style="min-width: 32px; padding: 4px 8px;" />
+                            }
                             @if (OnSendReminder.HasDelegate && assignment.WorkflowState != WorkflowState.Finalized)
                             {
                                 <RadzenButton Icon="notifications"
@@ -128,6 +139,7 @@
     [Parameter, EditorRequired] public List<QuestionnaireAssignment> Assignments { get; set; } = new();
     [Parameter] public EventCallback<EmployeeDto> OnSendReminder { get; set; }
     [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
+    [Parameter] public EventCallback<QuestionnaireAssignment> OnReopenClick { get; set; }
 
     private int TotalCount => Assignments.Count;
     // Completed: ONLY Finalized state (consistent with employee view)
@@ -201,5 +213,24 @@
         // Invoke the reminder callback with the employee for this specific assignment
         // The parent component will handle showing the message
         await OnSendReminder.InvokeAsync(TeamMember);
+    }
+
+    private bool CanReopen(QuestionnaireAssignment assignment)
+    {
+        // Can reopen if in a submitted or confirmed state (not Finalized, not in-progress)
+        return assignment.WorkflowState == WorkflowState.EmployeeSubmitted ||
+               assignment.WorkflowState == WorkflowState.ManagerSubmitted ||
+               assignment.WorkflowState == WorkflowState.BothSubmitted ||
+               assignment.WorkflowState == WorkflowState.InReview ||
+               assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
+               assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+    }
+
+    private async Task OnReopenAssignment(QuestionnaireAssignment assignment)
+    {
+        if (OnReopenClick.HasDelegate)
+        {
+            await OnReopenClick.InvokeAsync(assignment);
+        }
     }
 }
