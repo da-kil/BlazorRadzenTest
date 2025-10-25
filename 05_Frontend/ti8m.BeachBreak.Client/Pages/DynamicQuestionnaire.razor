@@ -553,7 +553,7 @@
                         {
                             Id = Guid.NewGuid(),
                             Title = "Set your primary goal for next year",
-                            Type = QuestionType.GoalAchievement,
+                            Type = QuestionType.Goal,
                             Order = 0,
                             IsRequired = true
                         }
@@ -883,7 +883,7 @@
         return response.ComplexValue?.TryGetValue("Description", out var value) == true ? value.ToString() ?? "" : "";
     }
 
-    private int GetGoalAchievementPercentage(Guid questionId)
+    private int GetGoalPercentage(Guid questionId)
     {
         var response = GetQuestionResponse(questionId);
         return response.ComplexValue?.TryGetValue("AchievementPercentage", out var value) == true ? Convert.ToInt32(value) : 0;
@@ -1007,7 +1007,7 @@
         UpdateProgress();
     }
 
-    private void SetGoalAchievementPercentage(Guid questionId, int value)
+    private void SetGoalPercentage(Guid questionId, int value)
     {
         var response = GetQuestionResponse(questionId);
         if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
@@ -1152,7 +1152,7 @@
         {
             QuestionType.Assessment => IsAssessmentCompleted(question, questionResponse),
             QuestionType.TextQuestion => IsTextQuestionCompleted(question, questionResponse),
-            QuestionType.GoalAchievement => !string.IsNullOrWhiteSpace(GetGoalDescription(question.Id)),
+            QuestionType.Goal => !string.IsNullOrWhiteSpace(GetGoalDescription(question.Id)),
             _ => true
         };
     }

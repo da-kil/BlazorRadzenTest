@@ -755,4 +755,222 @@ public class AssignmentsController : BaseController
         }
     }
 
+    #region Goal Operations
+
+    /// <summary>
+    /// Links a predecessor questionnaire to the current assignment for rating previous goals.
+    /// Employee or Manager can link (first wins).
+    /// </summary>
+    [HttpPost("{assignmentId}/goals/link-predecessor")]
+    public async Task<IActionResult> LinkPredecessorQuestionnaire(
+        Guid assignmentId,
+        [FromBody] LinkPredecessorQuestionnaireDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("LinkPredecessorQuestionnaire failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.LinkedByRole, out var linkedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.LinkedByRole}");
+            }
+
+            var command = new LinkPredecessorQuestionnaireCommand(
+                assignmentId,
+                dto.QuestionId,
+                dto.PredecessorAssignmentId,
+                linkedByRole,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error linking predecessor questionnaire for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while linking predecessor questionnaire");
+        }
+    }
+
+    /// <summary>
+    /// Adds a new goal to a questionnaire assignment during in-progress states.
+    /// Employee and Manager add goals separately.
+    /// </summary>
+    [HttpPost("{assignmentId}/goals")]
+    public async Task<IActionResult> AddGoal(
+        Guid assignmentId,
+        [FromBody] AddGoalDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("AddGoal failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.AddedByRole, out var addedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.AddedByRole}");
+            }
+
+            var command = new AddGoalCommand(
+                assignmentId,
+                dto.QuestionId,
+                addedByRole,
+                dto.TimeframeFrom,
+                dto.TimeframeTo,
+                dto.ObjectiveDescription,
+                dto.MeasurementMetric,
+                dto.WeightingPercentage,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error adding goal to assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while adding goal");
+        }
+    }
+
+    /// <summary>
+    /// Modifies an existing goal during review meeting.
+    /// </summary>
+    [HttpPut("{assignmentId}/goals/{goalId}")]
+    public async Task<IActionResult> ModifyGoal(
+        Guid assignmentId,
+        Guid goalId,
+        [FromBody] ModifyGoalDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("ModifyGoal failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.ModifiedByRole, out var modifiedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.ModifiedByRole}");
+            }
+
+            var command = new ModifyGoalCommand(
+                assignmentId,
+                goalId,
+                dto.TimeframeFrom,
+                dto.TimeframeTo,
+                dto.ObjectiveDescription,
+                dto.MeasurementMetric,
+                dto.WeightingPercentage,
+                modifiedByRole,
+                dto.ChangeReason,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error modifying goal {GoalId} in assignment {AssignmentId}", goalId, assignmentId);
+            return StatusCode(500, "An error occurred while modifying goal");
+        }
+    }
+
+    /// <summary>
+    /// Rates a goal from a predecessor questionnaire.
+    /// Employee and Manager rate separately during their respective in-progress states.
+    /// </summary>
+    [HttpPost("{assignmentId}/goals/rate-predecessor")]
+    public async Task<IActionResult> RatePredecessorGoal(
+        Guid assignmentId,
+        [FromBody] RatePredecessorGoalDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("RatePredecessorGoal failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.RatedByRole, out var ratedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.RatedByRole}");
+            }
+
+            var command = new RatePredecessorGoalCommand(
+                assignmentId,
+                dto.QuestionId,
+                dto.SourceAssignmentId,
+                dto.SourceGoalId,
+                ratedByRole,
+                dto.DegreeOfAchievement,
+                dto.Justification,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error rating predecessor goal for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while rating predecessor goal");
+        }
+    }
+
+    /// <summary>
+    /// Modifies a predecessor goal rating during review meeting.
+    /// </summary>
+    [HttpPut("{assignmentId}/goals/ratings/{sourceGoalId}")]
+    public async Task<IActionResult> ModifyPredecessorGoalRating(
+        Guid assignmentId,
+        Guid sourceGoalId,
+        [FromBody] ModifyPredecessorGoalRatingDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("ModifyPredecessorGoalRating failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.ModifiedByRole, out var modifiedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.ModifiedByRole}");
+            }
+
+            var command = new ModifyPredecessorGoalRatingCommand(
+                assignmentId,
+                dto.SourceGoalId,
+                dto.DegreeOfAchievement,
+                dto.Justification,
+                modifiedByRole,
+                dto.ChangeReason,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error modifying predecessor goal rating for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while modifying predecessor goal rating");
+        }
+    }
+
+    #endregion
+
 }

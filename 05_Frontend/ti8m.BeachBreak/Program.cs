@@ -219,7 +219,6 @@ public class Program
 
         // Register question type handlers (Strategy Pattern)
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.AssessmentQuestionHandler>();
-        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.GoalAchievementQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.TextQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory>();
 

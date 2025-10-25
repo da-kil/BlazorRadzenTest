@@ -97,7 +97,7 @@
         }
 
         <!-- Goal Achievement Configuration -->
-        @if (Question.Type == QuestionType.GoalAchievement)
+        @if (Question.Type == QuestionType.Goal)
         {
             var goalCategories = GetOrderedGoalCategories();
             <div class="goal-categories-config">
@@ -335,7 +335,7 @@
                     contentValid = false;
             }
         }
-        else if (Question.Type == QuestionType.GoalAchievement)
+        else if (Question.Type == QuestionType.Goal)
         {
             var categories = GetOrderedGoalCategories();
             for (int i = 0; i < categories.Count; i++)
@@ -458,7 +458,7 @@
     private string GetQuestionTypeIcon(QuestionType type) => type switch
     {
         QuestionType.Assessment => "self_improvement",
-        QuestionType.GoalAchievement => "track_changes",
+        QuestionType.Goal => "track_changes",
         QuestionType.TextQuestion => "psychology",
         _ => "help"
     };

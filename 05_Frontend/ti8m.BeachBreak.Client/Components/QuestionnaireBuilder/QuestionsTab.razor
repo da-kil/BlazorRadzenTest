@@ -23,7 +23,7 @@
                             ButtonStyle="ButtonStyle.Success"
                             Icon="track_changes"
                             Size="ButtonSize.Small"
-                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.GoalAchievement))"
+                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Goal))"
                             Title="Add goal and achievement review"
                             Disabled="@(!Template.IsAvailableForEditing)" />
                 <AsyncButton Text="Text Question"
@@ -214,7 +214,7 @@
                                 }
                             }
                             break;
-                        case QuestionType.GoalAchievement:
+                        case QuestionType.Goal:
                             if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
                             {
                                 if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)

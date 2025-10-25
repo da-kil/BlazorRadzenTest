@@ -74,7 +74,7 @@
                                         IsReadOnly="false"
                                         HideHeader="true" />
         }
-        else if (Question.Type == QuestionType.GoalAchievement)
+        else if (Question.Type == QuestionType.Goal)
         {
             <OptimizedGoalQuestion Question="@Question"
                                   Response="@editResponse"
@@ -220,7 +220,7 @@
                                       editResponse.ComplexValue.Any(kvp => kvp.Key.StartsWith("rating_") &&
                                                                            kvp.Value != null &&
                                                                            !kvp.Value.Equals(0)),
-            QuestionType.GoalAchievement => editResponse.ComplexValue != null &&
+            QuestionType.Goal => editResponse.ComplexValue != null &&
                                            editResponse.ComplexValue.ContainsKey("Description") &&
                                            !string.IsNullOrWhiteSpace(editResponse.ComplexValue["Description"]?.ToString()),
             _ => !string.IsNullOrWhiteSpace(SimpleTextValue) || editResponse.ComplexValue != null

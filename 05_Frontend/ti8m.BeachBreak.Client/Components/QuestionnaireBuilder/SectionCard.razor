@@ -222,7 +222,7 @@
                             <div class="col-md-4">
                                 <div class="question-type-card goal-achievement h-100 p-4 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
                                      style="transition: all 0.15s ease-in-out; transform: scale(1);"
-                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.GoalAchievement)"
+                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.Goal)"
                                      onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(230, 191, 127, 0.15)'; this.style.borderColor='var(--golden-milk)'"
                                      onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='var(--warning-color)'"
                                      onmousedown="this.style.transform='scale(0.98)'"
@@ -415,7 +415,7 @@
                         }
                     }
                     break;
-                case QuestionType.GoalAchievement:
+                case QuestionType.Goal:
                     if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
                     {
                         if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
@@ -461,7 +461,7 @@
         return Section.Questions.FirstOrDefault()?.Type switch
         {
             QuestionType.Assessment => "self_improvement",
-            QuestionType.GoalAchievement => "track_changes",
+            QuestionType.Goal => "track_changes",
             QuestionType.TextQuestion => "psychology",
             _ => "help"
         };
@@ -472,7 +472,7 @@
         return Section.Questions.FirstOrDefault()?.Type switch
         {
             QuestionType.Assessment => "Assessment",
-            QuestionType.GoalAchievement => "Goal Achievement",
+            QuestionType.Goal => "Goal Achievement",
             QuestionType.TextQuestion => "Text Question",
             _ => "Unknown"
         };
@@ -483,7 +483,7 @@
         return Section.Questions.FirstOrDefault()?.Type switch
         {
             QuestionType.Assessment => "#0F60FF",
-            QuestionType.GoalAchievement => "#00E6C8",
+            QuestionType.Goal => "#00E6C8",
             QuestionType.TextQuestion => "#935BA9",
             _ => "#6c757d"
         };
@@ -520,7 +520,7 @@
                         }
                     }
                     break;
-                case QuestionType.GoalAchievement:
+                case QuestionType.Goal:
                     if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
                     {
                         if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)

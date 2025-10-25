@@ -373,7 +373,7 @@ public class QuestionnaireTemplateCommandHandler :
     {
         QuestionType.TextQuestion => Domain.QuestionnaireTemplateAggregate.QuestionType.TextQuestion,
         QuestionType.Assessment => Domain.QuestionnaireTemplateAggregate.QuestionType.Assessment,
-        QuestionType.GoalAchievement => Domain.QuestionnaireTemplateAggregate.QuestionType.GoalAchievement,
+        QuestionType.Goal => Domain.QuestionnaireTemplateAggregate.QuestionType.Goal,
         _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
     };
 }

@@ -48,6 +48,20 @@ public class QuestionnaireAssignment : AggregateRoot
     public string? ManagerFinalNotes { get; private set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
+    // Goal management (for Goal question type)
+    private readonly Dictionary<Guid, List<Goal>> _goalsByQuestion = new();
+    private readonly Dictionary<Guid, Guid> _predecessorLinks = new();
+    private readonly Dictionary<Guid, List<GoalRating>> _goalRatingsByQuestion = new();
+
+    // Public readonly accessors for query purposes
+    public IReadOnlyDictionary<Guid, IReadOnlyList<Goal>> GoalsByQuestion =>
+        _goalsByQuestion.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<Goal>)kvp.Value.AsReadOnly());
+
+    public IReadOnlyDictionary<Guid, Guid> PredecessorLinks => _predecessorLinks;
+
+    public IReadOnlyDictionary<Guid, IReadOnlyList<GoalRating>> GoalRatingsByQuestion =>
+        _goalRatingsByQuestion.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<GoalRating>)kvp.Value.AsReadOnly());
+
     private QuestionnaireAssignment() { }
 
     public QuestionnaireAssignment(
@@ -402,6 +416,256 @@ public class QuestionnaireAssignment : AggregateRoot
         ));
     }
 
+    // Goal management methods
+    public void LinkPredecessorQuestionnaire(
+        Guid questionId,
+        Guid predecessorAssignmentId,
+        CompletionRole linkedByRole,
+        Guid linkedByEmployeeId)
+    {
+        if (_predecessorLinks.ContainsKey(questionId))
+            throw new InvalidOperationException($"Question {questionId} already linked to a predecessor questionnaire");
+
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot link predecessor - questionnaire is finalized");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot link predecessor - assignment is withdrawn");
+
+        if (!IsInProgressState())
+            throw new InvalidOperationException($"Cannot link predecessor in state {WorkflowState}");
+
+        if (linkedByRole == CompletionRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
+            throw new InvalidOperationException("Employee cannot link during ManagerInProgress state");
+
+        if (linkedByRole == CompletionRole.Manager && WorkflowState == WorkflowState.EmployeeInProgress)
+            throw new InvalidOperationException("Manager cannot link during EmployeeInProgress state");
+
+        if (_goalsByQuestion.ContainsKey(questionId) && _goalsByQuestion[questionId].Any())
+            throw new InvalidOperationException("Cannot link predecessor after goals have been added to this question");
+
+        RaiseEvent(new PredecessorQuestionnaireLinked(
+            predecessorAssignmentId,
+            questionId,
+            linkedByRole,
+            DateTime.UtcNow,
+            linkedByEmployeeId));
+    }
+
+    public void AddGoal(
+        Guid questionId,
+        Guid goalId,
+        CompletionRole addedByRole,
+        DateTime timeframeFrom,
+        DateTime timeframeTo,
+        string objectiveDescription,
+        string measurementMetric,
+        decimal weightingPercentage,
+        Guid addedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot add goal - questionnaire is finalized");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot add goal - assignment is withdrawn");
+
+        if (!IsInProgressState())
+            throw new InvalidOperationException($"Cannot add goal in state {WorkflowState}");
+
+        if (addedByRole == CompletionRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
+            throw new InvalidOperationException("Employee cannot add goals during ManagerInProgress state");
+
+        if (addedByRole == CompletionRole.Manager && WorkflowState == WorkflowState.EmployeeInProgress)
+            throw new InvalidOperationException("Manager cannot add goals during EmployeeInProgress state");
+
+        ValidateWeightingTotal(questionId, addedByRole, weightingPercentage);
+        ValidateTimeframe(timeframeFrom, timeframeTo);
+
+        RaiseEvent(new GoalAdded(
+            questionId,
+            goalId,
+            addedByRole,
+            timeframeFrom,
+            timeframeTo,
+            objectiveDescription,
+            measurementMetric,
+            weightingPercentage,
+            DateTime.UtcNow,
+            addedByEmployeeId));
+    }
+
+    public void ModifyGoal(
+        Guid goalId,
+        DateTime? timeframeFrom,
+        DateTime? timeframeTo,
+        string? objectiveDescription,
+        string? measurementMetric,
+        decimal? weightingPercentage,
+        CompletionRole modifiedByRole,
+        string changeReason,
+        Guid modifiedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot modify goal - questionnaire is finalized");
+
+        if (WorkflowState != WorkflowState.InReview)
+            throw new InvalidOperationException("Goals can only be modified during review meeting");
+
+        if (string.IsNullOrWhiteSpace(changeReason))
+            throw new ArgumentException("Change reason is required", nameof(changeReason));
+
+        var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == goalId);
+        if (goal == null)
+            throw new InvalidOperationException($"Goal {goalId} not found");
+
+        if (weightingPercentage.HasValue)
+        {
+            var questionId = goal.QuestionId;
+            var otherGoalsTotal = _goalsByQuestion[questionId]
+                .Where(g => g.Id != goalId && g.AddedByRole == goal.AddedByRole)
+                .Sum(g => g.WeightingPercentage);
+
+            if (otherGoalsTotal + weightingPercentage.Value > 100m)
+                throw new InvalidOperationException($"Total weighting would exceed 100% (current: {otherGoalsTotal}%, adding: {weightingPercentage.Value}%)");
+        }
+
+        RaiseEvent(new GoalModified(
+            goalId,
+            timeframeFrom,
+            timeframeTo,
+            objectiveDescription,
+            measurementMetric,
+            weightingPercentage,
+            modifiedByRole,
+            changeReason,
+            DateTime.UtcNow,
+            modifiedByEmployeeId));
+    }
+
+    public void RatePredecessorGoal(
+        Guid questionId,
+        Guid sourceAssignmentId,
+        Guid sourceGoalId,
+        GoalSnapshot snapshot,
+        CompletionRole ratedByRole,
+        decimal degreeOfAchievement,
+        string justification,
+        Guid ratedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot rate goal - questionnaire is finalized");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot rate goal - assignment is withdrawn");
+
+        if (!_predecessorLinks.TryGetValue(questionId, out var linkedPredecessor) || linkedPredecessor != sourceAssignmentId)
+            throw new InvalidOperationException("Source assignment not linked as predecessor");
+
+        if (!IsInProgressState())
+            throw new InvalidOperationException($"Cannot rate goal in state {WorkflowState}");
+
+        if (ratedByRole == CompletionRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
+            throw new InvalidOperationException("Employee cannot rate goals during ManagerInProgress state");
+
+        if (ratedByRole == CompletionRole.Manager && WorkflowState == WorkflowState.EmployeeInProgress)
+            throw new InvalidOperationException("Manager cannot rate goals during EmployeeInProgress state");
+
+        if (degreeOfAchievement < 0 || degreeOfAchievement > 100)
+            throw new ArgumentException("Degree of achievement must be between 0 and 100", nameof(degreeOfAchievement));
+
+        RaiseEvent(new PredecessorGoalRated(
+            questionId,
+            sourceAssignmentId,
+            sourceGoalId,
+            ratedByRole,
+            degreeOfAchievement,
+            justification,
+            DateTime.UtcNow,
+            ratedByEmployeeId));
+    }
+
+    public void ModifyPredecessorGoalRating(
+        Guid sourceGoalId,
+        CompletionRole modifiedByRole,
+        decimal? degreeOfAchievement,
+        string? justification,
+        string changeReason,
+        Guid modifiedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot modify rating - questionnaire is finalized");
+
+        if (WorkflowState != WorkflowState.InReview)
+            throw new InvalidOperationException("Ratings can only be modified during review meeting");
+
+        if (string.IsNullOrWhiteSpace(changeReason))
+            throw new ArgumentException("Change reason is required", nameof(changeReason));
+
+        var rating = _goalRatingsByQuestion.Values.SelectMany(r => r).FirstOrDefault(r => r.SourceGoalId == sourceGoalId && r.RatedByRole == modifiedByRole);
+        if (rating == null)
+            throw new InvalidOperationException($"Rating for goal {sourceGoalId} by {modifiedByRole} not found");
+
+        if (degreeOfAchievement.HasValue && (degreeOfAchievement.Value < 0 || degreeOfAchievement.Value > 100))
+            throw new ArgumentException("Degree of achievement must be between 0 and 100", nameof(degreeOfAchievement));
+
+        RaiseEvent(new PredecessorGoalRatingModified(
+            sourceGoalId,
+            modifiedByRole,
+            degreeOfAchievement,
+            justification,
+            changeReason,
+            DateTime.UtcNow,
+            modifiedByEmployeeId));
+    }
+
+    /// <summary>
+    /// Gets a snapshot of a specific goal for rating purposes.
+    /// Used when rating goals from predecessor questionnaires.
+    /// </summary>
+    public GoalSnapshot GetGoalSnapshot(Guid questionId, Guid goalId)
+    {
+        if (!_goalsByQuestion.TryGetValue(questionId, out var goals))
+            throw new InvalidOperationException($"Question {questionId} has no goals");
+
+        var goal = goals.FirstOrDefault(g => g.Id == goalId);
+        if (goal == null)
+            throw new InvalidOperationException($"Goal {goalId} not found in question {questionId}");
+
+        return new GoalSnapshot(
+            goal.ObjectiveDescription,
+            goal.TimeframeFrom,
+            goal.TimeframeTo,
+            goal.MeasurementMetric,
+            goal.AddedByRole,
+            goal.WeightingPercentage);
+    }
+
+    private bool IsInProgressState()
+    {
+        return WorkflowState is
+            WorkflowState.EmployeeInProgress or
+            WorkflowState.ManagerInProgress or
+            WorkflowState.BothInProgress;
+    }
+
+    private void ValidateWeightingTotal(Guid questionId, CompletionRole role, decimal newWeighting)
+    {
+        if (!_goalsByQuestion.TryGetValue(questionId, out var goals))
+            goals = new List<Goal>();
+
+        var currentTotal = goals.Where(g => g.AddedByRole == role).Sum(g => g.WeightingPercentage);
+        if (currentTotal + newWeighting > 100m)
+        {
+            throw new InvalidOperationException($"Total weighting for {role} would exceed 100% (current: {currentTotal}%, adding: {newWeighting}%)");
+        }
+    }
+
+    private void ValidateTimeframe(DateTime timeframeFrom, DateTime timeframeTo)
+    {
+        if (timeframeFrom >= timeframeTo)
+            throw new ArgumentException("Timeframe 'From' must be before 'To'");
+    }
+
     public void Apply(QuestionnaireAssignmentAssigned @event)
     {
         Id = @event.AggregateId;
@@ -706,5 +970,101 @@ public class QuestionnaireAssignment : AggregateRoot
                 "Questionnaire submission",
                 EmployeeSubmittedDate.HasValue ? EmployeeSubmittedByEmployeeId : ManagerSubmittedByEmployeeId);
         }
+    }
+
+    // Apply methods for goal events
+    public void Apply(PredecessorQuestionnaireLinked @event)
+    {
+        _predecessorLinks[@event.QuestionId] = @event.PredecessorAssignmentId;
+    }
+
+    public void Apply(GoalAdded @event)
+    {
+        if (!_goalsByQuestion.ContainsKey(@event.QuestionId))
+            _goalsByQuestion[@event.QuestionId] = new List<Goal>();
+
+        var goal = new Goal(
+            @event.GoalId,
+            @event.QuestionId,
+            @event.AddedByRole,
+            @event.TimeframeFrom,
+            @event.TimeframeTo,
+            @event.ObjectiveDescription,
+            @event.MeasurementMetric,
+            @event.WeightingPercentage,
+            @event.AddedAt,
+            @event.AddedByEmployeeId);
+
+        _goalsByQuestion[@event.QuestionId].Add(goal);
+    }
+
+    public void Apply(GoalModified @event)
+    {
+        var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == @event.GoalId);
+        if (goal == null)
+            return;
+
+        var questionId = goal.QuestionId;
+        var modifiedGoal = goal.ApplyModification(
+            @event.TimeframeFrom,
+            @event.TimeframeTo,
+            @event.ObjectiveDescription,
+            @event.MeasurementMetric,
+            @event.WeightingPercentage,
+            @event.ModifiedByRole,
+            @event.ChangeReason,
+            @event.ModifiedAt,
+            @event.ModifiedByEmployeeId);
+
+        _goalsByQuestion[questionId].Remove(goal);
+        _goalsByQuestion[questionId].Add(modifiedGoal);
+    }
+
+    public void Apply(PredecessorGoalRated @event)
+    {
+        if (!_goalRatingsByQuestion.ContainsKey(@event.QuestionId))
+            _goalRatingsByQuestion[@event.QuestionId] = new List<GoalRating>();
+
+        // Note: GoalSnapshot should be provided from the command handler
+        // Here we create an empty snapshot - in practice, this should be populated from the predecessor goal
+        var snapshot = new GoalSnapshot("", DateTime.MinValue, DateTime.MinValue, "", CompletionRole.Employee, 0);
+
+        // Generate unique Id for this rating entity
+        var ratingId = Guid.NewGuid();
+
+        var rating = new GoalRating(
+            ratingId,
+            @event.SourceAssignmentId,
+            @event.SourceGoalId,
+            @event.QuestionId,
+            snapshot,
+            @event.RatedByRole,
+            @event.DegreeOfAchievement,
+            @event.Justification,
+            @event.RatedAt,
+            @event.RatedByEmployeeId);
+
+        _goalRatingsByQuestion[@event.QuestionId].Add(rating);
+    }
+
+    public void Apply(PredecessorGoalRatingModified @event)
+    {
+        var rating = _goalRatingsByQuestion.Values.SelectMany(r => r)
+            .FirstOrDefault(r => r.SourceGoalId == @event.SourceGoalId && r.RatedByRole == @event.ModifiedByRole);
+
+        if (rating == null)
+            return;
+
+        var questionId = rating.QuestionId;
+        var modifiedRating = rating.ApplyModification(
+            @event.DegreeOfAchievement,
+            @event.Justification,
+            @event.ModifiedByRole,
+            @event.ChangeReason,
+            @event.ModifiedAt,
+            @event.ModifiedByEmployeeId);
+
+        _goalRatingsByQuestion[questionId].Remove(rating);
+        _goalRatingsByQuestion[questionId].Add(modifiedRating);
     }
 }

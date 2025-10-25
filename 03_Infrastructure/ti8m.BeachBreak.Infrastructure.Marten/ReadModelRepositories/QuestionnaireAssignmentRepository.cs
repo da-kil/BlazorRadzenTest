@@ -59,4 +59,13 @@ internal class QuestionnaireAssignmentRepository(IDocumentStore store) : IQuesti
             .OrderBy(a => a.DueDate)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment?> LoadAggregateAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        using var session = await store.LightweightSerializableSessionAsync();
+        return await session.Events.AggregateStreamAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+            id, token: cancellationToken);
+    }
 }

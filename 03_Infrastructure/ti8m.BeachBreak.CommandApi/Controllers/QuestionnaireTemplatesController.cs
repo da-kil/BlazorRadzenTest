@@ -261,7 +261,7 @@ public class QuestionnaireTemplatesController : BaseController
     {
         QuestionTypeDto.TextQuestion => QuestionType.TextQuestion,
         QuestionTypeDto.Assessment => QuestionType.Assessment,
-        QuestionTypeDto.GoalAchievement => QuestionType.GoalAchievement,
+        QuestionTypeDto.Goal => QuestionType.Goal,
         _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
     };
 }

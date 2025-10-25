@@ -205,7 +205,7 @@ public class QuestionnaireTemplatesController : BaseController
         new Dictionary<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType, QueryApi.Dto.QuestionType>
         {
             { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.TextQuestion, QueryApi.Dto.QuestionType.TextQuestion },
-            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.GoalAchievement, QueryApi.Dto.QuestionType.GoalAchievement },
+            { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.Goal, QueryApi.Dto.QuestionType.Goal },
             { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.Assessment, QueryApi.Dto.QuestionType.Assessment }
         };
 }

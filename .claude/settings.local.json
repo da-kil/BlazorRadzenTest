@@ -64,7 +64,10 @@
       "Bash(del \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.Infrastructure.Marten\\Replay\\IProjectionRegistry.cs\")",
       "Bash(Select-String -Pattern \"(error |Build succeeded|Build FAILED)\" -Context 0,2)",
       "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\Authorization\\RoleHierarchyService.cs\" -Force)",
-      "Bash(del \"C:\\projects\\BlazorRadzenTest\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\Authorization\\RoleHierarchyService.cs\")"
+      "Bash(del \"C:\\projects\\BlazorRadzenTest\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\Authorization\\RoleHierarchyService.cs\")",
+      "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Services\\QuestionHandlers\\GoalAchievementQuestionHandler.cs\" -Force)",
+      "Bash(del \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Services\\QuestionHandlers\\GoalAchievementQuestionHandler.cs\")",
+      "Bash(Select-String -Pattern \"(error |Build succeeded|Build FAILED)\")"
     ],
     "deny": [],
     "ask": []

@@ -318,4 +318,78 @@ public class AssignmentsController : BaseController
             return StatusCode(500, "An error occurred while retrieving review changes");
         }
     }
+
+    #region Goal Queries
+
+    /// <summary>
+    /// Gets available predecessor questionnaires that can be linked for goal rating.
+    /// Returns questionnaires for same employee, same category, with goals, that are finalized.
+    /// </summary>
+    [HttpGet("{assignmentId}/predecessors/{questionId}")]
+    public async Task<IActionResult> GetAvailablePredecessors(Guid assignmentId, Guid questionId)
+    {
+        try
+        {
+            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetAvailablePredecessorsQuery(
+                assignmentId, questionId);
+
+            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+            if (result == null)
+            {
+                logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
+                return NotFound();
+            }
+
+            if (!result.Succeeded)
+            {
+                return CreateResponse(result);
+            }
+
+            return Ok(result.Payload);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting available predecessors for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while retrieving available predecessors");
+        }
+    }
+
+    /// <summary>
+    /// Gets all goal data for a specific question within an assignment.
+    /// Includes goals added by Employee/Manager and ratings of predecessor goals.
+    /// </summary>
+    [HttpGet("{assignmentId}/goals/{questionId}")]
+    public async Task<IActionResult> GetGoalQuestionData(Guid assignmentId, Guid questionId)
+    {
+        try
+        {
+            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
+                assignmentId, questionId);
+
+            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+            if (result == null)
+            {
+                logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
+                    assignmentId, questionId);
+                return NotFound();
+            }
+
+            if (!result.Succeeded)
+            {
+                return CreateResponse(result);
+            }
+
+            return Ok(result.Payload);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting goal data for assignment {AssignmentId}, question {QuestionId}",
+                assignmentId, questionId);
+            return StatusCode(500, "An error occurred while retrieving goal data");
+        }
+    }
+
+    #endregion
 }

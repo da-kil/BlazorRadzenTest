@@ -4,7 +4,7 @@ namespace ti8m.BeachBreak.Client.Services.QuestionHandlers;
 
 /// <summary>
 /// Strategy interface for handling different question types.
-/// Each question type (Assessment, GoalAchievement, TextQuestion) has its own handler.
+/// Each question type (Assessment, Goal, TextQuestion) has its own handler.
 /// </summary>
 public interface IQuestionTypeHandler
 {

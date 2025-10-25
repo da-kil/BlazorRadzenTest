@@ -103,23 +103,10 @@ public class QuestionnaireValidationService
                         }
                     }
                 }
-                else if (question.Type == QuestionType.GoalAchievement)
+                else if (question.Type == QuestionType.Goal)
                 {
-                    var goalCategories = configurationService.GetGoalCategories(question);
-                    if (goalCategories.Count == 0)
-                    {
-                        validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one goal category");
-                    }
-                    else
-                    {
-                        for (int i = 0; i < goalCategories.Count; i++)
-                        {
-                            if (string.IsNullOrWhiteSpace(goalCategories[i].Title))
-                            {
-                                validationErrors.Add($"Goal category {i + 1} in {questionPos} ('{sectionName}') requires a title");
-                            }
-                        }
-                    }
+                    // Goal questions don't require template items - items are added dynamically during in-progress states
+                    // Only Title and Description are required, which are already validated as QuestionItem properties
                 }
                 else if (question.Type == QuestionType.TextQuestion)
                 {
