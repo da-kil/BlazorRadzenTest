@@ -232,13 +232,13 @@ public class QuestionnaireAssignmentReadModel
         }
         else if (@event.ToState == WorkflowState.InReview)
         {
-            // Reset review confirmation flags (but preserve ManagerReviewSummary for editing)
+            // Reset review confirmation flags and dates, but preserve comments/summary for editing
             ManagerReviewFinishedDate = null;
             ManagerReviewFinishedByEmployeeId = null;
             // NOTE: ManagerReviewSummary is NOT cleared - preserve it so manager can edit
             EmployeeReviewConfirmedDate = null;
             EmployeeReviewConfirmedByEmployeeId = null;
-            EmployeeReviewComments = null;
+            // NOTE: EmployeeReviewComments is NOT cleared - preserve it so it remains visible after reopening
         }
     }
 

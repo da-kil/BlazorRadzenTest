@@ -312,12 +312,26 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         {
             var dto = new InitiateReviewDto();
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/initiate-review", dto);
-            return response.IsSuccessStatusCode;
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // Extract error message from response to show user
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Error initiating review for assignment {assignmentId}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                throw new HttpRequestException($"Unable to initiate review: {errorContent}");
+            }
+
+            return true;
+        }
+        catch (HttpRequestException)
+        {
+            // Re-throw HTTP exceptions so UI can show the error message
+            throw;
         }
         catch (Exception ex)
         {
             LogError($"Error initiating review for assignment {assignmentId}", ex);
-            return false;
+            throw new HttpRequestException("An unexpected error occurred while initiating the review. Please try again.");
         }
     }
 
@@ -377,12 +391,26 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         {
             var dto = new FinalizeQuestionnaireDto { FinalizedBy = finalizedBy, ManagerFinalNotes = finalNotes };
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/review/finalize-manager", dto);
-            return response.IsSuccessStatusCode;
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // Extract error message from response to show user
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Error finalizing questionnaire for assignment {assignmentId}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                throw new HttpRequestException($"Unable to finalize questionnaire: {errorContent}");
+            }
+
+            return true;
+        }
+        catch (HttpRequestException)
+        {
+            // Re-throw HTTP exceptions so UI can show the error message
+            throw;
         }
         catch (Exception ex)
         {
             LogError($"Error finalizing questionnaire for assignment {assignmentId}", ex);
-            return false;
+            throw new HttpRequestException("An unexpected error occurred while finalizing the questionnaire. Please try again.");
         }
     }
 

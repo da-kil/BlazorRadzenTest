@@ -50,6 +50,20 @@
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
             Add any final notes, observations, or action items for future reference:
         </RadzenText>
+        @if (!string.IsNullOrWhiteSpace(ExistingFinalNotes))
+        {
+            <div class="info-section mb-2" style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 0.75rem;">
+                <div class="icon-box">
+                    <RadzenIcon Icon="edit" Style="color: #ff9800;" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-0" Style="color: #856404;">
+                        Existing Notes Loaded
+                    </RadzenText>
+                </div>
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: #856404;">
+                    You can edit or replace your previous final notes below.
+                </RadzenText>
+            </div>
+        }
         <RadzenTextArea @bind-Value="@finalNotes"
                        Placeholder="Enter final notes here... (optional)"
                        Rows="8"
@@ -75,7 +89,24 @@
 </div>
 
 @code {
+    [Parameter]
+    public string? ExistingFinalNotes { get; set; }
+
     private string? finalNotes;
+
+    protected override void OnInitialized()
+    {
+        // Initialize with existing notes if reopening
+        finalNotes = ExistingFinalNotes;
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update notes when parameters are set (important for dialog parameters)
+        finalNotes = ExistingFinalNotes;
+        base.OnParametersSet();
+    }
 
     private void Cancel()
     {

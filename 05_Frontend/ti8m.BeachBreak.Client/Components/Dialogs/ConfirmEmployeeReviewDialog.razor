@@ -40,6 +40,20 @@
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
             You may add comments about the review process, any concerns, or additional feedback:
         </RadzenText>
+        @if (!string.IsNullOrWhiteSpace(ExistingComments))
+        {
+            <div class="info-section mb-2" style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 0.75rem;">
+                <div class="icon-box">
+                    <RadzenIcon Icon="edit" Style="color: #ff9800;" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-0" Style="color: #856404;">
+                        Existing Comments Loaded
+                    </RadzenText>
+                </div>
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: #856404;">
+                    You can edit or replace your previous comments below.
+                </RadzenText>
+            </div>
+        }
         <RadzenTextArea @bind-Value="@employeeComments"
                        Placeholder="Enter your comments here... (optional)"
                        Rows="6"
@@ -65,7 +79,24 @@
 </div>
 
 @code {
+    [Parameter]
+    public string? ExistingComments { get; set; }
+
     private string? employeeComments;
+
+    protected override void OnInitialized()
+    {
+        // Initialize with existing comments if reopening
+        employeeComments = ExistingComments;
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update comments when parameters are set (important for dialog parameters)
+        employeeComments = ExistingComments;
+        base.OnParametersSet();
+    }
 
     private void Cancel()
     {

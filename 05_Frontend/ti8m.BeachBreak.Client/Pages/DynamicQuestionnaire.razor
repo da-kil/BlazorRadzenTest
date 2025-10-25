@@ -1597,69 +1597,6 @@
         }
     }
 
-    private async Task EmployeeSignOffReview()
-    {
-        if (assignment == null || !assignmentId.HasValue) return;
-
-        isProcessing = true;
-        try
-        {
-            // Open dialog to collect optional employee comments
-            var result = await DialogService.OpenAsync<ConfirmEmployeeReviewDialog>(
-                "Employee Sign-Off",
-                new Dictionary<string, object>(),
-                new DialogOptions
-                {
-                    Width = "600px",
-                    Resizable = false,
-                    Draggable = true
-                });
-
-            // If dialog was cancelled, return
-            if (result == null)
-            {
-                return;
-            }
-
-            // Result is the employee comments (can be null or empty string)
-            var employeeComments = result as string;
-
-            var success = await AssignmentService.ConfirmEmployeeReviewAsync(
-                assignment.Id,
-                currentUserName,
-                string.IsNullOrWhiteSpace(employeeComments) ? null : employeeComments);
-
-            if (success)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Success",
-                    Detail = "Review signed off by employee",
-                    Duration = 4000
-                });
-
-                // Reload assignment and navigate back to my questionnaires
-                await OnWorkflowActionCompleted();
-                NavigationManager.NavigateTo("/my-questionnaires");
-            }
-            else
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Failed to sign off on review",
-                    Duration = 4000
-                });
-            }
-        }
-        finally
-        {
-            isProcessing = false;
-        }
-    }
-
     // Competency-specific helper methods
     private int GetCompetencyRating(Guid questionId, string competencyKey)
     {

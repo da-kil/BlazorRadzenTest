@@ -96,16 +96,28 @@
                 await OnActionCompleted.InvokeAsync();
                 StateHasChanged(); // Force re-render after assignment is reloaded
             }
-            else
+        }
+        catch (HttpRequestException ex)
+        {
+            // Show the specific error message from the server
+            NotificationService.Notify(new NotificationMessage
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Failed to initiate review",
-                    Duration = 4000
-                });
-            }
+                Severity = NotificationSeverity.Error,
+                Summary = "Cannot Initiate Review",
+                Detail = ex.Message,
+                Duration = 6000
+            });
+        }
+        catch (Exception ex)
+        {
+            // Generic error handler
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"An unexpected error occurred: {ex.Message}",
+                Duration = 6000
+            });
         }
         finally
         {
@@ -118,9 +130,13 @@
         if (Assignment == null) return;
 
         // Open dialog to collect optional employee comments
+        // Pass existing EmployeeReviewComments if reopening (will be shown in dialog)
         var result = await DialogService.OpenAsync<ConfirmEmployeeReviewDialog>(
             "Employee Sign-Off",
-            new Dictionary<string, object>(),
+            new Dictionary<string, object>
+            {
+                { "ExistingComments", Assignment.EmployeeReviewComments }
+            },
             new DialogOptions
             {
                 Width = "600px",
@@ -191,9 +207,13 @@
         if (Assignment == null) return;
 
         // Open dialog to collect optional final notes
+        // Pass existing ManagerFinalNotes if reopening (will be shown in dialog)
         var result = await DialogService.OpenAsync<FinalizeQuestionnaireDialog>(
             "Finalize Questionnaire",
-            new Dictionary<string, object>(),
+            new Dictionary<string, object>
+            {
+                { "ExistingFinalNotes", Assignment.ManagerFinalNotes }
+            },
             new DialogOptions
             {
                 Width = "650px",
@@ -230,16 +250,28 @@
                 await OnActionCompleted.InvokeAsync();
                 StateHasChanged(); // Force re-render after assignment is reloaded
             }
-            else
+        }
+        catch (HttpRequestException ex)
+        {
+            // Show the specific error message from the server
+            NotificationService.Notify(new NotificationMessage
             {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Failed to finalize questionnaire",
-                    Duration = 4000
-                });
-            }
+                Severity = NotificationSeverity.Error,
+                Summary = "Cannot Finalize Questionnaire",
+                Detail = ex.Message,
+                Duration = 6000
+            });
+        }
+        catch (Exception ex)
+        {
+            // Generic error handler
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"An unexpected error occurred: {ex.Message}",
+                Duration = 6000
+            });
         }
         finally
         {
