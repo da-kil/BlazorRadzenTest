@@ -40,9 +40,9 @@ public class QuestionItem
 
 public enum QuestionType
 {
-    Assessment,          // 1-4 scale with comments - can be used by employee or manager
-    Goal,     // Goal achievement evaluation like GoalReviewStep.razor
-    TextQuestion         // Text area questions like CareerPlanningStep.razor
+    Assessment = 0,      // 1-4 scale with comments - can be used by employee or manager
+    TextQuestion = 1,    // Text area questions like CareerPlanningStep.razor
+    Goal = 2             // Goal achievement evaluation like GoalReviewStep.razor
 }
 
 public class QuestionnaireSettings

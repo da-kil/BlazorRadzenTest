@@ -2,23 +2,23 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 public enum WorkflowState
 {
-    Assigned,
-    EmployeeInProgress,
-    ManagerInProgress,
-    BothInProgress,
+    Assigned = 0,
+    EmployeeInProgress = 1,
+    ManagerInProgress = 2,
+    BothInProgress = 3,
 
     // Submission phase (Phase 1 Read-Only)
-    EmployeeSubmitted,
-    ManagerSubmitted,
-    BothSubmitted,
+    EmployeeSubmitted = 4,
+    ManagerSubmitted = 5,
+    BothSubmitted = 6,
 
     // Review phase
-    InReview,
+    InReview = 7,
 
     // Post-review confirmation
-    EmployeeReviewConfirmed,
-    ManagerReviewConfirmed,
+    EmployeeReviewConfirmed = 8,
+    ManagerReviewConfirmed = 9,
 
     // Final state (Phase 2 Read-Only)
-    Finalized
+    Finalized = 10
 }

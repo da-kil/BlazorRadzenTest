@@ -46,8 +46,8 @@ public class Goal : Entity<Guid>
         if (string.IsNullOrWhiteSpace(measurementMetric))
             throw new ArgumentException("Measurement metric is required", nameof(measurementMetric));
 
-        if (weightingPercentage <= 0 || weightingPercentage > 100)
-            throw new ArgumentException("Weighting must be between 0 and 100", nameof(weightingPercentage));
+        if (weightingPercentage < 0 || weightingPercentage > 100)
+            throw new ArgumentException("Weighting must be between 0 and 100 (inclusive)", nameof(weightingPercentage));
         QuestionId = questionId;
         AddedByRole = addedByRole;
         TimeframeFrom = timeframeFrom;
