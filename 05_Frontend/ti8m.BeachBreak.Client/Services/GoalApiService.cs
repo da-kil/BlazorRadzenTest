@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.JSInterop;
 using ti8m.BeachBreak.Client.Models;
 using ti8m.BeachBreak.Client.Models.Dto;
 
@@ -14,11 +13,9 @@ public class GoalApiService : BaseApiService, IGoalApiService
 {
     private const string QueryEndpoint = "q/api/v1/assignments";
     private const string CommandEndpoint = "c/api/v1/assignments";
-    private readonly IJSRuntime _jsRuntime;
 
-    public GoalApiService(IHttpClientFactory factory, IJSRuntime jsRuntime) : base(factory)
+    public GoalApiService(IHttpClientFactory factory) : base(factory)
     {
-        _jsRuntime = jsRuntime;
     }
 
     public async Task<Result> LinkPredecessorAsync(Guid assignmentId, LinkPredecessorQuestionnaireDto dto)
@@ -171,41 +168,18 @@ public class GoalApiService : BaseApiService, IGoalApiService
     {
         try
         {
-            var url = $"{QueryEndpoint}/{assignmentId}/goals/{questionId}";
-            await _jsRuntime.InvokeVoidAsync("console.log", $"[GoalApiService] GET {url}");
-
-            var response = await HttpQueryClient.GetFromJsonAsync<GoalQuestionDataDto>(url);
-
-            await _jsRuntime.InvokeVoidAsync("console.log", $"[GoalApiService] Response received - IsNull: {response == null}");
+            var response = await HttpQueryClient.GetFromJsonAsync<GoalQuestionDataDto>(
+                $"{QueryEndpoint}/{assignmentId}/goals/{questionId}");
 
             if (response != null)
             {
-                await _jsRuntime.InvokeVoidAsync("console.log", $"[GoalApiService] Response.Goals.Count: {response.Goals?.Count ?? 0}");
-                await _jsRuntime.InvokeVoidAsync("console.log", $"[GoalApiService] Response.QuestionId: {response.QuestionId}");
-                await _jsRuntime.InvokeVoidAsync("console.log", $"[GoalApiService] Response.PredecessorAssignmentId: {response.PredecessorAssignmentId}");
-
-                if (response.Goals != null && response.Goals.Any())
-                {
-                    foreach (var goal in response.Goals)
-                    {
-                        await _jsRuntime.InvokeVoidAsync("console.log", $"[GoalApiService] Goal: Id={goal.Id}, Objective={goal.ObjectiveDescription}, AddedByRole={goal.AddedByRole}");
-                    }
-                }
-                else
-                {
-                    await _jsRuntime.InvokeVoidAsync("console.log", "[GoalApiService] Response.Goals is null or empty");
-                }
-
                 return Result<GoalQuestionDataDto>.Success(response);
             }
 
-            await _jsRuntime.InvokeVoidAsync("console.log", "[GoalApiService] Response is null - returning Fail");
             return Result<GoalQuestionDataDto>.Fail("No goal data found", 404);
         }
         catch (Exception ex)
         {
-            await _jsRuntime.InvokeVoidAsync("console.error", $"[GoalApiService] EXCEPTION: {ex.Message}");
-            await _jsRuntime.InvokeVoidAsync("console.error", $"[GoalApiService] StackTrace: {ex.StackTrace}");
             LogError("Error fetching goal question data", ex);
             return Result<GoalQuestionDataDto>.Fail($"Error fetching goal data: {ex.Message}", 500);
         }

@@ -33,6 +33,9 @@ public class AddGoalCommandHandler
 
             var goalId = Guid.NewGuid();
 
+            // Default weighting to 0 if not provided (will be set during InReview by manager)
+            var weighting = command.WeightingPercentage ?? 0m;
+
             assignment.AddGoal(
                 command.QuestionId,
                 goalId,
@@ -41,7 +44,7 @@ public class AddGoalCommandHandler
                 command.TimeframeTo,
                 command.ObjectiveDescription,
                 command.MeasurementMetric,
-                command.WeightingPercentage,
+                weighting,
                 command.AddedByEmployeeId);
 
             await repository.StoreAsync(assignment, cancellationToken);

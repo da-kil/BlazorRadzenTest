@@ -4,6 +4,7 @@ using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Controllers;
@@ -20,17 +21,20 @@ public class AssignmentsController : BaseController
     private readonly ILogger<AssignmentsController> logger;
     private readonly IManagerAuthorizationService authorizationService;
     private readonly IAuthorizationCacheService authorizationCacheService;
+    private readonly UserContext userContext;
 
     public AssignmentsController(
         IQueryDispatcher queryDispatcher,
         ILogger<AssignmentsController> logger,
         IManagerAuthorizationService authorizationService,
-        IAuthorizationCacheService authorizationCacheService)
+        IAuthorizationCacheService authorizationCacheService,
+        UserContext userContext)
     {
         this.queryDispatcher = queryDispatcher;
         this.logger = logger;
         this.authorizationService = authorizationService;
         this.authorizationCacheService = authorizationCacheService;
+        this.userContext = userContext;
     }
 
     /// <summary>
@@ -358,14 +362,20 @@ public class AssignmentsController : BaseController
     /// <summary>
     /// Gets all goal data for a specific question within an assignment.
     /// Includes goals added by Employee/Manager and ratings of predecessor goals.
+    /// Goals are filtered based on workflow state and user role.
     /// </summary>
     [HttpGet("{assignmentId}/goals/{questionId}")]
     public async Task<IActionResult> GetGoalQuestionData(Guid assignmentId, Guid questionId)
     {
         try
         {
+            // Determine current user's role (Manager if has Manager role claim, otherwise Employee)
+            var currentUserRole = User.IsInRole("Manager")
+                ? Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager
+                : Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee;
+
             var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
-                assignmentId, questionId);
+                assignmentId, questionId, currentUserRole);
 
             var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 

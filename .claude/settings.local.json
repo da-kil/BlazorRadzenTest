@@ -68,7 +68,9 @@
       "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Services\\QuestionHandlers\\GoalAchievementQuestionHandler.cs\" -Force)",
       "Bash(del \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Services\\QuestionHandlers\\GoalAchievementQuestionHandler.cs\")",
       "Bash(Select-String -Pattern \"(error |Build succeeded|Build FAILED)\")",
-      "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest''; dotnet build ti8m.BeachBreak.sln 2>&1 | Select-String -Pattern ''(error |Build succeeded|Build FAILED)'' -Context 0,1\")"
+      "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest''; dotnet build ti8m.BeachBreak.sln 2>&1 | Select-String -Pattern ''(error |Build succeeded|Build FAILED)'' -Context 0,1\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest''; dotnet build ti8m.BeachBreak.sln 2>&1 | Select-String -Pattern ''(Build succeeded|Build FAILED)''\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest''; dotnet build ti8m.BeachBreak.sln 2>&1 | Select-String -Pattern ''error '' -Context 0,1\")"
     ],
     "deny": [],
     "ask": []

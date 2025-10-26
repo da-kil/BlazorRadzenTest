@@ -518,15 +518,31 @@ public class QuestionnaireAssignment : AggregateRoot
         if (IsLocked)
             throw new InvalidOperationException("Cannot modify goal - questionnaire is finalized");
 
-        if (WorkflowState != WorkflowState.InReview)
-            throw new InvalidOperationException("Goals can only be modified during review meeting");
-
-        if (string.IsNullOrWhiteSpace(changeReason))
-            throw new ArgumentException("Change reason is required", nameof(changeReason));
-
+        // Allow modifications during in-progress states (by goal owner) and during review (by manager)
         var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == goalId);
         if (goal == null)
             throw new InvalidOperationException($"Goal {goalId} not found");
+
+        // Validate permissions based on workflow state
+        if (WorkflowState == WorkflowState.InReview)
+        {
+            // During review, only manager can modify any goal
+            if (modifiedByRole != CompletionRole.Manager)
+                throw new InvalidOperationException("Only manager can modify goals during review meeting");
+        }
+        else if (WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress)
+        {
+            // During in-progress, user can only modify their own goals
+            if (goal.AddedByRole != modifiedByRole)
+                throw new InvalidOperationException($"Cannot modify goal added by {goal.AddedByRole}");
+        }
+        else
+        {
+            throw new InvalidOperationException($"Goals cannot be modified in state {WorkflowState}");
+        }
+
+        if (string.IsNullOrWhiteSpace(changeReason))
+            throw new ArgumentException("Change reason is required", nameof(changeReason));
 
         if (weightingPercentage.HasValue)
         {

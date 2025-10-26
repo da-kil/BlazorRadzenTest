@@ -6,7 +6,7 @@
 @inject NotificationService NotificationService
 @inject IGoalApiService GoalApiService
 
-<div class="add-goal-dialog">
+<div class="edit-goal-dialog">
     <RadzenStack Gap="1rem">
         @if (validationErrors.Any())
         {
@@ -83,17 +83,55 @@
             </ChildContent>
         </RadzenFieldset>
 
-        @* Weighting is hidden during in-progress states and will be set during InReview by manager *@
+        <RadzenFieldset>
+            <HeaderTemplate>
+                <RadzenIcon Icon="percent" Class="me-2" />
+                <span class="fw-bold">Weighting</span>
+            </HeaderTemplate>
+            <ChildContent>
+                <div>
+                    <RadzenLabel Text="Weighting Percentage*" Component="weightingPercentage" Class="fw-bold mb-1" />
+                    <RadzenNumeric @bind-Value="@weightingPercentage"
+                                 Name="weightingPercentage"
+                                 Min="0"
+                                 Max="100"
+                                 Step="5"
+                                 ShowUpDown="true"
+                                 Class="w-100" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                        Percentage of total goals (0-100%). Set weighting to allocate importance across goals.
+                    </RadzenText>
+                </div>
+            </ChildContent>
+        </RadzenFieldset>
+
+        <RadzenFieldset>
+            <HeaderTemplate>
+                <RadzenIcon Icon="edit_note" Class="me-2" />
+                <span class="fw-bold">Reason for Change*</span>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenTextArea @bind-Value="@changeReason"
+                              Name="changeReason"
+                              Placeholder="Explain why this goal is being modified..."
+                              Rows="2"
+                              Class="w-100"
+                              MaxLength="500" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @changeReason.Length / 500 characters
+                </RadzenText>
+            </ChildContent>
+        </RadzenFieldset>
 
         <RadzenFieldset>
             <HeaderTemplate>
                 <RadzenIcon Icon="person" Class="me-2" />
-                <span class="fw-bold">Added By</span>
+                <span class="fw-bold">Modified By</span>
             </HeaderTemplate>
             <ChildContent>
-                <RadzenBadge Text="@AddedByRole" BadgeStyle="BadgeStyle.Info" IsPill="true" />
+                <RadzenBadge Text="@ModifiedByRole" BadgeStyle="BadgeStyle.Info" IsPill="true" />
                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted ms-2">
-                    This goal will be attributed to @AddedByRole
+                    This modification will be attributed to @ModifiedByRole
                 </RadzenText>
             </ChildContent>
         </RadzenFieldset>
@@ -103,8 +141,8 @@
                         ButtonStyle="ButtonStyle.Light"
                         Click="@Cancel"
                         Disabled="@isSubmitting" />
-            <RadzenButton Text="@(isSubmitting ? "Adding Goal..." : "Add Goal")"
-                        Icon="@(isSubmitting ? "" : "add")"
+            <RadzenButton Text="@(isSubmitting ? "Updating Goal..." : "Update Goal")"
+                        Icon="@(isSubmitting ? "" : "save")"
                         ButtonStyle="ButtonStyle.Primary"
                         Click="@Submit"
                         Disabled="@isSubmitting" />
@@ -115,15 +153,35 @@
 @code {
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public Guid QuestionId { get; set; }
-    [Parameter] public string AddedByRole { get; set; } = "Employee";
+    [Parameter] public Guid GoalId { get; set; }
+    [Parameter] public string ModifiedByRole { get; set; } = "Employee";
+
+    // Pre-populated values
+    [Parameter] public string InitialObjective { get; set; } = "";
+    [Parameter] public string InitialMeasurement { get; set; } = "";
+    [Parameter] public DateTime InitialTimeframeFrom { get; set; } = DateTime.Today;
+    [Parameter] public DateTime InitialTimeframeTo { get; set; } = DateTime.Today.AddMonths(6);
+    [Parameter] public decimal InitialWeighting { get; set; } = 0;
 
     private string objectiveDescription = "";
     private string measurementMetric = "";
     private DateTime? timeframeFrom = DateTime.Today;
     private DateTime? timeframeTo = DateTime.Today.AddMonths(6);
+    private decimal weightingPercentage = 0;
+    private string changeReason = "";
 
     private List<string> validationErrors = new();
     private bool isSubmitting = false;
+
+    protected override void OnParametersSet()
+    {
+        // Pre-populate form with existing values
+        objectiveDescription = InitialObjective;
+        measurementMetric = InitialMeasurement;
+        timeframeFrom = InitialTimeframeFrom;
+        timeframeTo = InitialTimeframeTo;
+        weightingPercentage = InitialWeighting;
+    }
 
     private bool ValidateForm()
     {
@@ -162,6 +220,25 @@
             validationErrors.Add("End date must be after start date");
         }
 
+        if (weightingPercentage <= 0)
+        {
+            validationErrors.Add("Weighting percentage must be greater than 0");
+        }
+
+        if (weightingPercentage > 100)
+        {
+            validationErrors.Add("Weighting percentage cannot exceed 100%");
+        }
+
+        if (string.IsNullOrWhiteSpace(changeReason))
+        {
+            validationErrors.Add("Reason for change is required");
+        }
+        else if (changeReason.Length < 10)
+        {
+            validationErrors.Add("Reason for change must be at least 10 characters");
+        }
+
         return !validationErrors.Any();
     }
 
@@ -178,26 +255,26 @@
 
         try
         {
-            var dto = new AddGoalDto
+            var dto = new ModifyGoalDto
             {
-                QuestionId = QuestionId,
-                AddedByRole = AddedByRole,
                 ObjectiveDescription = objectiveDescription.Trim(),
                 MeasurementMetric = measurementMetric.Trim(),
                 TimeframeFrom = timeframeFrom!.Value,
                 TimeframeTo = timeframeTo!.Value,
-                WeightingPercentage = null // Will be set during InReview by manager
+                WeightingPercentage = weightingPercentage,
+                ModifiedByRole = ModifiedByRole,
+                ChangeReason = changeReason.Trim()
             };
 
-            var result = await GoalApiService.AddGoalAsync(AssignmentId, dto);
+            var result = await GoalApiService.ModifyGoalAsync(AssignmentId, GoalId, dto);
 
             if (result.Succeeded)
             {
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
-                    Summary = "Goal Added",
-                    Detail = "The goal has been added successfully",
+                    Summary = "Goal Updated",
+                    Detail = "The goal has been updated successfully",
                     Duration = 4000
                 });
 
@@ -210,7 +287,7 @@
                 if (result.StatusCode >= 400 && result.StatusCode < 500)
                 {
                     // Client/validation error - show in dialog for immediate correction
-                    validationErrors.Add(result.ErrorMessage ?? "Failed to add goal");
+                    validationErrors.Add(result.ErrorMessage ?? "Failed to update goal");
                 }
                 else
                 {
@@ -250,17 +327,17 @@
 }
 
 <style>
-.add-goal-dialog {
+.edit-goal-dialog {
     padding: 1rem;
     max-width: 700px;
 }
 
-.add-goal-dialog ul {
+.edit-goal-dialog ul {
     margin-bottom: 0;
     padding-left: 1.5rem;
 }
 
-.add-goal-dialog ul li {
+.edit-goal-dialog ul li {
     margin-bottom: 0.25rem;
 }
 </style>

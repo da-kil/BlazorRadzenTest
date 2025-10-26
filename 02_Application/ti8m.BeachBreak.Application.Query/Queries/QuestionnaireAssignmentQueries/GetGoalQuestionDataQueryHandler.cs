@@ -1,4 +1,6 @@
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
@@ -28,7 +30,8 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
         // Build DTO from aggregate state
         var dto = new GoalQuestionDataDto
         {
-            QuestionId = query.QuestionId
+            QuestionId = query.QuestionId,
+            WorkflowState = assignment.WorkflowState
         };
 
         // Get predecessor link if exists
@@ -37,10 +40,12 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
             dto.PredecessorAssignmentId = predecessorId;
         }
 
-        // Get goals for this question
+        // Get goals for this question with role-based filtering
         if (assignment.GoalsByQuestion.TryGetValue(query.QuestionId, out var goals))
         {
-            dto.Goals = goals.Select(g => new GoalDto
+            var filteredGoals = FilterGoalsByWorkflowState(goals, assignment.WorkflowState, query.CurrentUserRole);
+
+            dto.Goals = filteredGoals.Select(g => new GoalDto
             {
                 Id = g.Id,
                 QuestionId = g.QuestionId,
@@ -68,7 +73,9 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
         }
 
         // Get predecessor goal ratings for this question
-        if (assignment.GoalRatingsByQuestion.TryGetValue(query.QuestionId, out var ratings))
+        // Only show ratings from InReview onwards
+        if (ShouldShowPredecessorRatings(assignment.WorkflowState) &&
+            assignment.GoalRatingsByQuestion.TryGetValue(query.QuestionId, out var ratings))
         {
             dto.PredecessorGoalRatings = ratings.Select(r => new GoalRatingDto
             {
@@ -89,5 +96,48 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
         }
 
         return Result<GoalQuestionDataDto>.Success(dto);
+    }
+
+    /// <summary>
+    /// Filters goals based on workflow state and user role.
+    /// In-Progress: User sees only their own goals.
+    /// InReview: Manager sees all, Employee sees only their own.
+    /// Post-Review: Both see all.
+    /// </summary>
+    private IEnumerable<Goal> FilterGoalsByWorkflowState(
+        IEnumerable<Goal> goals,
+        WorkflowState workflowState,
+        CompletionRole currentUserRole)
+    {
+        // Post-review states: Both Employee and Manager see all goals
+        if (workflowState >= WorkflowState.ManagerReviewConfirmed)
+        {
+            return goals;
+        }
+
+        // InReview: Manager sees all, Employee sees only their own
+        if (workflowState == WorkflowState.InReview)
+        {
+            if (currentUserRole == CompletionRole.Manager)
+            {
+                return goals; // Manager sees all
+            }
+            else
+            {
+                return goals.Where(g => g.AddedByRole == currentUserRole); // Employee sees only their own
+            }
+        }
+
+        // In-Progress states: Each role sees only their own goals
+        return goals.Where(g => g.AddedByRole == currentUserRole);
+    }
+
+    /// <summary>
+    /// Determines if predecessor ratings should be shown based on workflow state.
+    /// Ratings are visible from InReview onwards.
+    /// </summary>
+    private bool ShouldShowPredecessorRatings(WorkflowState workflowState)
+    {
+        return workflowState >= WorkflowState.InReview;
     }
 }
