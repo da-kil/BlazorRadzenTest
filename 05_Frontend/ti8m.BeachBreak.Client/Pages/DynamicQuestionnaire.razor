@@ -19,6 +19,7 @@
 @inject IQuestionnaireResponseService ResponseService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject QuestionConfigurationService ConfigService
+@inject GoalService GoalService
 @inherits OptimizedComponentBase
 
 <link href="css/questionnaire-unified.css" rel="stylesheet" />
@@ -747,7 +748,9 @@
                             Response="@employeeResponse"
                             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
                             IsReadOnly="true"
-                            HideHeader="true" />
+                            HideHeader="true"
+                            AssignmentId="@(assignmentId ?? Guid.Empty)"
+                            CurrentUserRole="Employee" />
                     </div>
                 </div>
 
@@ -763,7 +766,9 @@
                             Response="@managerResponse"
                             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
                             IsReadOnly="true"
-                            HideHeader="true" />
+                            HideHeader="true"
+                            AssignmentId="@(assignmentId ?? Guid.Empty)"
+                            CurrentUserRole="Manager" />
                     </div>
                 </div>
             </div>;
@@ -776,7 +781,9 @@
             Question="@question"
             Response="@questionResponse"
             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-            IsReadOnly="@IsQuestionnaireCompleted()" />;
+            IsReadOnly="@IsQuestionnaireCompleted()"
+            AssignmentId="@(assignmentId ?? Guid.Empty)"
+            CurrentUserRole="@currentUserRole" />;
     }
 
     private async Task HandleQuestionResponseChangedDynamic(QuestionResponse updatedResponse)
@@ -869,24 +876,6 @@
     {
         var response = GetQuestionResponse(questionId);
         return response.ComplexValue?.TryGetValue("StartDate", out var value) == true ? (DateTime?)value : null;
-    }
-
-    private DateTime? GetGoalEndDate(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("EndDate", out var value) == true ? (DateTime?)value : null;
-    }
-
-    private string GetGoalDescription(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("Description", out var value) == true ? value.ToString() ?? "" : "";
-    }
-
-    private int GetGoalPercentage(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("AchievementPercentage", out var value) == true ? Convert.ToInt32(value) : 0;
     }
 
     private string GetGoalJustification(Guid questionId)
@@ -1152,9 +1141,16 @@
         {
             QuestionType.Assessment => IsAssessmentCompleted(question, questionResponse),
             QuestionType.TextQuestion => IsTextQuestionCompleted(question, questionResponse),
-            QuestionType.Goal => !string.IsNullOrWhiteSpace(GetGoalDescription(question.Id)),
+            QuestionType.Goal => IsGoalQuestionCompleted(question, questionResponse),
             _ => true
         };
+    }
+
+    private bool IsGoalQuestionCompleted(QuestionItem question, QuestionResponse questionResponse)
+    {
+        // Goal questions are completed if at least one goal has been added
+        var goals = GoalService.GetGoals(questionResponse);
+        return goals.Any() && goals.All(g => GoalService.IsGoalValid(g));
     }
 
     private bool IsTextQuestionCompleted(QuestionItem question, QuestionResponse questionResponse)

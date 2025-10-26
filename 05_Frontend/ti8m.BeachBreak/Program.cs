@@ -212,14 +212,17 @@ public class Program
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
         builder.Services.AddScoped<IHRApiService, HRApiService>();
         builder.Services.AddScoped<IProjectionReplayApiService, ProjectionReplayApiService>();
+        builder.Services.AddScoped<IGoalApiService, GoalApiService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();
         builder.Services.AddScoped<QuestionnaireValidationService>();
+        builder.Services.AddScoped<GoalService>();
 
         // Register question type handlers (Strategy Pattern)
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.AssessmentQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.TextQuestionHandler>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.GoalQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory>();
 
         // Register state management

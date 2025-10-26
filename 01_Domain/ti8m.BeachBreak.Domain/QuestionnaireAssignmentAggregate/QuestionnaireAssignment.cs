@@ -432,9 +432,14 @@ public class QuestionnaireAssignment : AggregateRoot
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot link predecessor - assignment is withdrawn");
 
-        if (!IsInProgressState())
-            throw new InvalidOperationException($"Cannot link predecessor in state {WorkflowState}");
+        // Validate edit permissions based on role
+        if (linkedByRole == CompletionRole.Employee && !CanEmployeeEdit())
+            throw new InvalidOperationException($"Employee cannot link predecessor in state {WorkflowState}");
 
+        if (linkedByRole == CompletionRole.Manager && !CanManagerEdit())
+            throw new InvalidOperationException($"Manager cannot link predecessor in state {WorkflowState}");
+
+        // Validate role-specific workflow state restrictions
         if (linkedByRole == CompletionRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
             throw new InvalidOperationException("Employee cannot link during ManagerInProgress state");
 
@@ -469,9 +474,14 @@ public class QuestionnaireAssignment : AggregateRoot
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot add goal - assignment is withdrawn");
 
-        if (!IsInProgressState())
-            throw new InvalidOperationException($"Cannot add goal in state {WorkflowState}");
+        // Validate edit permissions based on role
+        if (addedByRole == CompletionRole.Employee && !CanEmployeeEdit())
+            throw new InvalidOperationException($"Employee cannot add goals in state {WorkflowState}");
 
+        if (addedByRole == CompletionRole.Manager && !CanManagerEdit())
+            throw new InvalidOperationException($"Manager cannot add goals in state {WorkflowState}");
+
+        // Validate role-specific workflow state restrictions
         if (addedByRole == CompletionRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
             throw new InvalidOperationException("Employee cannot add goals during ManagerInProgress state");
 
@@ -561,9 +571,14 @@ public class QuestionnaireAssignment : AggregateRoot
         if (!_predecessorLinks.TryGetValue(questionId, out var linkedPredecessor) || linkedPredecessor != sourceAssignmentId)
             throw new InvalidOperationException("Source assignment not linked as predecessor");
 
-        if (!IsInProgressState())
-            throw new InvalidOperationException($"Cannot rate goal in state {WorkflowState}");
+        // Validate edit permissions based on role
+        if (ratedByRole == CompletionRole.Employee && !CanEmployeeEdit())
+            throw new InvalidOperationException($"Employee cannot rate goals in state {WorkflowState}");
 
+        if (ratedByRole == CompletionRole.Manager && !CanManagerEdit())
+            throw new InvalidOperationException($"Manager cannot rate goals in state {WorkflowState}");
+
+        // Validate role-specific workflow state restrictions
         if (ratedByRole == CompletionRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
             throw new InvalidOperationException("Employee cannot rate goals during ManagerInProgress state");
 

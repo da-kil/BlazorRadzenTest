@@ -149,7 +149,7 @@ public class GoalQueryHandler :
                 {
                     Id = g.Id,
                     QuestionId = g.QuestionId,
-                    AddedByRole = g.AddedByRole,
+                    AddedByRole = g.AddedByRole.ToString(), // Convert enum to string
                     TimeframeFrom = g.TimeframeFrom,
                     TimeframeTo = g.TimeframeTo,
                     ObjectiveDescription = g.ObjectiveDescription,
@@ -159,7 +159,7 @@ public class GoalQueryHandler :
                     AddedByEmployeeId = g.AddedByEmployeeId,
                     Modifications = g.Modifications.Select(m => new GoalModificationDto
                     {
-                        ModifiedByRole = m.ModifiedByRole,
+                        ModifiedByRole = m.ModifiedByRole.ToString(), // Convert enum to string
                         ChangeReason = m.ChangeReason,
                         ModifiedAt = m.ModifiedAt,
                         ModifiedByEmployeeId = m.ModifiedByEmployeeId,

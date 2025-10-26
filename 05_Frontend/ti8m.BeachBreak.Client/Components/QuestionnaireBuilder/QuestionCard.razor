@@ -96,86 +96,27 @@
             </div>
         }
 
-        <!-- Goal Achievement Configuration -->
+        <!-- Goal Configuration -->
         @if (Question.Type == QuestionType.Goal)
         {
-            var goalCategories = GetOrderedGoalCategories();
-            <div class="goal-categories-config">
-                @if (goalCategories.Count == 0)
-                {
-                    <div class="text-center p-3 text-muted">
-                        <RadzenIcon Icon="track_changes" Style="font-size: 1.5rem; opacity: 0.5; color: var(--success-color);" />
-                        <div class="mt-2 small">No goal categories configured</div>
-                    </div>
-                }
-                else
-                {
-                    @for (int i = 0; i < goalCategories.Count; i++)
-                    {
-                        var categoryIndex = i;
-                        var category = goalCategories[categoryIndex];
-
-                        <RadzenCard Class="goal-category-item mb-2 p-3 border">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-goal-achievement">
-                                    Goal Category @(categoryIndex + 1)
-                                </RadzenText>
-                                <div class="d-flex gap-1">
-                                    <AsyncButton ButtonStyle="ButtonStyle.Light"
-                                                Icon="keyboard_arrow_up"
-                                                Size="ButtonSize.ExtraSmall"
-                                                Click="@(() => MoveGoalCategoryUp(categoryIndex))"
-                                                Disabled="@(categoryIndex == 0 || !Template.IsAvailableForEditing)"
-                                                Title="Move up" />
-                                    <AsyncButton ButtonStyle="ButtonStyle.Light"
-                                                Icon="keyboard_arrow_down"
-                                                Size="ButtonSize.ExtraSmall"
-                                                Click="@(() => MoveGoalCategoryDown(categoryIndex))"
-                                                Disabled="@(categoryIndex == goalCategories.Count - 1 || !Template.IsAvailableForEditing)"
-                                                Title="Move down" />
-                                    <AsyncButton ButtonStyle="ButtonStyle.Danger"
-                                                ProcessingText="Deleting"
-                                                Icon="delete"
-                                                Size="ButtonSize.ExtraSmall"
-                                                Click="@(() => RemoveGoalCategory(categoryIndex))"
-                                                Title="Delete"
-                                                Disabled="@(!Template.IsAvailableForEditing)" />
-                                </div>
-                            </div>
-                            <div class="goal-category-input-row">
-                                <div class="input-field-container">
-                                    <RadzenTextBox Value="@category.Title"
-                                                  ValueChanged="@((string value) => UpdateGoalCategoryTitle(categoryIndex, value))"
-                                                  Placeholder="Enter goal category title..."
-                                                  Disabled="@(!Template.IsAvailableForEditing)"
-                                                  Class="@GetGoalCategoryTitleValidationClass(categoryIndex)"
-                                                  @onblur="@(() => ValidateGoalCategoryTitle(categoryIndex))" />
-                                    @if (!GetGoalCategoryTitleValid(categoryIndex) && GetGoalCategoryTitleValidated(categoryIndex))
-                                    {
-                                        <div class="validation-message">
-                                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
-                                            Goal category title is required
-                                        </div>
-                                    }
-                                </div>
-                                <div class="required-checkbox-container">
-                                    <RadzenCheckBox Value="@GetGoalCategoryRequired(categoryIndex)"
-                                                   ValueChanged="@((bool value) => UpdateGoalCategoryRequired(categoryIndex, value))"
-                                                   Name="@($"goal_req_{Question.Id}_{categoryIndex}")"
-                                                   Disabled="@(!Template.IsAvailableForEditing)" />
-                                    <RadzenLabel Text="Required" Component="@($"goal_req_{Question.Id}_{categoryIndex}")" Class="ms-2" />
-                                </div>
-                            </div>
-                            <div class="mb-2">
-                                <RadzenTextArea Value="@category.Description"
-                                               ValueChanged="@((string value) => UpdateGoalCategoryDescription(categoryIndex, value))"
-                                               Placeholder="Describe this goal category..."
-                                               Rows="2"
-                                               Class="w-100" />
-                            </div>
-                        </RadzenCard>
-                    }
-                }
+            <div class="goal-config text-center p-4">
+                <RadzenIcon Icon="flag" Style="font-size: 2rem; color: var(--rz-primary);" Class="mb-3" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 fw-bold">
+                    Goal Question Type
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+                    No template configuration is required for Goal questions.
+                </RadzenText>
+                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Class="mb-0" ShowIcon="false">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="d-block mb-1">
+                        Goals are added dynamically during the questionnaire workflow:
+                    </RadzenText>
+                    <ul class="text-start small mb-0" style="line-height: 1.8;">
+                        <li>Employee and Manager add goals during their completion phases</li>
+                        <li>Goals can be linked to predecessor questionnaires for rating</li>
+                        <li>Each goal includes objective, timeframe, measurement, and weighting</li>
+                    </ul>
+                </RadzenAlert>
             </div>
         }
 
@@ -337,13 +278,8 @@
         }
         else if (Question.Type == QuestionType.Goal)
         {
-            var categories = GetOrderedGoalCategories();
-            for (int i = 0; i < categories.Count; i++)
-            {
-                ValidateGoalCategoryTitle(i);
-                if (!GetGoalCategoryTitleValid(i))
-                    contentValid = false;
-            }
+            // Goal questions don't use template items - always valid
+            contentValid = true;
         }
         else if (Question.Type == QuestionType.TextQuestion)
         {
