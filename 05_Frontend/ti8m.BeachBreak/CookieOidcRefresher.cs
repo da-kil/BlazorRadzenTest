@@ -89,7 +89,40 @@ internal sealed class CookieOidcRefresher(IOptionsMonitor<OpenIdConnectOptions> 
             });
 
             validateContext.ShouldRenew = true;
-            validateContext.ReplacePrincipal(new ClaimsPrincipal(validationResult.ClaimsIdentity));
+
+            // Preserve custom claims (ApplicationRole, EmployeeId) from the old principal
+            var oldPrincipal = validateContext.Principal;
+            var newIdentity = (ClaimsIdentity)validationResult.ClaimsIdentity!;
+
+            if (oldPrincipal != null)
+            {
+                // Copy custom claims that aren't in the new token
+                var customClaimTypes = new[] { "ApplicationRole", "EmployeeId", "roles" };
+                foreach (var claimType in customClaimTypes)
+                {
+                    var existingClaims = oldPrincipal.FindAll(claimType).ToList();
+                    foreach (var claim in existingClaims)
+                    {
+                        if (!newIdentity.HasClaim(c => c.Type == claimType && c.Value == claim.Value))
+                        {
+                            newIdentity.AddClaim(new Claim(claim.Type, claim.Value));
+                        }
+                    }
+                }
+
+                // Also preserve the standard Role claim
+                var roleClaimType = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role";
+                var existingRoleClaims = oldPrincipal.FindAll(roleClaimType).ToList();
+                foreach (var claim in existingRoleClaims)
+                {
+                    if (!newIdentity.HasClaim(c => c.Type == roleClaimType && c.Value == claim.Value))
+                    {
+                        newIdentity.AddClaim(new Claim(claim.Type, claim.Value));
+                    }
+                }
+            }
+
+            validateContext.ReplacePrincipal(new ClaimsPrincipal(newIdentity));
 
             var expiresIn = int.Parse(message.ExpiresIn, NumberStyles.Integer, CultureInfo.InvariantCulture);
             var expiresAt = now + TimeSpan.FromSeconds(expiresIn);

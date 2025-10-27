@@ -179,11 +179,15 @@ public class Program
                             }
 
                             logger.LogInformation("Calling QueryClient to get role...");
-                            var client = httpClientFactory.CreateClient("QueryClient");
+                            // Create a new HttpClient without the BearerTokenHandler since we're setting the token manually
+                            // The BearerTokenHandler won't work here because the token hasn't been saved to the auth properties yet
+                            var client = new HttpClient();
+                            var queryApiUri = builder.Configuration.GetValue<string>("services:QueryApi:https:0");
+                            client.BaseAddress = new Uri(queryApiUri!);
                             client.DefaultRequestHeaders.Authorization =
                                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
-                            var response = await client.GetAsync("api/v1/auth/me/role");
+                            var response = await client.GetAsync("q/api/v1/auth/me/role");
                             logger.LogInformation("API response status: {StatusCode}", response.StatusCode);
 
                             if (!response.IsSuccessStatusCode)
