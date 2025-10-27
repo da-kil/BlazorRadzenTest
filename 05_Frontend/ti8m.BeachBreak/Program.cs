@@ -352,6 +352,134 @@ public class Program
 
         app.UseAuthentication();
 
+        // Map API proxies for WebAssembly client
+        // These use the configured HttpClients which include BearerTokenHandler for authentication
+        app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/q"), appBuilder =>
+        {
+            appBuilder.Run(async context =>
+            {
+                var httpClientFactory = context.RequestServices.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient("QueryClient");
+
+                var targetUri = new Uri(httpClient.BaseAddress!, context.Request.Path.ToString() + context.Request.QueryString);
+
+                HttpResponseMessage response;
+                if (HttpMethods.IsGet(context.Request.Method))
+                {
+                    response = await httpClient.GetAsync(targetUri);
+                }
+                else if (HttpMethods.IsPost(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                    }
+                    response = await httpClient.PostAsync(targetUri, content);
+                }
+                else if (HttpMethods.IsPut(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                    }
+                    response = await httpClient.PutAsync(targetUri, content);
+                }
+                else if (HttpMethods.IsDelete(context.Request.Method))
+                {
+                    response = await httpClient.DeleteAsync(targetUri);
+                }
+                else if (HttpMethods.IsPatch(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                    }
+                    response = await httpClient.PatchAsync(targetUri, content);
+                }
+                else
+                {
+                    context.Response.StatusCode = 405;
+                    return;
+                }
+
+                context.Response.StatusCode = (int)response.StatusCode;
+                foreach (var header in response.Headers.Concat(response.Content.Headers))
+                {
+                    if (!header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Response.Headers[header.Key] = header.Value.ToArray();
+                    }
+                }
+                await response.Content.CopyToAsync(context.Response.Body);
+            });
+        });
+
+        app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/c"), appBuilder =>
+        {
+            appBuilder.Run(async context =>
+            {
+                var httpClientFactory = context.RequestServices.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient("CommandClient");
+
+                var targetUri = new Uri(httpClient.BaseAddress!, context.Request.Path.ToString() + context.Request.QueryString);
+
+                HttpResponseMessage response;
+                if (HttpMethods.IsGet(context.Request.Method))
+                {
+                    response = await httpClient.GetAsync(targetUri);
+                }
+                else if (HttpMethods.IsPost(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                    }
+                    response = await httpClient.PostAsync(targetUri, content);
+                }
+                else if (HttpMethods.IsPut(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                    }
+                    response = await httpClient.PutAsync(targetUri, content);
+                }
+                else if (HttpMethods.IsDelete(context.Request.Method))
+                {
+                    response = await httpClient.DeleteAsync(targetUri);
+                }
+                else if (HttpMethods.IsPatch(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                    }
+                    response = await httpClient.PatchAsync(targetUri, content);
+                }
+                else
+                {
+                    context.Response.StatusCode = 405;
+                    return;
+                }
+
+                context.Response.StatusCode = (int)response.StatusCode;
+                foreach (var header in response.Headers.Concat(response.Content.Headers))
+                {
+                    if (!header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Response.Headers[header.Key] = header.Value.ToArray();
+                    }
+                }
+                await response.Content.CopyToAsync(context.Response.Body);
+            });
+        });
+
         // Add middleware to enrich user claims with ApplicationRole from backend
         //app.UseMiddleware<Authorization.ApplicationRoleClaimsMiddleware>();
 

@@ -5,7 +5,14 @@
       "Bash(powershell.exe -Command \"Remove-Item ''C:\\projects\\BlazorRadzenTest\\01_Domain\\ti8m.BeachBreak.Domain\\QuestionnaireTemplateAggregate\\Events\\EventSnapshots.cs''\")",
       "Bash(powershell.exe -Command \"Remove-Item ''C:\\projects\\BlazorRadzenTest\\01_Domain\\ti8m.BeachBreak.Domain\\QuestionnaireTemplateAggregate\\Events\\EventData.cs''\")",
       "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest''; dotnet build ti8m.BeachBreak.sln 2>&1 | Select-String -Pattern ''error CS'' -Context 0,2\")",
-      "Bash(powershell.exe:*)"
+      "Bash(powershell.exe:*)",
+      "Bash(Get-Content \"C:\\projects\\BlazorRadzenTest\\Aspire\\ti8m.BeachBreak.AppHost\\appsettings.json\" -ErrorAction SilentlyContinue)",
+      "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak''; Get-Content ''ti8m.BeachBreak.csproj'' | Select-String -Pattern ''Yarp|Proxy|Forwarder''\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak''; Get-Content ''ti8m.BeachBreak.csproj''\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest''; dotnet build ti8m.BeachBreak.sln 2>&1 | Select-String -Pattern ''(error |Build succeeded|Build FAILED)'' -Context 0,2\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client''; dotnet add reference ''..\\..\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\ti8m.BeachBreak.Core.Infrastructure.csproj''\")",
+      "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client''; dotnet remove reference ''..\\..\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\ti8m.BeachBreak.Core.Infrastructure.csproj''\")",
+      "Bash(Copy-Item \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Configuration\\AuthorizationPolicyConfiguration.cs\" \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.QueryApi\\Authorization\\AuthorizationPolicyConfiguration.cs\")"
     ],
     "deny": [],
     "ask": []

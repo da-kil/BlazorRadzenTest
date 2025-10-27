@@ -39,8 +39,8 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
         AuthorizationPolicy policy,
         PolicyAuthorizationResult authorizeResult)
     {
-        // Allow /api/v1/auth/me/role endpoint to bypass role checking (for initial role fetch)
-        if (context.Request.Path.StartsWithSegments("/api/v1/auth/me/role", StringComparison.OrdinalIgnoreCase))
+        // Allow /q/api/v1/auth/me/role endpoint to bypass role checking (for initial role fetch)
+        if (context.Request.Path.StartsWithSegments("/q/api/v1/auth/me/role", StringComparison.OrdinalIgnoreCase))
         {
             // Still require authentication, but skip role check
             if (context.User.Identity?.IsAuthenticated ?? false)
