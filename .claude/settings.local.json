@@ -12,7 +12,9 @@
       "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest''; dotnet build ti8m.BeachBreak.sln 2>&1 | Select-String -Pattern ''(error |Build succeeded|Build FAILED)'' -Context 0,2\")",
       "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client''; dotnet add reference ''..\\..\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\ti8m.BeachBreak.Core.Infrastructure.csproj''\")",
       "Bash(powershell.exe -Command \"cd ''C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client''; dotnet remove reference ''..\\..\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\ti8m.BeachBreak.Core.Infrastructure.csproj''\")",
-      "Bash(Copy-Item \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Configuration\\AuthorizationPolicyConfiguration.cs\" \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.QueryApi\\Authorization\\AuthorizationPolicyConfiguration.cs\")"
+      "Bash(Copy-Item \"C:\\projects\\BlazorRadzenTest\\05_Frontend\\ti8m.BeachBreak.Client\\Configuration\\AuthorizationPolicyConfiguration.cs\" \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.QueryApi\\Authorization\\AuthorizationPolicyConfiguration.cs\")",
+      "Bash(dotnet new:*)",
+      "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.CommandApi\\Authorization\\AuthorizationPolicyConfiguration.cs\" -Force)"
     ],
     "deny": [],
     "ask": []

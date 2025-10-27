@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 
-namespace ti8m.BeachBreak.CommandApi.Authorization;
+namespace ti8m.BeachBreak.Core.Infrastructure.Authorization;
 
 /// <summary>
 /// Shared authorization policy configuration for API.
