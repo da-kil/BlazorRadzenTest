@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace ti8m.BeachBreak.Client.Models;
 
 /// <summary>
@@ -12,7 +14,8 @@ public class Result
     // Compatibility property for existing code using ErrorMessage
     public string? ErrorMessage => Message;
 
-    protected Result(bool succeeded, string? message = null, int statusCode = 200)
+    [JsonConstructor]
+    public Result(bool succeeded, string? message = null, int statusCode = 200)
     {
         Succeeded = succeeded;
         Message = message;
@@ -31,7 +34,8 @@ public class Result<T> : Result
 {
     public T? Payload { get; init; }
 
-    private Result(bool succeeded, T? payload = default, string? message = null, int statusCode = 200)
+    [JsonConstructor]
+    public Result(bool succeeded, T? payload = default, string? message = null, int statusCode = 200)
         : base(succeeded, message, statusCode)
     {
         Payload = payload;

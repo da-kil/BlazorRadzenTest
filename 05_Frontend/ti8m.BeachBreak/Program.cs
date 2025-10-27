@@ -373,7 +373,7 @@ public class Program
                     var content = new StreamContent(context.Request.Body);
                     if (context.Request.ContentType != null)
                     {
-                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
                     }
                     response = await httpClient.PostAsync(targetUri, content);
                 }
@@ -382,7 +382,7 @@ public class Program
                     var content = new StreamContent(context.Request.Body);
                     if (context.Request.ContentType != null)
                     {
-                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
                     }
                     response = await httpClient.PutAsync(targetUri, content);
                 }
@@ -395,7 +395,7 @@ public class Program
                     var content = new StreamContent(context.Request.Body);
                     if (context.Request.ContentType != null)
                     {
-                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
                     }
                     response = await httpClient.PatchAsync(targetUri, content);
                 }
@@ -436,7 +436,7 @@ public class Program
                     var content = new StreamContent(context.Request.Body);
                     if (context.Request.ContentType != null)
                     {
-                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
                     }
                     response = await httpClient.PostAsync(targetUri, content);
                 }
@@ -445,7 +445,7 @@ public class Program
                     var content = new StreamContent(context.Request.Body);
                     if (context.Request.ContentType != null)
                     {
-                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
                     }
                     response = await httpClient.PutAsync(targetUri, content);
                 }
@@ -458,7 +458,7 @@ public class Program
                     var content = new StreamContent(context.Request.Body);
                     if (context.Request.ContentType != null)
                     {
-                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(context.Request.ContentType);
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
                     }
                     response = await httpClient.PatchAsync(targetUri, content);
                 }
