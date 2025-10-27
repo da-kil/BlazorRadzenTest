@@ -4,7 +4,7 @@
 @using ti8m.BeachBreak.Client.Services
 @inject IHRApiService HRService
 @inject NavigationManager NavigationManager
-@attribute [Authorize(Roles = "HR,HRLead,Admin")]
+@attribute [Authorize(Policy = "HR")]
 
 <RadzenStack Gap="1.5rem">
     <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">HR Dashboard</RadzenText>

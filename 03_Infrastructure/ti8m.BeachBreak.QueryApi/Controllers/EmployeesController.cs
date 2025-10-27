@@ -603,7 +603,7 @@ public class EmployeesController : BaseController
     /// HR/Admin can view assignments for any employee.
     /// </summary>
     [HttpGet("{employeeId:guid}/assignments")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetEmployeeAssignments(Guid employeeId)

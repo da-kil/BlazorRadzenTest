@@ -4,7 +4,7 @@
 @using ti8m.BeachBreak.Client.Services
 @inject IManagerQuestionnaireService ManagerService
 @inject NavigationManager NavigationManager
-@attribute [Authorize(Roles = "TeamLead")]
+@attribute [Authorize(Policy = "TeamLead")]
 
 <RadzenStack Gap="1.5rem">
     <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">Manager Dashboard</RadzenText>

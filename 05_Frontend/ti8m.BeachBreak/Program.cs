@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Radzen;
 using ti8m.BeachBreak.Authentication;
 using ti8m.BeachBreak.Authorization;
+using ti8m.BeachBreak.Client.Configuration;
 using ti8m.BeachBreak.Client.Services;
 using ti8m.BeachBreak.Components;
 
@@ -137,6 +139,112 @@ public class Program
                 // use the refresh token to obtain a new access token on access token
                 // expiration.
                 // ........................................................................
+
+                // Enrich claims with ApplicationRole from backend during authentication
+                oidcOptions.Events = new Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                        logger.LogInformation("OnTokenValidated event fired!");
+
+                        var httpClientFactory = context.HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>();
+
+                        try
+                        {
+                            var userId = context.Principal?.FindFirst("oid")?.Value
+                                        ?? context.Principal?.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value
+                                        ?? context.Principal?.FindFirst("sub")?.Value;
+
+                            logger.LogInformation("Looking for user ID in claims, found: {UserId}", userId ?? "NULL");
+
+                            if (string.IsNullOrEmpty(userId))
+                            {
+                                logger.LogWarning("Cannot enrich claims: User ID not found in token");
+                                // Log all claims to debug
+                                foreach (var claim in context.Principal?.Claims ?? Enumerable.Empty<System.Security.Claims.Claim>())
+                                {
+                                    logger.LogInformation("Available claim: {Type} = {Value}", claim.Type, claim.Value);
+                                }
+                                return;
+                            }
+
+                            var accessToken = context.TokenEndpointResponse?.AccessToken;
+                            logger.LogInformation("Access token from TokenEndpointResponse: {HasToken}", !string.IsNullOrEmpty(accessToken));
+
+                            if (string.IsNullOrEmpty(accessToken))
+                            {
+                                logger.LogWarning("Cannot enrich claims: Access token not available");
+                                return;
+                            }
+
+                            logger.LogInformation("Calling QueryClient to get role...");
+                            var client = httpClientFactory.CreateClient("QueryClient");
+                            client.DefaultRequestHeaders.Authorization =
+                                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                            var response = await client.GetAsync("api/v1/auth/me/role");
+                            logger.LogInformation("API response status: {StatusCode}", response.StatusCode);
+
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                var errorContent = await response.Content.ReadAsStringAsync();
+                                logger.LogWarning("Failed to fetch ApplicationRole: {StatusCode}, Body: {Body}", response.StatusCode, errorContent);
+                                return;
+                            }
+
+                            var json = await response.Content.ReadAsStringAsync();
+                            logger.LogInformation("API response JSON: {Json}", json);
+
+                            var roleData = System.Text.Json.JsonDocument.Parse(json);
+
+                            if (!roleData.RootElement.TryGetProperty("ApplicationRole", out var roleProperty) ||
+                                !roleData.RootElement.TryGetProperty("EmployeeId", out var employeeIdProperty))
+                            {
+                                logger.LogWarning("ApplicationRole or EmployeeId not found in response");
+                                return;
+                            }
+
+                            var applicationRole = roleProperty.GetInt32();
+                            var roleName = ((Authorization.ApplicationRole)applicationRole).ToString();
+                            var employeeId = employeeIdProperty.GetGuid();
+
+                            logger.LogInformation("Adding claims: ApplicationRole={Role}, EmployeeId={EmployeeId}", roleName, employeeId);
+
+                            // Create new claims to add
+                            var claims = new List<System.Security.Claims.Claim>
+                            {
+                                new System.Security.Claims.Claim("ApplicationRole", roleName),
+                                new System.Security.Claims.Claim("EmployeeId", employeeId.ToString()),
+                                // Add role claim with type "roles" to match RoleClaimType configuration
+                                new System.Security.Claims.Claim("roles", roleName),
+                                // Also add standard ClaimTypes.Role for compatibility
+                                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, roleName)
+                            };
+
+                            // Add the claims to the existing identity
+                            var identity = (System.Security.Claims.ClaimsIdentity)context.Principal!.Identity!;
+                            identity.AddClaims(claims);
+
+                            // Create a new ClaimsPrincipal with the enriched identity to ensure it's used
+                            context.Principal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+                            logger.LogInformation("Successfully enriched user claims with ApplicationRole: {Role} for user {UserId}. Claims in identity: {Count}",
+                                roleName, userId, identity.Claims.Count());
+
+                            // Log all claims to verify
+                            logger.LogInformation("All claims after enrichment:");
+                            foreach (var claim in context.Principal.Claims)
+                            {
+                                logger.LogInformation("  Claim: {Type} = {Value}", claim.Type, claim.Value);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Error enriching user claims with ApplicationRole");
+                        }
+                    }
+                };
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -147,27 +255,14 @@ public class Program
         // scope.
         builder.Services.ConfigureCookieOidcRefresh(CookieAuthenticationDefaults.AuthenticationScheme, MS_OIDC_SCHEME);
 
-        // Configure authorization with role-based policies (matching backend hierarchy)
+        // Note: Claims are enriched during OIDC OnTokenValidated event (see AddOpenIdConnect configuration)
+        // Claims transformation doesn't work with WebAssembly rendering mode
+
+        // Configure authorization with role-based policies (shared configuration)
         builder.Services.AddAuthorization(options =>
         {
-            // Employee policy: All authenticated employees can access (Employee, TeamLead, HR, HRLead, Admin)
-            options.AddPolicy("Employee", policy => policy.RequireRole("Employee", "TeamLead", "HR", "HRLead", "Admin"));
-
-            // TeamLead policy: TeamLead and above can access (TeamLead, HR, HRLead, Admin)
-            options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
-
-            // HR policy: HR and above can access (HR, HRLead, Admin)
-            options.AddPolicy("HR", policy => policy.RequireRole("HR", "HRLead", "Admin"));
-
-            // HRLead policy: HRLead and above can access (HRLead, Admin)
-            options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead", "Admin"));
-
-            // Admin policy: Only Admin can access
-            options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+            options.ConfigureAuthorizationPolicies();
         });
-
-        // Register custom AuthenticationStateProvider that enriches claims with ApplicationRole
-        builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 
         builder.Services.AddCascadingAuthenticationState();
 
@@ -176,7 +271,14 @@ public class Program
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents()
             .AddInteractiveWebAssemblyComponents()
-            .AddAuthenticationStateSerialization();
+            .AddAuthenticationStateSerialization(options =>
+            {
+                // Include custom claims in serialization
+                options.SerializeAllClaims = true;
+            });
+
+        // Note: Claims are enriched during OIDC authentication via OnTokenValidated event
+        // No need for custom AuthenticationStateProvider
 
         builder.Services.AddHttpContextAccessor();
 

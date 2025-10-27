@@ -64,7 +64,7 @@ public class EmployeesController : BaseController
     }
 
     [HttpPut("bulk-update")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -92,7 +92,7 @@ public class EmployeesController : BaseController
     }
 
     [HttpDelete("bulk-delete")]
-    [Authorize(Roles = "HRLeadOnly")] // Only Admin, HRLead can delete employees
+    [Authorize(Policy = "HRLead")] // Only Admin, HRLead can delete employees
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -109,7 +109,7 @@ public class EmployeesController : BaseController
     /// Controller fetches requester's role from database using UserContext; business rules enforced in domain layer.
     /// </summary>
     [HttpPut("{employeeId:guid}/application-role")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

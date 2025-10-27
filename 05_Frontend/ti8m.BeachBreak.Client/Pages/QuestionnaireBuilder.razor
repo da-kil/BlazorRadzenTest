@@ -1,6 +1,6 @@
 @page "/questionnaire-builder"
 @page "/questionnaire-builder/{TemplateId:guid?}"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "HR")]
 @using Radzen
 @using Radzen.Blazor
 @using System.Text.Json

@@ -8,7 +8,7 @@ namespace ti8m.BeachBreak.QueryApi.Controllers;
 
 [ApiController]
 [Route("q/api/v{version:apiVersion}/hr")]
-[Authorize(Roles = "HR,HRLead,Admin")]
+[Authorize(Policy = "HR")]
 public class HRController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;

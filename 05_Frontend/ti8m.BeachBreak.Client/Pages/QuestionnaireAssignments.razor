@@ -1,5 +1,5 @@
 @page "/questionnaire-assignments"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "HR")]
 @using System.Linq
 @using Radzen
 @using Radzen.Blazor

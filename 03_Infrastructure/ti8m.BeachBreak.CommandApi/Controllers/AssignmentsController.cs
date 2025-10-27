@@ -45,7 +45,7 @@ public class AssignmentsController : BaseController
     /// Creates bulk assignments for any employees. HR/Admin only.
     /// </summary>
     [HttpPost("bulk")]
-    [Authorize(Roles = "HR,HRLead,Admin")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateBulkAssignments([FromBody] CreateBulkAssignmentsDto bulkAssignmentDto)
@@ -110,7 +110,7 @@ public class AssignmentsController : BaseController
     /// Validates that all employees are direct reports of the authenticated manager.
     /// </summary>
     [HttpPost("manager/bulk")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -200,7 +200,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/start")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     public async Task<IActionResult> StartAssignmentWork(Guid assignmentId)
     {
         try
@@ -238,7 +238,7 @@ public class AssignmentsController : BaseController
     /// HR/Admin can extend any assignment.
     /// </summary>
     [HttpPost("extend-due-date")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ExtendAssignmentDueDate([FromBody] ExtendAssignmentDueDateDto extendDto)
@@ -294,7 +294,7 @@ public class AssignmentsController : BaseController
     /// HR/Admin can withdraw any assignment.
     /// </summary>
     [HttpPost("withdraw")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> WithdrawAssignment([FromBody] WithdrawAssignmentDto withdrawDto)
@@ -381,7 +381,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/sections/{sectionId}/complete-manager")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> CompleteSectionAsManager(Guid assignmentId, Guid sectionId)
     {
         try
@@ -398,7 +398,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/sections/bulk-complete-manager")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> CompleteBulkSectionsAsManager(Guid assignmentId, [FromBody] List<Guid> sectionIds)
     {
         try
@@ -444,7 +444,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/submit-manager")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> SubmitManagerQuestionnaire(Guid assignmentId, [FromBody] SubmitQuestionnaireDto submitDto)
     {
         try
@@ -471,7 +471,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/initiate-review")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> InitiateReview(Guid assignmentId)
     {
         try
@@ -532,7 +532,7 @@ public class AssignmentsController : BaseController
     /// Transitions from InReview to ManagerReviewConfirmed state.
     /// </summary>
     [HttpPost("{assignmentId}/review/finish")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> FinishReviewMeeting(Guid assignmentId, [FromBody] FinishReviewMeetingDto finishDto)
@@ -608,7 +608,7 @@ public class AssignmentsController : BaseController
     /// Transitions from EmployeeReviewConfirmed to Finalized state.
     /// </summary>
     [HttpPost("{assignmentId}/review/finalize-manager")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> FinalizeQuestionnaireAsManager(Guid assignmentId, [FromBody] FinalizeAsManagerDto finalizeDto)
@@ -642,7 +642,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("reminder")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -703,7 +703,7 @@ public class AssignmentsController : BaseController
     /// <param name="assignmentId">The assignment to reopen</param>
     /// <param name="reopenDto">Target state and reason for reopening</param>
     [HttpPost("{assignmentId}/reopen")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

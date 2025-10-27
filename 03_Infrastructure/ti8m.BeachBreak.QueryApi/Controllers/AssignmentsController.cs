@@ -41,7 +41,7 @@ public class AssignmentsController : BaseController
     /// Gets all assignments. HR/Admin only.
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "HR,HRLead,Admin")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllAssignments()
     {
@@ -66,7 +66,7 @@ public class AssignmentsController : BaseController
     /// HR/Admin can view any assignment.
     /// </summary>
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(QuestionnaireAssignmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -121,7 +121,7 @@ public class AssignmentsController : BaseController
     /// HR/Admin can view assignments for any employee.
     /// </summary>
     [HttpGet("employee/{employeeId}")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAssignmentsByEmployee(Guid employeeId)
@@ -245,7 +245,7 @@ public class AssignmentsController : BaseController
     /// Returns a list of all edits made by the manager during the review meeting.
     /// </summary>
     [HttpGet("{id:guid}/review-changes")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(IEnumerable<ReviewChangeDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -330,7 +330,7 @@ public class AssignmentsController : BaseController
     /// Returns questionnaires for same employee, same category, with goals, that are finalized.
     /// </summary>
     [HttpGet("{assignmentId}/predecessors/{questionId}")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(IEnumerable<AvailablePredecessorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAvailablePredecessors(Guid assignmentId, Guid questionId)
@@ -368,7 +368,7 @@ public class AssignmentsController : BaseController
     /// Goals are filtered based on workflow state and user role.
     /// </summary>
     [HttpGet("{assignmentId}/goals/{questionId}")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(GoalQuestionDataDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

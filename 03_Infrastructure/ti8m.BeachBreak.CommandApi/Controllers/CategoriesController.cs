@@ -8,7 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/categories")]
-[Authorize(Roles = "HR")]
+[Authorize(Policy = "HR")]
 public class CategoriesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;

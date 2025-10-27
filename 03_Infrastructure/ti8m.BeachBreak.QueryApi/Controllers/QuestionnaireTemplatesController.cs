@@ -24,7 +24,7 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpGet]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllTemplates()
     {
@@ -75,7 +75,7 @@ public class QuestionnaireTemplatesController : BaseController
     //}
 
     [HttpGet("published")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPublishedTemplates()
     {
@@ -92,7 +92,7 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpGet("drafts")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDraftTemplates()
     {
@@ -109,7 +109,7 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpGet("archived")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetArchivedTemplates()
     {
@@ -126,7 +126,7 @@ public class QuestionnaireTemplatesController : BaseController
     }
 
     [HttpGet("assignable")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAssignableTemplates()
     {

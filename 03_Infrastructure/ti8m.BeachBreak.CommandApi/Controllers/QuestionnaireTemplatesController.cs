@@ -9,7 +9,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/questionnaire-templates")]
-[Authorize(Roles = "HR")]
+[Authorize(Policy = "HR")]
 public class QuestionnaireTemplatesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;

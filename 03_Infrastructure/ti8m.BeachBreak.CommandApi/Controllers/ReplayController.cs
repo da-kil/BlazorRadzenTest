@@ -10,7 +10,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/admin/replay")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "Admin")]
 public class ReplayController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;

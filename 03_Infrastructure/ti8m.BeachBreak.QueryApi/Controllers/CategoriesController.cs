@@ -8,7 +8,7 @@ namespace ti8m.BeachBreak.QueryApi.Controllers;
 
 [ApiController]
 [Route("q/api/v{version:apiVersion}/categories")]
-[Authorize(Roles = "HR")]
+[Authorize(Policy = "HR")]
 public class CategoriesController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;

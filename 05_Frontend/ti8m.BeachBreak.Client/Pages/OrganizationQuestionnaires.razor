@@ -1,5 +1,5 @@
 @page "/organization/questionnaires"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "HR")]
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
