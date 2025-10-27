@@ -107,9 +107,9 @@ public class QuestionnaireTemplateReadModel
         IsDeleted = false;
     }
 
-    private static List<QuestionSection> MapDomainSectionsToQuerySections(List<Domain.QuestionnaireTemplateAggregate.Events.QuestionSectionSnapshot> snapshots)
+    private static List<QuestionSection> MapDomainSectionsToQuerySections(List<Domain.QuestionnaireTemplateAggregate.Events.QuestionSectionData> data)
     {
-        return snapshots.Select(s => new QuestionSection
+        return data.Select(s => new QuestionSection
         {
             Id = s.Id,
             Title = s.Title,

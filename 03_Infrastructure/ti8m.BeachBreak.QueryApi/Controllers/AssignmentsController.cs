@@ -330,6 +330,9 @@ public class AssignmentsController : BaseController
     /// Returns questionnaires for same employee, same category, with goals, that are finalized.
     /// </summary>
     [HttpGet("{assignmentId}/predecessors/{questionId}")]
+    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [ProducesResponseType(typeof(IEnumerable<AvailablePredecessorDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAvailablePredecessors(Guid assignmentId, Guid questionId)
     {
         try
@@ -365,12 +368,35 @@ public class AssignmentsController : BaseController
     /// Goals are filtered based on workflow state and user role.
     /// </summary>
     [HttpGet("{assignmentId}/goals/{questionId}")]
+    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [ProducesResponseType(typeof(GoalQuestionDataDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetGoalQuestionData(Guid assignmentId, Guid questionId)
     {
         try
         {
-            // Determine current user's role (Manager if has Manager role claim, otherwise Employee)
-            var currentUserRole = User.IsInRole("Manager")
+            // Get current user ID
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("Failed to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Determine current user's role using the authorization cache service
+            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, HttpContext.RequestAborted);
+            if (employeeRole == null)
+            {
+                logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+                return Unauthorized("Unable to determine user role");
+            }
+
+            // Map ApplicationRole to CompletionRole
+            // TeamLead, HR, HRLead, and Admin are treated as Manager for goal visibility
+            var currentUserRole = employeeRole.ApplicationRole == ApplicationRole.TeamLead ||
+                                  employeeRole.ApplicationRole == ApplicationRole.HR ||
+                                  employeeRole.ApplicationRole == ApplicationRole.HRLead ||
+                                  employeeRole.ApplicationRole == ApplicationRole.Admin
                 ? Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager
                 : Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee;
 
