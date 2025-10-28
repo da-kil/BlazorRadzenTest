@@ -28,8 +28,24 @@ public class LinkPredecessorQuestionnaireCommandHandler
                 "Linking predecessor questionnaire {PredecessorId} to assignment {AssignmentId} for question {QuestionId}",
                 command.PredecessorAssignmentId, command.AssignmentId, command.QuestionId);
 
+            // Load current assignment
             var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
                 command.AssignmentId, cancellationToken: cancellationToken);
+
+            // Load predecessor to validate it's finalized
+            var predecessor = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
+                command.PredecessorAssignmentId, cancellationToken: cancellationToken);
+
+            // Business rule: Can only link to finalized predecessors
+            if (predecessor.WorkflowState != Domain.QuestionnaireAssignmentAggregate.WorkflowState.Finalized)
+            {
+                logger.LogWarning(
+                    "Cannot link predecessor {PredecessorId} - not finalized (current state: {State})",
+                    command.PredecessorAssignmentId, predecessor.WorkflowState);
+                return Result.Fail(
+                    $"Cannot link predecessor questionnaire - it must be finalized (current state: {predecessor.WorkflowState})",
+                    400);
+            }
 
             assignment.LinkPredecessorQuestionnaire(
                 command.QuestionId,

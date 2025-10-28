@@ -5,7 +5,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 /// <summary>
 /// Entity representing a rating of a goal from a predecessor questionnaire.
-/// Uses hybrid approach: maintains reference + snapshot for historical accuracy.
+/// Uses hybrid approach: maintains reference + captured predecessor goal data for historical accuracy.
 /// Identity is based on unique Id (Guid).
 /// </summary>
 public class GoalRating : Entity<Guid>
@@ -15,8 +15,8 @@ public class GoalRating : Entity<Guid>
     public Guid SourceGoalId { get; private set; }
     public Guid QuestionId { get; private set; }
 
-    // Snapshot (immutable copy at linking time)
-    public GoalSnapshot Snapshot { get; private set; } = null!;
+    // Predecessor goal data (immutable copy at rating time)
+    public PredecessorGoalData PredecessorGoal { get; private set; } = null!;
 
     // Rating data
     public CompletionRole RatedByRole { get; private set; }
@@ -35,7 +35,7 @@ public class GoalRating : Entity<Guid>
         Guid sourceAssignmentId,
         Guid sourceGoalId,
         Guid questionId,
-        GoalSnapshot snapshot,
+        PredecessorGoalData predecessorGoal,
         CompletionRole ratedByRole,
         decimal degreeOfAchievement,
         string justification,
@@ -48,7 +48,7 @@ public class GoalRating : Entity<Guid>
         SourceAssignmentId = sourceAssignmentId;
         SourceGoalId = sourceGoalId;
         QuestionId = questionId;
-        Snapshot = snapshot ?? throw new ArgumentNullException(nameof(snapshot));
+        PredecessorGoal = predecessorGoal ?? throw new ArgumentNullException(nameof(predecessorGoal));
         RatedByRole = ratedByRole;
         DegreeOfAchievement = degreeOfAchievement;
         Justification = justification ?? string.Empty;
@@ -70,7 +70,7 @@ public class GoalRating : Entity<Guid>
             SourceAssignmentId = SourceAssignmentId,
             SourceGoalId = SourceGoalId,
             QuestionId = QuestionId,
-            Snapshot = Snapshot,
+            PredecessorGoal = PredecessorGoal,
             RatedByRole = RatedByRole,
             DegreeOfAchievement = degreeOfAchievement ?? DegreeOfAchievement,
             Justification = justification ?? Justification,

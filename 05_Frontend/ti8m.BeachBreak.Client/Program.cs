@@ -43,6 +43,7 @@ internal class Program
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
 
         // Register other API services
+        builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<ICategoryApiService, CategoryApiService>();
         builder.Services.AddScoped<IEmployeeApiService, EmployeeApiService>();
         builder.Services.AddScoped<IOrganizationApiService, OrganizationApiService>();

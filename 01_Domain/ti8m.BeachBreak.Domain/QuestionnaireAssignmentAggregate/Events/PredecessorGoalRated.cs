@@ -6,6 +6,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 /// <summary>
 /// Domain event raised when a goal from a predecessor questionnaire is rated.
 /// Employee and Manager rate goals separately during in-progress states.
+/// Includes captured predecessor goal data for historical accuracy.
 /// </summary>
 public record PredecessorGoalRated(
     Guid QuestionId,
@@ -15,4 +16,5 @@ public record PredecessorGoalRated(
     decimal DegreeOfAchievement,
     string Justification,
     DateTime RatedAt,
-    Guid RatedByEmployeeId) : IDomainEvent;
+    Guid RatedByEmployeeId,
+    PredecessorGoalData PredecessorGoal) : IDomainEvent;

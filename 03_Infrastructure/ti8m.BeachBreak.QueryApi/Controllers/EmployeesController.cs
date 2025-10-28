@@ -598,6 +598,80 @@ public class EmployeesController : BaseController
     }
 
     /// <summary>
+    /// Gets all goal data for a specific question within an assignment for the current employee.
+    /// Includes goals added by Employee and ratings of predecessor goals.
+    /// Goals are filtered based on workflow state - employees only see their own goals.
+    /// </summary>
+    [HttpGet("me/assignments/{assignmentId:guid}/goals/{questionId:guid}")]
+    [ProducesResponseType(typeof(GoalQuestionDataDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyGoalQuestionData(Guid assignmentId, Guid questionId)
+    {
+        try
+        {
+            // Get current user ID from UserContext
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("Failed to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Verify the assignment belongs to the current employee
+            var assignmentResult = await queryDispatcher.QueryAsync(
+                new QuestionnaireEmployeeAssignmentListQuery(userId),
+                HttpContext.RequestAborted);
+
+            if (assignmentResult?.Payload == null || !assignmentResult.Payload.Any(a => a.Id == assignmentId))
+            {
+                logger.LogWarning("Employee {UserId} attempted to access assignment {AssignmentId} that doesn't belong to them",
+                    userId, assignmentId);
+                return NotFound($"Assignment {assignmentId} not found or does not belong to you");
+            }
+
+            // Employees always see goals with Employee role filter
+            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
+                assignmentId, questionId, Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee);
+
+            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+            if (result == null)
+            {
+                logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
+                    assignmentId, questionId);
+                return NotFound();
+            }
+
+            if (!result.Succeeded)
+            {
+                return CreateResponse(result);
+            }
+
+            // Log what we're returning for debugging
+            logger.LogInformation("Returning goal data for employee {UserId}: Assignment {AssignmentId}, Question {QuestionId}, WorkflowState: {WorkflowState}, Goals Count: {GoalCount}",
+                userId, assignmentId, questionId,
+                result.Payload?.WorkflowState,
+                result.Payload?.Goals?.Count ?? 0);
+
+            if (result.Payload?.Goals != null)
+            {
+                foreach (var goal in result.Payload.Goals)
+                {
+                    logger.LogInformation("  Goal {GoalId}: AddedByRole={AddedByRole}", goal.Id, goal.AddedByRole);
+                }
+            }
+
+            return Ok(result.Payload);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting goal data for assignment {AssignmentId}, question {QuestionId}",
+                assignmentId, questionId);
+            return StatusCode(500, "An error occurred while retrieving goal data");
+        }
+    }
+
+    /// <summary>
     /// Gets all questionnaire assignments for a specific employee by ID.
     /// Managers can only view assignments for their direct reports.
     /// HR/Admin can view assignments for any employee.

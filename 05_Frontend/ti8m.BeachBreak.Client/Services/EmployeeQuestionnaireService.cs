@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.JSInterop;
 using ti8m.BeachBreak.Client.Models;
 
 namespace ti8m.BeachBreak.Client.Services;
@@ -7,9 +8,11 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
 {
     private const string EmployeeQueryEndpoint = "q/api/v1/employees";
     private const string EmployeeCommandEndpoint = "c/api/v1/employees";
+    private readonly IJSRuntime _jsRuntime;
 
-    public EmployeeQuestionnaireService(IHttpClientFactory factory) : base(factory)
+    public EmployeeQuestionnaireService(IHttpClientFactory factory, IJSRuntime jsRuntime) : base(factory)
     {
+        _jsRuntime = jsRuntime;
     }
 
     public async Task<List<QuestionnaireAssignment>> GetMyAssignmentsAsync()
@@ -23,10 +26,18 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         // Use "me" endpoint - backend resolves employee ID from UserContext
         try
         {
-            return await HttpQueryClient.GetFromJsonAsync<QuestionnaireAssignment>($"{EmployeeQueryEndpoint}/me/assignments/{assignmentId}");
+            var endpoint = $"{EmployeeQueryEndpoint}/me/assignments/{assignmentId}";
+            await _jsRuntime.InvokeVoidAsync("console.log", $"[EmployeeQuestionnaireService] Fetching assignment {assignmentId} from {endpoint}");
+
+            var result = await HttpQueryClient.GetFromJsonAsync<QuestionnaireAssignment>(endpoint);
+
+            await _jsRuntime.InvokeVoidAsync("console.log", $"[EmployeeQuestionnaireService] Successfully fetched assignment {assignmentId}: {(result != null ? "Found" : "NULL")}");
+            return result;
         }
         catch (Exception ex)
         {
+            await _jsRuntime.InvokeVoidAsync("console.error", $"[EmployeeQuestionnaireService] ERROR fetching assignment {assignmentId}: {ex.GetType().Name} - {ex.Message}");
+            await _jsRuntime.InvokeVoidAsync("console.error", $"[EmployeeQuestionnaireService] Stack trace: {ex.StackTrace}");
             LogError($"Error fetching assignment {assignmentId}", ex);
             return null;
         }

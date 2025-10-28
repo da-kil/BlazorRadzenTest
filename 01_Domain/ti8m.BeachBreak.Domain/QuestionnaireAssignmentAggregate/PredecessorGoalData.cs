@@ -4,10 +4,11 @@ using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 /// <summary>
-/// Immutable snapshot of a goal from a predecessor questionnaire.
-/// Captured at linking time to protect against historical changes.
+/// Immutable captured data of a goal from a predecessor questionnaire.
+/// Captured at rating time to preserve historical accuracy and protect against future changes.
+/// Note: Not an event sourcing snapshot - this is domain data preservation.
 /// </summary>
-public class GoalSnapshot : ValueObject
+public class PredecessorGoalData : ValueObject
 {
     public string ObjectiveDescription { get; private set; } = string.Empty;
     public DateTime TimeframeFrom { get; private set; }
@@ -16,9 +17,9 @@ public class GoalSnapshot : ValueObject
     public CompletionRole AddedByRole { get; private set; }
     public decimal WeightingPercentage { get; private set; }
 
-    private GoalSnapshot() { }
+    private PredecessorGoalData() { }
 
-    public GoalSnapshot(
+    public PredecessorGoalData(
         string objectiveDescription,
         DateTime timeframeFrom,
         DateTime timeframeTo,

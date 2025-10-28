@@ -572,7 +572,7 @@ public class QuestionnaireAssignment : AggregateRoot
         Guid questionId,
         Guid sourceAssignmentId,
         Guid sourceGoalId,
-        GoalSnapshot snapshot,
+        PredecessorGoalData predecessorGoal,
         CompletionRole ratedByRole,
         decimal degreeOfAchievement,
         string justification,
@@ -612,7 +612,8 @@ public class QuestionnaireAssignment : AggregateRoot
             degreeOfAchievement,
             justification,
             DateTime.UtcNow,
-            ratedByEmployeeId));
+            ratedByEmployeeId,
+            predecessorGoal));
     }
 
     public void ModifyPredecessorGoalRating(
@@ -650,10 +651,10 @@ public class QuestionnaireAssignment : AggregateRoot
     }
 
     /// <summary>
-    /// Gets a snapshot of a specific goal for rating purposes.
+    /// Gets captured data of a specific goal for rating purposes.
     /// Used when rating goals from predecessor questionnaires.
     /// </summary>
-    public GoalSnapshot GetGoalSnapshot(Guid questionId, Guid goalId)
+    public PredecessorGoalData GetPredecessorGoalData(Guid questionId, Guid goalId)
     {
         if (!_goalsByQuestion.TryGetValue(questionId, out var goals))
             throw new InvalidOperationException($"Question {questionId} has no goals");
@@ -662,7 +663,7 @@ public class QuestionnaireAssignment : AggregateRoot
         if (goal == null)
             throw new InvalidOperationException($"Goal {goalId} not found in question {questionId}");
 
-        return new GoalSnapshot(
+        return new PredecessorGoalData(
             goal.ObjectiveDescription,
             goal.TimeframeFrom,
             goal.TimeframeTo,
@@ -1056,10 +1057,6 @@ public class QuestionnaireAssignment : AggregateRoot
         if (!_goalRatingsByQuestion.ContainsKey(@event.QuestionId))
             _goalRatingsByQuestion[@event.QuestionId] = new List<GoalRating>();
 
-        // Note: GoalSnapshot should be provided from the command handler
-        // Here we create an empty snapshot - in practice, this should be populated from the predecessor goal
-        var snapshot = new GoalSnapshot("", DateTime.MinValue, DateTime.MinValue, "", CompletionRole.Employee, 0);
-
         // Generate unique Id for this rating entity
         var ratingId = Guid.NewGuid();
 
@@ -1068,7 +1065,7 @@ public class QuestionnaireAssignment : AggregateRoot
             @event.SourceAssignmentId,
             @event.SourceGoalId,
             @event.QuestionId,
-            snapshot,
+            @event.PredecessorGoal,
             @event.RatedByRole,
             @event.DegreeOfAchievement,
             @event.Justification,

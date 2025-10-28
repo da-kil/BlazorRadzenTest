@@ -64,6 +64,7 @@ public class AssignmentsController : BaseController
     /// Gets a specific assignment by ID.
     /// Managers can only view assignments for their direct reports.
     /// HR/Admin can view any assignment.
+    /// Note: Employees should use /employees/me/assignments/{id} instead.
     /// </summary>
     [HttpGet("{id:guid}")]
     [Authorize(Policy = "TeamLead")]
@@ -81,7 +82,7 @@ public class AssignmentsController : BaseController
 
             var assignment = result.Payload;
 
-            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
+            // Get current user ID
             Guid userId;
             try
             {
@@ -93,11 +94,12 @@ public class AssignmentsController : BaseController
                 return Unauthorized(ex.Message);
             }
 
+            // Check if user has elevated role (HR/Admin) - they can access any assignment
             var hasElevatedRole = await HasElevatedRoleAsync(userId);
             if (!hasElevatedRole)
             {
+                // Managers can only access assignments for their direct reports
                 var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, id);
-
                 if (!canAccess)
                 {
                     logger.LogWarning("Manager {UserId} attempted to access assignment {AssignmentId} for non-direct report",

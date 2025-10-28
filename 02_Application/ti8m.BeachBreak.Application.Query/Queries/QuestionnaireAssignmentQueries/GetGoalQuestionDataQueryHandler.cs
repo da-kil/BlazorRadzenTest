@@ -6,7 +6,7 @@ namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueri
 
 /// <summary>
 /// Query handler to retrieve goal data for a specific question within an assignment.
-/// Reads from the event-sourced QuestionnaireAssignment aggregate.
+/// Reads from the QuestionnaireAssignmentReadModel projection (proper CQRS).
 /// </summary>
 public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionDataQuery, Result<GoalQuestionDataDto>>
 {
@@ -19,8 +19,8 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
 
     public async Task<Result<GoalQuestionDataDto>> HandleAsync(GetGoalQuestionDataQuery query, CancellationToken cancellationToken = default)
     {
-        // Load the aggregate from event stream
-        var assignment = await _repository.LoadAggregateAsync(query.AssignmentId, cancellationToken);
+        // Load from read model projection instead of replaying event stream
+        var assignment = await _repository.GetAssignmentByIdAsync(query.AssignmentId, cancellationToken);
 
         if (assignment == null)
         {
@@ -35,7 +35,7 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
         };
 
         // Get predecessor link if exists
-        if (assignment.PredecessorLinks.TryGetValue(query.QuestionId, out var predecessorId))
+        if (assignment.PredecessorLinksByQuestion.TryGetValue(query.QuestionId, out var predecessorId))
         {
             dto.PredecessorAssignmentId = predecessorId;
         }
@@ -86,12 +86,12 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
                 RatedByRole = r.RatedByRole,
                 DegreeOfAchievement = r.DegreeOfAchievement,
                 Justification = r.Justification,
-                OriginalObjectiveDescription = r.Snapshot.ObjectiveDescription,
-                OriginalTimeframeFrom = r.Snapshot.TimeframeFrom,
-                OriginalTimeframeTo = r.Snapshot.TimeframeTo,
-                OriginalMeasurementMetric = r.Snapshot.MeasurementMetric,
-                OriginalAddedByRole = r.Snapshot.AddedByRole,
-                OriginalWeightingPercentage = r.Snapshot.WeightingPercentage
+                OriginalObjectiveDescription = r.SnapshotObjectiveDescription,
+                OriginalTimeframeFrom = r.SnapshotTimeframeFrom,
+                OriginalTimeframeTo = r.SnapshotTimeframeTo,
+                OriginalMeasurementMetric = r.SnapshotMeasurementMetric,
+                OriginalAddedByRole = r.SnapshotAddedByRole,
+                OriginalWeightingPercentage = r.SnapshotWeightingPercentage
             }).ToList();
         }
 
@@ -104,8 +104,8 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
     /// InReview: Manager sees all, Employee sees only their own.
     /// Post-Review: Both see all.
     /// </summary>
-    private IEnumerable<Goal> FilterGoalsByWorkflowState(
-        IEnumerable<Goal> goals,
+    private IEnumerable<Projections.GoalReadModel> FilterGoalsByWorkflowState(
+        IEnumerable<Projections.GoalReadModel> goals,
         WorkflowState workflowState,
         CompletionRole currentUserRole)
     {

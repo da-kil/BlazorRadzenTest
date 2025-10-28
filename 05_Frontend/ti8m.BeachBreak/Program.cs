@@ -84,7 +84,7 @@ public class Program
                 // single-tenant apps, but it requires a custom IssuerValidator as shown 
                 // in the comments below. 
 
-                oidcOptions.Authority = $"{azureEntraSettings.Instance}/{azureEntraSettings.TenantId}/v2.0/";
+                oidcOptions.Authority = $"{azureEntraSettings.Instance?.TrimEnd('/')}/{azureEntraSettings.TenantId}/v2.0/";
                 // ........................................................................
 
                 // ........................................................................
@@ -310,6 +310,7 @@ public class Program
         }).AddHttpMessageHandler<BearerTokenHandler>();
 
         builder.Services.AddQuestionnaireServices();
+        builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<ICategoryApiService, CategoryApiService>();
         builder.Services.AddScoped<IEmployeeApiService, EmployeeApiService>();
         builder.Services.AddScoped<IOrganizationApiService, OrganizationApiService>();
@@ -413,7 +414,15 @@ public class Program
                         context.Response.Headers[header.Key] = header.Value.ToArray();
                     }
                 }
-                await response.Content.CopyToAsync(context.Response.Body);
+
+                // Only copy response body if status code allows content
+                // 204 No Content, 205 Reset Content, 304 Not Modified should not have a body
+                if (response.StatusCode != System.Net.HttpStatusCode.NoContent &&
+                    response.StatusCode != System.Net.HttpStatusCode.ResetContent &&
+                    response.StatusCode != System.Net.HttpStatusCode.NotModified)
+                {
+                    await response.Content.CopyToAsync(context.Response.Body);
+                }
             });
         });
 
@@ -476,7 +485,15 @@ public class Program
                         context.Response.Headers[header.Key] = header.Value.ToArray();
                     }
                 }
-                await response.Content.CopyToAsync(context.Response.Body);
+
+                // Only copy response body if status code allows content
+                // 204 No Content, 205 Reset Content, 304 Not Modified should not have a body
+                if (response.StatusCode != System.Net.HttpStatusCode.NoContent &&
+                    response.StatusCode != System.Net.HttpStatusCode.ResetContent &&
+                    response.StatusCode != System.Net.HttpStatusCode.NotModified)
+                {
+                    await response.Content.CopyToAsync(context.Response.Body);
+                }
             });
         });
 

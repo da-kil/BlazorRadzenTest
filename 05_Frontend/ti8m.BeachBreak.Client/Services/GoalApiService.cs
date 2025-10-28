@@ -12,10 +12,13 @@ namespace ti8m.BeachBreak.Client.Services;
 public class GoalApiService : BaseApiService, IGoalApiService
 {
     private const string QueryEndpoint = "q/api/v1/assignments";
+    private const string EmployeeQueryEndpoint = "q/api/v1/employees/me/assignments";
     private const string CommandEndpoint = "c/api/v1/assignments";
+    private readonly IAuthService _authService;
 
-    public GoalApiService(IHttpClientFactory factory) : base(factory)
+    public GoalApiService(IHttpClientFactory factory, IAuthService authService) : base(factory)
     {
+        _authService = authService;
     }
 
     public async Task<Result> LinkPredecessorAsync(Guid assignmentId, LinkPredecessorQuestionnaireDto dto)
@@ -168,8 +171,26 @@ public class GoalApiService : BaseApiService, IGoalApiService
     {
         try
         {
-            var response = await HttpQueryClient.GetFromJsonAsync<GoalQuestionDataDto>(
-                $"{QueryEndpoint}/{assignmentId}/goals/{questionId}");
+            // Determine which endpoint to use based on user role
+            var userRole = await _authService.GetMyRoleAsync();
+            var isManager = userRole?.ApplicationRole is ApplicationRole.TeamLead
+                or ApplicationRole.HR
+                or ApplicationRole.HRLead
+                or ApplicationRole.Admin;
+
+            string endpoint;
+            if (isManager)
+            {
+                // Managers use the general assignments endpoint
+                endpoint = $"{QueryEndpoint}/{assignmentId}/goals/{questionId}";
+            }
+            else
+            {
+                // Employees use the "me" endpoint which validates ownership
+                endpoint = $"{EmployeeQueryEndpoint}/{assignmentId}/goals/{questionId}";
+            }
+
+            var response = await HttpQueryClient.GetFromJsonAsync<GoalQuestionDataDto>(endpoint);
 
             if (response != null)
             {

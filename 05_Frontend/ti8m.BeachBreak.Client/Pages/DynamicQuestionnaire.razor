@@ -20,6 +20,8 @@
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject QuestionConfigurationService ConfigService
 @inject GoalService GoalService
+@inject IJSRuntime JSRuntime
+@inject IAuthService AuthService
 @inherits OptimizedComponentBase
 
 <link href="css/questionnaire-unified.css" rel="stylesheet" />
@@ -369,29 +371,75 @@
         // Get user name for workflow actions
         currentUserName = user.Identity?.Name ?? "Unknown User";
 
-        // Check application roles - use actual ApplicationRole enum values
-        isEmployee = user.IsInRole("Employee");
-        // Managers are TeamLead, HR, HRLead, or Admin - anyone who can manage team questionnaires
-        isManager = user.IsInRole("TeamLead") || user.IsInRole("HR") || user.IsInRole("HRLead") || user.IsInRole("Admin");
+        await JSRuntime.InvokeVoidAsync("console.log", $"[DynamicQuestionnaire] User: {currentUserName}, IsAuthenticated: {user.Identity?.IsAuthenticated}");
 
-        currentUserRole = isManager ? "Manager" : "Employee";
+        try
+        {
+            // WebAssembly client doesn't have ApplicationRole claims (those are added server-side only)
+            // So we need to call the API to get the user's role from the database
+            await JSRuntime.InvokeVoidAsync("console.log", "[DynamicQuestionnaire] Fetching user role from API via AuthService");
+
+            var roleData = await AuthService.GetMyRoleAsync();
+
+            if (roleData == null)
+            {
+                await JSRuntime.InvokeVoidAsync("console.error", "[DynamicQuestionnaire] Role data is null");
+                // Default to Employee for safety
+                isEmployee = true;
+                isManager = false;
+                currentUserRole = "Employee";
+                return;
+            }
+
+            await JSRuntime.InvokeVoidAsync("console.log", $"[DynamicQuestionnaire] Fetched role: {roleData.ApplicationRole}");
+
+            // Determine role flags based on ApplicationRole enum
+            // Managers are TeamLead, HR, HRLead, or Admin
+            isManager = roleData.ApplicationRole is ApplicationRole.TeamLead
+                or ApplicationRole.HR
+                or ApplicationRole.HRLead
+                or ApplicationRole.Admin;
+
+            // Everyone is an employee (Employee role is base level)
+            isEmployee = true;
+
+            currentUserRole = isManager ? "Manager" : "Employee";
+
+            await JSRuntime.InvokeVoidAsync("console.log", $"[DynamicQuestionnaire] Determined roles - isEmployee={isEmployee}, isManager={isManager}, currentUserRole={currentUserRole}");
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"[DynamicQuestionnaire] Error fetching user role: {ex.Message}");
+            // Default to Employee for safety
+            isEmployee = true;
+            isManager = false;
+            currentUserRole = "Employee";
+        }
     }
 
     private async Task LoadAssignmentAndTemplate()
     {
         try
         {
+            await JSRuntime.InvokeVoidAsync("console.log", $"[DynamicQuestionnaire] LoadAssignmentAndTemplate called. AssignmentId.HasValue={AssignmentId.HasValue}, isEmployee={isEmployee}, isManager={isManager}");
+
             // Determine which parameter was provided
             if (AssignmentId.HasValue)
             {
+                await JSRuntime.InvokeVoidAsync("console.log", $"[DynamicQuestionnaire] AssignmentId has value: {AssignmentId.Value}");
+
                 // New route: /questionnaire/{assignmentId}
                 assignmentId = AssignmentId.Value;
 
                 // Load assignment using appropriate service based on user role
                 if (isEmployee)
                 {
+                    await JSRuntime.InvokeVoidAsync("console.log", $"[DynamicQuestionnaire] Calling EmployeeQuestionnaireService.GetMyAssignmentByIdAsync for assignment {assignmentId.Value}");
+
                     // Employees use the "me/assignments/{id}" endpoint which validates ownership
                     assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
+
+                    await JSRuntime.InvokeVoidAsync("console.log", $"[DynamicQuestionnaire] GetMyAssignmentByIdAsync returned: {(assignment != null ? "Assignment found" : "NULL")}");
                 }
                 else if (isManager)
                 {
@@ -423,6 +471,8 @@
         }
         catch (Exception ex)
         {
+            await JSRuntime.InvokeVoidAsync("console.error", $"[DynamicQuestionnaire] Exception in LoadAssignmentAndTemplate: {ex.GetType().Name} - {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("console.error", $"[DynamicQuestionnaire] Stack trace: {ex.StackTrace}");
             NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load questionnaire: {ex.Message}");
             NavigateBack();
         }
