@@ -329,18 +329,26 @@ public class AssignmentsController : BaseController
 
     /// <summary>
     /// Gets available predecessor questionnaires that can be linked for goal rating.
-    /// Returns questionnaires for same employee, same category, with goals, that are finalized.
+    /// Returns finalized questionnaires for same employee, same category, that have goals.
+    /// Validates ownership - users can only see their own predecessors.
     /// </summary>
     [HttpGet("{assignmentId}/predecessors/{questionId}")]
-    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(IEnumerable<AvailablePredecessorDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAvailablePredecessors(Guid assignmentId, Guid questionId)
     {
         try
         {
+            // Get authenticated user ID
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("Failed to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
             var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetAvailablePredecessorsQuery(
-                assignmentId, questionId);
+                assignmentId, questionId, userId);
 
             var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 

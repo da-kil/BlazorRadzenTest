@@ -36,7 +36,7 @@ public interface IGoalApiService
 
     /// <summary>
     /// Gets available predecessor questionnaires that can be linked for goal rating.
-    /// Returns questionnaires for same employee, same category, with goals, that are finalized.
+    /// Returns finalized questionnaires for same employee, same category, that have goals.
     /// </summary>
     Task<Result<IEnumerable<AvailablePredecessorDto>>> GetAvailablePredecessorsAsync(Guid assignmentId, Guid questionId);
 
