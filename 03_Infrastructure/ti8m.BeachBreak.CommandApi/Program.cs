@@ -139,11 +139,15 @@ namespace ti8m.BeachBreak.CommandApi
             builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
             {
                 options.SerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+                options.SerializerOptions.AllowTrailingCommas = true; // More lenient parsing
+                options.SerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
             });
 
             builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+                options.JsonSerializerOptions.AllowTrailingCommas = true; // More lenient parsing
+                options.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
             });
 
             var app = builder.Build();

@@ -35,6 +35,7 @@ public class GoalService
 
     /// <summary>
     /// Validates a goal's data completeness and correctness.
+    /// Note: Weighting can be 0 or null during in-progress states (will be set by manager during review).
     /// </summary>
     public bool IsGoalValid(Dictionary<string, object> goalData)
     {
@@ -66,18 +67,21 @@ public class GoalService
             return false; // Dates must be DateTime
         }
 
-        // Validate weighting
+        // Validate weighting - allow 0 or null during in-progress (will be set by manager later)
         if (!goalData.ContainsKey(GoalWeightingKey))
-            return false;
+            return true; // Weighting is optional during goal creation
 
         if (goalData[GoalWeightingKey] is decimal weighting)
         {
-            if (weighting <= 0 || weighting > 100)
+            // Allow 0 for goals being added during in-progress
+            // Weighting will be set by manager during InReview state
+            if (weighting < 0 || weighting > 100)
                 return false;
         }
         else
         {
-            return false; // Weighting must be decimal
+            // If weighting exists but is not decimal, it's invalid
+            return false;
         }
 
         return true;

@@ -27,17 +27,11 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         try
         {
             var endpoint = $"{EmployeeQueryEndpoint}/me/assignments/{assignmentId}";
-            await _jsRuntime.InvokeVoidAsync("console.log", $"[EmployeeQuestionnaireService] Fetching assignment {assignmentId} from {endpoint}");
-
             var result = await HttpQueryClient.GetFromJsonAsync<QuestionnaireAssignment>(endpoint);
-
-            await _jsRuntime.InvokeVoidAsync("console.log", $"[EmployeeQuestionnaireService] Successfully fetched assignment {assignmentId}: {(result != null ? "Found" : "NULL")}");
             return result;
         }
         catch (Exception ex)
         {
-            await _jsRuntime.InvokeVoidAsync("console.error", $"[EmployeeQuestionnaireService] ERROR fetching assignment {assignmentId}: {ex.GetType().Name} - {ex.Message}");
-            await _jsRuntime.InvokeVoidAsync("console.error", $"[EmployeeQuestionnaireService] Stack trace: {ex.StackTrace}");
             LogError($"Error fetching assignment {assignmentId}", ex);
             return null;
         }
@@ -64,7 +58,15 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         {
             var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", sectionResponses);
             response.EnsureSuccessStatusCode();
-            var responseId = await response.Content.ReadFromJsonAsync<Guid>();
+
+            // Backend returns Result<Guid>, not just Guid
+            var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
+            if (result == null || !result.Succeeded)
+            {
+                throw new Exception(result?.Message ?? "Failed to save response");
+            }
+
+            var responseId = result.Payload;
             return new QuestionnaireResponse { Id = responseId, AssignmentId = assignmentId, SectionResponses = sectionResponses };
         }
         catch (Exception ex)

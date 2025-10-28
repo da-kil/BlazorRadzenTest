@@ -16,7 +16,8 @@
       "Bash(dotnet new:*)",
       "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.CommandApi\\Authorization\\AuthorizationPolicyConfiguration.cs\" -Force)",
       "Bash(dotnet build:*)",
-      "Bash(Select-String -Pattern \"(error |Build succeeded|Build FAILED)\" -Context 0,2)"
+      "Bash(Select-String -Pattern \"(error |Build succeeded|Build FAILED)\" -Context 0,2)",
+      "Bash(Select-String -Pattern '(error |Build succeeded|Build FAILED)' -Context 0,2)"
     ],
     "deny": [],
     "ask": []
