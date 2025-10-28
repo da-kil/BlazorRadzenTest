@@ -418,16 +418,18 @@
                 assignmentId = AssignmentId.Value;
 
                 // Load assignment using appropriate service based on user role
-                if (isEmployee)
-                {
-                    // Employees use the "me/assignments/{id}" endpoint which validates ownership
-                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
-                }
-                else if (isManager)
+                // IMPORTANT: Check manager FIRST because managers often have dual roles (Manager + Employee)
+                // Managers need to use the general endpoint to view their team's assignments
+                if (isManager)
                 {
                     // Managers use the general assignment service
                     // Backend validates manager has this employee in their team
                     assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+                }
+                else if (isEmployee)
+                {
+                    // Employees use the "me/assignments/{id}" endpoint which validates ownership
+                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
                 }
 
                 if (assignment == null)
@@ -1371,13 +1373,13 @@
             }
 
             // Reload assignment to get updated workflow state and section progress
-            if (isEmployee)
-            {
-                assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
-            }
-            else if (isManager)
+            if (isManager)
             {
                 assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+            }
+            else if (isEmployee)
+            {
+                assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
             }
             StateHasChanged(); // Force UI update with new workflow state
 
@@ -1580,13 +1582,13 @@
         {
             try
             {
-                if (isEmployee)
-                {
-                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
-                }
-                else if (isManager)
+                if (isManager)
                 {
                     assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
+                }
+                else if (isEmployee)
+                {
+                    assignment = await EmployeeQuestionnaireService.GetMyAssignmentByIdAsync(assignmentId.Value);
                 }
 
                 StateHasChanged();
