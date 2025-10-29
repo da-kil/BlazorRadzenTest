@@ -136,7 +136,9 @@
                                                                 Question="@question"
                                                                 Response="@employeeResponse"
                                                                 IsReadOnly="true"
-                                                                HideHeader="true" />
+                                                                HideHeader="true"
+                                                                AssignmentId="@Assignment.Id"
+                                                                CurrentUserRole="Employee" />
                                                         </div>
                                                     </div>
                                                     <div class="answer-actions">
@@ -171,7 +173,9 @@
                                                                 Question="@question"
                                                                 Response="@managerResponse"
                                                                 IsReadOnly="true"
-                                                                HideHeader="true" />
+                                                                HideHeader="true"
+                                                                AssignmentId="@Assignment.Id"
+                                                                CurrentUserRole="Manager" />
                                                         </div>
                                                     </div>
                                                     <div class="answer-actions">
@@ -209,7 +213,9 @@
                                                             Question="@question"
                                                             Response="@singleResponse"
                                                             IsReadOnly="true"
-                                                            HideHeader="true" />
+                                                            HideHeader="true"
+                                                            AssignmentId="@Assignment.Id"
+                                                            CurrentUserRole="@currentSection.CompletionRole.ToString()" />
                                                     </div>
                                                 </div>
                                                 <div class="answer-actions">
