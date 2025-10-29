@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Questions
 @using Microsoft.AspNetCore.Components.Authorization
+@using ti8m.BeachBreak.Client.Extensions
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject IQuestionnaireAssignmentService AssignmentService
@@ -322,11 +323,11 @@
         if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
             return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
 
-        // Use role-based responses structure
-        var roleKey = role.ToString();
+        // Convert CompletionRole to ResponseRole for type-safe dictionary access
+        var responseRole = role.ToResponseRole();
 
         if (sectionResponse.RoleResponses != null &&
-            sectionResponse.RoleResponses.TryGetValue(roleKey, out var roleQuestions))
+            sectionResponse.RoleResponses.TryGetValue(responseRole, out var roleQuestions))
         {
             if (roleQuestions.TryGetValue(questionId, out var questionResponse))
             {
