@@ -1,0 +1,33 @@
+# Development environment values for QueryApi
+replicaCount: 1
+
+image:
+  repository: acrbeachbreakdev.azurecr.io/beachbreak/queryapi
+  tag: "latest"
+
+ingress:
+  hosts:
+    - host: queryapi-dev.beachbreak.ti8m.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: queryapi-dev-tls
+      hosts:
+        - queryapi-dev.beachbreak.ti8m.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 5
+
+keyVault:
+  name: "kv-beachbreak-dev"

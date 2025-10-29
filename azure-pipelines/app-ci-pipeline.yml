@@ -1,0 +1,199 @@
+# Application CI Pipeline - Build and Push Container Images
+# Builds .NET applications and pushes Docker images to ACR
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+  paths:
+    exclude:
+      - terraform/**
+      - helm/**
+      - azure-pipelines/**
+      - '**/*.md'
+
+pr:
+  branches:
+    include:
+      - main
+      - develop
+
+variables:
+  buildConfiguration: 'Release'
+  dotnetVersion: '9.0.x'
+  dockerRegistryServiceConnection: 'ACRServiceConnection'
+  imageRepository: 'beachbreak'
+  dockerfilePath: '$(Build.SourcesDirectory)'
+  tag: '$(Build.BuildId)'
+
+stages:
+  - stage: Build
+    displayName: 'Build and Test'
+    jobs:
+      - job: BuildDotNet
+        displayName: 'Build .NET Solution'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Install .NET SDK'
+            inputs:
+              version: $(dotnetVersion)
+              includePreviewVersions: false
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Restore NuGet Packages'
+            inputs:
+              command: 'restore'
+              projects: '**/*.sln'
+              feedsToUse: 'select'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Build Solution'
+            inputs:
+              command: 'build'
+              projects: '**/*.sln'
+              arguments: '--configuration $(buildConfiguration) --no-restore'
+
+          - task: DotNetCoreCLI@2
+            displayName: 'Run Unit Tests'
+            inputs:
+              command: 'test'
+              projects: '**/*Tests.csproj'
+              arguments: '--configuration $(buildConfiguration) --no-build --collect:"XPlat Code Coverage" --logger trx'
+              publishTestResults: true
+
+          - task: PublishCodeCoverageResults@1
+            displayName: 'Publish Code Coverage'
+            inputs:
+              codeCoverageTool: 'Cobertura'
+              summaryFileLocation: '$(Agent.TempDirectory)/**/*.cobertura.xml'
+
+  - stage: BuildAndPushImages
+    displayName: 'Build and Push Docker Images'
+    dependsOn: Build
+    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), eq(variables['Build.SourceBranch'], 'refs/heads/develop')))
+    jobs:
+      - job: BuildCommandApi
+        displayName: 'Build and Push CommandApi Image'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: Docker@2
+            displayName: 'Build CommandApi Image'
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)/commandapi'
+              command: 'build'
+              Dockerfile: '03_Infrastructure/ti8m.BeachBreak.CommandApi/Dockerfile'
+              tags: |
+                $(tag)
+                latest
+
+          - task: Docker@2
+            displayName: 'Push CommandApi Image'
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)/commandapi'
+              command: 'push'
+              tags: |
+                $(tag)
+                latest
+
+          - task: AquaSecurityTrivy@1
+            displayName: 'Scan CommandApi Image'
+            inputs:
+              image: '$(imageRepository)/commandapi:$(tag)'
+              severities: 'CRITICAL,HIGH'
+              ignoreUnfixed: true
+
+      - job: BuildQueryApi
+        displayName: 'Build and Push QueryApi Image'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: Docker@2
+            displayName: 'Build QueryApi Image'
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)/queryapi'
+              command: 'build'
+              Dockerfile: '03_Infrastructure/ti8m.BeachBreak.QueryApi/Dockerfile'
+              tags: |
+                $(tag)
+                latest
+
+          - task: Docker@2
+            displayName: 'Push QueryApi Image'
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)/queryapi'
+              command: 'push'
+              tags: |
+                $(tag)
+                latest
+
+          - task: AquaSecurityTrivy@1
+            displayName: 'Scan QueryApi Image'
+            inputs:
+              image: '$(imageRepository)/queryapi:$(tag)'
+              severities: 'CRITICAL,HIGH'
+              ignoreUnfixed: true
+
+      - job: BuildFrontend
+        displayName: 'Build and Push Frontend Image'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: Docker@2
+            displayName: 'Build Frontend Image'
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)/frontend'
+              command: 'build'
+              Dockerfile: '05_Frontend/ti8m.BeachBreak/Dockerfile'
+              tags: |
+                $(tag)
+                latest
+
+          - task: Docker@2
+            displayName: 'Push Frontend Image'
+            inputs:
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              repository: '$(imageRepository)/frontend'
+              command: 'push'
+              tags: |
+                $(tag)
+                latest
+
+          - task: AquaSecurityTrivy@1
+            displayName: 'Scan Frontend Image'
+            inputs:
+              image: '$(imageRepository)/frontend:$(tag)'
+              severities: 'CRITICAL,HIGH'
+              ignoreUnfixed: true
+
+      - job: PublishBuildInfo
+        displayName: 'Publish Build Information'
+        dependsOn:
+          - BuildCommandApi
+          - BuildQueryApi
+          - BuildFrontend
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Build Metadata'
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'build-info'
+              publishLocation: 'Container'
+
+          - bash: |
+              echo "Build ID: $(Build.BuildId)" > $(Build.ArtifactStagingDirectory)/build-info.txt
+              echo "Source Branch: $(Build.SourceBranch)" >> $(Build.ArtifactStagingDirectory)/build-info.txt
+              echo "Commit: $(Build.SourceVersion)" >> $(Build.ArtifactStagingDirectory)/build-info.txt
+              echo "Build Date: $(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $(Build.ArtifactStagingDirectory)/build-info.txt
+            displayName: 'Generate Build Info'

@@ -1,0 +1,33 @@
+# Development environment values for CommandApi
+replicaCount: 1
+
+image:
+  repository: acrbeachbreakdev.azurecr.io/beachbreak/commandapi
+  tag: "latest"
+
+ingress:
+  hosts:
+    - host: commandapi-dev.beachbreak.ti8m.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: commandapi-dev-tls
+      hosts:
+        - commandapi-dev.beachbreak.ti8m.com
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+
+keyVault:
+  name: "kv-beachbreak-dev"

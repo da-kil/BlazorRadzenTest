@@ -1,0 +1,42 @@
+# Production environment values for CommandApi
+replicaCount: 3
+
+image:
+  repository: acrbeachbreakproduction.azurecr.io/beachbreak/commandapi
+  tag: "1.0.0"
+
+ingress:
+  hosts:
+    - host: commandapi.beachbreak.ti8m.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: commandapi-tls
+      hosts:
+        - commandapi.beachbreak.ti8m.com
+  annotations:
+    nginx.ingress.kubernetes.io/rate-limit: "200"
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+keyVault:
+  name: "kv-beachbreak-production"
