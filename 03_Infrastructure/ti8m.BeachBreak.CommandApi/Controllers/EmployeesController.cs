@@ -15,7 +15,6 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/employees")]
-//[Authorize] // All endpoints require authentication
 public class EmployeesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
@@ -36,7 +35,7 @@ public class EmployeesController : BaseController
     }
 
     [HttpPost("bulk-insert")]
-    //[Authorize(Roles = "HRAccess")] // Only Admin, HRLead, HR can create employees
+    [Authorize(Policy = "AdminOrApp")] // Allows Admin users OR service principals with DataSeeder app role
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -64,7 +63,7 @@ public class EmployeesController : BaseController
     }
 
     [HttpPut("bulk-update")]
-    [Authorize(Policy = "HR")]
+    [Authorize(Policy = "Admin")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -92,7 +91,7 @@ public class EmployeesController : BaseController
     }
 
     [HttpDelete("bulk-delete")]
-    [Authorize(Policy = "HRLead")] // Only Admin, HRLead can delete employees
+    [Authorize(Policy = "Admin")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

@@ -75,12 +75,15 @@ public static class ApplicationRoleAuthorizationService
     /// <summary>
     /// Policy to ApplicationRole mappings for authorization checks.
     /// All roles inherit Employee's basic access and can access additional policy-protected endpoints.
+    /// Policies ending with "OrApp" also allow service principals with DataSeeder app role (checked in ASP.NET Core policies).
     /// </summary>
     public static readonly Dictionary<string, ApplicationRole[]> PolicyRoleMappings = new()
     {
         ["Employee"] = [ApplicationRole.Employee, ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
         ["Admin"] = [ApplicationRole.Admin],
+        ["AdminOrApp"] = [ApplicationRole.Admin], // Same as Admin, plus service principals with DataSeeder role (checked in ASP.NET Core policy)
         ["HR"] = [ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
+        ["HROrApp"] = [ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin], // Same as HR, plus service principals with DataSeeder role (checked in ASP.NET Core policy)
         ["HRLead"] = [ApplicationRole.HRLead, ApplicationRole.Admin],
         ["TeamLead"] = [ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin]
     };

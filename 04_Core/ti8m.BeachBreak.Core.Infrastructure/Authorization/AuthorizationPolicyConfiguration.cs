@@ -37,5 +37,29 @@ public static class AuthorizationPolicyConfiguration
         // Admin policy: Only Admin can access
         options.AddPolicy("Admin", policy =>
             policy.RequireClaim("ApplicationRole", "Admin"));
+
+        // AdminOrApp policy: Admin users OR service principals with DataSeeder app role
+        // Used for bulk operations that can be called by automated scripts
+        options.AddPolicy("AdminOrApp", policy =>
+            policy.RequireAssertion(context =>
+                // Allow users with Admin role
+                context.User.HasClaim("ApplicationRole", "Admin") ||
+                // OR allow service principals with DataSeeder app role
+                context.User.HasClaim("roles", "DataSeeder") ||
+                context.User.HasClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "DataSeeder")
+            ));
+
+        // HROrApp policy: HR users OR service principals with DataSeeder app role
+        // Used for bulk operations that can be called by automated scripts
+        options.AddPolicy("HROrApp", policy =>
+            policy.RequireAssertion(context =>
+                // Allow users with HR, HRLead, or Admin roles
+                context.User.HasClaim("ApplicationRole", "HR") ||
+                context.User.HasClaim("ApplicationRole", "HRLead") ||
+                context.User.HasClaim("ApplicationRole", "Admin") ||
+                // OR allow service principals with DataSeeder app role
+                context.User.HasClaim("roles", "DataSeeder") ||
+                context.User.HasClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "DataSeeder")
+            ));
     }
 }

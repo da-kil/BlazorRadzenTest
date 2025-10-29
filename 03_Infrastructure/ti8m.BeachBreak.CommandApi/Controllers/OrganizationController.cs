@@ -18,6 +18,7 @@ public class OrganizationController : BaseController
     }
 
     [HttpPost("bulk-import")]
+    [Authorize(Policy = "AdminOrApp")] // Allows Admin users OR service principals with DataSeeder app role
     public async Task<IActionResult> BulkImportOrganizations([FromBody] IEnumerable<SyncOrganizationDto> organizations)
     {
         Result result = await commandDispatcher.SendAsync(new BulkImportOrganizationCommand(

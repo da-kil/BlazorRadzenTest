@@ -1,0 +1,154 @@
+{
+  "Id": "960e40e9-30bd-4e4a-a16b-b0107cbe3dba",
+  "Name": "Beach Break 2026",
+  "Description": "",
+  "CategoryId": "2328167b-badc-4352-8934-ce233f2aff2b",
+  "RequiresManagerReview": true,
+  "Status": 0,
+  "PublishedDate": null,
+  "LastPublishedDate": null,
+  "PublishedByEmployeeId": null,
+  "Sections": [
+    {
+      "Id": "ffdef1bc-1d4b-4a6b-9ac3-f9ced087d639",
+      "Title": "Rückblick 2025: Selbsteinschätzung für Mitarbeitende",
+      "Description": "In diesem Abschnitt werden die beruflichen Kompetenzen und Fähigkeiten im Jahr 2025 reflektiert.",
+      "Order": 0,
+      "IsRequired": true,
+      "CompletionRole": 2,
+      "Questions": [
+        {
+          "Id": "606daef7-be7b-4085-97e5-50f931f8b869",
+          "Title": "Competency Assessment",
+          "Description": "",
+          "Type": 0,
+          "Order": 0,
+          "IsRequired": true,
+          "Configuration": {
+            "Competencies": [
+              {
+                "key": "competency_1",
+                "title": "Fachkenntnisse",
+                "description": "Bewertung der eigenen Expertise und des Fachwissens in Bezug auf die beruflichen Aufgaben.",
+                "isRequired": true,
+                "order": 0
+              },
+              {
+                "key": "competency_2",
+                "title": "Arbeitsqualität",
+                "description": "Einschätzung der Genauigkeit, Effizienz und Vollständigkeit der erbrachten Arbeit.",
+                "isRequired": true,
+                "order": 1
+              },
+              {
+                "key": "competency_3",
+                "title": "Zuverlässigkeit ",
+                "description": "Reflexion über die Pünktlichkeit, Termintreue und Zuverlässigkeit bei der Erfüllung von Aufgaben und Zusagen.",
+                "isRequired": true,
+                "order": 2
+              },
+              {
+                "key": "competency_4",
+                "title": "Belastbarkeit",
+                "description": "Beurteilung der Fähigkeit, unter Druck effektiv zu arbeiten und mit Stress umzugehen.",
+                "isRequired": true,
+                "order": 3
+              },
+              {
+                "key": "competency_5",
+                "title": "Selbstständigkeit",
+                "description": "Einschätzung der Fähigkeit, Aufgaben eigenverantwortlich und ohne ständige Anleitung zu erledigen.",
+                "isRequired": true,
+                "order": 4
+              },
+              {
+                "key": "competency_6",
+                "title": "Kommunikationsfähigkeit",
+                "description": "Einschätzung der Fähigkeit zur klaren und verständlichen Übermittlung von Informationen sowie des Verständnisses für den Bedarf an Kommunikation.",
+                "isRequired": true,
+                "order": 5
+              },
+              {
+                "key": "competency_7",
+                "title": "Proaktivität und Initiative",
+                "description": "Beurteilung der Neigung, eigenständig zu handeln und neue Ideen oder Lösungen vorzuschlagen.",
+                "isRequired": true,
+                "order": 6
+              },
+              {
+                "key": "competency_8",
+                "title": "Problemlösungsfähigkeit",
+                "description": "Bewertung der Fähigkeit, Herausforderungen zu erkennen und effektive Lösungen zu entwickeln.",
+                "isRequired": true,
+                "order": 7
+              },
+              {
+                "key": "competency_9",
+                "title": "Verhalten",
+                "description": "Einschätzung des eigenen Verhaltens im Arbeitskontext, insbesondere im Umgang mit Kolleginnen und Kollegen, Vorgesetzten und gegebenenfalls Kunden.",
+                "isRequired": true,
+                "order": 8
+              }
+            ],
+            "RatingScale": 4,
+            "ScaleLowLabel": "Poor",
+            "ScaleHighLabel": "Excellent"
+          }
+        }
+      ]
+    },
+    {
+      "Id": "716aadb8-82bd-4f5e-a072-aac1fbae82e5",
+      "Title": "Rückblick: Mein/e Vorgesetzte/r",
+      "Description": "Dieser Abschnitt ermöglicht eine Beurteilung der Zusammenarbeit mit dem/r Vorgesetzten. Es geht darum, spezifische Aspekte und Erfahrungen des letzten Jahres zu reflektieren, sowie Wünsche für die zukünftige Zusammenarbeit anzubringen.",
+      "Order": 1,
+      "IsRequired": true,
+      "CompletionRole": 0,
+      "Questions": [
+        {
+          "Id": "ffa36a25-c178-4b31-9c55-bf7ba72e24b7",
+          "Title": "Career Development & Planning",
+          "Description": "",
+          "Type": 1,
+          "Order": 0,
+          "IsRequired": true,
+          "Configuration": {
+            "TextSections": [
+              {
+                "title": "Was schätzt du besonders an deinem/r Vorgesetzten? In welchen Bereichen hat er/sie deine Erwartungen erfüllt oder übertroffen?",
+                "description": "",
+                "isRequired": true,
+                "order": 0
+              },
+              {
+                "title": "Gibt es Bereiche, in denen sich dein/e Vorgesetzte/n verbessern könnte? Wo benötigst du mehr Unterstützung von deinem/r Vorgesetzten?",
+                "description": "",
+                "isRequired": true,
+                "order": 1
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "Id": "2f1aab8f-ba3d-4dcf-ae21-4cb7e9420211",
+      "Title": "Ausblick 2026: Zielvereinbarung",
+      "Description": "In diesem Teil des Fragebogens werden gemeinsam die Ziele für das Jahr 2026 definiert. Bitte verwendet die folgende Tabelle, um klare und erreichbare Ziele festzulegen, deren Erfolg messbar ist, und um die notwendigen Schritte zur Zielerreichung zu planen.",
+      "Order": 2,
+      "IsRequired": true,
+      "CompletionRole": 0,
+      "Questions": [
+        {
+          "Id": "c50ded6d-e0c2-4aac-8806-176b5930e600",
+          "Title": "Goal Management",
+          "Description": "",
+          "Type": 2,
+          "Order": 0,
+          "IsRequired": true,
+          "Configuration": {}
+        }
+      ]
+    }
+  ]
+}

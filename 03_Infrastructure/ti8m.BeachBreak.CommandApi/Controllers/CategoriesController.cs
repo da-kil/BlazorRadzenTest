@@ -8,7 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/categories")]
-[Authorize(Policy = "HR")]
+[Authorize(Policy = "HROrApp")] // Allows HR users OR service principals with DataSeeder app role
 public class CategoriesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;

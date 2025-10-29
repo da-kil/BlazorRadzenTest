@@ -9,7 +9,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/questionnaire-templates")]
-[Authorize(Policy = "HR")]
+[Authorize(Policy = "HROrApp")] // Allows HR users OR service principals with DataSeeder app role
 public class QuestionnaireTemplatesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
