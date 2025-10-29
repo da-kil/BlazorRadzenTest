@@ -4,6 +4,7 @@ using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Controllers;
@@ -20,24 +21,27 @@ public class AssignmentsController : BaseController
     private readonly ILogger<AssignmentsController> logger;
     private readonly IManagerAuthorizationService authorizationService;
     private readonly IAuthorizationCacheService authorizationCacheService;
+    private readonly UserContext userContext;
 
     public AssignmentsController(
         IQueryDispatcher queryDispatcher,
         ILogger<AssignmentsController> logger,
         IManagerAuthorizationService authorizationService,
-        IAuthorizationCacheService authorizationCacheService)
+        IAuthorizationCacheService authorizationCacheService,
+        UserContext userContext)
     {
         this.queryDispatcher = queryDispatcher;
         this.logger = logger;
         this.authorizationService = authorizationService;
         this.authorizationCacheService = authorizationCacheService;
+        this.userContext = userContext;
     }
 
     /// <summary>
     /// Gets all assignments. HR/Admin only.
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "HR,HRLead,Admin")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllAssignments()
     {
@@ -60,9 +64,10 @@ public class AssignmentsController : BaseController
     /// Gets a specific assignment by ID.
     /// Managers can only view assignments for their direct reports.
     /// HR/Admin can view any assignment.
+    /// Note: Employees should use /employees/me/assignments/{id} instead.
     /// </summary>
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(QuestionnaireAssignmentDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -77,7 +82,7 @@ public class AssignmentsController : BaseController
 
             var assignment = result.Payload;
 
-            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
+            // Get current user ID
             Guid userId;
             try
             {
@@ -89,11 +94,12 @@ public class AssignmentsController : BaseController
                 return Unauthorized(ex.Message);
             }
 
+            // Check if user has elevated role (HR/Admin) - they can access any assignment
             var hasElevatedRole = await HasElevatedRoleAsync(userId);
             if (!hasElevatedRole)
             {
+                // Managers can only access assignments for their direct reports
                 var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, id);
-
                 if (!canAccess)
                 {
                     logger.LogWarning("Manager {UserId} attempted to access assignment {AssignmentId} for non-direct report",
@@ -117,7 +123,7 @@ public class AssignmentsController : BaseController
     /// HR/Admin can view assignments for any employee.
     /// </summary>
     [HttpGet("employee/{employeeId}")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAssignmentsByEmployee(Guid employeeId)
@@ -241,7 +247,7 @@ public class AssignmentsController : BaseController
     /// Returns a list of all edits made by the manager during the review meeting.
     /// </summary>
     [HttpGet("{id:guid}/review-changes")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(IEnumerable<ReviewChangeDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -318,4 +324,118 @@ public class AssignmentsController : BaseController
             return StatusCode(500, "An error occurred while retrieving review changes");
         }
     }
+
+    #region Goal Queries
+
+    /// <summary>
+    /// Gets available predecessor questionnaires that can be linked for goal rating.
+    /// Returns finalized questionnaires for same employee, same category, that have goals.
+    /// Validates ownership - users can only see their own predecessors.
+    /// </summary>
+    [HttpGet("{assignmentId}/predecessors/{questionId}")]
+    [ProducesResponseType(typeof(IEnumerable<AvailablePredecessorDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAvailablePredecessors(Guid assignmentId, Guid questionId)
+    {
+        try
+        {
+            // Get authenticated user ID
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("Failed to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetAvailablePredecessorsQuery(
+                assignmentId, questionId, userId);
+
+            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+            if (result == null)
+            {
+                logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
+                return NotFound();
+            }
+
+            if (!result.Succeeded)
+            {
+                return CreateResponse(result);
+            }
+
+            return Ok(result.Payload);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting available predecessors for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while retrieving available predecessors");
+        }
+    }
+
+    /// <summary>
+    /// Gets all goal data for a specific question within an assignment.
+    /// Includes goals added by Employee/Manager and ratings of predecessor goals.
+    /// Goals are filtered based on workflow state and user role.
+    /// </summary>
+    [HttpGet("{assignmentId}/goals/{questionId}")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(typeof(GoalQuestionDataDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetGoalQuestionData(Guid assignmentId, Guid questionId)
+    {
+        try
+        {
+            // Get current user ID
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("Failed to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Determine current user's role using the authorization cache service
+            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, HttpContext.RequestAborted);
+            if (employeeRole == null)
+            {
+                logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+                return Unauthorized("Unable to determine user role");
+            }
+
+            // Map ApplicationRole to CompletionRole
+            // TeamLead, HR, HRLead, and Admin are treated as Manager for goal visibility
+            var currentUserRole = employeeRole.ApplicationRole == ApplicationRole.TeamLead ||
+                                  employeeRole.ApplicationRole == ApplicationRole.HR ||
+                                  employeeRole.ApplicationRole == ApplicationRole.HRLead ||
+                                  employeeRole.ApplicationRole == ApplicationRole.Admin
+                ? Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager
+                : Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee;
+
+            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
+                assignmentId, questionId, currentUserRole);
+
+            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+            if (result == null)
+            {
+                logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
+                    assignmentId, questionId);
+                return NotFound();
+            }
+
+            if (!result.Succeeded)
+            {
+                return CreateResponse(result);
+            }
+
+            return Ok(result.Payload);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting goal data for assignment {AssignmentId}, question {QuestionId}",
+                assignmentId, questionId);
+            return StatusCode(500, "An error occurred while retrieving goal data");
+        }
+    }
+
+    #endregion
 }

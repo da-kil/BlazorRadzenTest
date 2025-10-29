@@ -9,7 +9,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{version:apiVersion}/questionnaire-templates")]
-[Authorize(Roles = "HR")]
+[Authorize(Policy = "HR")]
 public class QuestionnaireTemplatesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
@@ -261,7 +261,7 @@ public class QuestionnaireTemplatesController : BaseController
     {
         QuestionTypeDto.TextQuestion => QuestionType.TextQuestion,
         QuestionTypeDto.Assessment => QuestionType.Assessment,
-        QuestionTypeDto.GoalAchievement => QuestionType.GoalAchievement,
+        QuestionTypeDto.Goal => QuestionType.Goal,
         _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
     };
 }

@@ -412,3 +412,33 @@ These rules were established after discovering critical bugs caused by code dupl
 4. Add comprehensive tests to prevent regressions
 
 The refactoring effort to create the Optimized components was significant. Don't waste it by reintroducing duplication.
+
+### 8. Enum Explicit Values Pattern
+- **ALWAYS** set integer values explicitly for ALL enum members
+- **NEVER** rely on implicit enum numbering
+- **REASON**: Prevents serialization bugs when enum definitions differ across layers (CQRS/Event Sourcing architecture)
+- **CRITICAL**: This codebase uses separate assemblies for Domain, Application, CommandApi, QueryApi, and Frontend - implicit enum values can lead to ordering mismatches
+
+**EXAMPLE - BAD**:
+```csharp
+public enum QuestionType
+{
+    Assessment,      // Implicitly 0
+    Goal,            // Implicitly 1 - DANGEROUS if order differs in another assembly
+    TextQuestion     // Implicitly 2
+}
+```
+
+**EXAMPLE - GOOD**:
+```csharp
+public enum QuestionType
+{
+    Assessment = 0,      // Explicitly 0 - consistent across all assemblies
+    TextQuestion = 1,    // Explicitly 1
+    Goal = 2             // Explicitly 2
+}
+```
+
+**Historical Bug**: QuestionType enum had different implicit ordering in CommandApi (Assessment, Goal, TextQuestion) vs other layers (Assessment, TextQuestion, Goal), causing Goal questions (saved as Type=1) to be deserialized as TextQuestion (Type=1) in other layers, rendering them incorrectly.
+
+**Rule**: Set explicit integer values for ALL enums in this codebase, even if they seem to have a natural sequential order.

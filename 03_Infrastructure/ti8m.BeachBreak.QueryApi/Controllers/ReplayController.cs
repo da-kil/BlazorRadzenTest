@@ -9,7 +9,7 @@ namespace ti8m.BeachBreak.QueryApi.Controllers;
 
 [ApiController]
 [Route("q/api/v{version:apiVersion}/admin/replay")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "Admin")]
 public class ReplayController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;

@@ -1,0 +1,92 @@
+@page "/debug/claims"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<h3>User Claims Debug</h3>
+
+<AuthorizeView>
+    <Authorized>
+        <h4>Authentication: ✅ Authenticated</h4>
+        <p><strong>User:</strong> @context.User.Identity?.Name</p>
+        <p><strong>Total Claims:</strong> @context.User.Claims.Count()</p>
+
+        <h5>Claims:</h5>
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var claim in context.User.Claims)
+                {
+                    <tr>
+                        <td><code>@claim.Type</code></td>
+                        <td>@claim.Value</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <h5>Role Claims (ClaimTypes.Role):</h5>
+        @if (context.User.Claims.Any(c => c.Type == System.Security.Claims.ClaimTypes.Role))
+        {
+            <ul>
+                @foreach (var roleClaim in context.User.Claims.Where(c => c.Type == System.Security.Claims.ClaimTypes.Role))
+                {
+                    <li><strong>@roleClaim.Value</strong></li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-danger">❌ No ClaimTypes.Role claims found!</p>
+        }
+
+        <h5>Role Claims ("roles"):</h5>
+        @if (context.User.Claims.Any(c => c.Type == "roles"))
+        {
+            <ul>
+                @foreach (var roleClaim in context.User.Claims.Where(c => c.Type == "roles"))
+                {
+                    <li><strong>@roleClaim.Value</strong></li>
+                }
+            </ul>
+        }
+        else
+        {
+            <p class="text-danger">❌ No "roles" claims found!</p>
+        }
+
+        <h5>User.IsInRole Tests:</h5>
+        <ul>
+            <li>IsInRole("Admin"): @context.User.IsInRole("Admin")</li>
+            <li>IsInRole("HR"): @context.User.IsInRole("HR")</li>
+            <li>IsInRole("TeamLead"): @context.User.IsInRole("TeamLead")</li>
+            <li>IsInRole("Employee"): @context.User.IsInRole("Employee")</li>
+        </ul>
+
+        <h5>ApplicationRole Claim:</h5>
+        @if (context.User.HasClaim(c => c.Type == "ApplicationRole"))
+        {
+            <p>✅ <strong>@context.User.FindFirst("ApplicationRole")?.Value</strong></p>
+        }
+        else
+        {
+            <p class="text-danger">❌ ApplicationRole claim not found!</p>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <h4>Authentication: ❌ Not Authenticated</h4>
+        <p>Please log in to see your claims.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
+<style>
+    code {
+        background-color: #f4f4f4;
+        padding: 2px 4px;
+        border-radius: 3px;
+    }
+</style>

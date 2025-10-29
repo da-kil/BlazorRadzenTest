@@ -1,9 +1,11 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Radzen;
 using ti8m.BeachBreak.Authentication;
 using ti8m.BeachBreak.Authorization;
+using ti8m.BeachBreak.Client.Configuration;
 using ti8m.BeachBreak.Client.Services;
 using ti8m.BeachBreak.Components;
 
@@ -82,7 +84,7 @@ public class Program
                 // single-tenant apps, but it requires a custom IssuerValidator as shown 
                 // in the comments below. 
 
-                oidcOptions.Authority = $"{azureEntraSettings.Instance}/{azureEntraSettings.TenantId}/v2.0/";
+                oidcOptions.Authority = $"{azureEntraSettings.Instance?.TrimEnd('/')}/{azureEntraSettings.TenantId}/v2.0/";
                 // ........................................................................
 
                 // ........................................................................
@@ -137,6 +139,116 @@ public class Program
                 // use the refresh token to obtain a new access token on access token
                 // expiration.
                 // ........................................................................
+
+                // Enrich claims with ApplicationRole from backend during authentication
+                oidcOptions.Events = new Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents
+                {
+                    OnTokenValidated = async context =>
+                    {
+                        var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                        logger.LogInformation("OnTokenValidated event fired!");
+
+                        var httpClientFactory = context.HttpContext.RequestServices.GetRequiredService<IHttpClientFactory>();
+
+                        try
+                        {
+                            var userId = context.Principal?.FindFirst("oid")?.Value
+                                        ?? context.Principal?.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value
+                                        ?? context.Principal?.FindFirst("sub")?.Value;
+
+                            logger.LogInformation("Looking for user ID in claims, found: {UserId}", userId ?? "NULL");
+
+                            if (string.IsNullOrEmpty(userId))
+                            {
+                                logger.LogWarning("Cannot enrich claims: User ID not found in token");
+                                // Log all claims to debug
+                                foreach (var claim in context.Principal?.Claims ?? Enumerable.Empty<System.Security.Claims.Claim>())
+                                {
+                                    logger.LogInformation("Available claim: {Type} = {Value}", claim.Type, claim.Value);
+                                }
+                                return;
+                            }
+
+                            var accessToken = context.TokenEndpointResponse?.AccessToken;
+                            logger.LogInformation("Access token from TokenEndpointResponse: {HasToken}", !string.IsNullOrEmpty(accessToken));
+
+                            if (string.IsNullOrEmpty(accessToken))
+                            {
+                                logger.LogWarning("Cannot enrich claims: Access token not available");
+                                return;
+                            }
+
+                            logger.LogInformation("Calling QueryClient to get role...");
+                            // Create a new HttpClient without the BearerTokenHandler since we're setting the token manually
+                            // The BearerTokenHandler won't work here because the token hasn't been saved to the auth properties yet
+                            var client = new HttpClient();
+                            var queryApiUri = builder.Configuration.GetValue<string>("services:QueryApi:https:0");
+                            client.BaseAddress = new Uri(queryApiUri!);
+                            client.DefaultRequestHeaders.Authorization =
+                                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+
+                            var response = await client.GetAsync("q/api/v1/auth/me/role");
+                            logger.LogInformation("API response status: {StatusCode}", response.StatusCode);
+
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                var errorContent = await response.Content.ReadAsStringAsync();
+                                logger.LogWarning("Failed to fetch ApplicationRole: {StatusCode}, Body: {Body}", response.StatusCode, errorContent);
+                                return;
+                            }
+
+                            var json = await response.Content.ReadAsStringAsync();
+                            logger.LogInformation("API response JSON: {Json}", json);
+
+                            var roleData = System.Text.Json.JsonDocument.Parse(json);
+
+                            if (!roleData.RootElement.TryGetProperty("ApplicationRole", out var roleProperty) ||
+                                !roleData.RootElement.TryGetProperty("EmployeeId", out var employeeIdProperty))
+                            {
+                                logger.LogWarning("ApplicationRole or EmployeeId not found in response");
+                                return;
+                            }
+
+                            var applicationRole = roleProperty.GetInt32();
+                            var roleName = ((Authorization.ApplicationRole)applicationRole).ToString();
+                            var employeeId = employeeIdProperty.GetGuid();
+
+                            logger.LogInformation("Adding claims: ApplicationRole={Role}, EmployeeId={EmployeeId}", roleName, employeeId);
+
+                            // Create new claims to add
+                            var claims = new List<System.Security.Claims.Claim>
+                            {
+                                new System.Security.Claims.Claim("ApplicationRole", roleName),
+                                new System.Security.Claims.Claim("EmployeeId", employeeId.ToString()),
+                                // Add role claim with type "roles" to match RoleClaimType configuration
+                                new System.Security.Claims.Claim("roles", roleName),
+                                // Also add standard ClaimTypes.Role for compatibility
+                                new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, roleName)
+                            };
+
+                            // Add the claims to the existing identity
+                            var identity = (System.Security.Claims.ClaimsIdentity)context.Principal!.Identity!;
+                            identity.AddClaims(claims);
+
+                            // Create a new ClaimsPrincipal with the enriched identity to ensure it's used
+                            context.Principal = new System.Security.Claims.ClaimsPrincipal(identity);
+
+                            logger.LogInformation("Successfully enriched user claims with ApplicationRole: {Role} for user {UserId}. Claims in identity: {Count}",
+                                roleName, userId, identity.Claims.Count());
+
+                            // Log all claims to verify
+                            logger.LogInformation("All claims after enrichment:");
+                            foreach (var claim in context.Principal.Claims)
+                            {
+                                logger.LogInformation("  Claim: {Type} = {Value}", claim.Type, claim.Value);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.LogError(ex, "Error enriching user claims with ApplicationRole");
+                        }
+                    }
+                };
             })
             .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -147,27 +259,14 @@ public class Program
         // scope.
         builder.Services.ConfigureCookieOidcRefresh(CookieAuthenticationDefaults.AuthenticationScheme, MS_OIDC_SCHEME);
 
-        // Configure authorization with role-based policies (matching backend hierarchy)
+        // Note: Claims are enriched during OIDC OnTokenValidated event (see AddOpenIdConnect configuration)
+        // Claims transformation doesn't work with WebAssembly rendering mode
+
+        // Configure authorization with role-based policies (shared configuration)
         builder.Services.AddAuthorization(options =>
         {
-            // Employee policy: All authenticated employees can access (Employee, TeamLead, HR, HRLead, Admin)
-            options.AddPolicy("Employee", policy => policy.RequireRole("Employee", "TeamLead", "HR", "HRLead", "Admin"));
-
-            // TeamLead policy: TeamLead and above can access (TeamLead, HR, HRLead, Admin)
-            options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead", "HR", "HRLead", "Admin"));
-
-            // HR policy: HR and above can access (HR, HRLead, Admin)
-            options.AddPolicy("HR", policy => policy.RequireRole("HR", "HRLead", "Admin"));
-
-            // HRLead policy: HRLead and above can access (HRLead, Admin)
-            options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead", "Admin"));
-
-            // Admin policy: Only Admin can access
-            options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+            options.ConfigureAuthorizationPolicies();
         });
-
-        // Register custom AuthenticationStateProvider that enriches claims with ApplicationRole
-        builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 
         builder.Services.AddCascadingAuthenticationState();
 
@@ -176,7 +275,14 @@ public class Program
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents()
             .AddInteractiveWebAssemblyComponents()
-            .AddAuthenticationStateSerialization();
+            .AddAuthenticationStateSerialization(options =>
+            {
+                // Include custom claims in serialization
+                options.SerializeAllClaims = true;
+            });
+
+        // Note: Claims are enriched during OIDC authentication via OnTokenValidated event
+        // No need for custom AuthenticationStateProvider
 
         builder.Services.AddHttpContextAccessor();
 
@@ -204,6 +310,7 @@ public class Program
         }).AddHttpMessageHandler<BearerTokenHandler>();
 
         builder.Services.AddQuestionnaireServices();
+        builder.Services.AddScoped<IAuthService, AuthService>();
         builder.Services.AddScoped<ICategoryApiService, CategoryApiService>();
         builder.Services.AddScoped<IEmployeeApiService, EmployeeApiService>();
         builder.Services.AddScoped<IOrganizationApiService, OrganizationApiService>();
@@ -212,15 +319,17 @@ public class Program
         builder.Services.AddScoped<IHRQuestionnaireService, HRQuestionnaireService>();
         builder.Services.AddScoped<IHRApiService, HRApiService>();
         builder.Services.AddScoped<IProjectionReplayApiService, ProjectionReplayApiService>();
+        builder.Services.AddScoped<IGoalApiService, GoalApiService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();
         builder.Services.AddScoped<QuestionnaireValidationService>();
+        builder.Services.AddScoped<GoalService>();
 
         // Register question type handlers (Strategy Pattern)
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.AssessmentQuestionHandler>();
-        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.GoalAchievementQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.TextQuestionHandler>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.GoalQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory>();
 
         // Register state management
@@ -243,6 +352,150 @@ public class Program
         app.UseHttpsRedirection();
 
         app.UseAuthentication();
+
+        // Map API proxies for WebAssembly client
+        // These use the configured HttpClients which include BearerTokenHandler for authentication
+        app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/q"), appBuilder =>
+        {
+            appBuilder.Run(async context =>
+            {
+                var httpClientFactory = context.RequestServices.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient("QueryClient");
+
+                var targetUri = new Uri(httpClient.BaseAddress!, context.Request.Path.ToString() + context.Request.QueryString);
+
+                HttpResponseMessage response;
+                if (HttpMethods.IsGet(context.Request.Method))
+                {
+                    response = await httpClient.GetAsync(targetUri);
+                }
+                else if (HttpMethods.IsPost(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
+                    }
+                    response = await httpClient.PostAsync(targetUri, content);
+                }
+                else if (HttpMethods.IsPut(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
+                    }
+                    response = await httpClient.PutAsync(targetUri, content);
+                }
+                else if (HttpMethods.IsDelete(context.Request.Method))
+                {
+                    response = await httpClient.DeleteAsync(targetUri);
+                }
+                else if (HttpMethods.IsPatch(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
+                    }
+                    response = await httpClient.PatchAsync(targetUri, content);
+                }
+                else
+                {
+                    context.Response.StatusCode = 405;
+                    return;
+                }
+
+                context.Response.StatusCode = (int)response.StatusCode;
+                foreach (var header in response.Headers.Concat(response.Content.Headers))
+                {
+                    if (!header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Response.Headers[header.Key] = header.Value.ToArray();
+                    }
+                }
+
+                // Only copy response body if status code allows content
+                // 204 No Content, 205 Reset Content, 304 Not Modified should not have a body
+                if (response.StatusCode != System.Net.HttpStatusCode.NoContent &&
+                    response.StatusCode != System.Net.HttpStatusCode.ResetContent &&
+                    response.StatusCode != System.Net.HttpStatusCode.NotModified)
+                {
+                    await response.Content.CopyToAsync(context.Response.Body);
+                }
+            });
+        });
+
+        app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/c"), appBuilder =>
+        {
+            appBuilder.Run(async context =>
+            {
+                var httpClientFactory = context.RequestServices.GetRequiredService<IHttpClientFactory>();
+                var httpClient = httpClientFactory.CreateClient("CommandClient");
+
+                var targetUri = new Uri(httpClient.BaseAddress!, context.Request.Path.ToString() + context.Request.QueryString);
+
+                HttpResponseMessage response;
+                if (HttpMethods.IsGet(context.Request.Method))
+                {
+                    response = await httpClient.GetAsync(targetUri);
+                }
+                else if (HttpMethods.IsPost(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
+                    }
+                    response = await httpClient.PostAsync(targetUri, content);
+                }
+                else if (HttpMethods.IsPut(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
+                    }
+                    response = await httpClient.PutAsync(targetUri, content);
+                }
+                else if (HttpMethods.IsDelete(context.Request.Method))
+                {
+                    response = await httpClient.DeleteAsync(targetUri);
+                }
+                else if (HttpMethods.IsPatch(context.Request.Method))
+                {
+                    var content = new StreamContent(context.Request.Body);
+                    if (context.Request.ContentType != null)
+                    {
+                        content.Headers.ContentType = System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
+                    }
+                    response = await httpClient.PatchAsync(targetUri, content);
+                }
+                else
+                {
+                    context.Response.StatusCode = 405;
+                    return;
+                }
+
+                context.Response.StatusCode = (int)response.StatusCode;
+                foreach (var header in response.Headers.Concat(response.Content.Headers))
+                {
+                    if (!header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
+                    {
+                        context.Response.Headers[header.Key] = header.Value.ToArray();
+                    }
+                }
+
+                // Only copy response body if status code allows content
+                // 204 No Content, 205 Reset Content, 304 Not Modified should not have a body
+                if (response.StatusCode != System.Net.HttpStatusCode.NoContent &&
+                    response.StatusCode != System.Net.HttpStatusCode.ResetContent &&
+                    response.StatusCode != System.Net.HttpStatusCode.NotModified)
+                {
+                    await response.Content.CopyToAsync(context.Response.Body);
+                }
+            });
+        });
 
         // Add middleware to enrich user claims with ApplicationRole from backend
         //app.UseMiddleware<Authorization.ApplicationRoleClaimsMiddleware>();

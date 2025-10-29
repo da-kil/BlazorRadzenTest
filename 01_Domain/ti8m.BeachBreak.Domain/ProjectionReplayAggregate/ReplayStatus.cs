@@ -5,11 +5,11 @@ namespace ti8m.BeachBreak.Domain.ProjectionReplayAggregate;
 /// </summary>
 public enum ReplayStatus
 {
-    Pending,
-    Validating,
-    DeletingSnapshots,
-    Replaying,
-    Completed,
-    Failed,
-    Cancelled
+    Pending = 0,
+    Validating = 1,
+    DeletingSnapshots = 2,
+    Replaying = 3,
+    Completed = 4,
+    Failed = 5,
+    Cancelled = 6
 }

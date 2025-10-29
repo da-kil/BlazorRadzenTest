@@ -283,12 +283,18 @@ public class ResponsesController : BaseController
             if (roleBasedResponses == null) continue;
 
             // NEW: Populate RoleResponses with BOTH Employee and Manager responses (for review mode)
-            var roleResponsesDto = new Dictionary<string, Dictionary<Guid, QuestionResponseDto>>();
+            var roleResponsesDto = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>>();
 
             foreach (var roleKvp in roleBasedResponses)
             {
                 var role = roleKvp.Key;
-                var roleKey = role.ToString(); // "Employee" or "Manager"
+                // Convert CompletionRole to ResponseRole
+                ResponseRole responseRole = role switch
+                {
+                    Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee => ResponseRole.Employee,
+                    Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager => ResponseRole.Manager,
+                    _ => ResponseRole.Employee // Default fallback
+                };
                 var roleQuestions = roleKvp.Value;
 
                 var questionResponsesForRole = new Dictionary<Guid, QuestionResponseDto>();
@@ -357,7 +363,7 @@ public class ResponsesController : BaseController
 
                 if (questionResponsesForRole.Any())
                 {
-                    roleResponsesDto[roleKey] = questionResponsesForRole;
+                    roleResponsesDto[responseRole] = questionResponsesForRole;
                 }
             }
 
@@ -397,7 +403,7 @@ public class ResponsesController : BaseController
             if (roleBasedResponses == null) continue;
 
             // For employee endpoints, return EMPLOYEE responses only
-            var roleResponsesDto = new Dictionary<string, Dictionary<Guid, QuestionResponseDto>>();
+            var roleResponsesDto = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>>();
 
             if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponses))
             {
@@ -468,7 +474,7 @@ public class ResponsesController : BaseController
 
                 if (questionResponsesForEmployee.Any())
                 {
-                    roleResponsesDto["Employee"] = questionResponsesForEmployee;
+                    roleResponsesDto[ResponseRole.Employee] = questionResponsesForEmployee;
                 }
             }
 

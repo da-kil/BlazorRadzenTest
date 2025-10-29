@@ -108,7 +108,7 @@ public class CustomAuthenticationStateProvider : RevalidatingServerAuthenticatio
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
-            var response = await client.GetAsync("api/v1/auth/me/role");
+            var response = await client.GetAsync("q/api/v1/auth/me/role");
 
             if (!response.IsSuccessStatusCode)
             {

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using System.Text.Json.Serialization;
 
 namespace ti8m.BeachBreak.Application.Command.Commands;
 
@@ -6,7 +7,12 @@ public class Result<TPayload>
 {
     private readonly TPayload? _payload;
 
-    public TPayload Payload
+    // For JSON serialization - doesn't throw, returns nullable
+    public TPayload? Payload => _payload;
+
+    // For programmatic access - throws if not succeeded
+    [JsonIgnore]
+    public TPayload PayloadOrThrow
     {
         get
         {

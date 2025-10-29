@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.JSInterop;
 using ti8m.BeachBreak.Client.Models;
 
 namespace ti8m.BeachBreak.Client.Services;
@@ -7,9 +8,11 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
 {
     private const string EmployeeQueryEndpoint = "q/api/v1/employees";
     private const string EmployeeCommandEndpoint = "c/api/v1/employees";
+    private readonly IJSRuntime _jsRuntime;
 
-    public EmployeeQuestionnaireService(IHttpClientFactory factory) : base(factory)
+    public EmployeeQuestionnaireService(IHttpClientFactory factory, IJSRuntime jsRuntime) : base(factory)
     {
+        _jsRuntime = jsRuntime;
     }
 
     public async Task<List<QuestionnaireAssignment>> GetMyAssignmentsAsync()
@@ -23,7 +26,9 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         // Use "me" endpoint - backend resolves employee ID from UserContext
         try
         {
-            return await HttpQueryClient.GetFromJsonAsync<QuestionnaireAssignment>($"{EmployeeQueryEndpoint}/me/assignments/{assignmentId}");
+            var endpoint = $"{EmployeeQueryEndpoint}/me/assignments/{assignmentId}";
+            var result = await HttpQueryClient.GetFromJsonAsync<QuestionnaireAssignment>(endpoint);
+            return result;
         }
         catch (Exception ex)
         {
@@ -53,7 +58,15 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         {
             var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", sectionResponses);
             response.EnsureSuccessStatusCode();
-            var responseId = await response.Content.ReadFromJsonAsync<Guid>();
+
+            // Backend returns Result<Guid>, not just Guid
+            var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
+            if (result == null || !result.Succeeded)
+            {
+                throw new Exception(result?.Message ?? "Failed to save response");
+            }
+
+            var responseId = result.Payload;
             return new QuestionnaireResponse { Id = responseId, AssignmentId = assignmentId, SectionResponses = sectionResponses };
         }
         catch (Exception ex)

@@ -47,13 +47,10 @@ namespace ti8m.BeachBreak.CommandApi
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
+            // Configure authorization with claim-based policies (shared configuration)
             builder.Services.AddAuthorization(options =>
             {
-                options.AddPolicy("Employee", policy => policy.RequireRole("Employee"));
-                options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
-                options.AddPolicy("HR", policy => policy.RequireRole("HR"));
-                options.AddPolicy("HRLead", policy => policy.RequireRole("HRLead"));
-                options.AddPolicy("TeamLead", policy => policy.RequireRole("TeamLead"));
+                options.ConfigureAuthorizationPolicies();
             });
 
             // Register custom authorization middleware result handler
@@ -142,11 +139,15 @@ namespace ti8m.BeachBreak.CommandApi
             builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
             {
                 options.SerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+                options.SerializerOptions.AllowTrailingCommas = true; // More lenient parsing
+                options.SerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
             });
 
             builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+                options.JsonSerializerOptions.AllowTrailingCommas = true; // More lenient parsing
+                options.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
             });
 
             var app = builder.Build();

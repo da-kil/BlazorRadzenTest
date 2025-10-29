@@ -8,7 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 
 [ApiController]
 [Route("c/api/v{v:apiVersion}/authorizationcache")]
-[Authorize(Roles = "Admin")]
+[Authorize(Policy = "Admin")]
 public class AuthorizationCacheController : BaseController
 {
     private readonly IAuthorizationCacheService cacheService;

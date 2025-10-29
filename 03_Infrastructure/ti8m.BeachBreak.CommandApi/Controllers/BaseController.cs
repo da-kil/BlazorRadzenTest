@@ -12,6 +12,6 @@ public class BaseController : ControllerBase
 
     protected IActionResult CreateResponse<T>(Result<T> result)
     {
-        return result.Succeeded ? Ok(result.Payload) : Problem(detail: result.Message, statusCode: result.StatusCode);
+        return result.Succeeded ? Ok(result) : Problem(detail: result.Message, statusCode: result.StatusCode);
     }
 }

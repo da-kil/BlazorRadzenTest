@@ -16,7 +16,7 @@
             case QuestionType.TextQuestion:
                 @RenderTextQuestionOptimized()
                 break;
-            case QuestionType.GoalAchievement:
+            case QuestionType.Goal:
                 @RenderGoalQuestionOptimized()
                 break;
             default:
@@ -32,6 +32,8 @@
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public bool HideHeader { get; set; } = false;
+    [Parameter] public Guid AssignmentId { get; set; }
+    [Parameter] public string CurrentUserRole { get; set; } = "Employee";
 
     private bool shouldRender = true;
     private string? lastQuestionHash;
@@ -118,7 +120,9 @@
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
                               IsReadOnly="@IsReadOnly"
-                              HideHeader="@HideHeader" />
+                              HideHeader="@HideHeader"
+                              AssignmentId="@AssignmentId"
+                              CurrentUserRole="@CurrentUserRole" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>

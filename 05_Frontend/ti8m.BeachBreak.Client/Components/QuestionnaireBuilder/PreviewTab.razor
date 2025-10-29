@@ -235,7 +235,7 @@
     private string GetQuestionTypeIcon(QuestionType type) => type switch
     {
         QuestionType.Assessment => "self_improvement",
-        QuestionType.GoalAchievement => "track_changes",
+        QuestionType.Goal => "track_changes",
         QuestionType.TextQuestion => "psychology",
         _ => "help"
     };
@@ -261,7 +261,7 @@
         return question.Type switch
         {
             QuestionType.Assessment => GetAssessmentPreview(question),
-            QuestionType.GoalAchievement => GetGoalAchievementPreview(),
+            QuestionType.Goal => GetGoalPreview(),
             QuestionType.TextQuestion => GetTextQuestionPreview(question),
             _ => @<RadzenTextBox Placeholder="Preview not available" Disabled="true" Class="w-100" />
         };
@@ -320,7 +320,7 @@
         </div>;
     }
 
-    private RenderFragment GetGoalAchievementPreview()
+    private RenderFragment GetGoalPreview()
     {
         return @<div class="goal-achievement-preview">
             <div class="goal-preview-field">

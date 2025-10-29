@@ -207,9 +207,9 @@ public class ProgressCalculationService : IProgressCalculationService
                     var text = answer.ToString();
                     return !string.IsNullOrWhiteSpace(text);
 
-                case QuestionType.GoalAchievement:
-                    // Goal achievement must have a value
-                    return ValidateGoalAchievementAnswer(answer);
+                case QuestionType.Goal:
+                    // Goal must have a value
+                    return ValidateGoalAnswer(answer);
 
                 default:
                     logger.LogWarning("Unknown question type: {Type}", type);
@@ -276,10 +276,10 @@ public class ProgressCalculationService : IProgressCalculationService
     }
 
     /// <summary>
-    /// Validates GoalAchievement answer structure.
+    /// Validates Goal answer structure.
     /// Must have a non-null, non-empty value.
     /// </summary>
-    private bool ValidateGoalAchievementAnswer(object answer)
+    private bool ValidateGoalAnswer(object answer)
     {
         // Goal achievement answers are typically complex objects
         // Basic validation: not null and not empty string

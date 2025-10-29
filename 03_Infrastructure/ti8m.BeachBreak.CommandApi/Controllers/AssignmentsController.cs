@@ -45,7 +45,7 @@ public class AssignmentsController : BaseController
     /// Creates bulk assignments for any employees. HR/Admin only.
     /// </summary>
     [HttpPost("bulk")]
-    [Authorize(Roles = "HR,HRLead,Admin")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateBulkAssignments([FromBody] CreateBulkAssignmentsDto bulkAssignmentDto)
@@ -110,7 +110,7 @@ public class AssignmentsController : BaseController
     /// Validates that all employees are direct reports of the authenticated manager.
     /// </summary>
     [HttpPost("manager/bulk")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -200,7 +200,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/start")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     public async Task<IActionResult> StartAssignmentWork(Guid assignmentId)
     {
         try
@@ -238,7 +238,7 @@ public class AssignmentsController : BaseController
     /// HR/Admin can extend any assignment.
     /// </summary>
     [HttpPost("extend-due-date")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ExtendAssignmentDueDate([FromBody] ExtendAssignmentDueDateDto extendDto)
@@ -294,7 +294,7 @@ public class AssignmentsController : BaseController
     /// HR/Admin can withdraw any assignment.
     /// </summary>
     [HttpPost("withdraw")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> WithdrawAssignment([FromBody] WithdrawAssignmentDto withdrawDto)
@@ -381,7 +381,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/sections/{sectionId}/complete-manager")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> CompleteSectionAsManager(Guid assignmentId, Guid sectionId)
     {
         try
@@ -398,7 +398,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/sections/bulk-complete-manager")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> CompleteBulkSectionsAsManager(Guid assignmentId, [FromBody] List<Guid> sectionIds)
     {
         try
@@ -444,7 +444,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/submit-manager")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> SubmitManagerQuestionnaire(Guid assignmentId, [FromBody] SubmitQuestionnaireDto submitDto)
     {
         try
@@ -471,7 +471,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("{assignmentId}/initiate-review")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> InitiateReview(Guid assignmentId)
     {
         try
@@ -532,7 +532,7 @@ public class AssignmentsController : BaseController
     /// Transitions from InReview to ManagerReviewConfirmed state.
     /// </summary>
     [HttpPost("{assignmentId}/review/finish")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> FinishReviewMeeting(Guid assignmentId, [FromBody] FinishReviewMeetingDto finishDto)
@@ -608,7 +608,7 @@ public class AssignmentsController : BaseController
     /// Transitions from EmployeeReviewConfirmed to Finalized state.
     /// </summary>
     [HttpPost("{assignmentId}/review/finalize-manager")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> FinalizeQuestionnaireAsManager(Guid assignmentId, [FromBody] FinalizeAsManagerDto finalizeDto)
@@ -642,7 +642,7 @@ public class AssignmentsController : BaseController
     }
 
     [HttpPost("reminder")]
-    [Authorize(Roles = "TeamLead")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -703,7 +703,7 @@ public class AssignmentsController : BaseController
     /// <param name="assignmentId">The assignment to reopen</param>
     /// <param name="reopenDto">Target state and reason for reopening</param>
     [HttpPost("{assignmentId}/reopen")]
-    [Authorize(Roles = "TeamLead,HR,HRLead,Admin")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -754,5 +754,223 @@ public class AssignmentsController : BaseController
             return StatusCode(500, "An error occurred while reopening questionnaire");
         }
     }
+
+    #region Goal Operations
+
+    /// <summary>
+    /// Links a predecessor questionnaire to the current assignment for rating previous goals.
+    /// Employee or Manager can link (first wins).
+    /// </summary>
+    [HttpPost("{assignmentId}/goals/link-predecessor")]
+    public async Task<IActionResult> LinkPredecessorQuestionnaire(
+        Guid assignmentId,
+        [FromBody] LinkPredecessorQuestionnaireDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("LinkPredecessorQuestionnaire failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.LinkedByRole, out var linkedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.LinkedByRole}");
+            }
+
+            var command = new LinkPredecessorQuestionnaireCommand(
+                assignmentId,
+                dto.QuestionId,
+                dto.PredecessorAssignmentId,
+                linkedByRole,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error linking predecessor questionnaire for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while linking predecessor questionnaire");
+        }
+    }
+
+    /// <summary>
+    /// Adds a new goal to a questionnaire assignment during in-progress states.
+    /// Employee and Manager add goals separately.
+    /// </summary>
+    [HttpPost("{assignmentId}/goals")]
+    public async Task<IActionResult> AddGoal(
+        Guid assignmentId,
+        [FromBody] AddGoalDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("AddGoal failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.AddedByRole, out var addedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.AddedByRole}");
+            }
+
+            var command = new AddGoalCommand(
+                assignmentId,
+                dto.QuestionId,
+                addedByRole,
+                dto.TimeframeFrom,
+                dto.TimeframeTo,
+                dto.ObjectiveDescription,
+                dto.MeasurementMetric,
+                dto.WeightingPercentage,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error adding goal to assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while adding goal");
+        }
+    }
+
+    /// <summary>
+    /// Modifies an existing goal during review meeting.
+    /// </summary>
+    [HttpPut("{assignmentId}/goals/{goalId}")]
+    public async Task<IActionResult> ModifyGoal(
+        Guid assignmentId,
+        Guid goalId,
+        [FromBody] ModifyGoalDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("ModifyGoal failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.ModifiedByRole, out var modifiedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.ModifiedByRole}");
+            }
+
+            var command = new ModifyGoalCommand(
+                assignmentId,
+                goalId,
+                dto.TimeframeFrom,
+                dto.TimeframeTo,
+                dto.ObjectiveDescription,
+                dto.MeasurementMetric,
+                dto.WeightingPercentage,
+                modifiedByRole,
+                dto.ChangeReason,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error modifying goal {GoalId} in assignment {AssignmentId}", goalId, assignmentId);
+            return StatusCode(500, "An error occurred while modifying goal");
+        }
+    }
+
+    /// <summary>
+    /// Rates a goal from a predecessor questionnaire.
+    /// Employee and Manager rate separately during their respective in-progress states.
+    /// </summary>
+    [HttpPost("{assignmentId}/goals/rate-predecessor")]
+    public async Task<IActionResult> RatePredecessorGoal(
+        Guid assignmentId,
+        [FromBody] RatePredecessorGoalDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("RatePredecessorGoal failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.RatedByRole, out var ratedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.RatedByRole}");
+            }
+
+            var command = new RatePredecessorGoalCommand(
+                assignmentId,
+                dto.QuestionId,
+                dto.SourceAssignmentId,
+                dto.SourceGoalId,
+                ratedByRole,
+                dto.DegreeOfAchievement,
+                dto.Justification,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error rating predecessor goal for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while rating predecessor goal");
+        }
+    }
+
+    /// <summary>
+    /// Modifies a predecessor goal rating during review meeting.
+    /// </summary>
+    [HttpPut("{assignmentId}/goals/ratings/{sourceGoalId}")]
+    public async Task<IActionResult> ModifyPredecessorGoalRating(
+        Guid assignmentId,
+        Guid sourceGoalId,
+        [FromBody] ModifyPredecessorGoalRatingDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("ModifyPredecessorGoalRating failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Parse role from DTO
+            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.ModifiedByRole, out var modifiedByRole))
+            {
+                return BadRequest($"Invalid role: {dto.ModifiedByRole}");
+            }
+
+            var command = new ModifyPredecessorGoalRatingCommand(
+                assignmentId,
+                dto.SourceGoalId,
+                dto.DegreeOfAchievement,
+                dto.Justification,
+                modifiedByRole,
+                dto.ChangeReason,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error modifying predecessor goal rating for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while modifying predecessor goal rating");
+        }
+    }
+
+    #endregion
 
 }

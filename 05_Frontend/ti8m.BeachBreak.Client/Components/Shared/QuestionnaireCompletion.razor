@@ -3,11 +3,13 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Questions
 @using Microsoft.AspNetCore.Components.Authorization
+@using ti8m.BeachBreak.Client.Extensions
 @inject NotificationService NotificationService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthService AuthService
 
 <style>
     .questionnaire-completion {
@@ -490,10 +492,22 @@
     private bool isSaving = false;
     private bool isLoading = true;
     private DateTime? lastSavedTime;
-    private string currentUserRole = "Employee";
+    private ApplicationRole userRole = ApplicationRole.Employee;
     private bool isEmployee = false;
     private bool isManager = false;
     private bool canEdit = false;
+
+    /// <summary>
+    /// The response role for accessing RoleResponses dictionary.
+    /// Provides type-safe access while maintaining compatibility with string-based dictionary.
+    /// </summary>
+    private ResponseRole CurrentResponseRole => userRole.ToResponseRole();
+
+    /// <summary>
+    /// String key for accessing RoleResponses dictionary.
+    /// Provides backwards compatibility with string-based dictionary keys.
+    /// </summary>
+    private string currentUserRole => CurrentResponseRole.ToRoleKey();
 
     // Auto-save timer
     private Timer? autoSaveTimer;
@@ -518,10 +532,34 @@
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
 
-        // Managers are TeamLead, HR, HRLead, or Admin
-        isManager = user.IsInRole("TeamLead") || user.IsInRole("HR") || user.IsInRole("HRLead") || user.IsInRole("Admin");
-        isEmployee = !isManager;
-        currentUserRole = isManager ? "Manager" : "Employee";
+        try
+        {
+            // WebAssembly client doesn't have ApplicationRole claims (those are added server-side only)
+            // So we need to call the API to get the user's role from the database
+            var roleData = await AuthService.GetMyRoleAsync();
+
+            if (roleData == null)
+            {
+                // Default to Employee for safety
+                userRole = ApplicationRole.Employee;
+                isManager = false;
+                isEmployee = true;
+                UpdateCanEdit();
+                return;
+            }
+
+            // Store the actual ApplicationRole - computed properties derive behavior from it
+            userRole = roleData.ApplicationRole;
+            isManager = userRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin;
+            isEmployee = true; // Everyone has employee-level access
+        }
+        catch (Exception ex)
+        {
+            // Default to Employee for safety on API call failure
+            userRole = ApplicationRole.Employee;
+            isManager = false;
+            isEmployee = true;
+        }
 
         // Determine if editing is allowed based on workflow state
         UpdateCanEdit();
@@ -614,22 +652,22 @@
                 responses[section.Id] = new SectionResponse
                 {
                     SectionId = section.Id,
-                    RoleResponses = new Dictionary<string, Dictionary<Guid, QuestionResponse>>()
+                    RoleResponses = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponse>>()
                 };
             }
 
             // Ensure role dictionary exists
-            if (!responses[section.Id].RoleResponses.ContainsKey(currentUserRole))
+            if (!responses[section.Id].RoleResponses.ContainsKey(CurrentResponseRole))
             {
-                responses[section.Id].RoleResponses[currentUserRole] = new Dictionary<Guid, QuestionResponse>();
+                responses[section.Id].RoleResponses[CurrentResponseRole] = new Dictionary<Guid, QuestionResponse>();
             }
 
             // Initialize question responses for current user's role
             foreach (var question in section.Questions)
             {
-                if (!responses[section.Id].RoleResponses[currentUserRole].ContainsKey(question.Id))
+                if (!responses[section.Id].RoleResponses[CurrentResponseRole].ContainsKey(question.Id))
                 {
-                    responses[section.Id].RoleResponses[currentUserRole][question.Id] = new QuestionResponse
+                    responses[section.Id].RoleResponses[CurrentResponseRole][question.Id] = new QuestionResponse
                     {
                         QuestionId = question.Id,
                         QuestionType = question.Type,
@@ -765,7 +803,7 @@
         validationErrors.Clear();
         var section = currentSection;
 
-        if (!responses[section.Id].RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+        if (!responses[section.Id].RoleResponses.TryGetValue(CurrentResponseRole, out var roleQuestions))
             return false;
 
         foreach (var question in section.Questions.Where(q => q.IsRequired))
@@ -793,7 +831,7 @@
 
         foreach (var section in template.Sections)
         {
-            if (!responses[section.Id].RoleResponses.TryGetValue(currentUserRole, out var roleQuestions))
+            if (!responses[section.Id].RoleResponses.TryGetValue(CurrentResponseRole, out var roleQuestions))
                 continue;
 
             foreach (var question in section.Questions.Where(q => q.IsRequired))
@@ -814,7 +852,7 @@
         return question.Type switch
         {
             QuestionType.Assessment => IsCompetencyAssessmentComplete(question, response),
-            QuestionType.GoalAchievement => IsGoalAchievementComplete(response),
+            QuestionType.Goal => IsGoalComplete(response),
             QuestionType.TextQuestion => response.ComplexValue?.TryGetValue("value", out var val) == true && !string.IsNullOrWhiteSpace(val?.ToString()),
             _ => false
         };
@@ -836,7 +874,7 @@
         return true;
     }
 
-    private bool IsGoalAchievementComplete(QuestionResponse response)
+    private bool IsGoalComplete(QuestionResponse response)
     {
         return response.ComplexValue?.ContainsKey("GoalDescription") == true &&
                !string.IsNullOrWhiteSpace(response.ComplexValue["GoalDescription"]?.ToString());
@@ -864,7 +902,7 @@
     private RenderFragment GetQuestionInput(QuestionItem question)
     {
         var sectionResponse = responses[currentSection.Id];
-        var questionResponse = sectionResponse.RoleResponses[currentUserRole][question.Id];
+        var questionResponse = sectionResponse.RoleResponses[CurrentResponseRole][question.Id];
 
         return @<OptimizedQuestionRenderer
             Question="@question"

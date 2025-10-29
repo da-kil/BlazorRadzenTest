@@ -64,7 +64,7 @@ public class EmployeesController : BaseController
     }
 
     [HttpPut("bulk-update")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -92,7 +92,7 @@ public class EmployeesController : BaseController
     }
 
     [HttpDelete("bulk-delete")]
-    [Authorize(Roles = "HRLeadOnly")] // Only Admin, HRLead can delete employees
+    [Authorize(Policy = "HRLead")] // Only Admin, HRLead can delete employees
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -109,7 +109,7 @@ public class EmployeesController : BaseController
     /// Controller fetches requester's role from database using UserContext; business rules enforced in domain layer.
     /// </summary>
     [HttpPut("{employeeId:guid}/application-role")]
-    [Authorize(Roles = "HR")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -179,7 +179,7 @@ public class EmployeesController : BaseController
         var responsesAsObjects = sectionResponses.ToDictionary(
             kvp => kvp.Key,
             kvp => (object)kvp.Value.RoleResponses.ToDictionary(
-                roleKvp => roleKvp.Key, // Role key ("Employee" or "Manager")
+                roleKvp => roleKvp.Key.ToString(), // Convert ResponseRole enum to string for domain layer
                 roleKvp => (object)roleKvp.Value.ToDictionary(
                     q => q.Key,  // Question ID
                     q => (object)q.Value // QuestionResponse

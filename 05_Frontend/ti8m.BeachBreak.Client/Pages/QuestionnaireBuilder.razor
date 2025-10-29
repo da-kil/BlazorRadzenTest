@@ -1,6 +1,6 @@
 @page "/questionnaire-builder"
 @page "/questionnaire-builder/{TemplateId:guid?}"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "HR")]
 @using Radzen
 @using Radzen.Blazor
 @using System.Text.Json
@@ -171,7 +171,7 @@
 	private Dictionary<QuestionType, string> questionTypeLabels = new()
 	{
 		{ QuestionType.Assessment, "Assessment" },
-		{ QuestionType.GoalAchievement, "Goal Achievement" },
+		{ QuestionType.Goal, "Goal Achievement" },
 		{ QuestionType.TextQuestion, "Text Question" }
 	};
 
@@ -337,7 +337,7 @@
 		return type switch
 		{
 			QuestionType.Assessment => "Competency Assessment",
-			QuestionType.GoalAchievement => "Goal Achievement Review",
+			QuestionType.Goal => "Goal Achievement Review",
 			QuestionType.TextQuestion => "Open-Ended Questions",
 			_ => $"Section {State.Template.Sections.Count + 1}"
 		};
@@ -501,7 +501,7 @@
 		return type switch
 		{
 			QuestionType.Assessment => "self_improvement",
-			QuestionType.GoalAchievement => "track_changes",
+			QuestionType.Goal => "track_changes",
 			QuestionType.TextQuestion => "psychology",
 			_ => "help"
 		};

@@ -1,5 +1,5 @@
 @page "/team/questionnaires"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "TeamLead")]
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models

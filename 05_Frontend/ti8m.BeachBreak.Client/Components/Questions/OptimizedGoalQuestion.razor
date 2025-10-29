@@ -1,13 +1,19 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Services
+@inject GoalService GoalService
+@inject IGoalApiService GoalApiService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
 @inherits OptimizedComponentBase
 
 @if (!HideHeader)
 {
-    <RadzenCard Class="goal-achievement-question">
+    <RadzenCard Class="goal-question">
         <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
-            <RadzenIcon Icon="track_changes" Class="me-2" />
+            <RadzenIcon Icon="flag" Class="me-2" />
             @Question.Title
             @if (Question.IsRequired) { <span class="text-danger">*</span> }
             <EditedDuringReviewBadge Response="@Response" />
@@ -18,281 +24,463 @@
             <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
         }
 
-        <RadzenCard Class="goal-card mb-3 p-3 border">
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
-                Goal Assessment
-            </RadzenText>
-        </div>
-
-        <div class="mb-3">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Goal Description</RadzenText>
-            @if (!IsReadOnly)
-            {
-                <RadzenTextArea Value="@GetGoalDescription()"
-                              ValueChanged="@SetGoalDescription"
-                              Placeholder="Describe the goal that was set..."
-                              Rows="3"
-                              Class="w-100"
-                              Disabled="@IsReadOnly" />
-            }
-            else if (!string.IsNullOrEmpty(GetGoalDescription()))
-            {
-                <div class="readonly-text p-3 bg-light rounded">
-                    @GetGoalDescription()
-                </div>
-            }
-        </div>
-
-        <RadzenRow Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Percentage</RadzenText>
-                <div class="d-flex align-items-center">
-                    @if (!IsReadOnly)
-                    {
-                        <RadzenNumeric TValue="int"
-                                     Value="@GetGoalAchievementPercentage()"
-                                     ValueChanged="@SetGoalAchievementPercentage"
-                                     Min="0"
-                                     Max="100"
-                                     Step="5"
-                                     Format="0"
-                                     Class="flex-grow-1 me-2"
-                                     Disabled="@IsReadOnly" />
-                    }
-                    else
-                    {
-                        <div class="readonly-percentage p-2 bg-light rounded flex-grow-1 me-2">
-                            @GetGoalAchievementPercentage()
-                        </div>
-                    }
-                    <RadzenText TextStyle="TextStyle.Body1">%</RadzenText>
-                </div>
-                <RadzenProgressBar Value="@GetGoalAchievementPercentage()"
-                                 Max="100"
-                                 Class="mt-2"
-                                 ProgressBarStyle="@GetProgressStyle(GetGoalAchievementPercentage())" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Status</RadzenText>
-                <div class="status-indicator p-2 rounded" style="@GetStatusStyle(GetGoalAchievementPercentage())">
-                    <RadzenIcon Icon="@GetStatusIcon(GetGoalAchievementPercentage())" Class="me-2" />
-                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
-                        @GetStatusText(GetGoalAchievementPercentage())
-                    </RadzenText>
-                </div>
-            </RadzenColumn>
-        </RadzenRow>
-
-        <div class="mt-3">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Reasoning/Justification</RadzenText>
-            @if (!IsReadOnly)
-            {
-                <RadzenTextArea Value="@GetGoalJustification()"
-                              ValueChanged="@SetGoalJustification"
-                              Placeholder="Explain your achievement percentage. What factors contributed to your success or challenges?"
-                              Rows="4"
-                              Class="w-100"
-                              Disabled="@IsReadOnly" />
-            }
-            else if (!string.IsNullOrEmpty(GetGoalJustification()))
-            {
-                <div class="readonly-text p-3 bg-light rounded">
-                    @GetGoalJustification()
-                </div>
-            }
-        </div>
-        </RadzenCard>
+        @RenderGoalContent()
     </RadzenCard>
 }
 else
 {
-    <RadzenCard Class="goal-card mb-3 p-3 border">
-        <div class="d-flex justify-content-between align-items-start mb-3">
-            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
-                Goal Assessment
-            </RadzenText>
-        </div>
-
-        <div class="mb-3">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Goal Description</RadzenText>
-            @if (!IsReadOnly)
-            {
-                <RadzenTextArea Value="@GetGoalDescription()"
-                              ValueChanged="@SetGoalDescription"
-                              Placeholder="Describe the goal that was set..."
-                              Rows="3"
-                              Class="w-100"
-                              Disabled="@IsReadOnly" />
-            }
-            else if (!string.IsNullOrEmpty(GetGoalDescription()))
-            {
-                <div class="readonly-text p-3 bg-light rounded">
-                    @GetGoalDescription()
-                </div>
-            }
-        </div>
-
-        <RadzenRow Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Percentage</RadzenText>
-                <div class="d-flex align-items-center">
-                    @if (!IsReadOnly)
-                    {
-                        <RadzenNumeric TValue="int"
-                                     Value="@GetGoalAchievementPercentage()"
-                                     ValueChanged="@SetGoalAchievementPercentage"
-                                     Min="0"
-                                     Max="100"
-                                     Step="5"
-                                     Format="0"
-                                     Class="flex-grow-1 me-2"
-                                     Disabled="@IsReadOnly" />
-                    }
-                    else
-                    {
-                        <div class="readonly-percentage p-2 bg-light rounded flex-grow-1 me-2">
-                            @GetGoalAchievementPercentage()
-                        </div>
-                    }
-                    <RadzenText TextStyle="TextStyle.Body1">%</RadzenText>
-                </div>
-                <RadzenProgressBar Value="@GetGoalAchievementPercentage()"
-                                 Max="100"
-                                 Class="mt-2"
-                                 ProgressBarStyle="@GetProgressStyle(GetGoalAchievementPercentage())" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Achievement Status</RadzenText>
-                <div class="status-indicator p-2 rounded" style="@GetStatusStyle(GetGoalAchievementPercentage())">
-                    <RadzenIcon Icon="@GetStatusIcon(GetGoalAchievementPercentage())" Class="me-2" />
-                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">
-                        @GetStatusText(GetGoalAchievementPercentage())
-                    </RadzenText>
-                </div>
-            </RadzenColumn>
-        </RadzenRow>
-
-        <div class="mt-3">
-            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Reasoning/Justification</RadzenText>
-            @if (!IsReadOnly)
-            {
-                <RadzenTextArea Value="@GetGoalJustification()"
-                              ValueChanged="@SetGoalJustification"
-                              Placeholder="Explain your achievement percentage. What factors contributed to your success or challenges?"
-                              Rows="4"
-                              Class="w-100"
-                              Disabled="@IsReadOnly" />
-            }
-            else if (!string.IsNullOrEmpty(GetGoalJustification()))
-            {
-                <div class="readonly-text p-3 bg-light rounded">
-                    @GetGoalJustification()
-                </div>
-            }
-        </div>
-    </RadzenCard>
+    @RenderGoalContent()
 }
 
 @code {
+    private RenderFragment RenderGoalContent() => __builder =>
+    {
+        <div class="goal-content">
+            @* Predecessor Ratings Section *@
+            @if (hasPredecessor)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Predecessor Linked:</strong> Previous questionnaire goals are available for rating.
+                    </RadzenText>
+                </RadzenAlert>
+
+                <RadzenFieldset Class="mb-4">
+                    <HeaderTemplate>
+                        <RadzenIcon Icon="assessment" Class="me-2" />
+                        <span class="fw-bold">Rate Previous Goals</span>
+                    </HeaderTemplate>
+                    <ChildContent>
+                        @if (!predecessorRatings.Any())
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                                <RadzenText TextStyle="TextStyle.Body2">
+                                    No predecessor goals available for rating.
+                                </RadzenText>
+                            </RadzenAlert>
+                        }
+                        else
+                        {
+                            @foreach (var rating in predecessorRatings)
+                            {
+                                <div class="predecessor-rating-card mb-3 p-3 border rounded" @key="@rating[GoalService.RatingSourceGoalIdKey]">
+                                    @RenderPredecessorRating(rating)
+                                </div>
+                            }
+                        }
+                    </ChildContent>
+                </RadzenFieldset>
+            }
+            else if (!IsReadOnly)
+            {
+                @* Link Predecessor Section - Only show if no predecessor linked and not read-only *@
+                <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                        <strong>Link Previous Questionnaire:</strong> Link a predecessor questionnaire to rate goals from a previous period.
+                    </RadzenText>
+                    <RadzenButton Text="Link Predecessor Questionnaire"
+                                Icon="link"
+                                ButtonStyle="ButtonStyle.Primary"
+                                Size="ButtonSize.Small"
+                                Click="@ShowLinkPredecessorDialog" />
+                </RadzenAlert>
+            }
+
+            @* Current Goals Section *@
+            <RadzenFieldset>
+                <HeaderTemplate>
+                    <RadzenIcon Icon="track_changes" Class="me-2" />
+                    <span class="fw-bold">Current Goals</span>
+                </HeaderTemplate>
+                <ChildContent>
+                    @if (!currentGoals.Any())
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
+                            <RadzenText TextStyle="TextStyle.Body2">
+                                No goals have been added yet. @(!IsReadOnly ? "Click 'Add Goal' to create one." : "")
+                            </RadzenText>
+                        </RadzenAlert>
+                    }
+                    else
+                    {
+                        @foreach (var goal in currentGoals)
+                        {
+                            <div class="goal-card mb-3 p-3 border rounded" @key="@goal[GoalService.GoalIdKey]">
+                                @RenderGoal(goal)
+                            </div>
+                        }
+                    }
+
+                    @if (!IsReadOnly)
+                    {
+                        <RadzenButton Text="Add Goal"
+                                    Icon="add"
+                                    ButtonStyle="ButtonStyle.Secondary"
+                                    Class="mt-3"
+                                    Click="@ShowAddGoalDialog" />
+                    }
+                </ChildContent>
+            </RadzenFieldset>
+        </div>
+    };
+
+    private RenderFragment RenderPredecessorRating(Dictionary<string, object> rating) => __builder =>
+    {
+        var sourceGoalId = rating.TryGetValue(GoalService.RatingSourceGoalIdKey, out var sgId) ? sgId : Guid.Empty;
+        var originalObjective = rating.TryGetValue(GoalService.RatingOriginalObjectiveKey, out var obj) ? obj?.ToString() ?? "" : "";
+        var degree = rating.TryGetValue(GoalService.RatingDegreeKey, out var deg) ? Convert.ToDecimal(deg) : 0;
+        var justification = rating.TryGetValue(GoalService.RatingJustificationKey, out var just) ? just?.ToString() ?? "" : "";
+        var ratedByRole = rating.TryGetValue(GoalService.RatingByRoleKey, out var role) ? role?.ToString() ?? "" : "";
+
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                    @originalObjective
+                </RadzenText>
+                <RadzenBadge Text="@ratedByRole" BadgeStyle="BadgeStyle.Info" Class="mb-2" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Class="mt-2">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Degree of Achievement (%):</RadzenText>
+                @if (!IsReadOnly)
+                {
+                    <RadzenNumeric Value="@degree"
+                                 ValueChanged="@((decimal value) => SetPredecessorRatingDegree(sourceGoalId, value))"
+                                 Min="0"
+                                 Max="100"
+                                 Step="5"
+                                 Class="w-100"
+                                 Disabled="@IsReadOnly" />
+                }
+                else
+                {
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">@degree%</RadzenText>
+                }
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Class="mt-2">
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Justification:</RadzenText>
+                @if (!IsReadOnly)
+                {
+                    <RadzenTextArea Value="@justification"
+                                  ValueChanged="@((string value) => SetPredecessorRatingJustification(sourceGoalId, value))"
+                                  Placeholder="Provide justification for the achievement degree..."
+                                  Rows="3"
+                                  Class="w-100"
+                                  Disabled="@IsReadOnly" />
+                }
+                else if (!string.IsNullOrEmpty(justification))
+                {
+                    <div class="p-2 bg-light rounded">
+                        <span>@justification</span>
+                    </div>
+                }
+            </RadzenColumn>
+        </RadzenRow>
+    };
+
+    private RenderFragment RenderGoal(Dictionary<string, object> goal) => __builder =>
+    {
+        var goalId = goal.TryGetValue(GoalService.GoalIdKey, out var gId) ? gId : Guid.Empty;
+        var objective = goal.TryGetValue(GoalService.GoalObjectiveKey, out var obj) ? obj?.ToString() ?? "" : "";
+        var measurement = goal.TryGetValue(GoalService.GoalMeasurementKey, out var meas) ? meas?.ToString() ?? "" : "";
+        var weighting = goal.TryGetValue(GoalService.GoalWeightingKey, out var weight) ? Convert.ToDecimal(weight) : 0;
+        var addedByRole = goal.TryGetValue(GoalService.GoalAddedByRoleKey, out var role) ? role?.ToString() ?? "" : "";
+
+        DateTime fromDate = DateTime.Now;
+        DateTime toDate = DateTime.Now.AddMonths(1);
+
+        if (goal.TryGetValue(GoalService.GoalTimeframeFromKey, out var fromVal))
+        {
+            if (fromVal is DateTime dt) fromDate = dt;
+            else if (fromVal is DateTimeOffset dto) fromDate = dto.DateTime;
+            else DateTime.TryParse(fromVal?.ToString(), out fromDate);
+        }
+
+        if (goal.TryGetValue(GoalService.GoalTimeframeToKey, out var toVal))
+        {
+            if (toVal is DateTime dt) toDate = dt;
+            else if (toVal is DateTimeOffset dto) toDate = dto.DateTime;
+            else DateTime.TryParse(toVal?.ToString(), out toDate);
+        }
+
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                    @objective
+                </RadzenText>
+                <RadzenBadge Text="@addedByRole" BadgeStyle="BadgeStyle.Success" Class="mb-2" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Class="mt-2">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Timeframe:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">@fromDate.ToShortDateString() - @toDate.ToShortDateString()</RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Weighting:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">@weighting%</RadzenText>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Class="mt-2">
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Measurement Metric:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">@measurement</RadzenText>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @if (!IsReadOnly)
+        {
+            <RadzenRow Class="mt-3">
+                <RadzenColumn Size="12" Class="d-flex justify-content-end gap-2">
+                    <RadzenButton Text="Edit"
+                                Icon="edit"
+                                ButtonStyle="ButtonStyle.Light"
+                                Size="ButtonSize.Small"
+                                Click="@(() => ShowEditGoalDialog(goalId, objective, measurement, fromDate, toDate, weighting))" />
+                    <RadzenButton Text="Delete"
+                                Icon="delete"
+                                ButtonStyle="ButtonStyle.Danger"
+                                Size="ButtonSize.Small"
+                                Click="@(() => ShowDeleteGoalConfirmation(goalId, objective))" />
+                </RadzenColumn>
+            </RadzenRow>
+        }
+    };
+
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public bool HideHeader { get; set; } = false;
+    [Parameter] public Guid AssignmentId { get; set; }
+    [Parameter] public string CurrentUserRole { get; set; } = "Employee";
+
+    private List<Dictionary<string, object>> currentGoals = new();
+    private List<Dictionary<string, object>> predecessorRatings = new();
+    private bool hasPredecessor = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load goals from API (goals are stored in QuestionnaireAssignment aggregate, not in Response)
+        await ReloadGoalData();
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (HasParameterChanged(nameof(Question), Question) ||
+            HasParameterChanged(nameof(Response), Response))
+        {
+            LoadGoalData();
+        }
+        await base.OnParametersSetAsync();
+    }
+
+    private void LoadGoalData()
+    {
+        currentGoals = GoalService.GetGoals(Response);
+        predecessorRatings = GoalService.GetPredecessorRatings(Response);
+        hasPredecessor = GoalService.GetPredecessorAssignmentId(Response).HasValue;
+    }
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(Response.ComplexValue), Response.ComplexValue?.Count ?? 0);
+        return HasParameterChanged(nameof(Response.ComplexValue), Response.ComplexValue?.Count ?? 0) ||
+               HasParameterChanged(nameof(currentGoals), currentGoals.Count) ||
+               HasParameterChanged(nameof(predecessorRatings), predecessorRatings.Count);
     }
 
-    private string GetGoalDescription()
-    {
-        if (Response.ComplexValue?.TryGetValue("Description", out var value) == true)
-        {
-            // Handle JsonElement from API deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
-                    ? jsonElement.GetString() ?? ""
-                    : "";
-            }
-
-            return value.ToString() ?? "";
-        }
-
-        return "";
-    }
-
-    private int GetGoalAchievementPercentage()
-    {
-        if (Response.ComplexValue?.TryGetValue("AchievementPercentage", out var value) == true)
-        {
-            // Handle JsonElement from API deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number
-                    ? jsonElement.GetInt32()
-                    : 0;
-            }
-
-            return Convert.ToInt32(value);
-        }
-
-        return 0;
-    }
-
-    private string GetGoalJustification()
-    {
-        if (Response.ComplexValue?.TryGetValue("Justification", out var value) == true)
-        {
-            // Handle JsonElement from API deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
-                    ? jsonElement.GetString() ?? ""
-                    : "";
-            }
-
-            return value.ToString() ?? "";
-        }
-
-        return "";
-    }
-
-    private async Task SetGoalDescription(string value)
+    private async Task SetPredecessorRatingDegree(object sourceGoalId, decimal value)
     {
         if (IsReadOnly) return;
 
-        Response.ComplexValue ??= new Dictionary<string, object>();
-        Response.ComplexValue["Description"] = value ?? "";
-        Response.LastModified = DateTime.Now;
+        var rating = predecessorRatings.FirstOrDefault(r =>
+            r.TryGetValue(GoalService.RatingSourceGoalIdKey, out var id) && id.Equals(sourceGoalId));
 
-        await NotifyStateChangedDebounced(300);
-        await NotifyResponseChanged();
+        if (rating != null)
+        {
+            rating[GoalService.RatingDegreeKey] = value;
+            Response.ComplexValue ??= new Dictionary<string, object>();
+            Response.ComplexValue[GoalService.PredecessorRatingsKey] = predecessorRatings;
+            Response.LastModified = DateTime.Now;
+
+            await NotifyResponseChanged();
+        }
     }
 
-    private async Task SetGoalAchievementPercentage(int value)
+    private async Task SetPredecessorRatingJustification(object sourceGoalId, string value)
     {
         if (IsReadOnly) return;
 
-        Response.ComplexValue ??= new Dictionary<string, object>();
-        Response.ComplexValue["AchievementPercentage"] = Math.Clamp(value, 0, 100);
-        Response.LastModified = DateTime.Now;
+        var rating = predecessorRatings.FirstOrDefault(r =>
+            r.TryGetValue(GoalService.RatingSourceGoalIdKey, out var id) && id.Equals(sourceGoalId));
 
-        await NotifyResponseChanged();
+        if (rating != null)
+        {
+            rating[GoalService.RatingJustificationKey] = value ?? "";
+            Response.ComplexValue ??= new Dictionary<string, object>();
+            Response.ComplexValue[GoalService.PredecessorRatingsKey] = predecessorRatings;
+            Response.LastModified = DateTime.Now;
+
+            await NotifyStateChangedDebounced(300);
+            await NotifyResponseChanged();
+        }
     }
 
-    private async Task SetGoalJustification(string value)
+    private async Task ShowAddGoalDialog()
     {
-        if (IsReadOnly) return;
+        var result = await DialogService.OpenAsync<AddGoalDialog>("Add New Goal",
+            new Dictionary<string, object>
+            {
+                { "AssignmentId", AssignmentId },
+                { "QuestionId", Question.Id },
+                { "AddedByRole", CurrentUserRole }
+            },
+            new DialogOptions
+            {
+                Width = "700px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = false
+            });
 
-        Response.ComplexValue ??= new Dictionary<string, object>();
-        Response.ComplexValue["Justification"] = value ?? "";
-        Response.LastModified = DateTime.Now;
+        if (result is bool success && success)
+        {
+            // Reload goal data from API
+            await ReloadGoalData();
+        }
+    }
 
-        await NotifyStateChangedDebounced(300);
-        await NotifyResponseChanged();
+    private async Task ShowLinkPredecessorDialog()
+    {
+        var result = await DialogService.OpenAsync<LinkPredecessorDialog>("Link Predecessor Questionnaire",
+            new Dictionary<string, object>
+            {
+                { "AssignmentId", AssignmentId },
+                { "QuestionId", Question.Id }
+            },
+            new DialogOptions
+            {
+                Width = "800px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = false
+            });
+
+        if (result is bool success && success)
+        {
+            // Reload goal data from API to get new predecessor ratings
+            await ReloadGoalData();
+        }
+    }
+
+    private async Task ReloadGoalData()
+    {
+        try
+        {
+            var result = await GoalApiService.GetGoalQuestionDataAsync(AssignmentId, Question.Id);
+
+            if (result.Succeeded && result.Payload != null)
+            {
+                // Update the response with fresh data from the server
+                // Convert the DTOs back to the dictionary format expected by GoalService
+                var goalsList = result.Payload.Goals.Select(g => new Dictionary<string, object>
+                {
+                    [GoalService.GoalIdKey] = g.Id,
+                    [GoalService.GoalObjectiveKey] = g.ObjectiveDescription,
+                    [GoalService.GoalTimeframeFromKey] = g.TimeframeFrom,
+                    [GoalService.GoalTimeframeToKey] = g.TimeframeTo,
+                    [GoalService.GoalMeasurementKey] = g.MeasurementMetric,
+                    [GoalService.GoalWeightingKey] = g.WeightingPercentage,
+                    [GoalService.GoalAddedByRoleKey] = g.AddedByRole.ToString()
+                }).ToList();
+
+                Response.ComplexValue ??= new Dictionary<string, object>();
+                Response.ComplexValue[GoalService.GoalsKey] = goalsList;
+
+                if (result.Payload.PredecessorAssignmentId.HasValue)
+                {
+                    Response.ComplexValue[GoalService.PredecessorAssignmentIdKey] = result.Payload.PredecessorAssignmentId.Value;
+
+                    var ratingsList = result.Payload.PredecessorGoalRatings.Select(r => new Dictionary<string, object>
+                    {
+                        [GoalService.RatingSourceGoalIdKey] = r.SourceGoalId,
+                        [GoalService.RatingDegreeKey] = r.DegreeOfAchievement,
+                        [GoalService.RatingJustificationKey] = r.Justification ?? "",
+                        [GoalService.RatingByRoleKey] = r.RatedByRole.ToString(),
+                        [GoalService.RatingOriginalObjectiveKey] = r.OriginalObjectiveDescription ?? ""
+                    }).ToList();
+
+                    Response.ComplexValue[GoalService.PredecessorRatingsKey] = ratingsList;
+                }
+
+                Response.LastModified = DateTime.Now;
+
+                // Reload local data
+                LoadGoalData();
+
+                // Notify parent component
+                await NotifyResponseChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = $"Failed to reload goal data: {ex.Message}",
+                Duration = 6000
+            });
+        }
+    }
+
+    private async Task ShowEditGoalDialog(object goalId, string objective, string measurement, DateTime fromDate, DateTime toDate, decimal weighting)
+    {
+        var result = await DialogService.OpenAsync<EditGoalDialog>("Edit Goal",
+            new Dictionary<string, object>
+            {
+                { "AssignmentId", AssignmentId },
+                { "QuestionId", Question.Id },
+                { "GoalId", goalId },
+                { "ModifiedByRole", CurrentUserRole },
+                { "InitialObjective", objective },
+                { "InitialMeasurement", measurement },
+                { "InitialTimeframeFrom", fromDate },
+                { "InitialTimeframeTo", toDate },
+                { "InitialWeighting", weighting }
+            },
+            new DialogOptions
+            {
+                Width = "700px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = false
+            });
+
+        if (result is bool success && success)
+        {
+            // Reload goal data from API
+            await ReloadGoalData();
+        }
+    }
+
+    private async Task ShowDeleteGoalConfirmation(object goalId, string objective)
+    {
+        NotificationService.Notify(new NotificationMessage
+        {
+            Severity = NotificationSeverity.Warning,
+            Summary = "Feature Not Implemented",
+            Detail = "Delete goal functionality is not yet implemented. Please contact your administrator if you need to remove a goal.",
+            Duration = 6000
+        });
     }
 
     private async Task NotifyResponseChanged()
@@ -302,91 +490,26 @@ else
             await OnResponseChanged.InvokeAsync(Response);
         }
     }
-
-    private ProgressBarStyle GetProgressStyle(int percentage)
-    {
-        return percentage switch
-        {
-            >= 90 => ProgressBarStyle.Success,
-            >= 70 => ProgressBarStyle.Info,
-            >= 50 => ProgressBarStyle.Warning,
-            _ => ProgressBarStyle.Danger
-        };
-    }
-
-    private string GetStatusStyle(int percentage)
-    {
-        return percentage switch
-        {
-            >= 90 => "background-color: var(--light-green, #d4edda); border: 1px solid var(--success-color, #28a745); color: var(--dark-green, #155724);",
-            >= 70 => "background-color: var(--light-blue, #d1ecf1); border: 1px solid var(--info-color, #17a2b8); color: var(--dark-blue, #0c5460);",
-            >= 50 => "background-color: var(--light-yellow, #fff3cd); border: 1px solid var(--warning-color, #ffc107); color: var(--dark-yellow, #856404);",
-            _ => "background-color: var(--light-red, #f8d7da); border: 1px solid var(--danger-color, #dc3545); color: var(--dark-red, #721c24);"
-        };
-    }
-
-    private string GetStatusIcon(int percentage)
-    {
-        return percentage switch
-        {
-            >= 90 => "check_circle",
-            >= 70 => "task_alt",
-            >= 50 => "warning",
-            _ => "error"
-        };
-    }
-
-    private string GetStatusText(int percentage)
-    {
-        return percentage switch
-        {
-            >= 90 => "Excellent Achievement",
-            >= 70 => "Good Achievement",
-            >= 50 => "Partial Achievement",
-            _ => "Below Expectations"
-        };
-    }
 }
 
 <style>
-.goal-card {
+.goal-card, .predecessor-rating-card {
     transition: all 0.2s ease;
     border-color: var(--border-light, #e2e8f0) !important;
 }
 
-.goal-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+.goal-card:hover, .predecessor-rating-card:hover {
+    border-color: var(--primary-color, #2563eb) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.status-indicator {
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem;
-    transition: all 0.2s ease;
-}
-
-.readonly-text {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    line-height: 1.6;
-    min-height: 60px;
-}
-
-.readonly-percentage {
-    text-align: center;
-    font-weight: 600;
-    line-height: 2;
+.goal-content {
+    min-height: 100px;
 }
 
 /* Performance optimization */
-.goal-card[data-updating="true"] {
+.goal-card[data-updating="true"],
+.predecessor-rating-card[data-updating="true"] {
     opacity: 0.8;
-}
-
-/* Progress bar animations */
-.rz-progressbar {
-    transition: all 0.3s ease;
 }
 </style>

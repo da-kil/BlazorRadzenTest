@@ -1,0 +1,264 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject IGoalApiService GoalApiService
+
+<div class="link-predecessor-dialog">
+    <RadzenStack Gap="1rem">
+        @if (validationErrors.Any())
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
+                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-2">Please fix the following errors:</RadzenText>
+                <ul class="mb-0">
+                    @foreach (var error in validationErrors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </RadzenAlert>
+        }
+
+        <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">
+            Link a predecessor questionnaire to rate goals from a previous period.
+        </RadzenText>
+
+        @if (isLoadingPredecessors)
+        {
+            <div class="text-center p-4">
+                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" />
+                <RadzenText TextStyle="TextStyle.Body2" Class="mt-2">Loading available predecessors...</RadzenText>
+            </div>
+        }
+        else if (!availablePredecessors.Any())
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3" ShowIcon="true">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    No eligible predecessor questionnaires found.
+                    Predecessors must be from the same employee, same category, completed, and contain goals.
+                </RadzenText>
+            </RadzenAlert>
+        }
+        else
+        {
+            <RadzenFieldset>
+                <HeaderTemplate>
+                    <RadzenIcon Icon="link" Class="me-2" />
+                    <span class="fw-bold">Select Predecessor Questionnaire</span>
+                </HeaderTemplate>
+                <ChildContent>
+                    <RadzenDataList Data="@availablePredecessors" TItem="AvailablePredecessorDto">
+                        <Template Context="predecessor">
+                            <div class="predecessor-card mb-3 p-3 border rounded @(selectedPredecessorId == predecessor.AssignmentId ? "selected" : "")"
+                                 @onclick="@(() => SelectPredecessor(predecessor.AssignmentId))">
+                                <RadzenRow>
+                                    <RadzenColumn Size="1">
+                                        @if (selectedPredecessorId == predecessor.AssignmentId)
+                                        {
+                                            <RadzenIcon Icon="check_circle" Style="color: var(--primary-color, #2563eb); font-size: 1.5rem;" />
+                                        }
+                                        else
+                                        {
+                                            <RadzenIcon Icon="radio_button_unchecked" Style="color: #ccc; font-size: 1.5rem;" />
+                                        }
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="11">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-1">
+                                            @predecessor.TemplateName
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                            <RadzenIcon Icon="person" Style="font-size: 1rem;" /> @predecessor.EmployeeName
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                            <RadzenIcon Icon="calendar_today" Style="font-size: 1rem;" />
+                                            Assigned: @predecessor.AssignedDate.ToShortDateString()
+                                            @if (predecessor.CompletedDate.HasValue)
+                                            {
+                                                <span> | Completed: @predecessor.CompletedDate.Value.ToShortDateString()</span>
+                                            }
+                                        </RadzenText>
+                                    </RadzenColumn>
+                                </RadzenRow>
+                            </div>
+                        </Template>
+                    </RadzenDataList>
+                </ChildContent>
+            </RadzenFieldset>
+        }
+
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <RadzenButton Text="Cancel"
+                        ButtonStyle="ButtonStyle.Light"
+                        Click="@Cancel"
+                        Disabled="@isSubmitting" />
+            <RadzenButton Text="@(isSubmitting ? "Linking..." : "Link Predecessor")"
+                        Icon="@(isSubmitting ? "" : "link")"
+                        ButtonStyle="ButtonStyle.Primary"
+                        Click="@Submit"
+                        Disabled="@(isSubmitting || !selectedPredecessorId.HasValue || !availablePredecessors.Any())" />
+        </div>
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter] public Guid AssignmentId { get; set; }
+    [Parameter] public Guid QuestionId { get; set; }
+
+    private List<AvailablePredecessorDto> availablePredecessors = new();
+    private Guid? selectedPredecessorId;
+    private List<string> validationErrors = new();
+    private bool isSubmitting = false;
+    private bool isLoadingPredecessors = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailablePredecessors();
+    }
+
+    private async Task LoadAvailablePredecessors()
+    {
+        isLoadingPredecessors = true;
+        try
+        {
+            var result = await GoalApiService.GetAvailablePredecessorsAsync(AssignmentId, QuestionId);
+
+            if (result.Succeeded && result.Payload != null)
+            {
+                availablePredecessors = result.Payload.ToList();
+            }
+            else
+            {
+                validationErrors.Add(result.ErrorMessage ?? "Failed to load available predecessors");
+            }
+        }
+        catch (Exception ex)
+        {
+            validationErrors.Add($"Error loading predecessors: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingPredecessors = false;
+        }
+    }
+
+    private void SelectPredecessor(Guid predecessorId)
+    {
+        selectedPredecessorId = predecessorId;
+        StateHasChanged();
+    }
+
+    private async Task Submit()
+    {
+        validationErrors.Clear();
+
+        if (!selectedPredecessorId.HasValue)
+        {
+            validationErrors.Add("Please select a predecessor questionnaire");
+            StateHasChanged();
+            return;
+        }
+
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var dto = new LinkPredecessorQuestionnaireDto
+            {
+                QuestionId = QuestionId,
+                PredecessorAssignmentId = selectedPredecessorId.Value
+            };
+
+            var result = await GoalApiService.LinkPredecessorAsync(AssignmentId, dto);
+
+            if (result.Succeeded)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Predecessor Linked",
+                    Detail = "The predecessor questionnaire has been linked successfully. You can now rate the previous goals.",
+                    Duration = 4000
+                });
+
+                DialogService.Close(true);
+            }
+            else
+            {
+                // For validation errors (400-level), show in dialog only
+                // For system errors (500-level), show as notification
+                if (result.StatusCode >= 400 && result.StatusCode < 500)
+                {
+                    // Client/validation error - show in dialog for immediate correction
+                    validationErrors.Add(result.ErrorMessage ?? "Failed to link predecessor");
+                }
+                else
+                {
+                    // System error - show as notification
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "System Error",
+                        Detail = result.ErrorMessage ?? "An unexpected error occurred",
+                        Duration = 6000
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Unexpected exception - show as notification (system error, not validation)
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Unexpected Error",
+                Detail = $"An unexpected error occurred: {ex.Message}",
+                Duration = 6000
+            });
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}
+
+<style>
+.link-predecessor-dialog {
+    padding: 1rem;
+    max-width: 700px;
+}
+
+.link-predecessor-dialog ul {
+    margin-bottom: 0;
+    padding-left: 1.5rem;
+}
+
+.link-predecessor-dialog ul li {
+    margin-bottom: 0.25rem;
+}
+
+.predecessor-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-color: var(--border-light, #e2e8f0) !important;
+}
+
+.predecessor-card:hover {
+    border-color: var(--primary-color, #2563eb) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.predecessor-card.selected {
+    border-color: var(--primary-color, #2563eb) !important;
+    background-color: rgba(37, 99, 235, 0.05);
+}
+</style>

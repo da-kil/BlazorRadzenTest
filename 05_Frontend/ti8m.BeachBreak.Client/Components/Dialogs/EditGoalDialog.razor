@@ -1,0 +1,343 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject IGoalApiService GoalApiService
+
+<div class="edit-goal-dialog">
+    <RadzenStack Gap="1rem">
+        @if (validationErrors.Any())
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
+                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-2">Please fix the following errors:</RadzenText>
+                <ul class="mb-0">
+                    @foreach (var error in validationErrors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </RadzenAlert>
+        }
+
+        <RadzenFieldset>
+            <HeaderTemplate>
+                <RadzenIcon Icon="flag" Class="me-2" />
+                <span class="fw-bold">Goal Details</span>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenStack Gap="1rem">
+                    <div>
+                        <RadzenLabel Text="Objective Description*" Component="objectiveDescription" Class="fw-bold mb-1" />
+                        <RadzenTextArea @bind-Value="@objectiveDescription"
+                                      Name="objectiveDescription"
+                                      Placeholder="Describe the goal objective..."
+                                      Rows="3"
+                                      Class="w-100"
+                                      MaxLength="1000" />
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            @objectiveDescription.Length / 1000 characters
+                        </RadzenText>
+                    </div>
+
+                    <div>
+                        <RadzenLabel Text="Measurement Metric*" Component="measurementMetric" Class="fw-bold mb-1" />
+                        <RadzenTextBox @bind-Value="@measurementMetric"
+                                     Name="measurementMetric"
+                                     Placeholder="How will this goal be measured?"
+                                     Class="w-100"
+                                     MaxLength="500" />
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            Example: "Increase sales by 20%", "Complete 3 certifications", "Reduce errors to &lt; 2%"
+                        </RadzenText>
+                    </div>
+                </RadzenStack>
+            </ChildContent>
+        </RadzenFieldset>
+
+        <RadzenFieldset>
+            <HeaderTemplate>
+                <RadzenIcon Icon="calendar_today" Class="me-2" />
+                <span class="fw-bold">Timeframe</span>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenLabel Text="Start Date*" Component="timeframeFrom" Class="fw-bold mb-1" />
+                        <RadzenDatePicker @bind-Value="@timeframeFrom"
+                                        Name="timeframeFrom"
+                                        DateFormat="dd.MM.yyyy"
+                                        Class="w-100"
+                                        ShowTime="false" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenLabel Text="End Date*" Component="timeframeTo" Class="fw-bold mb-1" />
+                        <RadzenDatePicker @bind-Value="@timeframeTo"
+                                        Name="timeframeTo"
+                                        DateFormat="dd.MM.yyyy"
+                                        Class="w-100"
+                                        ShowTime="false" />
+                    </RadzenColumn>
+                </RadzenRow>
+            </ChildContent>
+        </RadzenFieldset>
+
+        <RadzenFieldset>
+            <HeaderTemplate>
+                <RadzenIcon Icon="percent" Class="me-2" />
+                <span class="fw-bold">Weighting</span>
+            </HeaderTemplate>
+            <ChildContent>
+                <div>
+                    <RadzenLabel Text="Weighting Percentage*" Component="weightingPercentage" Class="fw-bold mb-1" />
+                    <RadzenNumeric @bind-Value="@weightingPercentage"
+                                 Name="weightingPercentage"
+                                 Min="0"
+                                 Max="100"
+                                 Step="5"
+                                 ShowUpDown="true"
+                                 Class="w-100" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                        Percentage of total goals (0-100%). Set weighting to allocate importance across goals.
+                    </RadzenText>
+                </div>
+            </ChildContent>
+        </RadzenFieldset>
+
+        <RadzenFieldset>
+            <HeaderTemplate>
+                <RadzenIcon Icon="edit_note" Class="me-2" />
+                <span class="fw-bold">Reason for Change*</span>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenTextArea @bind-Value="@changeReason"
+                              Name="changeReason"
+                              Placeholder="Explain why this goal is being modified..."
+                              Rows="2"
+                              Class="w-100"
+                              MaxLength="500" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @changeReason.Length / 500 characters
+                </RadzenText>
+            </ChildContent>
+        </RadzenFieldset>
+
+        <RadzenFieldset>
+            <HeaderTemplate>
+                <RadzenIcon Icon="person" Class="me-2" />
+                <span class="fw-bold">Modified By</span>
+            </HeaderTemplate>
+            <ChildContent>
+                <RadzenBadge Text="@ModifiedByRole" BadgeStyle="BadgeStyle.Info" IsPill="true" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted ms-2">
+                    This modification will be attributed to @ModifiedByRole
+                </RadzenText>
+            </ChildContent>
+        </RadzenFieldset>
+
+        <div class="d-flex justify-content-end gap-2 mt-3">
+            <RadzenButton Text="Cancel"
+                        ButtonStyle="ButtonStyle.Light"
+                        Click="@Cancel"
+                        Disabled="@isSubmitting" />
+            <RadzenButton Text="@(isSubmitting ? "Updating Goal..." : "Update Goal")"
+                        Icon="@(isSubmitting ? "" : "save")"
+                        ButtonStyle="ButtonStyle.Primary"
+                        Click="@Submit"
+                        Disabled="@isSubmitting" />
+        </div>
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter] public Guid AssignmentId { get; set; }
+    [Parameter] public Guid QuestionId { get; set; }
+    [Parameter] public Guid GoalId { get; set; }
+    [Parameter] public string ModifiedByRole { get; set; } = "Employee";
+
+    // Pre-populated values
+    [Parameter] public string InitialObjective { get; set; } = "";
+    [Parameter] public string InitialMeasurement { get; set; } = "";
+    [Parameter] public DateTime InitialTimeframeFrom { get; set; } = DateTime.Today;
+    [Parameter] public DateTime InitialTimeframeTo { get; set; } = DateTime.Today.AddMonths(6);
+    [Parameter] public decimal InitialWeighting { get; set; } = 0;
+
+    private string objectiveDescription = "";
+    private string measurementMetric = "";
+    private DateTime? timeframeFrom = DateTime.Today;
+    private DateTime? timeframeTo = DateTime.Today.AddMonths(6);
+    private decimal weightingPercentage = 0;
+    private string changeReason = "";
+
+    private List<string> validationErrors = new();
+    private bool isSubmitting = false;
+
+    protected override void OnParametersSet()
+    {
+        // Pre-populate form with existing values
+        objectiveDescription = InitialObjective;
+        measurementMetric = InitialMeasurement;
+        timeframeFrom = InitialTimeframeFrom;
+        timeframeTo = InitialTimeframeTo;
+        weightingPercentage = InitialWeighting;
+    }
+
+    private bool ValidateForm()
+    {
+        validationErrors.Clear();
+
+        if (string.IsNullOrWhiteSpace(objectiveDescription))
+        {
+            validationErrors.Add("Objective description is required");
+        }
+        else if (objectiveDescription.Length < 10)
+        {
+            validationErrors.Add("Objective description must be at least 10 characters");
+        }
+
+        if (string.IsNullOrWhiteSpace(measurementMetric))
+        {
+            validationErrors.Add("Measurement metric is required");
+        }
+        else if (measurementMetric.Length < 5)
+        {
+            validationErrors.Add("Measurement metric must be at least 5 characters");
+        }
+
+        if (!timeframeFrom.HasValue)
+        {
+            validationErrors.Add("Start date is required");
+        }
+
+        if (!timeframeTo.HasValue)
+        {
+            validationErrors.Add("End date is required");
+        }
+
+        if (timeframeFrom.HasValue && timeframeTo.HasValue && timeframeTo.Value <= timeframeFrom.Value)
+        {
+            validationErrors.Add("End date must be after start date");
+        }
+
+        if (weightingPercentage <= 0)
+        {
+            validationErrors.Add("Weighting percentage must be greater than 0");
+        }
+
+        if (weightingPercentage > 100)
+        {
+            validationErrors.Add("Weighting percentage cannot exceed 100%");
+        }
+
+        if (string.IsNullOrWhiteSpace(changeReason))
+        {
+            validationErrors.Add("Reason for change is required");
+        }
+        else if (changeReason.Length < 10)
+        {
+            validationErrors.Add("Reason for change must be at least 10 characters");
+        }
+
+        return !validationErrors.Any();
+    }
+
+    private async Task Submit()
+    {
+        if (!ValidateForm())
+        {
+            StateHasChanged();
+            return;
+        }
+
+        isSubmitting = true;
+        StateHasChanged();
+
+        try
+        {
+            var dto = new ModifyGoalDto
+            {
+                ObjectiveDescription = objectiveDescription.Trim(),
+                MeasurementMetric = measurementMetric.Trim(),
+                TimeframeFrom = timeframeFrom!.Value,
+                TimeframeTo = timeframeTo!.Value,
+                WeightingPercentage = weightingPercentage,
+                ModifiedByRole = ModifiedByRole,
+                ChangeReason = changeReason.Trim()
+            };
+
+            var result = await GoalApiService.ModifyGoalAsync(AssignmentId, GoalId, dto);
+
+            if (result.Succeeded)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Goal Updated",
+                    Detail = "The goal has been updated successfully",
+                    Duration = 4000
+                });
+
+                DialogService.Close(true);
+            }
+            else
+            {
+                // For validation errors (400-level), show in dialog only
+                // For system errors (500-level), show as notification
+                if (result.StatusCode >= 400 && result.StatusCode < 500)
+                {
+                    // Client/validation error - show in dialog for immediate correction
+                    validationErrors.Add(result.ErrorMessage ?? "Failed to update goal");
+                }
+                else
+                {
+                    // System error - show as notification
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "System Error",
+                        Detail = result.ErrorMessage ?? "An unexpected error occurred",
+                        Duration = 6000
+                    });
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Unexpected exception - show as notification (system error, not validation)
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Unexpected Error",
+                Detail = $"An unexpected error occurred: {ex.Message}",
+                Duration = 6000
+            });
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+}
+
+<style>
+.edit-goal-dialog {
+    padding: 1rem;
+    max-width: 700px;
+}
+
+.edit-goal-dialog ul {
+    margin-bottom: 0;
+    padding-left: 1.5rem;
+}
+
+.edit-goal-dialog ul li {
+    margin-bottom: 0.25rem;
+}
+</style>

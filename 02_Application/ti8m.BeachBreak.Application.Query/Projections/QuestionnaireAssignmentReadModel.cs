@@ -1,5 +1,6 @@
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
@@ -54,6 +55,11 @@ public class QuestionnaireAssignmentReadModel
     public Guid? LastReopenedByEmployeeId { get; set; }
     public string? LastReopenedByRole { get; set; }
     public string? LastReopenReason { get; set; }
+
+    // Goal-related data (projection)
+    public Dictionary<Guid, List<GoalReadModel>> GoalsByQuestion { get; set; } = new();
+    public Dictionary<Guid, Guid> PredecessorLinksByQuestion { get; set; } = new();
+    public Dictionary<Guid, List<GoalRatingReadModel>> GoalRatingsByQuestion { get; set; } = new();
 
     // Apply methods for all QuestionnaireAssignment domain events
     public void Apply(QuestionnaireAssignmentAssigned @event)
@@ -281,6 +287,133 @@ public class QuestionnaireAssignmentReadModel
         else if (ManagerSubmittedDate.HasValue)
         {
             WorkflowState = WorkflowState.ManagerSubmitted;
+        }
+    }
+
+    // Apply methods for goal-related events
+    public void Apply(GoalAdded @event)
+    {
+        if (!GoalsByQuestion.ContainsKey(@event.QuestionId))
+        {
+            GoalsByQuestion[@event.QuestionId] = new List<GoalReadModel>();
+        }
+
+        GoalsByQuestion[@event.QuestionId].Add(new GoalReadModel
+        {
+            Id = @event.GoalId,
+            QuestionId = @event.QuestionId,
+            AddedByRole = @event.AddedByRole,
+            TimeframeFrom = @event.TimeframeFrom,
+            TimeframeTo = @event.TimeframeTo,
+            ObjectiveDescription = @event.ObjectiveDescription,
+            MeasurementMetric = @event.MeasurementMetric,
+            WeightingPercentage = @event.WeightingPercentage,
+            AddedAt = @event.AddedAt,
+            AddedByEmployeeId = @event.AddedByEmployeeId,
+            Modifications = new List<GoalModificationReadModel>()
+        });
+    }
+
+    public void Apply(GoalModified @event)
+    {
+        // Find the goal across all questions
+        foreach (var questionGoals in GoalsByQuestion.Values)
+        {
+            var goal = questionGoals.FirstOrDefault(g => g.Id == @event.GoalId);
+            if (goal != null)
+            {
+                // Apply modifications if provided
+                if (@event.TimeframeFrom.HasValue)
+                    goal.TimeframeFrom = @event.TimeframeFrom.Value;
+                if (@event.TimeframeTo.HasValue)
+                    goal.TimeframeTo = @event.TimeframeTo.Value;
+                if (@event.ObjectiveDescription != null)
+                    goal.ObjectiveDescription = @event.ObjectiveDescription;
+                if (@event.MeasurementMetric != null)
+                    goal.MeasurementMetric = @event.MeasurementMetric;
+                if (@event.WeightingPercentage.HasValue)
+                    goal.WeightingPercentage = @event.WeightingPercentage.Value;
+
+                // Track modification
+                goal.Modifications.Add(new GoalModificationReadModel
+                {
+                    TimeframeFrom = @event.TimeframeFrom,
+                    TimeframeTo = @event.TimeframeTo,
+                    ObjectiveDescription = @event.ObjectiveDescription,
+                    MeasurementMetric = @event.MeasurementMetric,
+                    WeightingPercentage = @event.WeightingPercentage,
+                    ModifiedByRole = @event.ModifiedByRole,
+                    ChangeReason = @event.ChangeReason,
+                    ModifiedAt = @event.ModifiedAt,
+                    ModifiedByEmployeeId = @event.ModifiedByEmployeeId
+                });
+
+                break;
+            }
+        }
+    }
+
+    public void Apply(PredecessorQuestionnaireLinked @event)
+    {
+        PredecessorLinksByQuestion[@event.QuestionId] = @event.PredecessorAssignmentId;
+    }
+
+    public void Apply(PredecessorGoalRated @event)
+    {
+        if (!GoalRatingsByQuestion.ContainsKey(@event.QuestionId))
+        {
+            GoalRatingsByQuestion[@event.QuestionId] = new List<GoalRatingReadModel>();
+        }
+
+        GoalRatingsByQuestion[@event.QuestionId].Add(new GoalRatingReadModel
+        {
+            Id = Guid.NewGuid(), // Generate unique ID (matches aggregate behavior)
+            SourceAssignmentId = @event.SourceAssignmentId,
+            SourceGoalId = @event.SourceGoalId,
+            QuestionId = @event.QuestionId,
+            RatedByRole = @event.RatedByRole,
+            DegreeOfAchievement = @event.DegreeOfAchievement,
+            Justification = @event.Justification,
+            RatedAt = @event.RatedAt,
+            RatedByEmployeeId = @event.RatedByEmployeeId,
+            Modifications = new List<GoalRatingModificationReadModel>(),
+            // Populate snapshot fields from event's PredecessorGoalData
+            SnapshotObjectiveDescription = @event.PredecessorGoal.ObjectiveDescription,
+            SnapshotTimeframeFrom = @event.PredecessorGoal.TimeframeFrom,
+            SnapshotTimeframeTo = @event.PredecessorGoal.TimeframeTo,
+            SnapshotMeasurementMetric = @event.PredecessorGoal.MeasurementMetric,
+            SnapshotAddedByRole = @event.PredecessorGoal.AddedByRole,
+            SnapshotWeightingPercentage = @event.PredecessorGoal.WeightingPercentage
+        });
+    }
+
+    public void Apply(PredecessorGoalRatingModified @event)
+    {
+        // Find the rating across all questions
+        foreach (var questionRatings in GoalRatingsByQuestion.Values)
+        {
+            var rating = questionRatings.FirstOrDefault(r => r.SourceGoalId == @event.SourceGoalId);
+            if (rating != null)
+            {
+                // Apply modifications if provided
+                if (@event.DegreeOfAchievement.HasValue)
+                    rating.DegreeOfAchievement = @event.DegreeOfAchievement.Value;
+                if (@event.Justification != null)
+                    rating.Justification = @event.Justification;
+
+                // Track modification
+                rating.Modifications.Add(new GoalRatingModificationReadModel
+                {
+                    DegreeOfAchievement = @event.DegreeOfAchievement,
+                    Justification = @event.Justification,
+                    ModifiedByRole = @event.ModifiedByRole,
+                    ChangeReason = @event.ChangeReason,
+                    ModifiedAt = @event.ModifiedAt,
+                    ModifiedByEmployeeId = @event.ModifiedByEmployeeId
+                });
+
+                break;
+            }
         }
     }
 }

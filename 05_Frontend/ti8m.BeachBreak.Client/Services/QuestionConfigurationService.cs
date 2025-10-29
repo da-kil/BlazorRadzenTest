@@ -84,9 +84,10 @@ public class QuestionConfigurationService
     }
 
     /// <summary>
-    /// Gets goal categories from question configuration
-    /// Note: Uses nested GoalCategory type from QuestionCard for compatibility with existing code
+    /// Gets goal categories from question configuration (LEGACY - for old GoalAchievement type)
+    /// Note: The new Goal type does not store items in template. This is kept for backward compatibility only.
     /// </summary>
+    [Obsolete("Goal questions no longer use template items. Goals are added dynamically during in-progress states.")]
     public List<QuestionCardTypes.GoalCategory> GetGoalCategories(QuestionItem question)
     {
         return GetConfigurationList<QuestionCardTypes.GoalCategory>(question.Configuration, "GoalCategories");
@@ -205,8 +206,10 @@ public class QuestionConfigurationService
     }
 
     /// <summary>
-    /// Updates goal categories in question configuration
+    /// Updates goal categories in question configuration (LEGACY - for old GoalAchievement type)
+    /// Note: The new Goal type does not store items in template. This is kept for backward compatibility only.
     /// </summary>
+    [Obsolete("Goal questions no longer use template items. Goals are added dynamically during in-progress states.")]
     public void SetGoalCategories(QuestionItem question, List<QuestionCardTypes.GoalCategory> goalCategories)
     {
         question.Configuration["GoalCategories"] = goalCategories;
@@ -228,7 +231,7 @@ public class QuestionConfigurationService
         return question.Type switch
         {
             QuestionType.Assessment => GetCompetencies(question).Any(),
-            QuestionType.GoalAchievement => GetGoalCategories(question).Any(),
+            QuestionType.Goal => true, // Goal questions don't require template items - items added dynamically during in-progress
             QuestionType.TextQuestion => GetTextSections(question).Any(),
             _ => false
         };
@@ -242,7 +245,7 @@ public class QuestionConfigurationService
         return question.Type switch
         {
             QuestionType.Assessment => GetCompetencies(question).Count,
-            QuestionType.GoalAchievement => GetGoalCategories(question).Count,
+            QuestionType.Goal => 0, // Goal questions don't have template items - items added dynamically during in-progress
             QuestionType.TextQuestion => GetTextSections(question).Count,
             _ => 0
         };

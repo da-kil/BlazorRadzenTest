@@ -9,7 +9,7 @@ namespace ti8m.BeachBreak.QueryApi.Controllers;
 
 [ApiController]
 [ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/[controller]")]
+[Route("q/api/v{version:apiVersion}/[controller]")]
 [Authorize] // Only requires authentication, no role check
 public class AuthController : BaseController
 {

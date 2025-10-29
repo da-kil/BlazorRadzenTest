@@ -2,7 +2,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 public enum CompletionRole
 {
-    Employee,
-    Manager,
-    Both
+    Employee = 0,
+    Manager = 1,
+    Both = 2
 }

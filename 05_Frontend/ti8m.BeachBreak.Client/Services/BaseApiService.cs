@@ -437,8 +437,15 @@ public abstract class BaseApiService
         }
     }
 
-    protected void LogError(string message, Exception ex)
+    protected void LogError(string message, Exception? ex)
     {
-        Console.WriteLine($"{message}: {ex.Message}");
+        if (ex != null)
+        {
+            Console.WriteLine($"{message}: {ex.Message}");
+        }
+        else
+        {
+            Console.WriteLine(message);
+        }
     }
 }

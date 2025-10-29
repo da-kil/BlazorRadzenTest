@@ -8,5 +8,5 @@ public record QuestionnaireTemplateCreated(
     string Description,
     Guid CategoryId,
     bool RequiresManagerReview,
-    List<QuestionSectionSnapshot> Sections,
+    List<QuestionSectionData> Sections,
     DateTime CreatedDate) : IDomainEvent;

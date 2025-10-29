@@ -10,7 +10,7 @@ namespace ti8m.BeachBreak.QueryApi.Controllers;
 
 [ApiController]
 [Route("q/api/v{version:apiVersion}/managers")]
-[Authorize(Roles = "TeamLead")]
+[Authorize(Policy = "TeamLead")]
 public class ManagersController : BaseController
 {
     private readonly IQueryDispatcher queryDispatcher;
@@ -428,7 +428,7 @@ public class ManagersController : BaseController
     /// Gets all team members for a specific manager. HR/Admin only.
     /// </summary>
     [HttpGet("{managerId:guid}/team")]
-    [Authorize(Roles = "HR,HRLead,Admin")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(typeof(IEnumerable<EmployeeDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -508,7 +508,7 @@ public class ManagersController : BaseController
     /// Returns enriched data including template names.
     /// </summary>
     [HttpGet("{managerId:guid}/assignments")]
-    [Authorize(Roles = "HR,HRLead,Admin")]
+    [Authorize(Policy = "HR")]
     [ProducesResponseType(typeof(IEnumerable<TeamAssignmentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
