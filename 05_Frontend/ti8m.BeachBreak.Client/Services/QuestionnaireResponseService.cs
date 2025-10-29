@@ -47,8 +47,12 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
         {
             var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/manager/assignment/{assignmentId}", sectionResponses);
             response.EnsureSuccessStatusCode();
-            var responseId = await response.Content.ReadFromJsonAsync<Guid>();
-            return new QuestionnaireResponse { Id = responseId, AssignmentId = assignmentId, SectionResponses = sectionResponses };
+            var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
+            if (result?.Succeeded == true && result.Payload != default)
+            {
+                return new QuestionnaireResponse { Id = result.Payload, AssignmentId = assignmentId, SectionResponses = sectionResponses };
+            }
+            throw new Exception(result?.Message ?? "Failed to save manager response");
         }
         catch (Exception ex)
         {

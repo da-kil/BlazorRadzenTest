@@ -392,7 +392,7 @@
         await LoadAssignmentAndTemplate();
         await InitializeResponseAsync();
         await LoadExistingResponse();
-        FilterVisibleSections();
+        await FilterVisibleSections();
         UpdateProgress();
     }
 
@@ -491,13 +491,15 @@
         }
     }
 
-    private void FilterVisibleSections()
+    private async Task FilterVisibleSections()
     {
         if (template == null)
         {
             visibleSections = new List<QuestionSection>();
             return;
         }
+
+        await JSRuntime.InvokeVoidAsync("console.log", $"[FilterVisibleSections] Assignment: {assignment?.Id}, WorkflowState: {assignment?.WorkflowState}, isManager: {isManager}, isEmployee: {isEmployee}");
 
         // After review meeting finishes, EVERYONE sees ALL sections (employee, manager, and both)
         // This ensures transparency - both parties can see what was discussed and agreed upon
@@ -509,28 +511,68 @@
         // Managers/HR can view employee-only questionnaires in read-only mode
         var isManagerViewingEmployeeOnlyQuestionnaire = isManager && !template.RequiresManagerReview;
 
+        await JSRuntime.InvokeVoidAsync("console.log", $"[FilterVisibleSections] isPostReviewState: {isPostReviewState}, isManagerViewingEmployeeOnly: {isManagerViewingEmployeeOnlyQuestionnaire}");
+
         if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // Show ALL sections in read-only view
+            await JSRuntime.InvokeVoidAsync("console.log", $"[FilterVisibleSections] Early return - showing all {template.Sections.Count} sections");
             visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
             return;
         }
 
-        // Filter sections based on user privileges and section completion role
-        // - Managers see: Manager sections + Both sections
-        // - Employees see: Employee sections + Both sections
-        // - TeamLeads (isManager=true, isEmployee=true) see all sections they have access to
+        // Filter sections based on workflow state and user role
+        // BUSINESS RULES:
+        // - Employees: See Employee + Both sections (backend filters responses in Both sections to only Employee responses)
+        // - Managers: See Manager + Both sections (backend filters responses in Both sections to only Manager responses)
+        // - InReview state: Manager sees ALL sections, Employee sees Employee + Both sections
+        // - ManagerReviewConfirmed onwards: Everyone sees ALL sections (full transparency)
         visibleSections = template.Sections
             .Where(s =>
             {
-                if (isManager && (s.CompletionRole == CompletionRole.Manager || s.CompletionRole == CompletionRole.Both))
+                if (assignment == null)
+                {
+                    // No assignment context - use default role-based filtering
+                    if (isManager && (s.CompletionRole == CompletionRole.Manager || s.CompletionRole == CompletionRole.Both))
+                        return true;
+                    if (isEmployee && (s.CompletionRole == CompletionRole.Employee || s.CompletionRole == CompletionRole.Both))
+                        return true;
+                    return false;
+                }
+
+                // From ManagerReviewConfirmed onwards: Everyone sees ALL sections
+                if (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                                WorkflowState.EmployeeReviewConfirmed or
+                                                WorkflowState.Finalized)
+                {
                     return true;
-                if (isEmployee && (s.CompletionRole == CompletionRole.Employee || s.CompletionRole == CompletionRole.Both))
-                    return true;
-                return false;
+                }
+
+                // InReview state: Manager sees ALL, Employee sees Employee + Both
+                if (assignment.WorkflowState == WorkflowState.InReview)
+                {
+                    if (isManager)
+                        return true; // Manager sees ALL sections
+                    else
+                        return s.CompletionRole == CompletionRole.Employee || s.CompletionRole == CompletionRole.Both;
+                }
+
+                // In-Progress + Submitted states: Role-based filtering
+                // Employees see: Employee + Both
+                // Managers see: Manager + Both
+                if (isManager)
+                {
+                    return s.CompletionRole == CompletionRole.Manager || s.CompletionRole == CompletionRole.Both;
+                }
+                else
+                {
+                    return s.CompletionRole == CompletionRole.Employee || s.CompletionRole == CompletionRole.Both;
+                }
             })
             .OrderBy(s => s.Order)
             .ToList();
+
+        await JSRuntime.InvokeVoidAsync("console.log", $"[FilterVisibleSections] Filtered to {visibleSections.Count} sections: {string.Join(", ", visibleSections.Select(s => $"'{s.Title}' (CompletionRole={s.CompletionRole})"))}");
 
         // If no visible sections, show helpful error
         if (!visibleSections.Any() && template.Sections.Any())

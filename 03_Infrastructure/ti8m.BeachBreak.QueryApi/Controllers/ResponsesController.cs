@@ -2,12 +2,20 @@ using Marten;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries;
+using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.Application.Query.Services;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.QueryApi.Dto;
+// ARCHITECTURAL NOTE: QueryApi references Domain for shared enum types only (WorkflowState, CompletionRole, ResponseRole).
+// This is pragmatic because Application.Query DTOs already use these Domain enums, and duplicating would cause ambiguity.
+// FUTURE: Consider moving shared enums to Core layer for proper layering.
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -19,17 +27,20 @@ public class ResponsesController : BaseController
     private readonly IProgressCalculationService _progressCalculationService;
     private readonly IDocumentStore _documentStore;
     private readonly ILogger<ResponsesController> _logger;
+    private readonly UserContext _userContext;
 
     public ResponsesController(
         IQueryDispatcher queryDispatcher,
         IProgressCalculationService progressCalculationService,
         IDocumentStore documentStore,
-        ILogger<ResponsesController> logger)
+        ILogger<ResponsesController> logger,
+        UserContext userContext)
     {
         _queryDispatcher = queryDispatcher;
         _progressCalculationService = progressCalculationService;
         _documentStore = documentStore;
         _logger = logger;
+        _userContext = userContext;
     }
 
     [HttpGet]
@@ -85,7 +96,51 @@ public class ResponsesController : BaseController
             if (response == null)
                 return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response for assignment {assignmentId} not found", 404));
 
-            return CreateResponse(Result<QuestionnaireResponseDto>.Success(MapToDto(response)));
+            // Get current user's role for filtering
+            if (!Guid.TryParse(_userContext.Id, out var userId))
+            {
+                _logger.LogWarning("GetResponseByAssignment: Unable to parse user ID from context");
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("User identification failed", 401));
+            }
+
+            var userRoleResult = await _queryDispatcher.QueryAsync(
+                new GetEmployeeRoleByIdQuery(userId),
+                HttpContext.RequestAborted);
+
+            if (userRoleResult == null)
+            {
+                _logger.LogWarning("GetResponseByAssignment: User role not found for user {UserId}", userId);
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("User role not found", 403));
+            }
+
+            // Get assignment to check workflow state
+            var assignmentQuery = new QuestionnaireAssignmentQuery(assignmentId);
+            var assignmentResult = await _queryDispatcher.QueryAsync(assignmentQuery);
+
+            if (assignmentResult?.Succeeded != true || assignmentResult.Payload == null)
+            {
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("Assignment not found", 404));
+            }
+
+            // Get template to check section CompletionRoles
+            var templateQuery = new QuestionnaireTemplateQuery(assignmentResult.Payload.TemplateId);
+            var templateResult = await _queryDispatcher.QueryAsync(templateQuery);
+
+            if (templateResult?.Succeeded != true || templateResult.Payload == null)
+            {
+                _logger.LogWarning("GetResponseByAssignment: Template not found for assignment {AssignmentId}", assignmentId);
+                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("Template not found", 404));
+            }
+
+            // Apply section and response filtering based on user role and workflow state
+            var dto = MapToDto(response);
+            dto = FilterSectionsByUserRoleAndWorkflowState(
+                dto,
+                assignmentResult.Payload,
+                templateResult.Payload,
+                userRoleResult.ApplicationRole);
+
+            return CreateResponse(Result<QuestionnaireResponseDto>.Success(dto));
         }
         catch (Exception ex)
         {
@@ -268,14 +323,14 @@ public class ResponsesController : BaseController
         foreach (var sectionKvp in sectionResponses)
         {
             var sectionId = sectionKvp.Key;
-            Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
+            Dictionary<CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
 
             // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
             if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
             {
-                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
+                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
             }
-            else if (sectionKvp.Value is Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
+            else if (sectionKvp.Value is Dictionary<CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
             {
                 roleBasedResponses = typedRoleResponses;
             }
@@ -291,8 +346,8 @@ public class ResponsesController : BaseController
                 // Convert CompletionRole to ResponseRole
                 ResponseRole responseRole = role switch
                 {
-                    Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee => ResponseRole.Employee,
-                    Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager => ResponseRole.Manager,
+                    CompletionRole.Employee => ResponseRole.Employee,
+                    CompletionRole.Manager => ResponseRole.Manager,
                     _ => ResponseRole.Employee // Default fallback
                 };
                 var roleQuestions = roleKvp.Value;
@@ -388,14 +443,14 @@ public class ResponsesController : BaseController
         foreach (var sectionKvp in sectionResponses)
         {
             var sectionId = sectionKvp.Key;
-            Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
+            Dictionary<CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
 
             // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
             if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
             {
-                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
+                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
             }
-            else if (sectionKvp.Value is Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
+            else if (sectionKvp.Value is Dictionary<CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
             {
                 roleBasedResponses = typedRoleResponses;
             }
@@ -405,7 +460,7 @@ public class ResponsesController : BaseController
             // For employee endpoints, return EMPLOYEE responses only
             var roleResponsesDto = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>>();
 
-            if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponses))
+            if (roleBasedResponses.TryGetValue(CompletionRole.Employee, out var employeeResponses))
             {
                 var questionResponsesForEmployee = new Dictionary<Guid, QuestionResponseDto>();
 
@@ -490,6 +545,110 @@ public class ResponsesController : BaseController
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Filters section responses based on user role and workflow state to prevent exposing data before it's ready.
+    /// BUSINESS RULES:
+    /// - Employees: See Employee + Both sections (but in Both sections, only their own Employee responses)
+    /// - Managers: See Manager + Both sections (but in Both sections, only their own Manager responses)
+    /// - InReview state: Manager sees ALL sections with ALL responses, Employee sees Employee + Both sections
+    /// - ManagerReviewConfirmed onwards: Everyone sees ALL sections with ALL responses
+    /// </summary>
+    private QuestionnaireResponseDto FilterSectionsByUserRoleAndWorkflowState(
+        QuestionnaireResponseDto response,
+        Application.Query.Queries.QuestionnaireAssignmentQueries.QuestionnaireAssignment assignment,
+        Application.Query.Queries.QuestionnaireTemplateQueries.QuestionnaireTemplate template,
+        ApplicationRole userRole)
+    {
+        var isManager = userRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin;
+
+        // From ManagerReviewConfirmed onwards: Everyone sees ALL sections with ALL responses
+        if (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or WorkflowState.EmployeeReviewConfirmed or WorkflowState.Finalized)
+        {
+            return response; // Full transparency
+        }
+
+        // InReview state: Manager sees ALL, Employee sees only their sections
+        if (assignment.WorkflowState == WorkflowState.InReview)
+        {
+            if (isManager)
+            {
+                return response; // Manager sees everything during review
+            }
+            // Employee continues with normal filtering (falls through)
+        }
+
+        // In-Progress + Submitted states: Filter by CompletionRole and ResponseRole
+        var filteredSections = new Dictionary<Guid, SectionResponseDto>();
+
+        foreach (var sectionKvp in response.SectionResponses)
+        {
+            var sectionId = sectionKvp.Key;
+            var sectionDto = sectionKvp.Value;
+
+            // Find section in template to get CompletionRole
+            var templateSection = template.Sections.FirstOrDefault(s => s.Id == sectionId);
+            if (templateSection == null) continue; // Skip sections not in template
+
+            // Parse CompletionRole string to enum (template stores as string)
+            if (!Enum.TryParse<CompletionRole>(templateSection.CompletionRole, out var completionRole))
+            {
+                continue; // Skip sections with invalid CompletionRole
+            }
+
+            // Determine if user should see this section
+            bool shouldIncludeSection = false;
+            Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>>? filteredRoleResponses = null;
+
+            if (completionRole == CompletionRole.Both)
+            {
+                // Both sections: Everyone sees them, but filtered by their own responses
+                shouldIncludeSection = true;
+                filteredRoleResponses = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>>();
+
+                // Filter to show only the user's own responses in Both sections
+                if (isManager && sectionDto.RoleResponses.ContainsKey(ResponseRole.Manager))
+                {
+                    filteredRoleResponses[ResponseRole.Manager] = sectionDto.RoleResponses[ResponseRole.Manager];
+                }
+                else if (!isManager && sectionDto.RoleResponses.ContainsKey(ResponseRole.Employee))
+                {
+                    filteredRoleResponses[ResponseRole.Employee] = sectionDto.RoleResponses[ResponseRole.Employee];
+                }
+            }
+            else if (isManager && completionRole == CompletionRole.Manager)
+            {
+                // Manager-only sections: Managers see all responses
+                shouldIncludeSection = true;
+                filteredRoleResponses = sectionDto.RoleResponses;
+            }
+            else if (!isManager && completionRole == CompletionRole.Employee)
+            {
+                // Employee-only sections: Employees see all responses
+                shouldIncludeSection = true;
+                filteredRoleResponses = sectionDto.RoleResponses;
+            }
+
+            if (shouldIncludeSection && filteredRoleResponses != null)
+            {
+                filteredSections[sectionId] = new SectionResponseDto
+                {
+                    RoleResponses = filteredRoleResponses
+                };
+            }
+        }
+
+        return new QuestionnaireResponseDto
+        {
+            Id = response.Id,
+            AssignmentId = response.AssignmentId,
+            TemplateId = response.TemplateId,
+            EmployeeId = response.EmployeeId,
+            SectionResponses = filteredSections,
+            StartedDate = response.StartedDate,
+            ProgressPercentage = response.ProgressPercentage
+        };
     }
 
 }

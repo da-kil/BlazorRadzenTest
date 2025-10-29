@@ -196,6 +196,7 @@ public class AssignmentsController : BaseController
         {
             AssignedBy = assignment.AssignedBy,
             AssignedDate = assignment.AssignedDate,
+            StartedDate = assignment.StartedDate,
             CompletedDate = assignment.CompletedDate,
             DueDate = assignment.DueDate,
             EmployeeEmail = assignment.EmployeeEmail,
@@ -208,35 +209,49 @@ public class AssignmentsController : BaseController
             TemplateName = assignment.TemplateName,
             TemplateCategoryId = assignment.TemplateCategoryId,
 
+            // Withdrawal tracking
+            IsWithdrawn = assignment.IsWithdrawn,
+            WithdrawnDate = assignment.WithdrawnDate,
+            WithdrawnByEmployeeId = assignment.WithdrawnByEmployeeId,
+            WithdrawnByEmployeeName = assignment.WithdrawnByEmployeeName,
+            WithdrawalReason = assignment.WithdrawalReason,
+
             // Workflow properties
             WorkflowState = assignment.WorkflowState,
             SectionProgress = assignment.SectionProgress,
 
             // Submission phase
             EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
-            EmployeeSubmittedBy = assignment.EmployeeSubmittedByEmployeeName,
+            EmployeeSubmittedByEmployeeId = assignment.EmployeeSubmittedByEmployeeId,
+            EmployeeSubmittedByEmployeeName = assignment.EmployeeSubmittedByEmployeeName,
             ManagerSubmittedDate = assignment.ManagerSubmittedDate,
-            ManagerSubmittedBy = assignment.ManagerSubmittedByEmployeeName,
+            ManagerSubmittedByEmployeeId = assignment.ManagerSubmittedByEmployeeId,
+            ManagerSubmittedByEmployeeName = assignment.ManagerSubmittedByEmployeeName,
 
             // Review phase
             ReviewInitiatedDate = assignment.ReviewInitiatedDate,
-            ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
+            ReviewInitiatedByEmployeeId = assignment.ReviewInitiatedByEmployeeId,
+            ReviewInitiatedByEmployeeName = assignment.ReviewInitiatedByEmployeeName,
             ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
-            ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
+            ManagerReviewFinishedByEmployeeId = assignment.ManagerReviewFinishedByEmployeeId,
+            ManagerReviewFinishedByEmployeeName = assignment.ManagerReviewFinishedByEmployeeName,
             ManagerReviewSummary = assignment.ManagerReviewSummary,
             EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
-            EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
+            EmployeeReviewConfirmedByEmployeeId = assignment.EmployeeReviewConfirmedByEmployeeId,
+            EmployeeReviewConfirmedByEmployeeName = assignment.EmployeeReviewConfirmedByEmployeeName,
             EmployeeReviewComments = assignment.EmployeeReviewComments,
 
             // Final state
             FinalizedDate = assignment.FinalizedDate,
-            FinalizedBy = assignment.FinalizedByEmployeeName,
+            FinalizedByEmployeeId = assignment.FinalizedByEmployeeId,
+            FinalizedByEmployeeName = assignment.FinalizedByEmployeeName,
             ManagerFinalNotes = assignment.ManagerFinalNotes,
             IsLocked = assignment.IsLocked,
 
             // Reopen tracking (audit trail)
             LastReopenedDate = assignment.LastReopenedDate,
-            LastReopenedBy = assignment.LastReopenedByEmployeeName,
+            LastReopenedByEmployeeId = assignment.LastReopenedByEmployeeId,
+            LastReopenedByEmployeeName = assignment.LastReopenedByEmployeeName,
             LastReopenedByRole = assignment.LastReopenedByRole,
             LastReopenReason = assignment.LastReopenReason
         };

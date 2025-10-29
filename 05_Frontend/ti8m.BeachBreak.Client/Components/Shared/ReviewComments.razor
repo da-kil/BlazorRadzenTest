@@ -17,7 +17,7 @@
                     <div>
                         <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="Manager Review Summary" Class="mb-1" />
                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block">
-                            Added by @(Assignment?.ManagerReviewFinishedBy ?? "manager") after finishing the review meeting
+                            Added by @(Assignment?.ManagerReviewFinishedByEmployeeName ?? "manager") after finishing the review meeting
                         </RadzenText>
                     </div>
                     @if (Assignment?.ManagerReviewFinishedDate.HasValue == true)
@@ -85,7 +85,7 @@
                     <div>
                         <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Manager Final Notes" Class="mb-1" />
                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block">
-                            Added by @(Assignment?.FinalizedBy ?? "manager") when finalizing the questionnaire (internal notes, not visible to employee)
+                            Added by @(Assignment?.FinalizedByEmployeeName ?? "manager") when finalizing the questionnaire (internal notes, not visible to employee)
                         </RadzenText>
                     </div>
                     @if (Assignment?.FinalizedDate.HasValue == true)
