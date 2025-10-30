@@ -1,0 +1,35 @@
+@using Radzen
+@using Radzen.Blazor
+
+@if (Errors.Any())
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
+        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-2">Please fix the following errors:</RadzenText>
+        <ul class="mb-0 validation-errors-list">
+            @foreach (var error in Errors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    </RadzenAlert>
+}
+
+@code {
+    /// <summary>
+    /// List of validation error messages to display.
+    /// Component only renders when errors exist.
+    /// </summary>
+    [Parameter]
+    public List<string> Errors { get; set; } = new();
+}
+
+<style>
+.validation-errors-list {
+    margin-bottom: 0;
+    padding-left: 1.5rem;
+}
+
+.validation-errors-list li {
+    margin-bottom: 0.25rem;
+}
+</style>

@@ -2,84 +2,19 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Services
 @inject DialogService DialogService
 
 <div class="edit-goal-dialog">
     <RadzenStack Gap="1rem">
-        @if (validationErrors.Any())
-        {
-            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
-                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-2">Please fix the following errors:</RadzenText>
-                <ul class="mb-0">
-                    @foreach (var error in validationErrors)
-                    {
-                        <li>@error</li>
-                    }
-                </ul>
-            </RadzenAlert>
-        }
+        <ValidationErrorAlert Errors="@validationErrors" />
 
-        <RadzenFieldset>
-            <HeaderTemplate>
-                <RadzenIcon Icon="flag" Class="me-2" />
-                <span class="fw-bold">Goal Details</span>
-            </HeaderTemplate>
-            <ChildContent>
-                <RadzenStack Gap="1rem">
-                    <div>
-                        <RadzenLabel Text="Objective Description*" Component="objectiveDescription" Class="fw-bold mb-1" />
-                        <RadzenTextArea @bind-Value="@objectiveDescription"
-                                      Name="objectiveDescription"
-                                      Placeholder="Describe the goal objective..."
-                                      Rows="3"
-                                      Class="w-100"
-                                      MaxLength="1000" />
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                            @objectiveDescription.Length / 1000 characters
-                        </RadzenText>
-                    </div>
+        <GoalDetailsFieldset @bind-ObjectiveDescription="@objectiveDescription"
+                            @bind-MeasurementMetric="@measurementMetric" />
 
-                    <div>
-                        <RadzenLabel Text="Measurement Metric*" Component="measurementMetric" Class="fw-bold mb-1" />
-                        <RadzenTextBox @bind-Value="@measurementMetric"
-                                     Name="measurementMetric"
-                                     Placeholder="How will this goal be measured?"
-                                     Class="w-100"
-                                     MaxLength="500" />
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                            Example: "Increase sales by 20%", "Complete 3 certifications", "Reduce errors to &lt; 2%"
-                        </RadzenText>
-                    </div>
-                </RadzenStack>
-            </ChildContent>
-        </RadzenFieldset>
-
-        <RadzenFieldset>
-            <HeaderTemplate>
-                <RadzenIcon Icon="calendar_today" Class="me-2" />
-                <span class="fw-bold">Timeframe</span>
-            </HeaderTemplate>
-            <ChildContent>
-                <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenLabel Text="Start Date*" Component="timeframeFrom" Class="fw-bold mb-1" />
-                        <RadzenDatePicker @bind-Value="@timeframeFrom"
-                                        Name="timeframeFrom"
-                                        DateFormat="dd.MM.yyyy"
-                                        Class="w-100"
-                                        ShowTime="false" />
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenLabel Text="End Date*" Component="timeframeTo" Class="fw-bold mb-1" />
-                        <RadzenDatePicker @bind-Value="@timeframeTo"
-                                        Name="timeframeTo"
-                                        DateFormat="dd.MM.yyyy"
-                                        Class="w-100"
-                                        ShowTime="false" />
-                    </RadzenColumn>
-                </RadzenRow>
-            </ChildContent>
-        </RadzenFieldset>
+        <GoalTimeframeFieldset @bind-TimeframeFrom="@timeframeFrom"
+                              @bind-TimeframeTo="@timeframeTo" />
 
         @if (IsInReviewMode)
         {
@@ -190,63 +125,14 @@
 
     private bool ValidateForm()
     {
-        validationErrors.Clear();
-
-        if (string.IsNullOrWhiteSpace(objectiveDescription))
-        {
-            validationErrors.Add("Objective description is required");
-        }
-        else if (objectiveDescription.Length < 10)
-        {
-            validationErrors.Add("Objective description must be at least 10 characters");
-        }
-
-        if (string.IsNullOrWhiteSpace(measurementMetric))
-        {
-            validationErrors.Add("Measurement metric is required");
-        }
-        else if (measurementMetric.Length < 5)
-        {
-            validationErrors.Add("Measurement metric must be at least 5 characters");
-        }
-
-        if (!timeframeFrom.HasValue)
-        {
-            validationErrors.Add("Start date is required");
-        }
-
-        if (!timeframeTo.HasValue)
-        {
-            validationErrors.Add("End date is required");
-        }
-
-        if (timeframeFrom.HasValue && timeframeTo.HasValue && timeframeTo.Value <= timeframeFrom.Value)
-        {
-            validationErrors.Add("End date must be after start date");
-        }
-
-        // Only validate weighting and reason for change when in review mode
-        if (IsInReviewMode)
-        {
-            if (weightingPercentage <= 0)
-            {
-                validationErrors.Add("Weighting percentage must be greater than 0");
-            }
-
-            if (weightingPercentage > 100)
-            {
-                validationErrors.Add("Weighting percentage cannot exceed 100%");
-            }
-
-            if (string.IsNullOrWhiteSpace(changeReason))
-            {
-                validationErrors.Add("Reason for change is required");
-            }
-            else if (changeReason.Length < 10)
-            {
-                validationErrors.Add("Reason for change must be at least 10 characters");
-            }
-        }
+        validationErrors = GoalFormValidator.ValidateGoalDetails(
+            objectiveDescription,
+            measurementMetric,
+            timeframeFrom,
+            timeframeTo,
+            IsInReviewMode,
+            weightingPercentage,
+            changeReason);
 
         return !validationErrors.Any();
     }
@@ -287,14 +173,5 @@
 .edit-goal-dialog {
     padding: 1rem;
     max-width: 700px;
-}
-
-.edit-goal-dialog ul {
-    margin-bottom: 0;
-    padding-left: 1.5rem;
-}
-
-.edit-goal-dialog ul li {
-    margin-bottom: 0.25rem;
 }
 </style>

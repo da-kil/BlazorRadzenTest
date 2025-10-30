@@ -1,0 +1,63 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenFieldset>
+    <HeaderTemplate>
+        <RadzenIcon Icon="flag" Class="me-2" />
+        <span class="fw-bold">Goal Details</span>
+    </HeaderTemplate>
+    <ChildContent>
+        <RadzenStack Gap="1rem">
+            <div>
+                <RadzenLabel Text="Objective Description*" Component="objectiveDescription" Class="fw-bold mb-1" />
+                <RadzenTextArea @bind-Value="@ObjectiveDescription"
+                              Name="objectiveDescription"
+                              Placeholder="Describe the goal objective..."
+                              Rows="3"
+                              Class="w-100"
+                              MaxLength="1000" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @ObjectiveDescription.Length / 1000 characters
+                </RadzenText>
+            </div>
+
+            <div>
+                <RadzenLabel Text="Measurement Metric*" Component="measurementMetric" Class="fw-bold mb-1" />
+                <RadzenTextBox @bind-Value="@MeasurementMetric"
+                             Name="measurementMetric"
+                             Placeholder="How will this goal be measured?"
+                             Class="w-100"
+                             MaxLength="500" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    Example: "Increase sales by 20%", "Complete 3 certifications", "Reduce errors to &lt; 2%"
+                </RadzenText>
+            </div>
+        </RadzenStack>
+    </ChildContent>
+</RadzenFieldset>
+
+@code {
+    /// <summary>
+    /// The goal's objective description.
+    /// </summary>
+    [Parameter]
+    public string ObjectiveDescription { get; set; } = "";
+
+    /// <summary>
+    /// Event callback when objective description changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> ObjectiveDescriptionChanged { get; set; }
+
+    /// <summary>
+    /// How the goal will be measured.
+    /// </summary>
+    [Parameter]
+    public string MeasurementMetric { get; set; } = "";
+
+    /// <summary>
+    /// Event callback when measurement metric changes.
+    /// </summary>
+    [Parameter]
+    public EventCallback<string> MeasurementMetricChanged { get; set; }
+}
