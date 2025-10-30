@@ -859,7 +859,8 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="Employee" />
+                            CurrentUserRole="Employee"
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />
                     </div>
                 </div>
 
@@ -877,7 +878,8 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="Manager" />
+                            CurrentUserRole="Manager"
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
                     </div>
                 </div>
             </div>;
@@ -892,7 +894,8 @@
             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
             IsReadOnly="@IsQuestionnaireCompleted()"
             AssignmentId="@(assignmentId ?? Guid.Empty)"
-            CurrentUserRole="@currentUserRole" />;
+            CurrentUserRole="@currentUserRole"
+            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />;
     }
 
     private async Task HandleQuestionResponseChangedDynamic(QuestionResponse updatedResponse)

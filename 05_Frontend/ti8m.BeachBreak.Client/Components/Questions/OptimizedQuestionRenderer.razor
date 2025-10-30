@@ -34,6 +34,7 @@
     [Parameter] public bool HideHeader { get; set; } = false;
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public string CurrentUserRole { get; set; } = "Employee";
+    [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
 
     private bool shouldRender = true;
     private string? lastQuestionHash;
@@ -122,7 +123,8 @@
                               IsReadOnly="@IsReadOnly"
                               HideHeader="@HideHeader"
                               AssignmentId="@AssignmentId"
-                              CurrentUserRole="@CurrentUserRole" />
+                              CurrentUserRole="@CurrentUserRole"
+                              AssignmentWorkflowState="@AssignmentWorkflowState" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>

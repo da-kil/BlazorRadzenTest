@@ -261,6 +261,7 @@ else
     [Parameter] public bool HideHeader { get; set; } = false;
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public string CurrentUserRole { get; set; } = "Employee";
+    [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
 
     private List<Dictionary<string, object>> currentGoals = new();
     private List<Dictionary<string, object>> predecessorRatings = new();
@@ -455,7 +456,8 @@ else
                 { "InitialMeasurement", measurement },
                 { "InitialTimeframeFrom", fromDate },
                 { "InitialTimeframeTo", toDate },
-                { "InitialWeighting", weighting }
+                { "InitialWeighting", weighting },
+                { "AssignmentWorkflowState", AssignmentWorkflowState }
             },
             new DialogOptions
             {

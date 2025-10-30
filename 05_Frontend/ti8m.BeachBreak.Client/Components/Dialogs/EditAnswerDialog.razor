@@ -82,7 +82,8 @@
                                   IsReadOnly="false"
                                   HideHeader="true"
                                   AssignmentId="@AssignmentId"
-                                  CurrentUserRole="@CurrentUserRole" />
+                                  CurrentUserRole="@CurrentUserRole"
+                                  AssignmentWorkflowState="@AssignmentWorkflowState" />
         }
         else
         {
@@ -114,6 +115,7 @@
     [Parameter] public string SectionTitle { get; set; } = string.Empty;
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public string CurrentUserRole { get; set; } = "Employee";
+    [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
 
     private QuestionResponse editResponse = new();
 

@@ -1,5 +1,6 @@
 @using Radzen
 @using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
 @inject DialogService DialogService
@@ -83,45 +84,48 @@
             </ChildContent>
         </RadzenFieldset>
 
-        <RadzenFieldset>
-            <HeaderTemplate>
-                <RadzenIcon Icon="percent" Class="me-2" />
-                <span class="fw-bold">Weighting</span>
-            </HeaderTemplate>
-            <ChildContent>
-                <div>
-                    <RadzenLabel Text="Weighting Percentage*" Component="weightingPercentage" Class="fw-bold mb-1" />
-                    <RadzenNumeric @bind-Value="@weightingPercentage"
-                                 Name="weightingPercentage"
-                                 Min="0"
-                                 Max="100"
-                                 Step="5"
-                                 ShowUpDown="true"
-                                 Class="w-100" />
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
-                        Percentage of total goals (0-100%). Set weighting to allocate importance across goals.
-                    </RadzenText>
-                </div>
-            </ChildContent>
-        </RadzenFieldset>
+        @if (IsInReviewMode)
+        {
+            <RadzenFieldset>
+                <HeaderTemplate>
+                    <RadzenIcon Icon="percent" Class="me-2" />
+                    <span class="fw-bold">Weighting</span>
+                </HeaderTemplate>
+                <ChildContent>
+                    <div>
+                        <RadzenLabel Text="Weighting Percentage*" Component="weightingPercentage" Class="fw-bold mb-1" />
+                        <RadzenNumeric @bind-Value="@weightingPercentage"
+                                     Name="weightingPercentage"
+                                     Min="0"
+                                     Max="100"
+                                     Step="5"
+                                     ShowUpDown="true"
+                                     Class="w-100" />
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                            Percentage of total goals (0-100%). Set weighting to allocate importance across goals.
+                        </RadzenText>
+                    </div>
+                </ChildContent>
+            </RadzenFieldset>
 
-        <RadzenFieldset>
-            <HeaderTemplate>
-                <RadzenIcon Icon="edit_note" Class="me-2" />
-                <span class="fw-bold">Reason for Change*</span>
-            </HeaderTemplate>
-            <ChildContent>
-                <RadzenTextArea @bind-Value="@changeReason"
-                              Name="changeReason"
-                              Placeholder="Explain why this goal is being modified..."
-                              Rows="2"
-                              Class="w-100"
-                              MaxLength="500" />
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                    @changeReason.Length / 500 characters
-                </RadzenText>
-            </ChildContent>
-        </RadzenFieldset>
+            <RadzenFieldset>
+                <HeaderTemplate>
+                    <RadzenIcon Icon="edit_note" Class="me-2" />
+                    <span class="fw-bold">Reason for Change*</span>
+                </HeaderTemplate>
+                <ChildContent>
+                    <RadzenTextArea @bind-Value="@changeReason"
+                                  Name="changeReason"
+                                  Placeholder="Explain why this goal is being modified..."
+                                  Rows="2"
+                                  Class="w-100"
+                                  MaxLength="500" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                        @changeReason.Length / 500 characters
+                    </RadzenText>
+                </ChildContent>
+            </RadzenFieldset>
+        }
 
         <RadzenFieldset>
             <HeaderTemplate>
@@ -155,6 +159,7 @@
     [Parameter] public Guid QuestionId { get; set; }
     [Parameter] public Guid GoalId { get; set; }
     [Parameter] public string ModifiedByRole { get; set; } = "Employee";
+    [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
 
     // Pre-populated values
     [Parameter] public string InitialObjective { get; set; } = "";
@@ -162,6 +167,9 @@
     [Parameter] public DateTime InitialTimeframeFrom { get; set; } = DateTime.Today;
     [Parameter] public DateTime InitialTimeframeTo { get; set; } = DateTime.Today.AddMonths(6);
     [Parameter] public decimal InitialWeighting { get; set; } = 0;
+
+    // Helper property to determine if weighting and reason fields should be shown
+    private bool IsInReviewMode => AssignmentWorkflowState == WorkflowState.InReview;
 
     private string objectiveDescription = "";
     private string measurementMetric = "";
@@ -220,23 +228,27 @@
             validationErrors.Add("End date must be after start date");
         }
 
-        if (weightingPercentage <= 0)
+        // Only validate weighting and reason for change when in review mode
+        if (IsInReviewMode)
         {
-            validationErrors.Add("Weighting percentage must be greater than 0");
-        }
+            if (weightingPercentage <= 0)
+            {
+                validationErrors.Add("Weighting percentage must be greater than 0");
+            }
 
-        if (weightingPercentage > 100)
-        {
-            validationErrors.Add("Weighting percentage cannot exceed 100%");
-        }
+            if (weightingPercentage > 100)
+            {
+                validationErrors.Add("Weighting percentage cannot exceed 100%");
+            }
 
-        if (string.IsNullOrWhiteSpace(changeReason))
-        {
-            validationErrors.Add("Reason for change is required");
-        }
-        else if (changeReason.Length < 10)
-        {
-            validationErrors.Add("Reason for change must be at least 10 characters");
+            if (string.IsNullOrWhiteSpace(changeReason))
+            {
+                validationErrors.Add("Reason for change is required");
+            }
+            else if (changeReason.Length < 10)
+            {
+                validationErrors.Add("Reason for change must be at least 10 characters");
+            }
         }
 
         return !validationErrors.Any();
@@ -261,9 +273,10 @@
                 MeasurementMetric = measurementMetric.Trim(),
                 TimeframeFrom = timeframeFrom!.Value,
                 TimeframeTo = timeframeTo!.Value,
-                WeightingPercentage = weightingPercentage,
+                // Only include weighting and change reason when in review mode
+                WeightingPercentage = IsInReviewMode ? weightingPercentage : null,
                 ModifiedByRole = ModifiedByRole,
-                ChangeReason = changeReason.Trim()
+                ChangeReason = IsInReviewMode ? changeReason.Trim() : string.Empty
             };
 
             var result = await GoalApiService.ModifyGoalAsync(AssignmentId, GoalId, dto);

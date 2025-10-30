@@ -138,7 +138,8 @@
                                                                 IsReadOnly="true"
                                                                 HideHeader="true"
                                                                 AssignmentId="@Assignment.Id"
-                                                                CurrentUserRole="Employee" />
+                                                                CurrentUserRole="Employee"
+                                                                AssignmentWorkflowState="@Assignment.WorkflowState" />
                                                         </div>
                                                     </div>
                                                     <div class="answer-actions">
@@ -175,7 +176,8 @@
                                                                 IsReadOnly="true"
                                                                 HideHeader="true"
                                                                 AssignmentId="@Assignment.Id"
-                                                                CurrentUserRole="Manager" />
+                                                                CurrentUserRole="Manager"
+                                                                AssignmentWorkflowState="@Assignment.WorkflowState" />
                                                         </div>
                                                     </div>
                                                     <div class="answer-actions">
@@ -215,7 +217,8 @@
                                                             IsReadOnly="true"
                                                             HideHeader="true"
                                                             AssignmentId="@Assignment.Id"
-                                                            CurrentUserRole="@currentSection.CompletionRole.ToString()" />
+                                                            CurrentUserRole="@currentSection.CompletionRole.ToString()"
+                                                            AssignmentWorkflowState="@Assignment.WorkflowState" />
                                                     </div>
                                                 </div>
                                                 <div class="answer-actions">
@@ -363,7 +366,8 @@
                 { "CompletionRole", originalRole },
                 { "SectionTitle", currentSection.Title },
                 { "AssignmentId", Assignment.Id },
-                { "CurrentUserRole", originalRole.ToString() }
+                { "CurrentUserRole", originalRole.ToString() },
+                { "AssignmentWorkflowState", Assignment.WorkflowState }
             },
             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
         );
