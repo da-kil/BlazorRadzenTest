@@ -25,6 +25,11 @@ public interface IGoalApiService
     Task<Result> ModifyGoalAsync(Guid assignmentId, Guid goalId, ModifyGoalDto dto);
 
     /// <summary>
+    /// Deletes an existing goal.
+    /// </summary>
+    Task<Result> DeleteGoalAsync(Guid assignmentId, Guid goalId);
+
+    /// <summary>
     /// Rates a predecessor goal (from a linked predecessor questionnaire).
     /// </summary>
     Task<Result> RatePredecessorGoalAsync(Guid assignmentId, RatePredecessorGoalDto dto);

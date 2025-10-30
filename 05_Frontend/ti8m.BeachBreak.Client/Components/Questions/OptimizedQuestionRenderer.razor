@@ -40,6 +40,22 @@
     private string? lastQuestionHash;
     private string? lastResponseHash;
 
+    // Reference to child OptimizedGoalQuestion (if this is a Goal question)
+    private OptimizedGoalQuestion? goalQuestionRef;
+
+    /// <summary>
+    /// Saves pending goal changes if this is a Goal question.
+    /// Returns true if all operations succeed or if not a goal question.
+    /// </summary>
+    public async Task<bool> SavePendingGoalChanges()
+    {
+        if (Question.Type == QuestionType.Goal && goalQuestionRef != null)
+        {
+            return await goalQuestionRef.SavePendingGoalChanges();
+        }
+        return true; // Not a goal question, nothing to save
+    }
+
     protected override void OnParametersSet()
     {
         // Only re-render if question or response data actually changed
@@ -117,7 +133,8 @@
 
     private RenderFragment RenderGoalQuestionOptimized() => __builder =>
     {
-        <OptimizedGoalQuestion Question="@Question"
+        <OptimizedGoalQuestion @ref="goalQuestionRef"
+                              Question="@Question"
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
                               IsReadOnly="@IsReadOnly"

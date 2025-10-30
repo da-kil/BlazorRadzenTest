@@ -96,6 +96,30 @@ public class GoalApiService : BaseApiService, IGoalApiService
         }
     }
 
+    public async Task<Result> DeleteGoalAsync(Guid assignmentId, Guid goalId)
+    {
+        try
+        {
+            var response = await HttpCommandClient.DeleteAsync(
+                $"{CommandEndpoint}/{assignmentId}/goals/{goalId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<Result>();
+                return result ?? Result.Success();
+            }
+
+            var errorMessage = await ExtractErrorMessageAsync(response);
+            LogError($"Failed to delete goal: {errorMessage}", null);
+            return Result.Fail(errorMessage, (int)response.StatusCode);
+        }
+        catch (Exception ex)
+        {
+            LogError("Error deleting goal", ex);
+            return Result.Fail($"Error deleting goal: {ex.Message}", 500);
+        }
+    }
+
     public async Task<Result> RatePredecessorGoalAsync(Guid assignmentId, RatePredecessorGoalDto dto)
     {
         try

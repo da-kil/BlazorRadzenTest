@@ -2,10 +2,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
-@using ti8m.BeachBreak.Client.Services
 @inject DialogService DialogService
-@inject NotificationService NotificationService
-@inject IGoalApiService GoalApiService
 
 <div class="edit-goal-dialog">
     <RadzenStack Gap="1rem">
@@ -254,7 +251,7 @@
         return !validationErrors.Any();
     }
 
-    private async Task Submit()
+    private void Submit()
     {
         if (!ValidateForm())
         {
@@ -262,75 +259,22 @@
             return;
         }
 
-        isSubmitting = true;
-        StateHasChanged();
-
-        try
+        // Return (GoalId, DTO) to parent component (OptimizedGoalQuestion)
+        // Parent will queue this operation and execute it when "Save Progress" or "Submit" is clicked
+        var dto = new ModifyGoalDto
         {
-            var dto = new ModifyGoalDto
-            {
-                ObjectiveDescription = objectiveDescription.Trim(),
-                MeasurementMetric = measurementMetric.Trim(),
-                TimeframeFrom = timeframeFrom!.Value,
-                TimeframeTo = timeframeTo!.Value,
-                // Only include weighting and change reason when in review mode
-                WeightingPercentage = IsInReviewMode ? weightingPercentage : null,
-                ModifiedByRole = ModifiedByRole,
-                ChangeReason = IsInReviewMode ? changeReason.Trim() : string.Empty
-            };
+            ObjectiveDescription = objectiveDescription.Trim(),
+            MeasurementMetric = measurementMetric.Trim(),
+            TimeframeFrom = timeframeFrom!.Value,
+            TimeframeTo = timeframeTo!.Value,
+            // Only include weighting and change reason when in review mode
+            WeightingPercentage = IsInReviewMode ? weightingPercentage : null,
+            ModifiedByRole = ModifiedByRole,
+            ChangeReason = IsInReviewMode ? changeReason.Trim() : string.Empty
+        };
 
-            var result = await GoalApiService.ModifyGoalAsync(AssignmentId, GoalId, dto);
-
-            if (result.Succeeded)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Goal Updated",
-                    Detail = "The goal has been updated successfully",
-                    Duration = 4000
-                });
-
-                DialogService.Close(true);
-            }
-            else
-            {
-                // For validation errors (400-level), show in dialog only
-                // For system errors (500-level), show as notification
-                if (result.StatusCode >= 400 && result.StatusCode < 500)
-                {
-                    // Client/validation error - show in dialog for immediate correction
-                    validationErrors.Add(result.ErrorMessage ?? "Failed to update goal");
-                }
-                else
-                {
-                    // System error - show as notification
-                    NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Error,
-                        Summary = "System Error",
-                        Detail = result.ErrorMessage ?? "An unexpected error occurred",
-                        Duration = 6000
-                    });
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            // Unexpected exception - show as notification (system error, not validation)
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Unexpected Error",
-                Detail = $"An unexpected error occurred: {ex.Message}",
-                Duration = 6000
-            });
-        }
-        finally
-        {
-            isSubmitting = false;
-            StateHasChanged();
-        }
+        // Return tuple (GoalId, DTO)
+        DialogService.Close((GoalId, dto));
     }
 
     private void Cancel()

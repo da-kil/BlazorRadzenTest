@@ -1,5 +1,6 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Services
@@ -93,7 +94,7 @@ else
                     <span class="fw-bold">Current Goals</span>
                 </HeaderTemplate>
                 <ChildContent>
-                    @if (!currentGoals.Any())
+                    @if (!currentGoals.Any() && !pendingAdds.Any())
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
                             <RadzenText TextStyle="TextStyle.Body2">
@@ -103,10 +104,20 @@ else
                     }
                     else
                     {
+                        @* Render saved goals *@
                         @foreach (var goal in currentGoals)
                         {
                             <div class="goal-card mb-3 p-3 border rounded" @key="@goal[GoalService.GoalIdKey]">
                                 @RenderGoal(goal)
+                            </div>
+                        }
+
+                        @* Render pending adds (not yet saved) *@
+                        @foreach (var pendingAdd in pendingAdds)
+                        {
+                            var tempKey = $"pending_{pendingAdds.IndexOf(pendingAdd)}";
+                            <div class="goal-card mb-3 p-3 border rounded" @key="@tempKey">
+                                @RenderPendingAdd(pendingAdd, pendingAdds.IndexOf(pendingAdd))
                             </div>
                         }
                     }
@@ -183,6 +194,50 @@ else
         </RadzenRow>
     };
 
+    private RenderFragment RenderPendingAdd(AddGoalDto dto, int index) => __builder =>
+    {
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                    @dto.ObjectiveDescription
+                </RadzenText>
+                <RadzenBadge Text="@dto.AddedByRole" BadgeStyle="BadgeStyle.Success" Class="mb-2" />
+                <RadzenBadge Text="Pending Add" BadgeStyle="BadgeStyle.Info" Class="mb-2 ms-2" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Class="mt-2">
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Timeframe:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">@dto.TimeframeFrom.ToShortDateString() - @dto.TimeframeTo.ToShortDateString()</RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Weighting:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">@(dto.WeightingPercentage?.ToString() ?? "0")%</RadzenText>
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Class="mt-2">
+            <RadzenColumn Size="12">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Measurement Metric:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">@dto.MeasurementMetric</RadzenText>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @if (!IsReadOnly)
+        {
+            <RadzenRow Class="mt-3">
+                <RadzenColumn Size="12" Class="d-flex justify-content-end gap-2">
+                    <RadzenButton Text="Cancel"
+                                Icon="close"
+                                ButtonStyle="ButtonStyle.Danger"
+                                Size="ButtonSize.Small"
+                                Click="@(() => CancelPendingAdd(index))" />
+                </RadzenColumn>
+            </RadzenRow>
+        }
+    };
+
     private RenderFragment RenderGoal(Dictionary<string, object> goal) => __builder =>
     {
         var goalId = goal.TryGetValue(GoalService.GoalIdKey, out var gId) ? gId : Guid.Empty;
@@ -190,6 +245,10 @@ else
         var measurement = goal.TryGetValue(GoalService.GoalMeasurementKey, out var meas) ? meas?.ToString() ?? "" : "";
         var weighting = goal.TryGetValue(GoalService.GoalWeightingKey, out var weight) ? Convert.ToDecimal(weight) : 0;
         var addedByRole = goal.TryGetValue(GoalService.GoalAddedByRoleKey, out var role) ? role?.ToString() ?? "" : "";
+
+        // Check pending status
+        var isPendingDelete = goalId is Guid gGuid && pendingDeletes.Contains(gGuid);
+        var isPendingModify = goalId is Guid gGuid2 && pendingModifies.ContainsKey(gGuid2);
 
         DateTime fromDate = DateTime.Now;
         DateTime toDate = DateTime.Now.AddMonths(1);
@@ -214,6 +273,14 @@ else
                     @objective
                 </RadzenText>
                 <RadzenBadge Text="@addedByRole" BadgeStyle="BadgeStyle.Success" Class="mb-2" />
+                @if (isPendingDelete)
+                {
+                    <RadzenBadge Text="Pending Delete" BadgeStyle="BadgeStyle.Danger" Class="mb-2 ms-2" />
+                }
+                else if (isPendingModify)
+                {
+                    <RadzenBadge Text="Pending Edit" BadgeStyle="BadgeStyle.Warning" Class="mb-2 ms-2" />
+                }
             </RadzenColumn>
         </RadzenRow>
 
@@ -239,16 +306,27 @@ else
         {
             <RadzenRow Class="mt-3">
                 <RadzenColumn Size="12" Class="d-flex justify-content-end gap-2">
-                    <RadzenButton Text="Edit"
-                                Icon="edit"
-                                ButtonStyle="ButtonStyle.Light"
-                                Size="ButtonSize.Small"
-                                Click="@(() => ShowEditGoalDialog(goalId, objective, measurement, fromDate, toDate, weighting))" />
-                    <RadzenButton Text="Delete"
-                                Icon="delete"
-                                ButtonStyle="ButtonStyle.Danger"
-                                Size="ButtonSize.Small"
-                                Click="@(() => ShowDeleteGoalConfirmation(goalId, objective))" />
+                    @if (isPendingDelete && goalId is Guid undoGuid)
+                    {
+                        <RadzenButton Text="Undo Delete"
+                                    Icon="undo"
+                                    ButtonStyle="ButtonStyle.Warning"
+                                    Size="ButtonSize.Small"
+                                    Click="@(() => UndoDelete(undoGuid))" />
+                    }
+                    else
+                    {
+                        <RadzenButton Text="Edit"
+                                    Icon="edit"
+                                    ButtonStyle="ButtonStyle.Light"
+                                    Size="ButtonSize.Small"
+                                    Click="@(() => ShowEditGoalDialog(goalId, objective, measurement, fromDate, toDate, weighting))" />
+                        <RadzenButton Text="Delete"
+                                    Icon="delete"
+                                    ButtonStyle="ButtonStyle.Danger"
+                                    Size="ButtonSize.Small"
+                                    Click="@(() => ShowDeleteGoalConfirmation(goalId, objective))" />
+                    }
                 </RadzenColumn>
             </RadzenRow>
         }
@@ -263,13 +341,23 @@ else
     [Parameter] public string CurrentUserRole { get; set; } = "Employee";
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
 
+    // Current state (loaded from API)
     private List<Dictionary<string, object>> currentGoals = new();
     private List<Dictionary<string, object>> predecessorRatings = new();
     private bool hasPredecessor = false;
 
+    // Pending operations queue (executed on Save Progress / Submit)
+    private List<AddGoalDto> pendingAdds = new();
+    private Dictionary<Guid, ModifyGoalDto> pendingModifies = new();
+    private List<Guid> pendingDeletes = new();
+
+    // Helper to check if there are any pending changes
+    public bool HasPendingChanges => pendingAdds.Any() || pendingModifies.Any() || pendingDeletes.Any();
+
     protected override async Task OnInitializedAsync()
     {
-        // Load goals from API (goals are stored in QuestionnaireAssignment aggregate, not in Response)
+        // Load goals from API (goals are stored in QuestionnaireAssignment aggregate)
+        // Pending operations will be queued locally and executed on "Save Progress" or "Submit"
         await ReloadGoalData();
         await base.OnInitializedAsync();
     }
@@ -352,10 +440,23 @@ else
                 CloseDialogOnOverlayClick = false
             });
 
-        if (result is bool success && success)
+        // Dialog returns AddGoalDto
+        if (result is AddGoalDto dto)
         {
-            // Reload goal data from API
-            await ReloadGoalData();
+            // Queue the add operation (will be executed when "Save Progress" or "Submit" is clicked)
+            pendingAdds.Add(dto);
+
+            // Show success message
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Goal Queued",
+                Detail = "Goal will be saved when you click 'Save Progress' or 'Submit'.",
+                Duration = 4000
+            });
+
+            // Trigger re-render to show the pending goal
+            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -467,22 +568,191 @@ else
                 CloseDialogOnOverlayClick = false
             });
 
-        if (result is bool success && success)
+        // Dialog returns tuple (Guid GoalId, ModifyGoalDto)
+        if (result is ValueTuple<Guid, ModifyGoalDto> tuple)
         {
-            // Reload goal data from API
-            await ReloadGoalData();
+            var (gId, dto) = tuple;
+
+            // Queue the modify operation (will be executed when "Save Progress" or "Submit" is clicked)
+            pendingModifies[gId] = dto;
+
+            // Show success message
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Edit Queued",
+                Detail = "Changes will be saved when you click 'Save Progress' or 'Submit'.",
+                Duration = 4000
+            });
+
+            // Trigger re-render to show the pending edit indicator
+            await InvokeAsync(StateHasChanged);
         }
     }
 
     private async Task ShowDeleteGoalConfirmation(object goalId, string objective)
     {
+        var confirmed = await DialogService.Confirm(
+            $"Are you sure you want to delete this goal: '{objective}'?",
+            "Confirm Delete",
+            new ConfirmOptions { OkButtonText = "Yes, Delete", CancelButtonText = "Cancel" }
+        );
+
+        if (confirmed == true && goalId is Guid gId)
+        {
+            // Queue the delete operation (will be executed when "Save Progress" or "Submit" is clicked)
+            pendingDeletes.Add(gId);
+
+            // Show success message
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Delete Queued",
+                Detail = "Goal will be deleted when you click 'Save Progress' or 'Submit'.",
+                Duration = 4000
+            });
+
+            // Trigger re-render to show the pending delete indicator
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task UndoDelete(Guid goalId)
+    {
+        // Remove from pending deletes
+        pendingDeletes.Remove(goalId);
+
+        // Show success message
         NotificationService.Notify(new NotificationMessage
         {
-            Severity = NotificationSeverity.Warning,
-            Summary = "Feature Not Implemented",
-            Detail = "Delete goal functionality is not yet implemented. Please contact your administrator if you need to remove a goal.",
-            Duration = 6000
+            Severity = NotificationSeverity.Info,
+            Summary = "Delete Cancelled",
+            Detail = "Goal deletion has been cancelled.",
+            Duration = 4000
         });
+
+        // Trigger re-render
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CancelPendingAdd(int index)
+    {
+        if (index >= 0 && index < pendingAdds.Count)
+        {
+            pendingAdds.RemoveAt(index);
+
+            // Show success message
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Add Cancelled",
+                Detail = "Goal addition has been cancelled.",
+                Duration = 4000
+            });
+
+            // Trigger re-render
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    /// <summary>
+    /// Executes all pending goal operations (add/modify/delete).
+    /// Returns true if all operations succeed, false if any fail.
+    /// Successful operations are kept saved (no rollback).
+    /// </summary>
+    public async Task<bool> SavePendingGoalChanges()
+    {
+        if (!HasPendingChanges)
+            return true; // Nothing to save
+
+        bool allSucceeded = true;
+        var errors = new List<string>();
+
+        // Execute deletes first
+        // TODO: Implement DeleteGoalAsync in IGoalApiService and backend
+        foreach (var goalId in pendingDeletes.ToList()) // ToList to avoid modification during iteration
+        {
+            // DeleteGoalAsync not yet implemented in API
+            allSucceeded = false;
+            errors.Add($"Delete operation not yet implemented in backend API");
+            // Keep in queue for now
+        }
+
+        // Execute modifies
+        foreach (var kvp in pendingModifies.ToList()) // ToList to avoid modification during iteration
+        {
+            try
+            {
+                var result = await GoalApiService.ModifyGoalAsync(AssignmentId, kvp.Key, kvp.Value);
+                if (result.Succeeded)
+                {
+                    pendingModifies.Remove(kvp.Key);
+                }
+                else
+                {
+                    allSucceeded = false;
+                    errors.Add($"Modify failed: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                allSucceeded = false;
+                errors.Add($"Modify error: {ex.Message}");
+            }
+        }
+
+        // Execute adds
+        foreach (var dto in pendingAdds.ToList()) // ToList to avoid modification during iteration
+        {
+            try
+            {
+                var result = await GoalApiService.AddGoalAsync(AssignmentId, dto);
+                if (result.Succeeded)
+                {
+                    pendingAdds.Remove(dto);
+                }
+                else
+                {
+                    allSucceeded = false;
+                    errors.Add($"Add failed: {result.ErrorMessage}");
+                }
+            }
+            catch (Exception ex)
+            {
+                allSucceeded = false;
+                errors.Add($"Add error: {ex.Message}");
+            }
+        }
+
+        // Reload goals from API to reflect saved changes
+        await ReloadGoalData();
+
+        // Trigger re-render
+        await InvokeAsync(StateHasChanged);
+
+        // Show result notification
+        if (allSucceeded)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Goals Saved",
+                Detail = "All goal changes have been saved successfully.",
+                Duration = 4000
+            });
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Partial Save",
+                Detail = $"Some goal operations failed: {string.Join("; ", errors)}",
+                Duration = 8000
+            });
+        }
+
+        return allSucceeded;
     }
 
     private async Task NotifyResponseChanged()

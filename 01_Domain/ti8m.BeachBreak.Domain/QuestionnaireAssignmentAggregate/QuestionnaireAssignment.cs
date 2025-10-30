@@ -568,6 +568,31 @@ public class QuestionnaireAssignment : AggregateRoot
             modifiedByEmployeeId));
     }
 
+    public void DeleteGoal(
+        Guid goalId,
+        Guid deletedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot delete goal - questionnaire is finalized");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot delete goal - assignment is withdrawn");
+
+        // Find the goal
+        var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == goalId);
+        if (goal == null)
+            throw new InvalidOperationException($"Goal {goalId} not found");
+
+        // Can only delete during in-progress states
+        if (WorkflowState is not (WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress))
+            throw new InvalidOperationException($"Goals cannot be deleted in state {WorkflowState}");
+
+        RaiseEvent(new GoalDeleted(
+            goalId,
+            DateTime.UtcNow,
+            deletedByEmployeeId));
+    }
+
     public void RatePredecessorGoal(
         Guid questionId,
         Guid sourceAssignmentId,
@@ -1050,6 +1075,16 @@ public class QuestionnaireAssignment : AggregateRoot
 
         _goalsByQuestion[questionId].Remove(goal);
         _goalsByQuestion[questionId].Add(modifiedGoal);
+    }
+
+    public void Apply(GoalDeleted @event)
+    {
+        var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == @event.GoalId);
+        if (goal == null)
+            return;
+
+        var questionId = goal.QuestionId;
+        _goalsByQuestion[questionId].Remove(goal);
     }
 
     public void Apply(PredecessorGoalRated @event)

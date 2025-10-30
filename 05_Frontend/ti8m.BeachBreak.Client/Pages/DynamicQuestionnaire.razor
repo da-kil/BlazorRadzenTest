@@ -212,7 +212,7 @@
                             @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
                             {
                                 <div class="question-wrapper mb-4">
-                                    @RenderQuestion(question)
+                                    @RenderQuestionWithRef(question)
                                 </div>
                             }
                         </div>
@@ -292,6 +292,9 @@
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse response = new();
     private int currentSectionIndex = 0;
+
+    // Store references to question renderers for calling SavePendingGoalChanges
+    private Dictionary<Guid, OptimizedQuestionRenderer> questionRenderers = new();
 
     /// <summary>
     /// The user's organizational role determining data access permissions.
@@ -898,6 +901,103 @@
             AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />;
     }
 
+    private RenderFragment RenderQuestionWithRef(QuestionItem question)
+    {
+        // Check if we're in post-review state and section is "Both"
+        var isPostReviewState = assignment != null &&
+            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.EmployeeReviewConfirmed or
+                                         WorkflowState.Finalized);
+
+        var isBothSection = currentSection?.CompletionRole == CompletionRole.Both;
+
+        // In post-review state for "Both" sections, show BOTH employee and manager responses
+        if (isPostReviewState && isBothSection)
+        {
+            var employeeResponse = GetQuestionResponseForRole(question.Id, "Employee");
+            var managerResponse = GetQuestionResponseForRole(question.Id, "Manager");
+
+            return @<div>
+                @* Employee's Answer *@
+                <div class="role-response-section mb-4">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-success mb-2">
+                        <RadzenIcon Icon="person" Class="me-1" />
+                        EMPLOYEE'S ANSWER
+                    </RadzenText>
+                    <div class="ps-3 border-start border-success border-3">
+                        <OptimizedQuestionRenderer
+                            Question="@question"
+                            Response="@employeeResponse"
+                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                            IsReadOnly="true"
+                            HideHeader="true"
+                            AssignmentId="@(assignmentId ?? Guid.Empty)"
+                            CurrentUserRole="Employee"
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />
+                    </div>
+                </div>
+
+                @* Manager's Answer *@
+                <div class="role-response-section">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info mb-2">
+                        <RadzenIcon Icon="manage_accounts" Class="me-1" />
+                        MANAGER'S ANSWER
+                    </RadzenText>
+                    <div class="ps-3 border-start border-info border-3">
+                        <OptimizedQuestionRenderer
+                            Question="@question"
+                            Response="@managerResponse"
+                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                            IsReadOnly="true"
+                            HideHeader="true"
+                            AssignmentId="@(assignmentId ?? Guid.Empty)"
+                            CurrentUserRole="Manager"
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
+                    </div>
+                </div>
+            </div>;
+        }
+
+        // Normal rendering for non-Both sections or during active questionnaire
+        var questionResponse = GetQuestionResponse(question.Id);
+
+        // Store reference for goal questions so we can call SavePendingGoalChanges later
+        return @<OptimizedQuestionRenderer
+            @ref="questionRenderers[question.Id]"
+            Question="@question"
+            Response="@questionResponse"
+            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+            IsReadOnly="@IsQuestionnaireCompleted()"
+            AssignmentId="@(assignmentId ?? Guid.Empty)"
+            CurrentUserRole="@currentUserRole"
+            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />;
+    }
+
+    /// <summary>
+    /// Saves all pending goal changes across all question renderers.
+    /// Returns true if all operations succeed.
+    /// </summary>
+    private async Task<bool> SaveAllPendingGoalChanges()
+    {
+        if (!questionRenderers.Any())
+            return true;
+
+        bool allSucceeded = true;
+        foreach (var renderer in questionRenderers.Values)
+        {
+            if (renderer != null)
+            {
+                var success = await renderer.SavePendingGoalChanges();
+                if (!success)
+                {
+                    allSucceeded = false;
+                }
+            }
+        }
+
+        return allSucceeded;
+    }
+
     private async Task HandleQuestionResponseChangedDynamic(QuestionResponse updatedResponse)
     {
         // Response object is already updated by reference
@@ -1440,6 +1540,13 @@
             isSaving = true;
             StateHasChanged(); // Update UI to show saving state
 
+            // Save any pending goal changes BEFORE saving question responses
+            var goalsSaved = await SaveAllPendingGoalChanges();
+            if (!goalsSaved)
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, "Partial Save", "Some goal changes could not be saved. Other progress was saved successfully.");
+            }
+
             if (isEmployee && !isManager)
             {
                 // Employees save responses and complete any finished sections
@@ -1549,6 +1656,14 @@
         {
             isSubmitting = true;
             StateHasChanged();
+
+            // Save any pending goal changes BEFORE saving question responses
+            var goalsSaved = await SaveAllPendingGoalChanges();
+            if (!goalsSaved)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Cannot Submit", "Please ensure all goal changes are saved before submitting.");
+                return;
+            }
 
             if (isManager)
             {

@@ -887,6 +887,37 @@ public class AssignmentsController : BaseController
     }
 
     /// <summary>
+    /// Deletes an existing goal from a questionnaire assignment during in-progress states.
+    /// </summary>
+    [HttpDelete("{assignmentId}/goals/{goalId}")]
+    public async Task<IActionResult> DeleteGoal(
+        Guid assignmentId,
+        Guid goalId)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("DeleteGoal failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            var command = new DeleteGoalCommand(
+                assignmentId,
+                goalId,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error deleting goal {GoalId} from assignment {AssignmentId}", goalId, assignmentId);
+            return StatusCode(500, "An error occurred while deleting goal");
+        }
+    }
+
+    /// <summary>
     /// Rates a goal from a predecessor questionnaire.
     /// Employee and Manager rate separately during their respective in-progress states.
     /// </summary>
