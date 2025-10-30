@@ -361,7 +361,9 @@
                 { "Question", question },
                 { "CurrentAnswer", currentAnswer },
                 { "CompletionRole", originalRole },
-                { "SectionTitle", currentSection.Title }
+                { "SectionTitle", currentSection.Title },
+                { "AssignmentId", Assignment.Id },
+                { "CurrentUserRole", originalRole.ToString() }
             },
             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
         );

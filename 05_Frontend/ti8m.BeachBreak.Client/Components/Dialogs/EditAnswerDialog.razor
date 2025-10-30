@@ -80,7 +80,9 @@
                                   Response="@editResponse"
                                   OnResponseChanged="@HandleResponseChanged"
                                   IsReadOnly="false"
-                                  HideHeader="true" />
+                                  HideHeader="true"
+                                  AssignmentId="@AssignmentId"
+                                  CurrentUserRole="@CurrentUserRole" />
         }
         else
         {
@@ -110,6 +112,8 @@
     [Parameter] public object? CurrentAnswer { get; set; }
     [Parameter] public CompletionRole CompletionRole { get; set; }
     [Parameter] public string SectionTitle { get; set; } = string.Empty;
+    [Parameter] public Guid AssignmentId { get; set; }
+    [Parameter] public string CurrentUserRole { get; set; } = "Employee";
 
     private QuestionResponse editResponse = new();
 
