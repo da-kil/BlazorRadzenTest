@@ -201,4 +201,48 @@ try {
     }
 }
 
+Write-Host "`nWaiting 2 seconds..." -ForegroundColor Cyan
+Start-Sleep -Seconds 2
+
+# Update employee application roles
+Write-Host "`nUpdating employee application roles..." -ForegroundColor Cyan
+
+# Define role updates
+$roleUpdates = @(
+    @{
+        Id = "9d159666-0126-4d36-beff-057b68512efa"
+        NewRole = 2
+        RoleName = "TeamLead"
+    },
+    @{
+        Id = "e91731e2-fb48-4a69-b740-075bf5d39eaf"
+        NewRole = 5
+        RoleName = "Admin"
+    }
+)
+
+foreach ($update in $roleUpdates) {
+    try {
+        $body = @{
+            NewRole = $update.NewRole
+        } | ConvertTo-Json
+
+        Write-Host "  Updating employee $($update.Id) to $($update.RoleName)..." -ForegroundColor Yellow
+
+        $roleResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/employees/$($update.Id)/application-role" `
+          -Method PUT `
+          -Headers $headers `
+          -Body $body
+
+        Write-Host "  Successfully updated employee to $($update.RoleName)" -ForegroundColor Green
+    } catch {
+        Write-Host "  Error updating employee role: $($_.Exception.Message)" -ForegroundColor Red
+        if ($_.Exception.Response) {
+            $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+            $responseBody = $reader.ReadToEnd()
+            Write-Host "  Response: $responseBody" -ForegroundColor Red
+        }
+    }
+}
+
 Write-Host "`nTest data insertion completed!" -ForegroundColor Cyan

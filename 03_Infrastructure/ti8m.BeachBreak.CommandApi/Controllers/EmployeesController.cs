@@ -104,11 +104,12 @@ public class EmployeesController : BaseController
 
     /// <summary>
     /// Changes the application role of an employee.
-    /// Only Admin, HRLead, and HR can access this endpoint.
-    /// Controller fetches requester's role from database using UserContext; business rules enforced in domain layer.
+    /// Only Admin, HRLead, HR, or service principals with DataSeeder app role can access this endpoint.
+    /// Service principals with DataSeeder role act as Admin for this operation.
+    /// For employee users, controller fetches requester's role from database; business rules enforced in domain layer.
     /// </summary>
     [HttpPut("{employeeId:guid}/application-role")]
-    [Authorize(Policy = "HR")]
+    [Authorize(Policy = "AdminOrApp")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -118,20 +119,27 @@ public class EmployeesController : BaseController
         [FromBody] ChangeApplicationRoleDto dto)
     {
         // Infrastructure responsibility: Fetch requester's role from database using UserContext
-        if (!Guid.TryParse(userContext.Id, out var userId))
+        // If user is not an employee (e.g., service principal), default to Admin role
+        ApplicationRole requesterRole = ApplicationRole.Admin;
+
+        if (Guid.TryParse(userContext.Id, out var userId))
         {
-            logger.LogWarning("Cannot change application role: User ID not found in UserContext");
-            return CreateResponse(CommandResult.Fail("User identification failed", 401));
+            var requesterRoleResult = await queryDispatcher.QueryAsync(
+                new GetEmployeeRoleByIdQuery(userId),
+                HttpContext.RequestAborted);
+
+            if (requesterRoleResult != null)
+            {
+                requesterRole = requesterRoleResult.ApplicationRole;
+            }
+            else
+            {
+                logger.LogInformation("User {UserId} not found in employee database, treating as Admin (likely service principal)", userId);
+            }
         }
-
-        var requesterRoleResult = await queryDispatcher.QueryAsync(
-            new GetEmployeeRoleByIdQuery(userId),
-            HttpContext.RequestAborted);
-
-        if (requesterRoleResult == null)
+        else
         {
-            logger.LogWarning("Cannot change application role: Requester role not found for user {UserId}", userId);
-            return CreateResponse(CommandResult.Fail("Requester role not found", 403));
+            logger.LogInformation("No user ID in context, treating as Admin (likely service principal)");
         }
 
         // Dispatch command with requester's role - business rules validated in domain
@@ -139,7 +147,7 @@ public class EmployeesController : BaseController
             new ChangeEmployeeApplicationRoleCommand(
                 employeeId,
                 (ApplicationRole)dto.NewRole,
-                requesterRoleResult.ApplicationRole));
+                requesterRole));
 
         return CreateResponse(result);
     }
