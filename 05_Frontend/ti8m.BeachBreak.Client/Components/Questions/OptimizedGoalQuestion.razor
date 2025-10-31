@@ -228,6 +228,11 @@ else
         {
             <RadzenRow Class="mt-3">
                 <RadzenColumn Size="12" Class="d-flex justify-content-end gap-2">
+                    <RadzenButton Text="Edit"
+                                Icon="edit"
+                                ButtonStyle="ButtonStyle.Light"
+                                Size="ButtonSize.Small"
+                                Click="@(() => ShowEditPendingGoalDialog(index, dto))" />
                     <RadzenButton Text="Cancel"
                                 Icon="close"
                                 ButtonStyle="ButtonStyle.Danger"
@@ -470,6 +475,47 @@ else
             });
 
             // Trigger re-render to show the pending goal
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ShowEditPendingGoalDialog(int index, AddGoalDto existingDto)
+    {
+        var result = await DialogService.OpenAsync<AddGoalDialog>("Edit Pending Goal",
+            new Dictionary<string, object>
+            {
+                { "AssignmentId", AssignmentId },
+                { "QuestionId", Question.Id },
+                { "AddedByRole", existingDto.AddedByRole },
+                { "InitialObjective", existingDto.ObjectiveDescription ?? "" },
+                { "InitialMeasurement", existingDto.MeasurementMetric ?? "" },
+                { "InitialTimeframeFrom", existingDto.TimeframeFrom },
+                { "InitialTimeframeTo", existingDto.TimeframeTo }
+            },
+            new DialogOptions
+            {
+                Width = "700px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = false
+            });
+
+        // Dialog returns updated AddGoalDto
+        if (result is AddGoalDto dto)
+        {
+            // Update the pending goal at the specified index
+            pendingAdds[index] = dto;
+
+            // Show success message
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Edit Queued",
+                Detail = "Changes will be saved when you click 'Save Progress' or 'Submit'.",
+                Duration = 4000
+            });
+
+            // Trigger re-render to show the updated pending goal
             await InvokeAsync(StateHasChanged);
         }
     }

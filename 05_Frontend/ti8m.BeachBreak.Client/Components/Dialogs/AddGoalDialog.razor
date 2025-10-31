@@ -49,6 +49,12 @@
     [Parameter] public Guid QuestionId { get; set; }
     [Parameter] public string AddedByRole { get; set; } = "Employee";
 
+    // Pre-populated values for editing pending goals
+    [Parameter] public string InitialObjective { get; set; } = "";
+    [Parameter] public string InitialMeasurement { get; set; } = "";
+    [Parameter] public DateTime InitialTimeframeFrom { get; set; } = DateTime.Today;
+    [Parameter] public DateTime InitialTimeframeTo { get; set; } = DateTime.Today.AddMonths(6);
+
     private string objectiveDescription = "";
     private string measurementMetric = "";
     private DateTime? timeframeFrom = DateTime.Today;
@@ -56,6 +62,15 @@
 
     private List<string> validationErrors = new();
     private bool isSubmitting = false;
+
+    protected override void OnParametersSet()
+    {
+        // Pre-populate form with existing values
+        objectiveDescription = InitialObjective;
+        measurementMetric = InitialMeasurement;
+        timeframeFrom = InitialTimeframeFrom;
+        timeframeTo = InitialTimeframeTo;
+    }
 
     private bool ValidateForm()
     {
