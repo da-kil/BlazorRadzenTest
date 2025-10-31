@@ -103,11 +103,12 @@ public class QuestionnaireResponseCommandHandler :
             await repository.StoreAsync(response, cancellationToken);
 
             // If this is the first time the employee is saving progress, mark the assignment as started
+            // StartWork() will automatically transition workflow state appropriately
             if (isFirstSave)
             {
-                assignment.StartWork();
+                assignment.StartWork(CompletionRole.Employee); // Sets StartedDate and updates workflow state
                 await assignmentRepository.StoreAsync(assignment, cancellationToken);
-                logger.LogInformation("Assignment {AssignmentId} marked as started", command.AssignmentId);
+                logger.LogInformation("Assignment {AssignmentId} marked as started by employee", command.AssignmentId);
             }
 
             logger.LogInformation("Successfully saved employee response for AssignmentId: {AssignmentId}", command.AssignmentId);
@@ -152,6 +153,8 @@ public class QuestionnaireResponseCommandHandler :
 
             // Try to load existing response by assignment ID
             var response = await repository.FindByAssignmentIdAsync(command.AssignmentId, cancellationToken);
+
+            bool isFirstSave = response == null;
 
             if (response == null)
             {
@@ -199,6 +202,15 @@ public class QuestionnaireResponseCommandHandler :
             }
 
             await repository.StoreAsync(response, cancellationToken);
+
+            // If this is the first time the manager is saving a response, mark the assignment as started
+            // StartWork() will automatically transition workflow state appropriately
+            if (isFirstSave)
+            {
+                assignment.StartWork(CompletionRole.Manager); // Sets StartedDate and updates workflow state
+                await assignmentRepository.StoreAsync(assignment, cancellationToken);
+                logger.LogInformation("Assignment {AssignmentId} marked as started by manager", command.AssignmentId);
+            }
 
             logger.LogInformation("Successfully saved manager response for AssignmentId: {AssignmentId}", command.AssignmentId);
             return Result<Guid>.Success(response.Id);

@@ -11,5 +11,5 @@ public record ModifyGoalCommand(
     string? MeasurementMetric,
     decimal? WeightingPercentage,
     CompletionRole ModifiedByRole,
-    string ChangeReason,
+    string? ChangeReason,
     Guid ModifiedByEmployeeId) : ICommand<Result>;

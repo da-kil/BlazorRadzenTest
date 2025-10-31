@@ -267,6 +267,16 @@ else
             else DateTime.TryParse(toVal?.ToString(), out toDate);
         }
 
+        // If there's a pending modify, override values with pending changes
+        if (isPendingModify && goalId is Guid pendingGoalId && pendingModifies.TryGetValue(pendingGoalId, out var pendingDto))
+        {
+            objective = pendingDto.ObjectiveDescription ?? objective;
+            measurement = pendingDto.MeasurementMetric ?? measurement;
+            fromDate = pendingDto.TimeframeFrom ?? fromDate;
+            toDate = pendingDto.TimeframeTo ?? toDate;
+            weighting = pendingDto.WeightingPercentage ?? weighting;
+        }
+
         <RadzenRow>
             <RadzenColumn Size="12">
                 <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
@@ -369,6 +379,7 @@ else
         {
             LoadGoalData();
         }
+
         await base.OnParametersSetAsync();
     }
 
@@ -383,7 +394,10 @@ else
     {
         return HasParameterChanged(nameof(Response.ComplexValue), Response.ComplexValue?.Count ?? 0) ||
                HasParameterChanged(nameof(currentGoals), currentGoals.Count) ||
-               HasParameterChanged(nameof(predecessorRatings), predecessorRatings.Count);
+               HasParameterChanged(nameof(predecessorRatings), predecessorRatings.Count) ||
+               HasParameterChanged(nameof(pendingAdds), pendingAdds.Count) ||
+               HasParameterChanged(nameof(pendingModifies), pendingModifies.Count) ||
+               HasParameterChanged(nameof(pendingDeletes), pendingDeletes.Count);
     }
 
     private async Task SetPredecessorRatingDegree(object sourceGoalId, decimal value)

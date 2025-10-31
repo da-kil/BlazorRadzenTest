@@ -10,7 +10,8 @@
         <RadzenStack Gap="1rem">
             <div>
                 <RadzenLabel Text="Objective Description*" Component="objectiveDescription" Class="fw-bold mb-1" />
-                <RadzenTextArea @bind-Value="@ObjectiveDescription"
+                <RadzenTextArea Value="@ObjectiveDescription"
+                              ValueChanged="@((string value) => OnObjectiveDescriptionChanged(value))"
                               Name="objectiveDescription"
                               Placeholder="Describe the goal objective..."
                               Rows="3"
@@ -23,7 +24,8 @@
 
             <div>
                 <RadzenLabel Text="Measurement Metric*" Component="measurementMetric" Class="fw-bold mb-1" />
-                <RadzenTextBox @bind-Value="@MeasurementMetric"
+                <RadzenTextBox Value="@MeasurementMetric"
+                             ValueChanged="@((string value) => OnMeasurementMetricChanged(value))"
                              Name="measurementMetric"
                              Placeholder="How will this goal be measured?"
                              Class="w-100"
@@ -60,4 +62,16 @@
     /// </summary>
     [Parameter]
     public EventCallback<string> MeasurementMetricChanged { get; set; }
+
+    private async Task OnObjectiveDescriptionChanged(string value)
+    {
+        ObjectiveDescription = value;
+        await ObjectiveDescriptionChanged.InvokeAsync(value);
+    }
+
+    private async Task OnMeasurementMetricChanged(string value)
+    {
+        MeasurementMetric = value;
+        await MeasurementMetricChanged.InvokeAsync(value);
+    }
 }

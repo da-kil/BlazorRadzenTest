@@ -10,7 +10,8 @@
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenLabel Text="Start Date*" Component="timeframeFrom" Class="fw-bold mb-1" />
-                <RadzenDatePicker @bind-Value="@TimeframeFrom"
+                <RadzenDatePicker Value="@TimeframeFrom"
+                                ValueChanged="@((DateTime? value) => OnTimeframeFromChanged(value))"
                                 Name="timeframeFrom"
                                 DateFormat="dd.MM.yyyy"
                                 Class="w-100"
@@ -18,7 +19,8 @@
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenLabel Text="End Date*" Component="timeframeTo" Class="fw-bold mb-1" />
-                <RadzenDatePicker @bind-Value="@TimeframeTo"
+                <RadzenDatePicker Value="@TimeframeTo"
+                                ValueChanged="@((DateTime? value) => OnTimeframeToChanged(value))"
                                 Name="timeframeTo"
                                 DateFormat="dd.MM.yyyy"
                                 Class="w-100"
@@ -52,4 +54,16 @@
     /// </summary>
     [Parameter]
     public EventCallback<DateTime?> TimeframeToChanged { get; set; }
+
+    private async Task OnTimeframeFromChanged(DateTime? value)
+    {
+        TimeframeFrom = value;
+        await TimeframeFromChanged.InvokeAsync(value);
+    }
+
+    private async Task OnTimeframeToChanged(DateTime? value)
+    {
+        TimeframeTo = value;
+        await TimeframeToChanged.InvokeAsync(value);
+    }
 }

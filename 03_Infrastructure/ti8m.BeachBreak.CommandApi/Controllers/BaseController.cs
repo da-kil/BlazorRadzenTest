@@ -7,7 +7,7 @@ public class BaseController : ControllerBase
 {
     protected IActionResult CreateResponse(Result result)
     {
-        return result.Succeeded ? Ok(string.IsNullOrWhiteSpace(result.Message) ? null : new { result.Message }) : Problem(detail: result.Message, statusCode: result.StatusCode);
+        return result.Succeeded ? Ok(result) : Problem(detail: result.Message, statusCode: result.StatusCode);
     }
 
     protected IActionResult CreateResponse<T>(Result<T> result)

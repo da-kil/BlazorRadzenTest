@@ -89,7 +89,7 @@ public class QuestionnaireAssignment : AggregateRoot
             notes));
     }
 
-    public void StartWork()
+    public void StartWork(CompletionRole? startedBy = null)
     {
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot start work on a withdrawn assignment");
@@ -100,6 +100,13 @@ public class QuestionnaireAssignment : AggregateRoot
         if (!StartedDate.HasValue)
         {
             RaiseEvent(new AssignmentWorkStarted(DateTime.UtcNow));
+
+            // Update workflow state based on having started work (even without completed sections)
+            // This ensures questionnaires move from Assigned to appropriate InProgress state when first response is saved
+            if (startedBy.HasValue)
+            {
+                UpdateWorkflowStateFromStartedWork(startedBy.Value);
+            }
         }
     }
 
@@ -148,7 +155,7 @@ public class QuestionnaireAssignment : AggregateRoot
     // Workflow state query methods (business rules)
     /// <summary>
     /// Determines if an employee can edit the questionnaire based on current workflow state.
-    /// Employee can edit when: Assigned, EmployeeInProgress, BothInProgress, ManagerSubmitted.
+    /// Employee can edit when: Assigned, EmployeeInProgress, ManagerInProgress, BothInProgress, ManagerSubmitted.
     /// Employee is READ-ONLY during: InReview (manager-led review meeting).
     /// Employee is blocked after submission: EmployeeSubmitted, BothSubmitted, and all review/final states.
     /// </summary>
@@ -157,13 +164,14 @@ public class QuestionnaireAssignment : AggregateRoot
         return WorkflowState is
             WorkflowState.Assigned or
             WorkflowState.EmployeeInProgress or
+            WorkflowState.ManagerInProgress or
             WorkflowState.BothInProgress or
             WorkflowState.ManagerSubmitted;
     }
 
     /// <summary>
     /// Determines if a manager can edit the questionnaire based on current workflow state.
-    /// Manager can edit when: Assigned, ManagerInProgress, BothInProgress, EmployeeSubmitted.
+    /// Manager can edit when: Assigned, EmployeeInProgress, ManagerInProgress, BothInProgress, EmployeeSubmitted.
     /// Manager can edit ALL sections during: InReview (including employee-only sections).
     /// Manager is blocked after submission: ManagerSubmitted, BothSubmitted, and all confirmation/final states.
     /// </summary>
@@ -171,6 +179,7 @@ public class QuestionnaireAssignment : AggregateRoot
     {
         return WorkflowState is
             WorkflowState.Assigned or
+            WorkflowState.EmployeeInProgress or
             WorkflowState.ManagerInProgress or
             WorkflowState.BothInProgress or
             WorkflowState.EmployeeSubmitted;
@@ -512,7 +521,7 @@ public class QuestionnaireAssignment : AggregateRoot
         string? measurementMetric,
         decimal? weightingPercentage,
         CompletionRole modifiedByRole,
-        string changeReason,
+        string? changeReason,
         Guid modifiedByEmployeeId)
     {
         if (IsLocked)
@@ -529,20 +538,23 @@ public class QuestionnaireAssignment : AggregateRoot
             // During review, only manager can modify any goal
             if (modifiedByRole != CompletionRole.Manager)
                 throw new InvalidOperationException("Only manager can modify goals during review meeting");
+
+            // Change reason is required during review state
+            if (string.IsNullOrWhiteSpace(changeReason))
+                throw new ArgumentException("Change reason is required during review", nameof(changeReason));
         }
         else if (WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress)
         {
             // During in-progress, user can only modify their own goals
             if (goal.AddedByRole != modifiedByRole)
                 throw new InvalidOperationException($"Cannot modify goal added by {goal.AddedByRole}");
+
+            // Change reason is optional during in-progress states
         }
         else
         {
             throw new InvalidOperationException($"Goals cannot be modified in state {WorkflowState}");
         }
-
-        if (string.IsNullOrWhiteSpace(changeReason))
-            throw new ArgumentException("Change reason is required", nameof(changeReason));
 
         if (weightingPercentage.HasValue)
         {
@@ -1010,6 +1022,33 @@ public class QuestionnaireAssignment : AggregateRoot
             TransitionWorkflowState(
                 newState,
                 "Section completion progress update");
+        }
+    }
+
+    private void UpdateWorkflowStateFromStartedWork(CompletionRole startedBy)
+    {
+        // Don't update state if already in submission, review, or finalization phases
+        if (WorkflowState >= WorkflowState.EmployeeSubmitted)
+        {
+            return;
+        }
+
+        var hasEmployeeProgress = SectionProgressList.Any(p => p.IsEmployeeCompleted);
+        var hasManagerProgress = SectionProgressList.Any(p => p.IsManagerCompleted);
+
+        var newState = WorkflowStateMachine.DetermineProgressStateFromStartedWork(
+            StartedDate.HasValue,
+            hasEmployeeProgress,
+            hasManagerProgress,
+            startedBy,
+            WorkflowState);
+
+        if (newState != WorkflowState)
+        {
+            var roleDescription = startedBy == CompletionRole.Employee ? "Employee" : "Manager";
+            TransitionWorkflowState(
+                newState,
+                $"{roleDescription} started work - first response saved");
         }
     }
 

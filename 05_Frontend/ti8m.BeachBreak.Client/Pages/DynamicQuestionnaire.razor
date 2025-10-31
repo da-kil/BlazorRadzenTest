@@ -502,8 +502,6 @@
             return;
         }
 
-        await JSRuntime.InvokeVoidAsync("console.log", $"[FilterVisibleSections] Assignment: {assignment?.Id}, WorkflowState: {assignment?.WorkflowState}, isManager: {isManager}, isEmployee: {isEmployee}");
-
         // After review meeting finishes, EVERYONE sees ALL sections (employee, manager, and both)
         // This ensures transparency - both parties can see what was discussed and agreed upon
         var isPostReviewState = assignment != null &&
@@ -514,12 +512,9 @@
         // Managers/HR can view employee-only questionnaires in read-only mode
         var isManagerViewingEmployeeOnlyQuestionnaire = isManager && !template.RequiresManagerReview;
 
-        await JSRuntime.InvokeVoidAsync("console.log", $"[FilterVisibleSections] isPostReviewState: {isPostReviewState}, isManagerViewingEmployeeOnly: {isManagerViewingEmployeeOnlyQuestionnaire}");
-
         if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // Show ALL sections in read-only view
-            await JSRuntime.InvokeVoidAsync("console.log", $"[FilterVisibleSections] Early return - showing all {template.Sections.Count} sections");
             visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
             return;
         }
@@ -574,8 +569,6 @@
             })
             .OrderBy(s => s.Order)
             .ToList();
-
-        await JSRuntime.InvokeVoidAsync("console.log", $"[FilterVisibleSections] Filtered to {visibleSections.Count} sections: {string.Join(", ", visibleSections.Select(s => $"'{s.Title}' (CompletionRole={s.CompletionRole})"))}");
 
         // If no visible sections, show helpful error
         if (!visibleSections.Any() && template.Sections.Any())

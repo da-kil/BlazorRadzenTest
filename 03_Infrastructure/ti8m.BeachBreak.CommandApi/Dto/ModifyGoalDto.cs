@@ -8,5 +8,5 @@ public class ModifyGoalDto
     public string? MeasurementMetric { get; set; }
     public decimal? WeightingPercentage { get; set; }
     public string ModifiedByRole { get; set; } = string.Empty; // "Employee" or "Manager"
-    public string ChangeReason { get; set; } = string.Empty;
+    public string? ChangeReason { get; set; } // Required only during InReview state
 }

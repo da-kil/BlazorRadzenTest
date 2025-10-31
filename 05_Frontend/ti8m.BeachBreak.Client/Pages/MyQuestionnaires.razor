@@ -108,14 +108,16 @@ else
 	{
 		var now = DateTime.Now;
 
-		// Upcoming: Assigned but not yet started by employee
-		newQuestionnaires = allAssignments.Where(a =>
-			a.WorkflowState == WorkflowState.Assigned).ToList();
+		// Upcoming: Empty list - once assigned, treat as in-progress for better UX
+		// Even if no sections are completed yet, having ANY saved responses means work has started
+		newQuestionnaires = new List<QuestionnaireAssignment>();
 
 		// Current: Employee is working, submitted, or in review process
+		// Includes Assigned state because user may have saved responses without completing sections
 		// Includes all states where employee might still need to take action or is waiting
 		inProgressQuestionnaires = allAssignments.Where(a =>
-			a.WorkflowState is WorkflowState.EmployeeInProgress
+			a.WorkflowState is WorkflowState.Assigned
+			or WorkflowState.EmployeeInProgress
 			or WorkflowState.BothInProgress
 			or WorkflowState.EmployeeSubmitted
 			or WorkflowState.ManagerSubmitted

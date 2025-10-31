@@ -17,7 +17,17 @@
       "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.CommandApi\\Authorization\\AuthorizationPolicyConfiguration.cs\" -Force)",
       "Bash(dotnet build:*)",
       "Bash(Select-String -Pattern \"(error |Build succeeded|Build FAILED)\" -Context 0,2)",
-      "Bash(Select-String -Pattern '(error |Build succeeded|Build FAILED)' -Context 0,2)"
+      "Bash(Select-String -Pattern '(error |Build succeeded|Build FAILED)' -Context 0,2)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(Select-String -Pattern \"Axu8Q\" -Context 2)",
+      "Bash(git reflog:*)",
+      "Bash(git gc:*)",
+      "Bash(git log:*)",
+      "Bash(git cat-file:*)",
+      "Bash(git grep:*)",
+      "Bash(git rev-list:*)",
+      "Bash(xargs -n 1 git grep -i \"Axu8Q\")"
     ],
     "deny": [],
     "ask": []

@@ -29,7 +29,6 @@ public static class QuestionnairePageConfigurationFactory
             Tabs = new List<QuestionnairePageTab>
             {
                 new() { Id = "current", Title = "Current", Type = QuestionnaireTabType.Current },
-                new() { Id = "upcoming", Title = "Upcoming", Type = QuestionnaireTabType.Upcoming },
                 new() { Id = "completed", Title = "Completed", Type = QuestionnaireTabType.Completed },
                 new() { Id = "overdue", Title = "Overdue", Type = QuestionnaireTabType.Overdue }
             },
@@ -60,7 +59,7 @@ public static class QuestionnairePageConfigurationFactory
 
             StatsConfig = new QuestionnaireStatsConfig
             {
-                Columns = 4,
+                Columns = 3,
                 StatCards = new List<StatCardConfiguration>
                 {
                     new()
@@ -71,15 +70,6 @@ public static class QuestionnairePageConfigurationFactory
                         IconClass = "text-info",
                         CssClass = "stats-current",
                         ValueCalculator = () => currentAssignments.Count
-                    },
-                    new()
-                    {
-                        Id = "upcoming",
-                        Label = "Upcoming",
-                        Icon = "schedule",
-                        IconClass = "text-primary",
-                        CssClass = "stats-upcoming",
-                        ValueCalculator = () => upcomingAssignments.Count
                     },
                     new()
                     {

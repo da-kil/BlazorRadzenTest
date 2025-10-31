@@ -1,3 +1,5 @@
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 /// <summary>
@@ -163,6 +165,52 @@ public class WorkflowStateMachine
             return WorkflowState.ManagerInProgress;
 
         return WorkflowState.Assigned;
+    }
+
+    /// <summary>
+    /// Determines the next workflow state based on work having started (via StartedDate).
+    /// Used when responses are saved but no sections are completed yet.
+    /// </summary>
+    public static WorkflowState DetermineProgressStateFromStartedWork(
+        bool hasStarted,
+        bool hasEmployeeProgress,
+        bool hasManagerProgress,
+        CompletionRole startedBy,
+        WorkflowState currentState)
+    {
+        // Don't update state if already in submission or later phases
+        if (currentState >= WorkflowState.EmployeeSubmitted)
+            return currentState;
+
+        // If sections are completed, use section-based logic
+        if (hasEmployeeProgress && hasManagerProgress)
+            return WorkflowState.BothInProgress;
+
+        if (hasEmployeeProgress)
+            return WorkflowState.EmployeeInProgress;
+
+        if (hasManagerProgress)
+            return WorkflowState.ManagerInProgress;
+
+        // If no sections completed but work has started, transition based on who started
+        if (hasStarted)
+        {
+            return (currentState, startedBy) switch
+            {
+                // From Assigned state
+                (WorkflowState.Assigned, CompletionRole.Employee) => WorkflowState.EmployeeInProgress,
+                (WorkflowState.Assigned, CompletionRole.Manager) => WorkflowState.ManagerInProgress,
+
+                // From single-role in-progress to both
+                (WorkflowState.EmployeeInProgress, CompletionRole.Manager) => WorkflowState.BothInProgress,
+                (WorkflowState.ManagerInProgress, CompletionRole.Employee) => WorkflowState.BothInProgress,
+
+                // Already in correct state or Both role (not used in practice)
+                _ => currentState
+            };
+        }
+
+        return currentState;
     }
 
     /// <summary>
