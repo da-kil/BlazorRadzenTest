@@ -22,15 +22,34 @@
 
     .answer-editor {
         padding: 0 0.5rem;
+        max-width: 100%;
+        overflow-x: hidden;
     }
 
     /* Ensure competency cards fit well in dialog */
     .answer-editor .rz-card {
         margin-bottom: 0 !important;
+        max-width: 100%;
+        overflow: visible !important;
     }
 
     .answer-editor .competency-card {
         margin-bottom: 1rem !important;
+        max-width: 100%;
+        overflow: visible !important;
+    }
+
+    /* Prevent nested scrolling in child components */
+    .answer-editor .competencies-container {
+        overflow: visible !important;
+        max-height: none !important;
+    }
+
+    /* Ensure all radzen components inside don't create their own scrollbars */
+    .answer-editor .rz-panel,
+    .answer-editor .rz-panel-content,
+    .answer-editor .rz-card-content {
+        overflow: visible !important;
     }
 
     /* Common Question Item Styles - Reused from Review Mode */
@@ -48,7 +67,7 @@
     }
 </style>
 
-<div style="display: flex; flex-direction: column; height: 550px;">
+<div style="display: flex; flex-direction: column; height: 100%; min-height: 500px; max-height: 80vh; overflow: hidden;">
     <div style="flex: 0 0 auto; margin-bottom: 1rem;">
         <div class="role-indicator">
             <RadzenIcon Icon="@GetRoleIcon()" />
@@ -56,7 +75,7 @@
         </div>
     </div>
 
-    <div style="flex: 1 1 auto; overflow-y: auto; margin-bottom: 1rem;">
+    <div style="flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; margin-bottom: 1rem; padding-right: 0.5rem; scrollbar-gutter: stable;">
         <div class="answer-editor">
         @if (Question.Type == QuestionType.TextQuestion)
         {
@@ -94,7 +113,7 @@
         </div>
     </div>
 
-    <div style="flex: 0 0 auto; display: flex; justify-content: flex-end; gap: 1rem; padding-top: 1rem; border-top: 1px solid #e9ecef;">
+    <div style="flex: 0 0 auto; display: flex; justify-content: flex-end; gap: 1rem; padding: 1rem 0.5rem 0 0.5rem; border-top: 1px solid #e9ecef; background: white; position: sticky; bottom: 0; z-index: 10;">
         <AsyncButton Text="Cancel"
                     ButtonStyle="ButtonStyle.Light"
                     Click="@Cancel"

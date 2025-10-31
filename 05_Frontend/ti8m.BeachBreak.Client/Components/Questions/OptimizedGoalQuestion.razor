@@ -390,7 +390,21 @@ else
 
     private void LoadGoalData()
     {
-        currentGoals = GoalService.GetGoals(Response);
+        var allGoals = GoalService.GetGoals(Response);
+
+        // Filter goals by current user role for comparison views
+        // In post-review states, each side should only show goals added by that role
+        currentGoals = allGoals.Where(goal =>
+        {
+            if (goal.TryGetValue(GoalService.GoalAddedByRoleKey, out var addedByRole))
+            {
+                var roleString = addedByRole?.ToString() ?? "";
+                return string.Equals(roleString, CurrentUserRole, StringComparison.OrdinalIgnoreCase);
+            }
+            // If no role information, include the goal (for backward compatibility)
+            return true;
+        }).ToList();
+
         predecessorRatings = GoalService.GetPredecessorRatings(Response);
         hasPredecessor = GoalService.GetPredecessorAssignmentId(Response).HasValue;
     }
@@ -553,7 +567,7 @@ else
             {
                 // Update the response with fresh data from the server
                 // Convert the DTOs back to the dictionary format expected by GoalService
-                var goalsList = result.Payload.Goals.Select(g => new Dictionary<string, object>
+                var allGoalsList = result.Payload.Goals.Select(g => new Dictionary<string, object>
                 {
                     [GoalService.GoalIdKey] = g.Id,
                     [GoalService.GoalObjectiveKey] = g.ObjectiveDescription,
@@ -563,6 +577,9 @@ else
                     [GoalService.GoalWeightingKey] = g.WeightingPercentage,
                     [GoalService.GoalAddedByRoleKey] = g.AddedByRole.ToString()
                 }).ToList();
+
+                // Store ALL goals in response (for persistence), but LoadGoalData() will filter for display
+                var goalsList = allGoalsList;
 
                 Response.ComplexValue ??= new Dictionary<string, object>();
                 Response.ComplexValue[GoalService.GoalsKey] = goalsList;
