@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -13,7 +13,7 @@ public class GoalRatingReadModel
     public Guid SourceAssignmentId { get; set; }
     public Guid SourceGoalId { get; set; }
     public Guid QuestionId { get; set; }
-    public CompletionRole RatedByRole { get; set; }
+    public ApplicationRole RatedByRole { get; set; }
     public decimal DegreeOfAchievement { get; set; }
     public string Justification { get; set; } = string.Empty;
     public DateTime RatedAt { get; set; }
@@ -25,6 +25,6 @@ public class GoalRatingReadModel
     public DateTime SnapshotTimeframeFrom { get; set; }
     public DateTime SnapshotTimeframeTo { get; set; }
     public string SnapshotMeasurementMetric { get; set; } = string.Empty;
-    public CompletionRole SnapshotAddedByRole { get; set; }
+    public ApplicationRole SnapshotAddedByRole { get; set; }
     public decimal SnapshotWeightingPercentage { get; set; }
 }

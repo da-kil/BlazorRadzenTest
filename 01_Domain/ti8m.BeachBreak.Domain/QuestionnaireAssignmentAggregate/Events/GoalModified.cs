@@ -1,5 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
@@ -15,7 +15,7 @@ public record GoalModified(
     string? ObjectiveDescription,
     string? MeasurementMetric,
     decimal? WeightingPercentage,
-    CompletionRole ModifiedByRole,
+    ApplicationRole ModifiedByRole,
     string? ChangeReason,
     DateTime ModifiedAt,
     Guid ModifiedByEmployeeId) : IDomainEvent;

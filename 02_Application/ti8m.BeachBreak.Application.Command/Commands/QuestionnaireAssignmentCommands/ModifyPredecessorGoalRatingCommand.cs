@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
@@ -7,6 +7,6 @@ public record ModifyPredecessorGoalRatingCommand(
     Guid SourceGoalId,
     decimal? DegreeOfAchievement,
     string? Justification,
-    CompletionRole ModifiedByRole,
+    ApplicationRole ModifiedByRole,
     string ChangeReason,
     Guid ModifiedByEmployeeId) : ICommand<Result>;

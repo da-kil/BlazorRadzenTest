@@ -1,5 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
@@ -10,7 +10,7 @@ public class GoalRatingModificationRecord : ValueObject
 {
     public decimal? DegreeOfAchievement { get; private set; }
     public string? Justification { get; private set; }
-    public CompletionRole ModifiedByRole { get; private set; }
+    public ApplicationRole ModifiedByRole { get; private set; }
     public string ChangeReason { get; private set; } = string.Empty;
     public DateTime ModifiedAt { get; private set; }
     public Guid ModifiedByEmployeeId { get; private set; }
@@ -20,7 +20,7 @@ public class GoalRatingModificationRecord : ValueObject
     public GoalRatingModificationRecord(
         decimal? degreeOfAchievement,
         string? justification,
-        CompletionRole modifiedByRole,
+        ApplicationRole modifiedByRole,
         string changeReason,
         DateTime modifiedAt,
         Guid modifiedByEmployeeId)

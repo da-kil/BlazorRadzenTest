@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Repositories;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
@@ -106,7 +107,7 @@ public class QuestionnaireResponseCommandHandler :
             // StartWork() will automatically transition workflow state appropriately
             if (isFirstSave)
             {
-                assignment.StartWork(CompletionRole.Employee); // Sets StartedDate and updates workflow state
+                assignment.StartWork(ApplicationRole.Employee); // Sets StartedDate and updates workflow state
                 await assignmentRepository.StoreAsync(assignment, cancellationToken);
                 logger.LogInformation("Assignment {AssignmentId} marked as started by employee", command.AssignmentId);
             }
@@ -207,7 +208,7 @@ public class QuestionnaireResponseCommandHandler :
             // StartWork() will automatically transition workflow state appropriately
             if (isFirstSave)
             {
-                assignment.StartWork(CompletionRole.Manager); // Sets StartedDate and updates workflow state
+                assignment.StartWork(ApplicationRole.TeamLead); // Sets StartedDate and updates workflow state
                 await assignmentRepository.StoreAsync(assignment, cancellationToken);
                 logger.LogInformation("Assignment {AssignmentId} marked as started by manager", command.AssignmentId);
             }

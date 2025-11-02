@@ -11,11 +11,11 @@ namespace ti8m.BeachBreak.Authorization;
 /// </summary>
 public enum ApplicationRole
 {
-    Employee = 1,
-    TeamLead = 2,
-    HR = 3,
-    HRLead = 4,
-    Admin = 5
+    Employee = 0,
+    TeamLead = 1,
+    HR = 2,
+    HRLead = 3,
+    Admin = 4
 }
 
 /// <summary>

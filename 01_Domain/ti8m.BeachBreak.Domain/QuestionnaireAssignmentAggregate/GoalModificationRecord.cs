@@ -1,5 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
@@ -13,7 +13,7 @@ public class GoalModificationRecord : ValueObject
     public string? ObjectiveDescription { get; private set; }
     public string? MeasurementMetric { get; private set; }
     public decimal? WeightingPercentage { get; private set; }
-    public CompletionRole ModifiedByRole { get; private set; }
+    public ApplicationRole ModifiedByRole { get; private set; }
     public string ChangeReason { get; private set; } = string.Empty;
     public DateTime ModifiedAt { get; private set; }
     public Guid ModifiedByEmployeeId { get; private set; }
@@ -26,7 +26,7 @@ public class GoalModificationRecord : ValueObject
         string? objectiveDescription,
         string? measurementMetric,
         decimal? weightingPercentage,
-        CompletionRole modifiedByRole,
+        ApplicationRole modifiedByRole,
         string changeReason,
         DateTime modifiedAt,
         Guid modifiedByEmployeeId)

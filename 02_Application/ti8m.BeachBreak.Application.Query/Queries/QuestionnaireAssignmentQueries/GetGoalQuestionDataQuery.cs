@@ -1,5 +1,5 @@
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
@@ -12,9 +12,9 @@ public class GetGoalQuestionDataQuery : IQuery<Result<GoalQuestionDataDto>>
 {
     public Guid AssignmentId { get; init; }
     public Guid QuestionId { get; init; }
-    public CompletionRole CurrentUserRole { get; init; }
+    public ApplicationRole CurrentUserRole { get; init; }
 
-    public GetGoalQuestionDataQuery(Guid assignmentId, Guid questionId, CompletionRole currentUserRole)
+    public GetGoalQuestionDataQuery(Guid assignmentId, Guid questionId, ApplicationRole currentUserRole)
     {
         AssignmentId = assignmentId;
         QuestionId = questionId;

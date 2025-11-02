@@ -4,10 +4,12 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Extensions
 @inject GoalService GoalService
 @inject IGoalApiService GoalApiService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+@inject IAuthService AuthService
 @inherits OptimizedComponentBase
 
 @if (!HideHeader)
@@ -72,9 +74,9 @@ else
                     </ChildContent>
                 </RadzenFieldset>
             }
-            else if (!IsReadOnly)
+            else if (!IsReadOnly && !IsInReviewPhase())
             {
-                @* Link Predecessor Section - Only show if no predecessor linked and not read-only *@
+                @* Link Predecessor Section - Only show if no predecessor linked, not read-only, and not in review phase *@
                 <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
                     <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
                         <strong>Link Previous Questionnaire:</strong> Link a predecessor questionnaire to rate goals from a previous period.
@@ -201,7 +203,7 @@ else
                 <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
                     @dto.ObjectiveDescription
                 </RadzenText>
-                <RadzenBadge Text="@dto.AddedByRole" BadgeStyle="BadgeStyle.Success" Class="mb-2" />
+                <RadzenBadge Text="@GetDisplayRole(dto.AddedByRole)" BadgeStyle="BadgeStyle.Success" Class="mb-2" />
                 <RadzenBadge Text="Pending Add" BadgeStyle="BadgeStyle.Info" Class="mb-2 ms-2" />
             </RadzenColumn>
         </RadzenRow>
@@ -287,7 +289,7 @@ else
                 <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
                     @objective
                 </RadzenText>
-                <RadzenBadge Text="@addedByRole" BadgeStyle="BadgeStyle.Success" Class="mb-2" />
+                <RadzenBadge Text="@GetDisplayRole(addedByRole)" BadgeStyle="BadgeStyle.Success" Class="mb-2" />
                 @if (isPendingDelete)
                 {
                     <RadzenBadge Text="Pending Delete" BadgeStyle="BadgeStyle.Danger" Class="mb-2 ms-2" />
@@ -392,14 +394,31 @@ else
     {
         var allGoals = GoalService.GetGoals(Response);
 
-        // Filter goals by current user role for comparison views
-        // In post-review states, each side should only show goals added by that role
+        // Filter goals for comparison views in review meetings
+        var currentRole = CurrentUserRole;
+
         currentGoals = allGoals.Where(goal =>
         {
             if (goal.TryGetValue(GoalService.GoalAddedByRoleKey, out var addedByRole))
             {
                 var roleString = addedByRole?.ToString() ?? "";
-                return string.Equals(roleString, CurrentUserRole, StringComparison.OrdinalIgnoreCase);
+
+                // For comparison views: show goals based on the perspective being displayed
+                if (currentRole == "Employee")
+                {
+                    // Employee side: show only goals added by Employee role
+                    return string.Equals(roleString, "Employee", StringComparison.OrdinalIgnoreCase);
+                }
+                else if (IsManagerRole(currentRole))
+                {
+                    // Manager side: show only goals added by any manager role
+                    return IsManagerRole(roleString);
+                }
+                else
+                {
+                    // Fallback: show all goals for admin/other roles
+                    return true;
+                }
             }
             // If no role information, include the goal (for backward compatibility)
             return true;
@@ -407,6 +426,11 @@ else
 
         predecessorRatings = GoalService.GetPredecessorRatings(Response);
         hasPredecessor = GoalService.GetPredecessorAssignmentId(Response).HasValue;
+    }
+
+    private bool IsManagerRole(string role)
+    {
+        return role == "TeamLead" || role == "HR" || role == "HRLead" || role == "Admin";
     }
 
     protected override bool HasStateChanged()
@@ -463,7 +487,7 @@ else
             {
                 { "AssignmentId", AssignmentId },
                 { "QuestionId", Question.Id },
-                { "AddedByRole", CurrentUserRole }
+                { "AddedByRole", await GetLoggedInUserRole() }
             },
             new DialogOptions
             {
@@ -500,7 +524,7 @@ else
             {
                 { "AssignmentId", AssignmentId },
                 { "QuestionId", Question.Id },
-                { "AddedByRole", existingDto.AddedByRole },
+                { "AddedByRole", await GetLoggedInUserRole() },
                 { "InitialObjective", existingDto.ObjectiveDescription ?? "" },
                 { "InitialMeasurement", existingDto.MeasurementMetric ?? "" },
                 { "InitialTimeframeFrom", existingDto.TimeframeFrom },
@@ -629,7 +653,7 @@ else
                 { "AssignmentId", AssignmentId },
                 { "QuestionId", Question.Id },
                 { "GoalId", goalId },
-                { "ModifiedByRole", CurrentUserRole },
+                { "ModifiedByRole", await GetLoggedInUserRole() },
                 { "InitialObjective", objective },
                 { "InitialMeasurement", measurement },
                 { "InitialTimeframeFrom", fromDate },
@@ -838,6 +862,70 @@ else
         {
             await OnResponseChanged.InvokeAsync(Response);
         }
+    }
+
+    /// <summary>
+    /// Checks if the assignment is in a review phase where structural changes (like linking predecessors) should not be allowed.
+    /// </summary>
+    private bool IsInReviewPhase()
+    {
+        return AssignmentWorkflowState is WorkflowState.InReview or
+                                         WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.EmployeeReviewConfirmed or
+                                         WorkflowState.Finalized;
+    }
+
+    /// <summary>
+    /// Gets the current user's ApplicationRole for API communication.
+    /// Returns the actual ApplicationRole enum string that the API expects.
+    /// </summary>
+    private async Task<string> GetLoggedInUserRole()
+    {
+        try
+        {
+            var roleData = await AuthService.GetMyRoleAsync();
+            if (roleData == null)
+            {
+                return ApplicationRole.Employee.ToString(); // Safe default
+            }
+
+            // Return actual ApplicationRole for API - don't convert to simplified form
+            return roleData.ApplicationRole.ToString();
+        }
+        catch (Exception)
+        {
+            // Safe default if role lookup fails
+            return ApplicationRole.Employee.ToString();
+        }
+    }
+
+    /// <summary>
+    /// Converts any role string (specific ApplicationRole or simplified ResponseRole)
+    /// to the simplified Employee/Manager format for display.
+    /// </summary>
+    private string GetDisplayRole(string roleString)
+    {
+        if (string.IsNullOrEmpty(roleString))
+        {
+            return ResponseRole.Employee.ToRoleKey();
+        }
+
+        // Handle simplified roles (already correct)
+        if (roleString == "Employee" || roleString == "Manager")
+        {
+            return roleString;
+        }
+
+        // Convert specific ApplicationRole strings to simplified format
+        return roleString switch
+        {
+            "Employee" => ResponseRole.Employee.ToRoleKey(),
+            "TeamLead" => ResponseRole.Manager.ToRoleKey(),
+            "HR" => ResponseRole.Manager.ToRoleKey(),
+            "HRLead" => ResponseRole.Manager.ToRoleKey(),
+            "Admin" => ResponseRole.Manager.ToRoleKey(),
+            _ => ResponseRole.Employee.ToRoleKey() // Default for unknown roles
+        };
     }
 }
 

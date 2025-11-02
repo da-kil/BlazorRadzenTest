@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -12,7 +12,7 @@ public class GoalModificationReadModel
     public string? ObjectiveDescription { get; set; }
     public string? MeasurementMetric { get; set; }
     public decimal? WeightingPercentage { get; set; }
-    public CompletionRole ModifiedByRole { get; set; }
+    public ApplicationRole ModifiedByRole { get; set; }
     public string ChangeReason { get; set; } = string.Empty;
     public DateTime ModifiedAt { get; set; }
     public Guid ModifiedByEmployeeId { get; set; }

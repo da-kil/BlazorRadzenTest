@@ -1347,17 +1347,17 @@
         {
             QuestionType.Assessment => IsAssessmentCompleted(question, questionResponse),
             QuestionType.TextQuestion => IsTextQuestionCompleted(question, questionResponse),
-            QuestionType.Goal => IsGoalQuestionCompleted(question, questionResponse),
+            QuestionType.Goal => true, // Goal questions never block submission (see comment below)
             _ => true
         };
     }
 
-    private bool IsGoalQuestionCompleted(QuestionItem question, QuestionResponse questionResponse)
-    {
-        // Goal questions are completed if at least one goal has been added
-        var goals = GoalService.GetGoals(questionResponse);
-        return goals.Any() && goals.All(g => GoalService.IsGoalValid(g));
-    }
+    // Note: Goal questions are designed to never block submission because:
+    // 1. Empty goal sections are acceptable for submission
+    // 2. Pending operations (PENDING ADD, PENDING EDIT, etc.) are stored in component local state,
+    //    not in questionResponse data accessible here
+    // 3. Goals can be added/modified during review phases after submission
+    // 4. Users should not be prevented from progressing due to goal workflow states
 
     private bool IsTextQuestionCompleted(QuestionItem question, QuestionResponse questionResponse)
     {

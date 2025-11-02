@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
@@ -9,7 +9,7 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 public record AddGoalCommand(
     Guid AssignmentId,
     Guid QuestionId,
-    CompletionRole AddedByRole,
+    ApplicationRole AddedByRole,
     DateTime TimeframeFrom,
     DateTime TimeframeTo,
     string ObjectiveDescription,

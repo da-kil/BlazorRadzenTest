@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Repositories;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
@@ -52,8 +54,10 @@ public class EditAnswerDuringReviewCommandHandler
 
             // Get current section responses for this role
             var currentSectionResponses = new Dictionary<Guid, object>();
+            // Map ApplicationRole to CompletionRole for compatibility with Response aggregate
+            var completionRole = command.OriginalCompletionRole == ApplicationRole.Employee ? CompletionRole.Employee : CompletionRole.Manager;
             if (response.SectionResponses.TryGetValue(command.SectionId, out var roleResponses) &&
-                roleResponses.TryGetValue(command.OriginalCompletionRole, out var existingQuestions))
+                roleResponses.TryGetValue(completionRole, out var existingQuestions))
             {
                 // Copy existing responses
                 currentSectionResponses = new Dictionary<Guid, object>(existingQuestions);
@@ -98,7 +102,7 @@ public class EditAnswerDuringReviewCommandHandler
             currentSectionResponses[command.QuestionId] = questionResponseStructure;
 
             // Record the updated section response
-            response.RecordSectionResponse(command.SectionId, command.OriginalCompletionRole, currentSectionResponses);
+            response.RecordSectionResponse(command.SectionId, completionRole, currentSectionResponses);
             await responseRepository.StoreAsync(response, cancellationToken);
 
             logger.LogInformation("Successfully edited answer during review for assignment {AssignmentId}", command.AssignmentId);

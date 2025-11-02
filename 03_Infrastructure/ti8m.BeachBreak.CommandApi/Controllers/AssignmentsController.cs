@@ -499,8 +499,8 @@ public class AssignmentsController : BaseController
     {
         try
         {
-            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(editDto.OriginalCompletionRole, out var completionRole))
-                return BadRequest("Invalid CompletionRole value");
+            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(editDto.OriginalCompletionRole, out var applicationRole))
+                return BadRequest("Invalid ApplicationRole value");
 
             // Get user ID from authenticated user context
             if (!Guid.TryParse(userContext.Id, out var userId))
@@ -513,7 +513,7 @@ public class AssignmentsController : BaseController
                 assignmentId,
                 editDto.SectionId,
                 editDto.QuestionId,
-                completionRole,
+                applicationRole,
                 editDto.Answer,
                 userId);
             var result = await commandDispatcher.SendAsync(command);
@@ -775,7 +775,7 @@ public class AssignmentsController : BaseController
             }
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.LinkedByRole, out var linkedByRole))
+            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.LinkedByRole, out var linkedByRole))
             {
                 return BadRequest($"Invalid role: {dto.LinkedByRole}");
             }
@@ -815,7 +815,7 @@ public class AssignmentsController : BaseController
             }
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.AddedByRole, out var addedByRole))
+            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.AddedByRole, out var addedByRole))
             {
                 return BadRequest($"Invalid role: {dto.AddedByRole}");
             }
@@ -859,7 +859,7 @@ public class AssignmentsController : BaseController
             }
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.ModifiedByRole, out var modifiedByRole))
+            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.ModifiedByRole, out var modifiedByRole))
             {
                 return BadRequest($"Invalid role: {dto.ModifiedByRole}");
             }
@@ -935,7 +935,7 @@ public class AssignmentsController : BaseController
             }
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.RatedByRole, out var ratedByRole))
+            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.RatedByRole, out var ratedByRole))
             {
                 return BadRequest($"Invalid role: {dto.RatedByRole}");
             }
@@ -978,7 +978,7 @@ public class AssignmentsController : BaseController
             }
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.QuestionnaireTemplateAggregate.CompletionRole>(dto.ModifiedByRole, out var modifiedByRole))
+            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.ModifiedByRole, out var modifiedByRole))
             {
                 return BadRequest($"Invalid role: {dto.ModifiedByRole}");
             }

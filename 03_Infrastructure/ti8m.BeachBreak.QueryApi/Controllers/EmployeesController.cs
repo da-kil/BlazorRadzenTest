@@ -675,7 +675,7 @@ public class EmployeesController : BaseController
 
             // Employees always see goals with Employee role filter
             var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
-                assignmentId, questionId, Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee);
+                assignmentId, questionId, Domain.EmployeeAggregate.ApplicationRole.Employee);
 
             var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 

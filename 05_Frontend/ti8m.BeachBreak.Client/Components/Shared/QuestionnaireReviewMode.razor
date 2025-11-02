@@ -13,6 +13,7 @@
 @inject NotificationService NotificationService
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthService AuthService
 
 <link href="css/questionnaire-unified.css" rel="stylesheet" />
 
@@ -176,7 +177,7 @@
                                                                 IsReadOnly="true"
                                                                 HideHeader="true"
                                                                 AssignmentId="@Assignment.Id"
-                                                                CurrentUserRole="Manager"
+                                                                CurrentUserRole="@GetCurrentUserRole()"
                                                                 AssignmentWorkflowState="@Assignment.WorkflowState" />
                                                         </div>
                                                     </div>
@@ -538,5 +539,20 @@
             CompletionRole.Both => "groups",
             _ => "help"
         };
+    }
+
+    private string GetCurrentUserRole()
+    {
+        try
+        {
+            // Get the current user's actual ApplicationRole for API calls
+            var roleData = AuthService.GetMyRoleAsync().GetAwaiter().GetResult();
+            return roleData?.ApplicationRole.ToString() ?? "Employee";
+        }
+        catch
+        {
+            // Safe default if role lookup fails
+            return "Employee";
+        }
     }
 }

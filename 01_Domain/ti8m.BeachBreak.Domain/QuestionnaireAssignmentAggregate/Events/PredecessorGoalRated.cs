@@ -1,5 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
@@ -12,7 +12,7 @@ public record PredecessorGoalRated(
     Guid QuestionId,
     Guid SourceAssignmentId,
     Guid SourceGoalId,
-    CompletionRole RatedByRole,
+    ApplicationRole RatedByRole,
     decimal DegreeOfAchievement,
     string Justification,
     DateTime RatedAt,

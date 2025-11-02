@@ -1,5 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
@@ -10,7 +10,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 public record GoalAdded(
     Guid QuestionId,
     Guid GoalId,
-    CompletionRole AddedByRole,
+    ApplicationRole AddedByRole,
     DateTime TimeframeFrom,
     DateTime TimeframeTo,
     string ObjectiveDescription,

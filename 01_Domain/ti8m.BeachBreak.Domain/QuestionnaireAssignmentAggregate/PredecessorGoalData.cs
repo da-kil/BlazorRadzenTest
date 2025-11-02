@@ -1,5 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
@@ -14,7 +14,7 @@ public class PredecessorGoalData : ValueObject
     public DateTime TimeframeFrom { get; private set; }
     public DateTime TimeframeTo { get; private set; }
     public string MeasurementMetric { get; private set; } = string.Empty;
-    public CompletionRole AddedByRole { get; private set; }
+    public ApplicationRole AddedByRole { get; private set; }
     public decimal WeightingPercentage { get; private set; }
 
     private PredecessorGoalData() { }
@@ -24,7 +24,7 @@ public class PredecessorGoalData : ValueObject
         DateTime timeframeFrom,
         DateTime timeframeTo,
         string measurementMetric,
-        CompletionRole addedByRole,
+        ApplicationRole addedByRole,
         decimal weightingPercentage)
     {
         ObjectiveDescription = objectiveDescription ?? string.Empty;

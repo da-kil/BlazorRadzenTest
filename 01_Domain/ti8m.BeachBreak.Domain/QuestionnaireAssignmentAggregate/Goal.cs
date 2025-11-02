@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
@@ -11,7 +12,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 public class Goal : Entity<Guid>
 {
     public Guid QuestionId { get; private set; }
-    public CompletionRole AddedByRole { get; private set; }
+    public ApplicationRole AddedByRole { get; private set; }
     public DateTime TimeframeFrom { get; private set; }
     public DateTime TimeframeTo { get; private set; }
     public string ObjectiveDescription { get; private set; } = string.Empty;
@@ -28,7 +29,7 @@ public class Goal : Entity<Guid>
     public Goal(
         Guid id,
         Guid questionId,
-        CompletionRole addedByRole,
+        ApplicationRole addedByRole,
         DateTime timeframeFrom,
         DateTime timeframeTo,
         string objectiveDescription,
@@ -66,7 +67,7 @@ public class Goal : Entity<Guid>
         string? objectiveDescription,
         string? measurementMetric,
         decimal? weightingPercentage,
-        CompletionRole modifiedByRole,
+        ApplicationRole modifiedByRole,
         string changeReason,
         DateTime modifiedAt,
         Guid modifiedByEmployeeId)

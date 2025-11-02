@@ -1,7 +1,9 @@
 using Marten;
 using Marten.Events.Projections;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.Projections;
 
@@ -51,9 +53,11 @@ public class ReviewChangeLogProjection : EventProjection
             if (response != null)
             {
                 // Navigate the nested dictionary structure: SectionId -> CompletionRole -> QuestionId -> Answer
+                // Map ApplicationRole to CompletionRole for compatibility with Response aggregate
+                var completionRole = @event.OriginalCompletionRole == ApplicationRole.Employee ? CompletionRole.Employee : CompletionRole.Manager;
                 if (response.SectionResponses.TryGetValue(@event.SectionId, out var roleResponses))
                 {
-                    if (roleResponses.TryGetValue(@event.OriginalCompletionRole, out var questionResponses))
+                    if (roleResponses.TryGetValue(completionRole, out var questionResponses))
                     {
                         if (questionResponses.TryGetValue(@event.QuestionId, out var answerObj))
                         {

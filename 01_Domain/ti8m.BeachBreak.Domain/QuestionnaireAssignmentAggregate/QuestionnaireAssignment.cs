@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
@@ -89,7 +90,7 @@ public class QuestionnaireAssignment : AggregateRoot
             notes));
     }
 
-    public void StartWork(CompletionRole? startedBy = null)
+    public void StartWork(ApplicationRole? startedBy = null)
     {
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot start work on a withdrawn assignment");
@@ -356,7 +357,7 @@ public class QuestionnaireAssignment : AggregateRoot
     public void EditAnswerAsManagerDuringReview(
         Guid sectionId,
         Guid questionId,
-        CompletionRole originalCompletionRole,
+        ApplicationRole originalCompletionRole,
         string newAnswer,
         Guid editedByEmployeeId)
     {
@@ -429,7 +430,7 @@ public class QuestionnaireAssignment : AggregateRoot
     public void LinkPredecessorQuestionnaire(
         Guid questionId,
         Guid predecessorAssignmentId,
-        CompletionRole linkedByRole,
+        ApplicationRole linkedByRole,
         Guid linkedByEmployeeId)
     {
         if (_predecessorLinks.ContainsKey(questionId))
@@ -442,17 +443,17 @@ public class QuestionnaireAssignment : AggregateRoot
             throw new InvalidOperationException("Cannot link predecessor - assignment is withdrawn");
 
         // Validate edit permissions based on role
-        if (linkedByRole == CompletionRole.Employee && !CanEmployeeEdit())
+        if (linkedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
             throw new InvalidOperationException($"Employee cannot link predecessor in state {WorkflowState}");
 
-        if (linkedByRole == CompletionRole.Manager && !CanManagerEdit())
+        if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
             throw new InvalidOperationException($"Manager cannot link predecessor in state {WorkflowState}");
 
         // Validate role-specific workflow state restrictions
-        if (linkedByRole == CompletionRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
+        if (linkedByRole == ApplicationRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
             throw new InvalidOperationException("Employee cannot link during ManagerInProgress state");
 
-        if (linkedByRole == CompletionRole.Manager && WorkflowState == WorkflowState.EmployeeInProgress)
+        if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && WorkflowState == WorkflowState.EmployeeInProgress)
             throw new InvalidOperationException("Manager cannot link during EmployeeInProgress state");
 
         if (_goalsByQuestion.ContainsKey(questionId) && _goalsByQuestion[questionId].Any())
@@ -469,7 +470,7 @@ public class QuestionnaireAssignment : AggregateRoot
     public void AddGoal(
         Guid questionId,
         Guid goalId,
-        CompletionRole addedByRole,
+        ApplicationRole addedByRole,
         DateTime timeframeFrom,
         DateTime timeframeTo,
         string objectiveDescription,
@@ -484,17 +485,17 @@ public class QuestionnaireAssignment : AggregateRoot
             throw new InvalidOperationException("Cannot add goal - assignment is withdrawn");
 
         // Validate edit permissions based on role
-        if (addedByRole == CompletionRole.Employee && !CanEmployeeEdit())
+        if (addedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
             throw new InvalidOperationException($"Employee cannot add goals in state {WorkflowState}");
 
-        if (addedByRole == CompletionRole.Manager && !CanManagerEdit())
+        if (addedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
             throw new InvalidOperationException($"Manager cannot add goals in state {WorkflowState}");
 
         // Validate role-specific workflow state restrictions
-        if (addedByRole == CompletionRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
+        if (addedByRole == ApplicationRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
             throw new InvalidOperationException("Employee cannot add goals during ManagerInProgress state");
 
-        if (addedByRole == CompletionRole.Manager && WorkflowState == WorkflowState.EmployeeInProgress)
+        if (addedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && WorkflowState == WorkflowState.EmployeeInProgress)
             throw new InvalidOperationException("Manager cannot add goals during EmployeeInProgress state");
 
         ValidateWeightingTotal(questionId, addedByRole, weightingPercentage);
@@ -520,7 +521,7 @@ public class QuestionnaireAssignment : AggregateRoot
         string? objectiveDescription,
         string? measurementMetric,
         decimal? weightingPercentage,
-        CompletionRole modifiedByRole,
+        ApplicationRole modifiedByRole,
         string? changeReason,
         Guid modifiedByEmployeeId)
     {
@@ -535,8 +536,8 @@ public class QuestionnaireAssignment : AggregateRoot
         // Validate permissions based on workflow state
         if (WorkflowState == WorkflowState.InReview)
         {
-            // During review, only manager can modify any goal
-            if (modifiedByRole != CompletionRole.Manager)
+            // During review, only roles with management authority can modify any goal
+            if (modifiedByRole is not (ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin))
                 throw new InvalidOperationException("Only manager can modify goals during review meeting");
 
             // Change reason is required during review state
@@ -610,7 +611,7 @@ public class QuestionnaireAssignment : AggregateRoot
         Guid sourceAssignmentId,
         Guid sourceGoalId,
         PredecessorGoalData predecessorGoal,
-        CompletionRole ratedByRole,
+        ApplicationRole ratedByRole,
         decimal degreeOfAchievement,
         string justification,
         Guid ratedByEmployeeId)
@@ -625,17 +626,17 @@ public class QuestionnaireAssignment : AggregateRoot
             throw new InvalidOperationException("Source assignment not linked as predecessor");
 
         // Validate edit permissions based on role
-        if (ratedByRole == CompletionRole.Employee && !CanEmployeeEdit())
+        if (ratedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
             throw new InvalidOperationException($"Employee cannot rate goals in state {WorkflowState}");
 
-        if (ratedByRole == CompletionRole.Manager && !CanManagerEdit())
+        if (ratedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
             throw new InvalidOperationException($"Manager cannot rate goals in state {WorkflowState}");
 
         // Validate role-specific workflow state restrictions
-        if (ratedByRole == CompletionRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
+        if (ratedByRole == ApplicationRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
             throw new InvalidOperationException("Employee cannot rate goals during ManagerInProgress state");
 
-        if (ratedByRole == CompletionRole.Manager && WorkflowState == WorkflowState.EmployeeInProgress)
+        if (ratedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && WorkflowState == WorkflowState.EmployeeInProgress)
             throw new InvalidOperationException("Manager cannot rate goals during EmployeeInProgress state");
 
         if (degreeOfAchievement < 0 || degreeOfAchievement > 100)
@@ -655,7 +656,7 @@ public class QuestionnaireAssignment : AggregateRoot
 
     public void ModifyPredecessorGoalRating(
         Guid sourceGoalId,
-        CompletionRole modifiedByRole,
+        ApplicationRole modifiedByRole,
         decimal? degreeOfAchievement,
         string? justification,
         string changeReason,
@@ -717,7 +718,7 @@ public class QuestionnaireAssignment : AggregateRoot
             WorkflowState.BothInProgress;
     }
 
-    private void ValidateWeightingTotal(Guid questionId, CompletionRole role, decimal newWeighting)
+    private void ValidateWeightingTotal(Guid questionId, ApplicationRole role, decimal newWeighting)
     {
         if (!_goalsByQuestion.TryGetValue(questionId, out var goals))
             goals = new List<Goal>();
@@ -1025,7 +1026,7 @@ public class QuestionnaireAssignment : AggregateRoot
         }
     }
 
-    private void UpdateWorkflowStateFromStartedWork(CompletionRole startedBy)
+    private void UpdateWorkflowStateFromStartedWork(ApplicationRole startedBy)
     {
         // Don't update state if already in submission, review, or finalization phases
         if (WorkflowState >= WorkflowState.EmployeeSubmitted)
@@ -1036,16 +1037,19 @@ public class QuestionnaireAssignment : AggregateRoot
         var hasEmployeeProgress = SectionProgressList.Any(p => p.IsEmployeeCompleted);
         var hasManagerProgress = SectionProgressList.Any(p => p.IsManagerCompleted);
 
+        // Map ApplicationRole to CompletionRole for workflow state machine compatibility
+        var completionRole = startedBy == ApplicationRole.Employee ? CompletionRole.Employee : CompletionRole.Manager;
+
         var newState = WorkflowStateMachine.DetermineProgressStateFromStartedWork(
             StartedDate.HasValue,
             hasEmployeeProgress,
             hasManagerProgress,
-            startedBy,
+            completionRole,
             WorkflowState);
 
         if (newState != WorkflowState)
         {
-            var roleDescription = startedBy == CompletionRole.Employee ? "Employee" : "Manager";
+            var roleDescription = startedBy == ApplicationRole.Employee ? "Employee" : "Manager";
             TransitionWorkflowState(
                 newState,
                 $"{roleDescription} started work - first response saved");

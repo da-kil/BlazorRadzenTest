@@ -1,5 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
@@ -11,7 +11,7 @@ public record ManagerEditedAnswerDuringReview(
     Guid AggregateId,
     Guid SectionId,
     Guid QuestionId,
-    CompletionRole OriginalCompletionRole,  // Who was supposed to complete this originally
+    ApplicationRole OriginalCompletionRole,  // Who was supposed to complete this originally
     string NewAnswer,
     DateTime EditedDate,
     Guid EditedByEmployeeId

@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
@@ -100,14 +101,14 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
 
     /// <summary>
     /// Filters goals based on workflow state and user role.
-    /// In-Progress: User sees only their own goals.
-    /// InReview: Manager sees all, Employee sees only their own.
+    /// In-Progress (including BothInProgress): Each role sees only their own goals.
+    /// InReview and later: Manager sees all, Employee sees only their own.
     /// Post-Review: Both see all.
     /// </summary>
     private IEnumerable<Projections.GoalReadModel> FilterGoalsByWorkflowState(
         IEnumerable<Projections.GoalReadModel> goals,
         WorkflowState workflowState,
-        CompletionRole currentUserRole)
+        ApplicationRole currentUserRole)
     {
         // Post-review states: Both Employee and Manager see all goals
         if (workflowState >= WorkflowState.ManagerReviewConfirmed)
@@ -115,12 +116,13 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
             return goals;
         }
 
-        // InReview: Manager sees all, Employee sees only their own
-        if (workflowState == WorkflowState.InReview)
+        // InReview state: Manager sees all, Employee sees only their own
+        // This covers review meetings where managers need to see both perspectives
+        if (workflowState >= WorkflowState.InReview)
         {
-            if (currentUserRole == CompletionRole.Manager)
+            if (currentUserRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin)
             {
-                return goals; // Manager sees all
+                return goals; // Manager/Admin sees all goals during review
             }
             else
             {
@@ -128,7 +130,8 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
             }
         }
 
-        // In-Progress states: Each role sees only their own goals
+        // All In-Progress states (including BothInProgress): Each role sees only their own goals
+        // This ensures privacy during active goal creation and editing phases
         return goals.Where(g => g.AddedByRole == currentUserRole);
     }
 

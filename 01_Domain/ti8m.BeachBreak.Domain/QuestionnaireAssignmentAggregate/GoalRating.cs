@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
@@ -19,7 +20,7 @@ public class GoalRating : Entity<Guid>
     public PredecessorGoalData PredecessorGoal { get; private set; } = null!;
 
     // Rating data
-    public CompletionRole RatedByRole { get; private set; }
+    public ApplicationRole RatedByRole { get; private set; }
     public decimal DegreeOfAchievement { get; private set; }
     public string Justification { get; private set; } = string.Empty;
     public DateTime RatedAt { get; private set; }
@@ -36,7 +37,7 @@ public class GoalRating : Entity<Guid>
         Guid sourceGoalId,
         Guid questionId,
         PredecessorGoalData predecessorGoal,
-        CompletionRole ratedByRole,
+        ApplicationRole ratedByRole,
         decimal degreeOfAchievement,
         string justification,
         DateTime ratedAt,
@@ -60,7 +61,7 @@ public class GoalRating : Entity<Guid>
     public GoalRating ApplyModification(
         decimal? degreeOfAchievement,
         string? justification,
-        CompletionRole modifiedByRole,
+        ApplicationRole modifiedByRole,
         string changeReason,
         DateTime modifiedAt,
         Guid modifiedByEmployeeId)

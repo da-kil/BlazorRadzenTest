@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -10,7 +10,7 @@ public class GoalReadModel
 {
     public Guid Id { get; set; }
     public Guid QuestionId { get; set; }
-    public CompletionRole AddedByRole { get; set; }
+    public ApplicationRole AddedByRole { get; set; }
     public DateTime TimeframeFrom { get; set; }
     public DateTime TimeframeTo { get; set; }
     public string ObjectiveDescription { get; set; } = string.Empty;

@@ -416,17 +416,10 @@ public class AssignmentsController : BaseController
                 return Unauthorized("Unable to determine user role");
             }
 
-            // Map ApplicationRole to CompletionRole
-            // TeamLead, HR, HRLead, and Admin are treated as Manager for goal visibility
-            var currentUserRole = employeeRole.ApplicationRole == ApplicationRole.TeamLead ||
-                                  employeeRole.ApplicationRole == ApplicationRole.HR ||
-                                  employeeRole.ApplicationRole == ApplicationRole.HRLead ||
-                                  employeeRole.ApplicationRole == ApplicationRole.Admin
-                ? Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager
-                : Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee;
-
+            // Use ApplicationRole directly (no premature mapping)
+            // The query handler will determine proper role-based filtering
             var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
-                assignmentId, questionId, currentUserRole);
+                assignmentId, questionId, employeeRole.ApplicationRole);
 
             var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 

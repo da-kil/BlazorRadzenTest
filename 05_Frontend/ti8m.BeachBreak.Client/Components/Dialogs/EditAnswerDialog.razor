@@ -3,8 +3,10 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Services
 @inject DialogService DialogService
 @inject NotificationService NotificationService
+@inject IAuthService AuthService
 
 <style>
     .role-indicator {
@@ -95,7 +97,8 @@
         }
         else if (Question.Type == QuestionType.Goal)
         {
-            <OptimizedGoalQuestion Question="@Question"
+            <OptimizedGoalQuestion @ref="goalQuestionRef"
+                                  Question="@Question"
                                   Response="@editResponse"
                                   OnResponseChanged="@HandleResponseChanged"
                                   IsReadOnly="false"
@@ -137,6 +140,7 @@
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
 
     private QuestionResponse editResponse = new();
+    private OptimizedGoalQuestion? goalQuestionRef;
 
     // Helper property for simple text binding
     private string SimpleTextValue
@@ -193,13 +197,34 @@
         DialogService.Close(null);
     }
 
-    private void SaveChanges()
+    private async Task SaveChanges()
     {
         // Validate required field
         if (Question.IsRequired && !IsAnswerValid())
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Required Field", "This field is required and cannot be empty.");
             return;
+        }
+
+        // For goal questions during review meetings, save pending changes immediately
+        if (Question.Type == QuestionType.Goal && goalQuestionRef != null && IsInReviewMeeting())
+        {
+            try
+            {
+                var goalsSaved = await goalQuestionRef.SavePendingGoalChanges();
+                if (!goalsSaved)
+                {
+                    NotificationService.Notify(NotificationSeverity.Warning, "Partial Save",
+                        "Some goal changes could not be saved. Please try again.");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Save Failed",
+                    $"Failed to save goal changes: {ex.Message}");
+                return;
+            }
         }
 
         // Build complete QuestionResponse structure (same as regular questionnaire)
@@ -245,10 +270,43 @@
                                       editResponse.ComplexValue.Any(kvp => kvp.Key.StartsWith("rating_") &&
                                                                            kvp.Value != null &&
                                                                            !kvp.Value.Equals(0)),
-            QuestionType.Goal => editResponse.ComplexValue != null &&
-                                           editResponse.ComplexValue.ContainsKey("Description") &&
-                                           !string.IsNullOrWhiteSpace(editResponse.ComplexValue["Description"]?.ToString()),
+            QuestionType.Goal => IsGoalQuestionValid(),
             _ => !string.IsNullOrWhiteSpace(SimpleTextValue) || editResponse.ComplexValue != null
         };
     }
+
+    private bool IsGoalQuestionValid()
+    {
+        // Goal questions are considered valid if they have existing complex value data
+        // During review/edit phases, goals have already been validated and saved
+        // The validation should be more lenient since we're editing existing data
+        if (editResponse.ComplexValue == null)
+            return false;
+
+        // Check if there are goals or predecessor ratings (either indicates valid goal data)
+        bool hasGoals = editResponse.ComplexValue.ContainsKey("Goals") &&
+                       editResponse.ComplexValue["Goals"] is IEnumerable<object> goals &&
+                       goals.Any();
+
+        bool hasPredecessorRatings = editResponse.ComplexValue.ContainsKey("PredecessorRatings") &&
+                                   editResponse.ComplexValue["PredecessorRatings"] is IEnumerable<object> ratings &&
+                                   ratings.Any();
+
+        bool hasPredecessorAssignmentId = editResponse.ComplexValue.ContainsKey("PredecessorAssignmentId");
+
+        // Goal question is valid if it has any goal-related data structure
+        // This is appropriate for edit dialogs where goal data is already established
+        return hasGoals || hasPredecessorRatings || hasPredecessorAssignmentId || editResponse.ComplexValue.Any();
+    }
+
+    /// <summary>
+    /// Checks if the current context is during a review meeting where changes should be saved immediately.
+    /// </summary>
+    private bool IsInReviewMeeting()
+    {
+        return AssignmentWorkflowState is WorkflowState.InReview or
+                                         WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.EmployeeReviewConfirmed;
+    }
+
 }
