@@ -161,7 +161,6 @@ public class Program
                             if (string.IsNullOrEmpty(userId))
                             {
                                 logger.LogWarning("Cannot enrich claims: User ID not found in token");
-                                // Log all claims to debug
                                 foreach (var claim in context.Principal?.Claims ?? Enumerable.Empty<System.Security.Claims.Claim>())
                                 {
                                     logger.LogInformation("Available claim: {Type} = {Value}", claim.Type, claim.Value);

@@ -71,7 +71,6 @@ public class ApplicationRoleClaimsTransformation : IClaimsTransformation
             if (string.IsNullOrEmpty(userId))
             {
                 _logger.LogWarning("Cannot transform claims: User ID not found");
-                // Log all claims to debug
                 foreach (var claim in principal.Claims)
                 {
                     _logger.LogInformation("Claim: {Type} = {Value}", claim.Type, claim.Value);

@@ -1581,7 +1581,6 @@
     {
         if (!CanSubmit())
         {
-            // Debug: Show which sections are incomplete
             var incompleteSections = visibleSections.Where(s =>
             {
                 var section = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);

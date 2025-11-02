@@ -691,7 +691,6 @@ public class EmployeesController : BaseController
                 return CreateResponse(result);
             }
 
-            // Log what we're returning for debugging
             logger.LogInformation("Returning goal data for employee {UserId}: Assignment {AssignmentId}, Question {QuestionId}, WorkflowState: {WorkflowState}, Goals Count: {GoalCount}",
                 userId, assignmentId, questionId,
                 result.Payload?.WorkflowState,
