@@ -357,6 +357,7 @@ else
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public string CurrentUserRole { get; set; } = "Employee";
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
+    [Parameter] public int GoalRefreshToken { get; set; } = 0;
 
     // Current state (loaded from API)
     private List<Dictionary<string, object>> currentGoals = new();
@@ -371,6 +372,9 @@ else
     // Helper to check if there are any pending changes
     public bool HasPendingChanges => pendingAdds.Any() || pendingModifies.Any() || pendingDeletes.Any();
 
+    // Tracking for refresh token to detect when parent requests data reload
+    private int lastGoalRefreshToken = 0;
+
     protected override async Task OnInitializedAsync()
     {
         // Load goals from API (goals are stored in QuestionnaireAssignment aggregate)
@@ -381,8 +385,14 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        if (HasParameterChanged(nameof(Question), Question) ||
-            HasParameterChanged(nameof(Response), Response))
+        // Check if refresh token changed (parent requesting data reload)
+        if (GoalRefreshToken != lastGoalRefreshToken)
+        {
+            lastGoalRefreshToken = GoalRefreshToken;
+            await ReloadGoalData();
+        }
+        else if (HasParameterChanged(nameof(Question), Question) ||
+                HasParameterChanged(nameof(Response), Response))
         {
             LoadGoalData();
         }
@@ -686,20 +696,29 @@ else
         {
             var (gId, dto) = tuple;
 
-            // Queue the modify operation (will be executed when "Save Progress" or "Submit" is clicked)
+            // Queue the modify operation
             pendingModifies[gId] = dto;
 
-            // Show success message
-            NotificationService.Notify(new NotificationMessage
+            // During review phases, save immediately instead of queuing
+            if (IsInReviewPhase())
             {
-                Severity = NotificationSeverity.Info,
-                Summary = "Edit Queued",
-                Detail = "Changes will be saved when you click 'Save Progress' or 'Submit'.",
-                Duration = 4000
-            });
+                // SavePendingGoalChanges() handles the save, reload, and notifications
+                await SavePendingGoalChanges();
+            }
+            else
+            {
+                // Show queue message for non-review phases
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Edit Queued",
+                    Detail = "Changes will be saved when you click 'Save Progress' or 'Submit'.",
+                    Duration = 4000
+                });
 
-            // Trigger re-render to show the pending edit indicator
-            await InvokeAsync(StateHasChanged);
+                // Trigger re-render to show the pending edit indicator
+                await InvokeAsync(StateHasChanged);
+            }
         }
     }
 

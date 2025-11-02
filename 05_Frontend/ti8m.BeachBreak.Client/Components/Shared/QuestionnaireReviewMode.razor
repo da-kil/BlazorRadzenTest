@@ -140,7 +140,8 @@
                                                                 HideHeader="true"
                                                                 AssignmentId="@Assignment.Id"
                                                                 CurrentUserRole="Employee"
-                                                                AssignmentWorkflowState="@Assignment.WorkflowState" />
+                                                                AssignmentWorkflowState="@Assignment.WorkflowState"
+                                                                GoalRefreshToken="@goalRefreshToken" />
                                                         </div>
                                                     </div>
                                                     <div class="answer-actions">
@@ -178,7 +179,8 @@
                                                                 HideHeader="true"
                                                                 AssignmentId="@Assignment.Id"
                                                                 CurrentUserRole="@GetCurrentUserRole()"
-                                                                AssignmentWorkflowState="@Assignment.WorkflowState" />
+                                                                AssignmentWorkflowState="@Assignment.WorkflowState"
+                                                                GoalRefreshToken="@goalRefreshToken" />
                                                         </div>
                                                     </div>
                                                     <div class="answer-actions">
@@ -219,7 +221,8 @@
                                                             HideHeader="true"
                                                             AssignmentId="@Assignment.Id"
                                                             CurrentUserRole="@currentSection.CompletionRole.ToString()"
-                                                            AssignmentWorkflowState="@Assignment.WorkflowState" />
+                                                            AssignmentWorkflowState="@Assignment.WorkflowState"
+                                                            GoalRefreshToken="@goalRefreshToken" />
                                                     </div>
                                                 </div>
                                                 <div class="answer-actions">
@@ -277,6 +280,9 @@
     private int currentSectionIndex = 0;
     private bool isLoading = true;
     private string currentManagerName = string.Empty;
+
+    // Token to trigger goal component refresh after assignment response reload
+    private int goalRefreshToken = 0;
 
     private QuestionSection? currentSection => template?.Sections.OrderBy(s => s.Order).Skip(currentSectionIndex).FirstOrDefault();
 
@@ -403,6 +409,10 @@
 
                 // Reload response to show updated answer
                 await LoadReviewData();
+
+                // After assignment response reload, refresh any goal components to prevent stale data
+                await RefreshGoalComponents();
+
                 StateHasChanged();
             }
             else
@@ -584,5 +594,18 @@
         // When editing Employee's Answer, always pass "Employee"
         // When editing Manager's Answer, pass the current user's actual role
         return originalRole == CompletionRole.Employee ? "Employee" : GetCurrentUserRole();
+    }
+
+    /// <summary>
+    /// Triggers refresh of all goal components after assignment response data is reloaded.
+    /// This prevents stale goal data from overwriting fresh API updates.
+    /// </summary>
+    private async Task RefreshGoalComponents()
+    {
+        // Increment the refresh token to trigger goal component reloads
+        goalRefreshToken++;
+
+        // Small delay to ensure token change propagates before any additional operations
+        await Task.Delay(50);
     }
 }

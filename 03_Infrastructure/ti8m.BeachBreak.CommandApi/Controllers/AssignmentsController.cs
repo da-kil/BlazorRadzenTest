@@ -858,10 +858,19 @@ public class AssignmentsController : BaseController
                 return Unauthorized("User ID not found in authentication context");
             }
 
-            // Parse role from DTO
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.ModifiedByRole, out var modifiedByRole))
+            // Parse role from DTO with better validation and case-insensitive parsing
+            if (string.IsNullOrWhiteSpace(dto.ModifiedByRole))
             {
-                return BadRequest($"Invalid role: {dto.ModifiedByRole}");
+                logger.LogWarning("ModifyGoal failed: ModifiedByRole is null or empty");
+                return BadRequest("ModifiedByRole is required");
+            }
+
+            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.ModifiedByRole, ignoreCase: true, out var modifiedByRole))
+            {
+                logger.LogWarning("ModifyGoal failed: Invalid role '{Role}'. Valid roles: {ValidRoles}",
+                    dto.ModifiedByRole,
+                    string.Join(", ", Enum.GetNames<Domain.EmployeeAggregate.ApplicationRole>()));
+                return BadRequest($"Invalid role: '{dto.ModifiedByRole}'. Valid roles: {string.Join(", ", Enum.GetNames<Domain.EmployeeAggregate.ApplicationRole>())}");
             }
 
             var command = new ModifyGoalCommand(

@@ -35,6 +35,7 @@
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public string CurrentUserRole { get; set; } = "Employee";
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
+    [Parameter] public int GoalRefreshToken { get; set; } = 0;
 
     private bool shouldRender = true;
     private string? lastQuestionHash;
@@ -141,7 +142,8 @@
                               HideHeader="@HideHeader"
                               AssignmentId="@AssignmentId"
                               CurrentUserRole="@CurrentUserRole"
-                              AssignmentWorkflowState="@AssignmentWorkflowState" />
+                              AssignmentWorkflowState="@AssignmentWorkflowState"
+                              GoalRefreshToken="@GoalRefreshToken" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>
