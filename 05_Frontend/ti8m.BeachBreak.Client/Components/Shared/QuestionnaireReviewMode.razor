@@ -282,6 +282,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Initialize the current user role cache before loading review data
+        await InitializeCurrentUserRoleAsync();
         await LoadReviewData();
     }
 
@@ -367,7 +369,7 @@
                 { "CompletionRole", originalRole },
                 { "SectionTitle", currentSection.Title },
                 { "AssignmentId", Assignment.Id },
-                { "CurrentUserRole", originalRole.ToString() },
+                { "CurrentUserRole", GetRoleForDialog(originalRole) },
                 { "AssignmentWorkflowState", Assignment.WorkflowState }
             },
             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
@@ -541,18 +543,46 @@
         };
     }
 
-    private string GetCurrentUserRole()
+    // Cache the current user's role to avoid async calls during render
+    private string currentUserRole = "Employee";
+
+    private async Task InitializeCurrentUserRoleAsync()
     {
         try
         {
-            // Get the current user's actual ApplicationRole for API calls
-            var roleData = AuthService.GetMyRoleAsync().GetAwaiter().GetResult();
-            return roleData?.ApplicationRole.ToString() ?? "Employee";
+            // Properly await the authentication state
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState?.User;
+
+            if (user?.Identity?.IsAuthenticated == true)
+            {
+                // Try to get ApplicationRole from claims
+                var roleClaim = user.FindFirst("ApplicationRole");
+                if (roleClaim != null)
+                {
+                    currentUserRole = roleClaim.Value;
+                    return;
+                }
+            }
+
+            currentUserRole = "Employee";
         }
-        catch
+        catch (Exception)
         {
-            // Safe default if role lookup fails
-            return "Employee";
+            currentUserRole = "Employee";
         }
+    }
+
+    private string GetCurrentUserRole()
+    {
+        // Return the cached role (no async operations during render)
+        return currentUserRole;
+    }
+
+    private string GetRoleForDialog(CompletionRole originalRole)
+    {
+        // When editing Employee's Answer, always pass "Employee"
+        // When editing Manager's Answer, pass the current user's actual role
+        return originalRole == CompletionRole.Employee ? "Employee" : GetCurrentUserRole();
     }
 }

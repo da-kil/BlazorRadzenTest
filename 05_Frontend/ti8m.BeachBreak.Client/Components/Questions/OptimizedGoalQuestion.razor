@@ -403,7 +403,7 @@ else
             {
                 var roleString = addedByRole?.ToString() ?? "";
 
-                // For comparison views: show goals based on the perspective being displayed
+                // For comparison views: strict role-based filtering
                 if (currentRole == "Employee")
                 {
                     // Employee side: show only goals added by Employee role
@@ -420,8 +420,20 @@ else
                     return true;
                 }
             }
-            // If no role information, include the goal (for backward compatibility)
-            return true;
+
+            // If no role information, default based on current context
+            // In comparison views, only show goals with proper role attribution
+            // This prevents duplicate goals from appearing on both sides
+            if (currentRole == "Employee")
+            {
+                // Employee side: if no role info, assume legacy employee goal
+                return true;
+            }
+            else
+            {
+                // Manager side: if no role info, don't show (prevents duplication)
+                return false;
+            }
         }).ToList();
 
         predecessorRatings = GoalService.GetPredecessorRatings(Response);
