@@ -236,10 +236,17 @@ public abstract class OptimizedComponentBase : ComponentBase, IDisposable
 
     /// <summary>
     /// Synchronous version of error handling
+    /// Note: This provides true synchronous error handling to avoid deadlocks.
+    /// For async error handling, use HandleComponentErrorAsync instead.
     /// </summary>
     protected virtual void HandleComponentError(Exception exception, string? operationName = null)
     {
-        HandleComponentErrorAsync(exception, operationName).ConfigureAwait(false).GetAwaiter().GetResult();
+        Console.WriteLine($"[{PerformanceTrackingName}] Error in {operationName ?? "component operation"}: {exception.Message}");
+
+        // In a real implementation, you might want to:
+        // - Log to a proper logging service (synchronously)
+        // - Show user-friendly error messages
+        // - Report to error tracking service (synchronously)
     }
 
     #endregion

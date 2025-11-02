@@ -122,19 +122,6 @@ public static class PerformanceOptimizer
             return false;
         }
 
-        /// <summary>
-        /// Throttles a synchronous operation
-        /// </summary>
-        public static bool TryThrottle(string key, Action operation, int intervalMs = 100)
-        {
-            var task = TryThrottleAsync(key, () =>
-            {
-                operation();
-                return Task.CompletedTask;
-            }, intervalMs);
-
-            return task.GetAwaiter().GetResult();
-        }
     }
 
     /// <summary>
