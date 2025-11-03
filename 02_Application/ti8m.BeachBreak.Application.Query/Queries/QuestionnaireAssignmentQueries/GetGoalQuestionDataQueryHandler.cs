@@ -111,7 +111,9 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
         ApplicationRole currentUserRole)
     {
         // Post-review states: Both Employee and Manager see all goals
-        if (workflowState >= WorkflowState.ManagerReviewConfirmed)
+        if (workflowState is WorkflowState.ManagerReviewConfirmed or
+                              WorkflowState.EmployeeReviewConfirmed or
+                              WorkflowState.Finalized)
         {
             return goals;
         }

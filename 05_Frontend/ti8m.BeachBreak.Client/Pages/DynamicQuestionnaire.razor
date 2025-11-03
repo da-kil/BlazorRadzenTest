@@ -62,7 +62,7 @@
             @if (assignment != null && assignmentId.HasValue)
             {
                 <WorkflowActionButtons Assignment="@assignment"
-                                      IsEmployee="@isEmployee"
+                                      IsEmployee="@isEmployeeOnly"
                                       IsManager="@isManager"
                                       UserName="@currentUserName"
                                       OnActionCompleted="@OnWorkflowActionCompleted" />
@@ -276,7 +276,7 @@
                   assignment.WorkflowState == WorkflowState.Finalized))
             {
                 <ReviewComments Assignment="@assignment"
-                               IsEmployee="@isEmployee"
+                               IsEmployee="@isEmployeeOnly"
                                IsManager="@isManager" />
             }
         </RadzenCard>
@@ -320,6 +320,13 @@
     private bool isEmployee => true;
 
     /// <summary>
+    /// Whether user is specifically an Employee (not a manager) for employee-only workflow actions.
+    /// TRUE only for Employee role, FALSE for all manager roles (TeamLead, HR, HRLead, Admin).
+    /// This is used exclusively for workflow actions like employee sign-off that should not be available to managers.
+    /// </summary>
+    private bool isEmployeeOnly => !HasManagerPrivileges;
+
+    /// <summary>
     /// Whether user can act as a manager (complete manager sections, view team responses).
     /// TRUE for TeamLead, HR, HRLead, Admin.
     /// This is used to determine which API endpoints to call and which UI features to show.
@@ -334,10 +341,10 @@
     private ResponseRole CurrentResponseRole => userRole.ToResponseRole();
 
     /// <summary>
-    /// Legacy string accessor for compatibility with components that expect string role names.
-    /// New code should use CurrentResponseRole enum directly.
+    /// String accessor for components that need actual ApplicationRole strings.
+    /// Goal filtering requires specific ApplicationRole strings (TeamLead, HR, etc.), not simplified ResponseRole strings.
     /// </summary>
-    private string currentUserRole => CurrentResponseRole.ToRoleKey();
+    private string currentUserRole => userRole.ToString();
 
     private string currentUserName = string.Empty;
     private string managerContextRole = string.Empty;
@@ -441,6 +448,7 @@
         {
             // Default to Employee for safety
             userRole = ApplicationRole.Employee;
+            managerContextRole = "TeamLead"; // Fallback for filtering
         }
     }
 
@@ -1775,6 +1783,8 @@
         {
             try
             {
+                var previousState = assignment?.WorkflowState;
+
                 if (isManager)
                 {
                     assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
@@ -1785,6 +1795,30 @@
                 }
 
                 StateHasChanged();
+
+                // Navigate back to overview after completion actions
+                if (assignment != null)
+                {
+                    var shouldNavigateBack = assignment.WorkflowState switch
+                    {
+                        // After employee signs off, take them back to overview
+                        WorkflowState.EmployeeReviewConfirmed when previousState == WorkflowState.ManagerReviewConfirmed => true,
+                        // After manager finalizes, take them back to overview
+                        WorkflowState.Finalized when previousState == WorkflowState.EmployeeReviewConfirmed => true,
+                        // Don't navigate for other state transitions (keep them on the questionnaire)
+                        _ => false
+                    };
+
+                    if (shouldNavigateBack)
+                    {
+                        // Small delay to let the user see the success notification
+                        await Task.Delay(2000);
+
+                        // Navigate to appropriate overview based on user role
+                        var targetRoute = isEmployeeOnly ? "/my-questionnaires" : "/team/questionnaires";
+                        NavigationManager.NavigateTo(targetRoute);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -1806,11 +1840,10 @@
 
         try
         {
-            // Reload assignment to get updated workflow state
+            // Reload assignment to get updated workflow state and handle navigation
             await OnWorkflowActionCompleted();
 
-            // Navigate back to team questionnaires
-            NavigationManager.NavigateTo("/team/questionnaires");
+            // Navigation is handled by OnWorkflowActionCompleted based on user role and workflow state
         }
         catch (Exception ex)
         {
