@@ -402,6 +402,10 @@ public class QuestionnaireAssignment : AggregateRoot
         if (WorkflowState != WorkflowState.ManagerReviewConfirmed)
             throw new InvalidOperationException("Manager must finish review meeting before employee confirmation");
 
+        // Only the assigned employee can confirm their own review
+        if (confirmedByEmployeeId != EmployeeId)
+            throw new InvalidOperationException("Only the assigned employee can confirm the review outcome");
+
         RaiseEvent(new EmployeeConfirmedReviewOutcome(
             Id,
             DateTime.UtcNow,
