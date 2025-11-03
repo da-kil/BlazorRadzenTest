@@ -339,11 +339,19 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     {
         try
         {
+            // Convert CompletionRole to ApplicationRole for backend API
+            string applicationRole = originalCompletionRole switch
+            {
+                CompletionRole.Employee => "Employee",
+                CompletionRole.Manager => "TeamLead", // Map Manager to a valid ApplicationRole
+                _ => "Employee"
+            };
+
             var dto = new EditAnswerDto
             {
                 SectionId = sectionId,
                 QuestionId = questionId,
-                OriginalCompletionRole = originalCompletionRole.ToString(),
+                OriginalCompletionRole = applicationRole,
                 Answer = answer
             };
             var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/edit-answer", dto);

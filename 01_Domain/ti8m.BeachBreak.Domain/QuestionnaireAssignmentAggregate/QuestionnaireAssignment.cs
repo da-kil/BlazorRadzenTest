@@ -488,12 +488,23 @@ public class QuestionnaireAssignment : AggregateRoot
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot add goal - assignment is withdrawn");
 
-        // Validate edit permissions based on role
+        // Validate edit permissions based on role and workflow state
         if (addedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
             throw new InvalidOperationException($"Employee cannot add goals in state {WorkflowState}");
 
-        if (addedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
-            throw new InvalidOperationException($"Manager cannot add goals in state {WorkflowState}");
+        // Special handling for InReview state - managers can add goals during review meetings
+        if (WorkflowState == WorkflowState.InReview)
+        {
+            // During review, only roles with management authority can add goals
+            if (addedByRole is not (ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin))
+                throw new InvalidOperationException("Only manager can add goals during review meeting");
+        }
+        else
+        {
+            // Standard validation for non-review states
+            if (addedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
+                throw new InvalidOperationException($"Manager cannot add goals in state {WorkflowState}");
+        }
 
         // Validate role-specific workflow state restrictions
         if (addedByRole == ApplicationRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
