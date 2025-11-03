@@ -340,6 +340,7 @@
     private string currentUserRole => CurrentResponseRole.ToRoleKey();
 
     private string currentUserName = string.Empty;
+    private string managerContextRole = string.Empty;
     private List<QuestionSection> visibleSections = new();
     private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
     private bool isSubmitting = false;
@@ -431,6 +432,10 @@
 
             // Store the actual ApplicationRole - computed properties derive behavior from it
             userRole = roleData.ApplicationRole;
+
+            // Cache role for Manager's Answer sections filtering
+            var userRoleString = userRole.ToString();
+            managerContextRole = IsManagerRole(userRoleString) ? userRoleString : "TeamLead";
         }
         catch (Exception ex)
         {
@@ -874,7 +879,7 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="Manager"
+                            CurrentUserRole="@managerContextRole"
                             AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
                     </div>
                 </div>
@@ -944,7 +949,7 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="Manager"
+                            CurrentUserRole="@managerContextRole"
                             AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
                     </div>
                 </div>
@@ -1908,4 +1913,10 @@
             _ => "help"
         };
     }
+
+    private bool IsManagerRole(string role)
+    {
+        return role == "TeamLead" || role == "HR" || role == "HRLead" || role == "Admin";
+    }
+
 }

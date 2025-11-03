@@ -178,7 +178,7 @@
                                                                 IsReadOnly="true"
                                                                 HideHeader="true"
                                                                 AssignmentId="@Assignment.Id"
-                                                                CurrentUserRole="@GetCurrentUserRole()"
+                                                                CurrentUserRole="@GetManagerContextRole()"
                                                                 AssignmentWorkflowState="@Assignment.WorkflowState"
                                                                 GoalRefreshToken="@goalRefreshToken" />
                                                         </div>
@@ -594,6 +594,28 @@
         // When editing Employee's Answer, always pass "Employee"
         // When editing Manager's Answer, pass the current user's actual role
         return originalRole == CompletionRole.Employee ? "Employee" : GetCurrentUserRole();
+    }
+
+    private bool IsManagerRole(string role)
+    {
+        return role == "TeamLead" || role == "HR" || role == "HRLead" || role == "Admin";
+    }
+
+    /// <summary>
+    /// Gets the appropriate role context for the Manager's Answer section filtering.
+    /// The Manager's Answer section should always show goals from ANY manager role,
+    /// regardless of who is currently viewing the page.
+    ///
+    /// - If current user is a manager: Use their actual role (maintains audit trail)
+    /// - If current user is employee: Use representative manager role to trigger manager filtering
+    ///
+    /// The specific manager role used doesn't affect filtering - the OptimizedGoalQuestion
+    /// component shows goals from ALL manager roles when any manager role is provided.
+    /// </summary>
+    private string GetManagerContextRole()
+    {
+        var userRole = GetCurrentUserRole();
+        return IsManagerRole(userRole) ? userRole : "TeamLead";
     }
 
     /// <summary>
