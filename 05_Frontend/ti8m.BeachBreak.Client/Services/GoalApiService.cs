@@ -14,9 +14,11 @@ public class GoalApiService : BaseApiService, IGoalApiService
     private const string QueryEndpoint = "q/api/v1/assignments";
     private const string EmployeeQueryEndpoint = "q/api/v1/employees/me/assignments";
     private const string CommandEndpoint = "c/api/v1/assignments";
+    private readonly IAuthService authService;
 
-    public GoalApiService(IHttpClientFactory factory) : base(factory)
+    public GoalApiService(IHttpClientFactory factory, IAuthService authService) : base(factory)
     {
+        this.authService = authService;
     }
 
     public async Task<Result> LinkPredecessorAsync(Guid assignmentId, LinkPredecessorQuestionnaireDto dto)
