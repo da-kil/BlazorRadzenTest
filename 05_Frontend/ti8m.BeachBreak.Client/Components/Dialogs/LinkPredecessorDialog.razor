@@ -5,6 +5,7 @@
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject IGoalApiService GoalApiService
+@inject IAuthService AuthService
 
 <div class="link-predecessor-dialog">
     <RadzenStack Gap="1rem">
@@ -165,10 +166,15 @@
 
         try
         {
+            // Get current user's role to populate LinkedByRole
+            var userRole = await AuthService.GetMyRoleAsync();
+            var linkedByRole = userRole?.ApplicationRole.ToString() ?? "Employee";
+
             var dto = new LinkPredecessorQuestionnaireDto
             {
                 QuestionId = QuestionId,
-                PredecessorAssignmentId = selectedPredecessorId.Value
+                PredecessorAssignmentId = selectedPredecessorId.Value,
+                LinkedByRole = linkedByRole
             };
 
             var result = await GoalApiService.LinkPredecessorAsync(AssignmentId, dto);

@@ -144,13 +144,14 @@ else
         var degree = rating.TryGetValue(GoalService.RatingDegreeKey, out var deg) ? Convert.ToDecimal(deg) : 0;
         var justification = rating.TryGetValue(GoalService.RatingJustificationKey, out var just) ? just?.ToString() ?? "" : "";
         var ratedByRole = rating.TryGetValue(GoalService.RatingByRoleKey, out var role) ? role?.ToString() ?? "" : "";
+        var originalAddedByRole = rating.TryGetValue(GoalService.RatingOriginalAddedByRoleKey, out var origRole) ? origRole?.ToString() ?? "" : "";
 
         <RadzenRow>
             <RadzenColumn Size="12">
                 <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
                     @originalObjective
                 </RadzenText>
-                <RadzenBadge Text="@ratedByRole" BadgeStyle="BadgeStyle.Info" Class="mb-2" />
+                <RadzenBadge Text="@GetDisplayRole(originalAddedByRole)" BadgeStyle="BadgeStyle.Success" Class="mb-2" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -640,7 +641,8 @@ else
                         [GoalService.RatingDegreeKey] = r.DegreeOfAchievement,
                         [GoalService.RatingJustificationKey] = r.Justification ?? "",
                         [GoalService.RatingByRoleKey] = r.RatedByRole.ToString(),
-                        [GoalService.RatingOriginalObjectiveKey] = r.OriginalObjectiveDescription ?? ""
+                        [GoalService.RatingOriginalObjectiveKey] = r.OriginalObjectiveDescription ?? "",
+                        [GoalService.RatingOriginalAddedByRoleKey] = r.OriginalAddedByRole ?? ""
                     }).ToList();
 
                     Response.ComplexValue[GoalService.PredecessorRatingsKey] = ratingsList;

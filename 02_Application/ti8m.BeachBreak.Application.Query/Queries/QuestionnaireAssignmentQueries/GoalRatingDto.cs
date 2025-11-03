@@ -8,7 +8,7 @@ public class GoalRatingDto
     public Guid SourceAssignmentId { get; set; }
     public Guid SourceGoalId { get; set; }
     public Guid QuestionId { get; set; }
-    public ApplicationRole RatedByRole { get; set; }
+    public string RatedByRole { get; set; } = string.Empty;
     public decimal DegreeOfAchievement { get; set; }
     public string Justification { get; set; } = string.Empty;
 
@@ -17,6 +17,6 @@ public class GoalRatingDto
     public DateTime OriginalTimeframeFrom { get; set; }
     public DateTime OriginalTimeframeTo { get; set; }
     public string OriginalMeasurementMetric { get; set; } = string.Empty;
-    public ApplicationRole OriginalAddedByRole { get; set; }
+    public string OriginalAddedByRole { get; set; } = string.Empty;
     public decimal OriginalWeightingPercentage { get; set; }
 }

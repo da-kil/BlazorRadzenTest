@@ -14,11 +14,9 @@ public class GoalApiService : BaseApiService, IGoalApiService
     private const string QueryEndpoint = "q/api/v1/assignments";
     private const string EmployeeQueryEndpoint = "q/api/v1/employees/me/assignments";
     private const string CommandEndpoint = "c/api/v1/assignments";
-    private readonly IAuthService _authService;
 
-    public GoalApiService(IHttpClientFactory factory, IAuthService authService) : base(factory)
+    public GoalApiService(IHttpClientFactory factory) : base(factory)
     {
-        _authService = authService;
     }
 
     public async Task<Result> LinkPredecessorAsync(Guid assignmentId, LinkPredecessorQuestionnaireDto dto)
@@ -196,7 +194,7 @@ public class GoalApiService : BaseApiService, IGoalApiService
         try
         {
             // Determine which endpoint to use based on user role
-            var userRole = await _authService.GetMyRoleAsync();
+            var userRole = await authService.GetMyRoleAsync();
             var isManager = userRole?.ApplicationRole is ApplicationRole.TeamLead
                 or ApplicationRole.HR
                 or ApplicationRole.HRLead

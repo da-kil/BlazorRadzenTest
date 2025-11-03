@@ -73,27 +73,44 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
             }).ToList();
         }
 
-        // Get predecessor goal ratings for this question
-        // Only show ratings from InReview onwards
-        if (ShouldShowPredecessorRatings(assignment.WorkflowState) &&
-            assignment.GoalRatingsByQuestion.TryGetValue(query.QuestionId, out var ratings))
+        // Get predecessor goals and ratings for this question
+        if (dto.PredecessorAssignmentId.HasValue)
         {
-            dto.PredecessorGoalRatings = ratings.Select(r => new GoalRatingDto
+            // Load predecessor assignment from read model
+            var predecessor = await _repository.GetAssignmentByIdAsync(dto.PredecessorAssignmentId.Value, cancellationToken);
+
+            if (predecessor != null)
             {
-                Id = r.Id,
-                SourceAssignmentId = r.SourceAssignmentId,
-                SourceGoalId = r.SourceGoalId,
-                QuestionId = r.QuestionId,
-                RatedByRole = r.RatedByRole,
-                DegreeOfAchievement = r.DegreeOfAchievement,
-                Justification = r.Justification,
-                OriginalObjectiveDescription = r.SnapshotObjectiveDescription,
-                OriginalTimeframeFrom = r.SnapshotTimeframeFrom,
-                OriginalTimeframeTo = r.SnapshotTimeframeTo,
-                OriginalMeasurementMetric = r.SnapshotMeasurementMetric,
-                OriginalAddedByRole = r.SnapshotAddedByRole,
-                OriginalWeightingPercentage = r.SnapshotWeightingPercentage
-            }).ToList();
+                if (predecessor.GoalsByQuestion.TryGetValue(query.QuestionId, out var predecessorGoals) && predecessorGoals.Any())
+                {
+                    // Create rating entries for each predecessor goal (with default values if not rated yet)
+                    var existingRatingsMap = assignment.GoalRatingsByQuestion.TryGetValue(query.QuestionId, out var existingRatings)
+                        ? existingRatings.ToDictionary(r => r.SourceGoalId, r => r)
+                        : new Dictionary<Guid, Projections.GoalRatingReadModel>();
+
+                    dto.PredecessorGoalRatings = predecessorGoals.Select(goal =>
+                    {
+                        var existingRating = existingRatingsMap.TryGetValue(goal.Id, out var rating) ? rating : null;
+
+                        return new GoalRatingDto
+                        {
+                            Id = existingRating?.Id ?? Guid.NewGuid(),
+                            SourceAssignmentId = dto.PredecessorAssignmentId.Value,
+                            SourceGoalId = goal.Id,
+                            QuestionId = query.QuestionId,
+                            RatedByRole = (existingRating?.RatedByRole ?? ApplicationRole.Employee).ToString(),
+                            DegreeOfAchievement = existingRating?.DegreeOfAchievement ?? 0m,
+                            Justification = existingRating?.Justification ?? "",
+                            OriginalObjectiveDescription = goal.ObjectiveDescription,
+                            OriginalTimeframeFrom = goal.TimeframeFrom,
+                            OriginalTimeframeTo = goal.TimeframeTo,
+                            OriginalMeasurementMetric = goal.MeasurementMetric,
+                            OriginalAddedByRole = goal.AddedByRole.ToString(),
+                            OriginalWeightingPercentage = goal.WeightingPercentage
+                        };
+                    }).ToList();
+                }
+            }
         }
 
         return Result<GoalQuestionDataDto>.Success(dto);

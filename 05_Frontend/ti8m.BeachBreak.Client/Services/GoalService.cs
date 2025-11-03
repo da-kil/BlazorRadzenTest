@@ -8,8 +8,6 @@ namespace ti8m.BeachBreak.Client.Services;
 /// </summary>
 public class GoalService
 {
-    #region Data Key Format Constants (CRITICAL - Must match across all components)
-
     // Current goals keys (goals added during in-progress)
     public const string GoalsKey = "Goals";
     public const string GoalIdKey = "GoalId";
@@ -28,10 +26,7 @@ public class GoalService
     public const string RatingJustificationKey = "Justification";
     public const string RatingByRoleKey = "RatedByRole";
     public const string RatingOriginalObjectiveKey = "OriginalObjective";
-
-    #endregion
-
-    #region Goal Data Validation
+    public const string RatingOriginalAddedByRoleKey = "OriginalAddedByRole";
 
     /// <summary>
     /// Validates a goal's data completeness and correctness.
@@ -190,10 +185,6 @@ public class GoalService
         return true;
     }
 
-    #endregion
-
-    #region Goal Data Extraction
-
     /// <summary>
     /// Extracts the list of current goals from a question response.
     /// </summary>
@@ -279,10 +270,6 @@ public class GoalService
         return null;
     }
 
-    #endregion
-
-    #region Goal Data Construction
-
     /// <summary>
     /// Creates a new goal data dictionary with proper key format.
     /// </summary>
@@ -326,6 +313,4 @@ public class GoalService
             [RatingOriginalObjectiveKey] = originalObjective
         };
     }
-
-    #endregion
 }

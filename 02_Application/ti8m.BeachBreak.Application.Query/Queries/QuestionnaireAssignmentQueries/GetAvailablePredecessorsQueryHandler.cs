@@ -56,6 +56,14 @@ public class GetAvailablePredecessorsQueryHandler
         var employeeAssignments = await assignmentRepository.GetAssignmentsByEmployeeIdAsync(
             query.RequestingUserId, cancellationToken);
 
+        // Check if current assignment already has a predecessor linked for this question
+        var isAlreadyLinked = currentAssignment.PredecessorLinksByQuestion.ContainsKey(query.QuestionId);
+        if (isAlreadyLinked)
+        {
+            // Return empty list - no need to show options when already linked
+            return Result<IEnumerable<AvailablePredecessorDto>>.Success(new List<AvailablePredecessorDto>());
+        }
+
         // Filter for available predecessors
         var availablePredecessors = new List<AvailablePredecessorDto>();
 
