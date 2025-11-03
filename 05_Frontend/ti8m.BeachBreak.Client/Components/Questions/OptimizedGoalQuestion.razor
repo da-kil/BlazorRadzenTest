@@ -193,6 +193,16 @@ else
                         <span>@justification</span>
                     </div>
                 }
+
+                @{
+                    var validationError = GetPredecessorRatingValidationError(sourceGoalId);
+                }
+                @if (!string.IsNullOrEmpty(validationError))
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Size="AlertSize.Small" Class="mt-2">
+                        <RadzenText TextStyle="TextStyle.Caption">@validationError</RadzenText>
+                    </RadzenAlert>
+                }
             </RadzenColumn>
         </RadzenRow>
     };
@@ -370,8 +380,14 @@ else
     private Dictionary<Guid, ModifyGoalDto> pendingModifies = new();
     private List<Guid> pendingDeletes = new();
 
+    // Validation tracking for predecessor ratings
+    private Dictionary<Guid, string> predecessorRatingValidationErrors = new();
+
     // Helper to check if there are any pending changes
     public bool HasPendingChanges => pendingAdds.Any() || pendingModifies.Any() || pendingDeletes.Any();
+
+    // Helper to check if there are any validation errors
+    public bool HasValidationErrors => predecessorRatingValidationErrors.Any();
 
     // Tracking for refresh token to detect when parent requests data reload
     private int lastGoalRefreshToken = 0;
@@ -449,6 +465,12 @@ else
 
         predecessorRatings = GoalService.GetPredecessorRatings(Response);
         hasPredecessor = GoalService.GetPredecessorAssignmentId(Response).HasValue;
+
+        // Validate all loaded predecessor ratings
+        foreach (var rating in predecessorRatings)
+        {
+            ValidatePredecessorRating(rating);
+        }
     }
 
     private bool IsManagerRole(string role)
@@ -476,6 +498,10 @@ else
         if (rating != null)
         {
             rating[GoalService.RatingDegreeKey] = value;
+
+            // Validate: If degree is provided, justification must be provided
+            ValidatePredecessorRating(rating);
+
             Response.ComplexValue ??= new Dictionary<string, object>();
             Response.ComplexValue[GoalService.PredecessorRatingsKey] = predecessorRatings;
             Response.LastModified = DateTime.Now;
@@ -494,6 +520,10 @@ else
         if (rating != null)
         {
             rating[GoalService.RatingJustificationKey] = value ?? "";
+
+            // Validate: If degree is provided, justification must be provided
+            ValidatePredecessorRating(rating);
+
             Response.ComplexValue ??= new Dictionary<string, object>();
             Response.ComplexValue[GoalService.PredecessorRatingsKey] = predecessorRatings;
             Response.LastModified = DateTime.Now;
@@ -501,6 +531,47 @@ else
             await NotifyStateChangedDebounced(300);
             await NotifyResponseChanged();
         }
+    }
+
+    /// <summary>
+    /// Validates predecessor rating: If degree is set to any numeric value (including 0%), justification is required.
+    /// Note: 0% achievement is a meaningful rating that requires explanation.
+    /// </summary>
+    private void ValidatePredecessorRating(Dictionary<string, object> rating)
+    {
+        var sourceGoalId = rating.TryGetValue(GoalService.RatingSourceGoalIdKey, out var sgId) && sgId is Guid guid ? guid : Guid.Empty;
+        if (sourceGoalId == Guid.Empty) return;
+
+        // Check if degree has been set to any numeric value (including 0%)
+        var degree = rating.TryGetValue(GoalService.RatingDegreeKey, out var degreeObj) ?
+            (decimal?)Convert.ToDecimal(degreeObj) : null;
+        var hasDegree = degree.HasValue; // This includes 0, which requires justification
+
+        var hasJustification = rating.TryGetValue(GoalService.RatingJustificationKey, out var justObj) &&
+                              !string.IsNullOrWhiteSpace(justObj?.ToString());
+
+        if (hasDegree && !hasJustification)
+        {
+            predecessorRatingValidationErrors[sourceGoalId] = "Justification is required when rating predecessor goals (including 0% achievement).";
+        }
+        else
+        {
+            predecessorRatingValidationErrors.Remove(sourceGoalId);
+        }
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Gets validation error for a specific predecessor rating, if any.
+    /// </summary>
+    private string? GetPredecessorRatingValidationError(object sourceGoalId)
+    {
+        if (sourceGoalId is Guid guid && predecessorRatingValidationErrors.TryGetValue(guid, out var error))
+        {
+            return error;
+        }
+        return null;
     }
 
     private async Task ShowAddGoalDialog()

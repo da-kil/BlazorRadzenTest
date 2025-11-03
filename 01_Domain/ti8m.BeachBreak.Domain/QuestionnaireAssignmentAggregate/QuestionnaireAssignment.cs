@@ -657,6 +657,10 @@ public class QuestionnaireAssignment : AggregateRoot
         if (degreeOfAchievement < 0 || degreeOfAchievement > 100)
             throw new ArgumentException("Degree of achievement must be between 0 and 100", nameof(degreeOfAchievement));
 
+        // Validate justification is required when rating predecessor goals (including 0% achievement)
+        if (string.IsNullOrWhiteSpace(justification))
+            throw new ArgumentException("Justification is required when rating predecessor goals (including 0% achievement)", nameof(justification));
+
         RaiseEvent(new PredecessorGoalRated(
             questionId,
             sourceAssignmentId,
@@ -692,6 +696,14 @@ public class QuestionnaireAssignment : AggregateRoot
 
         if (degreeOfAchievement.HasValue && (degreeOfAchievement.Value < 0 || degreeOfAchievement.Value > 100))
             throw new ArgumentException("Degree of achievement must be between 0 and 100", nameof(degreeOfAchievement));
+
+        // Validate justification is required when degree is being modified
+        // Check both current degree (from existing rating) and new degree being set
+        var finalDegree = degreeOfAchievement ?? rating.DegreeOfAchievement;
+        var finalJustification = justification ?? rating.Justification;
+
+        if (string.IsNullOrWhiteSpace(finalJustification))
+            throw new ArgumentException("Justification is required when modifying predecessor goal ratings (including 0% achievement)", nameof(justification));
 
         RaiseEvent(new PredecessorGoalRatingModified(
             sourceGoalId,
