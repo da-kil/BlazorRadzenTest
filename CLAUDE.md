@@ -29,6 +29,23 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - .NET Aspire for local development orchestration
 - Separate Command and Query APIs
 
+### Authentication & Authorization Architecture
+**CRITICAL: Roles are NOT in JWT tokens - they are looked up from database**
+
+- **JWT Tokens**: Contain only user ID (`oid` claim) from Entra ID
+- **ApplicationRole Storage**: Stored in EmployeeReadModel database table
+- **Authorization Flow**:
+  1. JWT token provides user ID (oid claim)
+  2. Authorization middleware queries database: `SELECT ApplicationRole FROM EmployeeReadModel WHERE Id = <user_id>`
+  3. Middleware adds ApplicationRole as claim to request context
+  4. Frontend `AuthorizeView` policies use the added ApplicationRole claim
+  5. API controllers use `[Authorize(Policy = "PolicyName")]` attributes
+
+- **Role Enum Values**: Employee=0, TeamLead=1, HR=2, HRLead=3, Admin=4
+- **Benefits**: Real-time role changes without token refresh, centralized role management
+- **Debugging Auth Issues**: Check database records, NOT JWT token claims
+- **Common Mistake**: Assuming roles are in JWT - they're dynamically looked up per request
+
 ## Domain Model
 
 ### Aggregates
