@@ -37,8 +37,8 @@
                         ButtonStyle="ButtonStyle.Light"
                         Click="@Cancel"
                         Disabled="@isSubmitting" />
-            <RadzenButton Text="@(isSubmitting ? "Adding Goal..." : "Add Goal")"
-                        Icon="@(isSubmitting ? "" : "add")"
+            <RadzenButton Text="@(isSubmitting ? (IsEditMode ? "Updating Goal..." : "Adding Goal...") : (IsEditMode ? "Update Goal" : "Add Goal"))"
+                        Icon="@(isSubmitting ? "" : (IsEditMode ? "save" : "add"))"
                         ButtonStyle="ButtonStyle.Primary"
                         Click="@Submit"
                         Disabled="@isSubmitting" />
@@ -50,6 +50,7 @@
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public Guid QuestionId { get; set; }
     [Parameter] public string AddedByRole { get; set; } = "Employee";
+    [Parameter] public bool IsEditMode { get; set; } = false;
 
     // Pre-populated values for editing pending goals
     [Parameter] public string InitialObjective { get; set; } = "";

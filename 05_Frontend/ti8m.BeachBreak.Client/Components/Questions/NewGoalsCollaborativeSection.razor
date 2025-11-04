@@ -50,6 +50,16 @@
                     }
                 </div>
             }
+
+            @* Render pending goals from the queue (not yet in Response) *@
+            @for (int i = 0; i < pendingAdds.Count; i++)
+            {
+                var index = i; // Capture loop variable for closures
+                var dto = pendingAdds[i];
+                <div class="goal-card mb-3 p-3 border rounded pending-goal" @key="@($"pending-add-{index}")">
+                    @RenderPendingAdd(dto, index)
+                </div>
+            }
         }
 
         @if (!IsReadOnly)
@@ -149,10 +159,11 @@
         var currentCount = allCurrentGoals?.Count ?? 0;
         var hasChanged = currentCount != _lastGoalCount || _goalCountChanged;
 
-        // Reset the change flag after checking
+        // Reset change flags after checking
         if (_goalCountChanged)
         {
             _goalCountChanged = false;
+            _lastGoalCount = currentCount;
         }
 
         return hasChanged || base.HasStateChanged();
@@ -356,7 +367,7 @@
                                             ButtonStyle="ButtonStyle.Light"
                                             Size="ButtonSize.Small"
                                             Class="me-2"
-                                            Click="@(() => ShowEditPendingGoalFromResponse(goal))" />
+                                            Click="@(() => ShowEditPendingGoalFromResponseBridge(goal))" />
                                 <RadzenButton Text="Cancel"
                                             Icon="close"
                                             ButtonStyle="ButtonStyle.Danger"
@@ -510,6 +521,7 @@
                 { "AssignmentId", AssignmentId },
                 { "QuestionId", Question.Id },
                 { "AddedByRole", await GetLoggedInUserRole() },
+                { "IsEditMode", true },
                 { "InitialObjective", existingDto.ObjectiveDescription ?? "" },
                 { "InitialMeasurement", existingDto.MeasurementMetric ?? "" },
                 { "InitialTimeframeFrom", existingDto.TimeframeFrom },
@@ -528,15 +540,16 @@
         {
             pendingAdds[index] = dto;
 
+            // Force immediate UI update - bypass OptimizedComponentBase
+            await InvokeAsync(StateHasChanged);
+
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Info,
-                Summary = "Edit Queued",
+                Summary = "Goal Updated",
                 Detail = "Changes will be saved when you click 'Save Progress' or 'Submit'.",
                 Duration = 4000
             });
-
-            await InvokeAsync(StateHasChanged);
         }
     }
 
@@ -576,15 +589,108 @@
             }
             else
             {
+                // Force immediate UI update - bypass OptimizedComponentBase
+                await InvokeAsync(StateHasChanged);
+
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Info,
-                    Summary = "Edit Queued",
+                    Summary = "Goal Updated",
                     Detail = "Changes will be saved when you click 'Save Progress' or 'Submit'.",
                     Duration = 4000
                 });
+            }
+        }
+    }
 
+    /// <summary>
+    /// Bridge method to edit pending goals directly in the Response data
+    /// </summary>
+    private async Task ShowEditPendingGoalFromResponseBridge(Dictionary<string, object> goal)
+    {
+        var objective = goal.TryGetValue(GoalService.GoalObjectiveKey, out var obj) ? obj?.ToString() ?? "" : "";
+        var measurement = goal.TryGetValue(GoalService.GoalMeasurementKey, out var meas) ? meas?.ToString() ?? "" : "";
+        var weighting = goal.TryGetValue(GoalService.GoalWeightingKey, out var weight) ? Convert.ToDecimal(weight) : 0;
+        var addedByRole = goal.TryGetValue(GoalService.GoalAddedByRoleKey, out var role) ? role?.ToString() ?? "" : "";
+
+        DateTime fromDate = DateTime.Now;
+        DateTime toDate = DateTime.Now.AddMonths(3);
+
+        if (goal.TryGetValue(GoalService.GoalTimeframeFromKey, out var fromVal))
+        {
+            if (fromVal is DateTime dt) fromDate = dt;
+            else if (fromVal is DateTimeOffset dtoFrom) fromDate = dtoFrom.DateTime;
+            else DateTime.TryParse(fromVal?.ToString(), out fromDate);
+        }
+
+        if (goal.TryGetValue(GoalService.GoalTimeframeToKey, out var toVal))
+        {
+            if (toVal is DateTime dt) toDate = dt;
+            else if (toVal is DateTimeOffset dtoTo) toDate = dtoTo.DateTime;
+            else DateTime.TryParse(toVal?.ToString(), out toDate);
+        }
+
+        var result = await DialogService.OpenAsync<AddGoalDialog>("Edit Pending Goal",
+            new Dictionary<string, object>
+            {
+                { "AssignmentId", AssignmentId },
+                { "QuestionId", Question.Id },
+                { "AddedByRole", addedByRole },
+                { "IsEditMode", true },
+                { "InitialObjective", objective },
+                { "InitialMeasurement", measurement },
+                { "InitialTimeframeFrom", fromDate },
+                { "InitialTimeframeTo", toDate },
+                { "InitialWeighting", weighting }
+            },
+            new DialogOptions
+            {
+                Width = "700px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = false
+            });
+
+        if (result is AddGoalDto dto)
+        {
+            // Update the goal directly in the Response data
+            var goalId = goal.TryGetValue(GoalService.GoalIdKey, out var gId) ? gId : Guid.Empty;
+            var existingGoals = GoalService.GetGoals(Response).ToList();
+            var goalIndex = existingGoals.FindIndex(g =>
+                g.TryGetValue(GoalService.GoalIdKey, out var id) && id.Equals(goalId));
+
+            if (goalIndex >= 0)
+            {
+                existingGoals[goalIndex] = new Dictionary<string, object>
+                {
+                    [GoalService.GoalIdKey] = goalId, // Keep same ID
+                    [GoalService.GoalObjectiveKey] = dto.ObjectiveDescription ?? "",
+                    [GoalService.GoalTimeframeFromKey] = dto.TimeframeFrom,
+                    [GoalService.GoalTimeframeToKey] = dto.TimeframeTo,
+                    [GoalService.GoalMeasurementKey] = dto.MeasurementMetric ?? "",
+                    [GoalService.GoalWeightingKey] = dto.WeightingPercentage ?? 0m,
+                    [GoalService.GoalAddedByRoleKey] = dto.AddedByRole,
+                    ["IsPendingAdd"] = true // Keep pending flag
+                };
+
+                Response.ComplexValue[GoalService.GoalsKey] = existingGoals;
+                Response.LastModified = DateTime.Now;
+
+                // Refresh the displayed data
+                LoadNewGoalsData();
+                _goalCountChanged = true; // Force re-render even if count didn't change (content changed)
+                await NotifyResponseChanged();
+
+                // Force immediate UI update
                 await InvokeAsync(StateHasChanged);
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Goal Updated",
+                    Detail = "Changes will be saved when you click 'Save Progress' or 'Submit'.",
+                    Duration = 4000
+                });
             }
         }
     }
@@ -628,90 +734,6 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task ShowEditPendingGoalFromResponse(Dictionary<string, object> goal)
-    {
-        var goalId = goal.TryGetValue(GoalService.GoalIdKey, out var gId) ? gId : Guid.Empty;
-        var objective = goal.TryGetValue(GoalService.GoalObjectiveKey, out var obj) ? obj?.ToString() ?? "" : "";
-        var measurement = goal.TryGetValue(GoalService.GoalMeasurementKey, out var meas) ? meas?.ToString() ?? "" : "";
-        var weighting = goal.TryGetValue(GoalService.GoalWeightingKey, out var weight) ? Convert.ToDecimal(weight) : 0;
-        var addedByRole = goal.TryGetValue(GoalService.GoalAddedByRoleKey, out var role) ? role?.ToString() ?? "" : "";
-
-        DateTime fromDate = DateTime.Now;
-        DateTime toDate = DateTime.Now.AddMonths(3);
-
-        if (goal.TryGetValue(GoalService.GoalTimeframeFromKey, out var fromVal))
-        {
-            if (fromVal is DateTime dt) fromDate = dt;
-            else if (fromVal is DateTimeOffset dtoFrom) fromDate = dtoFrom.DateTime;
-            else DateTime.TryParse(fromVal?.ToString(), out fromDate);
-        }
-
-        if (goal.TryGetValue(GoalService.GoalTimeframeToKey, out var toVal))
-        {
-            if (toVal is DateTime dt) toDate = dt;
-            else if (toVal is DateTimeOffset dtoTo) toDate = dtoTo.DateTime;
-            else DateTime.TryParse(toVal?.ToString(), out toDate);
-        }
-
-        var result = await DialogService.OpenAsync<AddGoalDialog>("Edit Pending Goal",
-            new Dictionary<string, object>
-            {
-                { "AssignmentId", AssignmentId },
-                { "QuestionId", Question.Id },
-                { "AddedByRole", addedByRole },
-                { "InitialObjective", objective },
-                { "InitialMeasurement", measurement },
-                { "InitialTimeframeFrom", fromDate },
-                { "InitialTimeframeTo", toDate },
-                { "InitialWeighting", weighting }
-            },
-            new DialogOptions
-            {
-                Width = "700px",
-                Resizable = true,
-                Draggable = true,
-                CloseDialogOnOverlayClick = false
-            });
-
-        if (result is AddGoalDto dto)
-        {
-            // Update the goal in the response
-            var existingGoals = GoalService.GetGoals(Response).ToList();
-            var goalIndex = existingGoals.FindIndex(g =>
-                g.TryGetValue(GoalService.GoalIdKey, out var id) && id.Equals(goalId));
-
-            if (goalIndex >= 0)
-            {
-                existingGoals[goalIndex] = new Dictionary<string, object>
-                {
-                    [GoalService.GoalIdKey] = goalId, // Keep same ID
-                    [GoalService.GoalObjectiveKey] = dto.ObjectiveDescription ?? "",
-                    [GoalService.GoalTimeframeFromKey] = dto.TimeframeFrom,
-                    [GoalService.GoalTimeframeToKey] = dto.TimeframeTo,
-                    [GoalService.GoalMeasurementKey] = dto.MeasurementMetric ?? "",
-                    [GoalService.GoalWeightingKey] = dto.WeightingPercentage ?? 0m,
-                    [GoalService.GoalAddedByRoleKey] = dto.AddedByRole,
-                    ["IsPendingAdd"] = true // Keep pending flag
-                };
-
-                Response.ComplexValue[GoalService.GoalsKey] = existingGoals;
-                Response.LastModified = DateTime.Now;
-
-                LoadNewGoalsData();
-                await NotifyResponseChanged();
-
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Info,
-                    Summary = "Goal Updated",
-                    Detail = "Changes will be saved when you click 'Save Progress' or 'Submit'.",
-                    Duration = 4000
-                });
-
-                await InvokeAsync(StateHasChanged);
-            }
-        }
-    }
 
     private async Task CancelPendingGoalFromResponse(Dictionary<string, object> goal)
     {
