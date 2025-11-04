@@ -45,7 +45,7 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
     {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/manager/assignment/{assignmentId}", sectionResponses);
+            var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/manager/assignment/{assignmentId}", sectionResponses, JsonOptions);
             response.EnsureSuccessStatusCode();
             var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
             if (result?.Succeeded == true && result.Payload != default)

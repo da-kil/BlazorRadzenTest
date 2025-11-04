@@ -1437,7 +1437,7 @@
 
     private bool HasCompetencyRating(QuestionResponse questionResponse, string competencyKey)
     {
-        if (questionResponse.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
+        if (questionResponse.ComplexValue?.TryGetValue($"Rating_{competencyKey}", out var value) == true)
         {
             // Handle JsonElement from deserialization
             if (value is System.Text.Json.JsonElement jsonElement)
@@ -1855,7 +1855,7 @@
     private int GetCompetencyRating(Guid questionId, string competencyKey)
     {
         var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
+        if (response.ComplexValue?.TryGetValue($"Rating_{competencyKey}", out var value) == true)
         {
             // Handle JsonElement from deserialization
             if (value is System.Text.Json.JsonElement jsonElement)
@@ -1880,7 +1880,7 @@
     private string GetCompetencyComment(Guid questionId, string competencyKey)
     {
         var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue($"comment_{competencyKey}", out var value) == true)
+        if (response.ComplexValue?.TryGetValue($"Comment_{competencyKey}", out var value) == true)
         {
             return value.ToString() ?? "";
         }
@@ -1891,7 +1891,7 @@
     {
         var response = GetQuestionResponse(questionId);
         if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"rating_{competencyKey}"] = value;
+        response.ComplexValue[$"Rating_{competencyKey}"] = value;
         response.LastModified = DateTime.Now;
         UpdateProgress();
     }
@@ -1900,7 +1900,7 @@
     {
         var response = GetQuestionResponse(questionId);
         if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"comment_{competencyKey}"] = value ?? "";
+        response.ComplexValue[$"Comment_{competencyKey}"] = value ?? "";
         response.LastModified = DateTime.Now;
         UpdateProgress();
     }

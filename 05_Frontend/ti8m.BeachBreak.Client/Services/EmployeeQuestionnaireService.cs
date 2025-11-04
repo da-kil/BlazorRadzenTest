@@ -56,7 +56,7 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         // Use "me" endpoint - backend resolves employee ID from UserContext for security
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", sectionResponses);
+            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", sectionResponses, JsonOptions);
             response.EnsureSuccessStatusCode();
 
             // Backend returns Result<Guid>, not just Guid
@@ -81,7 +81,7 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         // Use "me" endpoint - backend resolves employee ID from UserContext for security
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}/submit", new { });
+            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}/submit", new { }, JsonOptions);
             response.EnsureSuccessStatusCode();
 
             // Backend returns Result (void), not QuestionnaireResponse

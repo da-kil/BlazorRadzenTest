@@ -22,7 +22,8 @@ public class CategoryCommandHandler :
         try
         {
             // Create the category using the domain aggregate
-            var categoryId = Guid.NewGuid();
+            // Use provided ID if available, otherwise generate new one
+            var categoryId = command.Category.Id != Guid.Empty ? command.Category.Id : Guid.NewGuid();
             var name = new Translation(command.Category.NameDe, command.Category.NameEn);
             var description = new Translation(command.Category.DescriptionDe, command.Category.DescriptionEn);
 

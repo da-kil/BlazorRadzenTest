@@ -392,7 +392,7 @@ public class AssignmentsController : BaseController
     /// Includes goals added by Employee/Manager and ratings of predecessor goals.
     /// Goals are filtered based on workflow state and user role.
     /// </summary>
-    [HttpGet("{assignmentId}/goals/{questionId}")]
+    [HttpGet("{assignmentId:guid}/goals/{questionId:guid}")]
     [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(GoalQuestionDataDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]

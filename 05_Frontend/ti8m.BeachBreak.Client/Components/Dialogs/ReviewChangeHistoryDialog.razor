@@ -241,9 +241,9 @@
             var displayKey = key switch
             {
                 "value" => "Answer",
-                var k when k.StartsWith("section_") => $"Section {k.Replace("section_", "")}",
-                var k when k.StartsWith("rating_") => $"Rating: {k.Replace("rating_", "")}",
-                var k when k.StartsWith("comment_") => $"Comment: {k.Replace("comment_", "")}",
+                var k when k.StartsWith("Section_") => $"Section {k.Replace("Section_", "")}",
+                var k when k.StartsWith("Rating_") => $"Rating: {k.Replace("Rating_", "")}",
+                var k when k.StartsWith("Comment_") => $"Comment: {k.Replace("Comment_", "")}",
                 "Description" => "Goal Description",
                 "AchievementPercentage" => "Achievement",
                 "Justification" => "Justification",

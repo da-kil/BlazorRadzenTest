@@ -267,7 +267,7 @@
         return Question.Type switch
         {
             QuestionType.Assessment => editResponse.ComplexValue != null &&
-                                      editResponse.ComplexValue.Any(kvp => kvp.Key.StartsWith("rating_") &&
+                                      editResponse.ComplexValue.Any(kvp => kvp.Key.StartsWith("Rating_") &&
                                                                            kvp.Value != null &&
                                                                            !kvp.Value.Equals(0)),
             QuestionType.Goal => IsGoalQuestionValid(),

@@ -118,6 +118,7 @@ else
 		inProgressQuestionnaires = allAssignments.Where(a =>
 			a.WorkflowState is WorkflowState.Assigned
 			or WorkflowState.EmployeeInProgress
+			or WorkflowState.ManagerInProgress
 			or WorkflowState.BothInProgress
 			or WorkflowState.EmployeeSubmitted
 			or WorkflowState.ManagerSubmitted

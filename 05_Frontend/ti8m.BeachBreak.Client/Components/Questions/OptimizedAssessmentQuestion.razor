@@ -357,7 +357,7 @@ else
 
     private int GetCompetencyRating(string competencyKey)
     {
-        if (Response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
+        if (Response.ComplexValue?.TryGetValue($"Rating_{competencyKey}", out var value) == true)
         {
             // Handle JsonElement from API deserialization
             if (value is System.Text.Json.JsonElement jsonElement)
@@ -376,7 +376,7 @@ else
 
     private string GetCompetencyComment(string competencyKey)
     {
-        if (Response.ComplexValue?.TryGetValue($"comment_{competencyKey}", out var value) == true)
+        if (Response.ComplexValue?.TryGetValue($"Comment_{competencyKey}", out var value) == true)
         {
             // Handle JsonElement from API deserialization
             if (value is System.Text.Json.JsonElement jsonElement)
@@ -398,7 +398,7 @@ else
         if (IsReadOnly) return;
 
         Response.ComplexValue ??= new Dictionary<string, object>();
-        Response.ComplexValue[$"rating_{competencyKey}"] = value;
+        Response.ComplexValue[$"Rating_{competencyKey}"] = value;
         Response.LastModified = DateTime.Now;
 
         await NotifyResponseChanged();
@@ -409,7 +409,7 @@ else
         if (IsReadOnly) return;
 
         Response.ComplexValue ??= new Dictionary<string, object>();
-        Response.ComplexValue[$"comment_{competencyKey}"] = value ?? "";
+        Response.ComplexValue[$"Comment_{competencyKey}"] = value ?? "";
         Response.LastModified = DateTime.Now;
 
         // Debounce text input changes
