@@ -351,6 +351,9 @@ public class QuestionnaireAssignment : AggregateRoot
         if (WorkflowState != WorkflowState.BothSubmitted)
             throw new InvalidOperationException("Both employee and manager must submit their questionnaires before review");
 
+        // Validate that all predecessor goals have been rated by both Employee and Manager roles
+        ValidatePredecessorGoalsCompletion();
+
         RaiseEvent(new ReviewInitiated(DateTime.UtcNow, initiatedByEmployeeId));
     }
 
@@ -385,6 +388,9 @@ public class QuestionnaireAssignment : AggregateRoot
 
         if (WorkflowState != WorkflowState.InReview)
             throw new InvalidOperationException("No active review meeting to finish");
+
+        // Validate that all predecessor goals have been rated by both Employee and Manager roles
+        ValidatePredecessorGoalsCompletion();
 
         RaiseEvent(new ManagerReviewMeetingFinished(
             Id,
@@ -1199,5 +1205,84 @@ public class QuestionnaireAssignment : AggregateRoot
 
         _goalRatingsByQuestion[questionId].Remove(rating);
         _goalRatingsByQuestion[questionId].Add(modifiedRating);
+    }
+
+    /// <summary>
+    /// Validates that all predecessor goals have been rated by both Employee and Manager roles.
+    /// This ensures that the review cannot proceed until all predecessor goals have complete assessments.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when any predecessor goal is missing ratings from either Employee or Manager roles.
+    /// </exception>
+    private void ValidatePredecessorGoalsCompletion()
+    {
+        // Get all questions that have predecessor links
+        var questionsWithPredecessors = _predecessorLinks.Keys.ToList();
+
+        if (!questionsWithPredecessors.Any())
+        {
+            // No predecessor goals to validate
+            return;
+        }
+
+        var incompleteGoals = new List<string>();
+
+        foreach (var questionId in questionsWithPredecessors)
+        {
+            // Get all ratings for this question
+            var ratingsForQuestion = _goalRatingsByQuestion.TryGetValue(questionId, out var ratings)
+                ? ratings.ToList()
+                : new List<GoalRating>();
+
+            if (!ratingsForQuestion.Any())
+            {
+                incompleteGoals.Add($"Question {questionId}: No predecessor goals have been rated");
+                continue;
+            }
+
+            // Group ratings by SourceGoalId to check each predecessor goal
+            var ratingsByGoal = ratingsForQuestion.GroupBy(r => r.SourceGoalId).ToList();
+
+            foreach (var goalGroup in ratingsByGoal)
+            {
+                var sourceGoalId = goalGroup.Key;
+                var ratingsForGoal = goalGroup.ToList();
+
+                // Check if we have ratings from both Employee and Manager roles
+                var hasEmployeeRating = ratingsForGoal.Any(r => r.RatedByRole == ApplicationRole.Employee);
+                var hasManagerRating = ratingsForGoal.Any(r =>
+                    r.RatedByRole == ApplicationRole.TeamLead ||
+                    r.RatedByRole == ApplicationRole.HR ||
+                    r.RatedByRole == ApplicationRole.HRLead ||
+                    r.RatedByRole == ApplicationRole.Admin);
+
+                if (!hasEmployeeRating)
+                {
+                    incompleteGoals.Add($"Goal {sourceGoalId}: Missing Employee assessment");
+                }
+
+                if (!hasManagerRating)
+                {
+                    incompleteGoals.Add($"Goal {sourceGoalId}: Missing Manager assessment");
+                }
+
+                // Additional validation: Check that all ratings have valid justifications
+                foreach (var rating in ratingsForGoal)
+                {
+                    if (string.IsNullOrWhiteSpace(rating.Justification))
+                    {
+                        var roleDisplayName = rating.RatedByRole == ApplicationRole.Employee ? "Employee" : "Manager";
+                        incompleteGoals.Add($"Goal {sourceGoalId}: {roleDisplayName} assessment missing justification");
+                    }
+                }
+            }
+        }
+
+        if (incompleteGoals.Any())
+        {
+            var errorMessage = "Cannot proceed with review - all predecessor goals must be assessed by both Employee and Manager with justifications:\n" +
+                             string.Join("\n", incompleteGoals);
+            throw new InvalidOperationException(errorMessage);
+        }
     }
 }

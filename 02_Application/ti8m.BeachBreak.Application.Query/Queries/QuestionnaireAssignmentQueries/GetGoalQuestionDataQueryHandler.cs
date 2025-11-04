@@ -83,32 +83,66 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
             {
                 if (predecessor.GoalsByQuestion.TryGetValue(query.QuestionId, out var predecessorGoals) && predecessorGoals.Any())
                 {
-                    // Create rating entries for each predecessor goal (with default values if not rated yet)
-                    var existingRatingsMap = assignment.GoalRatingsByQuestion.TryGetValue(query.QuestionId, out var existingRatings)
-                        ? existingRatings.ToDictionary(r => r.SourceGoalId, r => r)
-                        : new Dictionary<Guid, Projections.GoalRatingReadModel>();
+                    // Get all existing ratings for this question
+                    var existingRatings = assignment.GoalRatingsByQuestion.TryGetValue(query.QuestionId, out var ratings)
+                        ? ratings.ToList()
+                        : new List<Projections.GoalRatingReadModel>();
 
-                    dto.PredecessorGoalRatings = predecessorGoals.Select(goal =>
+                    // Create rating DTOs for all combinations of predecessor goals and roles
+                    var ratingDtos = new List<GoalRatingDto>();
+
+                    foreach (var goal in predecessorGoals)
                     {
-                        var existingRating = existingRatingsMap.TryGetValue(goal.Id, out var rating) ? rating : null;
+                        // Find all ratings for this specific goal (could be Employee, Manager, or both)
+                        var ratingsForGoal = existingRatings.Where(r => r.SourceGoalId == goal.Id).ToList();
 
-                        return new GoalRatingDto
+                        if (ratingsForGoal.Any())
                         {
-                            Id = existingRating?.Id ?? Guid.NewGuid(),
-                            SourceAssignmentId = dto.PredecessorAssignmentId.Value,
-                            SourceGoalId = goal.Id,
-                            QuestionId = query.QuestionId,
-                            RatedByRole = (existingRating?.RatedByRole ?? ApplicationRole.Employee).ToString(),
-                            DegreeOfAchievement = existingRating?.DegreeOfAchievement ?? 0m,
-                            Justification = existingRating?.Justification ?? "",
-                            OriginalObjectiveDescription = goal.ObjectiveDescription,
-                            OriginalTimeframeFrom = goal.TimeframeFrom,
-                            OriginalTimeframeTo = goal.TimeframeTo,
-                            OriginalMeasurementMetric = goal.MeasurementMetric,
-                            OriginalAddedByRole = goal.AddedByRole.ToString(),
-                            OriginalWeightingPercentage = goal.WeightingPercentage
-                        };
-                    }).ToList();
+                            // Add DTOs for all existing ratings
+                            foreach (var rating in ratingsForGoal)
+                            {
+                                ratingDtos.Add(new GoalRatingDto
+                                {
+                                    Id = rating.Id,
+                                    SourceAssignmentId = dto.PredecessorAssignmentId.Value,
+                                    SourceGoalId = goal.Id,
+                                    QuestionId = query.QuestionId,
+                                    RatedByRole = rating.RatedByRole.ToString(),
+                                    DegreeOfAchievement = rating.DegreeOfAchievement,
+                                    Justification = rating.Justification ?? "",
+                                    OriginalObjectiveDescription = goal.ObjectiveDescription,
+                                    OriginalTimeframeFrom = goal.TimeframeFrom,
+                                    OriginalTimeframeTo = goal.TimeframeTo,
+                                    OriginalMeasurementMetric = goal.MeasurementMetric,
+                                    OriginalAddedByRole = goal.AddedByRole.ToString(),
+                                    OriginalWeightingPercentage = goal.WeightingPercentage
+                                });
+                            }
+                        }
+                        else
+                        {
+                            // No ratings exist yet - create placeholder entries for Employee and Manager roles
+                            // This allows the frontend to show empty assessment cards that can be filled in
+                            ratingDtos.Add(new GoalRatingDto
+                            {
+                                Id = Guid.NewGuid(),
+                                SourceAssignmentId = dto.PredecessorAssignmentId.Value,
+                                SourceGoalId = goal.Id,
+                                QuestionId = query.QuestionId,
+                                RatedByRole = ApplicationRole.Employee.ToString(),
+                                DegreeOfAchievement = 0m,
+                                Justification = "",
+                                OriginalObjectiveDescription = goal.ObjectiveDescription,
+                                OriginalTimeframeFrom = goal.TimeframeFrom,
+                                OriginalTimeframeTo = goal.TimeframeTo,
+                                OriginalMeasurementMetric = goal.MeasurementMetric,
+                                OriginalAddedByRole = goal.AddedByRole.ToString(),
+                                OriginalWeightingPercentage = goal.WeightingPercentage
+                            });
+                        }
+                    }
+
+                    dto.PredecessorGoalRatings = ratingDtos;
                 }
             }
         }
