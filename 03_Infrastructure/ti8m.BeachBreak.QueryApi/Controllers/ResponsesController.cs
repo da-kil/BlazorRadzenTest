@@ -634,6 +634,7 @@ public class ResponsesController : BaseController
             {
                 filteredSections[sectionId] = new SectionResponseDto
                 {
+                    SectionId = sectionId,
                     RoleResponses = filteredRoleResponses
                 };
             }

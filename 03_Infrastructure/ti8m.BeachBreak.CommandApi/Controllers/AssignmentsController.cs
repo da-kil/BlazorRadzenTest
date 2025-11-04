@@ -808,11 +808,15 @@ public class AssignmentsController : BaseController
     {
         try
         {
+            logger.LogInformation("AddGoal: UserContext.Id = '{UserId}' (length: {Length})", userContext.Id, userContext.Id?.Length ?? 0);
+
             if (!Guid.TryParse(userContext.Id, out var userId))
             {
-                logger.LogWarning("AddGoal failed: Unable to parse user ID from context");
+                logger.LogWarning("AddGoal failed: Unable to parse user ID '{UserId}' from context", userContext.Id);
                 return Unauthorized("User ID not found in authentication context");
             }
+
+            logger.LogInformation("AddGoal: Successfully parsed userId = {UserId}", userId);
 
             // Parse role from DTO
             if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.AddedByRole, out var addedByRole))

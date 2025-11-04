@@ -30,7 +30,7 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
     {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync(TemplateCommandEndpoint, template);
+            var response = await HttpCommandClient.PostAsJsonAsync(TemplateCommandEndpoint, template, JsonOptions);
 
             if (response.IsSuccessStatusCode)
             {
@@ -56,7 +56,7 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
     {
         try
         {
-            var response = await HttpCommandClient.PutAsJsonAsync($"{TemplateCommandEndpoint}/{template.Id}", template);
+            var response = await HttpCommandClient.PutAsJsonAsync($"{TemplateCommandEndpoint}/{template.Id}", template, JsonOptions);
 
             if (response.IsSuccessStatusCode)
             {
@@ -164,7 +164,7 @@ public class QuestionnaireTemplateService : BaseApiService, IQuestionnaireTempla
 
             var response = await HttpCommandClient.PostAsJsonAsync(
                 $"{TemplateCommandEndpoint}/{templateId}/clone",
-                requestDto);
+                requestDto, JsonOptions);
 
             if (response.IsSuccessStatusCode)
             {

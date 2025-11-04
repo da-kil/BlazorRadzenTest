@@ -97,13 +97,13 @@ public class Program
         builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
         {
             options.SerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
-            options.SerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase
+            options.SerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase enforcement
         });
 
         builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
         {
             options.JsonSerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
-            options.JsonSerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase enforcement
         });
 
         var app = builder.Build();

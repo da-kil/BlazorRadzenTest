@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -6,6 +7,15 @@ public abstract class BaseApiService
 {
     protected readonly HttpClient HttpCommandClient;
     protected readonly HttpClient HttpQueryClient;
+
+    /// <summary>
+    /// JSON serialization options configured for PascalCase consistency with backend
+    /// </summary>
+    protected static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = null, // PascalCase
+        PropertyNameCaseInsensitive = false // Strict enforcement
+    };
 
     protected BaseApiService(IHttpClientFactory factory)
     {

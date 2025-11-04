@@ -1027,8 +1027,7 @@
             try
             {
                 return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
-                    jsonElement.GetRawText(),
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    jsonElement.GetRawText()
                 ) ?? new List<CompetencyDefinition>();
             }
             catch { /* Ignore deserialization errors */ }

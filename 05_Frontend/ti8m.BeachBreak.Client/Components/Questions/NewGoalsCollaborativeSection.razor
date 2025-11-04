@@ -153,7 +153,7 @@
         // Handle JsonElement from API responses
         if (goalsValue is System.Text.Json.JsonElement jsonElement)
         {
-            var goalDtos = System.Text.Json.JsonSerializer.Deserialize<List<GoalDto>>(jsonElement.GetRawText(), deserializationOptions);
+            var goalDtos = System.Text.Json.JsonSerializer.Deserialize<List<GoalDto>>(jsonElement.GetRawText());
             return goalDtos?.Select(GoalWithState.FromGoalDto).ToList() ?? new List<GoalWithState>();
         }
 
@@ -171,7 +171,6 @@
 
         return new List<GoalWithState>();
     }
-
 
     /// <summary>
     /// Removes IsPendingAdd flag from goals that appear to be persisted (non-temporary GUIDs)
@@ -388,8 +387,10 @@
                 CloseDialogOnOverlayClick = false
             });
 
-        if (result is ModifyGoalDto modifyDto)
+        if (result is ValueTuple<Guid, ModifyGoalDto> tuple)
         {
+            var (returnedGoalId, modifyDto) = tuple;
+
             // Find the goal in the collection and update it
             var goalIndex = allCurrentGoals.IndexOf(goal);
             if (goalIndex >= 0)
