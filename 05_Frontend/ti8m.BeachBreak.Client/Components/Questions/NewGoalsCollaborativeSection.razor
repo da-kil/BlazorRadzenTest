@@ -130,8 +130,32 @@
 
     private void LoadNewGoalsData()
     {
+        var previousCount = allCurrentGoals.Count;
+
         // Load ALL goals without role filtering (collaborative approach)
         allCurrentGoals = GoalService.GetGoals(Response);
+
+        // Track state change for OptimizedComponentBase
+        _lastGoalCount = allCurrentGoals.Count;
+        _goalCountChanged = _lastGoalCount != previousCount;
+    }
+
+    // State tracking for OptimizedComponentBase
+    private int _lastGoalCount = 0;
+    private bool _goalCountChanged = false;
+
+    protected override bool HasStateChanged()
+    {
+        var currentCount = allCurrentGoals?.Count ?? 0;
+        var hasChanged = currentCount != _lastGoalCount || _goalCountChanged;
+
+        // Reset the change flag after checking
+        if (_goalCountChanged)
+        {
+            _goalCountChanged = false;
+        }
+
+        return hasChanged || base.HasStateChanged();
     }
 
     private DateTime GetGoalAddedDate(Dictionary<string, object> goal)
