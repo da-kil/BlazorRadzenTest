@@ -56,6 +56,7 @@
     [Parameter] public string InitialMeasurement { get; set; } = "";
     [Parameter] public DateTime InitialTimeframeFrom { get; set; } = DateTime.Today;
     [Parameter] public DateTime InitialTimeframeTo { get; set; } = DateTime.Today.AddMonths(6);
+    [Parameter] public decimal InitialWeighting { get; set; } = 0;
 
     private string objectiveDescription = "";
     private string measurementMetric = "";
