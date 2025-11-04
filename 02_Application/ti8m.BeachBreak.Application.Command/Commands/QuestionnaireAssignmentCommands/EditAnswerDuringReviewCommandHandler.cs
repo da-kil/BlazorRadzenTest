@@ -72,11 +72,7 @@ public class EditAnswerDuringReviewCommandHandler
                 try
                 {
                     var deserialized = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(
-                        answerString,
-                        new System.Text.Json.JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
+                        answerString);
 
                     if (deserialized != null)
                     {

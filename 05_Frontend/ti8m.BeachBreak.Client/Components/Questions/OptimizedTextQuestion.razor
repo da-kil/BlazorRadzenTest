@@ -154,8 +154,7 @@ else
                 try
                 {
                     var deserializedSections = System.Text.Json.JsonSerializer.Deserialize<List<TextSectionDefinition>>(
-                        jsonElement.GetRawText(),
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        jsonElement.GetRawText()
                     );
 
                     if (deserializedSections != null && deserializedSections.Any())

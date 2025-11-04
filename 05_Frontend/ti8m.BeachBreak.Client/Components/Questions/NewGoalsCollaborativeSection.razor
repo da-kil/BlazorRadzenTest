@@ -153,7 +153,7 @@
         // Handle JsonElement from API responses
         if (goalsValue is System.Text.Json.JsonElement jsonElement)
         {
-            var goalDtos = System.Text.Json.JsonSerializer.Deserialize<List<GoalDto>>(jsonElement.GetRawText());
+            var goalDtos = System.Text.Json.JsonSerializer.Deserialize<List<GoalDto>>(jsonElement.GetRawText(), deserializationOptions);
             return goalDtos?.Select(GoalWithState.FromGoalDto).ToList() ?? new List<GoalWithState>();
         }
 

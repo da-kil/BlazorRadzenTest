@@ -33,7 +33,6 @@ public static class Extensions
             options.UseSystemTextJsonForSerialization(configure: opts =>
             {
                 opts.PropertyNamingPolicy = null; // PascalCase for new data
-                opts.PropertyNameCaseInsensitive = true; // Allow reading both camelCase and PascalCase
             });
 
             // If we're running in development mode, let Marten just take care

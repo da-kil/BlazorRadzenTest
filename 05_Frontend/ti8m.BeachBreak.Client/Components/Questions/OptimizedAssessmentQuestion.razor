@@ -229,7 +229,6 @@ else
             {
                 var options = new System.Text.Json.JsonSerializerOptions
                 {
-                    PropertyNameCaseInsensitive = true,
                     Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
                 };
 
@@ -261,8 +260,7 @@ else
                     try
                     {
                         var deserializedComp = System.Text.Json.JsonSerializer.Deserialize<CompetencyDefinition>(
-                            itemJson.GetRawText(),
-                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                            itemJson.GetRawText()
                         );
                         if (deserializedComp != null) result.Add(deserializedComp);
                     }

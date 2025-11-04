@@ -204,8 +204,7 @@ public class GoalService
             try
             {
                 var deserialized = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(
-                    jsonElement.GetRawText(),
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    jsonElement.GetRawText());
 
                 return deserialized ?? new List<Dictionary<string, object>>();
             }
@@ -237,8 +236,7 @@ public class GoalService
             try
             {
                 var deserialized = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(
-                    jsonElement.GetRawText(),
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    jsonElement.GetRawText());
 
                 return deserialized ?? new List<Dictionary<string, object>>();
             }

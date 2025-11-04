@@ -93,15 +93,17 @@ public class Program
         // Register manager authorization service
         builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
 
-        // Configure JSON serialization to use PascalCase (C# naming conventions)
+        // Configure JSON serialization to explicitly use PascalCase (C# naming conventions)
         builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
         {
             options.SerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+            options.SerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase
         });
 
         builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
         {
             options.JsonSerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase
         });
 
         var app = builder.Build();
