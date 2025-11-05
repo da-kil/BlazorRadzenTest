@@ -25,22 +25,28 @@ public class QuestionResponseMappingService
 
             QuestionResponseValue domainResponse = questionResponse.QuestionType switch
             {
-                QuestionType.TextQuestion when questionResponse.TextResponse != null =>
-                    new QuestionResponseValue.TextResponse(questionResponse.TextResponse.TextSections),
+                QuestionType.TextQuestion => questionResponse.TextResponse != null
+                    ? new QuestionResponseValue.TextResponse(questionResponse.TextResponse.TextSections)
+                    : new QuestionResponseValue.TextResponse(new List<string>()), // Empty text response
 
-                QuestionType.Assessment when questionResponse.AssessmentResponse != null =>
-                    new QuestionResponseValue.AssessmentResponse(
+                QuestionType.Assessment => questionResponse.AssessmentResponse != null
+                    ? new QuestionResponseValue.AssessmentResponse(
                         questionResponse.AssessmentResponse.Competencies.ToDictionary(
                             kvp => kvp.Key,
-                            kvp => new CompetencyRating(kvp.Value.Rating, kvp.Value.Comment))),
+                            kvp => new CompetencyRating(kvp.Value.Rating, kvp.Value.Comment)))
+                    : new QuestionResponseValue.AssessmentResponse(new Dictionary<string, CompetencyRating>()), // Empty assessment response
 
-                QuestionType.Goal when questionResponse.GoalResponse != null =>
-                    new QuestionResponseValue.GoalResponse(
+                QuestionType.Goal => questionResponse.GoalResponse != null
+                    ? new QuestionResponseValue.GoalResponse(
                         MapGoalsToDomain(questionResponse.GoalResponse.Goals),
                         MapPredecessorRatingsToDomain(questionResponse.GoalResponse.PredecessorRatings),
-                        questionResponse.GoalResponse.PredecessorAssignmentId),
+                        questionResponse.GoalResponse.PredecessorAssignmentId)
+                    : new QuestionResponseValue.GoalResponse(
+                        new List<GoalData>(),
+                        new List<PredecessorRating>(),
+                        null), // Empty goal response
 
-                _ => throw new ArgumentException($"Invalid question type or missing response data: {questionResponse.QuestionType}")
+                _ => throw new ArgumentException($"Invalid question type: {questionResponse.QuestionType}")
             };
 
             questionResponses[questionId] = domainResponse;

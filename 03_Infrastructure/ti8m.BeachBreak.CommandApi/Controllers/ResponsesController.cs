@@ -65,7 +65,7 @@ public class ResponsesController : BaseController
         var questionResponses = mappingService.ConvertToTypeSafeFormat(request);
 
         // Get template structure to organize responses by actual sections
-        var sectionResponses = await sectionMappingService.OrganizeResponsesBySectionsAsync(assignmentId, questionResponses, CompletionRole.Employee, HttpContext.RequestAborted);
+        var sectionResponses = await sectionMappingService.OrganizeResponsesBySectionsAsync(assignmentId, request.TemplateId, questionResponses, CompletionRole.Employee, HttpContext.RequestAborted);
 
         var command = new SaveEmployeeResponseCommand(
             employeeId: employeeId,
@@ -127,7 +127,7 @@ public class ResponsesController : BaseController
         var questionResponses = mappingService.ConvertToTypeSafeFormat(request);
 
         // Get template structure to organize responses by actual sections
-        var sectionResponses = await sectionMappingService.OrganizeResponsesBySectionsAsync(assignmentId, questionResponses, CompletionRole.Manager, HttpContext.RequestAborted);
+        var sectionResponses = await sectionMappingService.OrganizeResponsesBySectionsAsync(assignmentId, request.TemplateId, questionResponses, CompletionRole.Manager, HttpContext.RequestAborted);
 
         var command = new SaveManagerResponseCommand(
             managerId: managerId,

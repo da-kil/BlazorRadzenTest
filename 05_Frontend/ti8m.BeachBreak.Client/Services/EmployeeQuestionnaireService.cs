@@ -1,5 +1,5 @@
-using System.Net.Http.Json;
 using Microsoft.JSInterop;
+using System.Net.Http.Json;
 using ti8m.BeachBreak.Client.Models;
 
 namespace ti8m.BeachBreak.Client.Services;
@@ -56,7 +56,42 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         // Use "me" endpoint - backend resolves employee ID from UserContext for security
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", sectionResponses, JsonOptions);
+            // Convert section-based responses to question-based DTO format expected by backend
+            var dto = QuestionnaireResponseConverter.ConvertToSaveQuestionnaireResponseDto(sectionResponses, templateId: null);
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", dto, JsonOptions);
+            response.EnsureSuccessStatusCode();
+
+            // Backend returns Result<Guid>, not just Guid
+            var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
+            if (result == null || !result.Succeeded)
+            {
+                throw new Exception(result?.Message ?? "Failed to save response");
+            }
+
+            var responseId = result.Payload;
+            return new QuestionnaireResponse { Id = responseId, AssignmentId = assignmentId, SectionResponses = sectionResponses };
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error saving response for assignment {assignmentId}", ex);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Saves the currently authenticated employee's response with templateId optimization.
+    /// When templateId is provided, the backend skips assignment lookup for better performance.
+    /// </summary>
+    public async Task<QuestionnaireResponse> SaveMyResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses, Guid? templateId)
+    {
+        // Use "me" endpoint - backend resolves employee ID from UserContext for security
+        try
+        {
+            // Convert section-based responses to question-based DTO format expected by backend
+            var dto = QuestionnaireResponseConverter.ConvertToSaveQuestionnaireResponseDto(sectionResponses, templateId);
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{EmployeeCommandEndpoint}/me/responses/assignment/{assignmentId}", dto, JsonOptions);
             response.EnsureSuccessStatusCode();
 
             // Backend returns Result<Guid>, not just Guid

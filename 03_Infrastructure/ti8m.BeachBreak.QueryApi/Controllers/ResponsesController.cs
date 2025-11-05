@@ -1,5 +1,6 @@
 using Marten;
 using Microsoft.AspNetCore.Mvc;
+using System.Text.Json;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
@@ -10,6 +11,8 @@ using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
+using ti8m.BeachBreak.Infrastructure.Marten.JsonSerialization;
 using ti8m.BeachBreak.QueryApi.Dto;
 // ARCHITECTURAL NOTE: QueryApi references Domain for shared enum types only (WorkflowState, CompletionRole, ResponseRole).
 // This is pragmatic because Application.Query DTOs already use these Domain enums, and duplicating would cause ambiguity.
@@ -259,7 +262,7 @@ public class ResponsesController : BaseController
                 AssignmentId = response.AssignmentId,
                 EmployeeId = response.EmployeeId.ToString(),
                 StartedDate = response.StartedDate,
-                SectionResponses = MapEmployeeSectionResponsesToDto(response.SectionResponses),
+                SectionResponses = MapStronglyTypedEmployeeSectionResponsesToDto(response.SectionResponses),
                 ProgressPercentage = progressPercentage
             };
 
@@ -311,109 +314,59 @@ public class ResponsesController : BaseController
             AssignmentId = response.AssignmentId,
             TemplateId = response.TemplateId,
             EmployeeId = response.EmployeeId.ToString(),
-            SectionResponses = MapSectionResponsesToDto(response.SectionResponses),
+            SectionResponses = MapStronglyTypedSectionResponsesToDto(response.SectionResponses),
             StartedDate = response.StartedDate
         };
     }
 
-    private Dictionary<Guid, SectionResponseDto> MapSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
+    /// <summary>
+    /// Maps strongly-typed section responses directly to DTO format.
+    /// Much cleaner than the object-based approach since we have compile-time type safety.
+    /// </summary>
+    private Dictionary<Guid, SectionResponseDto> MapStronglyTypedSectionResponsesToDto(
+        Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> sectionResponses)
     {
         var result = new Dictionary<Guid, SectionResponseDto>();
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null,
+            Converters = { new QuestionResponseValueJsonConverter() }
+        };
 
         foreach (var sectionKvp in sectionResponses)
         {
             var sectionId = sectionKvp.Key;
-            Dictionary<CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
+            var roleBasedResponses = sectionKvp.Value;
 
-            // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
-            if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
-            {
-                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
-            }
-            else if (sectionKvp.Value is Dictionary<CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
-            {
-                roleBasedResponses = typedRoleResponses;
-            }
-
-            if (roleBasedResponses == null) continue;
-
-            // NEW: Populate RoleResponses with BOTH Employee and Manager responses (for review mode)
             var roleResponsesDto = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>>();
 
             foreach (var roleKvp in roleBasedResponses)
             {
-                var role = roleKvp.Key;
+                var completionRole = roleKvp.Key;
+
                 // Convert CompletionRole to ResponseRole
-                ResponseRole responseRole = role switch
+                ResponseRole responseRole = completionRole switch
                 {
                     CompletionRole.Employee => ResponseRole.Employee,
                     CompletionRole.Manager => ResponseRole.Manager,
                     _ => ResponseRole.Employee // Default fallback
                 };
-                var roleQuestions = roleKvp.Value;
 
+                var roleQuestions = roleKvp.Value;
                 var questionResponsesForRole = new Dictionary<Guid, QuestionResponseDto>();
 
                 foreach (var questionKvp in roleQuestions)
                 {
                     var questionId = questionKvp.Key;
-                    var responseValue = questionKvp.Value;
+                    var questionResponseValue = questionKvp.Value;
 
-                    if (responseValue is System.Text.Json.JsonElement qJsonElement)
+                    // Direct assignment - no conversion needed with strongly-typed DTO!
+                    questionResponsesForRole[questionId] = new QuestionResponseDto
                     {
-                        // Try to deserialize as QuestionResponseDto first
-                        try
-                        {
-                            var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
-                            if (questionResponse != null && questionResponse.QuestionId != Guid.Empty)
-                            {
-                                // Successfully deserialized as structured response
-                                questionResponsesForRole[questionId] = questionResponse;
-                            }
-                            else
-                            {
-                                // Failed to deserialize as QuestionResponseDto - treat as raw dictionary
-                                var rawDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(qJsonElement.GetRawText());
-                                questionResponsesForRole[questionId] = new QuestionResponseDto
-                                {
-                                    QuestionId = questionId,
-                                    ComplexValue = rawDict
-                                };
-                            }
-                        }
-                        catch (System.Text.Json.JsonException jsonEx)
-                        {
-                            // Fallback: wrap as ComplexValue on JSON deserialization failure
-                            _logger.LogWarning(jsonEx,
-                                "Failed to deserialize question response for question {QuestionId} in section {SectionId}. Using fallback.",
-                                questionId, sectionKvp.Key);
-                            var fallbackDict = new Dictionary<string, object> { { "value", qJsonElement } };
-                            questionResponsesForRole[questionId] = new QuestionResponseDto
-                            {
-                                QuestionId = questionId,
-                                ComplexValue = fallbackDict
-                            };
-                        }
-                    }
-                    else if (responseValue is Dictionary<string, object> dict)
-                    {
-                        // Raw dictionary
-                        questionResponsesForRole[questionId] = new QuestionResponseDto
-                        {
-                            QuestionId = questionId,
-                            ComplexValue = dict
-                        };
-                    }
-                    else
-                    {
-                        // Fallback: wrap any other type in ComplexValue
-                        var valueDict = new Dictionary<string, object> { { "value", responseValue } };
-                        questionResponsesForRole[questionId] = new QuestionResponseDto
-                        {
-                            QuestionId = questionId,
-                            ComplexValue = valueDict
-                        };
-                    }
+                        QuestionId = questionId,
+                        QuestionType = QuestionResponseMapper.InferQuestionType(questionResponseValue),
+                        ResponseData = QuestionResponseMapper.MapToDto(questionResponseValue)
+                    };
                 }
 
                 if (questionResponsesForRole.Any())
@@ -436,95 +389,44 @@ public class ResponsesController : BaseController
         return result;
     }
 
-    private Dictionary<Guid, SectionResponseDto> MapEmployeeSectionResponsesToDto(Dictionary<Guid, object> sectionResponses)
+    /// <summary>
+    /// Maps strongly-typed section responses to DTO format, showing only Employee responses.
+    /// Used for employee-specific endpoints that should only show their own responses.
+    /// </summary>
+    private Dictionary<Guid, SectionResponseDto> MapStronglyTypedEmployeeSectionResponsesToDto(
+        Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> sectionResponses)
     {
         var result = new Dictionary<Guid, SectionResponseDto>();
+        var jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = null,
+            Converters = { new QuestionResponseValueJsonConverter() }
+        };
 
         foreach (var sectionKvp in sectionResponses)
         {
             var sectionId = sectionKvp.Key;
-            Dictionary<CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
+            var roleBasedResponses = sectionKvp.Value;
 
-            // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
-            if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
-            {
-                roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
-            }
-            else if (sectionKvp.Value is Dictionary<CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
-            {
-                roleBasedResponses = typedRoleResponses;
-            }
-
-            if (roleBasedResponses == null) continue;
-
-            // For employee endpoints, return EMPLOYEE responses only
             var roleResponsesDto = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>>();
 
+            // For employee endpoints, return EMPLOYEE responses only
             if (roleBasedResponses.TryGetValue(CompletionRole.Employee, out var employeeResponses))
             {
                 var questionResponsesForEmployee = new Dictionary<Guid, QuestionResponseDto>();
 
-                // employeeResponses is Dictionary<Guid, object> where each value might be JsonElement
                 foreach (var questionKvp in employeeResponses)
                 {
                     var questionId = questionKvp.Key;
-                    var responseValue = questionKvp.Value;
+                    var questionResponseValue = questionKvp.Value;
 
-                    if (responseValue is System.Text.Json.JsonElement qJsonElement)
+                    // Direct assignment - no conversion needed with strongly-typed DTO!
+                    questionResponsesForEmployee[questionId] = new QuestionResponseDto
                     {
-                        // Try to deserialize as QuestionResponseDto first
-                        try
-                        {
-                            var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
-                            if (questionResponse != null && questionResponse.QuestionId != Guid.Empty)
-                            {
-                                // Successfully deserialized as structured response
-                                questionResponsesForEmployee[questionId] = questionResponse;
-                            }
-                            else
-                            {
-                                // Failed to deserialize as QuestionResponseDto - treat as raw dictionary
-                                var rawDict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(qJsonElement.GetRawText());
-                                questionResponsesForEmployee[questionId] = new QuestionResponseDto
-                                {
-                                    QuestionId = questionId,
-                                    ComplexValue = rawDict
-                                };
-                            }
-                        }
-                        catch (System.Text.Json.JsonException jsonEx)
-                        {
-                            // Fallback: wrap as ComplexValue on JSON deserialization failure
-                            _logger.LogWarning(jsonEx,
-                                "Failed to deserialize employee question response for question {QuestionId}. Using fallback.",
-                                questionId);
-                            var fallbackDict = new Dictionary<string, object> { { "value", qJsonElement } };
-                            questionResponsesForEmployee[questionId] = new QuestionResponseDto
-                            {
-                                QuestionId = questionId,
-                                ComplexValue = fallbackDict
-                            };
-                        }
-                    }
-                    else if (responseValue is Dictionary<string, object> dict)
-                    {
-                        // Raw dictionary
-                        questionResponsesForEmployee[questionId] = new QuestionResponseDto
-                        {
-                            QuestionId = questionId,
-                            ComplexValue = dict
-                        };
-                    }
-                    else
-                    {
-                        // Fallback: wrap any other type in ComplexValue
-                        var valueDict = new Dictionary<string, object> { { "value", responseValue } };
-                        questionResponsesForEmployee[questionId] = new QuestionResponseDto
-                        {
-                            QuestionId = questionId,
-                            ComplexValue = valueDict
-                        };
-                    }
+                        QuestionId = questionId,
+                        QuestionType = QuestionResponseMapper.InferQuestionType(questionResponseValue),
+                        ResponseData = QuestionResponseMapper.MapToDto(questionResponseValue)
+                    };
                 }
 
                 if (questionResponsesForEmployee.Any())
@@ -546,6 +448,7 @@ public class ResponsesController : BaseController
 
         return result;
     }
+
 
     /// <summary>
     /// Filters section responses based on user role and workflow state to prevent exposing data before it's ready.
@@ -651,5 +554,4 @@ public class ResponsesController : BaseController
             ProgressPercentage = response.ProgressPercentage
         };
     }
-
 }

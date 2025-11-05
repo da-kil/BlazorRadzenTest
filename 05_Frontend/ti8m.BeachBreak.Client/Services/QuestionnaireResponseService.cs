@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.CommandDTOs;
 using System.Net.Http.Json;
 
 namespace ti8m.BeachBreak.Client.Services;
@@ -37,16 +38,54 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
     // Response management
     public async Task<QuestionnaireResponse> SaveResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
     {
-        var result = await PostToSubPathAsync<Dictionary<Guid, SectionResponse>, QuestionnaireResponse>(ResponseCommandEndpoint, "assignment", assignmentId, sectionResponses);
-        return result ?? throw new Exception("Failed to save response");
+        return await SaveResponseAsync(assignmentId, sectionResponses, templateId: null);
+    }
+
+    /// <summary>
+    /// Saves response with templateId optimization for better performance.
+    /// </summary>
+    public async Task<QuestionnaireResponse> SaveResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses, Guid? templateId)
+    {
+        try
+        {
+            // Convert section-based responses to question-based DTO format expected by backend
+            var dto = QuestionnaireResponseConverter.ConvertToSaveQuestionnaireResponseDto(sectionResponses, templateId);
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/assignment/{assignmentId}", dto, JsonOptions);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
+            if (result?.Succeeded == true && result.Payload != default)
+            {
+                return new QuestionnaireResponse { Id = result.Payload, AssignmentId = assignmentId, SectionResponses = sectionResponses };
+            }
+            throw new Exception(result?.Message ?? "Failed to save response");
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error saving response for assignment {assignmentId}", ex);
+            throw;
+        }
     }
 
     public async Task<QuestionnaireResponse> SaveManagerResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
     {
+        return await SaveManagerResponseAsync(assignmentId, sectionResponses, templateId: null);
+    }
+
+    /// <summary>
+    /// Saves manager response with templateId optimization for better performance.
+    /// </summary>
+    public async Task<QuestionnaireResponse> SaveManagerResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses, Guid? templateId)
+    {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/manager/assignment/{assignmentId}", sectionResponses, JsonOptions);
+            // Convert section-based responses to question-based DTO format expected by backend
+            var dto = QuestionnaireResponseConverter.ConvertToSaveQuestionnaireResponseDto(sectionResponses, templateId);
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/manager/assignment/{assignmentId}", dto, JsonOptions);
             response.EnsureSuccessStatusCode();
+
             var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
             if (result?.Succeeded == true && result.Payload != default)
             {

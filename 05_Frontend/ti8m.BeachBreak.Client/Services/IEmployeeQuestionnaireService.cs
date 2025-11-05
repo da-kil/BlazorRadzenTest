@@ -63,6 +63,14 @@ public interface IEmployeeQuestionnaireService
     Task<QuestionnaireResponse> SaveMyResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses);
 
     /// <summary>
+    /// Saves the currently authenticated employee's response with templateId optimization.
+    /// When templateId is provided, the backend skips assignment lookup for better performance.
+    /// Employee ID is resolved from UserContext on the backend for security.
+    /// Stores responses with CompletionRole.Employee in the domain model.
+    /// </summary>
+    Task<QuestionnaireResponse> SaveMyResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses, Guid? templateId);
+
+    /// <summary>
     /// Submits the currently authenticated employee's response for their assigned questionnaire.
     /// Marks the response as completed and triggers any workflow transitions.
     /// </summary>

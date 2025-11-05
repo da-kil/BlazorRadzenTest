@@ -747,10 +747,12 @@
                 {
                     // After review meeting: load ALL role responses for full transparency
                     // Managers viewing employee-only questionnaires: load ALL responses
+                    // Managers during InReview state: load ALL responses for active review
                     // Normal mode: only load current user's role responses
                     var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
+                    var isManagerDuringReview = isManager && assignment != null && assignment.WorkflowState == WorkflowState.InReview;
 
-                    if ((isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire) && sectionKvp.Value.RoleResponses != null)
+                    if ((isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire || isManagerDuringReview) && sectionKvp.Value.RoleResponses != null)
                     {
                         // Load ALL role responses (Employee, Manager)
                         foreach (var roleKvp in sectionKvp.Value.RoleResponses)
@@ -1557,13 +1559,13 @@
             {
                 // Employees save responses and complete any finished sections
                 await CompleteSectionsAsEmployee(); // Complete sections first to update workflow state
-                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
             }
             else if (isManager)
             {
                 // Managers save responses and complete any finished sections
                 await CompleteSectionsAsManager(); // Complete sections first to update workflow state
-                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses);
+                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
             }
 
             // Reload assignment to get updated workflow state and section progress
@@ -1674,7 +1676,7 @@
             {
                 // Manager flow - complete sections, save and submit
                 await CompleteSectionsAsManager();
-                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses);
+                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
                 var submitSuccess = await AssignmentService.SubmitManagerQuestionnaireAsync(assignmentId.Value, currentUserName);
 
                 if (submitSuccess)
@@ -1695,7 +1697,7 @@
             {
                 // Employee flow - complete sections, save and submit
                 await CompleteSectionsAsEmployee();
-                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
                 var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
 
                 if (submittedResponse != null)

@@ -6,6 +6,13 @@ namespace ti8m.BeachBreak.Client.Models.CommandDTOs;
 /// </summary>
 public class SaveQuestionnaireResponseDto
 {
+    /// <summary>
+    /// Optional template ID to optimize section mapping.
+    /// When provided, skips assignment lookup and goes directly to template lookup.
+    /// When null, falls back to querying assignment to get template ID.
+    /// </summary>
+    public Guid? TemplateId { get; set; }
+
     public Dictionary<Guid, QuestionResponseCommandDto> Responses { get; set; } = new();
 
     /// <summary>

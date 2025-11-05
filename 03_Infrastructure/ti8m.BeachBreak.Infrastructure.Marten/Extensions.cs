@@ -9,6 +9,7 @@ using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Core.Infrastructure.Configuration;
 using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
+using ti8m.BeachBreak.Infrastructure.Marten.JsonSerialization;
 using ti8m.BeachBreak.Infrastructure.Marten.Projections;
 using ti8m.BeachBreak.Infrastructure.Marten.Services;
 
@@ -33,6 +34,9 @@ public static class Extensions
             options.UseSystemTextJsonForSerialization(configure: opts =>
             {
                 opts.PropertyNamingPolicy = null; // PascalCase for new data
+
+                // Configure polymorphic serialization for QuestionResponseValue discriminated union
+                opts.Converters.Add(new QuestionResponseValueJsonConverter());
             });
 
             // If we're running in development mode, let Marten just take care

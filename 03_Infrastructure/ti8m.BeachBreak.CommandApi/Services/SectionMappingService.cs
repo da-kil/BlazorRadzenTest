@@ -27,33 +27,56 @@ public class SectionMappingService
     /// Organizes question responses by their proper sections based on the questionnaire template.
     /// Maps questions to sections and filters by completion role.
     /// </summary>
+    /// <param name="assignmentId">The assignment ID (used for logging and fallback validation)</param>
+    /// <param name="templateId">Optional template ID for optimization. When provided, skips assignment lookup.</param>
+    /// <param name="questionResponses">The question responses to organize</param>
+    /// <param name="role">The completion role (Employee/Manager)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     public async Task<Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>> OrganizeResponsesBySectionsAsync(
         Guid assignmentId,
+        Guid? templateId,
         Dictionary<Guid, QuestionResponseValue> questionResponses,
         CompletionRole role,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            // Step 1: Get the assignment to find the template ID
-            var assignmentResult = await queryDispatcher.QueryAsync(
-                new QuestionnaireAssignmentQuery(assignmentId),
-                cancellationToken);
+            Guid actualTemplateId;
 
-            if (assignmentResult?.Payload == null)
+            if (templateId.HasValue)
             {
-                logger.LogWarning("Assignment {AssignmentId} not found, using single section fallback", assignmentId);
-                return CreateFallbackSectionStructure(questionResponses, role);
+                // Optimization: Use provided templateId - skip assignment lookup!
+                actualTemplateId = templateId.Value;
+                logger.LogInformation("Using provided TemplateId {TemplateId} for assignment {AssignmentId} - skipping assignment lookup",
+                    actualTemplateId, assignmentId);
+            }
+            else
+            {
+                // Fallback: Query assignment to get template ID (original behavior)
+                logger.LogInformation("TemplateId not provided, looking up assignment {AssignmentId} to get template", assignmentId);
+
+                var assignmentResult = await queryDispatcher.QueryAsync(
+                    new QuestionnaireAssignmentQuery(assignmentId),
+                    cancellationToken);
+
+                if (assignmentResult?.Payload == null)
+                {
+                    logger.LogWarning("Assignment {AssignmentId} not found, using single section fallback", assignmentId);
+                    return CreateFallbackSectionStructure(questionResponses, role);
+                }
+
+                actualTemplateId = assignmentResult.Payload.TemplateId;
+                logger.LogInformation("Found TemplateId {TemplateId} for assignment {AssignmentId}", actualTemplateId, assignmentId);
             }
 
-            // Step 2: Get the template with section structure
+            // Get the template with section structure
             var templateResult = await queryDispatcher.QueryAsync(
-                new QuestionnaireTemplateQuery(assignmentResult.Payload.TemplateId),
+                new QuestionnaireTemplateQuery(actualTemplateId),
                 cancellationToken);
 
             if (templateResult?.Payload?.Sections == null || !templateResult.Payload.Sections.Any())
             {
-                logger.LogWarning("Template {TemplateId} has no sections, using single section fallback", assignmentResult.Payload.TemplateId);
+                logger.LogWarning("Template {TemplateId} has no sections, using single section fallback", actualTemplateId);
                 return CreateFallbackSectionStructure(questionResponses, role);
             }
 

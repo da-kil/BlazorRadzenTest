@@ -88,12 +88,27 @@ public interface IQuestionnaireResponseService
     Task<QuestionnaireResponse> SaveResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses);
 
     /// <summary>
+    /// Saves a response with templateId optimization for better performance.
+    /// When templateId is provided, the backend skips assignment lookup.
+    /// Requires appropriate authorization based on the assignment.
+    /// </summary>
+    Task<QuestionnaireResponse> SaveResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses, Guid? templateId);
+
+    /// <summary>
     /// Saves a manager's feedback/responses for an employee's questionnaire.
     /// Manager ID is resolved from UserContext on the backend.
     /// Stores responses with CompletionRole.Manager in the domain model.
     /// Backend validates that the manager is authorized for this assignment.
     /// </summary>
     Task<QuestionnaireResponse> SaveManagerResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses);
+
+    /// <summary>
+    /// Saves a manager's response with templateId optimization for better performance.
+    /// When templateId is provided, the backend skips assignment lookup.
+    /// Stores responses with CompletionRole.Manager in the domain model.
+    /// Backend validates that the manager is authorized for this assignment.
+    /// </summary>
+    Task<QuestionnaireResponse> SaveManagerResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses, Guid? templateId);
 
     /// <summary>
     /// Submits a response for a specific assignment (generic submit).
