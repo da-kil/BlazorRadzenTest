@@ -1,5 +1,6 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
 
@@ -11,5 +12,5 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
 public record SectionResponseRecorded(
     Guid SectionId,
     CompletionRole Role,
-    Dictionary<Guid, object> QuestionResponses,
+    Dictionary<Guid, QuestionResponseValue> QuestionResponses,
     DateTime RecordedDate) : IDomainEvent;

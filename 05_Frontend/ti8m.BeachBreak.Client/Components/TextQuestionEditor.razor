@@ -419,18 +419,4 @@
         }
     }
 
-    public class TextSection
-    {
-        public string Title { get; set; } = "";
-        public string Description { get; set; } = "";
-        public bool? IsExpanded { get; set; } = false;
-        public bool IsEditingTitle { get; set; } = false;
-        public bool IsSelected { get; set; } = false;
-        public bool ShowAutoSave { get; set; } = false;
-    }
-
-    public class TextQuestionConfiguration
-    {
-        public List<TextSection> TextSections { get; set; } = new();
-    }
 }

@@ -1,9 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
-using ti8m.BeachBreak.CommandApi.Models;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
-using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.CommandApi.Authorization;
+using ti8m.BeachBreak.CommandApi.Models;
+using ti8m.BeachBreak.CommandApi.Services;
+using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -14,17 +15,20 @@ public class ResponsesController : BaseController
     private readonly ICommandDispatcher commandDispatcher;
     private readonly UserContext userContext;
     private readonly IManagerAuthorizationService managerAuthorizationService;
+    private readonly QuestionResponseMappingService mappingService;
     private readonly ILogger<ResponsesController> logger;
 
     public ResponsesController(
         ICommandDispatcher commandDispatcher,
         UserContext userContext,
         IManagerAuthorizationService managerAuthorizationService,
+        QuestionResponseMappingService mappingService,
         ILogger<ResponsesController> logger)
     {
         this.commandDispatcher = commandDispatcher;
         this.userContext = userContext;
         this.managerAuthorizationService = managerAuthorizationService;
+        this.mappingService = mappingService;
         this.logger = logger;
     }
 
@@ -52,22 +56,13 @@ public class ResponsesController : BaseController
             return CreateResponse(Result<Guid>.Fail("Section responses are required", StatusCodes.Status400BadRequest));
         }
 
-        // Extract role-based responses from each SectionResponse and flatten to domain structure
-        var responsesAsObjects = sectionResponses.ToDictionary(
-            kvp => kvp.Key,
-            kvp => (object)kvp.Value.RoleResponses.ToDictionary(
-                roleKvp => roleKvp.Key.ToString(), // Convert ResponseRole enum to string for domain layer
-                roleKvp => (object)roleKvp.Value.ToDictionary(
-                    q => q.Key,  // Question ID
-                    q => (object)q.Value // QuestionResponse
-                )
-            )
-        );
+        // Convert from API DTOs to type-safe domain format
+        var typeSafeSectionResponses = mappingService.ConvertToTypeSafeFormat(sectionResponses);
 
         var command = new SaveEmployeeResponseCommand(
             employeeId: employeeId,
             assignmentId: assignmentId,
-            sectionResponses: responsesAsObjects
+            sectionResponses: typeSafeSectionResponses
         );
 
         var result = await commandDispatcher.SendAsync(command);
@@ -120,22 +115,13 @@ public class ResponsesController : BaseController
             return CreateResponse(Result<Guid>.Fail("Section responses are required", StatusCodes.Status400BadRequest));
         }
 
-        // Extract role-based responses from each SectionResponse and flatten to domain structure
-        var responsesAsObjects = sectionResponses.ToDictionary(
-            kvp => kvp.Key,
-            kvp => (object)kvp.Value.RoleResponses.ToDictionary(
-                roleKvp => roleKvp.Key.ToString(), // Convert ResponseRole enum to string for domain layer
-                roleKvp => (object)roleKvp.Value.ToDictionary(
-                    q => q.Key,  // Question ID
-                    q => (object)q.Value // QuestionResponse
-                )
-            )
-        );
+        // Convert from API DTOs to type-safe domain format
+        var typeSafeSectionResponses = mappingService.ConvertToTypeSafeFormat(sectionResponses);
 
         var command = new SaveManagerResponseCommand(
             managerId: managerId,
             assignmentId: assignmentId,
-            sectionResponses: responsesAsObjects
+            sectionResponses: typeSafeSectionResponses
         );
 
         var result = await commandDispatcher.SendAsync(command);

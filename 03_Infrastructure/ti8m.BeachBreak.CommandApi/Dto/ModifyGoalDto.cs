@@ -11,14 +11,5 @@ public class ModifyGoalDto
     public decimal? WeightingPercentage { get; set; }
     public string ModifiedByRole { get; set; } = string.Empty; // ApplicationRole as string (Employee, TeamLead, HR, HRLead, Admin)
 
-    /// <summary>
-    /// Helper method to parse ModifiedByRole string to ApplicationRole enum.
-    /// </summary>
-    public ApplicationRole GetModifiedByRoleEnum()
-    {
-        return Enum.TryParse<ApplicationRole>(ModifiedByRole, ignoreCase: true, out var role)
-            ? role
-            : ApplicationRole.Employee; // Safe default
-    }
     public string? ChangeReason { get; set; } // Required only during InReview state
 }

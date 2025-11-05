@@ -7,6 +7,7 @@ using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.CommandApi.Models;
+using ti8m.BeachBreak.CommandApi.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using CommandResult = ti8m.BeachBreak.Application.Command.Commands.Result;
@@ -20,17 +21,20 @@ public class EmployeesController : BaseController
     private readonly ICommandDispatcher commandDispatcher;
     private readonly IQueryDispatcher queryDispatcher;
     private readonly UserContext userContext;
+    private readonly QuestionResponseMappingService mappingService;
     private readonly ILogger<EmployeesController> logger;
 
     public EmployeesController(
         ICommandDispatcher commandDispatcher,
         IQueryDispatcher queryDispatcher,
         UserContext userContext,
+        QuestionResponseMappingService mappingService,
         ILogger<EmployeesController> logger)
     {
         this.commandDispatcher = commandDispatcher;
         this.queryDispatcher = queryDispatcher;
         this.userContext = userContext;
+        this.mappingService = mappingService;
         this.logger = logger;
     }
 
@@ -182,22 +186,13 @@ public class EmployeesController : BaseController
             return CreateResponse(Application.Command.Commands.Result<Guid>.Fail("Section responses are required", StatusCodes.Status400BadRequest));
         }
 
-        // Extract role-based responses from each SectionResponse and flatten to domain structure
-        var responsesAsObjects = sectionResponses.ToDictionary(
-            kvp => kvp.Key,
-            kvp => (object)kvp.Value.RoleResponses.ToDictionary(
-                roleKvp => roleKvp.Key.ToString(), // Convert ResponseRole enum to string for domain layer
-                roleKvp => (object)roleKvp.Value.ToDictionary(
-                    q => q.Key,  // Question ID
-                    q => (object)q.Value // QuestionResponse
-                )
-            )
-        );
+        // Convert from API DTOs to type-safe domain format
+        var typeSafeSectionResponses = mappingService.ConvertToTypeSafeFormat(sectionResponses);
 
         var command = new SaveEmployeeResponseCommand(
             employeeId: employeeId,
             assignmentId: assignmentId,
-            sectionResponses: responsesAsObjects
+            sectionResponses: typeSafeSectionResponses
         );
 
         var result = await commandDispatcher.SendAsync(command);
@@ -257,5 +252,4 @@ public class EmployeesController : BaseController
 
         return CreateResponse(result);
     }
-
 }

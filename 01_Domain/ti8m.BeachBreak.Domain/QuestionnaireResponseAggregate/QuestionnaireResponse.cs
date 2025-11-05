@@ -1,5 +1,6 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate;
@@ -15,8 +16,8 @@ public class QuestionnaireResponse : AggregateRoot
     public Guid TemplateId { get; private set; }
     public Guid EmployeeId { get; private set; }
 
-    // Role-based section responses: SectionId -> CompletionRole -> QuestionId -> Answer
-    public Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, object>>> SectionResponses { get; private set; } = new();
+    // Role-based section responses: SectionId -> CompletionRole -> QuestionId -> TypedAnswer
+    public Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> SectionResponses { get; private set; } = new();
 
     public DateTime InitiatedDate { get; private set; }
     public DateTime LastModified { get; private set; }
@@ -46,7 +47,7 @@ public class QuestionnaireResponse : AggregateRoot
     /// Records or updates responses for a specific section of the questionnaire.
     /// Note: Workflow state validation should be done by the calling command handler.
     /// </summary>
-    public void RecordSectionResponse(Guid sectionId, CompletionRole role, Dictionary<Guid, object> questionResponses)
+    public void RecordSectionResponse(Guid sectionId, CompletionRole role, Dictionary<Guid, QuestionResponseValue> questionResponses)
     {
         if (questionResponses == null)
             throw new ArgumentNullException(nameof(questionResponses));
@@ -77,7 +78,7 @@ public class QuestionnaireResponse : AggregateRoot
         // Ensure the section exists in the dictionary
         if (!SectionResponses.ContainsKey(@event.SectionId))
         {
-            SectionResponses[@event.SectionId] = new Dictionary<CompletionRole, Dictionary<Guid, object>>();
+            SectionResponses[@event.SectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>();
         }
 
         // Store responses under the specific role

@@ -75,17 +75,10 @@ public class QuestionnaireResponseCommandHandler :
             foreach (var section in command.SectionResponses)
             {
                 var sectionId = section.Key;
-
-                // Extract role-based responses: section.Value is Dictionary<string, Dictionary<Guid, object>>
-                if (section.Value is not Dictionary<string, object> roleBasedResponses)
-                {
-                    logger.LogWarning("Section {SectionId} has invalid response type: {Type}", sectionId, section.Value?.GetType());
-                    continue;
-                }
+                var roleBasedResponses = section.Value;
 
                 // Extract Employee role responses
-                if (!roleBasedResponses.TryGetValue("Employee", out var employeeResponsesObj) ||
-                    employeeResponsesObj is not Dictionary<Guid, object> questionResponses)
+                if (!roleBasedResponses.TryGetValue(CompletionRole.Employee, out var questionResponses))
                 {
                     logger.LogDebug("Section {SectionId} has no Employee responses", sectionId);
                     continue;
@@ -177,16 +170,10 @@ public class QuestionnaireResponseCommandHandler :
             {
                 var sectionId = section.Key;
 
-                // Extract role-based responses: section.Value is Dictionary<string, Dictionary<Guid, object>>
-                if (section.Value is not Dictionary<string, object> roleBasedResponses)
-                {
-                    logger.LogWarning("Section {SectionId} has invalid response type: {Type}", sectionId, section.Value?.GetType());
-                    continue;
-                }
+                var roleBasedResponses = section.Value;
 
                 // Extract Manager role responses
-                if (!roleBasedResponses.TryGetValue("Manager", out var managerResponsesObj) ||
-                    managerResponsesObj is not Dictionary<Guid, object> questionResponses)
+                if (!roleBasedResponses.TryGetValue(CompletionRole.Manager, out var questionResponses))
                 {
                     logger.LogDebug("Section {SectionId} has no Manager responses", sectionId);
                     continue;
@@ -199,6 +186,7 @@ public class QuestionnaireResponseCommandHandler :
                     continue;
                 }
 
+                // Already type-safe - no conversion needed!
                 response.RecordSectionResponse(sectionId, CompletionRole.Manager, questionResponses);
             }
 
