@@ -6,10 +6,12 @@ using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.CommandApi.Dto;
-using ti8m.BeachBreak.CommandApi.Models;
+using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.CommandApi.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using CommandResult = ti8m.BeachBreak.Application.Command.Commands.Result;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
@@ -168,7 +170,7 @@ public class EmployeesController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SaveMyResponse(
         Guid assignmentId,
-        [FromBody] Dictionary<Guid, SectionResponse> sectionResponses)
+        [FromBody] SaveQuestionnaireResponseDto request)
     {
         // Get employee ID from authenticated user context
         if (!Guid.TryParse(userContext.Id, out var employeeId))
@@ -180,14 +182,25 @@ public class EmployeesController : BaseController
         logger.LogInformation("Received SaveMyResponse request for authenticated EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
             employeeId, assignmentId);
 
-        if (sectionResponses == null)
+        if (request?.Responses == null)
         {
-            logger.LogWarning("SaveMyResponse failed: Section responses are null");
-            return CreateResponse(Application.Command.Commands.Result<Guid>.Fail("Section responses are required", StatusCodes.Status400BadRequest));
+            logger.LogWarning("SaveMyResponse failed: Responses are null");
+            return CreateResponse(Application.Command.Commands.Result<Guid>.Fail("Responses are required", StatusCodes.Status400BadRequest));
         }
 
-        // Convert from API DTOs to type-safe domain format
-        var typeSafeSectionResponses = mappingService.ConvertToTypeSafeFormat(sectionResponses);
+        // Convert from strongly-typed DTOs to domain format
+        var questionResponses = mappingService.ConvertToTypeSafeFormat(request);
+
+        // For now, put all questions in a single section with Employee role
+        // TODO: In the future, we might want to organize by actual sections
+        var sectionId = Guid.NewGuid(); // Temporary - we'd get this from the template
+        var typeSafeSectionResponses = new Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>
+        {
+            [sectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>
+            {
+                [CompletionRole.Employee] = questionResponses
+            }
+        };
 
         var command = new SaveEmployeeResponseCommand(
             employeeId: employeeId,

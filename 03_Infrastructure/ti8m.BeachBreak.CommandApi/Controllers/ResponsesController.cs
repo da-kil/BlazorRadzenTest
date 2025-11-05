@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
 using ti8m.BeachBreak.CommandApi.Authorization;
-using ti8m.BeachBreak.CommandApi.Models;
+using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.CommandApi.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -38,7 +40,7 @@ public class ResponsesController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SaveResponse(
         Guid assignmentId,
-        [FromBody] Dictionary<Guid, SectionResponse> sectionResponses)
+        [FromBody] SaveQuestionnaireResponseDto request)
     {
         // Get employee ID from authenticated user context
         if (!Guid.TryParse(userContext.Id, out var employeeId))
@@ -50,19 +52,30 @@ public class ResponsesController : BaseController
         logger.LogInformation("Received SaveResponse request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
             employeeId, assignmentId);
 
-        if (sectionResponses == null)
+        if (request?.Responses == null)
         {
-            logger.LogWarning("SaveResponse failed: Section responses are null");
-            return CreateResponse(Result<Guid>.Fail("Section responses are required", StatusCodes.Status400BadRequest));
+            logger.LogWarning("SaveResponse failed: Responses are null");
+            return CreateResponse(Result<Guid>.Fail("Responses are required", StatusCodes.Status400BadRequest));
         }
 
-        // Convert from API DTOs to type-safe domain format
-        var typeSafeSectionResponses = mappingService.ConvertToTypeSafeFormat(sectionResponses);
+        // Convert from strongly-typed DTOs to domain format
+        var questionResponses = mappingService.ConvertToTypeSafeFormat(request);
+
+        // For now, put all questions in a single section with Employee role
+        // TODO: In the future, we might want to organize by actual sections
+        var sectionId = Guid.NewGuid(); // Temporary - we'd get this from the template
+        var sectionResponses = new Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>
+        {
+            [sectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>
+            {
+                [CompletionRole.Employee] = questionResponses
+            }
+        };
 
         var command = new SaveEmployeeResponseCommand(
             employeeId: employeeId,
             assignmentId: assignmentId,
-            sectionResponses: typeSafeSectionResponses
+            sectionResponses: sectionResponses
         );
 
         var result = await commandDispatcher.SendAsync(command);
@@ -88,7 +101,7 @@ public class ResponsesController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> SaveManagerResponse(
         Guid assignmentId,
-        [FromBody] Dictionary<Guid, SectionResponse> sectionResponses)
+        [FromBody] SaveQuestionnaireResponseDto request)
     {
         // Get manager ID from authenticated user context
         if (!Guid.TryParse(userContext.Id, out var managerId))
@@ -109,19 +122,30 @@ public class ResponsesController : BaseController
             return CreateResponse(Result<Guid>.Fail("You are not authorized to save responses for this assignment", StatusCodes.Status403Forbidden));
         }
 
-        if (sectionResponses == null)
+        if (request?.Responses == null)
         {
-            logger.LogWarning("SaveManagerResponse failed: Section responses are null");
-            return CreateResponse(Result<Guid>.Fail("Section responses are required", StatusCodes.Status400BadRequest));
+            logger.LogWarning("SaveManagerResponse failed: Responses are null");
+            return CreateResponse(Result<Guid>.Fail("Responses are required", StatusCodes.Status400BadRequest));
         }
 
-        // Convert from API DTOs to type-safe domain format
-        var typeSafeSectionResponses = mappingService.ConvertToTypeSafeFormat(sectionResponses);
+        // Convert from strongly-typed DTOs to domain format
+        var questionResponses = mappingService.ConvertToTypeSafeFormat(request);
+
+        // For now, put all questions in a single section with Manager role
+        // TODO: In the future, we might want to organize by actual sections
+        var sectionId = Guid.NewGuid(); // Temporary - we'd get this from the template
+        var sectionResponses = new Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>
+        {
+            [sectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>
+            {
+                [CompletionRole.Manager] = questionResponses
+            }
+        };
 
         var command = new SaveManagerResponseCommand(
             managerId: managerId,
             assignmentId: assignmentId,
-            sectionResponses: typeSafeSectionResponses
+            sectionResponses: sectionResponses
         );
 
         var result = await commandDispatcher.SendAsync(command);

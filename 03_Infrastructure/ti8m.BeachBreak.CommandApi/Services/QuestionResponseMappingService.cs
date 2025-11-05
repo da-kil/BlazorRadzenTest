@@ -1,67 +1,76 @@
-using ti8m.BeachBreak.Application.Command.Services;
-using ti8m.BeachBreak.CommandApi.Models;
+using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
-using ModelsResponseRole = ti8m.BeachBreak.CommandApi.Models.ResponseRole;
 
 namespace ti8m.BeachBreak.CommandApi.Services;
 
 /// <summary>
-/// Service for mapping between CommandApi DTOs and Domain value objects.
-/// Centralizes conversion logic and eliminates Dictionary<string, object> casting.
+/// Service for mapping between strongly-typed CommandApi DTOs and Domain value objects.
+/// No more Dictionary<string, object> casting - everything is type-safe!
 /// </summary>
 public class QuestionResponseMappingService
 {
-
     /// <summary>
-    /// Converts API DTOs to type-safe domain format for command handling.
-    /// Centralizes the conversion logic used by both EmployeesController and ResponsesController.
+    /// Converts strongly-typed DTOs directly to domain value objects.
+    /// Much simpler than the old object-based approach!
     /// </summary>
-    public Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> ConvertToTypeSafeFormat(
-        Dictionary<Guid, SectionResponse> sectionResponses)
+    public Dictionary<Guid, QuestionResponseValue> ConvertToTypeSafeFormat(SaveQuestionnaireResponseDto dto)
     {
-        var typeSafeSectionResponses = new Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>();
+        var questionResponses = new Dictionary<Guid, QuestionResponseValue>();
 
-        foreach (var section in sectionResponses)
+        foreach (var response in dto.Responses)
         {
-            var sectionId = section.Key;
-            var sectionResponse = section.Value;
+            var questionId = response.Key;
+            var questionResponse = response.Value;
 
-            var roleResponses = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>();
-
-            foreach (var roleResponse in sectionResponse.RoleResponses)
+            QuestionResponseValue domainResponse = questionResponse.QuestionType switch
             {
-                // Convert ResponseRole (API enum) to CompletionRole (domain enum)
-                var completionRole = roleResponse.Key switch
-                {
-                    ModelsResponseRole.Employee => CompletionRole.Employee,
-                    ModelsResponseRole.Manager => CompletionRole.Manager,
-                    _ => throw new InvalidOperationException($"Unknown ResponseRole: {roleResponse.Key}")
-                };
+                QuestionType.TextQuestion when questionResponse.TextResponse != null =>
+                    new QuestionResponseValue.TextResponse(questionResponse.TextResponse.TextSections),
 
-                // Convert QuestionResponse objects to QuestionResponseValue
-                var questionResponses = new Dictionary<Guid, QuestionResponseValue>();
-                foreach (var questionResponse in roleResponse.Value)
-                {
-                    var questionId = questionResponse.Key;
-                    var response = questionResponse.Value;
+                QuestionType.Assessment when questionResponse.AssessmentResponse != null =>
+                    new QuestionResponseValue.AssessmentResponse(
+                        questionResponse.AssessmentResponse.Competencies.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => new CompetencyRating(kvp.Value.Rating, kvp.Value.Comment))),
 
-                    // Convert from API QuestionResponse to domain QuestionResponseValue
-                    var legacyFormat = new Dictionary<Guid, object> { { questionId, response.Value ?? new object() } };
-                    var convertedResponses = QuestionResponseValueConverter.ConvertQuestionResponses(legacyFormat);
+                QuestionType.Goal when questionResponse.GoalResponse != null =>
+                    new QuestionResponseValue.GoalResponse(
+                        MapGoalsToDomain(questionResponse.GoalResponse.Goals),
+                        MapPredecessorRatingsToDomain(questionResponse.GoalResponse.PredecessorRatings),
+                        questionResponse.GoalResponse.PredecessorAssignmentId),
 
-                    if (convertedResponses.TryGetValue(questionId, out var convertedResponse))
-                    {
-                        questionResponses[questionId] = convertedResponse;
-                    }
-                }
+                _ => throw new ArgumentException($"Invalid question type or missing response data: {questionResponse.QuestionType}")
+            };
 
-                roleResponses[completionRole] = questionResponses;
-            }
-
-            typeSafeSectionResponses[sectionId] = roleResponses;
+            questionResponses[questionId] = domainResponse;
         }
 
-        return typeSafeSectionResponses;
+        return questionResponses;
+    }
+
+    private List<GoalData> MapGoalsToDomain(IEnumerable<GoalDataDto> dtos)
+    {
+        return dtos.Select(dto => new GoalData(
+            dto.GoalId,
+            dto.ObjectiveDescription,
+            dto.TimeframeFrom,
+            dto.TimeframeTo,
+            dto.MeasurementMetric,
+            dto.WeightingPercentage,
+            dto.AddedByRole
+        )).ToList();
+    }
+
+    private List<PredecessorRating> MapPredecessorRatingsToDomain(IEnumerable<PredecessorRatingDto> dtos)
+    {
+        return dtos.Select(dto => new PredecessorRating(
+            dto.SourceGoalId,
+            dto.DegreeOfAchievement,
+            dto.Justification,
+            dto.RatedByRole,
+            dto.OriginalObjective,
+            dto.OriginalAddedByRole
+        )).ToList();
     }
 }

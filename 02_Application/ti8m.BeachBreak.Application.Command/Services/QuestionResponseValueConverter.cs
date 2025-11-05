@@ -35,7 +35,7 @@ public static class QuestionResponseValueConverter
     /// <summary>
     /// Converts a single response object to QuestionResponseValue.
     /// </summary>
-    private static QuestionResponseValue? ConvertSingleResponse(object responseData)
+    public static QuestionResponseValue? ConvertSingleResponse(object responseData)
     {
         if (responseData == null)
             return null;
@@ -84,8 +84,8 @@ public static class QuestionResponseValueConverter
         // Detection logic based on keys in the dictionary
         var keys = complexValue.Keys.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        // Assessment Response Detection
-        if (keys.Any(k => k.StartsWith("rating_", StringComparison.OrdinalIgnoreCase)) ||
+        // Assessment Response Detection - handle "Rating_" format
+        if (keys.Any(k => k.StartsWith("Rating_", StringComparison.OrdinalIgnoreCase)) ||
             keys.Any(k => k.StartsWith("comment_", StringComparison.OrdinalIgnoreCase)))
         {
             return ConvertToAssessmentResponse(complexValue);
@@ -122,9 +122,9 @@ public static class QuestionResponseValueConverter
         foreach (var kvp in complexValue)
         {
             var key = kvp.Key;
-            if (key.StartsWith("rating_", StringComparison.OrdinalIgnoreCase))
+            if (key.StartsWith("Rating_", StringComparison.OrdinalIgnoreCase))
             {
-                var competencyKey = key.Substring(7); // Remove "rating_" prefix
+                var competencyKey = key.Substring(7); // Remove "Rating_" prefix
                 competencyKeys.Add(competencyKey);
             }
             else if (key.StartsWith("comment_", StringComparison.OrdinalIgnoreCase))
@@ -136,11 +136,12 @@ public static class QuestionResponseValueConverter
 
         foreach (var competencyKey in competencyKeys)
         {
-            var ratingKey = $"rating_{competencyKey}";
-            var commentKey = $"comment_{competencyKey}";
-
             var rating = 0;
             var comment = string.Empty;
+
+            // Use "Rating_" format (as seen in the POST body)
+            var ratingKey = $"Rating_{competencyKey}";
+            var commentKey = $"comment_{competencyKey}";
 
             if (complexValue.TryGetValue(ratingKey, out var ratingObj) &&
                 int.TryParse(ratingObj?.ToString(), out var parsedRating))
