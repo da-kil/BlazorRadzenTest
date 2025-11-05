@@ -18,6 +18,7 @@ public class ResponsesController : BaseController
     private readonly UserContext userContext;
     private readonly IManagerAuthorizationService managerAuthorizationService;
     private readonly QuestionResponseMappingService mappingService;
+    private readonly SectionMappingService sectionMappingService;
     private readonly ILogger<ResponsesController> logger;
 
     public ResponsesController(
@@ -25,12 +26,14 @@ public class ResponsesController : BaseController
         UserContext userContext,
         IManagerAuthorizationService managerAuthorizationService,
         QuestionResponseMappingService mappingService,
+        SectionMappingService sectionMappingService,
         ILogger<ResponsesController> logger)
     {
         this.commandDispatcher = commandDispatcher;
         this.userContext = userContext;
         this.managerAuthorizationService = managerAuthorizationService;
         this.mappingService = mappingService;
+        this.sectionMappingService = sectionMappingService;
         this.logger = logger;
     }
 
@@ -46,7 +49,7 @@ public class ResponsesController : BaseController
         if (!Guid.TryParse(userContext.Id, out var employeeId))
         {
             logger.LogWarning("SaveResponse failed: Unable to parse user ID from context");
-            return CreateResponse(Result<Guid>.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
+            return CreateResponse(ti8m.BeachBreak.Application.Command.Commands.Result<Guid>.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
         }
 
         logger.LogInformation("Received SaveResponse request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
@@ -55,22 +58,14 @@ public class ResponsesController : BaseController
         if (request?.Responses == null)
         {
             logger.LogWarning("SaveResponse failed: Responses are null");
-            return CreateResponse(Result<Guid>.Fail("Responses are required", StatusCodes.Status400BadRequest));
+            return CreateResponse(ti8m.BeachBreak.Application.Command.Commands.Result<Guid>.Fail("Responses are required", StatusCodes.Status400BadRequest));
         }
 
         // Convert from strongly-typed DTOs to domain format
         var questionResponses = mappingService.ConvertToTypeSafeFormat(request);
 
-        // For now, put all questions in a single section with Employee role
-        // TODO: In the future, we might want to organize by actual sections
-        var sectionId = Guid.NewGuid(); // Temporary - we'd get this from the template
-        var sectionResponses = new Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>
-        {
-            [sectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>
-            {
-                [CompletionRole.Employee] = questionResponses
-            }
-        };
+        // Get template structure to organize responses by actual sections
+        var sectionResponses = await sectionMappingService.OrganizeResponsesBySectionsAsync(assignmentId, questionResponses, CompletionRole.Employee, HttpContext.RequestAborted);
 
         var command = new SaveEmployeeResponseCommand(
             employeeId: employeeId,
@@ -107,7 +102,7 @@ public class ResponsesController : BaseController
         if (!Guid.TryParse(userContext.Id, out var managerId))
         {
             logger.LogWarning("SaveManagerResponse failed: Unable to parse user ID from context");
-            return CreateResponse(Result<Guid>.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
+            return CreateResponse(ti8m.BeachBreak.Application.Command.Commands.Result<Guid>.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
         }
 
         logger.LogInformation("Received SaveManagerResponse request for ManagerId: {ManagerId}, AssignmentId: {AssignmentId}",
@@ -119,28 +114,20 @@ public class ResponsesController : BaseController
         {
             logger.LogWarning("Manager {ManagerId} attempted to save response for assignment {AssignmentId} without authorization",
                 managerId, assignmentId);
-            return CreateResponse(Result<Guid>.Fail("You are not authorized to save responses for this assignment", StatusCodes.Status403Forbidden));
+            return CreateResponse(ti8m.BeachBreak.Application.Command.Commands.Result<Guid>.Fail("You are not authorized to save responses for this assignment", StatusCodes.Status403Forbidden));
         }
 
         if (request?.Responses == null)
         {
             logger.LogWarning("SaveManagerResponse failed: Responses are null");
-            return CreateResponse(Result<Guid>.Fail("Responses are required", StatusCodes.Status400BadRequest));
+            return CreateResponse(ti8m.BeachBreak.Application.Command.Commands.Result<Guid>.Fail("Responses are required", StatusCodes.Status400BadRequest));
         }
 
         // Convert from strongly-typed DTOs to domain format
         var questionResponses = mappingService.ConvertToTypeSafeFormat(request);
 
-        // For now, put all questions in a single section with Manager role
-        // TODO: In the future, we might want to organize by actual sections
-        var sectionId = Guid.NewGuid(); // Temporary - we'd get this from the template
-        var sectionResponses = new Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>
-        {
-            [sectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>
-            {
-                [CompletionRole.Manager] = questionResponses
-            }
-        };
+        // Get template structure to organize responses by actual sections
+        var sectionResponses = await sectionMappingService.OrganizeResponsesBySectionsAsync(assignmentId, questionResponses, CompletionRole.Manager, HttpContext.RequestAborted);
 
         var command = new SaveManagerResponseCommand(
             managerId: managerId,
@@ -174,7 +161,7 @@ public class ResponsesController : BaseController
         if (!Guid.TryParse(userContext.Id, out var employeeId))
         {
             logger.LogWarning("SubmitResponse failed: Unable to parse user ID from context");
-            return CreateResponse(Result.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
+            return CreateResponse(ti8m.BeachBreak.Application.Command.Commands.Result.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
         }
 
         logger.LogInformation("Received SubmitResponse request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",

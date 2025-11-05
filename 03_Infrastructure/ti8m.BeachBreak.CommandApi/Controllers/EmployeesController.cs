@@ -24,6 +24,7 @@ public class EmployeesController : BaseController
     private readonly IQueryDispatcher queryDispatcher;
     private readonly UserContext userContext;
     private readonly QuestionResponseMappingService mappingService;
+    private readonly SectionMappingService sectionMappingService;
     private readonly ILogger<EmployeesController> logger;
 
     public EmployeesController(
@@ -31,12 +32,14 @@ public class EmployeesController : BaseController
         IQueryDispatcher queryDispatcher,
         UserContext userContext,
         QuestionResponseMappingService mappingService,
+        SectionMappingService sectionMappingService,
         ILogger<EmployeesController> logger)
     {
         this.commandDispatcher = commandDispatcher;
         this.queryDispatcher = queryDispatcher;
         this.userContext = userContext;
         this.mappingService = mappingService;
+        this.sectionMappingService = sectionMappingService;
         this.logger = logger;
     }
 
@@ -191,16 +194,8 @@ public class EmployeesController : BaseController
         // Convert from strongly-typed DTOs to domain format
         var questionResponses = mappingService.ConvertToTypeSafeFormat(request);
 
-        // For now, put all questions in a single section with Employee role
-        // TODO: In the future, we might want to organize by actual sections
-        var sectionId = Guid.NewGuid(); // Temporary - we'd get this from the template
-        var typeSafeSectionResponses = new Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>
-        {
-            [sectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>
-            {
-                [CompletionRole.Employee] = questionResponses
-            }
-        };
+        // Get template structure to organize responses by actual sections
+        var typeSafeSectionResponses = await sectionMappingService.OrganizeResponsesBySectionsAsync(assignmentId, questionResponses, CompletionRole.Employee, HttpContext.RequestAborted);
 
         var command = new SaveEmployeeResponseCommand(
             employeeId: employeeId,
