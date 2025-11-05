@@ -211,12 +211,12 @@ Write-Host "`nUpdating employee application roles..." -ForegroundColor Cyan
 $roleUpdates = @(
     @{
         Id = "9d159666-0126-4d36-beff-057b68512efa"
-        NewRole = 2
+        NewRole = 1
         RoleName = "TeamLead"
     },
     @{
         Id = "e91731e2-fb48-4a69-b740-075bf5d39eaf"
-        NewRole = 5
+        NewRole = 4
         RoleName = "Admin"
     }
 )
