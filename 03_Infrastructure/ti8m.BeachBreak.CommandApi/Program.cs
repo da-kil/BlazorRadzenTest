@@ -123,6 +123,7 @@ namespace ti8m.BeachBreak.CommandApi
 
             // Register mapping services
             builder.Services.AddScoped<ti8m.BeachBreak.CommandApi.Services.QuestionResponseMappingService>();
+            builder.Services.AddScoped<ti8m.BeachBreak.CommandApi.Services.SectionMappingService>();
 
             // Register EmployeeHierarchyService (Command-side only)
             // This service depends on IEmployeeAggregateRepository and is used for authorization checks
