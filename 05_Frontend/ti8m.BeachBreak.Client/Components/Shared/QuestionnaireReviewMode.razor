@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Components.Dialogs
@@ -359,7 +360,7 @@
     private object? GetAnswer(Guid sectionId, Guid questionId, CompletionRole role)
     {
         var questionResponse = GetQuestionResponse(sectionId, questionId, role);
-        return questionResponse.ComplexValue;
+        return questionResponse.ResponseData;
     }
 
     private async Task EditAnswer(QuestionItem question, CompletionRole originalRole)
@@ -449,7 +450,7 @@
                 QuestionId = question.Id,
                 QuestionType = question.Type,
                 LastModified = DateTime.Now,
-                ComplexValue = sourceAnswer as Dictionary<string, object>
+                ResponseData = sourceAnswer as QuestionResponseDataDto
             };
 
             await SaveEditedAnswer(currentSection.Id, toRole, questionResponse);

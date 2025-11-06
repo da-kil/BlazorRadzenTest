@@ -1,5 +1,6 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
@@ -145,31 +146,36 @@
     /// </summary>
     private List<GoalWithState> LoadGoalsFromResponse()
     {
-        if (Response?.ComplexValue == null || !Response.ComplexValue.ContainsKey(GoalService.GoalsKey))
+        if (Response?.ResponseData is not GoalResponseDataDto goalData)
             return new List<GoalWithState>();
 
-        var goalsValue = Response.ComplexValue[GoalService.GoalsKey];
+        // Convert GoalDataDto objects to GoalWithState objects
+        return goalData.Goals.Select(ConvertGoalDataDtoToGoalWithState).ToList();
+    }
 
-        // Handle JsonElement from API responses
-        if (goalsValue is System.Text.Json.JsonElement jsonElement)
+    /// <summary>
+    /// Converts GoalDataDto to GoalWithState for UI operations
+    /// </summary>
+    private GoalWithState ConvertGoalDataDtoToGoalWithState(GoalDataDto goalData)
+    {
+        return new GoalWithState
         {
-            var goalDtos = System.Text.Json.JsonSerializer.Deserialize<List<GoalDto>>(jsonElement.GetRawText());
-            return goalDtos?.Select(GoalWithState.FromGoalDto).ToList() ?? new List<GoalWithState>();
-        }
-
-        // Handle direct GoalDto list
-        if (goalsValue is List<GoalDto> goalDtoList)
-        {
-            return goalDtoList.Select(GoalWithState.FromGoalDto).ToList();
-        }
-
-        // Handle GoalWithState list (already converted)
-        if (goalsValue is List<GoalWithState> goalWithStateList)
-        {
-            return goalWithStateList;
-        }
-
-        return new List<GoalWithState>();
+            Id = goalData.GoalId,
+            QuestionId = Question?.Id ?? Guid.Empty,
+            AddedByRole = goalData.AddedByRole.ToString(),
+            TimeframeFrom = goalData.TimeframeFrom,
+            TimeframeTo = goalData.TimeframeTo,
+            ObjectiveDescription = goalData.ObjectiveDescription ?? "",
+            MeasurementMetric = goalData.MeasurementMetric ?? "",
+            WeightingPercentage = goalData.WeightingPercentage,
+            AddedAt = DateTime.Now, // Default for now - could be enhanced with actual timestamps
+            AddedByEmployeeId = Guid.Empty, // Default for now - could be enhanced if needed
+            Modifications = new List<GoalModificationDto>(), // Empty list for now
+            // Pending flags default to false for persisted goals
+            IsPendingAdd = false,
+            IsPendingModify = false,
+            IsPendingDelete = false
+        };
     }
 
     /// <summary>
@@ -215,28 +221,76 @@
     /// </summary>
     public void ClearAllPendingAddFlags()
     {
-        var goals = GoalService.GetGoals(Response).ToList();
         var hasChanges = false;
 
-        for (int i = 0; i < goals.Count; i++)
+        // Clear pending flags from local cache
+        foreach (var goal in allCurrentGoals)
         {
-            if (goals[i].ContainsKey("IsPendingAdd"))
+            if (goal.IsPendingAdd)
             {
-                var cleanedGoal = new Dictionary<string, object>(goals[i]);
-                cleanedGoal.Remove("IsPendingAdd");
-                goals[i] = cleanedGoal;
+                goal.IsPendingAdd = false;
                 hasChanges = true;
             }
         }
 
         if (hasChanges)
         {
-            Response.ComplexValue ??= new Dictionary<string, object>();
-            Response.ComplexValue[GoalService.GoalsKey] = goals;
+            SaveGoalsToResponse();
             LoadNewGoalsData(); // Refresh local cache
             _goalCountChanged = true; // Force re-render
             StateHasChanged();
         }
+    }
+
+    /// <summary>
+    /// Saves the current GoalWithState objects back to Response.ResponseData as GoalDataDto objects
+    /// </summary>
+    private void SaveGoalsToResponse()
+    {
+        // Ensure we have GoalResponseDataDto
+        if (Response.ResponseData is not GoalResponseDataDto goalData)
+        {
+            goalData = new GoalResponseDataDto();
+            Response.ResponseData = goalData;
+        }
+
+        // Convert GoalWithState objects back to GoalDataDto objects
+        goalData.Goals = allCurrentGoals.Select(ConvertGoalWithStateToGoalDataDto).ToList();
+        Response.LastModified = DateTime.Now;
+    }
+
+    /// <summary>
+    /// Converts GoalWithState back to GoalDataDto for persistence
+    /// </summary>
+    private GoalDataDto ConvertGoalWithStateToGoalDataDto(GoalWithState goalState)
+    {
+        return new GoalDataDto
+        {
+            GoalId = goalState.Id,
+            ObjectiveDescription = goalState.ObjectiveDescription,
+            TimeframeFrom = goalState.TimeframeFrom,
+            TimeframeTo = goalState.TimeframeTo,
+            MeasurementMetric = goalState.MeasurementMetric,
+            WeightingPercentage = goalState.WeightingPercentage,
+            AddedByRole = Enum.TryParse<ApplicationRole>(goalState.AddedByRole, out var role) ? role : ApplicationRole.Employee
+        };
+    }
+
+    /// <summary>
+    /// Converts GoalDto to GoalDataDto for strongly-typed operations
+    /// </summary>
+    private GoalDataDto ConvertGoalDtoToGoalDataDto(GoalDto goalDto)
+    {
+        return new GoalDataDto
+        {
+            GoalId = goalDto.Id,
+            ObjectiveDescription = goalDto.ObjectiveDescription,
+            TimeframeFrom = goalDto.TimeframeFrom,
+            TimeframeTo = goalDto.TimeframeTo,
+            MeasurementMetric = goalDto.MeasurementMetric,
+            WeightingPercentage = goalDto.WeightingPercentage,
+            AddedByRole = Enum.TryParse<ApplicationRole>(goalDto.AddedByRole, out var role) ? role : ApplicationRole.Employee
+        };
     }
 
     // State tracking for OptimizedComponentBase
@@ -499,23 +553,10 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    /// <summary>
-    /// Save strongly-typed goals back to Response data
-    /// </summary>
-    private void SaveGoalsToResponse()
-    {
-        Response.ComplexValue ??= new Dictionary<string, object>();
-        Response.ComplexValue[GoalService.GoalsKey] = allCurrentGoals.Select(g => g.ToGoalDto()).ToList();
-        Response.LastModified = DateTime.Now;
-    }
-
     private BadgeStyle GetRoleBadgeStyle(string role)
     {
         return role == "Employee" ? BadgeStyle.Primary : BadgeStyle.Success;
     }
-
-
-
 
     private async Task ShowAddGoalDialog()
     {
@@ -763,13 +804,18 @@
 
             if (result.Succeeded && result.Payload != null)
             {
-                // Convert to strongly-typed goals and save to Response
-                var goalDtoList = result.Payload.Goals.ToList();
-                Response.ComplexValue ??= new Dictionary<string, object>();
-                Response.ComplexValue[GoalService.GoalsKey] = goalDtoList;
+                // Ensure we have GoalResponseDataDto
+                if (Response.ResponseData is not GoalResponseDataDto goalData)
+                {
+                    goalData = new GoalResponseDataDto();
+                    Response.ResponseData = goalData;
+                }
+
+                // Update with strongly-typed goals - convert GoalDto to GoalDataDto
+                goalData.Goals = result.Payload.Goals.Select(ConvertGoalDtoToGoalDataDto).ToList();
                 Response.LastModified = DateTime.Now;
 
-                LoadGoalsFromResponse();
+                LoadNewGoalsData();
                 await NotifyResponseChanged();
             }
         }

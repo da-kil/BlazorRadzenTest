@@ -212,10 +212,10 @@
             var jsonDoc = System.Text.Json.JsonDocument.Parse(value);
             var root = jsonDoc.RootElement;
 
-            // Check if it's a QuestionResponse with ComplexValue
-            if (root.TryGetProperty("ComplexValue", out var complexValue))
+            // Check for new strongly-typed ResponseData format
+            if (root.TryGetProperty("ResponseData", out var responseData))
             {
-                return FormatComplexValue(complexValue);
+                return FormatResponseData(responseData);
             }
 
             // Otherwise return as-is
@@ -228,31 +228,85 @@
         }
     }
 
-    private string FormatComplexValue(System.Text.Json.JsonElement complexValue)
+    /// <summary>
+    /// Formats new strongly-typed ResponseData (TextResponseDataDto, AssessmentResponseDataDto, GoalResponseDataDto).
+    /// </summary>
+    private string FormatResponseData(System.Text.Json.JsonElement responseData)
     {
         var formatted = new System.Text.StringBuilder();
 
-        foreach (var prop in complexValue.EnumerateObject())
+        // Detect response data type by checking properties
+        if (responseData.TryGetProperty("TextSections", out var textSections))
         {
-            var key = prop.Name;
-            var value = prop.Value.GetRawText().Trim('"');
-
-            // Format keys nicely
-            var displayKey = key switch
+            // TextResponseDataDto
+            var sectionIndex = 0;
+            foreach (var section in textSections.EnumerateArray())
             {
-                "value" => "Answer",
-                var k when k.StartsWith("Section_") => $"Section {k.Replace("Section_", "")}",
-                var k when k.StartsWith("Rating_") => $"Rating: {k.Replace("Rating_", "")}",
-                var k when k.StartsWith("Comment_") => $"Comment: {k.Replace("Comment_", "")}",
-                "Description" => "Goal Description",
-                "AchievementPercentage" => "Achievement",
-                "Justification" => "Justification",
-                _ => key
-            };
+                var sectionText = section.GetString() ?? "";
+                if (!string.IsNullOrWhiteSpace(sectionText))
+                {
+                    formatted.AppendLine(textSections.GetArrayLength() > 1
+                        ? $"Section {sectionIndex + 1}: {sectionText}"
+                        : $"Answer: {sectionText}");
+                }
+                sectionIndex++;
+            }
+        }
+        else if (responseData.TryGetProperty("Competencies", out var competencies))
+        {
+            // AssessmentResponseDataDto
+            foreach (var competency in competencies.EnumerateObject())
+            {
+                var competencyKey = competency.Name;
+                var competencyValue = competency.Value;
 
-            formatted.AppendLine($"{displayKey}: {value}");
+                if (competencyValue.TryGetProperty("Rating", out var rating))
+                {
+                    formatted.AppendLine($"Rating ({competencyKey}): {rating.GetInt32()}");
+                }
+
+                if (competencyValue.TryGetProperty("Comment", out var comment))
+                {
+                    var commentText = comment.GetString();
+                    if (!string.IsNullOrWhiteSpace(commentText))
+                    {
+                        formatted.AppendLine($"Comment ({competencyKey}): {commentText}");
+                    }
+                }
+            }
+        }
+        else if (responseData.TryGetProperty("Goals", out var goals) ||
+                 responseData.TryGetProperty("PredecessorRatings", out _))
+        {
+            // GoalResponseDataDto
+            if (goals.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                var goalIndex = 1;
+                foreach (var goal in goals.EnumerateArray())
+                {
+                    formatted.AppendLine($"Goal {goalIndex}:");
+
+                    if (goal.TryGetProperty("ObjectiveDescription", out var objective))
+                    {
+                        formatted.AppendLine($"  Objective: {objective.GetString()}");
+                    }
+
+                    if (goal.TryGetProperty("MeasurementMetric", out var metric))
+                    {
+                        formatted.AppendLine($"  Measurement: {metric.GetString()}");
+                    }
+
+                    if (goal.TryGetProperty("WeightingPercentage", out var weighting))
+                    {
+                        formatted.AppendLine($"  Weighting: {weighting.GetDecimal()}%");
+                    }
+
+                    goalIndex++;
+                    formatted.AppendLine();
+                }
+            }
         }
 
-        return formatted.ToString().TrimEnd();
+        return formatted.Length > 0 ? formatted.ToString().TrimEnd() : "(empty)";
     }
 }

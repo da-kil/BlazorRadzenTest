@@ -91,18 +91,18 @@
         competencies = TypedAssessmentQuestionService.GetCompetenciesFromConfiguration(configJson);
         ratingScale = TypedAssessmentQuestionService.GetRatingScale(configJson);
 
-        // Initialize or load response data
-        if (Response?.AssessmentResponse != null)
+        // Initialize or load response data from new ResponseData structure
+        if (Response?.ResponseData is AssessmentResponseDataDto assessmentData)
         {
-            assessmentResponse = Response.AssessmentResponse;
+            assessmentResponse = new AssessmentResponseDto();
+            foreach (var competency in assessmentData.Competencies)
+            {
+                assessmentResponse.SetCompetency(competency.Key, competency.Value.Rating, competency.Value.Comment);
+            }
         }
         else
         {
             assessmentResponse = TypedAssessmentQuestionService.CreateAssessmentResponse();
-            if (Response != null)
-            {
-                Response.AssessmentResponse = assessmentResponse;
-            }
         }
     }
 

@@ -1,5 +1,6 @@
 using ti8m.BeachBreak.Client.Models;
 using ti8m.BeachBreak.Client.Models.CommandDTOs;
+using ti8m.BeachBreak.Client.Models.DTOs;
 using System.Net.Http.Json;
 
 namespace ti8m.BeachBreak.Client.Services;
@@ -27,7 +28,56 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
 
     public async Task<QuestionnaireResponse?> GetResponseByAssignmentIdAsync(Guid assignmentId)
     {
-        return await GetBySubPathAsync<QuestionnaireResponse>(ResponseQueryEndpoint, "assignment", assignmentId);
+        try
+        {
+            // API returns QuestionResponseDto[] with strongly-typed ResponseData
+            var questionResponses = await HttpQueryClient.GetFromJsonAsync<QuestionResponseDto[]>($"{ResponseQueryEndpoint}/assignment/{assignmentId}");
+
+            if (questionResponses == null || !questionResponses.Any())
+            {
+                return null;
+            }
+
+            // Build QuestionnaireResponse with strongly-typed data
+            var questionnaireResponse = new QuestionnaireResponse
+            {
+                AssignmentId = assignmentId,
+                SectionResponses = new Dictionary<Guid, SectionResponse>()
+            };
+
+            // Group questions by section (using default section since API doesn't provide section info)
+            var defaultSectionId = Guid.NewGuid();
+            var sectionResponse = new SectionResponse
+            {
+                SectionId = defaultSectionId,
+                RoleResponses = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponse>>()
+            };
+
+            // Initialize employee responses
+            sectionResponse.RoleResponses[ResponseRole.Employee] = new Dictionary<Guid, QuestionResponse>();
+
+            foreach (var apiResponse in questionResponses)
+            {
+                var questionResponse = new QuestionResponse
+                {
+                    QuestionId = apiResponse.QuestionId,
+                    QuestionType = apiResponse.QuestionType,
+                    LastModified = apiResponse.LastModified,
+                    ResponseData = apiResponse.ResponseData
+                };
+
+                sectionResponse.RoleResponses[ResponseRole.Employee][apiResponse.QuestionId] = questionResponse;
+            }
+
+            questionnaireResponse.SectionResponses[defaultSectionId] = sectionResponse;
+
+            return questionnaireResponse;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error getting response for assignment {assignmentId}", ex);
+            return null;
+        }
     }
 
     public async Task<bool> DeleteResponseAsync(Guid id)

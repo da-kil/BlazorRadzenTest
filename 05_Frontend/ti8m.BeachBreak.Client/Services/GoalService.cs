@@ -1,83 +1,39 @@
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.DTOs;
 
 namespace ti8m.BeachBreak.Client.Services;
 
 /// <summary>
-/// Service for Goal question type operations.
-/// Centralizes goal data parsing, validation, and response key format to prevent duplication.
+/// Service for Goal question type operations with strongly-typed DTOs.
+/// Centralizes goal data parsing, validation, and response operations to prevent duplication.
 /// </summary>
 public class GoalService
 {
-    // Current goals keys (goals added during in-progress)
-    public const string GoalsKey = "Goals";
-    public const string GoalIdKey = "GoalId";
-    public const string GoalObjectiveKey = "ObjectiveDescription";
-    public const string GoalTimeframeFromKey = "TimeframeFrom";
-    public const string GoalTimeframeToKey = "TimeframeTo";
-    public const string GoalMeasurementKey = "MeasurementMetric";
-    public const string GoalWeightingKey = "WeightingPercentage";
-    public const string GoalAddedByRoleKey = "AddedByRole";
-
-    // Predecessor ratings keys (rating goals from previous questionnaire)
-    public const string PredecessorAssignmentIdKey = "PredecessorAssignmentId";
-    public const string PredecessorRatingsKey = "PredecessorRatings";
-    public const string RatingSourceGoalIdKey = "SourceGoalId";
-    public const string RatingDegreeKey = "DegreeOfAchievement";
-    public const string RatingJustificationKey = "Justification";
-    public const string RatingByRoleKey = "RatedByRole";
-    public const string RatingOriginalObjectiveKey = "OriginalObjective";
-    public const string RatingOriginalAddedByRoleKey = "OriginalAddedByRole";
 
     /// <summary>
     /// Validates a goal's data completeness and correctness.
-    /// Note: Weighting can be 0 or null during in-progress states (will be set by manager during review).
+    /// Note: Weighting can be 0 during in-progress states (will be set by manager during review).
     /// </summary>
-    public bool IsGoalValid(Dictionary<string, object> goalData)
+    public bool IsGoalValid(GoalDataDto goalData)
     {
-        if (goalData == null || !goalData.Any())
+        if (goalData == null)
             return false;
 
         // Check required fields
-        if (!goalData.ContainsKey(GoalObjectiveKey) ||
-            string.IsNullOrWhiteSpace(goalData[GoalObjectiveKey]?.ToString()))
+        if (string.IsNullOrWhiteSpace(goalData.ObjectiveDescription))
             return false;
 
-        if (!goalData.ContainsKey(GoalMeasurementKey) ||
-            string.IsNullOrWhiteSpace(goalData[GoalMeasurementKey]?.ToString()))
+        if (string.IsNullOrWhiteSpace(goalData.MeasurementMetric))
             return false;
 
         // Validate dates
-        if (!goalData.ContainsKey(GoalTimeframeFromKey) ||
-            !goalData.ContainsKey(GoalTimeframeToKey))
+        if (goalData.TimeframeFrom >= goalData.TimeframeTo)
             return false;
 
-        if (goalData[GoalTimeframeFromKey] is DateTime fromDate &&
-            goalData[GoalTimeframeToKey] is DateTime toDate)
-        {
-            if (fromDate >= toDate)
-                return false;
-        }
-        else
-        {
-            return false; // Dates must be DateTime
-        }
-
-        // Validate weighting - allow 0 or null during in-progress (will be set by manager later)
-        if (!goalData.ContainsKey(GoalWeightingKey))
-            return true; // Weighting is optional during goal creation
-
-        if (goalData[GoalWeightingKey] is decimal weighting)
-        {
-            // Allow 0 for goals being added during in-progress
-            // Weighting will be set by manager during InReview state
-            if (weighting < 0 || weighting > 100)
-                return false;
-        }
-        else
-        {
-            // If weighting exists but is not decimal, it's invalid
+        // Validate weighting - allow 0 for goals being added during in-progress
+        // Weighting will be set by manager during InReview state
+        if (goalData.WeightingPercentage < 0 || goalData.WeightingPercentage > 100)
             return false;
-        }
 
         return true;
     }
@@ -85,30 +41,21 @@ public class GoalService
     /// <summary>
     /// Validates a predecessor goal rating's data completeness.
     /// </summary>
-    public bool IsPredecessorRatingValid(Dictionary<string, object> ratingData)
+    public bool IsPredecessorRatingValid(PredecessorRatingDto ratingData)
     {
-        if (ratingData == null || !ratingData.Any())
+        if (ratingData == null)
             return false;
 
-        // Check required fields
-        if (!ratingData.ContainsKey(RatingSourceGoalIdKey))
+        // Check required fields - SourceGoalId is required
+        if (ratingData.SourceGoalId == Guid.Empty)
             return false;
 
-        if (!ratingData.ContainsKey(RatingDegreeKey))
+        // Validate degree of achievement range
+        if (ratingData.DegreeOfAchievement < 0 || ratingData.DegreeOfAchievement > 100)
             return false;
 
-        if (ratingData[RatingDegreeKey] is decimal degree)
-        {
-            if (degree < 0 || degree > 100)
-                return false;
-        }
-        else
-        {
-            return false;
-        }
-
-        if (!ratingData.ContainsKey(RatingJustificationKey) ||
-            string.IsNullOrWhiteSpace(ratingData[RatingJustificationKey]?.ToString()))
+        // Justification is required
+        if (string.IsNullOrWhiteSpace(ratingData.Justification))
             return false;
 
         return true;
@@ -119,36 +66,33 @@ public class GoalService
     /// </summary>
     public bool IsGoalQuestionComplete(QuestionResponse response, bool requiresManagerReview)
     {
-        if (response?.ComplexValue == null || !response.ComplexValue.Any())
+        if (response?.ResponseData is not GoalResponseDataDto goalData)
             return false;
 
         // Check if predecessor is linked (optional but if present, must have ratings)
-        bool hasPredecessor = response.ComplexValue.ContainsKey(PredecessorAssignmentIdKey);
+        bool hasPredecessor = goalData.PredecessorAssignmentId.HasValue;
 
         if (hasPredecessor)
         {
             // If predecessor linked, must have ratings
-            if (!response.ComplexValue.ContainsKey(PredecessorRatingsKey))
-                return false;
-
-            var ratings = GetPredecessorRatings(response);
-            if (!ratings.Any())
+            if (!goalData.PredecessorRatings.Any())
                 return false;
 
             // All ratings must be valid
-            if (!ratings.All(r => IsPredecessorRatingValid(r)))
+            if (!goalData.PredecessorRatings.All(r => IsPredecessorRatingValid(r)))
                 return false;
 
             // If requires manager review, must have both employee and manager ratings
             if (requiresManagerReview)
             {
-                bool hasEmployeeRating = ratings.Any(r =>
-                    r.ContainsKey(RatingByRoleKey) &&
-                    r[RatingByRoleKey]?.ToString() == "Employee");
+                bool hasEmployeeRating = goalData.PredecessorRatings.Any(r =>
+                    r.RatedByRole == ApplicationRole.Employee);
 
-                bool hasManagerRating = ratings.Any(r =>
-                    r.ContainsKey(RatingByRoleKey) &&
-                    r[RatingByRoleKey]?.ToString() == "Manager");
+                bool hasManagerRating = goalData.PredecessorRatings.Any(r =>
+                    r.RatedByRole == ApplicationRole.TeamLead ||
+                    r.RatedByRole == ApplicationRole.HR ||
+                    r.RatedByRole == ApplicationRole.HRLead ||
+                    r.RatedByRole == ApplicationRole.Admin);
 
                 if (!hasEmployeeRating || !hasManagerRating)
                     return false;
@@ -156,27 +100,23 @@ public class GoalService
         }
 
         // Check if there are current goals
-        if (!response.ComplexValue.ContainsKey(GoalsKey))
-            return false;
-
-        var goals = GetGoals(response);
-        if (!goals.Any())
+        if (!goalData.Goals.Any())
             return false;
 
         // All goals must be valid
-        if (!goals.All(g => IsGoalValid(g)))
+        if (!goalData.Goals.All(g => IsGoalValid(g)))
             return false;
 
         // If requires manager review, must have goals from both roles
         if (requiresManagerReview)
         {
-            bool hasEmployeeGoals = goals.Any(g =>
-                g.ContainsKey(GoalAddedByRoleKey) &&
-                g[GoalAddedByRoleKey]?.ToString() == "Employee");
+            bool hasEmployeeGoals = goalData.Goals.Any(g => g.AddedByRole == ApplicationRole.Employee);
 
-            bool hasManagerGoals = goals.Any(g =>
-                g.ContainsKey(GoalAddedByRoleKey) &&
-                g[GoalAddedByRoleKey]?.ToString() == "Manager");
+            bool hasManagerGoals = goalData.Goals.Any(g =>
+                g.AddedByRole == ApplicationRole.TeamLead ||
+                g.AddedByRole == ApplicationRole.HR ||
+                g.AddedByRole == ApplicationRole.HRLead ||
+                g.AddedByRole == ApplicationRole.Admin);
 
             if (!hasEmployeeGoals || !hasManagerGoals)
                 return false;
@@ -188,65 +128,23 @@ public class GoalService
     /// <summary>
     /// Extracts the list of current goals from a question response.
     /// </summary>
-    public List<Dictionary<string, object>> GetGoals(QuestionResponse response)
+    public List<GoalDataDto> GetGoals(QuestionResponse response)
     {
-        if (response?.ComplexValue == null || !response.ComplexValue.ContainsKey(GoalsKey))
-            return new List<Dictionary<string, object>>();
+        if (response?.ResponseData is not GoalResponseDataDto goalData)
+            return new List<GoalDataDto>();
 
-        var goalsValue = response.ComplexValue[GoalsKey];
-
-        if (goalsValue is List<Dictionary<string, object>> goalsList)
-            return goalsList;
-
-        // Try to deserialize from JSON if needed
-        if (goalsValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var deserialized = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(
-                    jsonElement.GetRawText());
-
-                return deserialized ?? new List<Dictionary<string, object>>();
-            }
-            catch
-            {
-                return new List<Dictionary<string, object>>();
-            }
-        }
-
-        return new List<Dictionary<string, object>>();
+        return goalData.Goals;
     }
 
     /// <summary>
     /// Extracts the list of predecessor goal ratings from a question response.
     /// </summary>
-    public List<Dictionary<string, object>> GetPredecessorRatings(QuestionResponse response)
+    public List<PredecessorRatingDto> GetPredecessorRatings(QuestionResponse response)
     {
-        if (response?.ComplexValue == null || !response.ComplexValue.ContainsKey(PredecessorRatingsKey))
-            return new List<Dictionary<string, object>>();
+        if (response?.ResponseData is not GoalResponseDataDto goalData)
+            return new List<PredecessorRatingDto>();
 
-        var ratingsValue = response.ComplexValue[PredecessorRatingsKey];
-
-        if (ratingsValue is List<Dictionary<string, object>> ratingsList)
-            return ratingsList;
-
-        // Try to deserialize from JSON if needed
-        if (ratingsValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var deserialized = System.Text.Json.JsonSerializer.Deserialize<List<Dictionary<string, object>>>(
-                    jsonElement.GetRawText());
-
-                return deserialized ?? new List<Dictionary<string, object>>();
-            }
-            catch
-            {
-                return new List<Dictionary<string, object>>();
-            }
-        }
-
-        return new List<Dictionary<string, object>>();
+        return goalData.PredecessorRatings;
     }
 
     /// <summary>
@@ -254,61 +152,53 @@ public class GoalService
     /// </summary>
     public Guid? GetPredecessorAssignmentId(QuestionResponse response)
     {
-        if (response?.ComplexValue == null || !response.ComplexValue.ContainsKey(PredecessorAssignmentIdKey))
+        if (response?.ResponseData is not GoalResponseDataDto goalData)
             return null;
 
-        var value = response.ComplexValue[PredecessorAssignmentIdKey];
-
-        if (value is Guid guidValue)
-            return guidValue;
-
-        if (Guid.TryParse(value?.ToString(), out var parsedGuid))
-            return parsedGuid;
-
-        return null;
+        return goalData.PredecessorAssignmentId;
     }
 
     /// <summary>
-    /// Creates a new goal data dictionary with proper key format.
+    /// Creates a new goal data with strongly-typed structure.
     /// </summary>
-    public Dictionary<string, object> CreateGoalData(
+    public GoalDataDto CreateGoalData(
         Guid goalId,
         string objective,
         DateTime fromDate,
         DateTime toDate,
         string measurement,
         decimal weighting,
-        string addedByRole)
+        ApplicationRole addedByRole)
     {
-        return new Dictionary<string, object>
+        return new GoalDataDto
         {
-            [GoalIdKey] = goalId,
-            [GoalObjectiveKey] = objective,
-            [GoalTimeframeFromKey] = fromDate,
-            [GoalTimeframeToKey] = toDate,
-            [GoalMeasurementKey] = measurement,
-            [GoalWeightingKey] = weighting,
-            [GoalAddedByRoleKey] = addedByRole
+            GoalId = goalId,
+            ObjectiveDescription = objective,
+            TimeframeFrom = fromDate,
+            TimeframeTo = toDate,
+            MeasurementMetric = measurement,
+            WeightingPercentage = weighting,
+            AddedByRole = addedByRole
         };
     }
 
     /// <summary>
-    /// Creates a new predecessor rating data dictionary with proper key format.
+    /// Creates a new predecessor rating data with strongly-typed structure.
     /// </summary>
-    public Dictionary<string, object> CreatePredecessorRatingData(
+    public PredecessorRatingDto CreatePredecessorRatingData(
         Guid sourceGoalId,
         decimal degree,
         string justification,
-        string ratedByRole,
+        ApplicationRole ratedByRole,
         string originalObjective)
     {
-        return new Dictionary<string, object>
+        return new PredecessorRatingDto
         {
-            [RatingSourceGoalIdKey] = sourceGoalId,
-            [RatingDegreeKey] = degree,
-            [RatingJustificationKey] = justification,
-            [RatingByRoleKey] = ratedByRole,
-            [RatingOriginalObjectiveKey] = originalObjective
+            SourceGoalId = sourceGoalId,
+            DegreeOfAchievement = (int)degree,
+            Justification = justification,
+            RatedByRole = ratedByRole,
+            OriginalObjective = originalObjective
         };
     }
 }
