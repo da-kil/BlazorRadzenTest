@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Command.Mappers;
 using ti8m.BeachBreak.Application.Command.Repositories;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
@@ -45,7 +46,7 @@ public class RatePredecessorGoalCommandHandler
                 command.SourceAssignmentId,
                 command.SourceGoalId,
                 predecessorGoal,
-                command.RatedByRole,
+                ApplicationRoleMapper.MapToDomain(command.RatedByRole),
                 command.DegreeOfAchievement,
                 command.Justification,
                 command.RatedByEmployeeId);

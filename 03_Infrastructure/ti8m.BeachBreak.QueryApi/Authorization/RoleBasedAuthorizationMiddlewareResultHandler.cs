@@ -6,6 +6,7 @@ using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.QueryApi.Authorization;
 
@@ -111,12 +112,14 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
         // Check each policy to see if user's role satisfies it
         var hasAccess = false;
 
+        var domainRole = ApplicationRoleMapper.MapToDomain(employeeRole.ApplicationRole);
+
         // Check policy-based authorization
         foreach (var policyName in requiredPolicyNames)
         {
             if (PolicyRoleMappings.TryGetValue(policyName, out var allowedRoles))
             {
-                if (allowedRoles.Contains(employeeRole.ApplicationRole))
+                if (allowedRoles.Contains(domainRole))
                 {
                     hasAccess = true;
                     break;
@@ -131,13 +134,13 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
             {
                 if (PolicyRoleMappings.TryGetValue(roleName, out var allowedRoles))
                 {
-                    if (allowedRoles.Contains(employeeRole.ApplicationRole))
+                    if (allowedRoles.Contains(domainRole))
                     {
                         hasAccess = true;
                         break;
                     }
                 }
-                else if (Enum.TryParse<ApplicationRole>(roleName, out var role) && role == employeeRole.ApplicationRole)
+                else if (Enum.TryParse<ApplicationRole>(roleName, out var role) && role == domainRole)
                 {
                     hasAccess = true;
                     break;

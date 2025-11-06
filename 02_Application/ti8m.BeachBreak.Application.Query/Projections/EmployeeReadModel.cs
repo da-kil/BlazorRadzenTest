@@ -1,4 +1,6 @@
-﻿using ti8m.BeachBreak.Domain.EmployeeAggregate.Events;
+﻿using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Application.Query.Models;
+using ti8m.BeachBreak.Domain.EmployeeAggregate.Events;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -17,7 +19,7 @@ public class EmployeeReadModel
     public string LoginName { get; set; } = string.Empty;
     public int OrganizationNumber { get; set; }
     public bool IsDeleted { get; set; }
-    public Domain.EmployeeAggregate.ApplicationRole ApplicationRole { get; set; }
+    public ApplicationRole ApplicationRole { get; set; }
 
     // Apply methods for all Employee domain events
     public void Apply(EmployeeAdded @event)
@@ -34,7 +36,7 @@ public class EmployeeReadModel
         ManagerId = @event.ManagerId;
         LoginName = @event.LoginName;
         OrganizationNumber = @event.OrganizationNumber;
-        ApplicationRole = @event.ApplicationRole;
+        ApplicationRole = ApplicationRoleMapper.MapFromDomain(@event.ApplicationRole);
         IsDeleted = false;
     }
 
@@ -56,7 +58,7 @@ public class EmployeeReadModel
         ManagerId = @event.ManagerId;
         LoginName = @event.LoginName;
         OrganizationNumber = @event.OrganizationNumber;
-        ApplicationRole = @event.ApplicationRole;
+        ApplicationRole = ApplicationRoleMapper.MapFromDomain(@event.ApplicationRole);
         IsDeleted = false;
     }
 
@@ -103,6 +105,6 @@ public class EmployeeReadModel
 
     public void Apply(EmployeeApplicationRoleChanged @event)
     {
-        ApplicationRole = @event.NewRole;
+        ApplicationRole = ApplicationRoleMapper.MapFromDomain(@event.NewRole);
     }
 }

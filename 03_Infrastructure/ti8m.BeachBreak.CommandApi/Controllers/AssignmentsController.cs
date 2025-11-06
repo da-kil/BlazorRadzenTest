@@ -2,14 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
+using ti8m.BeachBreak.Application.Command.Models;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.CommandApi.Mappers;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -499,7 +500,7 @@ public class AssignmentsController : BaseController
     {
         try
         {
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(editDto.OriginalCompletionRole, out var applicationRole))
+            if (!Enum.TryParse<ApplicationRole>(editDto.OriginalCompletionRole, out var commandRole))
                 return BadRequest("Invalid ApplicationRole value");
 
             // Get user ID from authenticated user context
@@ -509,11 +510,13 @@ public class AssignmentsController : BaseController
                 return Unauthorized("User ID not found in authentication context");
             }
 
+            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
+
             var command = new EditAnswerDuringReviewCommand(
                 assignmentId,
                 editDto.SectionId,
                 editDto.QuestionId,
-                applicationRole,
+                ApplicationRoleMapper.MapFromDomain(domainRole),
                 editDto.Answer,
                 userId);
             var result = await commandDispatcher.SendAsync(command);
@@ -688,9 +691,10 @@ public class AssignmentsController : BaseController
             return false;
         }
 
-        return employeeRole.ApplicationRole == ApplicationRole.HR ||
-               employeeRole.ApplicationRole == ApplicationRole.HRLead ||
-               employeeRole.ApplicationRole == ApplicationRole.Admin;
+        var commandRole = ApplicationRoleMapper.MapFromQuery(employeeRole.ApplicationRole);
+        return commandRole == ApplicationRole.HR ||
+               commandRole == ApplicationRole.HRLead ||
+               commandRole == ApplicationRole.Admin;
     }
 
     /// <summary>
@@ -775,16 +779,18 @@ public class AssignmentsController : BaseController
             }
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.LinkedByRole, out var linkedByRole))
+            if (!Enum.TryParse<ApplicationRole>(dto.LinkedByRole, out var commandRole))
             {
                 return BadRequest($"Invalid role: {dto.LinkedByRole}");
             }
+
+            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
 
             var command = new LinkPredecessorQuestionnaireCommand(
                 assignmentId,
                 dto.QuestionId,
                 dto.PredecessorAssignmentId,
-                linkedByRole,
+                ApplicationRoleMapper.MapFromDomain(domainRole),
                 userId);
 
             var result = await commandDispatcher.SendAsync(command);
@@ -819,15 +825,17 @@ public class AssignmentsController : BaseController
             logger.LogInformation("AddGoal: Successfully parsed userId = {UserId}", userId);
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.AddedByRole, out var addedByRole))
+            if (!Enum.TryParse<ApplicationRole>(dto.AddedByRole, out var commandRole))
             {
                 return BadRequest($"Invalid role: {dto.AddedByRole}");
             }
 
+            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
+
             var command = new AddGoalCommand(
                 assignmentId,
                 dto.QuestionId,
-                addedByRole,
+                ApplicationRoleMapper.MapFromDomain(domainRole),
                 dto.TimeframeFrom,
                 dto.TimeframeTo,
                 dto.ObjectiveDescription,
@@ -869,13 +877,15 @@ public class AssignmentsController : BaseController
                 return BadRequest("ModifiedByRole is required");
             }
 
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.ModifiedByRole, ignoreCase: true, out var modifiedByRole))
+            if (!Enum.TryParse<ApplicationRole>(dto.ModifiedByRole, ignoreCase: true, out var commandRole))
             {
                 logger.LogWarning("ModifyGoal failed: Invalid role '{Role}'. Valid roles: {ValidRoles}",
                     dto.ModifiedByRole,
-                    string.Join(", ", Enum.GetNames<Domain.EmployeeAggregate.ApplicationRole>()));
-                return BadRequest($"Invalid role: '{dto.ModifiedByRole}'. Valid roles: {string.Join(", ", Enum.GetNames<Domain.EmployeeAggregate.ApplicationRole>())}");
+                    string.Join(", ", Enum.GetNames<ApplicationRole>()));
+                return BadRequest($"Invalid role: '{dto.ModifiedByRole}'. Valid roles: {string.Join(", ", Enum.GetNames<ApplicationRole>())}");
             }
+
+            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
 
             var command = new ModifyGoalCommand(
                 assignmentId,
@@ -885,7 +895,7 @@ public class AssignmentsController : BaseController
                 dto.ObjectiveDescription,
                 dto.MeasurementMetric,
                 dto.WeightingPercentage,
-                modifiedByRole,
+                ApplicationRoleMapper.MapFromDomain(domainRole),
                 dto.ChangeReason,
                 userId);
 
@@ -948,17 +958,19 @@ public class AssignmentsController : BaseController
             }
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.RatedByRole, out var ratedByRole))
+            if (!Enum.TryParse<ApplicationRole>(dto.RatedByRole, out var commandRole))
             {
                 return BadRequest($"Invalid role: {dto.RatedByRole}");
             }
+
+            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
 
             var command = new RatePredecessorGoalCommand(
                 assignmentId,
                 dto.QuestionId,
                 dto.SourceAssignmentId,
                 dto.SourceGoalId,
-                ratedByRole,
+                ApplicationRoleMapper.MapFromDomain(domainRole),
                 dto.DegreeOfAchievement,
                 dto.Justification,
                 userId);
@@ -991,17 +1003,19 @@ public class AssignmentsController : BaseController
             }
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.ModifiedByRole, out var modifiedByRole))
+            if (!Enum.TryParse<ApplicationRole>(dto.ModifiedByRole, out var commandRole))
             {
                 return BadRequest($"Invalid role: {dto.ModifiedByRole}");
             }
+
+            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
 
             var command = new ModifyPredecessorGoalRatingCommand(
                 assignmentId,
                 dto.SourceGoalId,
                 dto.DegreeOfAchievement,
                 dto.Justification,
-                modifiedByRole,
+                ApplicationRoleMapper.MapFromDomain(domainRole),
                 dto.ChangeReason,
                 userId);
 

@@ -5,10 +5,9 @@ using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
-using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Dto;
+using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -654,7 +653,7 @@ public class EmployeesController : BaseController
 
             // Employees always see goals with Employee role filter
             var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
-                assignmentId, questionId, Domain.EmployeeAggregate.ApplicationRole.Employee);
+                assignmentId, questionId, ApplicationRoleMapper.MapFromDomain(Domain.EmployeeAggregate.ApplicationRole.Employee));
 
             var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 
@@ -785,10 +784,9 @@ public class EmployeesController : BaseController
             return false;
         }
 
-        return employeeRole.ApplicationRole == ApplicationRole.HR ||
-               employeeRole.ApplicationRole == ApplicationRole.HRLead ||
-               employeeRole.ApplicationRole == ApplicationRole.Admin;
+        // EmployeeRoleResult.ApplicationRole is already Application.Query.ApplicationRole
+        return employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HR ||
+               employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HRLead ||
+               employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.Admin;
     }
-
-
 }

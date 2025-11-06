@@ -1,6 +1,8 @@
+using ti8m.BeachBreak.Application.Command.Models;
+
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
 public class ChangeApplicationRoleDto
 {
-    public ApplicationRoleTypeDto NewRole { get; set; }
+    public ApplicationRole NewRole { get; set; }
 }

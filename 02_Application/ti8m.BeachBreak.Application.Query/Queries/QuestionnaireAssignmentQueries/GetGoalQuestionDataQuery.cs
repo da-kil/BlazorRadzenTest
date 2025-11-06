@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;

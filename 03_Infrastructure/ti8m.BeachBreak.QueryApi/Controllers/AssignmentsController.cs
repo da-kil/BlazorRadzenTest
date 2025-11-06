@@ -9,6 +9,7 @@ using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Controllers;
 using ti8m.BeachBreak.QueryApi.Dto;
+using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -181,9 +182,10 @@ public class AssignmentsController : BaseController
             return false;
         }
 
-        return employeeRole.ApplicationRole == ApplicationRole.HR ||
-               employeeRole.ApplicationRole == ApplicationRole.HRLead ||
-               employeeRole.ApplicationRole == ApplicationRole.Admin;
+        // EmployeeRoleResult.ApplicationRole is already Application.Query.ApplicationRole
+        return employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HR ||
+               employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HRLead ||
+               employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.Admin;
     }
 
     /// <summary>

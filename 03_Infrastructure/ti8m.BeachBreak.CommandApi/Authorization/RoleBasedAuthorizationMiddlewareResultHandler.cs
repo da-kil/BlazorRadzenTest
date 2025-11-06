@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using System.Security.Claims;
+using ti8m.BeachBreak.Application.Command.Models;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
+using ti8m.BeachBreak.CommandApi.Mappers;
 using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using DomainApplicationRole = ti8m.BeachBreak.Domain.EmployeeAggregate.ApplicationRole;
 
 namespace ti8m.BeachBreak.CommandApi.Authorization;
 
@@ -21,7 +23,7 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
     private readonly ILogger<RoleBasedAuthorizationMiddlewareResultHandler> logger;
 
     // Policy to ApplicationRole mappings - from domain service
-    private static Dictionary<string, ApplicationRole[]> PolicyRoleMappings => ApplicationRoleAuthorizationService.PolicyRoleMappings;
+    private static Dictionary<string, DomainApplicationRole[]> PolicyRoleMappings => Domain.EmployeeAggregate.ApplicationRoleAuthorizationService.PolicyRoleMappings;
 
     public RoleBasedAuthorizationMiddlewareResultHandler(
         IAuthorizationCacheService cacheService,
@@ -100,12 +102,15 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
         // Check each policy to see if user's role satisfies it
         var hasAccess = false;
 
+        var commandRole = ApplicationRoleMapper.MapFromQuery(employeeRole.ApplicationRole);
+        var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
+
         // Check policy-based authorization
         foreach (var policyName in requiredPolicyNames)
         {
             if (PolicyRoleMappings.TryGetValue(policyName, out var allowedRoles))
             {
-                if (allowedRoles.Contains(employeeRole.ApplicationRole))
+                if (Array.IndexOf(allowedRoles, domainRole) >= 0)
                 {
                     hasAccess = true;
                     break;
@@ -120,13 +125,13 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
             {
                 if (PolicyRoleMappings.TryGetValue(roleName, out var allowedRoles))
                 {
-                    if (allowedRoles.Contains(employeeRole.ApplicationRole))
+                    if (Array.IndexOf(allowedRoles, domainRole) >= 0)
                     {
                         hasAccess = true;
                         break;
                     }
                 }
-                else if (Enum.TryParse<ApplicationRole>(roleName, out var role) && role == employeeRole.ApplicationRole)
+                else if (Enum.TryParse<ApplicationRole>(roleName, out var role) && role == commandRole)
                 {
                     hasAccess = true;
                     break;

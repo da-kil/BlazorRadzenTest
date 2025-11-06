@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
+using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
@@ -35,16 +36,22 @@ public static class QuestionResponseMapper
             {
                 Goals = (goalResponse.Goals ?? Enumerable.Empty<GoalData>()).Select(g => new GoalDataDto
                 {
-                    Description = g.ObjectiveDescription,
-                    AchievementPercentage = 0, // Not available in domain GoalData
-                    Justification = null, // Not available in domain GoalData
-                    Weight = (double)g.WeightingPercentage
+                    GoalId = g.GoalId,
+                    ObjectiveDescription = g.ObjectiveDescription,
+                    TimeframeFrom = g.TimeframeFrom,
+                    TimeframeTo = g.TimeframeTo,
+                    MeasurementMetric = g.MeasurementMetric,
+                    WeightingPercentage = g.WeightingPercentage,
+                    AddedByRole = ApplicationRoleMapper.MapFromDomain(g.AddedByRole)
                 }).ToList(),
                 PredecessorRatings = (goalResponse.PredecessorRatings ?? Enumerable.Empty<PredecessorRating>()).Select(pr => new PredecessorRatingDto
                 {
-                    GoalDescription = pr.OriginalObjective,
-                    Rating = pr.DegreeOfAchievement,
-                    Comment = pr.Justification
+                    SourceGoalId = pr.SourceGoalId,
+                    DegreeOfAchievement = pr.DegreeOfAchievement,
+                    Justification = pr.Justification,
+                    RatedByRole = ApplicationRoleMapper.MapFromDomain(pr.RatedByRole),
+                    OriginalObjective = pr.OriginalObjective,
+                    OriginalAddedByRole = ApplicationRoleMapper.MapFromDomain(pr.OriginalAddedByRole)
                 }).ToList(),
                 PredecessorAssignmentId = goalResponse.PredecessorAssignmentId
             },

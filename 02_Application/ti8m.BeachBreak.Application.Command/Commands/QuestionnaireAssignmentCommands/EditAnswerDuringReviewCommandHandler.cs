@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Command.Mappers;
 using ti8m.BeachBreak.Application.Command.Repositories;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.Application.Command.Models;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
@@ -40,7 +41,7 @@ public class EditAnswerDuringReviewCommandHandler
             assignment.EditAnswerAsManagerDuringReview(
                 command.SectionId,
                 command.QuestionId,
-                command.OriginalCompletionRole,
+                ApplicationRoleMapper.MapToDomain(command.OriginalCompletionRole),
                 command.Answer,
                 command.EditedByEmployeeId);
             await repository.StoreAsync(assignment, cancellationToken);

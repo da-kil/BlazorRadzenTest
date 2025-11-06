@@ -10,15 +10,14 @@ using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
-using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
-using ti8m.BeachBreak.Infrastructure.Marten.JsonSerialization;
-using ti8m.BeachBreak.QueryApi.Dto;
 // ARCHITECTURAL NOTE: QueryApi references Domain for shared enum types only (WorkflowState, CompletionRole, ResponseRole).
 // This is pragmatic because Application.Query DTOs already use these Domain enums, and duplicating would cause ambiguity.
 // FUTURE: Consider moving shared enums to Core layer for proper layering.
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Infrastructure.Marten.JsonSerialization;
+using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -462,9 +461,9 @@ public class ResponsesController : BaseController
         QuestionnaireResponseDto response,
         Application.Query.Queries.QuestionnaireAssignmentQueries.QuestionnaireAssignment assignment,
         Application.Query.Queries.QuestionnaireTemplateQueries.QuestionnaireTemplate template,
-        ApplicationRole userRole)
+        Application.Query.Models.ApplicationRole userRole)
     {
-        var isManager = userRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin;
+        var isManager = userRole is Application.Query.Models.ApplicationRole.TeamLead or Application.Query.Models.ApplicationRole.HR or Application.Query.Models.ApplicationRole.HRLead or Application.Query.Models.ApplicationRole.Admin;
 
         // From ManagerReviewConfirmed onwards: Everyone sees ALL sections with ALL responses
         if (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or WorkflowState.EmployeeReviewConfirmed or WorkflowState.Finalized)

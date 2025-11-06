@@ -190,7 +190,8 @@ public class GoalService
         decimal degree,
         string justification,
         ApplicationRole ratedByRole,
-        string originalObjective)
+        string originalObjective,
+        ApplicationRole originalAddedByRole)
     {
         return new PredecessorRatingDto
         {
@@ -198,7 +199,8 @@ public class GoalService
             DegreeOfAchievement = (int)degree,
             Justification = justification,
             RatedByRole = ratedByRole,
-            OriginalObjective = originalObjective
+            OriginalObjective = originalObjective,
+            OriginalAddedByRole = originalAddedByRole
         };
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Command.Mappers;
 using ti8m.BeachBreak.Application.Command.Repositories;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
@@ -38,7 +39,7 @@ public class ModifyGoalCommandHandler
                 command.ObjectiveDescription,
                 command.MeasurementMetric,
                 command.WeightingPercentage,
-                command.ModifiedByRole,
+                ApplicationRoleMapper.MapToDomain(command.ModifiedByRole),
                 command.ChangeReason,
                 command.ModifiedByEmployeeId);
 

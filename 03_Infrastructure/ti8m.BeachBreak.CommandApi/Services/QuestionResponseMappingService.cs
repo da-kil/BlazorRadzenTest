@@ -1,6 +1,7 @@
 using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using DomainApplicationRole = ti8m.BeachBreak.Domain.EmployeeAggregate.ApplicationRole;
 
 namespace ti8m.BeachBreak.CommandApi.Services;
 
@@ -64,7 +65,7 @@ public class QuestionResponseMappingService
             dto.TimeframeTo,
             dto.MeasurementMetric,
             dto.WeightingPercentage,
-            dto.AddedByRole
+            (DomainApplicationRole)(int)dto.AddedByRole
         )).ToList();
     }
 
@@ -74,9 +75,9 @@ public class QuestionResponseMappingService
             dto.SourceGoalId,
             dto.DegreeOfAchievement,
             dto.Justification,
-            dto.RatedByRole,
+            (DomainApplicationRole)(int)dto.RatedByRole,
             dto.OriginalObjective,
-            dto.OriginalAddedByRole
+            (DomainApplicationRole)(int)dto.OriginalAddedByRole
         )).ToList();
     }
 }

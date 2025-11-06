@@ -5,7 +5,6 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseComm
 
 /// <summary>
 /// Type-safe command for saving manager responses.
-/// Eliminates Dictionary<Guid, object> in favor of strongly-typed QuestionResponseValue.
 /// </summary>
 public class SaveManagerResponseCommand : ICommand<Result<Guid>>
 {

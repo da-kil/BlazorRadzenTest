@@ -1,4 +1,4 @@
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.Application.Command.Models;
 
 namespace ti8m.BeachBreak.CommandApi.DTOs;
 

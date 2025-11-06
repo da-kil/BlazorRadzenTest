@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -61,7 +62,7 @@ public class AuthController : BaseController
             return Ok(new UserRoleDto
             {
                 EmployeeId = result.EmployeeId,
-                ApplicationRole = result.ApplicationRole
+                ApplicationRole = ApplicationRoleMapper.MapToDomain(result.ApplicationRole)
             });
         }
         catch (Exception ex)

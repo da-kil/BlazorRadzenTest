@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Command.Mappers;
 using ti8m.BeachBreak.Application.Command.Repositories;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
@@ -39,7 +40,7 @@ public class AddGoalCommandHandler
             assignment.AddGoal(
                 command.QuestionId,
                 goalId,
-                command.AddedByRole,
+                ApplicationRoleMapper.MapToDomain(command.AddedByRole),
                 command.TimeframeFrom,
                 command.TimeframeTo,
                 command.ObjectiveDescription,

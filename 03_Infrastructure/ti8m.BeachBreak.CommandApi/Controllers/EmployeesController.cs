@@ -3,13 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
+using ti8m.BeachBreak.Application.Command.Models;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.CommandApi.DTOs;
+using ti8m.BeachBreak.CommandApi.Mappers;
 using ti8m.BeachBreak.CommandApi.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using CommandResult = ti8m.BeachBreak.Application.Command.Commands.Result;
@@ -129,7 +130,7 @@ public class EmployeesController : BaseController
     {
         // Infrastructure responsibility: Fetch requester's role from database using UserContext
         // If user is not an employee (e.g., service principal), default to Admin role
-        ApplicationRole requesterRole = ApplicationRole.Admin;
+        ApplicationRole commandRequesterRole = ApplicationRole.Admin;
 
         if (Guid.TryParse(userContext.Id, out var userId))
         {
@@ -139,7 +140,7 @@ public class EmployeesController : BaseController
 
             if (requesterRoleResult != null)
             {
-                requesterRole = requesterRoleResult.ApplicationRole;
+                commandRequesterRole = ApplicationRoleMapper.MapFromQuery(requesterRoleResult.ApplicationRole);
             }
             else
             {
@@ -151,12 +152,15 @@ public class EmployeesController : BaseController
             logger.LogInformation("No user ID in context, treating as Admin (likely service principal)");
         }
 
+        var domainRequesterRole = ApplicationRoleMapper.MapToDomain(commandRequesterRole);
+        var domainNewRole = (Domain.EmployeeAggregate.ApplicationRole)dto.NewRole;
+
         // Dispatch command with requester's role - business rules validated in domain
         CommandResult result = await commandDispatcher.SendAsync(
             new ChangeEmployeeApplicationRoleCommand(
                 employeeId,
-                (ApplicationRole)dto.NewRole,
-                requesterRole));
+                ApplicationRoleMapper.MapFromDomain(domainNewRole),
+                ApplicationRoleMapper.MapFromDomain(domainRequesterRole)));
 
         return CreateResponse(result);
     }

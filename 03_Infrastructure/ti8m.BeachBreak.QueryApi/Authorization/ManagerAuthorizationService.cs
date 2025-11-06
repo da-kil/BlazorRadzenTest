@@ -5,6 +5,7 @@ using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.QueryApi.Authorization;
 
@@ -61,9 +62,10 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
         }
 
         // HR and HRLead can view any manager's team
-        if (employeeRole.ApplicationRole == ApplicationRole.HR ||
-            employeeRole.ApplicationRole == ApplicationRole.HRLead ||
-            employeeRole.ApplicationRole == ApplicationRole.Admin)
+        // employeeRole.ApplicationRole is already Application.Query.ApplicationRole - no conversion needed
+        if (employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HR ||
+            employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HRLead ||
+            employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.Admin)
         {
             logger.LogInformation("User {RequestingUserId} granted access to view manager {TargetManagerId} team via elevated role",
                 requestingUserId, targetManagerId);

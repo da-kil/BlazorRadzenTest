@@ -1,7 +1,9 @@
+using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Application.Query.Models;
+using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
-using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -302,7 +304,7 @@ public class QuestionnaireAssignmentReadModel
         {
             Id = @event.GoalId,
             QuestionId = @event.QuestionId,
-            AddedByRole = @event.AddedByRole,
+            AddedByRole = ApplicationRoleMapper.MapFromDomain(@event.AddedByRole),
             TimeframeFrom = @event.TimeframeFrom,
             TimeframeTo = @event.TimeframeTo,
             ObjectiveDescription = @event.ObjectiveDescription,
@@ -342,7 +344,7 @@ public class QuestionnaireAssignmentReadModel
                     ObjectiveDescription = @event.ObjectiveDescription,
                     MeasurementMetric = @event.MeasurementMetric,
                     WeightingPercentage = @event.WeightingPercentage,
-                    ModifiedByRole = @event.ModifiedByRole,
+                    ModifiedByRole = ApplicationRoleMapper.MapFromDomain(@event.ModifiedByRole),
                     ChangeReason = @event.ChangeReason,
                     ModifiedAt = @event.ModifiedAt,
                     ModifiedByEmployeeId = @event.ModifiedByEmployeeId
@@ -371,7 +373,7 @@ public class QuestionnaireAssignmentReadModel
             SourceAssignmentId = @event.SourceAssignmentId,
             SourceGoalId = @event.SourceGoalId,
             QuestionId = @event.QuestionId,
-            RatedByRole = @event.RatedByRole,
+            RatedByRole = ApplicationRoleMapper.MapFromDomain(@event.RatedByRole),
             DegreeOfAchievement = @event.DegreeOfAchievement,
             Justification = @event.Justification,
             RatedAt = @event.RatedAt,
@@ -382,7 +384,7 @@ public class QuestionnaireAssignmentReadModel
             SnapshotTimeframeFrom = @event.PredecessorGoal.TimeframeFrom,
             SnapshotTimeframeTo = @event.PredecessorGoal.TimeframeTo,
             SnapshotMeasurementMetric = @event.PredecessorGoal.MeasurementMetric,
-            SnapshotAddedByRole = @event.PredecessorGoal.AddedByRole,
+            SnapshotAddedByRole = ApplicationRoleMapper.MapFromDomain(@event.PredecessorGoal.AddedByRole),
             SnapshotWeightingPercentage = @event.PredecessorGoal.WeightingPercentage
         });
     }
@@ -406,7 +408,7 @@ public class QuestionnaireAssignmentReadModel
                 {
                     DegreeOfAchievement = @event.DegreeOfAchievement,
                     Justification = @event.Justification,
-                    ModifiedByRole = @event.ModifiedByRole,
+                    ModifiedByRole = ApplicationRoleMapper.MapFromDomain(@event.ModifiedByRole),
                     ChangeReason = @event.ChangeReason,
                     ModifiedAt = @event.ModifiedAt,
                     ModifiedByEmployeeId = @event.ModifiedByEmployeeId

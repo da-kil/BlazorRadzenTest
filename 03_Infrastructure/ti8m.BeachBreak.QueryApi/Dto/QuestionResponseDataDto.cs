@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using ti8m.BeachBreak.Application.Query.Models;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
@@ -50,13 +51,17 @@ public class CompetencyRatingDto
 
 /// <summary>
 /// Goal data for goal responses.
+/// Must match frontend GoalDataDto structure exactly for compatibility.
 /// </summary>
 public class GoalDataDto
 {
-    public string Description { get; set; } = string.Empty;
-    public double AchievementPercentage { get; set; }
-    public string? Justification { get; set; }
-    public double Weight { get; set; }
+    public Guid GoalId { get; set; }
+    public string ObjectiveDescription { get; set; } = string.Empty;
+    public DateTime TimeframeFrom { get; set; }
+    public DateTime TimeframeTo { get; set; }
+    public string MeasurementMetric { get; set; } = string.Empty;
+    public decimal WeightingPercentage { get; set; }
+    public ApplicationRole AddedByRole { get; set; }
 }
 
 /// <summary>
@@ -64,7 +69,11 @@ public class GoalDataDto
 /// </summary>
 public class PredecessorRatingDto
 {
-    public string GoalDescription { get; set; } = string.Empty;
-    public int Rating { get; set; }
-    public string? Comment { get; set; }
+    public Guid SourceGoalId { get; set; }
+    public int DegreeOfAchievement { get; set; }
+    public string Justification { get; set; } = string.Empty;
+    public ApplicationRole RatedByRole { get; set; }
+    public string OriginalObjective { get; set; } = string.Empty;
+    public ApplicationRole OriginalAddedByRole { get; set; }
 }
+
