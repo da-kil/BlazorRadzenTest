@@ -1,6 +1,6 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
-@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Extensions
 @using ti8m.BeachBreak.Client.Components.Shared
@@ -68,7 +68,7 @@
     [Parameter] public string CurrentUserRole { get; set; } = "Employee";
 
     // Groups predecessor ratings by SourceGoalId to show comparison
-    private Dictionary<Guid, List<Dictionary<string, object>>> predecessorGoalGroups = new();
+    private Dictionary<Guid, List<PredecessorRatingDto>> predecessorGoalGroups = new();
     private List<string> validationErrors = new();
 
     protected override void OnInitialized()
@@ -92,8 +92,8 @@
 
         // Group ratings by SourceGoalId to compare Employee vs Manager assessments
         predecessorGoalGroups = allRatings
-            .Where(r => r.TryGetValue(GoalService.RatingSourceGoalIdKey, out var sgId) && sgId is Guid)
-            .GroupBy(r => (Guid)r[GoalService.RatingSourceGoalIdKey])
+            .Where(r => r.SourceGoalId != Guid.Empty)
+            .GroupBy(r => r.SourceGoalId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
         // Validate completion status
@@ -110,19 +110,16 @@
             var ratings = kvp.Value;
 
             // Get the original goal objective for display
-            var originalObjective = ratings.FirstOrDefault()
-                ?.TryGetValue(GoalService.RatingOriginalObjectiveKey, out var obj) == true
-                ? obj?.ToString() ?? "Unknown Goal"
-                : "Unknown Goal";
+            var originalObjective = ratings.FirstOrDefault()?.OriginalObjective ?? "Unknown Goal";
 
             // Check if we have ratings from both employee and manager perspectives
-            var employeeRating = ratings.FirstOrDefault(r =>
-                r.TryGetValue(GoalService.RatingByRoleKey, out var role) &&
-                role?.ToString() == "Employee");
+            var employeeRating = ratings.FirstOrDefault(r => r.RatedByRole == ApplicationRole.Employee);
 
             var managerRating = ratings.FirstOrDefault(r =>
-                r.TryGetValue(GoalService.RatingByRoleKey, out var role) &&
-                IsManagerRole(role?.ToString() ?? ""));
+                r.RatedByRole == ApplicationRole.TeamLead ||
+                r.RatedByRole == ApplicationRole.HR ||
+                r.RatedByRole == ApplicationRole.HRLead ||
+                r.RatedByRole == ApplicationRole.Admin);
 
             // Check for missing ratings
             if (employeeRating == null)
@@ -145,10 +142,9 @@
         }
     }
 
-    private bool HasValidJustification(Dictionary<string, object> rating)
+    private bool HasValidJustification(PredecessorRatingDto rating)
     {
-        return rating.TryGetValue(GoalService.RatingJustificationKey, out var justification) &&
-               !string.IsNullOrWhiteSpace(justification?.ToString());
+        return !string.IsNullOrWhiteSpace(rating.Justification);
     }
 
     private bool IsManagerRole(string role)
@@ -156,24 +152,22 @@
         return role == "TeamLead" || role == "HR" || role == "HRLead" || role == "Admin" || role == "Manager";
     }
 
-    private RenderFragment RenderPredecessorGoalComparison(Guid sourceGoalId, List<Dictionary<string, object>> ratings) => __builder =>
+    private RenderFragment RenderPredecessorGoalComparison(Guid sourceGoalId, List<PredecessorRatingDto> ratings) => __builder =>
     {
         // Get goal information from first rating (all ratings for same goal have same original data)
         var firstRating = ratings.FirstOrDefault();
         if (firstRating == null) return;
 
-        var originalObjective = firstRating.TryGetValue(GoalService.RatingOriginalObjectiveKey, out var obj)
-            ? obj?.ToString() ?? "Unknown Goal"
-            : "Unknown Goal";
-        var originalAddedByRole = firstRating.TryGetValue(GoalService.RatingOriginalAddedByRoleKey, out var origRole)
-            ? origRole?.ToString() ?? "Unknown"
-            : "Unknown";
+        var originalObjective = firstRating.OriginalObjective ?? "Unknown Goal";
+        var originalAddedByRole = "Employee"; // Default assumption - could be enhanced with additional data if needed
 
         // Separate employee and manager ratings
-        var employeeRating = ratings.FirstOrDefault(r =>
-            r.TryGetValue(GoalService.RatingByRoleKey, out var role) && role?.ToString() == "Employee");
+        var employeeRating = ratings.FirstOrDefault(r => r.RatedByRole == ApplicationRole.Employee);
         var managerRating = ratings.FirstOrDefault(r =>
-            r.TryGetValue(GoalService.RatingByRoleKey, out var role) && IsManagerRole(role?.ToString() ?? ""));
+            r.RatedByRole == ApplicationRole.TeamLead ||
+            r.RatedByRole == ApplicationRole.HR ||
+            r.RatedByRole == ApplicationRole.HRLead ||
+            r.RatedByRole == ApplicationRole.Admin);
 
         <RadzenRow>
             <RadzenColumn Size="12" Class="mb-3">
@@ -245,15 +239,11 @@
         </RadzenRow>
     };
 
-    private RenderFragment RenderRatingContent(Dictionary<string, object> rating, Guid sourceGoalId, string perspective) => __builder =>
+    private RenderFragment RenderRatingContent(PredecessorRatingDto rating, Guid sourceGoalId, string perspective) => __builder =>
     {
-        var degree = rating.TryGetValue(GoalService.RatingDegreeKey, out var deg) ? Convert.ToDecimal(deg) : 0;
-        var justification = rating.TryGetValue(GoalService.RatingJustificationKey, out var just)
-            ? just?.ToString() ?? ""
-            : "";
-        var ratedByRole = rating.TryGetValue(GoalService.RatingByRoleKey, out var role)
-            ? role?.ToString() ?? ""
-            : "";
+        var degree = rating.DegreeOfAchievement;
+        var justification = rating.Justification ?? "";
+        var ratedByRole = rating.RatedByRole.ToString();
 
         // Check if current user can edit this rating
         bool canEdit = !IsReadOnly &&
@@ -321,27 +311,44 @@
 
     private async Task AddNewRating(Guid sourceGoalId, string originalObjective, string perspectiveRole)
     {
-        var actualRole = perspectiveRole == "Employee" ? "Employee" :
-                        IsManagerRole(CurrentUserRole) ? CurrentUserRole : "Manager";
-
-        // Create new rating entry
-        var newRating = new Dictionary<string, object>
+        // Determine the actual role based on perspective and current user role
+        ApplicationRole actualRole;
+        if (perspectiveRole == "Employee")
         {
-            [GoalService.RatingSourceGoalIdKey] = sourceGoalId,
-            [GoalService.RatingDegreeKey] = 0m,
-            [GoalService.RatingJustificationKey] = "",
-            [GoalService.RatingByRoleKey] = actualRole,
-            [GoalService.RatingOriginalObjectiveKey] = originalObjective,
-            [GoalService.RatingOriginalAddedByRoleKey] = ""
+            actualRole = ApplicationRole.Employee;
+        }
+        else
+        {
+            // Map current user role string to ApplicationRole enum
+            actualRole = CurrentUserRole switch
+            {
+                "TeamLead" => ApplicationRole.TeamLead,
+                "HR" => ApplicationRole.HR,
+                "HRLead" => ApplicationRole.HRLead,
+                "Admin" => ApplicationRole.Admin,
+                _ => ApplicationRole.TeamLead // Default fallback
+            };
+        }
+
+        // Create new rating entry using strongly-typed DTO
+        var newRating = new PredecessorRatingDto
+        {
+            SourceGoalId = sourceGoalId,
+            DegreeOfAchievement = 0,
+            Justification = "",
+            RatedByRole = actualRole,
+            OriginalObjective = originalObjective
         };
 
-        // Add to existing ratings
-        var allRatings = GoalService.GetPredecessorRatings(Response).ToList();
-        allRatings.Add(newRating);
+        // Ensure we have GoalResponseDataDto
+        if (Response.ResponseData is not GoalResponseDataDto goalData)
+        {
+            goalData = new GoalResponseDataDto();
+            Response.ResponseData = goalData;
+        }
 
-        // Update response
-        Response.ComplexValue ??= new Dictionary<string, object>();
-        Response.ComplexValue[GoalService.PredecessorRatingsKey] = allRatings;
+        // Add to existing ratings
+        goalData.PredecessorRatings.Add(newRating);
         Response.LastModified = DateTime.Now;
 
         // Reload data and notify parent
@@ -351,17 +358,21 @@
 
     private async Task SetRatingDegree(Guid sourceGoalId, string ratedByRole, decimal value)
     {
-        var allRatings = GoalService.GetPredecessorRatings(Response).ToList();
-        var rating = allRatings.FirstOrDefault(r =>
-            r.TryGetValue(GoalService.RatingSourceGoalIdKey, out var sgId) && sgId.Equals(sourceGoalId) &&
-            r.TryGetValue(GoalService.RatingByRoleKey, out var role) && role?.ToString() == ratedByRole);
+        // Ensure we have GoalResponseDataDto
+        if (Response.ResponseData is not GoalResponseDataDto goalData)
+        {
+            goalData = new GoalResponseDataDto();
+            Response.ResponseData = goalData;
+        }
+
+        // Find the rating to update
+        var rating = goalData.PredecessorRatings.FirstOrDefault(r =>
+            r.SourceGoalId == sourceGoalId &&
+            r.RatedByRole.ToString() == ratedByRole);
 
         if (rating != null)
         {
-            rating[GoalService.RatingDegreeKey] = value;
-
-            Response.ComplexValue ??= new Dictionary<string, object>();
-            Response.ComplexValue[GoalService.PredecessorRatingsKey] = allRatings;
+            rating.DegreeOfAchievement = (int)value;
             Response.LastModified = DateTime.Now;
 
             LoadPredecessorData();
@@ -371,17 +382,21 @@
 
     private async Task SetRatingJustification(Guid sourceGoalId, string ratedByRole, string value)
     {
-        var allRatings = GoalService.GetPredecessorRatings(Response).ToList();
-        var rating = allRatings.FirstOrDefault(r =>
-            r.TryGetValue(GoalService.RatingSourceGoalIdKey, out var sgId) && sgId.Equals(sourceGoalId) &&
-            r.TryGetValue(GoalService.RatingByRoleKey, out var role) && role?.ToString() == ratedByRole);
+        // Ensure we have GoalResponseDataDto
+        if (Response.ResponseData is not GoalResponseDataDto goalData)
+        {
+            goalData = new GoalResponseDataDto();
+            Response.ResponseData = goalData;
+        }
+
+        // Find the rating to update
+        var rating = goalData.PredecessorRatings.FirstOrDefault(r =>
+            r.SourceGoalId == sourceGoalId &&
+            r.RatedByRole.ToString() == ratedByRole);
 
         if (rating != null)
         {
-            rating[GoalService.RatingJustificationKey] = value ?? "";
-
-            Response.ComplexValue ??= new Dictionary<string, object>();
-            Response.ComplexValue[GoalService.PredecessorRatingsKey] = allRatings;
+            rating.Justification = value ?? "";
             Response.LastModified = DateTime.Now;
 
             LoadPredecessorData();

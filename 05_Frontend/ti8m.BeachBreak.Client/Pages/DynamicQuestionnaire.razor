@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
@@ -1074,36 +1075,9 @@
         return new QuestionResponse { QuestionId = questionId };
     }
 
-    private void UpdateQuestionResponse(Guid questionId, int value)
-    {
-        var questionResponse = GetQuestionResponse(questionId);
-        questionResponse.ComplexValue = new Dictionary<string, object> { { "value", value } };
-        questionResponse.LastModified = DateTime.Now;
-        UpdateProgress();
-        NotifyStateChanged();
-    }
+    // Question response update methods removed - functionality handled by OptimizedQuestionRenderer components
 
-    private void UpdateQuestionResponseText(Guid questionId, string value)
-    {
-        var questionResponse = GetQuestionResponse(questionId);
-        questionResponse.ComplexValue = new Dictionary<string, object> { { "value", value } };
-        questionResponse.LastModified = DateTime.Now;
-        UpdateProgress();
-        NotifyStateChangedDebounced(200);
-    }
-
-    // Goal question helpers
-    private DateTime? GetGoalStartDate(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("StartDate", out var value) == true ? (DateTime?)value : null;
-    }
-
-    private string GetGoalJustification(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("Justification", out var value) == true ? value.ToString() ?? "" : "";
-    }
+    // Goal question helper methods removed - functionality handled by OptimizedGoalQuestion
 
     private ProgressBarStyle GetProgressStyle(int percentage)
     {
@@ -1150,127 +1124,7 @@
         };
     }
 
-    private string GetGoalMeasurement(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("Measurement", out var value) == true ? value.ToString() ?? "" : "";
-    }
-
-    private decimal GetGoalWeighting(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("Weighting", out var value) == true ? Convert.ToDecimal(value) : 0m;
-    }
-
-    private bool GetBooleanValue(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("value", out var value) == true && value?.ToString() == "true";
-    }
-
-    private DateTime? GetDateValue(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue("value", out var value) == true && value is DateTime dateValue)
-            return dateValue;
-        return null;
-    }
-
-    private int GetNumericValue(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue("value", out var value) == true)
-        {
-            if (value is int intValue) return intValue;
-            if (int.TryParse(value?.ToString(), out var parsed)) return parsed;
-        }
-        return 0;
-    }
-
-    // Setter methods for goal questions
-    private void SetGoalStartDate(Guid questionId, DateTime? value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        if (value.HasValue) response.ComplexValue["StartDate"] = value.Value;
-        else response.ComplexValue.Remove("StartDate");
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalEndDate(Guid questionId, DateTime? value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        if (value.HasValue) response.ComplexValue["EndDate"] = value.Value;
-        else response.ComplexValue.Remove("EndDate");
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalDescription(Guid questionId, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["Description"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalPercentage(Guid questionId, int value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["AchievementPercentage"] = value;
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalJustification(Guid questionId, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["Justification"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalMeasurement(Guid questionId, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["Measurement"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalWeighting(Guid questionId, decimal value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["Weighting"] = value;
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetSimpleValue(Guid questionId, object? value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (value != null)
-        {
-            // For bool, store as lowercase string "true"/"false" for consistency
-            if (value is bool boolValue)
-                value = boolValue.ToString().ToLower();
-
-            response.ComplexValue = new Dictionary<string, object> { { "value", value } };
-        }
-        else
-        {
-            response.ComplexValue = null;
-        }
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
+    // All goal and value helper methods removed - functionality handled by OptimizedQuestionRenderer components
 
     // Navigation methods
     private void OnSectionChanged(int newIndex)
@@ -1379,18 +1233,18 @@
         var textSections = ConfigService.GetTextSections(question);
         if (textSections.Count == 0) return true;
 
-        if (questionResponse.ComplexValue == null) return false;
+        if (questionResponse.ResponseData is not TextResponseDataDto textData) return false;
 
-        // Match the key format used by OptimizedTextQuestion
+        // Match the format used by OptimizedTextQuestion
         if (textSections.Count == 1)
         {
-            // Single section uses "value" key
-            var hasValue = questionResponse.ComplexValue.TryGetValue("value", out var val) &&
-                          !string.IsNullOrWhiteSpace(val?.ToString());
+            // Single section - check first TextSection
+            var hasValue = textData.TextSections.Count > 0 &&
+                          !string.IsNullOrWhiteSpace(textData.TextSections[0]);
             return hasValue;
         }
 
-        // Multiple sections use "section_0", "section_1", etc.
+        // Multiple sections - check corresponding TextSections by index
         // Get only required text sections
         var requiredTextSections = textSections.Where(ts => ts.IsRequired).ToList();
 
@@ -1399,9 +1253,8 @@
         {
             return textSections.Select((ts, index) => index).Any(index =>
             {
-                var sectionKey = $"section_{index}";
-                var hasValue = questionResponse.ComplexValue.TryGetValue(sectionKey, out var val) &&
-                              !string.IsNullOrWhiteSpace(val?.ToString());
+                var hasValue = index < textData.TextSections.Count &&
+                              !string.IsNullOrWhiteSpace(textData.TextSections[index]);
                 return hasValue;
             });
         }
@@ -1410,9 +1263,8 @@
         return requiredTextSections.All(ts =>
         {
             var index = textSections.IndexOf(ts);
-            var sectionKey = $"section_{index}";
-            var hasValue = questionResponse.ComplexValue.TryGetValue(sectionKey, out var val) &&
-                          !string.IsNullOrWhiteSpace(val?.ToString());
+            var hasValue = index < textData.TextSections.Count &&
+                          !string.IsNullOrWhiteSpace(textData.TextSections[index]);
             return hasValue;
         });
     }
@@ -1422,7 +1274,7 @@
         var competencies = ConfigService.GetCompetencies(question);
         if (competencies.Count == 0) return true;
 
-        if (questionResponse.ComplexValue == null) return false;
+        if (questionResponse.ResponseData is not AssessmentResponseDataDto assessmentData) return false;
 
         // Get only required competencies
         var requiredCompetencies = competencies.Where(c => c.IsRequired).ToList();
@@ -1430,29 +1282,18 @@
         // If no required competencies exist, check if at least one competency is rated
         if (!requiredCompetencies.Any())
         {
-            return competencies.Any(c => HasCompetencyRating(questionResponse, c.Key));
+            return competencies.Any(c => HasCompetencyRating(assessmentData, c.Key));
         }
 
         // Check that ALL required competencies have been rated
-        return requiredCompetencies.All(c => HasCompetencyRating(questionResponse, c.Key));
+        return requiredCompetencies.All(c => HasCompetencyRating(assessmentData, c.Key));
     }
 
-    private bool HasCompetencyRating(QuestionResponse questionResponse, string competencyKey)
+    private bool HasCompetencyRating(AssessmentResponseDataDto assessmentData, string competencyKey)
     {
-        if (questionResponse.ComplexValue?.TryGetValue($"Rating_{competencyKey}", out var value) == true)
+        if (assessmentData.Competencies.TryGetValue(competencyKey, out var competencyRating))
         {
-            // Handle JsonElement from deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
-                {
-                    return jsonElement.GetInt32() > 0;
-                }
-            }
-            else if (value is int intValue)
-            {
-                return intValue > 0;
-            }
+            return competencyRating.Rating > 0;
         }
         return false;
     }
@@ -1853,59 +1694,7 @@
         }
     }
 
-    // Competency-specific helper methods
-    private int GetCompetencyRating(Guid questionId, string competencyKey)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue($"Rating_{competencyKey}", out var value) == true)
-        {
-            // Handle JsonElement from deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
-                {
-                    return jsonElement.GetInt32();
-                }
-            }
-            else if (value is int intValue)
-            {
-                return intValue;
-            }
-            else
-            {
-                return Convert.ToInt32(value);
-            }
-        }
-        return 0;
-    }
-
-    private string GetCompetencyComment(Guid questionId, string competencyKey)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue($"Comment_{competencyKey}", out var value) == true)
-        {
-            return value.ToString() ?? "";
-        }
-        return "";
-    }
-
-    private void SetCompetencyRating(Guid questionId, string competencyKey, int value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"Rating_{competencyKey}"] = value;
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetCompetencyComment(Guid questionId, string competencyKey, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"Comment_{competencyKey}"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
+    // Competency-specific helper methods removed - functionality handled by OptimizedAssessmentQuestion
 
     // Text Question helper methods
     private string GetTextQuestionSectionTitle(QuestionItem question)

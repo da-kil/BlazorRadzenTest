@@ -1,5 +1,6 @@
 using ti8m.BeachBreak.Client.Models;
 using ti8m.BeachBreak.Client.Models.CommandDTOs;
+using ti8m.BeachBreak.Client.Models.DTOs;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -73,81 +74,34 @@ public static class QuestionnaireResponseConverter
     }
 
     /// <summary>
-    /// Converts text question response from ComplexValue format to TextResponseCommandDto.
+    /// Converts text question response from ResponseData format to TextResponseCommandDto.
     /// </summary>
     private static TextResponseCommandDto? ConvertTextResponse(QuestionResponse response)
     {
-        if (response.ComplexValue == null) return null;
+        if (response.ResponseData is not TextResponseDataDto textData) return null;
 
-        var textSections = new List<string>();
-
-        // Handle both single value and multiple sections format
-        if (response.ComplexValue.ContainsKey("value"))
-        {
-            // Single section format
-            var value = response.ComplexValue["value"]?.ToString();
-            if (!string.IsNullOrEmpty(value))
-            {
-                textSections.Add(value);
-            }
-        }
-        else if (response.ComplexValue.ContainsKey("textSections"))
-        {
-            // Multiple sections format
-            var sections = response.ComplexValue["textSections"] as List<string>;
-            if (sections != null)
-            {
-                textSections.AddRange(sections);
-            }
-        }
-        else
-        {
-            // Check for section_0, section_1, etc. format used by OptimizedTextQuestion
-            var sectionIndex = 0;
-            while (response.ComplexValue.ContainsKey($"section_{sectionIndex}"))
-            {
-                var sectionValue = response.ComplexValue[$"section_{sectionIndex}"]?.ToString();
-                if (!string.IsNullOrEmpty(sectionValue))
-                {
-                    textSections.Add(sectionValue);
-                }
-                sectionIndex++;
-            }
-        }
+        var textSections = new List<string>(textData.TextSections);
 
         return textSections.Any() ? new TextResponseCommandDto { TextSections = textSections } : null;
     }
 
     /// <summary>
-    /// Converts assessment question response from ComplexValue format to AssessmentResponseCommandDto.
+    /// Converts assessment question response from ResponseData format to AssessmentResponseCommandDto.
     /// </summary>
     private static AssessmentResponseCommandDto? ConvertAssessmentResponse(QuestionResponse response)
     {
-        if (response.ComplexValue == null) return null;
+        if (response.ResponseData is not AssessmentResponseDataDto assessmentData) return null;
 
         var competencies = new Dictionary<string, CompetencyRatingCommandDto>();
 
-        // Extract competency ratings from ComplexValue using "Rating_" prefix format
-        foreach (var kvp in response.ComplexValue)
+        // Convert from AssessmentResponseDataDto to command format
+        foreach (var kvp in assessmentData.Competencies)
         {
-            if (kvp.Key.StartsWith("Rating_") && kvp.Value != null)
+            competencies[kvp.Key] = new CompetencyRatingCommandDto
             {
-                var competencyKey = kvp.Key.Substring(7); // Remove "Rating_" prefix
-
-                if (int.TryParse(kvp.Value.ToString(), out var rating))
-                {
-                    var commentKey = $"comment_{competencyKey}";
-                    var comment = response.ComplexValue.ContainsKey(commentKey)
-                        ? response.ComplexValue[commentKey]?.ToString() ?? ""
-                        : "";
-
-                    competencies[competencyKey] = new CompetencyRatingCommandDto
-                    {
-                        Rating = rating,
-                        Comment = comment
-                    };
-                }
-            }
+                Rating = kvp.Value.Rating,
+                Comment = kvp.Value.Comment
+            };
         }
 
         return competencies.Any()
@@ -156,38 +110,48 @@ public static class QuestionnaireResponseConverter
     }
 
     /// <summary>
-    /// Converts goal question response from ComplexValue format to GoalResponseCommandDto.
-    /// This is a placeholder implementation - actual goal data structure may need refinement.
+    /// Converts goal question response from ResponseData format to GoalResponseCommandDto.
     /// </summary>
     private static GoalResponseCommandDto? ConvertGoalResponse(QuestionResponse response)
     {
-        if (response.ComplexValue == null) return null;
-
-        // TODO: Implement proper goal response conversion based on actual goal data structure
-        // For now, return a basic structure to prevent errors
+        if (response.ResponseData is not GoalResponseDataDto goalData) return null;
 
         var goals = new List<GoalDataCommandDto>();
         var predecessorRatings = new List<PredecessorRatingCommandDto>();
-        Guid? predecessorAssignmentId = null;
 
-        // Check if this is a goal achievement response format
-        if (response.ComplexValue.ContainsKey("AchievementPercentage"))
+        // Convert goals
+        foreach (var goal in goalData.Goals)
         {
-            // This appears to be a predecessor rating format
-            if (response.ComplexValue.ContainsKey("Description") &&
-                response.ComplexValue.ContainsKey("AchievementPercentage") &&
-                response.ComplexValue.ContainsKey("Justification"))
+            goals.Add(new GoalDataCommandDto
             {
-                // Extract predecessor rating data - this is a simplified implementation
-                // Real implementation would need to map to proper PredecessorRatingCommandDto structure
-            }
+                GoalId = goal.GoalId,
+                ObjectiveDescription = goal.ObjectiveDescription,
+                TimeframeFrom = goal.TimeframeFrom,
+                TimeframeTo = goal.TimeframeTo,
+                MeasurementMetric = goal.MeasurementMetric,
+                WeightingPercentage = goal.WeightingPercentage,
+                AddedByRole = goal.AddedByRole
+            });
+        }
+
+        // Convert predecessor ratings
+        foreach (var rating in goalData.PredecessorRatings)
+        {
+            predecessorRatings.Add(new PredecessorRatingCommandDto
+            {
+                SourceGoalId = rating.SourceGoalId,
+                DegreeOfAchievement = rating.DegreeOfAchievement,
+                Justification = rating.Justification,
+                RatedByRole = rating.RatedByRole,
+                OriginalObjective = rating.OriginalObjective
+            });
         }
 
         return new GoalResponseCommandDto
         {
             Goals = goals,
             PredecessorRatings = predecessorRatings,
-            PredecessorAssignmentId = predecessorAssignmentId
+            PredecessorAssignmentId = goalData.PredecessorAssignmentId
         };
     }
 
@@ -197,35 +161,19 @@ public static class QuestionnaireResponseConverter
     /// </summary>
     private static QuestionType DetectQuestionType(QuestionResponse response)
     {
-        if (response.ComplexValue == null || !response.ComplexValue.Any())
+        if (response.ResponseData == null)
         {
-            // No complex data, default to the stated question type or TextQuestion
+            // No response data, default to the stated question type
             return response.QuestionType;
         }
 
-        // Check for assessment data (Rating_ prefix indicates assessment)
-        if (response.ComplexValue.Keys.Any(k => k.StartsWith("Rating_", StringComparison.OrdinalIgnoreCase)))
+        // Check the actual ResponseData type
+        return response.ResponseData switch
         {
-            return QuestionType.Assessment;
-        }
-
-        // Check for goal data (AchievementPercentage, Description, Justification indicate goals)
-        if (response.ComplexValue.ContainsKey("AchievementPercentage") ||
-            response.ComplexValue.ContainsKey("Description") ||
-            response.ComplexValue.ContainsKey("Justification"))
-        {
-            return QuestionType.Goal;
-        }
-
-        // Check for text data (value, section_0, textSections indicate text)
-        if (response.ComplexValue.ContainsKey("value") ||
-            response.ComplexValue.ContainsKey("textSections") ||
-            response.ComplexValue.Keys.Any(k => k.StartsWith("section_")))
-        {
-            return QuestionType.TextQuestion;
-        }
-
-        // Fallback to stated question type
-        return response.QuestionType;
+            TextResponseDataDto => QuestionType.TextQuestion,
+            AssessmentResponseDataDto => QuestionType.Assessment,
+            GoalResponseDataDto => QuestionType.Goal,
+            _ => response.QuestionType
+        };
     }
 }

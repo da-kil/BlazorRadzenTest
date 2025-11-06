@@ -1,5 +1,6 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits OptimizedComponentBase
 
@@ -203,7 +204,9 @@ else
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(Response.ComplexValue), Response.ComplexValue?.Count ?? 0) ||
+        // Check if response data has changed - compare by reference since ResponseData is strongly typed
+        var responseDataHash = Response.ResponseData?.GetHashCode() ?? 0;
+        return HasParameterChanged(nameof(Response.ResponseData), responseDataHash) ||
                HasParameterChanged(nameof(competencies), competencies.Count);
     }
 
@@ -357,18 +360,10 @@ else
 
     private int GetCompetencyRating(string competencyKey)
     {
-        if (Response.ComplexValue?.TryGetValue($"Rating_{competencyKey}", out var value) == true)
+        if (Response.ResponseData is AssessmentResponseDataDto assessmentData &&
+            assessmentData.Competencies.TryGetValue(competencyKey, out var competencyRating))
         {
-            // Handle JsonElement from API deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number
-                    ? jsonElement.GetInt32()
-                    : 0;
-            }
-
-            // Handle direct int value
-            return Convert.ToInt32(value);
+            return competencyRating.Rating;
         }
 
         return 0;
@@ -376,18 +371,10 @@ else
 
     private string GetCompetencyComment(string competencyKey)
     {
-        if (Response.ComplexValue?.TryGetValue($"Comment_{competencyKey}", out var value) == true)
+        if (Response.ResponseData is AssessmentResponseDataDto assessmentData &&
+            assessmentData.Competencies.TryGetValue(competencyKey, out var competencyRating))
         {
-            // Handle JsonElement from API deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
-                    ? jsonElement.GetString() ?? ""
-                    : "";
-            }
-
-            // Handle direct string value
-            return value.ToString() ?? "";
+            return competencyRating.Comment ?? "";
         }
 
         return "";
@@ -397,8 +384,22 @@ else
     {
         if (IsReadOnly) return;
 
-        Response.ComplexValue ??= new Dictionary<string, object>();
-        Response.ComplexValue[$"Rating_{competencyKey}"] = value;
+        // Ensure we have an AssessmentResponseDataDto
+        if (Response.ResponseData is not AssessmentResponseDataDto assessmentData)
+        {
+            assessmentData = new AssessmentResponseDataDto();
+            Response.ResponseData = assessmentData;
+        }
+
+        // Get existing competency or create new one
+        if (!assessmentData.Competencies.TryGetValue(competencyKey, out var existingRating))
+        {
+            existingRating = new CompetencyRatingDto();
+            assessmentData.Competencies[competencyKey] = existingRating;
+        }
+
+        // Update the rating
+        existingRating.Rating = value;
         Response.LastModified = DateTime.Now;
 
         await NotifyResponseChanged();
@@ -408,8 +409,22 @@ else
     {
         if (IsReadOnly) return;
 
-        Response.ComplexValue ??= new Dictionary<string, object>();
-        Response.ComplexValue[$"Comment_{competencyKey}"] = value ?? "";
+        // Ensure we have an AssessmentResponseDataDto
+        if (Response.ResponseData is not AssessmentResponseDataDto assessmentData)
+        {
+            assessmentData = new AssessmentResponseDataDto();
+            Response.ResponseData = assessmentData;
+        }
+
+        // Get existing competency or create new one
+        if (!assessmentData.Competencies.TryGetValue(competencyKey, out var existingRating))
+        {
+            existingRating = new CompetencyRatingDto();
+            assessmentData.Competencies[competencyKey] = existingRating;
+        }
+
+        // Update the comment
+        existingRating.Comment = value ?? "";
         Response.LastModified = DateTime.Now;
 
         // Debounce text input changes
