@@ -553,16 +553,10 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    /// <summary>
-    // Duplicate SaveGoalsToResponse method removed - using strongly-typed version instead
-
     private BadgeStyle GetRoleBadgeStyle(string role)
     {
         return role == "Employee" ? BadgeStyle.Primary : BadgeStyle.Success;
     }
-
-
-
 
     private async Task ShowAddGoalDialog()
     {

@@ -1075,10 +1075,6 @@
         return new QuestionResponse { QuestionId = questionId };
     }
 
-    // Question response update methods removed - functionality handled by OptimizedQuestionRenderer components
-
-    // Goal question helper methods removed - functionality handled by OptimizedGoalQuestion
-
     private ProgressBarStyle GetProgressStyle(int percentage)
     {
         return percentage switch
@@ -1123,8 +1119,6 @@
             _ => "Below Expectations"
         };
     }
-
-    // All goal and value helper methods removed - functionality handled by OptimizedQuestionRenderer components
 
     // Navigation methods
     private void OnSectionChanged(int newIndex)
@@ -1693,8 +1687,6 @@
             NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to reload assignment: {ex.Message}");
         }
     }
-
-    // Competency-specific helper methods removed - functionality handled by OptimizedAssessmentQuestion
 
     // Text Question helper methods
     private string GetTextQuestionSectionTitle(QuestionItem question)

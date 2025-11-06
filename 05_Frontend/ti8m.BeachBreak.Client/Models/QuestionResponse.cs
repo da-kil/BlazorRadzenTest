@@ -9,7 +9,6 @@ public class QuestionResponse
 
     /// <summary>
     /// Strongly-typed response data that corresponds to the QuestionType.
-    /// Replaces the old Dictionary<string, object> ComplexValue approach.
     /// </summary>
     public QuestionResponseDataDto? ResponseData { get; set; }
 

@@ -110,9 +110,11 @@
         }
         else
         {
-            <RadzenTextBox @bind-Value="@SimpleTextValue"
-                          Placeholder="Enter your answer..."
-                          Style="width: 100%;" />
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                <RadzenText TextStyle="TextStyle.Body1">
+                    This question type is not supported for editing during review.
+                </RadzenText>
+            </RadzenAlert>
         }
         </div>
     </div>
@@ -143,29 +145,6 @@
     private QuestionResponse editResponse = new();
     private OptimizedGoalQuestion? goalQuestionRef;
 
-    // Helper property for simple text binding
-    private string SimpleTextValue
-    {
-        get
-        {
-            if (editResponse.ResponseData is TextResponseDataDto textData && textData.TextSections.Count > 0)
-                return textData.TextSections[0];
-            return "";
-        }
-        set
-        {
-            if (editResponse.ResponseData is not TextResponseDataDto textData)
-            {
-                textData = new TextResponseDataDto();
-                editResponse.ResponseData = textData;
-            }
-            if (textData.TextSections.Count == 0)
-                textData.TextSections.Add(value ?? "");
-            else
-                textData.TextSections[0] = value ?? "";
-        }
-    }
-
     protected override void OnInitialized()
     {
         editResponse = new QuestionResponse
@@ -176,105 +155,22 @@
         };
 
         // Initialize ResponseData based on question type and current answer
-        if (CurrentAnswer != null)
-        {
-            InitializeResponseDataFromCurrentAnswer();
-        }
-        else if (Question.Type == QuestionType.TextQuestion)
-        {
-            // Initialize empty TextResponseData for text sections
-            editResponse.ResponseData = new TextResponseDataDto();
-        }
-        else
-        {
-            InitializeEmptyResponseData();
-        }
-    }
-
-    private void InitializeResponseDataFromCurrentAnswer()
-    {
-        // If CurrentAnswer is already strongly typed, use it directly
         if (CurrentAnswer is QuestionResponseDataDto responseData)
         {
+            // Use strongly-typed ResponseData directly
             editResponse.ResponseData = responseData;
-        }
-        else if (CurrentAnswer is Dictionary<string, object> complexValue)
-        {
-            // Convert old dictionary format to strongly-typed format
-            InitializeResponseDataFromDictionary(complexValue);
         }
         else
         {
-            InitializeEmptyResponseData();
+            // Initialize empty strongly-typed ResponseData
+            editResponse.ResponseData = Question.Type switch
+            {
+                QuestionType.TextQuestion => new TextResponseDataDto(),
+                QuestionType.Assessment => new AssessmentResponseDataDto(),
+                QuestionType.Goal => new GoalResponseDataDto(),
+                _ => null
+            };
         }
-    }
-
-    private void InitializeResponseDataFromDictionary(Dictionary<string, object> complexValue)
-    {
-        switch (Question.Type)
-        {
-            case QuestionType.TextQuestion:
-                var textData = new TextResponseDataDto();
-                // Handle both single "value" format and multi-section "section_0", "section_1" format
-                if (complexValue.ContainsKey("value"))
-                {
-                    textData.TextSections.Add(complexValue["value"]?.ToString() ?? "");
-                }
-                else
-                {
-                    var sectionKeys = complexValue.Keys.Where(k => k.StartsWith("section_"))
-                                                      .OrderBy(k => k).ToList();
-                    foreach (var key in sectionKeys)
-                    {
-                        textData.TextSections.Add(complexValue[key]?.ToString() ?? "");
-                    }
-                }
-                editResponse.ResponseData = textData;
-                break;
-
-            case QuestionType.Assessment:
-                var assessmentData = new AssessmentResponseDataDto();
-                // Convert rating entries
-                var ratingEntries = complexValue.Where(kvp => kvp.Key.StartsWith("Rating_"));
-                foreach (var entry in ratingEntries)
-                {
-                    var competencyKey = entry.Key.Substring("Rating_".Length);
-                    var rating = Convert.ToInt32(entry.Value);
-                    var comment = "";
-                    if (complexValue.TryGetValue($"Comment_{competencyKey}", out var commentValue))
-                    {
-                        comment = commentValue?.ToString() ?? "";
-                    }
-                    assessmentData.Competencies[competencyKey] = new CompetencyRatingDto
-                    {
-                        Rating = rating,
-                        Comment = comment
-                    };
-                }
-                editResponse.ResponseData = assessmentData;
-                break;
-
-            case QuestionType.Goal:
-                // Goal questions should not be edited in simple dialog - this is complex data
-                // For now, create empty goal data
-                editResponse.ResponseData = new GoalResponseDataDto();
-                break;
-
-            default:
-                InitializeEmptyResponseData();
-                break;
-        }
-    }
-
-    private void InitializeEmptyResponseData()
-    {
-        editResponse.ResponseData = Question.Type switch
-        {
-            QuestionType.TextQuestion => new TextResponseDataDto(),
-            QuestionType.Assessment => new AssessmentResponseDataDto(),
-            QuestionType.Goal => new GoalResponseDataDto(),
-            _ => null
-        };
     }
 
     private async Task HandleResponseChanged(QuestionResponse response)
@@ -344,21 +240,22 @@
 
     private bool IsAnswerValid()
     {
-        if (Question.Type == QuestionType.TextQuestion)
-        {
-            if (editResponse.ResponseData is not TextResponseDataDto textData)
-                return false;
-
-            // Check if any text section has content
-            return textData.TextSections.Any(section => !string.IsNullOrWhiteSpace(section));
-        }
-
         return Question.Type switch
         {
+            QuestionType.TextQuestion => IsTextQuestionValid(),
             QuestionType.Assessment => IsAssessmentQuestionValid(),
             QuestionType.Goal => IsGoalQuestionValid(),
-            _ => !string.IsNullOrWhiteSpace(SimpleTextValue) || editResponse.ResponseData != null
+            _ => editResponse.ResponseData != null
         };
+    }
+
+    private bool IsTextQuestionValid()
+    {
+        if (editResponse.ResponseData is not TextResponseDataDto textData)
+            return false;
+
+        // Check if any text section has content
+        return textData.TextSections.Any(section => !string.IsNullOrWhiteSpace(section));
     }
 
     private bool IsAssessmentQuestionValid()
