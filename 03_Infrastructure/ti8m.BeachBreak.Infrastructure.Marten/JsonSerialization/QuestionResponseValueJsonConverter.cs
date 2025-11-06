@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.JsonSerialization;
@@ -22,7 +23,6 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
     {
         using var document = JsonDocument.ParseValue(ref reader);
         var root = document.RootElement;
-        var rawJson = root.GetRawText();
 
         // Check for type discriminator property (new format)
         if (root.TryGetProperty(TypeDiscriminatorPropertyName, out var typeProperty))
@@ -30,9 +30,9 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
             var typeValue = typeProperty.GetString();
             return typeValue switch
             {
-                TextResponseTypeValue => JsonSerializer.Deserialize<QuestionResponseValue.TextResponse>(rawJson, options)!,
-                AssessmentResponseTypeValue => JsonSerializer.Deserialize<QuestionResponseValue.AssessmentResponse>(rawJson, options)!,
-                GoalResponseTypeValue => JsonSerializer.Deserialize<QuestionResponseValue.GoalResponse>(rawJson, options)!,
+                TextResponseTypeValue => DeserializeTextResponse(root),
+                AssessmentResponseTypeValue => DeserializeAssessmentResponse(root),
+                GoalResponseTypeValue => DeserializeGoalResponse(root),
                 _ => throw new JsonException($"Unknown QuestionResponseValue type discriminator: '{typeValue}'")
             };
         }
@@ -41,11 +41,100 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
         var inferredType = InferTypeFromJsonStructure(root);
         return inferredType switch
         {
-            TextResponseTypeValue => JsonSerializer.Deserialize<QuestionResponseValue.TextResponse>(rawJson, options)!,
-            AssessmentResponseTypeValue => JsonSerializer.Deserialize<QuestionResponseValue.AssessmentResponse>(rawJson, options)!,
-            GoalResponseTypeValue => JsonSerializer.Deserialize<QuestionResponseValue.GoalResponse>(rawJson, options)!,
-            _ => throw new JsonException($"Could not infer QuestionResponseValue type from JSON structure: {rawJson}")
+            TextResponseTypeValue => DeserializeTextResponse(root),
+            AssessmentResponseTypeValue => DeserializeAssessmentResponse(root),
+            GoalResponseTypeValue => DeserializeGoalResponse(root),
+            _ => throw new JsonException($"Could not infer QuestionResponseValue type from JSON structure")
         };
+    }
+
+    private static QuestionResponseValue.TextResponse DeserializeTextResponse(JsonElement root)
+    {
+        var dto = JsonSerializer.Deserialize<TextResponseDto>(root.GetRawText())
+            ?? throw new JsonException("Failed to deserialize TextResponse");
+        return new QuestionResponseValue.TextResponse(dto.TextSections);
+    }
+
+    private class TextResponseDto
+    {
+        public List<string> TextSections { get; set; } = new();
+    }
+
+    private static QuestionResponseValue.AssessmentResponse DeserializeAssessmentResponse(JsonElement root)
+    {
+        var dto = JsonSerializer.Deserialize<AssessmentResponseDto>(root.GetRawText())
+            ?? throw new JsonException("Failed to deserialize AssessmentResponse");
+        var competencies = dto.Competencies.ToDictionary(
+            kvp => kvp.Key,
+            kvp => new CompetencyRating(kvp.Value.Rating, kvp.Value.Comment ?? string.Empty)
+        );
+        return new QuestionResponseValue.AssessmentResponse(competencies);
+    }
+
+    private class AssessmentResponseDto
+    {
+        public Dictionary<string, CompetencyRatingDto> Competencies { get; set; } = new();
+    }
+
+    private class CompetencyRatingDto
+    {
+        public int Rating { get; set; }
+        public string? Comment { get; set; }
+    }
+
+    private static QuestionResponseValue.GoalResponse DeserializeGoalResponse(JsonElement root)
+    {
+        var dto = JsonSerializer.Deserialize<GoalResponseDto>(root.GetRawText())
+            ?? throw new JsonException("Failed to deserialize GoalResponse");
+
+        var goals = dto.Goals.Select(g => new GoalData(
+            g.GoalId,
+            g.ObjectiveDescription,
+            g.TimeframeFrom,
+            g.TimeframeTo,
+            g.MeasurementMetric,
+            g.WeightingPercentage,
+            g.AddedByRole
+        )).ToList();
+
+        var predecessorRatings = dto.PredecessorRatings.Select(pr => new PredecessorRating(
+            pr.SourceGoalId,
+            pr.DegreeOfAchievement,
+            pr.Justification ?? string.Empty,
+            pr.RatedByRole,
+            pr.OriginalObjective,
+            pr.OriginalAddedByRole
+        )).ToList();
+
+        return new QuestionResponseValue.GoalResponse(goals, predecessorRatings, dto.PredecessorAssignmentId);
+    }
+
+    private class GoalResponseDto
+    {
+        public List<GoalDataDto> Goals { get; set; } = new();
+        public List<PredecessorRatingDto> PredecessorRatings { get; set; } = new();
+        public Guid? PredecessorAssignmentId { get; set; }
+    }
+
+    private class GoalDataDto
+    {
+        public Guid GoalId { get; set; }
+        public string ObjectiveDescription { get; set; } = string.Empty;
+        public DateTime TimeframeFrom { get; set; }
+        public DateTime TimeframeTo { get; set; }
+        public string MeasurementMetric { get; set; } = string.Empty;
+        public decimal WeightingPercentage { get; set; }
+        public ApplicationRole AddedByRole { get; set; }
+    }
+
+    private class PredecessorRatingDto
+    {
+        public Guid SourceGoalId { get; set; }
+        public string OriginalObjective { get; set; } = string.Empty;
+        public int DegreeOfAchievement { get; set; }
+        public string? Justification { get; set; }
+        public ApplicationRole RatedByRole { get; set; }
+        public ApplicationRole OriginalAddedByRole { get; set; }
     }
 
     /// <summary>

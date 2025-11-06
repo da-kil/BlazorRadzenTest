@@ -1,7 +1,7 @@
-using ti8m.BeachBreak.Client.Models;
-using ti8m.BeachBreak.Client.Models.CommandDTOs;
-using ti8m.BeachBreak.Client.Models.DTOs;
 using System.Net.Http.Json;
+using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.DTOs;
+using ti8m.BeachBreak.Client.Models.DTOs.Api;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -30,10 +30,10 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
     {
         try
         {
-            // API returns QuestionResponseDto[] with strongly-typed ResponseData
-            var questionResponses = await HttpQueryClient.GetFromJsonAsync<QuestionResponseDto[]>($"{ResponseQueryEndpoint}/assignment/{assignmentId}");
+            // API returns ApiQuestionnaireResponseDto directly (not wrapped in Result)
+            var apiResponse = await HttpQueryClient.GetFromJsonAsync<ApiQuestionnaireResponseDto>($"{ResponseQueryEndpoint}/assignment/{assignmentId}", JsonOptions);
 
-            if (questionResponses == null || !questionResponses.Any())
+            if (apiResponse == null)
             {
                 return null;
             }
@@ -45,31 +45,41 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
                 SectionResponses = new Dictionary<Guid, SectionResponse>()
             };
 
-            // Group questions by section (using default section since API doesn't provide section info)
-            var defaultSectionId = Guid.NewGuid();
-            var sectionResponse = new SectionResponse
+            // Map nested API structure to frontend structure
+            foreach (var sectionKvp in apiResponse.SectionResponses)
             {
-                SectionId = defaultSectionId,
-                RoleResponses = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponse>>()
-            };
-
-            // Initialize employee responses
-            sectionResponse.RoleResponses[ResponseRole.Employee] = new Dictionary<Guid, QuestionResponse>();
-
-            foreach (var apiResponse in questionResponses)
-            {
-                var questionResponse = new QuestionResponse
+                var apiSection = sectionKvp.Value;
+                var sectionResponse = new SectionResponse
                 {
-                    QuestionId = apiResponse.QuestionId,
-                    QuestionType = apiResponse.QuestionType,
-                    LastModified = apiResponse.LastModified,
-                    ResponseData = apiResponse.ResponseData
+                    SectionId = apiSection.SectionId,
+                    RoleResponses = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponse>>()
                 };
 
-                sectionResponse.RoleResponses[ResponseRole.Employee][apiResponse.QuestionId] = questionResponse;
-            }
+                // Map each role's responses
+                foreach (var roleKvp in apiSection.RoleResponses)
+                {
+                    var role = roleKvp.Key;
+                    var roleQuestions = roleKvp.Value;
 
-            questionnaireResponse.SectionResponses[defaultSectionId] = sectionResponse;
+                    sectionResponse.RoleResponses[role] = new Dictionary<Guid, QuestionResponse>();
+
+                    foreach (var questionKvp in roleQuestions)
+                    {
+                        var apiQuestion = questionKvp.Value;
+                        var questionResponse = new QuestionResponse
+                        {
+                            QuestionId = apiQuestion.QuestionId,
+                            QuestionType = apiQuestion.QuestionType,
+                            LastModified = apiQuestion.LastModified,
+                            ResponseData = apiQuestion.ResponseData
+                        };
+
+                        sectionResponse.RoleResponses[role][apiQuestion.QuestionId] = questionResponse;
+                    }
+                }
+
+                questionnaireResponse.SectionResponses[sectionKvp.Key] = sectionResponse;
+            }
 
             return questionnaireResponse;
         }

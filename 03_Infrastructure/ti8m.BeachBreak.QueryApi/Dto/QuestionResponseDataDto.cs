@@ -1,9 +1,14 @@
+using System.Text.Json.Serialization;
+
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
 /// <summary>
 /// Base class for different types of question response data.
 /// This maintains type safety while being independent of domain value objects.
 /// </summary>
+[JsonDerivedType(typeof(TextResponseDataDto), typeDiscriminator: "text")]
+[JsonDerivedType(typeof(AssessmentResponseDataDto), typeDiscriminator: "assessment")]
+[JsonDerivedType(typeof(GoalResponseDataDto), typeDiscriminator: "goal")]
 public abstract class QuestionResponseDataDto
 {
 }

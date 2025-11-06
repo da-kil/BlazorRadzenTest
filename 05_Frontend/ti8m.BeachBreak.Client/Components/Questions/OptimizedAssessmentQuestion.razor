@@ -30,28 +30,40 @@
         {
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
                 <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Configuration Error:</strong> No competencies are defined for this question. Please check the question configuration.
+                    <strong>Configuration Error:</strong> No competencies are defined for this question. Please edit the template to add competencies.
                 </RadzenText>
             </RadzenAlert>
         }
         else
         {
+            @if (competencies.Any(c => string.IsNullOrWhiteSpace(c.Title)))
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Incomplete Configuration:</strong> One or more competencies are missing titles. Please edit the template to complete the competency configuration.
+                    </RadzenText>
+                </RadzenAlert>
+            }
             @foreach (var competency in competencies)
             {
                 var competencyKey = competency.Key;
                 var currentRating = GetCompetencyRating(competencyKey);
                 var currentComment = GetCompetencyComment(competencyKey);
                 var ratingText = GetRatingText(currentRating);
+                var displayTitle = string.IsNullOrWhiteSpace(competency.Title) ? $"[Unnamed Competency - {competencyKey}]" : competency.Title;
 
                 <div class="competency-card mb-3 p-3 border rounded" @key="@competencyKey">
                     <RadzenRow>
                         <RadzenColumn Size="12" SizeMD="8">
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
-                                @competency.Title
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2" Style="@(string.IsNullOrWhiteSpace(competency.Title) ? "color: #dc3545;" : "")">
+                                @displayTitle
                             </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                                @competency.Description
-                            </RadzenText>
+                            @if (!string.IsNullOrWhiteSpace(competency.Description))
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                                    @competency.Description
+                                </RadzenText>
+                            }
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="4" Class="text-end">
                             <div class="rating-section">
@@ -103,28 +115,40 @@ else
         {
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
                 <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Configuration Error:</strong> No competencies are defined for this question. Please check the question configuration.
+                    <strong>Configuration Error:</strong> No competencies are defined for this question. Please edit the template to add competencies.
                 </RadzenText>
             </RadzenAlert>
         }
         else
         {
+            @if (competencies.Any(c => string.IsNullOrWhiteSpace(c.Title)))
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>Incomplete Configuration:</strong> One or more competencies are missing titles. Please edit the template to complete the competency configuration.
+                    </RadzenText>
+                </RadzenAlert>
+            }
             @foreach (var competency in competencies)
             {
                 var competencyKey = competency.Key;
                 var currentRating = GetCompetencyRating(competencyKey);
                 var currentComment = GetCompetencyComment(competencyKey);
                 var ratingText = GetRatingText(currentRating);
+                var displayTitle = string.IsNullOrWhiteSpace(competency.Title) ? $"[Unnamed Competency - {competencyKey}]" : competency.Title;
 
                 <div class="competency-card mb-3 p-3 border rounded" @key="@competencyKey">
                     <RadzenRow>
                         <RadzenColumn Size="12" SizeMD="8">
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
-                                @competency.Title
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2" Style="@(string.IsNullOrWhiteSpace(competency.Title) ? "color: #dc3545;" : "")">
+                                @displayTitle
                             </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                                @competency.Description
-                            </RadzenText>
+                            @if (!string.IsNullOrWhiteSpace(competency.Description))
+                            {
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                                    @competency.Description
+                                </RadzenText>
+                            }
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="4" Class="text-end">
                             <div class="rating-section">
