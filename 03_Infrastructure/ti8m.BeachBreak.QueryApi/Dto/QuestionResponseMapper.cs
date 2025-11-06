@@ -17,29 +17,30 @@ public static class QuestionResponseMapper
         {
             QuestionResponseValue.TextResponse textResponse => new TextResponseDataDto
             {
-                TextSections = textResponse.TextSections.ToList()
+                TextSections = textResponse.TextSections?.ToList() ?? new List<string>()
             },
             QuestionResponseValue.AssessmentResponse assessmentResponse => new AssessmentResponseDataDto
             {
-                Competencies = assessmentResponse.Competencies.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => new CompetencyRatingDto
-                    {
-                        Rating = kvp.Value.Rating,
-                        Comment = kvp.Value.Comment
-                    }
-                )
+                Competencies = (assessmentResponse.Competencies ?? new Dictionary<string, CompetencyRating>())
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => new CompetencyRatingDto
+                        {
+                            Rating = kvp.Value.Rating,
+                            Comment = kvp.Value.Comment
+                        }
+                    )
             },
             QuestionResponseValue.GoalResponse goalResponse => new GoalResponseDataDto
             {
-                Goals = goalResponse.Goals.Select(g => new GoalDataDto
+                Goals = (goalResponse.Goals ?? Enumerable.Empty<GoalData>()).Select(g => new GoalDataDto
                 {
                     Description = g.ObjectiveDescription,
                     AchievementPercentage = 0, // Not available in domain GoalData
                     Justification = null, // Not available in domain GoalData
                     Weight = (double)g.WeightingPercentage
                 }).ToList(),
-                PredecessorRatings = goalResponse.PredecessorRatings.Select(pr => new PredecessorRatingDto
+                PredecessorRatings = (goalResponse.PredecessorRatings ?? Enumerable.Empty<PredecessorRating>()).Select(pr => new PredecessorRatingDto
                 {
                     GoalDescription = pr.OriginalObjective,
                     Rating = pr.DegreeOfAchievement,
