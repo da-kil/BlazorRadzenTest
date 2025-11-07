@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
-using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Dto;
@@ -20,20 +20,20 @@ public class EmployeesController : BaseController
     private readonly ILogger<EmployeesController> logger;
     private readonly UserContext userContext;
     private readonly IManagerAuthorizationService authorizationService;
-    private readonly IAuthorizationCacheService authorizationCacheService;
+    private readonly IEmployeeRoleService employeeRoleService;
 
     public EmployeesController(
         IQueryDispatcher queryDispatcher,
         ILogger<EmployeesController> logger,
         UserContext userContext,
         IManagerAuthorizationService authorizationService,
-        IAuthorizationCacheService authorizationCacheService)
+        IEmployeeRoleService employeeRoleService)
     {
         this.queryDispatcher = queryDispatcher;
         this.logger = logger;
         this.userContext = userContext;
         this.authorizationService = authorizationService;
-        this.authorizationCacheService = authorizationCacheService;
+        this.employeeRoleService = employeeRoleService;
     }
 
     [HttpGet]
@@ -777,7 +777,7 @@ public class EmployeesController : BaseController
     /// </summary>
     private async Task<bool> HasElevatedRoleAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, cancellationToken);
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, cancellationToken);
         if (employeeRole == null)
         {
             logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);

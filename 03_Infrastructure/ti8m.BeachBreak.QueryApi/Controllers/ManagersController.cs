@@ -446,7 +446,7 @@ public class ManagersController : BaseController
         }
 
         // Check authorization
-        if (!authorizationService.CanViewTeam(requestingUserId, managerId))
+        if (!await authorizationService.CanViewTeamAsync(requestingUserId, managerId))
         {
             logger.LogWarning("User {RequestingUserId} not authorized to view manager {ManagerId} team",
                 requestingUserId, managerId);
@@ -526,7 +526,7 @@ public class ManagersController : BaseController
         }
 
         // Check authorization
-        if (!authorizationService.CanViewTeam(requestingUserId, managerId))
+        if (!await authorizationService.CanViewTeamAsync(requestingUserId, managerId))
         {
             logger.LogWarning("User {RequestingUserId} not authorized to view manager {ManagerId} team assignments",
                 requestingUserId, managerId);

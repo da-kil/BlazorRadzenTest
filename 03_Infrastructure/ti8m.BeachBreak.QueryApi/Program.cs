@@ -53,6 +53,9 @@ public class Program
         // Register authorization cache service
         builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
 
+        // Register employee role service for cache-through role retrieval
+        builder.Services.AddScoped<Application.Query.Services.IEmployeeRoleService, Services.EmployeeRoleService>();
+
         builder.Services.AddControllers();
 
         builder.Services.AddSwaggerGen(option =>

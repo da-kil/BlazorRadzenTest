@@ -1,11 +1,7 @@
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
-using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.QueryApi.Authorization;
 
@@ -17,6 +13,7 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
     private readonly IQuestionnaireAssignmentRepository assignmentRepository;
     private readonly ILogger<ManagerAuthorizationService> logger;
     private readonly IAuthorizationCacheService authorizationCacheService;
+    private readonly IEmployeeRoleService employeeRoleService;
 
     public ManagerAuthorizationService(
         UserContext userContext,
@@ -24,7 +21,8 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
         IEmployeeRepository employeeRepository,
         IQuestionnaireAssignmentRepository assignmentRepository,
         ILogger<ManagerAuthorizationService> logger,
-        IAuthorizationCacheService authorizationCacheService)
+        IAuthorizationCacheService authorizationCacheService,
+        IEmployeeRoleService employeeRoleService)
     {
         this.userContext = userContext;
         this.httpContextAccessor = httpContextAccessor;
@@ -32,6 +30,7 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
         this.assignmentRepository = assignmentRepository;
         this.logger = logger;
         this.authorizationCacheService = authorizationCacheService;
+        this.employeeRoleService = employeeRoleService;
     }
 
     public Task<Guid> GetCurrentManagerIdAsync()
@@ -45,7 +44,7 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
         return Task.FromResult(managerId);
     }
 
-    public bool CanViewTeam(Guid requestingUserId, Guid targetManagerId)
+    public async Task<bool> CanViewTeamAsync(Guid requestingUserId, Guid targetManagerId)
     {
         // User can always view their own team
         if (requestingUserId == targetManagerId)
@@ -53,8 +52,8 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
             return true;
         }
 
-        // Check if user has HR or Admin role using authorization cache
-        var employeeRole = authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(requestingUserId).GetAwaiter().GetResult();
+        // Check if user has HR or Admin role using cache-through service
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(requestingUserId);
         if (employeeRole == null)
         {
             logger.LogWarning("Unable to retrieve employee role for user {UserId} in CanViewTeam check", requestingUserId);
@@ -62,7 +61,6 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
         }
 
         // HR and HRLead can view any manager's team
-        // employeeRole.ApplicationRole is already Application.Query.ApplicationRole - no conversion needed
         if (employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HR ||
             employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HRLead ||
             employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.Admin)

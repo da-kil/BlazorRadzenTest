@@ -3,13 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 using ti8m.BeachBreak.Application.Command.Models;
+using ti8m.BeachBreak.Application.Command.Services;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.CommandApi.Mappers;
-using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
@@ -24,7 +24,7 @@ public class AssignmentsController : BaseController
     private readonly UserContext userContext;
     private readonly ILogger<AssignmentsController> logger;
     private readonly IManagerAuthorizationService authorizationService;
-    private readonly IAuthorizationCacheService authorizationCacheService;
+    private readonly IEmployeeRoleService employeeRoleService;
 
     public AssignmentsController(
         ICommandDispatcher commandDispatcher,
@@ -32,14 +32,14 @@ public class AssignmentsController : BaseController
         UserContext userContext,
         ILogger<AssignmentsController> logger,
         IManagerAuthorizationService authorizationService,
-        IAuthorizationCacheService authorizationCacheService)
+        IEmployeeRoleService employeeRoleService)
     {
         this.commandDispatcher = commandDispatcher;
         this.queryDispatcher = queryDispatcher;
         this.userContext = userContext;
         this.logger = logger;
         this.authorizationService = authorizationService;
-        this.authorizationCacheService = authorizationCacheService;
+        this.employeeRoleService = employeeRoleService;
     }
 
     /// <summary>
@@ -684,14 +684,15 @@ public class AssignmentsController : BaseController
     /// </summary>
     private async Task<bool> HasElevatedRoleAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, cancellationToken);
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, cancellationToken);
         if (employeeRole == null)
         {
             logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
             return false;
         }
 
-        var commandRole = ApplicationRoleMapper.MapFromQuery(employeeRole.ApplicationRole);
+        var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+        var commandRole = ApplicationRoleMapper.MapFromQuery(queryRole);
         return commandRole == ApplicationRole.HR ||
                commandRole == ApplicationRole.HRLead ||
                commandRole == ApplicationRole.Admin;
@@ -728,10 +729,8 @@ public class AssignmentsController : BaseController
                 return Unauthorized("User ID not found in authentication context");
             }
 
-            // Get user role from cache
-            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(
-                userId,
-                HttpContext.RequestAborted);
+            // Get user role with cache-through pattern
+            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
 
             if (employeeRole == null)
             {
@@ -740,7 +739,8 @@ public class AssignmentsController : BaseController
             }
 
             // Map ApplicationRole enum to string for command
-            var roleString = employeeRole.ApplicationRole.ToString();
+            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+            var roleString = queryRole.ToString();
 
             var command = new ReopenQuestionnaireCommand(
                 assignmentId,
@@ -824,15 +824,16 @@ public class AssignmentsController : BaseController
 
             logger.LogInformation("AddGoal: Successfully parsed userId = {UserId}", userId);
 
-            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId);
+            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId);
             if (employeeRole == null)
             {
                 logger.LogWarning("AddGoal failed: Unable to retrieve employee role for user {UserId}", userId);
                 return Unauthorized("User role not found");
             }
 
-            // Convert Application.Query role to Application.Command role directly
-            var commandRole = ApplicationRoleMapper.MapFromQuery(employeeRole.ApplicationRole);
+            // Convert integer role value back to Query ApplicationRole, then to Command ApplicationRole
+            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+            var commandRole = ApplicationRoleMapper.MapFromQuery(queryRole);
 
             var command = new AddGoalCommand(
                 assignmentId,
@@ -872,15 +873,16 @@ public class AssignmentsController : BaseController
                 return Unauthorized("User ID not found in authentication context");
             }
 
-            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId);
+            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId);
             if (employeeRole == null)
             {
                 logger.LogWarning("ModifyGoal failed: Unable to retrieve employee role for user {UserId}", userId);
                 return Unauthorized("User role not found");
             }
 
-            // Convert Application.Query role to Application.Command role directly
-            var commandRole = ApplicationRoleMapper.MapFromQuery(employeeRole.ApplicationRole);
+            // Convert integer role value back to Query ApplicationRole, then to Command ApplicationRole
+            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+            var commandRole = ApplicationRoleMapper.MapFromQuery(queryRole);
 
             var command = new ModifyGoalCommand(
                 assignmentId,

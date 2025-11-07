@@ -3,13 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
-using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Controllers;
 using ti8m.BeachBreak.QueryApi.Dto;
-using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -21,20 +19,20 @@ public class AssignmentsController : BaseController
     private readonly IQueryDispatcher queryDispatcher;
     private readonly ILogger<AssignmentsController> logger;
     private readonly IManagerAuthorizationService authorizationService;
-    private readonly IAuthorizationCacheService authorizationCacheService;
+    private readonly IEmployeeRoleService employeeRoleService;
     private readonly UserContext userContext;
 
     public AssignmentsController(
         IQueryDispatcher queryDispatcher,
         ILogger<AssignmentsController> logger,
         IManagerAuthorizationService authorizationService,
-        IAuthorizationCacheService authorizationCacheService,
+        IEmployeeRoleService employeeRoleService,
         UserContext userContext)
     {
         this.queryDispatcher = queryDispatcher;
         this.logger = logger;
         this.authorizationService = authorizationService;
-        this.authorizationCacheService = authorizationCacheService;
+        this.employeeRoleService = employeeRoleService;
         this.userContext = userContext;
     }
 
@@ -175,7 +173,7 @@ public class AssignmentsController : BaseController
     /// </summary>
     private async Task<bool> HasElevatedRoleAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, cancellationToken);
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, cancellationToken);
         if (employeeRole == null)
         {
             logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
@@ -410,8 +408,8 @@ public class AssignmentsController : BaseController
                 return Unauthorized("User ID not found in authentication context");
             }
 
-            // Determine current user's role using the authorization cache service
-            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, HttpContext.RequestAborted);
+            // Determine current user's role using the employee role service
+            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
             if (employeeRole == null)
             {
                 logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);

@@ -19,7 +19,7 @@ public interface IManagerAuthorizationService
     /// - The requesting user IS the manager
     /// - The requesting user has HR/Admin role
     /// </summary>
-    bool CanViewTeam(Guid requestingUserId, Guid targetManagerId);
+    Task<bool> CanViewTeamAsync(Guid requestingUserId, Guid targetManagerId);
 
     /// <summary>
     /// Checks if the specified manager has the employee as a direct report.
