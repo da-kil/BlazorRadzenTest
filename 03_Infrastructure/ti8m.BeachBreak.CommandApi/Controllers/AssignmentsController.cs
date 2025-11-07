@@ -824,18 +824,20 @@ public class AssignmentsController : BaseController
 
             logger.LogInformation("AddGoal: Successfully parsed userId = {UserId}", userId);
 
-            // Parse role from DTO
-            if (!Enum.TryParse<ApplicationRole>(dto.AddedByRole, out var commandRole))
+            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId);
+            if (employeeRole == null)
             {
-                return BadRequest($"Invalid role: {dto.AddedByRole}");
+                logger.LogWarning("AddGoal failed: Unable to retrieve employee role for user {UserId}", userId);
+                return Unauthorized("User role not found");
             }
 
-            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
+            // Convert Application.Query role to Application.Command role directly
+            var commandRole = ApplicationRoleMapper.MapFromQuery(employeeRole.ApplicationRole);
 
             var command = new AddGoalCommand(
                 assignmentId,
                 dto.QuestionId,
-                ApplicationRoleMapper.MapFromDomain(domainRole),
+                commandRole,
                 dto.TimeframeFrom,
                 dto.TimeframeTo,
                 dto.ObjectiveDescription,
@@ -870,22 +872,15 @@ public class AssignmentsController : BaseController
                 return Unauthorized("User ID not found in authentication context");
             }
 
-            // Parse role from DTO with better validation and case-insensitive parsing
-            if (string.IsNullOrWhiteSpace(dto.ModifiedByRole))
+            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId);
+            if (employeeRole == null)
             {
-                logger.LogWarning("ModifyGoal failed: ModifiedByRole is null or empty");
-                return BadRequest("ModifiedByRole is required");
+                logger.LogWarning("ModifyGoal failed: Unable to retrieve employee role for user {UserId}", userId);
+                return Unauthorized("User role not found");
             }
 
-            if (!Enum.TryParse<ApplicationRole>(dto.ModifiedByRole, ignoreCase: true, out var commandRole))
-            {
-                logger.LogWarning("ModifyGoal failed: Invalid role '{Role}'. Valid roles: {ValidRoles}",
-                    dto.ModifiedByRole,
-                    string.Join(", ", Enum.GetNames<ApplicationRole>()));
-                return BadRequest($"Invalid role: '{dto.ModifiedByRole}'. Valid roles: {string.Join(", ", Enum.GetNames<ApplicationRole>())}");
-            }
-
-            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
+            // Convert Application.Query role to Application.Command role directly
+            var commandRole = ApplicationRoleMapper.MapFromQuery(employeeRole.ApplicationRole);
 
             var command = new ModifyGoalCommand(
                 assignmentId,
@@ -895,7 +890,7 @@ public class AssignmentsController : BaseController
                 dto.ObjectiveDescription,
                 dto.MeasurementMetric,
                 dto.WeightingPercentage,
-                ApplicationRoleMapper.MapFromDomain(domainRole),
+                commandRole,
                 dto.ChangeReason,
                 userId);
 

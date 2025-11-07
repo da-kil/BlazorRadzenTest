@@ -1,10 +1,12 @@
+using ti8m.BeachBreak.Client.Models;
+
 namespace ti8m.BeachBreak.Client.Models.Dto;
 
 public class GoalDto
 {
     public Guid Id { get; set; }
     public Guid QuestionId { get; set; }
-    public string AddedByRole { get; set; } = string.Empty; // CompletionRole as string for JSON
+    public ApplicationRole AddedByRole { get; set; } = ApplicationRole.Employee;
     public DateTime TimeframeFrom { get; set; }
     public DateTime TimeframeTo { get; set; }
     public string ObjectiveDescription { get; set; } = string.Empty;

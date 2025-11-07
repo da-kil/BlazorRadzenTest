@@ -162,7 +162,7 @@
         {
             Id = goalData.GoalId,
             QuestionId = Question?.Id ?? Guid.Empty,
-            AddedByRole = goalData.AddedByRole.ToString(),
+            AddedByRole = goalData.AddedByRole,
             TimeframeFrom = goalData.TimeframeFrom,
             TimeframeTo = goalData.TimeframeTo,
             ObjectiveDescription = goalData.ObjectiveDescription ?? "",
@@ -272,7 +272,7 @@
             TimeframeTo = goalState.TimeframeTo,
             MeasurementMetric = goalState.MeasurementMetric,
             WeightingPercentage = goalState.WeightingPercentage,
-            AddedByRole = Enum.TryParse<ApplicationRole>(goalState.AddedByRole, out var role) ? role : ApplicationRole.Employee
+            AddedByRole = goalState.AddedByRole
         };
     }
 
@@ -289,7 +289,7 @@
             TimeframeTo = goalDto.TimeframeTo,
             MeasurementMetric = goalDto.MeasurementMetric,
             WeightingPercentage = goalDto.WeightingPercentage,
-            AddedByRole = Enum.TryParse<ApplicationRole>(goalDto.AddedByRole, out var role) ? role : ApplicationRole.Employee
+            AddedByRole = goalDto.AddedByRole // Already an enum - no parsing needed
         };
     }
 
@@ -330,7 +330,7 @@
         // Count all goals (including pending ones) - now strongly-typed
         foreach (var goal in allCurrentGoals)
         {
-            var role = GetDisplayRole(goal.AddedByRole);
+            var role = GetDisplayRole(goal.AddedByRole.ToString());
             roleGroups[role] = roleGroups.GetValueOrDefault(role, 0) + 1;
         }
 
@@ -350,8 +350,8 @@
                             @goal.ObjectiveDescription
                         </RadzenText>
                         <div class="goal-badges mb-2">
-                            <RadzenBadge Text="@GetDisplayRole(goal.AddedByRole)"
-                                       BadgeStyle="@GetRoleBadgeStyle(GetDisplayRole(goal.AddedByRole))"
+                            <RadzenBadge Text="@GetDisplayRole(goal.AddedByRole.ToString())"
+                                       BadgeStyle="@GetRoleBadgeStyle(GetDisplayRole(goal.AddedByRole.ToString()))"
                                        Class="me-2" />
 
                             @if (goal.IsPendingDelete)
@@ -425,7 +425,6 @@
                 { "AssignmentId", AssignmentId },
                 { "QuestionId", Question.Id },
                 { "GoalId", goal.Id },
-                { "ModifiedByRole", await GetLoggedInUserRole() },
                 { "InitialObjective", goal.ObjectiveDescription },
                 { "InitialMeasurement", goal.MeasurementMetric },
                 { "InitialTimeframeFrom", goal.TimeframeFrom },
@@ -564,8 +563,7 @@
             new Dictionary<string, object>
             {
                 { "AssignmentId", AssignmentId },
-                { "QuestionId", Question.Id },
-                { "AddedByRole", await GetLoggedInUserRole() }
+                { "QuestionId", Question.Id }
             },
             new DialogOptions
             {
@@ -577,7 +575,6 @@
 
         if (result is AddGoalDto dto)
         {
-            // NEW: Create a strongly-typed goal instead of Dictionary
             var newGoal = new GoalWithState
             {
                 Id = Guid.NewGuid(), // Temporary ID for pending goal
@@ -587,7 +584,7 @@
                 TimeframeFrom = dto.TimeframeFrom,
                 TimeframeTo = dto.TimeframeTo,
                 WeightingPercentage = dto.WeightingPercentage ?? 0m,
-                AddedByRole = dto.AddedByRole ?? "Employee",
+                AddedByRole = ApplicationRole.Employee,
                 AddedAt = DateTime.UtcNow,
                 AddedByEmployeeId = Guid.Empty, // Will be set by backend
                 Modifications = new List<GoalModificationDto>(),
@@ -625,19 +622,6 @@
                                          WorkflowState.ManagerReviewConfirmed or
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized;
-    }
-
-    private async Task<string> GetLoggedInUserRole()
-    {
-        try
-        {
-            var roleData = await AuthService.GetMyRoleAsync();
-            return roleData?.ApplicationRole.ToString() ?? ApplicationRole.Employee.ToString();
-        }
-        catch
-        {
-            return ApplicationRole.Employee.ToString();
-        }
     }
 
     private string GetDisplayRole(string roleString)
@@ -728,7 +712,6 @@
                 var addDto = new AddGoalDto
                 {
                     QuestionId = goal.QuestionId,
-                    AddedByRole = goal.AddedByRole,
                     ObjectiveDescription = goal.ObjectiveDescription,
                     MeasurementMetric = goal.MeasurementMetric,
                     TimeframeFrom = goal.TimeframeFrom,

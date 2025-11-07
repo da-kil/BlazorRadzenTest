@@ -156,7 +156,6 @@
             TimeframeTo = timeframeTo!.Value,
             // Only include weighting and change reason when in review mode
             WeightingPercentage = IsInReviewMode ? weightingPercentage : null,
-            ModifiedByRole = ModifiedByRole,
             ChangeReason = IsInReviewMode ? changeReason.Trim() : null
         };
 
