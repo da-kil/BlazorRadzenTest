@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using ti8m.BeachBreak.Client.Models.Dto.Queries;
 
 namespace ti8m.BeachBreak.Client.Models.DTOs;
 

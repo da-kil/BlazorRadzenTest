@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using ti8m.BeachBreak.Client.Models;
 using ti8m.BeachBreak.Client.Models.Dto;
+using ti8m.BeachBreak.Client.Models.Dto.Shared;
 
 namespace ti8m.BeachBreak.Client.Services;
 

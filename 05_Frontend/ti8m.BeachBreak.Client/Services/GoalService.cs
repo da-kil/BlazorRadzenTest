@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.Dto.Queries;
 using ti8m.BeachBreak.Client.Models.DTOs;
 
 namespace ti8m.BeachBreak.Client.Services;

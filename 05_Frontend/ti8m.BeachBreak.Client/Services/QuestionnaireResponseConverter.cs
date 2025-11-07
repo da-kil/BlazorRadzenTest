@@ -1,5 +1,5 @@
 using ti8m.BeachBreak.Client.Models;
-using ti8m.BeachBreak.Client.Models.CommandDTOs;
+using ti8m.BeachBreak.Client.Models.Dto.Commands;
 using ti8m.BeachBreak.Client.Models.DTOs;
 
 namespace ti8m.BeachBreak.Client.Services;

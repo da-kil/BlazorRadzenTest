@@ -1,6 +1,6 @@
 using ti8m.BeachBreak.Client.Models;
 
-namespace ti8m.BeachBreak.Client.Models.DTOs;
+namespace ti8m.BeachBreak.Client.Models.Dto.Queries;
 
 /// <summary>
 /// Simple DTO for predecessor goal ratings.

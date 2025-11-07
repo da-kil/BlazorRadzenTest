@@ -1,4 +1,4 @@
-namespace ti8m.BeachBreak.Client.Models.CommandDTOs;
+namespace ti8m.BeachBreak.Client.Models.Dto.Commands;
 
 /// <summary>
 /// Command DTO for individual goal data.

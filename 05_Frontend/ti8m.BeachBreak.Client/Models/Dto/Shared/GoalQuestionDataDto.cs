@@ -1,4 +1,6 @@
-namespace ti8m.BeachBreak.Client.Models.Dto;
+using ti8m.BeachBreak.Client.Models.Dto.Queries;
+
+namespace ti8m.BeachBreak.Client.Models.Dto.Shared;
 
 public class GoalQuestionDataDto
 {

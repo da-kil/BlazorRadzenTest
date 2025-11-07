@@ -1,7 +1,7 @@
-using ti8m.BeachBreak.Client.Models;
-using ti8m.BeachBreak.Client.Models.DTOs;
-using ti8m.BeachBreak.Client.Models.CommandDTOs;
 using System.Net.Http.Json;
+using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.Dto.Commands;
+using ti8m.BeachBreak.Client.Models.DTOs;
 
 namespace ti8m.BeachBreak.Client.Services;
 
