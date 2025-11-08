@@ -213,6 +213,16 @@ public class QuestionnaireAssignment : AggregateRoot
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot complete section - assignment is withdrawn");
 
+        // Enforce workflow state restrictions for questionnaire modifications
+        if (WorkflowState == WorkflowState.BothSubmitted)
+            throw new InvalidOperationException("Cannot complete section - both questionnaires have been submitted");
+
+        if (WorkflowState == WorkflowState.EmployeeSubmitted)
+            throw new InvalidOperationException("Cannot complete section - employee questionnaire has been submitted");
+
+        if (WorkflowState == WorkflowState.InReview)
+            throw new InvalidOperationException("Cannot complete section - questionnaire is in review");
+
         var progress = SectionProgressList.FirstOrDefault(p => p.SectionId == sectionId);
         if (progress?.IsEmployeeCompleted == true)
             throw new InvalidOperationException("Section already completed by employee");
@@ -227,6 +237,16 @@ public class QuestionnaireAssignment : AggregateRoot
 
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot complete sections - assignment is withdrawn");
+
+        // Enforce workflow state restrictions for questionnaire modifications
+        if (WorkflowState == WorkflowState.BothSubmitted)
+            throw new InvalidOperationException("Cannot complete sections - both questionnaires have been submitted");
+
+        if (WorkflowState == WorkflowState.EmployeeSubmitted)
+            throw new InvalidOperationException("Cannot complete sections - employee questionnaire has been submitted");
+
+        if (WorkflowState == WorkflowState.InReview)
+            throw new InvalidOperationException("Cannot complete sections - questionnaire is in review");
 
         if (sectionIds == null || !sectionIds.Any())
             throw new ArgumentException("Section IDs list cannot be null or empty", nameof(sectionIds));
@@ -254,6 +274,16 @@ public class QuestionnaireAssignment : AggregateRoot
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot complete section - assignment is withdrawn");
 
+        // Enforce workflow state restrictions for questionnaire modifications
+        if (WorkflowState == WorkflowState.BothSubmitted)
+            throw new InvalidOperationException("Cannot complete section - both questionnaires have been submitted");
+
+        if (WorkflowState == WorkflowState.ManagerSubmitted)
+            throw new InvalidOperationException("Cannot complete section - manager questionnaire has been submitted");
+
+        if (WorkflowState == WorkflowState.InReview)
+            throw new InvalidOperationException("Cannot complete section - questionnaire is in review");
+
         var progress = SectionProgressList.FirstOrDefault(p => p.SectionId == sectionId);
         if (progress?.IsManagerCompleted == true)
             throw new InvalidOperationException("Section already completed by manager");
@@ -268,6 +298,16 @@ public class QuestionnaireAssignment : AggregateRoot
 
         if (IsWithdrawn)
             throw new InvalidOperationException("Cannot complete sections - assignment is withdrawn");
+
+        // Enforce workflow state restrictions for questionnaire modifications
+        if (WorkflowState == WorkflowState.BothSubmitted)
+            throw new InvalidOperationException("Cannot complete sections - both questionnaires have been submitted");
+
+        if (WorkflowState == WorkflowState.ManagerSubmitted)
+            throw new InvalidOperationException("Cannot complete sections - manager questionnaire has been submitted");
+
+        if (WorkflowState == WorkflowState.InReview)
+            throw new InvalidOperationException("Cannot complete sections - questionnaire is in review");
 
         if (sectionIds == null || !sectionIds.Any())
             throw new ArgumentException("Section IDs list cannot be null or empty", nameof(sectionIds));
@@ -552,18 +592,45 @@ public class QuestionnaireAssignment : AggregateRoot
         // Allow modifications during in-progress states (by goal owner) and during review (by manager)
         var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == goalId);
         if (goal == null)
-            throw new InvalidOperationException($"Goal {goalId} not found");
+        {
+            // Debug information for goal not found
+            var allGoals = _goalsByQuestion.Values.SelectMany(g => g).ToList();
+            var goalInfo = allGoals.Any()
+                ? string.Join(", ", allGoals.Select(g => $"{g.Id} (Q:{g.QuestionId})"))
+                : "no goals found";
+            throw new InvalidOperationException($"Goal {goalId} not found. Assignment {Id} in state {WorkflowState} has {allGoals.Count} total goals: {goalInfo}");
+        }
 
         // Validate permissions based on workflow state
         if (WorkflowState == WorkflowState.InReview)
         {
-            // During review, only roles with management authority can modify any goal
+            // During formal review, only roles with management authority can modify any goal
             if (modifiedByRole is not (ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin))
                 throw new InvalidOperationException("Only manager can modify goals during review meeting");
 
             // Change reason is required during review state
             if (string.IsNullOrWhiteSpace(changeReason))
                 throw new ArgumentException("Change reason is required during review", nameof(changeReason));
+        }
+        else if (WorkflowState == WorkflowState.EmployeeSubmitted)
+        {
+            // After employee submission, only managers can modify any goal (collaborative editing)
+            if (modifiedByRole is not (ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin))
+                throw new InvalidOperationException("Only manager can modify goals after employee submission");
+
+            // Change reason is optional during collaborative editing
+        }
+        else if (WorkflowState == WorkflowState.ManagerSubmitted)
+        {
+            // After manager submission, only employees can modify goals they added (collaborative editing)
+            if (modifiedByRole is not ApplicationRole.Employee)
+                throw new InvalidOperationException("Only employee can modify goals after manager submission");
+
+            // Employee can only modify goals they added
+            if (goal.AddedByRole != ApplicationRole.Employee)
+                throw new InvalidOperationException("Employee can only modify goals they added");
+
+            // Change reason is optional during collaborative editing
         }
         else if (WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress)
         {
@@ -615,7 +682,14 @@ public class QuestionnaireAssignment : AggregateRoot
         // Find the goal
         var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == goalId);
         if (goal == null)
-            throw new InvalidOperationException($"Goal {goalId} not found");
+        {
+            // Debug information for goal not found
+            var allGoals = _goalsByQuestion.Values.SelectMany(g => g).ToList();
+            var goalInfo = allGoals.Any()
+                ? string.Join(", ", allGoals.Select(g => $"{g.Id} (Q:{g.QuestionId})"))
+                : "no goals found";
+            throw new InvalidOperationException($"Goal {goalId} not found. Assignment {Id} in state {WorkflowState} has {allGoals.Count} total goals: {goalInfo}");
+        }
 
         // Can only delete during in-progress states
         if (WorkflowState is not (WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress))
