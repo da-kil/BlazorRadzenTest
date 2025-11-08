@@ -50,7 +50,7 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
             {
                 Id = g.Id,
                 QuestionId = g.QuestionId,
-                AddedByRole = g.AddedByRole.ToString(), // Convert enum to string
+                AddedByRole = g.AddedByRole,
                 TimeframeFrom = g.TimeframeFrom,
                 TimeframeTo = g.TimeframeTo,
                 ObjectiveDescription = g.ObjectiveDescription,
@@ -60,7 +60,7 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
                 AddedByEmployeeId = g.AddedByEmployeeId,
                 Modifications = g.Modifications.Select(m => new GoalModificationDto
                 {
-                    ModifiedByRole = m.ModifiedByRole.ToString(), // Convert enum to string
+                    ModifiedByRole = m.ModifiedByRole,
                     ChangeReason = m.ChangeReason,
                     ModifiedAt = m.ModifiedAt,
                     ModifiedByEmployeeId = m.ModifiedByEmployeeId,

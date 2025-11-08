@@ -2,7 +2,7 @@ namespace ti8m.BeachBreak.Client.Models.Dto;
 
 public class GoalModificationDto
 {
-    public string ModifiedByRole { get; set; } = string.Empty; // CompletionRole as string
+    public ApplicationRole ModifiedByRole { get; set; } = ApplicationRole.Employee;
     public string ChangeReason { get; set; } = string.Empty;
     public DateTime ModifiedAt { get; set; }
     public Guid ModifiedByEmployeeId { get; set; }

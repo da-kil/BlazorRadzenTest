@@ -848,10 +848,31 @@
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
 
+        var isInReview = assignment != null && assignment.WorkflowState == WorkflowState.InReview;
         var isBothSection = currentSection?.CompletionRole == CompletionRole.Both;
 
-        // In post-review state for "Both" sections, show BOTH employee and manager responses
-        if (isPostReviewState && isBothSection)
+        // For goal questions in "Both" sections, ALWAYS use collaborative grouped view (never comparison)
+        // The comparison view only makes sense for predecessor goal ratings, not new goals
+        if (isBothSection && question.Type == QuestionType.Goal)
+        {
+            // Use the collaborative component that groups by roles instead of comparison view
+            var goalQuestionResponse = GetQuestionResponse(question.Id);
+
+            return @<div>
+                <OptimizedQuestionRenderer
+                    Question="@question"
+                    Response="@goalQuestionResponse"
+                    OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                    IsReadOnly="@(assignment?.WorkflowState == WorkflowState.InReview ? !isManager : true)"
+                    AssignmentId="@(assignmentId ?? Guid.Empty)"
+                    CurrentUserRole="@currentUserRole"
+                    AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)" />
+            </div>;
+        }
+
+        // In post-review state for "Both" sections, show BOTH employee and manager responses (comparison view)
+        // Exclude goal questions as they use collaborative view instead
+        if (isPostReviewState && isBothSection && question.Type != QuestionType.Goal)
         {
             var employeeResponse = GetQuestionResponseForRole(question.Id, "Employee");
             var managerResponse = GetQuestionResponseForRole(question.Id, "Manager");
@@ -918,10 +939,29 @@
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
 
+        var isInReview = assignment != null && assignment.WorkflowState == WorkflowState.InReview;
         var isBothSection = currentSection?.CompletionRole == CompletionRole.Both;
 
-        // In post-review state for "Both" sections, show BOTH employee and manager responses
-        if (isPostReviewState && isBothSection)
+        // For goal questions in "Both" sections, ALWAYS use collaborative grouped view (never comparison)
+        // The comparison view only makes sense for predecessor goal ratings, not new goals
+        if (isBothSection && question.Type == QuestionType.Goal)
+        {
+            // Use the collaborative component that groups by roles instead of comparison view
+            var goalQuestionResponseWithRef = GetQuestionResponse(question.Id);
+
+            return @<OptimizedQuestionRenderer
+                Question="@question"
+                Response="@goalQuestionResponseWithRef"
+                OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                IsReadOnly="@(assignment?.WorkflowState == WorkflowState.InReview ? !isManager : true)"
+                AssignmentId="@(assignmentId ?? Guid.Empty)"
+                CurrentUserRole="@currentUserRole"
+                AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)" />;
+        }
+
+        // In post-review state for "Both" sections, show BOTH employee and manager responses (comparison view)
+        // Exclude goal questions as they use collaborative view instead
+        if (isPostReviewState && isBothSection && question.Type != QuestionType.Goal)
         {
             var employeeResponse = GetQuestionResponseForRole(question.Id, "Employee");
             var managerResponse = GetQuestionResponseForRole(question.Id, "Manager");

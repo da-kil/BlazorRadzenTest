@@ -117,9 +117,9 @@
                                     }
 
                                     <div class="review-question-container">
-                                        @if (currentSection.CompletionRole == CompletionRole.Both)
+                                        @if (currentSection.CompletionRole == CompletionRole.Both && question.Type != QuestionType.Goal)
                                         {
-                                            <!-- Side-by-side view for Both sections -->
+                                            <!-- Side-by-side view for Both sections (excluding goals) -->
                                             <div class="side-by-side-view">
                                                 <!-- Employee Answer -->
                                                 <div class="answer-column employee">
@@ -197,6 +197,36 @@
                                                                      Size="ButtonSize.Small"
                                                                      Click="@(() => EditAnswer(question, CompletionRole.Manager))" />
                                                     </div>
+                                                </div>
+                                            </div>
+                                        }
+                                        else if (currentSection.CompletionRole == CompletionRole.Both && question.Type == QuestionType.Goal)
+                                        {
+                                            <!-- Collaborative grouped view for goal questions in Both sections -->
+                                            <div class="goal-collaborative-view">
+                                                @{
+                                                    // Use the same approach as DynamicQuestionnaire.razor - let OptimizedQuestionRenderer handle role logic
+                                                    var goalResponse = GetGenericQuestionResponse(question.Id);
+                                                }
+
+
+                                                <OptimizedQuestionRenderer
+                                                    Question="@question"
+                                                    Response="@goalResponse"
+                                                    IsReadOnly="true"
+                                                    HideHeader="true"
+                                                    AssignmentId="@Assignment.Id"
+                                                    CurrentUserRole="@GetCurrentUserRole()"
+                                                    AssignmentWorkflowState="@Assignment.WorkflowState"
+                                                    GoalRefreshToken="@goalRefreshToken" />
+
+                                                <!-- Edit actions for goal questions -->
+                                                <div class="answer-actions mt-3 d-flex justify-content-center gap-2">
+                                                    <RadzenButton Text="Edit Goals"
+                                                                 ButtonStyle="ButtonStyle.Primary"
+                                                                 Icon="edit"
+                                                                 Size="ButtonSize.Medium"
+                                                                 Click="@(() => EditAnswer(question, CompletionRole.Both))" />
                                                 </div>
                                             </div>
                                         }
@@ -352,6 +382,49 @@
             {
                 return questionResponse;
             }
+        }
+
+        return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+    }
+
+    private QuestionResponse GetGenericQuestionResponse(Guid questionId)
+    {
+        if (currentSection == null || response?.SectionResponses == null)
+            return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+
+        if (!response.SectionResponses.TryGetValue(currentSection.Id, out var sectionResponse))
+            return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+
+        // Determine which role's responses to fetch based on section's CompletionRole
+        // Copy exact logic from DynamicQuestionnaire.razor lines 1092-1112
+        var isPostReviewState = Assignment != null &&
+            (Assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                        WorkflowState.EmployeeReviewConfirmed or
+                                        WorkflowState.Finalized);
+
+        // Review mode is always post-review state, but let's be explicit
+        var isManagerViewingEmployeeOnlyQuestionnaire = IsManagerRole(currentUserRole) && template != null && !template.RequiresManagerReview;
+
+        ResponseRole roleToFetch = CurrentResponseRole;
+
+        if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
+        {
+            // In post-review states or when manager views employee-only questionnaire,
+            // fetch responses based on section's CompletionRole
+            roleToFetch = currentSection.CompletionRole switch
+            {
+                CompletionRole.Employee => ResponseRole.Employee,
+                CompletionRole.Manager => ResponseRole.Manager,
+                CompletionRole.Both => CurrentResponseRole,
+                _ => CurrentResponseRole
+            };
+        }
+
+        // Access responses for the determined role
+        if (sectionResponse.RoleResponses?.TryGetValue(roleToFetch, out var roleQuestions) == true &&
+            roleQuestions.TryGetValue(questionId, out var questionResponse))
+        {
+            return questionResponse;
         }
 
         return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
@@ -557,6 +630,22 @@
     // Cache the current user's role to avoid async calls during render
     private string currentUserRole = "Employee";
 
+    /// <summary>
+    /// The response role for accessing RoleResponses dictionary.
+    /// Converts current user's role to ResponseRole for data access.
+    /// </summary>
+    private ResponseRole CurrentResponseRole
+    {
+        get
+        {
+            if (Enum.TryParse<ApplicationRole>(currentUserRole, out var appRole))
+            {
+                return appRole.ToResponseRole();
+            }
+            return ResponseRole.Employee; // Fallback
+        }
+    }
+
     private async Task InitializeCurrentUserRoleAsync()
     {
         try
@@ -630,5 +719,43 @@
 
         // Small delay to ensure token change propagates before any additional operations
         await Task.Delay(50);
+    }
+
+    /// <summary>
+    /// Debug helper to show which role was fetched for a goal question
+    /// </summary>
+    private string GetRoleFetchedForGoal(Guid questionId)
+    {
+        if (currentSection == null || response?.SectionResponses == null)
+            return "NO_SECTION_OR_RESPONSE";
+
+        if (!response.SectionResponses.TryGetValue(currentSection.Id, out var sectionResponse))
+            return "NO_SECTION_RESPONSE";
+
+        // Copy the same logic from GetGenericQuestionResponse to show what role it would fetch
+        var isPostReviewState = Assignment != null &&
+            (Assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                                        WorkflowState.EmployeeReviewConfirmed or
+                                        WorkflowState.Finalized);
+
+        var isManagerViewingEmployeeOnlyQuestionnaire = IsManagerRole(currentUserRole) && template != null && !template.RequiresManagerReview;
+
+        ResponseRole roleToFetch = CurrentResponseRole;
+
+        if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
+        {
+            roleToFetch = currentSection.CompletionRole switch
+            {
+                CompletionRole.Employee => ResponseRole.Employee,
+                CompletionRole.Manager => ResponseRole.Manager,
+                CompletionRole.Both => CurrentResponseRole,
+                _ => CurrentResponseRole
+            };
+        }
+
+        var hasData = sectionResponse.RoleResponses?.TryGetValue(roleToFetch, out var roleQuestions) == true &&
+                     roleQuestions.ContainsKey(questionId);
+
+        return $"{roleToFetch} (has_data: {hasData})";
     }
 }

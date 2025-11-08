@@ -103,9 +103,9 @@
     // All current goals (strongly-typed with pending state tracking)
     private List<GoalWithState> allCurrentGoals = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        LoadNewGoalsData();
+        await ReloadGoalData();
 
         // If this is the first load and we have goals with IsPendingAdd flags that weren't just added
         // in this session, they're likely incorrectly flagged (now using strongly-typed approach)
@@ -117,16 +117,16 @@
             ClearAllPendingAddFlags();
         }
 
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (HasParameterChanged(nameof(Response), Response))
         {
-            LoadNewGoalsData();
+            await ReloadGoalData();
         }
-        base.OnParametersSet();
+        await base.OnParametersSetAsync();
     }
 
     private void LoadNewGoalsData()
