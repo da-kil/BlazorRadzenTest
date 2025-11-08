@@ -213,21 +213,15 @@
                                                 <OptimizedQuestionRenderer
                                                     Question="@question"
                                                     Response="@goalResponse"
-                                                    IsReadOnly="true"
+                                                    IsReadOnly="false"
                                                     HideHeader="true"
                                                     AssignmentId="@Assignment.Id"
                                                     CurrentUserRole="@GetCurrentUserRole()"
                                                     AssignmentWorkflowState="@Assignment.WorkflowState"
                                                     GoalRefreshToken="@goalRefreshToken" />
 
-                                                <!-- Edit actions for goal questions -->
-                                                <div class="answer-actions mt-3 d-flex justify-content-center gap-2">
-                                                    <RadzenButton Text="Edit Goals"
-                                                                 ButtonStyle="ButtonStyle.Primary"
-                                                                 Icon="edit"
-                                                                 Size="ButtonSize.Medium"
-                                                                 Click="@(() => EditAnswer(question, CompletionRole.Both))" />
-                                                </div>
+                                                <!-- Inline goal management now available directly -->
+                                                <!-- EDIT, DELETE, and ADD NEW GOAL buttons are shown inline in the component above -->
                                             </div>
                                         }
                                         else
