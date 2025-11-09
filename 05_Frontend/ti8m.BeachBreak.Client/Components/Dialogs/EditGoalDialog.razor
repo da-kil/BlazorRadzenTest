@@ -91,7 +91,7 @@
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public Guid QuestionId { get; set; }
     [Parameter] public Guid GoalId { get; set; }
-    [Parameter] public string ModifiedByRole { get; set; } = "Employee";
+    [Parameter] public ApplicationRole ModifiedByRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
 
     // Pre-populated values
@@ -194,6 +194,22 @@
             "HRLead" => ResponseRole.Manager.ToRoleKey(),
             "Admin" => ResponseRole.Manager.ToRoleKey(),
             _ => ResponseRole.Employee.ToRoleKey() // Default for unknown roles
+        };
+    }
+
+    /// <summary>
+    /// Converts ApplicationRole enum to the simplified Employee/Manager format for display.
+    /// </summary>
+    private string GetDisplayRole(ApplicationRole role)
+    {
+        return role switch
+        {
+            ApplicationRole.Employee => ResponseRole.Employee.ToRoleKey(),
+            ApplicationRole.TeamLead => ResponseRole.Manager.ToRoleKey(),
+            ApplicationRole.HR => ResponseRole.Manager.ToRoleKey(),
+            ApplicationRole.HRLead => ResponseRole.Manager.ToRoleKey(),
+            ApplicationRole.Admin => ResponseRole.Manager.ToRoleKey(),
+            _ => ResponseRole.Employee.ToRoleKey() // Default fallback
         };
     }
 }

@@ -66,7 +66,7 @@
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
-    [Parameter] public string CurrentUserRole { get; set; } = "Employee";
+    [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
 
     // Groups predecessor ratings by SourceGoalId to show comparison
     private Dictionary<Guid, List<PredecessorRatingDto>> predecessorGoalGroups = new();
@@ -153,6 +153,11 @@
         return role == "TeamLead" || role == "HR" || role == "HRLead" || role == "Admin" || role == "Manager";
     }
 
+    private bool IsManagerRole(ApplicationRole role)
+    {
+        return role == ApplicationRole.TeamLead || role == ApplicationRole.HR || role == ApplicationRole.HRLead || role == ApplicationRole.Admin;
+    }
+
     private RenderFragment RenderPredecessorGoalComparison(Guid sourceGoalId, List<PredecessorRatingDto> ratings) => __builder =>
     {
         // Get goal information from first rating (all ratings for same goal have same original data)
@@ -197,7 +202,7 @@
                         <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
                             <RadzenText TextStyle="TextStyle.Caption">No employee assessment yet</RadzenText>
                         </RadzenAlert>
-                        @if (!IsReadOnly && CurrentUserRole == "Employee")
+                        @if (!IsReadOnly && CurrentUserRole == ApplicationRole.Employee)
                         {
                             <RadzenButton Text="Provide Assessment"
                                         Icon="add"
@@ -248,7 +253,7 @@
 
         // Check if current user can edit this rating
         bool canEdit = !IsReadOnly &&
-                      ((perspective == "Employee" && CurrentUserRole == "Employee") ||
+                      ((perspective == "Employee" && CurrentUserRole == ApplicationRole.Employee) ||
                        (perspective == "Manager" && IsManagerRole(CurrentUserRole)));
 
         <div class="rating-content">
@@ -320,15 +325,8 @@
         }
         else
         {
-            // Map current user role string to ApplicationRole enum
-            actualRole = CurrentUserRole switch
-            {
-                "TeamLead" => ApplicationRole.TeamLead,
-                "HR" => ApplicationRole.HR,
-                "HRLead" => ApplicationRole.HRLead,
-                "Admin" => ApplicationRole.Admin,
-                _ => ApplicationRole.TeamLead // Default fallback
-            };
+            // CurrentUserRole is already an ApplicationRole enum
+            actualRole = CurrentUserRole;
         }
 
         // Create new rating entry using strongly-typed DTO

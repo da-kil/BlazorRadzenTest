@@ -34,7 +34,7 @@
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public bool HideHeader { get; set; } = false;
     [Parameter] public Guid AssignmentId { get; set; }
-    [Parameter] public string CurrentUserRole { get; set; } = "Employee";
+    [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
     [Parameter] public int GoalRefreshToken { get; set; } = 0;
 

@@ -96,7 +96,7 @@
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
-    [Parameter] public string CurrentUserRole { get; set; } = "Employee";
+    [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
     [Parameter] public Guid AssignmentId { get; set; }
 
@@ -639,6 +639,19 @@
             "Admin" => "Manager",
             "Manager" => "Manager",
             _ => "Employee"
+        };
+    }
+
+    private string GetDisplayRole(ApplicationRole role)
+    {
+        return role switch
+        {
+            ApplicationRole.Employee => ResponseRole.Employee.ToRoleKey(),
+            ApplicationRole.TeamLead => ResponseRole.Manager.ToRoleKey(),
+            ApplicationRole.HR => ResponseRole.Manager.ToRoleKey(),
+            ApplicationRole.HRLead => ResponseRole.Manager.ToRoleKey(),
+            ApplicationRole.Admin => ResponseRole.Manager.ToRoleKey(),
+            _ => ResponseRole.Employee.ToRoleKey() // Default fallback
         };
     }
 

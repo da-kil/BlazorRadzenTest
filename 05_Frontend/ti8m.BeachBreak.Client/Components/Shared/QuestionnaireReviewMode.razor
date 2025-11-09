@@ -140,7 +140,7 @@
                                                                 IsReadOnly="true"
                                                                 HideHeader="true"
                                                                 AssignmentId="@Assignment.Id"
-                                                                CurrentUserRole="Employee"
+                                                                CurrentUserRole="ApplicationRole.Employee"
                                                                 AssignmentWorkflowState="@Assignment.WorkflowState"
                                                                 GoalRefreshToken="@goalRefreshToken" />
                                                         </div>
@@ -179,7 +179,7 @@
                                                                 IsReadOnly="true"
                                                                 HideHeader="true"
                                                                 AssignmentId="@Assignment.Id"
-                                                                CurrentUserRole="@GetCurrentUserRole()"
+                                                                CurrentUserRole="@currentUserRole"
                                                                 AssignmentWorkflowState="@Assignment.WorkflowState"
                                                                 GoalRefreshToken="@goalRefreshToken" />
                                                         </div>
@@ -216,7 +216,7 @@
                                                     IsReadOnly="false"
                                                     HideHeader="true"
                                                     AssignmentId="@Assignment.Id"
-                                                    CurrentUserRole="@GetCurrentUserRole()"
+                                                    CurrentUserRole="@currentUserRole"
                                                     AssignmentWorkflowState="@Assignment.WorkflowState"
                                                     GoalRefreshToken="@goalRefreshToken" />
 
@@ -245,7 +245,7 @@
                                                             IsReadOnly="true"
                                                             HideHeader="true"
                                                             AssignmentId="@Assignment.Id"
-                                                            CurrentUserRole="@currentSection.CompletionRole.ToString()"
+                                                            CurrentUserRole="@ConvertCompletionRoleToApplicationRole(currentSection.CompletionRole)"
                                                             AssignmentWorkflowState="@Assignment.WorkflowState"
                                                             GoalRefreshToken="@goalRefreshToken" />
                                                     </div>
@@ -693,6 +693,13 @@
     private bool IsManagerRole(ApplicationRole role)
     {
         return role is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin;
+    }
+
+    private ApplicationRole ConvertCompletionRoleToApplicationRole(CompletionRole completionRole)
+    {
+        // CompletionRole.Employee should map to ApplicationRole.Employee
+        // CompletionRole.Manager could be the current user's actual role (if they are a manager)
+        return completionRole == CompletionRole.Employee ? ApplicationRole.Employee : currentUserRole;
     }
 
 

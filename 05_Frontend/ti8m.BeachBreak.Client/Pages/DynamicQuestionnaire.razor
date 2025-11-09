@@ -865,7 +865,7 @@
                     OnResponseChanged="@HandleQuestionResponseChangedDynamic"
                     IsReadOnly="@(assignment?.WorkflowState == WorkflowState.InReview ? !isManager : true)"
                     AssignmentId="@(assignmentId ?? Guid.Empty)"
-                    CurrentUserRole="@currentUserRole"
+                    CurrentUserRole="@userRole"
                     AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)" />
             </div>;
         }
@@ -892,7 +892,7 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="Employee"
+                            CurrentUserRole="ApplicationRole.Employee"
                             AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />
                     </div>
                 </div>
@@ -911,7 +911,7 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="@managerContextRole"
+                            CurrentUserRole="@ParseApplicationRole(managerContextRole)"
                             AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
                     </div>
                 </div>
@@ -927,7 +927,7 @@
             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
             IsReadOnly="@IsQuestionnaireCompleted()"
             AssignmentId="@(assignmentId ?? Guid.Empty)"
-            CurrentUserRole="@currentUserRole"
+            CurrentUserRole="@userRole"
             AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />;
     }
 
@@ -955,7 +955,7 @@
                 OnResponseChanged="@HandleQuestionResponseChangedDynamic"
                 IsReadOnly="@(assignment?.WorkflowState == WorkflowState.InReview ? !isManager : true)"
                 AssignmentId="@(assignmentId ?? Guid.Empty)"
-                CurrentUserRole="@currentUserRole"
+                CurrentUserRole="@userRole"
                 AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)" />;
         }
 
@@ -981,7 +981,7 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="Employee"
+                            CurrentUserRole="ApplicationRole.Employee"
                             AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />
                     </div>
                 </div>
@@ -1000,7 +1000,7 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="@managerContextRole"
+                            CurrentUserRole="@ParseApplicationRole(managerContextRole)"
                             AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
                     </div>
                 </div>
@@ -1018,7 +1018,7 @@
             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
             IsReadOnly="@IsQuestionnaireCompleted()"
             AssignmentId="@(assignmentId ?? Guid.Empty)"
-            CurrentUserRole="@currentUserRole"
+            CurrentUserRole="@userRole"
             AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />;
     }
 
@@ -1773,6 +1773,19 @@
     private bool IsManagerRole(string role)
     {
         return role == "TeamLead" || role == "HR" || role == "HRLead" || role == "Admin";
+    }
+
+    private ApplicationRole ParseApplicationRole(string roleString)
+    {
+        return roleString switch
+        {
+            "Employee" => ApplicationRole.Employee,
+            "TeamLead" => ApplicationRole.TeamLead,
+            "HR" => ApplicationRole.HR,
+            "HRLead" => ApplicationRole.HRLead,
+            "Admin" => ApplicationRole.Admin,
+            _ => ApplicationRole.Employee // Default fallback
+        };
     }
 
 }

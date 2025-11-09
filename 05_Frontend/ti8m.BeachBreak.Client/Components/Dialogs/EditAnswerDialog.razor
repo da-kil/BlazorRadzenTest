@@ -139,7 +139,7 @@
     [Parameter] public CompletionRole CompletionRole { get; set; }
     [Parameter] public string SectionTitle { get; set; } = string.Empty;
     [Parameter] public Guid AssignmentId { get; set; }
-    [Parameter] public string CurrentUserRole { get; set; } = "Employee";
+    [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
 
     private QuestionResponse editResponse = new();
