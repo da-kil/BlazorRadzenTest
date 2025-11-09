@@ -430,7 +430,8 @@
                 { "InitialTimeframeFrom", goal.TimeframeFrom },
                 { "InitialTimeframeTo", goal.TimeframeTo },
                 { "InitialWeighting", goal.WeightingPercentage },
-                { "AssignmentWorkflowState", AssignmentWorkflowState }
+                { "AssignmentWorkflowState", AssignmentWorkflowState },
+                { "ModifiedByRole", GetModifiedByRole() }
             },
             new DialogOptions
             {
@@ -822,9 +823,25 @@
         }
     }
 
+    /// <summary>
+    /// Determines the appropriate role for modification attribution based on workflow state and business logic.
+    /// </summary>
+    private string GetModifiedByRole()
+    {
+        return AssignmentWorkflowState switch
+        {
+            // During review phase: Manager is making changes
+            WorkflowState.InReview => GetDisplayRole(CurrentUserRole),
 
+            // Post-review phases: Use current user's role
+            WorkflowState.ManagerReviewConfirmed or
+            WorkflowState.EmployeeReviewConfirmed or
+            WorkflowState.Finalized => GetDisplayRole(CurrentUserRole),
 
-
+            // In-progress phases: Always Employee (since it's the employee's goals)
+            _ => "Employee"
+        };
+    }
 }
 
 <style>

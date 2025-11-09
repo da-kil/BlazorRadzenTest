@@ -179,7 +179,7 @@
                                                                 IsReadOnly="true"
                                                                 HideHeader="true"
                                                                 AssignmentId="@Assignment.Id"
-                                                                CurrentUserRole="@GetManagerContextRole()"
+                                                                CurrentUserRole="@GetCurrentUserRole()"
                                                                 AssignmentWorkflowState="@Assignment.WorkflowState"
                                                                 GoalRefreshToken="@goalRefreshToken" />
                                                         </div>
@@ -397,7 +397,7 @@
                                         WorkflowState.Finalized);
 
         // Review mode is always post-review state, but let's be explicit
-        var isManagerViewingEmployeeOnlyQuestionnaire = IsManagerRole(currentUserRole) && template != null && !template.RequiresManagerReview;
+        var isManagerViewingEmployeeOnlyQuestionnaire = HasManagerPrivileges && template != null && !template.RequiresManagerReview;
 
         ResponseRole roleToFetch = CurrentResponseRole;
 
@@ -621,56 +621,66 @@
         };
     }
 
-    // Cache the current user's role to avoid async calls during render
-    private string currentUserRole = "Employee";
+    /// <summary>
+    /// The user's organizational role determining data access permissions.
+    /// Maps to ApplicationRole enum: Employee, TeamLead, HR, HRLead, Admin.
+    /// Defaults to Employee (principle of least privilege), then upgraded via API call.
+    /// </summary>
+    private ApplicationRole currentUserRole = ApplicationRole.Employee;
+
+    /// <summary>
+    /// Whether user has manager-level privileges (TeamLead or higher).
+    /// Determines endpoint access and UI features.
+    /// </summary>
+    private bool HasManagerPrivileges => currentUserRole is ApplicationRole.TeamLead
+        or ApplicationRole.HR
+        or ApplicationRole.HRLead
+        or ApplicationRole.Admin;
 
     /// <summary>
     /// The response role for accessing RoleResponses dictionary.
     /// Converts current user's role to ResponseRole for data access.
     /// </summary>
-    private ResponseRole CurrentResponseRole
-    {
-        get
-        {
-            if (Enum.TryParse<ApplicationRole>(currentUserRole, out var appRole))
-            {
-                return appRole.ToResponseRole();
-            }
-            return ResponseRole.Employee; // Fallback
-        }
-    }
+    private ResponseRole CurrentResponseRole => currentUserRole.ToResponseRole();
 
     private async Task InitializeCurrentUserRoleAsync()
     {
         try
         {
-            // Properly await the authentication state
-            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState?.User;
+            // WebAssembly client doesn't have ApplicationRole claims (those are added server-side only)
+            // So we need to call the API to get the user's role from the database
+            var roleData = await AuthService.GetMyRoleAsync();
 
-            if (user?.Identity?.IsAuthenticated == true)
+            if (roleData == null)
             {
-                // Try to get ApplicationRole from claims
-                var roleClaim = user.FindFirst("ApplicationRole");
-                if (roleClaim != null)
-                {
-                    currentUserRole = roleClaim.Value;
-                    return;
-                }
+                throw new UnauthorizedAccessException("Unable to retrieve user role for review mode");
             }
 
-            currentUserRole = "Employee";
+            // Store the actual ApplicationRole
+            currentUserRole = roleData.ApplicationRole;
+
+            // SECURITY: Validate manager privileges for review mode
+            if (!HasManagerPrivileges)
+            {
+                throw new UnauthorizedAccessException($"Review mode requires manager privileges. Current role: {currentUserRole}");
+            }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            currentUserRole = "Employee";
+            // Follow principle of least privilege - default to Employee even in error cases
+            NotificationService.Notify(NotificationSeverity.Error, "Access Error",
+                $"Unable to validate manager access for review mode: {ex.Message}");
+
+            // Default to Employee for consistency and security (least privilege principle)
+            // The HasManagerPrivileges validation will catch unauthorized access
+            currentUserRole = ApplicationRole.Employee;
         }
     }
 
     private string GetCurrentUserRole()
     {
-        // Return the cached role (no async operations during render)
-        return currentUserRole;
+        // Return the cached role string representation (no async operations during render)
+        return currentUserRole.ToString();
     }
 
     private string GetRoleForDialog(CompletionRole originalRole)
@@ -680,27 +690,11 @@
         return originalRole == CompletionRole.Employee ? "Employee" : GetCurrentUserRole();
     }
 
-    private bool IsManagerRole(string role)
+    private bool IsManagerRole(ApplicationRole role)
     {
-        return role == "TeamLead" || role == "HR" || role == "HRLead" || role == "Admin";
+        return role is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin;
     }
 
-    /// <summary>
-    /// Gets the appropriate role context for the Manager's Answer section filtering.
-    /// The Manager's Answer section should always show goals from ANY manager role,
-    /// regardless of who is currently viewing the page.
-    ///
-    /// - If current user is a manager: Use their actual role (maintains audit trail)
-    /// - If current user is employee: Use representative manager role to trigger manager filtering
-    ///
-    /// The specific manager role used doesn't affect filtering - the OptimizedGoalQuestion
-    /// component shows goals from ALL manager roles when any manager role is provided.
-    /// </summary>
-    private string GetManagerContextRole()
-    {
-        var userRole = GetCurrentUserRole();
-        return IsManagerRole(userRole) ? userRole : "TeamLead";
-    }
 
     /// <summary>
     /// Triggers refresh of all goal components after assignment response data is reloaded.
@@ -732,7 +726,7 @@
                                         WorkflowState.EmployeeReviewConfirmed or
                                         WorkflowState.Finalized);
 
-        var isManagerViewingEmployeeOnlyQuestionnaire = IsManagerRole(currentUserRole) && template != null && !template.RequiresManagerReview;
+        var isManagerViewingEmployeeOnlyQuestionnaire = HasManagerPrivileges && template != null && !template.RequiresManagerReview;
 
         ResponseRole roleToFetch = CurrentResponseRole;
 
