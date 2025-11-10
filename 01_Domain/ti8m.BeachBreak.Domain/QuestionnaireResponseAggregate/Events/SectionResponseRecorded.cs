@@ -11,6 +11,6 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
 /// </summary>
 public record SectionResponseRecorded(
     Guid SectionId,
-    CompletionRole Role,
+    CompletionRole CompletionRole,
     Dictionary<Guid, QuestionResponseValue> QuestionResponses,
     DateTime RecordedDate) : IDomainEvent;

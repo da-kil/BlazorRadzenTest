@@ -337,7 +337,7 @@ public class QuestionnaireResponse : AggregateRoot
         }
 
         // Store responses under the specific role
-        SectionResponses[@event.SectionId][@event.Role] = @event.QuestionResponses;
+        SectionResponses[@event.SectionId][@event.CompletionRole] = @event.QuestionResponses;
         LastModified = @event.RecordedDate;
     }
 }
