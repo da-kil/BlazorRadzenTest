@@ -431,7 +431,7 @@
                 { "InitialTimeframeTo", goal.TimeframeTo },
                 { "InitialWeighting", goal.WeightingPercentage },
                 { "AssignmentWorkflowState", AssignmentWorkflowState },
-                { "ModifiedByRole", GetModifiedByRole() }
+                { "ModifiedByRole", GetModifiedByRoleEnum() }
             },
             new DialogOptions
             {
@@ -853,6 +853,26 @@
 
             // In-progress phases: Always Employee (since it's the employee's goals)
             _ => "Employee"
+        };
+    }
+
+    /// <summary>
+    /// Determines the appropriate role enum for modification attribution based on workflow state and business logic.
+    /// </summary>
+    private ApplicationRole GetModifiedByRoleEnum()
+    {
+        return AssignmentWorkflowState switch
+        {
+            // During review phase: Manager is making changes
+            WorkflowState.InReview => CurrentUserRole,
+
+            // Post-review phases: Use current user's role
+            WorkflowState.ManagerReviewConfirmed or
+            WorkflowState.EmployeeReviewConfirmed or
+            WorkflowState.Finalized => CurrentUserRole,
+
+            // In-progress phases: Always Employee (since it's the employee's goals)
+            _ => ApplicationRole.Employee
         };
     }
 }

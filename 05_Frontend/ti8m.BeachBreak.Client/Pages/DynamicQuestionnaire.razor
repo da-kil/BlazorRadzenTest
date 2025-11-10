@@ -863,7 +863,7 @@
                     Question="@question"
                     Response="@goalQuestionResponse"
                     OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-                    IsReadOnly="@(assignment?.WorkflowState == WorkflowState.InReview ? !isManager : true)"
+                    IsReadOnly="@IsQuestionnaireCompleted()"
                     AssignmentId="@(assignmentId ?? Guid.Empty)"
                     CurrentUserRole="@userRole"
                     AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)" />
@@ -953,7 +953,7 @@
                 Question="@question"
                 Response="@goalQuestionResponseWithRef"
                 OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-                IsReadOnly="@(assignment?.WorkflowState == WorkflowState.InReview ? !isManager : true)"
+                IsReadOnly="@IsQuestionnaireCompleted()"
                 AssignmentId="@(assignmentId ?? Guid.Empty)"
                 CurrentUserRole="@userRole"
                 AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)" />;
