@@ -174,15 +174,17 @@ public class QuestionnaireResponse : AggregateRoot
             return false;
         }
 
-        // Get competency count from configuration
-        var competencyCount = GetConfigurationCollectionCount(question, "Competencies");
-        if (competencyCount == 0)
+        // Get competency keys from configuration
+        var configCompetencyKeys = GetCompetencyKeysFromConfiguration(question);
+        if (configCompetencyKeys.Count == 0)
         {
             return true; // No competencies defined, consider complete
         }
 
-        // Check if at least one competency is rated
-        return assessmentResponse.Competencies.Any(c => c.Value.Rating > 0);
+        // Check that ALL competencies from configuration are rated in the response
+        return configCompetencyKeys.All(competencyKey =>
+            assessmentResponse.Competencies.TryGetValue(competencyKey, out var competencyResponse) &&
+            competencyResponse.Rating > 0);
     }
 
     private int GetConfigurationCollectionCount(QuestionnaireTemplateAggregate.QuestionItem question, string key)
@@ -196,6 +198,31 @@ public class QuestionnaireResponse : AggregateRoot
         }
 
         return 0;
+    }
+
+    private List<string> GetCompetencyKeysFromConfiguration(QuestionItem question)
+    {
+        if (question.Configuration.TryGetValue("Competencies", out var obj))
+        {
+            if (obj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                var keys = new List<string>();
+                foreach (var item in jsonElement.EnumerateArray())
+                {
+                    if (item.TryGetProperty("Key", out var keyProperty) && keyProperty.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        var key = keyProperty.GetString();
+                        if (!string.IsNullOrEmpty(key))
+                        {
+                            keys.Add(key);
+                        }
+                    }
+                }
+                return keys;
+            }
+        }
+
+        return new List<string>();
     }
 
     // Event application methods (Apply pattern for event sourcing)
