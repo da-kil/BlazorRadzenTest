@@ -135,6 +135,19 @@ public class QuestionnaireResponse : AggregateRoot
         };
     }
 
+    /// <summary>
+    /// Determines if a text question has been completed based on required text sections.
+    /// Validation rules:
+    /// 1. If NO text sections configured: Automatically complete (nothing to validate)
+    /// 2. If text sections configured but NONE are required: Automatically complete (nothing required)
+    /// 3. If required text sections exist: Checks that ALL required sections have content
+    /// </summary>
+    /// <remarks>
+    /// This validation respects item-level IsRequired flags on text sections, not just question-level flags.
+    /// Example: A question with 3 text sections where only 2 are required will be complete when those 2 are filled,
+    /// even if the optional 3rd section is empty.
+    /// If all 3 sections are optional (IsRequired=false), the question is automatically complete.
+    /// </remarks>
     private bool IsTextQuestionComplete(QuestionnaireTemplateAggregate.QuestionItem question, QuestionResponseValue response)
     {
         if (response is not QuestionResponseValue.TextResponse textResponse)
@@ -142,31 +155,47 @@ public class QuestionnaireResponse : AggregateRoot
             return false;
         }
 
-        // Get text sections count from configuration
-        var textSectionsCount = GetConfigurationCollectionCount(question, "TextSections");
-        if (textSectionsCount == 0)
+        // Get text sections with IsRequired flags from configuration
+        var textSectionItems = GetTextSectionsFromConfiguration(question);
+        if (textSectionItems.Count == 0)
         {
-            return true; // No sections defined, consider complete
+            return true; // No items configured = nothing to validate = complete
         }
 
-        // Single section - check if it has a value
-        if (textSectionsCount == 1)
+        // Get only required text sections
+        var requiredTextSections = textSectionItems.Where(ts => ts.IsRequired).ToList();
+
+        // If no required text sections exist, question is automatically complete
+        if (!requiredTextSections.Any())
         {
-            return textResponse.TextSections.Any() && !string.IsNullOrWhiteSpace(textResponse.TextSections.FirstOrDefault());
+            return true; // Nothing required = automatically complete
         }
 
-        // Multiple sections - check if at least one section has content
-        for (int i = 0; i < textSectionsCount; i++)
+        // Check that ALL required text sections have non-empty values
+        return requiredTextSections.All(ts =>
         {
-            if (i < textResponse.TextSections.Count && !string.IsNullOrWhiteSpace(textResponse.TextSections[i]))
-            {
-                return true;
-            }
-        }
-
-        return false;
+            var index = ts.Index;
+            return index < textResponse.TextSections.Count &&
+                   !string.IsNullOrWhiteSpace(textResponse.TextSections[index]);
+        });
     }
 
+    /// <summary>
+    /// Determines if an assessment question has been completed based on required competencies.
+    /// Validation rules:
+    /// 1. If NO competencies configured: Automatically complete (nothing to validate)
+    /// 2. If competencies configured but NONE are required: Automatically complete (nothing required)
+    /// 3. If required competencies exist: Checks that ALL required competencies are rated (rating > 0)
+    /// </summary>
+    /// <remarks>
+    /// This validation respects item-level IsRequired flags on competencies, not just question-level flags.
+    /// Example: An assessment with 5 competencies where only 3 are required will be complete when those 3 are rated,
+    /// even if the optional 2 competencies are unrated (rating = 0).
+    /// If all 5 competencies are optional (IsRequired=false), the question is automatically complete.
+    ///
+    /// FIXED BUG (2025-11-10): Previously validated ALL competencies regardless of IsRequired flag,
+    /// and required at least one to be filled even when all were optional.
+    /// </remarks>
     private bool IsAssessmentComplete(QuestionnaireTemplateAggregate.QuestionItem question, QuestionResponseValue response)
     {
         if (response is not QuestionResponseValue.AssessmentResponse assessmentResponse)
@@ -174,16 +203,25 @@ public class QuestionnaireResponse : AggregateRoot
             return false;
         }
 
-        // Get competency keys from configuration
-        var configCompetencyKeys = GetCompetencyKeysFromConfiguration(question);
-        if (configCompetencyKeys.Count == 0)
+        // Get competencies with IsRequired flags from configuration
+        var competencies = GetCompetenciesFromConfiguration(question);
+        if (competencies.Count == 0)
         {
-            return true; // No competencies defined, consider complete
+            return true; // No items configured = nothing to validate = complete
         }
 
-        // Check that ALL competencies from configuration are rated in the response
-        return configCompetencyKeys.All(competencyKey =>
-            assessmentResponse.Competencies.TryGetValue(competencyKey, out var competencyResponse) &&
+        // Get only required competencies
+        var requiredCompetencies = competencies.Where(c => c.IsRequired).ToList();
+
+        // If no required competencies exist, question is automatically complete
+        if (!requiredCompetencies.Any())
+        {
+            return true; // Nothing required = automatically complete
+        }
+
+        // Check that ALL required competencies have been rated
+        return requiredCompetencies.All(c =>
+            assessmentResponse.Competencies.TryGetValue(c.Key, out var competencyResponse) &&
             competencyResponse.Rating > 0);
     }
 
@@ -200,30 +238,83 @@ public class QuestionnaireResponse : AggregateRoot
         return 0;
     }
 
-    private List<string> GetCompetencyKeysFromConfiguration(QuestionItem question)
+    private List<CompetencyItem> GetCompetenciesFromConfiguration(QuestionItem question)
     {
         if (question.Configuration.TryGetValue("Competencies", out var obj))
         {
             if (obj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
             {
-                var keys = new List<string>();
+                var competencies = new List<CompetencyItem>();
                 foreach (var item in jsonElement.EnumerateArray())
                 {
+                    string? key = null;
+                    bool isRequired = false;
+
                     if (item.TryGetProperty("Key", out var keyProperty) && keyProperty.ValueKind == System.Text.Json.JsonValueKind.String)
                     {
-                        var key = keyProperty.GetString();
-                        if (!string.IsNullOrEmpty(key))
+                        key = keyProperty.GetString();
+                    }
+
+                    if (item.TryGetProperty("IsRequired", out var isRequiredProperty))
+                    {
+                        if (isRequiredProperty.ValueKind == System.Text.Json.JsonValueKind.True)
                         {
-                            keys.Add(key);
+                            isRequired = true;
+                        }
+                        else if (isRequiredProperty.ValueKind == System.Text.Json.JsonValueKind.False)
+                        {
+                            isRequired = false;
                         }
                     }
+
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        competencies.Add(new CompetencyItem(key, isRequired));
+                    }
                 }
-                return keys;
+                return competencies;
             }
         }
 
-        return new List<string>();
+        return new List<CompetencyItem>();
     }
+
+    private List<TextSectionItem> GetTextSectionsFromConfiguration(QuestionItem question)
+    {
+        if (question.Configuration.TryGetValue("TextSections", out var obj))
+        {
+            if (obj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+            {
+                var sections = new List<TextSectionItem>();
+                int index = 0;
+                foreach (var item in jsonElement.EnumerateArray())
+                {
+                    bool isRequired = false;
+
+                    if (item.TryGetProperty("IsRequired", out var isRequiredProperty))
+                    {
+                        if (isRequiredProperty.ValueKind == System.Text.Json.JsonValueKind.True)
+                        {
+                            isRequired = true;
+                        }
+                        else if (isRequiredProperty.ValueKind == System.Text.Json.JsonValueKind.False)
+                        {
+                            isRequired = false;
+                        }
+                    }
+
+                    sections.Add(new TextSectionItem(index, isRequired));
+                    index++;
+                }
+                return sections;
+            }
+        }
+
+        return new List<TextSectionItem>();
+    }
+
+    private record CompetencyItem(string Key, bool IsRequired);
+    private record TextSectionItem(int Index, bool IsRequired);
 
     // Event application methods (Apply pattern for event sourcing)
 
