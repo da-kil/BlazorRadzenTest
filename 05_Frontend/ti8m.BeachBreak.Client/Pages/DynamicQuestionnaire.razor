@@ -1432,14 +1432,10 @@
 
             if (isEmployee && !isManager)
             {
-                // Employees save responses and complete any finished sections
-                await CompleteSectionsAsEmployee(); // Complete sections first to update workflow state
                 await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
             }
             else if (isManager)
             {
-                // Managers save responses and complete any finished sections
-                await CompleteSectionsAsManager(); // Complete sections first to update workflow state
                 await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
             }
 
@@ -1549,8 +1545,7 @@
 
             if (isManager)
             {
-                // Manager flow - complete sections, save and submit
-                await CompleteSectionsAsManager();
+                // Manager flow - backend automatically tracks section completion during save
                 await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
                 var submitSuccess = await AssignmentService.SubmitManagerQuestionnaireAsync(assignmentId.Value, currentUserName);
 
@@ -1570,8 +1565,6 @@
             }
             else
             {
-                // Employee flow - complete sections, save and submit
-                await CompleteSectionsAsEmployee();
                 await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
                 var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
 
@@ -1603,55 +1596,6 @@
         }
     }
 
-    private async Task CompleteSectionsAsEmployee()
-    {
-        if (!assignmentId.HasValue) return;
-
-        // Collect all completed section IDs
-        var completedSectionIds = visibleSections
-            .Where(s => IsSectionCompleted(s.Id))
-            .Select(s => s.Id)
-            .ToList();
-
-        if (!completedSectionIds.Any())
-            return;
-
-        try
-        {
-            // Single atomic bulk operation - fixes concurrency issue
-            await AssignmentService.CompleteBulkSectionsAsEmployeeAsync(assignmentId.Value, completedSectionIds);
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
-                $"Could not complete sections: {ex.Message}");
-        }
-    }
-
-    private async Task CompleteSectionsAsManager()
-    {
-        if (!assignmentId.HasValue) return;
-
-        // Collect all completed section IDs
-        var completedSectionIds = visibleSections
-            .Where(s => IsSectionCompleted(s.Id))
-            .Select(s => s.Id)
-            .ToList();
-
-        if (!completedSectionIds.Any())
-            return;
-
-        try
-        {
-            // Single atomic bulk operation - fixes concurrency issue
-            await AssignmentService.CompleteBulkSectionsAsManagerAsync(assignmentId.Value, completedSectionIds);
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
-                $"Could not complete sections: {ex.Message}");
-        }
-    }
 
     private async Task OnWorkflowActionCompleted()
     {

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Mappers;
-using ti8m.BeachBreak.Application.Command.Repositories;
 using ti8m.BeachBreak.Application.Command.Models;
+using ti8m.BeachBreak.Application.Command.Repositories;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
@@ -15,15 +15,18 @@ public class QuestionnaireResponseCommandHandler :
 {
     private readonly IQuestionnaireResponseAggregateRepository repository;
     private readonly IQuestionnaireAssignmentAggregateRepository assignmentRepository;
+    private readonly IQuestionnaireTemplateAggregateRepository templateRepository;
     private readonly ILogger<QuestionnaireResponseCommandHandler> logger;
 
     public QuestionnaireResponseCommandHandler(
         IQuestionnaireResponseAggregateRepository repository,
         IQuestionnaireAssignmentAggregateRepository assignmentRepository,
+        IQuestionnaireTemplateAggregateRepository templateRepository,
         ILogger<QuestionnaireResponseCommandHandler> logger)
     {
         this.repository = repository;
         this.assignmentRepository = assignmentRepository;
+        this.templateRepository = templateRepository;
         this.logger = logger;
     }
 
@@ -102,9 +105,27 @@ public class QuestionnaireResponseCommandHandler :
             if (isFirstSave)
             {
                 assignment.StartWork(ApplicationRoleMapper.MapToDomain(ApplicationRole.Employee)); // Sets StartedDate and updates workflow state
-                await assignmentRepository.StoreAsync(assignment, cancellationToken);
-                logger.LogInformation("Assignment {AssignmentId} marked as started by employee", command.AssignmentId);
             }
+
+            // Automatically track section completion - Response validates itself against Template rules
+            var template = await templateRepository.LoadAsync<Domain.QuestionnaireTemplateAggregate.QuestionnaireTemplate>(
+                assignment.TemplateId,
+                cancellationToken: cancellationToken);
+
+            if (template != null)
+            {
+                var completedSectionIds = response.GetCompletedSections(template, CompletionRole.Employee);
+
+                if (completedSectionIds.Any())
+                {
+                    assignment.CompleteBulkSectionsAsEmployee(completedSectionIds);
+                    logger.LogInformation("Marked {Count} sections as completed for employee in AssignmentId: {AssignmentId}",
+                        completedSectionIds.Count, command.AssignmentId);
+                }
+            }
+
+            // Save assignment with updated state and section progress
+            await assignmentRepository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully saved employee response for AssignmentId: {AssignmentId}", command.AssignmentId);
             return Result<Guid>.Success(response.Id);
@@ -198,9 +219,27 @@ public class QuestionnaireResponseCommandHandler :
             if (isFirstSave)
             {
                 assignment.StartWork(ApplicationRoleMapper.MapToDomain(ApplicationRole.TeamLead)); // Sets StartedDate and updates workflow state
-                await assignmentRepository.StoreAsync(assignment, cancellationToken);
-                logger.LogInformation("Assignment {AssignmentId} marked as started by manager", command.AssignmentId);
             }
+
+            // Automatically track section completion - Response validates itself against Template rules
+            var template = await templateRepository.LoadAsync<Domain.QuestionnaireTemplateAggregate.QuestionnaireTemplate>(
+                assignment.TemplateId,
+                cancellationToken: cancellationToken);
+
+            if (template != null)
+            {
+                var completedSectionIds = response.GetCompletedSections(template, CompletionRole.Manager);
+
+                if (completedSectionIds.Any())
+                {
+                    assignment.CompleteBulkSectionsAsManager(completedSectionIds);
+                    logger.LogInformation("Marked {Count} sections as completed for manager in AssignmentId: {AssignmentId}",
+                        completedSectionIds.Count, command.AssignmentId);
+                }
+            }
+
+            // Save assignment with updated state and section progress
+            await assignmentRepository.StoreAsync(assignment, cancellationToken);
 
             logger.LogInformation("Successfully saved manager response for AssignmentId: {AssignmentId}", command.AssignmentId);
             return Result<Guid>.Success(response.Id);

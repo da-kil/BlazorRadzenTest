@@ -205,62 +205,6 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     }
 
     // Workflow operations
-    public async Task<bool> CompleteSectionAsEmployeeAsync(Guid assignmentId, Guid sectionId)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsync($"{AssignmentCommandEndpoint}/{assignmentId}/sections/{sectionId}/complete-employee", null);
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error completing section {sectionId} as employee for assignment {assignmentId}", ex);
-            return false;
-        }
-    }
-
-    public async Task<bool> CompleteBulkSectionsAsEmployeeAsync(Guid assignmentId, List<Guid> sectionIds)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/sections/bulk-complete-employee", sectionIds);
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error completing {sectionIds.Count} sections as employee for assignment {assignmentId}", ex);
-            return false;
-        }
-    }
-
-    public async Task<bool> CompleteSectionAsManagerAsync(Guid assignmentId, Guid sectionId)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsync($"{AssignmentCommandEndpoint}/{assignmentId}/sections/{sectionId}/complete-manager", null);
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error completing section {sectionId} as manager for assignment {assignmentId}", ex);
-            return false;
-        }
-    }
-
-    public async Task<bool> CompleteBulkSectionsAsManagerAsync(Guid assignmentId, List<Guid> sectionIds)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/sections/bulk-complete-manager", sectionIds);
-            return response.IsSuccessStatusCode;
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error completing {sectionIds.Count} sections as manager for assignment {assignmentId}", ex);
-            return false;
-        }
-    }
-
     public async Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy)
     {
         try
