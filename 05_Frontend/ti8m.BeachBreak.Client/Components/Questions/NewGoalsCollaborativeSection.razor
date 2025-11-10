@@ -99,6 +99,7 @@
     [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
     [Parameter] public Guid AssignmentId { get; set; }
+    [Parameter] public SectionResponse? SectionData { get; set; } // Access to all role responses for review mode
 
     // All current goals (strongly-typed with pending state tracking)
     private List<GoalWithState> allCurrentGoals = new();
@@ -142,14 +143,37 @@
     }
 
     /// <summary>
-    /// Load goals from Response data as strongly-typed GoalWithState objects
+    /// Load goals from Response data as strongly-typed GoalWithState objects.
+    /// In review mode, loads goals from all role responses; otherwise loads from current role only.
     /// </summary>
     private List<GoalWithState> LoadGoalsFromResponse()
     {
+        // In review mode with access to full section data, load goals from all roles
+        if (AssignmentWorkflowState == WorkflowState.InReview && SectionData != null)
+        {
+            var allGoals = new List<GoalWithState>();
+
+            // Iterate through all role responses in the section
+            foreach (var roleResponse in SectionData.RoleResponses)
+            {
+                if (roleResponse.Value.TryGetValue(Question.Id, out var questionResponse) &&
+                    questionResponse.ResponseData is GoalResponseDataDto roleGoalData)
+                {
+                    // Convert goals from this role and add to the collection
+                    var roleGoals = roleGoalData.Goals.Select(ConvertGoalDataDtoToGoalWithState).ToList();
+                    allGoals.AddRange(roleGoals);
+                }
+            }
+
+            return allGoals;
+        }
+
+        // Fallback: current single-role behavior
         if (Response?.ResponseData is not GoalResponseDataDto goalData)
         {
             return new List<GoalWithState>();
         }
+
         // Convert GoalDataDto objects to GoalWithState objects
         return goalData.Goals.Select(ConvertGoalDataDtoToGoalWithState).ToList();
     }

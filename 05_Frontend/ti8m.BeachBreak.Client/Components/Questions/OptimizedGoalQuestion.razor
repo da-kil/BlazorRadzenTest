@@ -74,6 +74,7 @@ else
                 CurrentUserRole="@CurrentUserRole"
                 AssignmentWorkflowState="@AssignmentWorkflowState"
                 AssignmentId="@AssignmentId"
+                SectionData="@SectionData"
                 @ref="newGoalsSection" />
         </div>
     };
@@ -88,6 +89,7 @@ else
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
+    [Parameter] public SectionResponse? SectionData { get; set; } // Access to all role responses for review mode
     [Parameter] public int GoalRefreshToken { get; set; } = 0;
 
     // Component references for the two sections

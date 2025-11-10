@@ -210,6 +210,16 @@
                                                 }
 
 
+                                                @{
+                                                    // Get the section response containing all role responses for review mode
+                                                    SectionResponse? sectionData = null;
+                                                    if (currentSection != null && response?.SectionResponses != null &&
+                                                        response.SectionResponses.TryGetValue(currentSection.Id, out var sectionResponse))
+                                                    {
+                                                        sectionData = sectionResponse;
+                                                    }
+                                                }
+
                                                 <OptimizedQuestionRenderer
                                                     Question="@question"
                                                     Response="@goalResponse"
@@ -218,7 +228,8 @@
                                                     AssignmentId="@Assignment.Id"
                                                     CurrentUserRole="@currentUserRole"
                                                     AssignmentWorkflowState="@Assignment.WorkflowState"
-                                                    GoalRefreshToken="@goalRefreshToken" />
+                                                    GoalRefreshToken="@goalRefreshToken"
+                                                    SectionData="@sectionData" />
 
                                                 <!-- Inline goal management now available directly -->
                                                 <!-- EDIT, DELETE, and ADD NEW GOAL buttons are shown inline in the component above -->

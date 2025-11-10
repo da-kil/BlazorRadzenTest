@@ -37,6 +37,7 @@
     [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
     [Parameter] public int GoalRefreshToken { get; set; } = 0;
+    [Parameter] public SectionResponse? SectionData { get; set; } // Access to all role responses for review mode
 
     private bool shouldRender = true;
     private string? lastQuestionHash;
@@ -136,7 +137,8 @@
                               AssignmentId="@AssignmentId"
                               CurrentUserRole="@CurrentUserRole"
                               AssignmentWorkflowState="@AssignmentWorkflowState"
-                              GoalRefreshToken="@GoalRefreshToken" />
+                              GoalRefreshToken="@GoalRefreshToken"
+                              SectionData="@SectionData" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>
