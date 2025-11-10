@@ -147,8 +147,9 @@
     private List<GoalWithState> LoadGoalsFromResponse()
     {
         if (Response?.ResponseData is not GoalResponseDataDto goalData)
+        {
             return new List<GoalWithState>();
-
+        }
         // Convert GoalDataDto objects to GoalWithState objects
         return goalData.Goals.Select(ConvertGoalDataDtoToGoalWithState).ToList();
     }
@@ -585,7 +586,7 @@
                 TimeframeFrom = dto.TimeframeFrom,
                 TimeframeTo = dto.TimeframeTo,
                 WeightingPercentage = dto.WeightingPercentage ?? 0m,
-                AddedByRole = ApplicationRole.Employee,
+                AddedByRole = CurrentUserRole,
                 AddedAt = DateTime.UtcNow,
                 AddedByEmployeeId = Guid.Empty, // Will be set by backend
                 Modifications = new List<GoalModificationDto>(),
@@ -795,6 +796,25 @@
 
     private async Task ReloadGoalData()
     {
+        // Check if we already have goal data loaded from the main questionnaire API
+        if (Response.ResponseData is GoalResponseDataDto existingGoalData && existingGoalData.Goals.Count > 0)
+        {
+            LoadNewGoalsData();
+            await NotifyResponseChanged();
+            return;
+        }
+
+        // If ResponseData is null or not the right type, the main questionnaire response might have been
+        // loaded before our JsonOptions fix. Let's try refreshing the whole questionnaire response.
+        if (Response.ResponseData is not GoalResponseDataDto)
+        {
+            // We'll continue with the Goals API call as fallback
+        }
+        else if (Response.ResponseData is GoalResponseDataDto emptyGoalData && emptyGoalData.Goals.Count == 0)
+        {
+            // We'll continue with the Goals API call as fallback
+        }
+
         try
         {
             var result = await GoalApiService.GetGoalQuestionDataAsync(AssignmentId, Question.Id);
@@ -806,6 +826,10 @@
                 {
                     goalData = new GoalResponseDataDto();
                     Response.ResponseData = goalData;
+                }
+                else
+                {
+                    goalData = (GoalResponseDataDto)Response.ResponseData;
                 }
 
                 // Update with strongly-typed goals - convert GoalDto to GoalDataDto

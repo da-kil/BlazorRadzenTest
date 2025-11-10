@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using ti8m.BeachBreak.Client.Configuration;
 using ti8m.BeachBreak.Client.Services;
 
@@ -28,6 +29,7 @@ internal class Program
         {
             options.PropertyNamingPolicy = null; // PascalCase for both sending and receiving
             options.PropertyNameCaseInsensitive = false; // Enforce strict PascalCase consistency
+            options.TypeInfoResolver = new DefaultJsonTypeInfoResolver(); // Enable polymorphic type discrimination
         });
 
         // Configure HttpClients for API communication
