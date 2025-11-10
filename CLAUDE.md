@@ -459,3 +459,86 @@ public enum QuestionType
 **Historical Bug**: QuestionType enum had different implicit ordering in CommandApi (Assessment, Goal, TextQuestion) vs other layers (Assessment, TextQuestion, Goal), causing Goal questions (saved as Type=1) to be deserialized as TextQuestion (Type=1) in other layers, rendering them incorrectly.
 
 **Rule**: Set explicit integer values for ALL enums in this codebase, even if they seem to have a natural sequential order.
+
+### 9. Domain Validation Pattern - Template Configuration vs Response Data
+- **CRITICAL**: When validating questionnaire responses, you must validate response data AGAINST template configuration
+- **NEVER** validate only the response data in isolation
+- **ALWAYS** extract the expected structure from template configuration, then verify ALL required elements are present in the response
+- **PRINCIPLE**: Follows DDD's Information Expert pattern - the aggregate owns the data and knows how to validate itself using the template as a specification
+
+**The Common Bug Pattern**:
+```csharp
+// ❌ WRONG - Validates response in isolation
+private bool IsAssessmentComplete(QuestionItem question, AssessmentResponse response)
+{
+    // This checks if ANY competency is rated, but ignores the template configuration
+    return response.Competencies.Any(c => c.Value.Rating > 0);
+}
+
+// Problem: If template defines 4 competencies but user only rates 1, this returns true!
+```
+
+**The Correct Pattern**:
+```csharp
+// ✅ CORRECT - Validates response against template configuration
+private bool IsAssessmentComplete(QuestionItem question, AssessmentResponse response)
+{
+    // Step 1: Extract expected structure from template configuration
+    var configCompetencyKeys = GetCompetencyKeysFromConfiguration(question);
+
+    if (configCompetencyKeys.Count == 0)
+    {
+        return true; // No competencies defined, consider complete
+    }
+
+    // Step 2: Verify ALL required elements from config exist in response
+    return configCompetencyKeys.All(competencyKey =>
+        response.Competencies.TryGetValue(competencyKey, out var competencyResponse) &&
+        competencyResponse.Rating > 0);
+}
+```
+
+**Configuration Parsing Pattern**:
+
+When parsing template configuration (stored as `Dictionary<string, object>` containing JSON):
+
+```csharp
+private List<string> GetCompetencyKeysFromConfiguration(QuestionItem question)
+{
+    if (question.Configuration.TryGetValue("Competencies", out var obj))
+    {
+        // Configuration values are stored as System.Text.Json.JsonElement
+        if (obj is System.Text.Json.JsonElement jsonElement &&
+            jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            var keys = new List<string>();
+            foreach (var item in jsonElement.EnumerateArray())
+            {
+                // Extract the "Key" property from each competency object
+                if (item.TryGetProperty("Key", out var keyProperty) &&
+                    keyProperty.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var key = keyProperty.GetString();
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        keys.Add(key);
+                    }
+                }
+            }
+            return keys;
+        }
+    }
+    return new List<string>();
+}
+```
+
+**Where This Pattern Applies**:
+- `QuestionnaireResponse.GetCompletedSections()` - Domain aggregate validation (01_Domain)
+- Frontend validation in question components - Must match domain validation logic
+- Command handlers that validate before submission - Use domain aggregate methods
+
+**Key Locations**:
+- `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireResponseAggregate/QuestionnaireResponse.cs` - Canonical validation logic
+- See pattern #7 (Frontend Component Architecture) for matching validation in the UI layer
+
+**Historical Bug** (Fixed 2025-11-10): Assessment validation only checked if ANY competency was rated (`Any(c => c.Rating > 0)`), rather than validating that ALL competencies defined in the template configuration were rated. This allowed incomplete assessments to be marked as complete.
