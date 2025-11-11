@@ -351,6 +351,7 @@
     private string managerContextRole = string.Empty;
     private List<QuestionSection> visibleSections = new();
     private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
+    private SectionResponse? currentSectionData => currentSection != null && response.SectionResponses.TryGetValue(currentSection.Id, out var sectionData) ? sectionData : null;
     private bool isSubmitting = false;
     private bool isProcessing = false;
     private bool isSaving = false;
@@ -866,7 +867,8 @@
                     IsReadOnly="@IsQuestionnaireCompleted()"
                     AssignmentId="@(assignmentId ?? Guid.Empty)"
                     CurrentUserRole="@userRole"
-                    AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)" />
+                    AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)"
+                    SectionData="@currentSectionData" />
             </div>;
         }
 
@@ -893,7 +895,8 @@
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
                             CurrentUserRole="ApplicationRole.Employee"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+                            SectionData="@currentSectionData" />
                     </div>
                 </div>
 
@@ -912,7 +915,8 @@
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
                             CurrentUserRole="@ParseApplicationRole(managerContextRole)"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)"
+                            SectionData="@currentSectionData" />
                     </div>
                 </div>
             </div>;
@@ -928,7 +932,8 @@
             IsReadOnly="@IsQuestionnaireCompleted()"
             AssignmentId="@(assignmentId ?? Guid.Empty)"
             CurrentUserRole="@userRole"
-            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />;
+            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+            SectionData="@currentSectionData" />;
     }
 
     private RenderFragment RenderQuestionWithRef(QuestionItem question)
@@ -956,7 +961,8 @@
                 IsReadOnly="@IsQuestionnaireCompleted()"
                 AssignmentId="@(assignmentId ?? Guid.Empty)"
                 CurrentUserRole="@userRole"
-                AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)" />;
+                AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)"
+                SectionData="@currentSectionData" />;
         }
 
         // In post-review state for "Both" sections, show BOTH employee and manager responses (comparison view)
@@ -982,7 +988,8 @@
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
                             CurrentUserRole="ApplicationRole.Employee"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+                            SectionData="@currentSectionData" />
                     </div>
                 </div>
 
@@ -1001,7 +1008,8 @@
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
                             CurrentUserRole="@ParseApplicationRole(managerContextRole)"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)"
+                            SectionData="@currentSectionData" />
                     </div>
                 </div>
             </div>;
@@ -1019,7 +1027,8 @@
             IsReadOnly="@IsQuestionnaireCompleted()"
             AssignmentId="@(assignmentId ?? Guid.Empty)"
             CurrentUserRole="@userRole"
-            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />;
+            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+            SectionData="@currentSectionData" />;
     }
 
     /// <summary>

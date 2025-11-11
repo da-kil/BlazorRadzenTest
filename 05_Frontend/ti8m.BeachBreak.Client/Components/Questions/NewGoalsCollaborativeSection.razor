@@ -144,12 +144,15 @@
 
     /// <summary>
     /// Load goals from Response data as strongly-typed GoalWithState objects.
-    /// In review mode, loads goals from all role responses; otherwise loads from current role only.
+    /// In review and post-review states, loads goals from all role responses; otherwise loads from current role only.
     /// </summary>
     private List<GoalWithState> LoadGoalsFromResponse()
     {
-        // In review mode with access to full section data, load goals from all roles
-        if (AssignmentWorkflowState == WorkflowState.InReview && SectionData != null)
+        // In review and post-review states with access to full section data, load goals from all roles
+        if (AssignmentWorkflowState is WorkflowState.InReview or
+                                        WorkflowState.ManagerReviewConfirmed or
+                                        WorkflowState.EmployeeReviewConfirmed or
+                                        WorkflowState.Finalized && SectionData != null)
         {
             var allGoals = new List<GoalWithState>();
 
