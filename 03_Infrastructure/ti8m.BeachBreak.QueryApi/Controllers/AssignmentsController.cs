@@ -344,14 +344,15 @@ public class AssignmentsController : BaseController
 
     /// <summary>
     /// Gets available predecessor questionnaires that can be linked for goal rating.
-    /// Returns finalized questionnaires for same employee, same category, that have goals.
-    /// Validates ownership - users can only see their own predecessors.
+    /// Returns finalized questionnaires for same employee, same category, that have ANY goals.
+    /// Managers can access this for their direct reports' assignments.
     /// </summary>
-    [HttpGet("{assignmentId}/predecessors/{questionId}")]
+    [HttpGet("{assignmentId}/predecessors")]
+    [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(typeof(IEnumerable<AvailablePredecessorDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetAvailablePredecessors(Guid assignmentId, Guid questionId)
+    public async Task<IActionResult> GetAvailablePredecessors(Guid assignmentId)
     {
         try
         {
@@ -362,8 +363,34 @@ public class AssignmentsController : BaseController
                 return Unauthorized("User ID not found in authentication context");
             }
 
+            // Get the assignment first to determine the employee
+            var assignmentResult = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentQuery(assignmentId));
+            if (assignmentResult == null || !assignmentResult.Succeeded || assignmentResult.Payload == null)
+            {
+                logger.LogWarning("Assignment {AssignmentId} not found", assignmentId);
+                return NotFound($"Assignment with ID {assignmentId} not found");
+            }
+
+            var assignment = assignmentResult.Payload;
+            var employeeId = assignment.EmployeeId;
+
+            // Check if user has elevated role (HR/Admin) or is the employee themselves
+            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+            if (!hasElevatedRole && userId != employeeId)
+            {
+                // Managers can only access assignments for their direct reports
+                var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, assignmentId);
+                if (!canAccess)
+                {
+                    logger.LogWarning("Manager {UserId} attempted to access predecessors for assignment {AssignmentId} for non-direct report",
+                        userId, assignmentId);
+                    return Forbid();
+                }
+            }
+
+            // Query uses the employee ID (not the requesting user ID) to get predecessors for the employee
             var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetAvailablePredecessorsQuery(
-                assignmentId, questionId, userId);
+                assignmentId, employeeId);
 
             var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 

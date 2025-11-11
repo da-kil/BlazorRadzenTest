@@ -7,6 +7,7 @@ namespace ti8m.BeachBreak.Client.Models.Dto.Queries;
 /// </summary>
 public class PredecessorRatingDto
 {
+    public Guid SourceAssignmentId { get; set; }
     public Guid SourceGoalId { get; set; }
     public int DegreeOfAchievement { get; set; }
     public string Justification { get; set; } = string.Empty;

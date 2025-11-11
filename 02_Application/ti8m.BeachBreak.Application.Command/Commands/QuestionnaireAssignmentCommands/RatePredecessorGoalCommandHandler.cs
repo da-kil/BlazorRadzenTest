@@ -34,18 +34,13 @@ public class RatePredecessorGoalCommandHandler
             var assignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
                 command.AssignmentId, cancellationToken: cancellationToken);
 
-            // Load predecessor assignment to get the goal data
-            var predecessorAssignment = await repository.LoadRequiredAsync<Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment>(
-                command.SourceAssignmentId, cancellationToken: cancellationToken);
-
-            // Capture predecessor goal data for historical accuracy
-            var predecessorGoal = predecessorAssignment.GetPredecessorGoalData(command.QuestionId, command.SourceGoalId);
-
+            // Predecessor goal data is now passed in the command (read from QuestionnaireResponse by the caller)
+            // No need to load predecessor assignment since goals are stored in QuestionnaireResponse
             assignment.RatePredecessorGoal(
                 command.QuestionId,
                 command.SourceAssignmentId,
                 command.SourceGoalId,
-                predecessorGoal,
+                command.PredecessorGoalData,
                 ApplicationRoleMapper.MapToDomain(command.RatedByRole),
                 command.DegreeOfAchievement,
                 command.Justification,

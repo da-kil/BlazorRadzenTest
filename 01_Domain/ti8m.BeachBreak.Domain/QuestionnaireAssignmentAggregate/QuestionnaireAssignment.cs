@@ -49,15 +49,11 @@ public class QuestionnaireAssignment : AggregateRoot
     public string? ManagerFinalNotes { get; private set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
-    // Goal management (for Goal question type)
-    private readonly Dictionary<Guid, List<Goal>> _goalsByQuestion = new();
+    // Predecessor linking and goal ratings (for predecessor functionality)
     private readonly Dictionary<Guid, Guid> _predecessorLinks = new();
     private readonly Dictionary<Guid, List<GoalRating>> _goalRatingsByQuestion = new();
 
     // Public readonly accessors for query purposes
-    public IReadOnlyDictionary<Guid, IReadOnlyList<Goal>> GoalsByQuestion =>
-        _goalsByQuestion.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<Goal>)kvp.Value.AsReadOnly());
-
     public IReadOnlyDictionary<Guid, Guid> PredecessorLinks => _predecessorLinks;
 
     public IReadOnlyDictionary<Guid, IReadOnlyList<GoalRating>> GoalRatingsByQuestion =>
@@ -506,199 +502,12 @@ public class QuestionnaireAssignment : AggregateRoot
         if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && WorkflowState == WorkflowState.EmployeeInProgress)
             throw new InvalidOperationException("Manager cannot link during EmployeeInProgress state");
 
-        if (_goalsByQuestion.ContainsKey(questionId) && _goalsByQuestion[questionId].Any())
-            throw new InvalidOperationException("Cannot link predecessor after goals have been added to this question");
-
         RaiseEvent(new PredecessorQuestionnaireLinked(
             predecessorAssignmentId,
             questionId,
             linkedByRole,
             DateTime.UtcNow,
             linkedByEmployeeId));
-    }
-
-    public void AddGoal(
-        Guid questionId,
-        Guid goalId,
-        ApplicationRole addedByRole,
-        DateTime timeframeFrom,
-        DateTime timeframeTo,
-        string objectiveDescription,
-        string measurementMetric,
-        decimal weightingPercentage,
-        Guid addedByEmployeeId)
-    {
-        if (IsLocked)
-            throw new InvalidOperationException("Cannot add goal - questionnaire is finalized");
-
-        if (IsWithdrawn)
-            throw new InvalidOperationException("Cannot add goal - assignment is withdrawn");
-
-        // Validate edit permissions based on role and workflow state
-        if (addedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
-            throw new InvalidOperationException($"Employee cannot add goals in state {WorkflowState}");
-
-        // Special handling for InReview state - managers can add goals during review meetings
-        if (WorkflowState == WorkflowState.InReview)
-        {
-            // During review, only roles with management authority can add goals
-            if (addedByRole is not (ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin))
-                throw new InvalidOperationException("Only manager can add goals during review meeting");
-        }
-        else
-        {
-            // Standard validation for non-review states
-            if (addedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
-                throw new InvalidOperationException($"Manager cannot add goals in state {WorkflowState}");
-        }
-
-        // Validate role-specific workflow state restrictions
-        if (addedByRole == ApplicationRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
-            throw new InvalidOperationException("Employee cannot add goals during ManagerInProgress state");
-
-        if (addedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && WorkflowState == WorkflowState.EmployeeInProgress)
-            throw new InvalidOperationException("Manager cannot add goals during EmployeeInProgress state");
-
-        ValidateWeightingTotal(questionId, addedByRole, weightingPercentage);
-        ValidateTimeframe(timeframeFrom, timeframeTo);
-
-        RaiseEvent(new GoalAdded(
-            questionId,
-            goalId,
-            addedByRole,
-            timeframeFrom,
-            timeframeTo,
-            objectiveDescription,
-            measurementMetric,
-            weightingPercentage,
-            DateTime.UtcNow,
-            addedByEmployeeId));
-    }
-
-    public void ModifyGoal(
-        Guid goalId,
-        DateTime? timeframeFrom,
-        DateTime? timeframeTo,
-        string? objectiveDescription,
-        string? measurementMetric,
-        decimal? weightingPercentage,
-        ApplicationRole modifiedByRole,
-        string? changeReason,
-        Guid modifiedByEmployeeId)
-    {
-        if (IsLocked)
-            throw new InvalidOperationException("Cannot modify goal - questionnaire is finalized");
-
-        // Allow modifications during in-progress states (by goal owner) and during review (by manager)
-        var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == goalId);
-        if (goal == null)
-        {
-            // Debug information for goal not found
-            var allGoals = _goalsByQuestion.Values.SelectMany(g => g).ToList();
-            var goalInfo = allGoals.Any()
-                ? string.Join(", ", allGoals.Select(g => $"{g.Id} (Q:{g.QuestionId})"))
-                : "no goals found";
-            throw new InvalidOperationException($"Goal {goalId} not found. Assignment {Id} in state {WorkflowState} has {allGoals.Count} total goals: {goalInfo}");
-        }
-
-        // Validate permissions based on workflow state
-        if (WorkflowState == WorkflowState.InReview)
-        {
-            // During formal review, only roles with management authority can modify any goal
-            if (modifiedByRole is not (ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin))
-                throw new InvalidOperationException("Only manager can modify goals during review meeting");
-
-            // Change reason is required during review state
-            if (string.IsNullOrWhiteSpace(changeReason))
-                throw new ArgumentException("Change reason is required during review", nameof(changeReason));
-        }
-        else if (WorkflowState == WorkflowState.EmployeeSubmitted)
-        {
-            // After employee submission, only managers can modify any goal (collaborative editing)
-            if (modifiedByRole is not (ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin))
-                throw new InvalidOperationException("Only manager can modify goals after employee submission");
-
-            // Change reason is optional during collaborative editing
-        }
-        else if (WorkflowState == WorkflowState.ManagerSubmitted)
-        {
-            // After manager submission, only employees can modify goals they added (collaborative editing)
-            if (modifiedByRole is not ApplicationRole.Employee)
-                throw new InvalidOperationException("Only employee can modify goals after manager submission");
-
-            // Employee can only modify goals they added
-            if (goal.AddedByRole != ApplicationRole.Employee)
-                throw new InvalidOperationException("Employee can only modify goals they added");
-
-            // Change reason is optional during collaborative editing
-        }
-        else if (WorkflowState is WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress)
-        {
-            // During in-progress, user can only modify their own goals
-            if (goal.AddedByRole != modifiedByRole)
-                throw new InvalidOperationException($"Cannot modify goal added by {goal.AddedByRole}");
-
-            // Change reason is optional during in-progress states
-        }
-        else
-        {
-            throw new InvalidOperationException($"Goals cannot be modified in state {WorkflowState}");
-        }
-
-        if (weightingPercentage.HasValue)
-        {
-            var questionId = goal.QuestionId;
-            var otherGoalsTotal = _goalsByQuestion[questionId]
-                .Where(g => g.Id != goalId && g.AddedByRole == goal.AddedByRole)
-                .Sum(g => g.WeightingPercentage);
-
-            if (otherGoalsTotal + weightingPercentage.Value > 100m)
-                throw new InvalidOperationException($"Total weighting would exceed 100% (current: {otherGoalsTotal}%, adding: {weightingPercentage.Value}%)");
-        }
-
-        RaiseEvent(new GoalModified(
-            goalId,
-            timeframeFrom,
-            timeframeTo,
-            objectiveDescription,
-            measurementMetric,
-            weightingPercentage,
-            modifiedByRole,
-            changeReason,
-            DateTime.UtcNow,
-            modifiedByEmployeeId));
-    }
-
-    public void DeleteGoal(
-        Guid goalId,
-        Guid deletedByEmployeeId)
-    {
-        if (IsLocked)
-            throw new InvalidOperationException("Cannot delete goal - questionnaire is finalized");
-
-        if (IsWithdrawn)
-            throw new InvalidOperationException("Cannot delete goal - assignment is withdrawn");
-
-        // Find the goal
-        var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == goalId);
-        if (goal == null)
-        {
-            // Debug information for goal not found
-            var allGoals = _goalsByQuestion.Values.SelectMany(g => g).ToList();
-            var goalInfo = allGoals.Any()
-                ? string.Join(", ", allGoals.Select(g => $"{g.Id} (Q:{g.QuestionId})"))
-                : "no goals found";
-            throw new InvalidOperationException($"Goal {goalId} not found. Assignment {Id} in state {WorkflowState} has {allGoals.Count} total goals: {goalInfo}");
-        }
-
-        // Can only delete during in-progress states
-        if (WorkflowState is not (WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress))
-            throw new InvalidOperationException($"Goals cannot be deleted in state {WorkflowState}");
-
-        RaiseEvent(new GoalDeleted(
-            goalId,
-            DateTime.UtcNow,
-            deletedByEmployeeId));
     }
 
     public void RatePredecessorGoal(
@@ -795,52 +604,12 @@ public class QuestionnaireAssignment : AggregateRoot
             modifiedByEmployeeId));
     }
 
-    /// <summary>
-    /// Gets captured data of a specific goal for rating purposes.
-    /// Used when rating goals from predecessor questionnaires.
-    /// </summary>
-    public PredecessorGoalData GetPredecessorGoalData(Guid questionId, Guid goalId)
-    {
-        if (!_goalsByQuestion.TryGetValue(questionId, out var goals))
-            throw new InvalidOperationException($"Question {questionId} has no goals");
-
-        var goal = goals.FirstOrDefault(g => g.Id == goalId);
-        if (goal == null)
-            throw new InvalidOperationException($"Goal {goalId} not found in question {questionId}");
-
-        return new PredecessorGoalData(
-            goal.ObjectiveDescription,
-            goal.TimeframeFrom,
-            goal.TimeframeTo,
-            goal.MeasurementMetric,
-            goal.AddedByRole,
-            goal.WeightingPercentage);
-    }
-
     private bool IsInProgressState()
     {
         return WorkflowState is
             WorkflowState.EmployeeInProgress or
             WorkflowState.ManagerInProgress or
             WorkflowState.BothInProgress;
-    }
-
-    private void ValidateWeightingTotal(Guid questionId, ApplicationRole role, decimal newWeighting)
-    {
-        if (!_goalsByQuestion.TryGetValue(questionId, out var goals))
-            goals = new List<Goal>();
-
-        var currentTotal = goals.Where(g => g.AddedByRole == role).Sum(g => g.WeightingPercentage);
-        if (currentTotal + newWeighting > 100m)
-        {
-            throw new InvalidOperationException($"Total weighting for {role} would exceed 100% (current: {currentTotal}%, adding: {newWeighting}%)");
-        }
-    }
-
-    private void ValidateTimeframe(DateTime timeframeFrom, DateTime timeframeTo)
-    {
-        if (timeframeFrom >= timeframeTo)
-            throw new ArgumentException("Timeframe 'From' must be before 'To'");
     }
 
     public void Apply(QuestionnaireAssignmentAssigned @event)
@@ -1179,62 +948,10 @@ public class QuestionnaireAssignment : AggregateRoot
         }
     }
 
-    // Apply methods for goal events
+    // Apply methods for predecessor and goal rating events
     public void Apply(PredecessorQuestionnaireLinked @event)
     {
         _predecessorLinks[@event.QuestionId] = @event.PredecessorAssignmentId;
-    }
-
-    public void Apply(GoalAdded @event)
-    {
-        if (!_goalsByQuestion.ContainsKey(@event.QuestionId))
-            _goalsByQuestion[@event.QuestionId] = new List<Goal>();
-
-        var goal = new Goal(
-            @event.GoalId,
-            @event.QuestionId,
-            @event.AddedByRole,
-            @event.TimeframeFrom,
-            @event.TimeframeTo,
-            @event.ObjectiveDescription,
-            @event.MeasurementMetric,
-            @event.WeightingPercentage,
-            @event.AddedAt,
-            @event.AddedByEmployeeId);
-
-        _goalsByQuestion[@event.QuestionId].Add(goal);
-    }
-
-    public void Apply(GoalModified @event)
-    {
-        var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == @event.GoalId);
-        if (goal == null)
-            return;
-
-        var questionId = goal.QuestionId;
-        var modifiedGoal = goal.ApplyModification(
-            @event.TimeframeFrom,
-            @event.TimeframeTo,
-            @event.ObjectiveDescription,
-            @event.MeasurementMetric,
-            @event.WeightingPercentage,
-            @event.ModifiedByRole,
-            @event.ChangeReason,
-            @event.ModifiedAt,
-            @event.ModifiedByEmployeeId);
-
-        _goalsByQuestion[questionId].Remove(goal);
-        _goalsByQuestion[questionId].Add(modifiedGoal);
-    }
-
-    public void Apply(GoalDeleted @event)
-    {
-        var goal = _goalsByQuestion.Values.SelectMany(g => g).FirstOrDefault(g => g.Id == @event.GoalId);
-        if (goal == null)
-            return;
-
-        var questionId = goal.QuestionId;
-        _goalsByQuestion[questionId].Remove(goal);
     }
 
     public void Apply(PredecessorGoalRated @event)

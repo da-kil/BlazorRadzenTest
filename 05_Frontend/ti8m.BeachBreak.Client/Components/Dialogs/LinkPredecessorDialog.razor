@@ -70,9 +70,6 @@
                                             @predecessor.TemplateName
                                         </RadzenText>
                                         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                                            <RadzenIcon Icon="person" Style="font-size: 1rem;" /> @predecessor.EmployeeName
-                                        </RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
                                             <RadzenIcon Icon="calendar_today" Style="font-size: 1rem;" />
                                             Assigned: @predecessor.AssignedDate.ToShortDateString()
                                             @if (predecessor.CompletedDate.HasValue)
@@ -123,7 +120,7 @@
         isLoadingPredecessors = true;
         try
         {
-            var result = await GoalApiService.GetAvailablePredecessorsAsync(AssignmentId, QuestionId);
+            var result = await GoalApiService.GetAvailablePredecessorsAsync(AssignmentId);
 
             if (result.Succeeded && result.Payload != null)
             {

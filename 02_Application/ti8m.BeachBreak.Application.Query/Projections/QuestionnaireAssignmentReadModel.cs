@@ -58,8 +58,7 @@ public class QuestionnaireAssignmentReadModel
     public string? LastReopenedByRole { get; set; }
     public string? LastReopenReason { get; set; }
 
-    // Goal-related data (projection)
-    public Dictionary<Guid, List<GoalReadModel>> GoalsByQuestion { get; set; } = new();
+    // Predecessor and goal rating data (projection)
     public Dictionary<Guid, Guid> PredecessorLinksByQuestion { get; set; } = new();
     public Dictionary<Guid, List<GoalRatingReadModel>> GoalRatingsByQuestion { get; set; } = new();
 
@@ -292,69 +291,7 @@ public class QuestionnaireAssignmentReadModel
         }
     }
 
-    // Apply methods for goal-related events
-    public void Apply(GoalAdded @event)
-    {
-        if (!GoalsByQuestion.ContainsKey(@event.QuestionId))
-        {
-            GoalsByQuestion[@event.QuestionId] = new List<GoalReadModel>();
-        }
-
-        GoalsByQuestion[@event.QuestionId].Add(new GoalReadModel
-        {
-            Id = @event.GoalId,
-            QuestionId = @event.QuestionId,
-            AddedByRole = ApplicationRoleMapper.MapFromDomain(@event.AddedByRole),
-            TimeframeFrom = @event.TimeframeFrom,
-            TimeframeTo = @event.TimeframeTo,
-            ObjectiveDescription = @event.ObjectiveDescription,
-            MeasurementMetric = @event.MeasurementMetric,
-            WeightingPercentage = @event.WeightingPercentage,
-            AddedAt = @event.AddedAt,
-            AddedByEmployeeId = @event.AddedByEmployeeId,
-            Modifications = new List<GoalModificationReadModel>()
-        });
-    }
-
-    public void Apply(GoalModified @event)
-    {
-        // Find the goal across all questions
-        foreach (var questionGoals in GoalsByQuestion.Values)
-        {
-            var goal = questionGoals.FirstOrDefault(g => g.Id == @event.GoalId);
-            if (goal != null)
-            {
-                // Apply modifications if provided
-                if (@event.TimeframeFrom.HasValue)
-                    goal.TimeframeFrom = @event.TimeframeFrom.Value;
-                if (@event.TimeframeTo.HasValue)
-                    goal.TimeframeTo = @event.TimeframeTo.Value;
-                if (@event.ObjectiveDescription != null)
-                    goal.ObjectiveDescription = @event.ObjectiveDescription;
-                if (@event.MeasurementMetric != null)
-                    goal.MeasurementMetric = @event.MeasurementMetric;
-                if (@event.WeightingPercentage.HasValue)
-                    goal.WeightingPercentage = @event.WeightingPercentage.Value;
-
-                // Track modification
-                goal.Modifications.Add(new GoalModificationReadModel
-                {
-                    TimeframeFrom = @event.TimeframeFrom,
-                    TimeframeTo = @event.TimeframeTo,
-                    ObjectiveDescription = @event.ObjectiveDescription,
-                    MeasurementMetric = @event.MeasurementMetric,
-                    WeightingPercentage = @event.WeightingPercentage,
-                    ModifiedByRole = ApplicationRoleMapper.MapFromDomain(@event.ModifiedByRole),
-                    ChangeReason = @event.ChangeReason,
-                    ModifiedAt = @event.ModifiedAt,
-                    ModifiedByEmployeeId = @event.ModifiedByEmployeeId
-                });
-
-                break;
-            }
-        }
-    }
-
+    // Apply methods for predecessor and goal rating events
     public void Apply(PredecessorQuestionnaireLinked @event)
     {
         PredecessorLinksByQuestion[@event.QuestionId] = @event.PredecessorAssignmentId;

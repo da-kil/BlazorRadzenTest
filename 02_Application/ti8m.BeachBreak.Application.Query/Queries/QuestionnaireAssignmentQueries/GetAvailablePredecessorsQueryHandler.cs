@@ -1,24 +1,29 @@
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
 /// <summary>
 /// Query handler to retrieve available predecessor questionnaires for goal rating.
 /// Returns finalized questionnaires for the same employee and category that have goals.
+/// Queries QuestionnaireResponse for actual goal storage (not QuestionnaireAssignment).
 /// </summary>
 public class GetAvailablePredecessorsQueryHandler
     : IQueryHandler<GetAvailablePredecessorsQuery, Result<IEnumerable<AvailablePredecessorDto>>>
 {
     private readonly IQuestionnaireAssignmentRepository assignmentRepository;
     private readonly IQuestionnaireTemplateRepository templateRepository;
+    private readonly IQuestionnaireResponseRepository responseRepository;
 
     public GetAvailablePredecessorsQueryHandler(
         IQuestionnaireAssignmentRepository assignmentRepository,
-        IQuestionnaireTemplateRepository templateRepository)
+        IQuestionnaireTemplateRepository templateRepository,
+        IQuestionnaireResponseRepository responseRepository)
     {
         this.assignmentRepository = assignmentRepository;
         this.templateRepository = templateRepository;
+        this.responseRepository = responseRepository;
     }
 
     public async Task<Result<IEnumerable<AvailablePredecessorDto>>> HandleAsync(
@@ -56,14 +61,6 @@ public class GetAvailablePredecessorsQueryHandler
         var employeeAssignments = await assignmentRepository.GetAssignmentsByEmployeeIdAsync(
             query.RequestingUserId, cancellationToken);
 
-        // Check if current assignment already has a predecessor linked for this question
-        var isAlreadyLinked = currentAssignment.PredecessorLinksByQuestion.ContainsKey(query.QuestionId);
-        if (isAlreadyLinked)
-        {
-            // Return empty list - no need to show options when already linked
-            return Result<IEnumerable<AvailablePredecessorDto>>.Success(new List<AvailablePredecessorDto>());
-        }
-
         // Filter for available predecessors
         var availablePredecessors = new List<AvailablePredecessorDto>();
 
@@ -88,14 +85,30 @@ public class GetAvailablePredecessorsQueryHandler
             if (template.CategoryId != currentTemplate.CategoryId)
                 continue;
 
-            // Business rule: Must have goals for the specified question
-            // Check if this assignment has any goals for the question
-            if (!assignment.GoalsByQuestion.TryGetValue(query.QuestionId, out var goals) ||
-                goals == null ||
-                !goals.Any())
+
+            // Business rule: Must have ANY goals
+            // Query QuestionnaireResponse for actual goal storage (not GoalsByQuestion which is empty)
+            var response = await responseRepository.GetByAssignmentIdAsync(
+                assignment.Id, cancellationToken);
+
+            if (response == null)
+                continue;
+
+            // Extract all goal responses from all sections and roles
+            var goalResponses = response.SectionResponses.Values
+                .SelectMany(roleDict => roleDict.Values)
+                .SelectMany(questionDict => questionDict.Values)
+                .OfType<QuestionResponseValue.GoalResponse>()
+                .Where(gr => gr.Goals != null && gr.Goals.Any())
+                .ToList();
+
+            if (!goalResponses.Any())
             {
                 continue;
             }
+
+            // Count total goals across all sections and roles
+            var totalGoals = goalResponses.Sum(gr => gr.Goals.Count);
 
             // Add to available predecessors
             availablePredecessors.Add(new AvailablePredecessorDto
@@ -104,7 +117,7 @@ public class GetAvailablePredecessorsQueryHandler
                 TemplateName = template.Name,
                 AssignedDate = assignment.AssignedDate,
                 CompletedDate = assignment.CompletedDate,
-                GoalCount = goals.Count
+                GoalCount = totalGoals
             });
         }
 

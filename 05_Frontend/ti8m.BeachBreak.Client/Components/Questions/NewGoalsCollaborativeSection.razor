@@ -2,6 +2,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Models.Dto.Shared
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Services
@@ -692,101 +693,26 @@
     }
 
     /// <summary>
-    /// Executes all pending goal operations (add/modify/delete).
-    /// Returns true if all operations succeed, false if any fail.
+    /// Clears pending flags for goal operations since goals are now saved via SaveQuestionnaireResponse.
+    /// Goals are already persisted in the Response object and will be saved when the user clicks Save/Submit.
+    /// Returns true to indicate changes are ready to be saved.
     /// </summary>
     public async Task<bool> SavePendingGoalChanges()
     {
         if (!HasPendingChanges)
             return true;
 
-        bool allSucceeded = true;
-        var errors = new List<string>();
-
-        // Execute deletes first
-        var goalsToDelete = allCurrentGoals.Where(g => g.IsPendingDelete && !g.IsPendingAdd).ToList();
-        foreach (var goal in goalsToDelete)
+        // Goals are saved via SaveQuestionnaireResponse mechanism, not individual API calls
+        // Clear pending flags since the data is already in the Response object
+        foreach (var goal in allCurrentGoals)
         {
-            // DeleteGoalAsync not yet implemented in API
-            allSucceeded = false;
-            errors.Add($"Delete operation not yet implemented in backend API");
+            goal.IsPendingAdd = false;
+            goal.IsPendingModify = false;
         }
 
-        // Execute modifies
-        var goalsToModify = allCurrentGoals.Where(g => g.IsPendingModify && !g.IsPendingAdd).ToList();
-        foreach (var goal in goalsToModify)
-        {
-            try
-            {
-                var modifyDto = new ModifyGoalDto
-                {
-                    ObjectiveDescription = goal.ObjectiveDescription,
-                    MeasurementMetric = goal.MeasurementMetric,
-                    TimeframeFrom = goal.TimeframeFrom,
-                    TimeframeTo = goal.TimeframeTo,
-                    WeightingPercentage = goal.WeightingPercentage
-                };
-
-                var result = await GoalApiService.ModifyGoalAsync(AssignmentId, goal.Id, modifyDto);
-                if (result.Succeeded)
-                {
-                    goal.IsPendingModify = false;
-                }
-                else
-                {
-                    allSucceeded = false;
-                    errors.Add($"Modify failed: {result.ErrorMessage}");
-                }
-            }
-            catch (Exception ex)
-            {
-                allSucceeded = false;
-                errors.Add($"Modify error: {ex.Message}");
-            }
-        }
-
-        // Execute adds
-        var goalsToAdd = allCurrentGoals.Where(g => g.IsPendingAdd).ToList();
-        foreach (var goal in goalsToAdd)
-        {
-            try
-            {
-                var addDto = new AddGoalDto
-                {
-                    QuestionId = goal.QuestionId,
-                    ObjectiveDescription = goal.ObjectiveDescription,
-                    MeasurementMetric = goal.MeasurementMetric,
-                    TimeframeFrom = goal.TimeframeFrom,
-                    TimeframeTo = goal.TimeframeTo,
-                    WeightingPercentage = goal.WeightingPercentage
-                };
-
-                var result = await GoalApiService.AddGoalAsync(AssignmentId, addDto);
-                if (result.Succeeded)
-                {
-                    goal.IsPendingAdd = false;
-                    // Update the goal with the backend-assigned ID if available
-                    if (result.Payload != Guid.Empty)
-                    {
-                        goal.Id = result.Payload;
-                    }
-                }
-                else
-                {
-                    allSucceeded = false;
-                    errors.Add($"Add failed: {result.ErrorMessage}");
-                }
-            }
-            catch (Exception ex)
-            {
-                allSucceeded = false;
-                errors.Add($"Add error: {ex.Message}");
-            }
-        }
-
-        // Remove goals that were marked for deletion and are pending adds (temporary goals)
-        var tempGoalsToRemove = allCurrentGoals.Where(g => g.IsPendingDelete && g.IsPendingAdd).ToList();
-        foreach (var goal in tempGoalsToRemove)
+        // Remove goals that were marked for deletion
+        var goalsToRemove = allCurrentGoals.Where(g => g.IsPendingDelete).ToList();
+        foreach (var goal in goalsToRemove)
         {
             allCurrentGoals.Remove(goal);
         }
@@ -796,29 +722,7 @@
         await NotifyResponseChanged();
         await InvokeAsync(StateHasChanged);
 
-        // Show result notification
-        if (allSucceeded)
-        {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Success,
-                Summary = "Goals Saved",
-                Detail = "All goal changes have been saved successfully.",
-                Duration = 4000
-            });
-        }
-        else
-        {
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Partial Save",
-                Detail = $"Some goal operations failed: {string.Join("; ", errors)}",
-                Duration = 8000
-            });
-        }
-
-        return allSucceeded;
+        return true; // Always succeeds since data is in Response object
     }
 
     private async Task ReloadGoalData()

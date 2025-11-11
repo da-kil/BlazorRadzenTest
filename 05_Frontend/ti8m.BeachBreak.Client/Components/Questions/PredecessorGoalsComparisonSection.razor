@@ -329,22 +329,36 @@
             actualRole = CurrentUserRole;
         }
 
-        // Create new rating entry using strongly-typed DTO
-        var newRating = new PredecessorRatingDto
-        {
-            SourceGoalId = sourceGoalId,
-            DegreeOfAchievement = 0,
-            Justification = "",
-            RatedByRole = actualRole,
-            OriginalObjective = originalObjective
-        };
-
         // Ensure we have GoalResponseDataDto
         if (Response.ResponseData is not GoalResponseDataDto goalData)
         {
             goalData = new GoalResponseDataDto();
             Response.ResponseData = goalData;
         }
+
+        // Get SourceAssignmentId from goal data (must be set when predecessor is linked)
+        if (!goalData.PredecessorAssignmentId.HasValue)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Predecessor assignment not linked. Please link a predecessor first.",
+                Duration = 4000
+            });
+            return;
+        }
+
+        // Create new rating entry using strongly-typed DTO
+        var newRating = new PredecessorRatingDto
+        {
+            SourceAssignmentId = goalData.PredecessorAssignmentId.Value,
+            SourceGoalId = sourceGoalId,
+            DegreeOfAchievement = 0,
+            Justification = "",
+            RatedByRole = actualRole,
+            OriginalObjective = originalObjective
+        };
 
         // Add to existing ratings
         goalData.PredecessorRatings.Add(newRating);

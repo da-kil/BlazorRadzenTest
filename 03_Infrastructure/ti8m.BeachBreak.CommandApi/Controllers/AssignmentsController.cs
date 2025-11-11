@@ -804,140 +804,6 @@ public class AssignmentsController : BaseController
     }
 
     /// <summary>
-    /// Adds a new goal to a questionnaire assignment during in-progress states.
-    /// Employee and Manager add goals separately.
-    /// </summary>
-    [HttpPost("{assignmentId}/goals")]
-    public async Task<IActionResult> AddGoal(
-        Guid assignmentId,
-        [FromBody] AddGoalDto dto)
-    {
-        try
-        {
-            logger.LogInformation("AddGoal: UserContext.Id = '{UserId}' (length: {Length})", userContext.Id, userContext.Id?.Length ?? 0);
-
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("AddGoal failed: Unable to parse user ID '{UserId}' from context", userContext.Id);
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            logger.LogInformation("AddGoal: Successfully parsed userId = {UserId}", userId);
-
-            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId);
-            if (employeeRole == null)
-            {
-                logger.LogWarning("AddGoal failed: Unable to retrieve employee role for user {UserId}", userId);
-                return Unauthorized("User role not found");
-            }
-
-            // Convert integer role value back to Query ApplicationRole, then to Command ApplicationRole
-            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
-            var commandRole = ApplicationRoleMapper.MapFromQuery(queryRole);
-
-            var command = new AddGoalCommand(
-                assignmentId,
-                dto.QuestionId,
-                commandRole,
-                dto.TimeframeFrom,
-                dto.TimeframeTo,
-                dto.ObjectiveDescription,
-                dto.MeasurementMetric,
-                dto.WeightingPercentage,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error adding goal to assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while adding goal");
-        }
-    }
-
-    /// <summary>
-    /// Modifies an existing goal during review meeting.
-    /// </summary>
-    [HttpPut("{assignmentId}/goals/{goalId}")]
-    public async Task<IActionResult> ModifyGoal(
-        Guid assignmentId,
-        Guid goalId,
-        [FromBody] ModifyGoalDto dto)
-    {
-        try
-        {
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("ModifyGoal failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId);
-            if (employeeRole == null)
-            {
-                logger.LogWarning("ModifyGoal failed: Unable to retrieve employee role for user {UserId}", userId);
-                return Unauthorized("User role not found");
-            }
-
-            // Convert integer role value back to Query ApplicationRole, then to Command ApplicationRole
-            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
-            var commandRole = ApplicationRoleMapper.MapFromQuery(queryRole);
-
-            var command = new ModifyGoalCommand(
-                assignmentId,
-                goalId,
-                dto.TimeframeFrom,
-                dto.TimeframeTo,
-                dto.ObjectiveDescription,
-                dto.MeasurementMetric,
-                dto.WeightingPercentage,
-                commandRole,
-                dto.ChangeReason,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error modifying goal {GoalId} in assignment {AssignmentId}", goalId, assignmentId);
-            return StatusCode(500, "An error occurred while modifying goal");
-        }
-    }
-
-    /// <summary>
-    /// Deletes an existing goal from a questionnaire assignment during in-progress states.
-    /// </summary>
-    [HttpDelete("{assignmentId}/goals/{goalId}")]
-    public async Task<IActionResult> DeleteGoal(
-        Guid assignmentId,
-        Guid goalId)
-    {
-        try
-        {
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("DeleteGoal failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            var command = new DeleteGoalCommand(
-                assignmentId,
-                goalId,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error deleting goal {GoalId} from assignment {AssignmentId}", goalId, assignmentId);
-            return StatusCode(500, "An error occurred while deleting goal");
-        }
-    }
-
-    /// <summary>
     /// Rates a goal from a predecessor questionnaire.
     /// Employee and Manager rate separately during their respective in-progress states.
     /// </summary>
@@ -962,11 +828,27 @@ public class AssignmentsController : BaseController
 
             var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
 
+            // Parse predecessor goal's AddedByRole
+            if (!Enum.TryParse<ApplicationRole>(dto.PredecessorGoalAddedByRole, out var predecessorAddedByRole))
+            {
+                return BadRequest($"Invalid predecessor goal role: {dto.PredecessorGoalAddedByRole}");
+            }
+
+            // Construct predecessor goal data from DTO
+            var predecessorGoalData = new Domain.QuestionnaireAssignmentAggregate.PredecessorGoalData(
+                dto.PredecessorGoalObjectiveDescription,
+                dto.PredecessorGoalTimeframeFrom,
+                dto.PredecessorGoalTimeframeTo,
+                dto.PredecessorGoalMeasurementMetric,
+                ApplicationRoleMapper.MapToDomain(predecessorAddedByRole),
+                dto.PredecessorGoalWeightingPercentage);
+
             var command = new RatePredecessorGoalCommand(
                 assignmentId,
                 dto.QuestionId,
                 dto.SourceAssignmentId,
                 dto.SourceGoalId,
+                predecessorGoalData,
                 ApplicationRoleMapper.MapFromDomain(domainRole),
                 dto.DegreeOfAchievement,
                 dto.Justification,

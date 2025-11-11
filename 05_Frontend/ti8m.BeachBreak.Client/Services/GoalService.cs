@@ -47,7 +47,10 @@ public class GoalService
         if (ratingData == null)
             return false;
 
-        // Check required fields - SourceGoalId is required
+        // Check required fields - SourceAssignmentId and SourceGoalId are required
+        if (ratingData.SourceAssignmentId == Guid.Empty)
+            return false;
+
         if (ratingData.SourceGoalId == Guid.Empty)
             return false;
 
@@ -187,6 +190,7 @@ public class GoalService
     /// Creates a new predecessor rating data with strongly-typed structure.
     /// </summary>
     public PredecessorRatingDto CreatePredecessorRatingData(
+        Guid sourceAssignmentId,
         Guid sourceGoalId,
         decimal degree,
         string justification,
@@ -196,6 +200,7 @@ public class GoalService
     {
         return new PredecessorRatingDto
         {
+            SourceAssignmentId = sourceAssignmentId,
             SourceGoalId = sourceGoalId,
             DegreeOfAchievement = (int)degree,
             Justification = justification,
