@@ -1622,6 +1622,8 @@
                 {
                     var shouldNavigateBack = assignment.WorkflowState switch
                     {
+                        // After manager finishes review meeting, take them back to team overview
+                        WorkflowState.ManagerReviewConfirmed when previousState == WorkflowState.InReview => true,
                         // After employee signs off, take them back to overview
                         WorkflowState.EmployeeReviewConfirmed when previousState == WorkflowState.ManagerReviewConfirmed => true,
                         // After manager finalizes, take them back to overview
