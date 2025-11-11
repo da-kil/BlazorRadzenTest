@@ -46,40 +46,9 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
         // This query handler now returns empty goals list - goals are accessed through the response data
         dto.Goals = new List<GoalDto>();
 
-        // Get predecessor goal ratings for this question
-        // Note: Predecessor goals themselves are now stored in QuestionnaireResponse
-        // Ratings are still stored in QuestionnaireAssignment.GoalRatingsByQuestion
-        if (dto.PredecessorAssignmentId.HasValue)
-        {
-            // Get all existing ratings for this question
-            var existingRatings = assignment.GoalRatingsByQuestion.TryGetValue(query.QuestionId, out var ratings)
-                ? ratings.ToList()
-                : new List<Projections.GoalRatingReadModel>();
-
-            // Create rating DTOs from existing ratings
-            var ratingDtos = new List<GoalRatingDto>();
-            foreach (var rating in existingRatings)
-            {
-                ratingDtos.Add(new GoalRatingDto
-                {
-                    Id = rating.Id,
-                    SourceAssignmentId = rating.SourceAssignmentId,
-                    SourceGoalId = rating.SourceGoalId,
-                    QuestionId = query.QuestionId,
-                    RatedByRole = rating.RatedByRole.ToString(),
-                    DegreeOfAchievement = rating.DegreeOfAchievement,
-                    Justification = rating.Justification ?? "",
-                    OriginalObjectiveDescription = rating.SnapshotObjectiveDescription,
-                    OriginalTimeframeFrom = rating.SnapshotTimeframeFrom,
-                    OriginalTimeframeTo = rating.SnapshotTimeframeTo,
-                    OriginalMeasurementMetric = rating.SnapshotMeasurementMetric,
-                    OriginalAddedByRole = rating.SnapshotAddedByRole.ToString(),
-                    OriginalWeightingPercentage = rating.SnapshotWeightingPercentage
-                });
-            }
-
-            dto.PredecessorGoalRatings = ratingDtos;
-        }
+        // Predecessor goal ratings are now stored in QuestionnaireResponse.SectionResponses alongside goals
+        // No longer stored in QuestionnaireAssignment aggregate
+        dto.PredecessorGoalRatings = new List<GoalRatingDto>();
 
         return Result<GoalQuestionDataDto>.Success(dto);
     }

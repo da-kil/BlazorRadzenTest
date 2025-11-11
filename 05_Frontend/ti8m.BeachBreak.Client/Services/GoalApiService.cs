@@ -47,56 +47,6 @@ public class GoalApiService : BaseApiService, IGoalApiService
         }
     }
 
-    public async Task<Result> RatePredecessorGoalAsync(Guid assignmentId, RatePredecessorGoalDto dto)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsJsonAsync(
-                $"{CommandEndpoint}/{assignmentId}/goals/rate-predecessor",
-                dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<Result>();
-                return result ?? Result.Success();
-            }
-
-            var errorMessage = await ExtractErrorMessageAsync(response);
-            LogError($"Failed to rate predecessor goal: {errorMessage}", null);
-            return Result.Fail(errorMessage, (int)response.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("Error rating predecessor goal", ex);
-            return Result.Fail($"Error rating predecessor goal: {ex.Message}", 500);
-        }
-    }
-
-    public async Task<Result> ModifyPredecessorGoalRatingAsync(Guid assignmentId, Guid sourceGoalId, ModifyPredecessorGoalRatingDto dto)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PutAsJsonAsync(
-                $"{CommandEndpoint}/{assignmentId}/goals/ratings/{sourceGoalId}",
-                dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<Result>();
-                return result ?? Result.Success();
-            }
-
-            var errorMessage = await ExtractErrorMessageAsync(response);
-            LogError($"Failed to modify predecessor goal rating: {errorMessage}", null);
-            return Result.Fail(errorMessage, (int)response.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("Error modifying predecessor goal rating", ex);
-            return Result.Fail($"Error modifying rating: {ex.Message}", 500);
-        }
-    }
-
     public async Task<Result<IEnumerable<AvailablePredecessorDto>>> GetAvailablePredecessorsAsync(Guid assignmentId)
     {
         try

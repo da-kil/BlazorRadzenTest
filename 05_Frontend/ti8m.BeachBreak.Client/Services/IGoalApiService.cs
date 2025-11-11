@@ -16,16 +16,6 @@ public interface IGoalApiService
     Task<Result> LinkPredecessorAsync(Guid assignmentId, LinkPredecessorQuestionnaireDto dto);
 
     /// <summary>
-    /// Rates a predecessor goal (from a linked predecessor questionnaire).
-    /// </summary>
-    Task<Result> RatePredecessorGoalAsync(Guid assignmentId, RatePredecessorGoalDto dto);
-
-    /// <summary>
-    /// Modifies an existing predecessor goal rating.
-    /// </summary>
-    Task<Result> ModifyPredecessorGoalRatingAsync(Guid assignmentId, Guid sourceGoalId, ModifyPredecessorGoalRatingDto dto);
-
-    /// <summary>
     /// Gets available predecessor questionnaires that can be linked for goal rating.
     /// Returns finalized questionnaires for same employee, same category, that have ANY goals.
     /// Works across cloned templates with different question IDs.

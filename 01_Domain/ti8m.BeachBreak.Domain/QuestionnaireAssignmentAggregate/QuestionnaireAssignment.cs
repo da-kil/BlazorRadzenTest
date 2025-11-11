@@ -49,15 +49,11 @@ public class QuestionnaireAssignment : AggregateRoot
     public string? ManagerFinalNotes { get; private set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
-    // Predecessor linking and goal ratings (for predecessor functionality)
+    // Predecessor linking (for predecessor functionality)
     private readonly Dictionary<Guid, Guid> _predecessorLinks = new();
-    private readonly Dictionary<Guid, List<GoalRating>> _goalRatingsByQuestion = new();
 
     // Public readonly accessors for query purposes
     public IReadOnlyDictionary<Guid, Guid> PredecessorLinks => _predecessorLinks;
-
-    public IReadOnlyDictionary<Guid, IReadOnlyList<GoalRating>> GoalRatingsByQuestion =>
-        _goalRatingsByQuestion.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlyList<GoalRating>)kvp.Value.AsReadOnly());
 
     private QuestionnaireAssignment() { }
 
@@ -387,9 +383,6 @@ public class QuestionnaireAssignment : AggregateRoot
         if (WorkflowState != WorkflowState.BothSubmitted)
             throw new InvalidOperationException("Both employee and manager must submit their questionnaires before review");
 
-        // Validate that all predecessor goals have been rated by both Employee and Manager roles
-        ValidatePredecessorGoalsCompletion();
-
         RaiseEvent(new ReviewInitiated(DateTime.UtcNow, initiatedByEmployeeId));
     }
 
@@ -424,9 +417,6 @@ public class QuestionnaireAssignment : AggregateRoot
 
         if (WorkflowState != WorkflowState.InReview)
             throw new InvalidOperationException("No active review meeting to finish");
-
-        // Validate that all predecessor goals have been rated by both Employee and Manager roles
-        ValidatePredecessorGoalsCompletion();
 
         RaiseEvent(new ManagerReviewMeetingFinished(
             Id,
@@ -510,99 +500,6 @@ public class QuestionnaireAssignment : AggregateRoot
             linkedByEmployeeId));
     }
 
-    public void RatePredecessorGoal(
-        Guid questionId,
-        Guid sourceAssignmentId,
-        Guid sourceGoalId,
-        PredecessorGoalData predecessorGoal,
-        ApplicationRole ratedByRole,
-        decimal degreeOfAchievement,
-        string justification,
-        Guid ratedByEmployeeId)
-    {
-        if (IsLocked)
-            throw new InvalidOperationException("Cannot rate goal - questionnaire is finalized");
-
-        if (IsWithdrawn)
-            throw new InvalidOperationException("Cannot rate goal - assignment is withdrawn");
-
-        if (!_predecessorLinks.TryGetValue(questionId, out var linkedPredecessor) || linkedPredecessor != sourceAssignmentId)
-            throw new InvalidOperationException("Source assignment not linked as predecessor");
-
-        // Validate edit permissions based on role
-        if (ratedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
-            throw new InvalidOperationException($"Employee cannot rate goals in state {WorkflowState}");
-
-        if (ratedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
-            throw new InvalidOperationException($"Manager cannot rate goals in state {WorkflowState}");
-
-        // Validate role-specific workflow state restrictions
-        if (ratedByRole == ApplicationRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
-            throw new InvalidOperationException("Employee cannot rate goals during ManagerInProgress state");
-
-        if (ratedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && WorkflowState == WorkflowState.EmployeeInProgress)
-            throw new InvalidOperationException("Manager cannot rate goals during EmployeeInProgress state");
-
-        if (degreeOfAchievement < 0 || degreeOfAchievement > 100)
-            throw new ArgumentException("Degree of achievement must be between 0 and 100", nameof(degreeOfAchievement));
-
-        // Validate justification is required when rating predecessor goals (including 0% achievement)
-        if (string.IsNullOrWhiteSpace(justification))
-            throw new ArgumentException("Justification is required when rating predecessor goals (including 0% achievement)", nameof(justification));
-
-        RaiseEvent(new PredecessorGoalRated(
-            questionId,
-            sourceAssignmentId,
-            sourceGoalId,
-            ratedByRole,
-            degreeOfAchievement,
-            justification,
-            DateTime.UtcNow,
-            ratedByEmployeeId,
-            predecessorGoal));
-    }
-
-    public void ModifyPredecessorGoalRating(
-        Guid sourceGoalId,
-        ApplicationRole modifiedByRole,
-        decimal? degreeOfAchievement,
-        string? justification,
-        string changeReason,
-        Guid modifiedByEmployeeId)
-    {
-        if (IsLocked)
-            throw new InvalidOperationException("Cannot modify rating - questionnaire is finalized");
-
-        if (WorkflowState != WorkflowState.InReview)
-            throw new InvalidOperationException("Ratings can only be modified during review meeting");
-
-        if (string.IsNullOrWhiteSpace(changeReason))
-            throw new ArgumentException("Change reason is required", nameof(changeReason));
-
-        var rating = _goalRatingsByQuestion.Values.SelectMany(r => r).FirstOrDefault(r => r.SourceGoalId == sourceGoalId && r.RatedByRole == modifiedByRole);
-        if (rating == null)
-            throw new InvalidOperationException($"Rating for goal {sourceGoalId} by {modifiedByRole} not found");
-
-        if (degreeOfAchievement.HasValue && (degreeOfAchievement.Value < 0 || degreeOfAchievement.Value > 100))
-            throw new ArgumentException("Degree of achievement must be between 0 and 100", nameof(degreeOfAchievement));
-
-        // Validate justification is required when degree is being modified
-        // Check both current degree (from existing rating) and new degree being set
-        var finalDegree = degreeOfAchievement ?? rating.DegreeOfAchievement;
-        var finalJustification = justification ?? rating.Justification;
-
-        if (string.IsNullOrWhiteSpace(finalJustification))
-            throw new ArgumentException("Justification is required when modifying predecessor goal ratings (including 0% achievement)", nameof(justification));
-
-        RaiseEvent(new PredecessorGoalRatingModified(
-            sourceGoalId,
-            modifiedByRole,
-            degreeOfAchievement,
-            justification,
-            changeReason,
-            DateTime.UtcNow,
-            modifiedByEmployeeId));
-    }
 
     private bool IsInProgressState()
     {
@@ -948,132 +845,10 @@ public class QuestionnaireAssignment : AggregateRoot
         }
     }
 
-    // Apply methods for predecessor and goal rating events
+    // Apply methods for predecessor events
     public void Apply(PredecessorQuestionnaireLinked @event)
     {
         _predecessorLinks[@event.QuestionId] = @event.PredecessorAssignmentId;
     }
 
-    public void Apply(PredecessorGoalRated @event)
-    {
-        if (!_goalRatingsByQuestion.ContainsKey(@event.QuestionId))
-            _goalRatingsByQuestion[@event.QuestionId] = new List<GoalRating>();
-
-        // Generate unique Id for this rating entity
-        var ratingId = Guid.NewGuid();
-
-        var rating = new GoalRating(
-            ratingId,
-            @event.SourceAssignmentId,
-            @event.SourceGoalId,
-            @event.QuestionId,
-            @event.PredecessorGoal,
-            @event.RatedByRole,
-            @event.DegreeOfAchievement,
-            @event.Justification,
-            @event.RatedAt,
-            @event.RatedByEmployeeId);
-
-        _goalRatingsByQuestion[@event.QuestionId].Add(rating);
-    }
-
-    public void Apply(PredecessorGoalRatingModified @event)
-    {
-        var rating = _goalRatingsByQuestion.Values.SelectMany(r => r)
-            .FirstOrDefault(r => r.SourceGoalId == @event.SourceGoalId && r.RatedByRole == @event.ModifiedByRole);
-
-        if (rating == null)
-            return;
-
-        var questionId = rating.QuestionId;
-        var modifiedRating = rating.ApplyModification(
-            @event.DegreeOfAchievement,
-            @event.Justification,
-            @event.ModifiedByRole,
-            @event.ChangeReason,
-            @event.ModifiedAt,
-            @event.ModifiedByEmployeeId);
-
-        _goalRatingsByQuestion[questionId].Remove(rating);
-        _goalRatingsByQuestion[questionId].Add(modifiedRating);
-    }
-
-    /// <summary>
-    /// Validates that all predecessor goals have been rated by both Employee and Manager roles.
-    /// This ensures that the review cannot proceed until all predecessor goals have complete assessments.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when any predecessor goal is missing ratings from either Employee or Manager roles.
-    /// </exception>
-    private void ValidatePredecessorGoalsCompletion()
-    {
-        // Get all questions that have predecessor links
-        var questionsWithPredecessors = _predecessorLinks.Keys.ToList();
-
-        if (!questionsWithPredecessors.Any())
-        {
-            // No predecessor goals to validate
-            return;
-        }
-
-        var incompleteGoals = new List<string>();
-
-        foreach (var questionId in questionsWithPredecessors)
-        {
-            // Get all ratings for this question
-            var ratingsForQuestion = _goalRatingsByQuestion.TryGetValue(questionId, out var ratings)
-                ? ratings.ToList()
-                : new List<GoalRating>();
-
-            if (!ratingsForQuestion.Any())
-            {
-                incompleteGoals.Add($"Question {questionId}: No predecessor goals have been rated");
-                continue;
-            }
-
-            // Group ratings by SourceGoalId to check each predecessor goal
-            var ratingsByGoal = ratingsForQuestion.GroupBy(r => r.SourceGoalId).ToList();
-
-            foreach (var goalGroup in ratingsByGoal)
-            {
-                var sourceGoalId = goalGroup.Key;
-                var ratingsForGoal = goalGroup.ToList();
-
-                // Check if we have ratings from both Employee and Manager roles
-                var hasEmployeeRating = ratingsForGoal.Any(r => r.RatedByRole == ApplicationRole.Employee);
-                var hasManagerRating = ratingsForGoal.Any(r =>
-                    r.RatedByRole == ApplicationRole.TeamLead ||
-                    r.RatedByRole == ApplicationRole.HR ||
-                    r.RatedByRole == ApplicationRole.HRLead ||
-                    r.RatedByRole == ApplicationRole.Admin);
-
-                if (!hasEmployeeRating)
-                {
-                    incompleteGoals.Add($"Goal {sourceGoalId}: Missing Employee assessment");
-                }
-
-                if (!hasManagerRating)
-                {
-                    incompleteGoals.Add($"Goal {sourceGoalId}: Missing Manager assessment");
-                }
-
-                // Additional validation: Check that all ratings have valid justifications
-                foreach (var rating in ratingsForGoal)
-                {
-                    if (string.IsNullOrWhiteSpace(rating.Justification))
-                    {
-                        var roleDisplayName = rating.RatedByRole == ApplicationRole.Employee ? "Employee" : "Manager";
-                        incompleteGoals.Add($"Goal {sourceGoalId}: {roleDisplayName} assessment missing justification");
-                    }
-                }
-            }
-        }
-
-        if (incompleteGoals.Any())
-        {
-            var errorMessage = "Cannot proceed with review - all predecessor goals must be assessed by both Employee and Manager with justifications:\n" +
-                             string.Join("\n", incompleteGoals);
-            throw new InvalidOperationException(errorMessage);
-        }
-    }
 }

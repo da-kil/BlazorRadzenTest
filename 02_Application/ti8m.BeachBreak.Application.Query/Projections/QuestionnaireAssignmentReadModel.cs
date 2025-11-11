@@ -58,9 +58,8 @@ public class QuestionnaireAssignmentReadModel
     public string? LastReopenedByRole { get; set; }
     public string? LastReopenReason { get; set; }
 
-    // Predecessor and goal rating data (projection)
+    // Predecessor data (projection)
     public Dictionary<Guid, Guid> PredecessorLinksByQuestion { get; set; } = new();
-    public Dictionary<Guid, List<GoalRatingReadModel>> GoalRatingsByQuestion { get; set; } = new();
 
     // Apply methods for all QuestionnaireAssignment domain events
     public void Apply(QuestionnaireAssignmentAssigned @event)
@@ -291,68 +290,9 @@ public class QuestionnaireAssignmentReadModel
         }
     }
 
-    // Apply methods for predecessor and goal rating events
+    // Apply methods for predecessor events
     public void Apply(PredecessorQuestionnaireLinked @event)
     {
         PredecessorLinksByQuestion[@event.QuestionId] = @event.PredecessorAssignmentId;
-    }
-
-    public void Apply(PredecessorGoalRated @event)
-    {
-        if (!GoalRatingsByQuestion.ContainsKey(@event.QuestionId))
-        {
-            GoalRatingsByQuestion[@event.QuestionId] = new List<GoalRatingReadModel>();
-        }
-
-        GoalRatingsByQuestion[@event.QuestionId].Add(new GoalRatingReadModel
-        {
-            Id = Guid.NewGuid(), // Generate unique ID (matches aggregate behavior)
-            SourceAssignmentId = @event.SourceAssignmentId,
-            SourceGoalId = @event.SourceGoalId,
-            QuestionId = @event.QuestionId,
-            RatedByRole = ApplicationRoleMapper.MapFromDomain(@event.RatedByRole),
-            DegreeOfAchievement = @event.DegreeOfAchievement,
-            Justification = @event.Justification,
-            RatedAt = @event.RatedAt,
-            RatedByEmployeeId = @event.RatedByEmployeeId,
-            Modifications = new List<GoalRatingModificationReadModel>(),
-            // Populate snapshot fields from event's PredecessorGoalData
-            SnapshotObjectiveDescription = @event.PredecessorGoal.ObjectiveDescription,
-            SnapshotTimeframeFrom = @event.PredecessorGoal.TimeframeFrom,
-            SnapshotTimeframeTo = @event.PredecessorGoal.TimeframeTo,
-            SnapshotMeasurementMetric = @event.PredecessorGoal.MeasurementMetric,
-            SnapshotAddedByRole = ApplicationRoleMapper.MapFromDomain(@event.PredecessorGoal.AddedByRole),
-            SnapshotWeightingPercentage = @event.PredecessorGoal.WeightingPercentage
-        });
-    }
-
-    public void Apply(PredecessorGoalRatingModified @event)
-    {
-        // Find the rating across all questions
-        foreach (var questionRatings in GoalRatingsByQuestion.Values)
-        {
-            var rating = questionRatings.FirstOrDefault(r => r.SourceGoalId == @event.SourceGoalId);
-            if (rating != null)
-            {
-                // Apply modifications if provided
-                if (@event.DegreeOfAchievement.HasValue)
-                    rating.DegreeOfAchievement = @event.DegreeOfAchievement.Value;
-                if (@event.Justification != null)
-                    rating.Justification = @event.Justification;
-
-                // Track modification
-                rating.Modifications.Add(new GoalRatingModificationReadModel
-                {
-                    DegreeOfAchievement = @event.DegreeOfAchievement,
-                    Justification = @event.Justification,
-                    ModifiedByRole = ApplicationRoleMapper.MapFromDomain(@event.ModifiedByRole),
-                    ChangeReason = @event.ChangeReason,
-                    ModifiedAt = @event.ModifiedAt,
-                    ModifiedByEmployeeId = @event.ModifiedByEmployeeId
-                });
-
-                break;
-            }
-        }
     }
 }
