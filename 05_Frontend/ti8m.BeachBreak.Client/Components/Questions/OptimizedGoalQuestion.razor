@@ -50,9 +50,9 @@ else
                     CurrentUserRole="@CurrentUserRole"
                     @ref="predecessorSection" />
             }
-            else if (!IsReadOnly && !IsInReviewPhase())
+            else if (!IsReadOnly && !IsInReviewPhase() && CurrentUserRole >= ApplicationRole.TeamLead)
             {
-                @* Link Predecessor Section - Only show if no predecessor linked, not read-only, and not in review phase *@
+                @* Link Predecessor Section - Only show if no predecessor linked, not read-only, not in review phase, and user is TeamLead or above *@
                 <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
                     <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
                         <strong>Link Previous Questionnaire:</strong> Link a predecessor questionnaire to rate goals from a previous period.
