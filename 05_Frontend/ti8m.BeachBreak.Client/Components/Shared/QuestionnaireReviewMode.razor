@@ -688,17 +688,12 @@
         }
     }
 
-    private string GetCurrentUserRole()
-    {
-        // Return the cached role string representation (no async operations during render)
-        return currentUserRole.ToString();
-    }
 
-    private string GetRoleForDialog(CompletionRole originalRole)
+    private ApplicationRole GetRoleForDialog(CompletionRole originalRole)
     {
-        // When editing Employee's Answer, always pass "Employee"
+        // When editing Employee's Answer, always pass ApplicationRole.Employee
         // When editing Manager's Answer, pass the current user's actual role
-        return originalRole == CompletionRole.Employee ? "Employee" : GetCurrentUserRole();
+        return originalRole == CompletionRole.Employee ? ApplicationRole.Employee : currentUserRole;
     }
 
     private bool IsManagerRole(ApplicationRole role)
