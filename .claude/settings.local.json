@@ -27,7 +27,21 @@
       "Bash(git cat-file:*)",
       "Bash(git grep:*)",
       "Bash(git rev-list:*)",
-      "Bash(xargs -n 1 git grep -i \"Axu8Q\")"
+      "Bash(xargs -n 1 git grep -i \"Axu8Q\")",
+      "Bash(QUESTIONNAIRE_TEMPLATE_QUERY_GUIDE.md)",
+      "Bash(powershell -Command \"(Get-Content ''C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.QueryApi\\Controllers\\ResponsesController.cs'').Count\")",
+      "WebFetch(domain:localhost)",
+      "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\03_Infrastructure\\ti8m.BeachBreak.QueryApi\\Dto\\ApplicationRole.cs\" -Force)",
+      "Bash(Select-String -Pattern \"error CS\" -Context 0,2)",
+      "Bash(findstr:*)",
+      "Bash(Select-String -Pattern \"Build succeeded|Build FAILED|error CS\")",
+      "Bash(C:tempbuild_output.txt)",
+      "Bash(printf:*)",
+      "Bash(/tmp/analysis.txt)",
+      "Bash(printf '%s\\n' \"2. BLUE ''CONTINUE'' - When can edit (EmployeeInProgress, BothInProgress, ManagerSubmitted)\")",
+      "Bash(cat:*)",
+      "Bash(/tmp/idx.txt)",
+      "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\Authorization\\EmployeeRoleResult.cs\" -Force)"
     ],
     "deny": [],
     "ask": []

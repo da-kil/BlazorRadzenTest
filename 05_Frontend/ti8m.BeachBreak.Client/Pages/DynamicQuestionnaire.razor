@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
@@ -350,6 +351,7 @@
     private string managerContextRole = string.Empty;
     private List<QuestionSection> visibleSections = new();
     private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
+    private SectionResponse? currentSectionData => currentSection != null && response.SectionResponses.TryGetValue(currentSection.Id, out var sectionData) ? sectionData : null;
     private bool isSubmitting = false;
     private bool isProcessing = false;
     private bool isSaving = false;
@@ -747,10 +749,12 @@
                 {
                     // After review meeting: load ALL role responses for full transparency
                     // Managers viewing employee-only questionnaires: load ALL responses
+                    // Managers during InReview state: load ALL responses for active review
                     // Normal mode: only load current user's role responses
                     var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
+                    var isManagerDuringReview = isManager && assignment != null && assignment.WorkflowState == WorkflowState.InReview;
 
-                    if ((isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire) && sectionKvp.Value.RoleResponses != null)
+                    if ((isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire || isManagerDuringReview) && sectionKvp.Value.RoleResponses != null)
                     {
                         // Load ALL role responses (Employee, Manager)
                         foreach (var roleKvp in sectionKvp.Value.RoleResponses)
@@ -845,10 +849,32 @@
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
 
+        var isInReview = assignment != null && assignment.WorkflowState == WorkflowState.InReview;
         var isBothSection = currentSection?.CompletionRole == CompletionRole.Both;
 
-        // In post-review state for "Both" sections, show BOTH employee and manager responses
-        if (isPostReviewState && isBothSection)
+        // For goal questions in "Both" sections, ALWAYS use collaborative grouped view (never comparison)
+        // The comparison view only makes sense for predecessor goal ratings, not new goals
+        if (isBothSection && question.Type == QuestionType.Goal)
+        {
+            // Use the collaborative component that groups by roles instead of comparison view
+            var goalQuestionResponse = GetQuestionResponse(question.Id);
+
+            return @<div>
+                <OptimizedQuestionRenderer
+                    Question="@question"
+                    Response="@goalQuestionResponse"
+                    OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                    IsReadOnly="@IsQuestionnaireCompleted()"
+                    AssignmentId="@(assignmentId ?? Guid.Empty)"
+                    CurrentUserRole="@userRole"
+                    AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)"
+                    SectionData="@currentSectionData" />
+            </div>;
+        }
+
+        // In post-review state for "Both" sections, show BOTH employee and manager responses (comparison view)
+        // Exclude goal questions as they use collaborative view instead
+        if (isPostReviewState && isBothSection && question.Type != QuestionType.Goal)
         {
             var employeeResponse = GetQuestionResponseForRole(question.Id, "Employee");
             var managerResponse = GetQuestionResponseForRole(question.Id, "Manager");
@@ -868,8 +894,9 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="Employee"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />
+                            CurrentUserRole="ApplicationRole.Employee"
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+                            SectionData="@currentSectionData" />
                     </div>
                 </div>
 
@@ -887,8 +914,9 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="@managerContextRole"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
+                            CurrentUserRole="@ParseApplicationRole(managerContextRole)"
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)"
+                            SectionData="@currentSectionData" />
                     </div>
                 </div>
             </div>;
@@ -903,8 +931,9 @@
             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
             IsReadOnly="@IsQuestionnaireCompleted()"
             AssignmentId="@(assignmentId ?? Guid.Empty)"
-            CurrentUserRole="@currentUserRole"
-            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />;
+            CurrentUserRole="@userRole"
+            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+            SectionData="@currentSectionData" />;
     }
 
     private RenderFragment RenderQuestionWithRef(QuestionItem question)
@@ -915,10 +944,30 @@
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
 
+        var isInReview = assignment != null && assignment.WorkflowState == WorkflowState.InReview;
         var isBothSection = currentSection?.CompletionRole == CompletionRole.Both;
 
-        // In post-review state for "Both" sections, show BOTH employee and manager responses
-        if (isPostReviewState && isBothSection)
+        // For goal questions in "Both" sections, ALWAYS use collaborative grouped view (never comparison)
+        // The comparison view only makes sense for predecessor goal ratings, not new goals
+        if (isBothSection && question.Type == QuestionType.Goal)
+        {
+            // Use the collaborative component that groups by roles instead of comparison view
+            var goalQuestionResponseWithRef = GetQuestionResponse(question.Id);
+
+            return @<OptimizedQuestionRenderer
+                Question="@question"
+                Response="@goalQuestionResponseWithRef"
+                OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                IsReadOnly="@IsQuestionnaireCompleted()"
+                AssignmentId="@(assignmentId ?? Guid.Empty)"
+                CurrentUserRole="@userRole"
+                AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)"
+                SectionData="@currentSectionData" />;
+        }
+
+        // In post-review state for "Both" sections, show BOTH employee and manager responses (comparison view)
+        // Exclude goal questions as they use collaborative view instead
+        if (isPostReviewState && isBothSection && question.Type != QuestionType.Goal)
         {
             var employeeResponse = GetQuestionResponseForRole(question.Id, "Employee");
             var managerResponse = GetQuestionResponseForRole(question.Id, "Manager");
@@ -938,8 +987,9 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="Employee"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />
+                            CurrentUserRole="ApplicationRole.Employee"
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+                            SectionData="@currentSectionData" />
                     </div>
                 </div>
 
@@ -957,8 +1007,9 @@
                             IsReadOnly="true"
                             HideHeader="true"
                             AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="@managerContextRole"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)" />
+                            CurrentUserRole="@ParseApplicationRole(managerContextRole)"
+                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)"
+                            SectionData="@currentSectionData" />
                     </div>
                 </div>
             </div>;
@@ -975,8 +1026,9 @@
             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
             IsReadOnly="@IsQuestionnaireCompleted()"
             AssignmentId="@(assignmentId ?? Guid.Empty)"
-            CurrentUserRole="@currentUserRole"
-            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)" />;
+            CurrentUserRole="@userRole"
+            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+            SectionData="@currentSectionData" />;
     }
 
     /// <summary>
@@ -1072,37 +1124,6 @@
         return new QuestionResponse { QuestionId = questionId };
     }
 
-    private void UpdateQuestionResponse(Guid questionId, int value)
-    {
-        var questionResponse = GetQuestionResponse(questionId);
-        questionResponse.ComplexValue = new Dictionary<string, object> { { "value", value } };
-        questionResponse.LastModified = DateTime.Now;
-        UpdateProgress();
-        NotifyStateChanged();
-    }
-
-    private void UpdateQuestionResponseText(Guid questionId, string value)
-    {
-        var questionResponse = GetQuestionResponse(questionId);
-        questionResponse.ComplexValue = new Dictionary<string, object> { { "value", value } };
-        questionResponse.LastModified = DateTime.Now;
-        UpdateProgress();
-        NotifyStateChangedDebounced(200);
-    }
-
-    // Goal question helpers
-    private DateTime? GetGoalStartDate(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("StartDate", out var value) == true ? (DateTime?)value : null;
-    }
-
-    private string GetGoalJustification(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("Justification", out var value) == true ? value.ToString() ?? "" : "";
-    }
-
     private ProgressBarStyle GetProgressStyle(int percentage)
     {
         return percentage switch
@@ -1146,128 +1167,6 @@
             >= 50 => "Partial Achievement",
             _ => "Below Expectations"
         };
-    }
-
-    private string GetGoalMeasurement(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("Measurement", out var value) == true ? value.ToString() ?? "" : "";
-    }
-
-    private decimal GetGoalWeighting(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("Weighting", out var value) == true ? Convert.ToDecimal(value) : 0m;
-    }
-
-    private bool GetBooleanValue(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        return response.ComplexValue?.TryGetValue("value", out var value) == true && value?.ToString() == "true";
-    }
-
-    private DateTime? GetDateValue(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue("value", out var value) == true && value is DateTime dateValue)
-            return dateValue;
-        return null;
-    }
-
-    private int GetNumericValue(Guid questionId)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue("value", out var value) == true)
-        {
-            if (value is int intValue) return intValue;
-            if (int.TryParse(value?.ToString(), out var parsed)) return parsed;
-        }
-        return 0;
-    }
-
-    // Setter methods for goal questions
-    private void SetGoalStartDate(Guid questionId, DateTime? value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        if (value.HasValue) response.ComplexValue["StartDate"] = value.Value;
-        else response.ComplexValue.Remove("StartDate");
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalEndDate(Guid questionId, DateTime? value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        if (value.HasValue) response.ComplexValue["EndDate"] = value.Value;
-        else response.ComplexValue.Remove("EndDate");
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalDescription(Guid questionId, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["Description"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalPercentage(Guid questionId, int value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["AchievementPercentage"] = value;
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalJustification(Guid questionId, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["Justification"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalMeasurement(Guid questionId, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["Measurement"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetGoalWeighting(Guid questionId, decimal value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["Weighting"] = value;
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetSimpleValue(Guid questionId, object? value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (value != null)
-        {
-            // For bool, store as lowercase string "true"/"false" for consistency
-            if (value is bool boolValue)
-                value = boolValue.ToString().ToLower();
-
-            response.ComplexValue = new Dictionary<string, object> { { "value", value } };
-        }
-        else
-        {
-            response.ComplexValue = null;
-        }
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
     }
 
     // Navigation methods
@@ -1377,18 +1276,18 @@
         var textSections = ConfigService.GetTextSections(question);
         if (textSections.Count == 0) return true;
 
-        if (questionResponse.ComplexValue == null) return false;
+        if (questionResponse.ResponseData is not TextResponseDataDto textData) return false;
 
-        // Match the key format used by OptimizedTextQuestion
+        // Match the format used by OptimizedTextQuestion
         if (textSections.Count == 1)
         {
-            // Single section uses "value" key
-            var hasValue = questionResponse.ComplexValue.TryGetValue("value", out var val) &&
-                          !string.IsNullOrWhiteSpace(val?.ToString());
+            // Single section - check first TextSection
+            var hasValue = textData.TextSections.Count > 0 &&
+                          !string.IsNullOrWhiteSpace(textData.TextSections[0]);
             return hasValue;
         }
 
-        // Multiple sections use "section_0", "section_1", etc.
+        // Multiple sections - check corresponding TextSections by index
         // Get only required text sections
         var requiredTextSections = textSections.Where(ts => ts.IsRequired).ToList();
 
@@ -1397,9 +1296,8 @@
         {
             return textSections.Select((ts, index) => index).Any(index =>
             {
-                var sectionKey = $"section_{index}";
-                var hasValue = questionResponse.ComplexValue.TryGetValue(sectionKey, out var val) &&
-                              !string.IsNullOrWhiteSpace(val?.ToString());
+                var hasValue = index < textData.TextSections.Count &&
+                              !string.IsNullOrWhiteSpace(textData.TextSections[index]);
                 return hasValue;
             });
         }
@@ -1408,9 +1306,8 @@
         return requiredTextSections.All(ts =>
         {
             var index = textSections.IndexOf(ts);
-            var sectionKey = $"section_{index}";
-            var hasValue = questionResponse.ComplexValue.TryGetValue(sectionKey, out var val) &&
-                          !string.IsNullOrWhiteSpace(val?.ToString());
+            var hasValue = index < textData.TextSections.Count &&
+                          !string.IsNullOrWhiteSpace(textData.TextSections[index]);
             return hasValue;
         });
     }
@@ -1420,7 +1317,7 @@
         var competencies = ConfigService.GetCompetencies(question);
         if (competencies.Count == 0) return true;
 
-        if (questionResponse.ComplexValue == null) return false;
+        if (questionResponse.ResponseData is not AssessmentResponseDataDto assessmentData) return false;
 
         // Get only required competencies
         var requiredCompetencies = competencies.Where(c => c.IsRequired).ToList();
@@ -1428,29 +1325,18 @@
         // If no required competencies exist, check if at least one competency is rated
         if (!requiredCompetencies.Any())
         {
-            return competencies.Any(c => HasCompetencyRating(questionResponse, c.Key));
+            return competencies.Any(c => HasCompetencyRating(assessmentData, c.Key));
         }
 
         // Check that ALL required competencies have been rated
-        return requiredCompetencies.All(c => HasCompetencyRating(questionResponse, c.Key));
+        return requiredCompetencies.All(c => HasCompetencyRating(assessmentData, c.Key));
     }
 
-    private bool HasCompetencyRating(QuestionResponse questionResponse, string competencyKey)
+    private bool HasCompetencyRating(AssessmentResponseDataDto assessmentData, string competencyKey)
     {
-        if (questionResponse.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
+        if (assessmentData.Competencies.TryGetValue(competencyKey, out var competencyRating))
         {
-            // Handle JsonElement from deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
-                {
-                    return jsonElement.GetInt32() > 0;
-                }
-            }
-            else if (value is int intValue)
-            {
-                return intValue > 0;
-            }
+            return competencyRating.Rating > 0;
         }
         return false;
     }
@@ -1555,15 +1441,11 @@
 
             if (isEmployee && !isManager)
             {
-                // Employees save responses and complete any finished sections
-                await CompleteSectionsAsEmployee(); // Complete sections first to update workflow state
-                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
             }
             else if (isManager)
             {
-                // Managers save responses and complete any finished sections
-                await CompleteSectionsAsManager(); // Complete sections first to update workflow state
-                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses);
+                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
             }
 
             // Reload assignment to get updated workflow state and section progress
@@ -1672,9 +1554,8 @@
 
             if (isManager)
             {
-                // Manager flow - complete sections, save and submit
-                await CompleteSectionsAsManager();
-                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses);
+                // Manager flow - backend automatically tracks section completion during save
+                await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
                 var submitSuccess = await AssignmentService.SubmitManagerQuestionnaireAsync(assignmentId.Value, currentUserName);
 
                 if (submitSuccess)
@@ -1693,9 +1574,7 @@
             }
             else
             {
-                // Employee flow - complete sections, save and submit
-                await CompleteSectionsAsEmployee();
-                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses);
+                await EmployeeQuestionnaireService.SaveMyResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
                 var submittedResponse = await EmployeeQuestionnaireService.SubmitMyResponseAsync(assignmentId.Value);
 
                 if (submittedResponse != null)
@@ -1726,55 +1605,6 @@
         }
     }
 
-    private async Task CompleteSectionsAsEmployee()
-    {
-        if (!assignmentId.HasValue) return;
-
-        // Collect all completed section IDs
-        var completedSectionIds = visibleSections
-            .Where(s => IsSectionCompleted(s.Id))
-            .Select(s => s.Id)
-            .ToList();
-
-        if (!completedSectionIds.Any())
-            return;
-
-        try
-        {
-            // Single atomic bulk operation - fixes concurrency issue
-            await AssignmentService.CompleteBulkSectionsAsEmployeeAsync(assignmentId.Value, completedSectionIds);
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
-                $"Could not complete sections: {ex.Message}");
-        }
-    }
-
-    private async Task CompleteSectionsAsManager()
-    {
-        if (!assignmentId.HasValue) return;
-
-        // Collect all completed section IDs
-        var completedSectionIds = visibleSections
-            .Where(s => IsSectionCompleted(s.Id))
-            .Select(s => s.Id)
-            .ToList();
-
-        if (!completedSectionIds.Any())
-            return;
-
-        try
-        {
-            // Single atomic bulk operation - fixes concurrency issue
-            await AssignmentService.CompleteBulkSectionsAsManagerAsync(assignmentId.Value, completedSectionIds);
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Warning, "Section Completion",
-                $"Could not complete sections: {ex.Message}");
-        }
-    }
 
     private async Task OnWorkflowActionCompleted()
     {
@@ -1801,6 +1631,8 @@
                 {
                     var shouldNavigateBack = assignment.WorkflowState switch
                     {
+                        // After manager finishes review meeting, take them back to team overview
+                        WorkflowState.ManagerReviewConfirmed when previousState == WorkflowState.InReview => true,
                         // After employee signs off, take them back to overview
                         WorkflowState.EmployeeReviewConfirmed when previousState == WorkflowState.ManagerReviewConfirmed => true,
                         // After manager finalizes, take them back to overview
@@ -1851,60 +1683,6 @@
         }
     }
 
-    // Competency-specific helper methods
-    private int GetCompetencyRating(Guid questionId, string competencyKey)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue($"rating_{competencyKey}", out var value) == true)
-        {
-            // Handle JsonElement from deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
-                {
-                    return jsonElement.GetInt32();
-                }
-            }
-            else if (value is int intValue)
-            {
-                return intValue;
-            }
-            else
-            {
-                return Convert.ToInt32(value);
-            }
-        }
-        return 0;
-    }
-
-    private string GetCompetencyComment(Guid questionId, string competencyKey)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue?.TryGetValue($"comment_{competencyKey}", out var value) == true)
-        {
-            return value.ToString() ?? "";
-        }
-        return "";
-    }
-
-    private void SetCompetencyRating(Guid questionId, string competencyKey, int value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"rating_{competencyKey}"] = value;
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
-    private void SetCompetencyComment(Guid questionId, string competencyKey, string value)
-    {
-        var response = GetQuestionResponse(questionId);
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"comment_{competencyKey}"] = value ?? "";
-        response.LastModified = DateTime.Now;
-        UpdateProgress();
-    }
-
     // Text Question helper methods
     private string GetTextQuestionSectionTitle(QuestionItem question)
     {
@@ -1950,6 +1728,19 @@
     private bool IsManagerRole(string role)
     {
         return role == "TeamLead" || role == "HR" || role == "HRLead" || role == "Admin";
+    }
+
+    private ApplicationRole ParseApplicationRole(string roleString)
+    {
+        return roleString switch
+        {
+            "Employee" => ApplicationRole.Employee,
+            "TeamLead" => ApplicationRole.TeamLead,
+            "HR" => ApplicationRole.HR,
+            "HRLead" => ApplicationRole.HRLead,
+            "Admin" => ApplicationRole.Admin,
+            _ => ApplicationRole.Employee // Default fallback
+        };
     }
 
 }

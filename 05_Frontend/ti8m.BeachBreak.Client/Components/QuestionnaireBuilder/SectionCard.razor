@@ -509,7 +509,7 @@
                         {
                             try
                             {
-                                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
+                                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText()) ?? new List<CompetencyDefinition>();
                                 requiredItems += competencies.Count(c => c.IsRequired);
                             }
                             catch { }
@@ -527,7 +527,7 @@
                         {
                             try
                             {
-                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
+                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText()) ?? new List<QuestionCard.GoalCategory>();
                                 requiredItems += categories.Count(c => c.IsRequired);
                             }
                             catch { }
@@ -541,7 +541,7 @@
                             try
                             {
                                 var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.GoalCategory>();
+                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(json) ?? new List<QuestionCard.GoalCategory>();
                                 requiredItems += categories.Count(c => c.IsRequired);
                             }
                             catch { }
@@ -555,7 +555,7 @@
                         {
                             try
                             {
-                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
+                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText()) ?? new List<QuestionCard.TextSection>();
                                 requiredItems += sections.Count(s => s.IsRequired);
                             }
                             catch { }
@@ -569,7 +569,7 @@
                             try
                             {
                                 var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<QuestionCard.TextSection>();
+                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(json) ?? new List<QuestionCard.TextSection>();
                                 requiredItems += sections.Count(s => s.IsRequired);
                             }
                             catch { }

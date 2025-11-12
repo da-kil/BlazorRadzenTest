@@ -1,6 +1,7 @@
 using Marten;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.ReadModelRepositories;
@@ -37,7 +38,7 @@ public class HRDashboardRepository : IHRDashboardRepository
 
         // Calculate organization-wide metrics
         var totalEmployees = allEmployees.Count;
-        var managers = allEmployees.Where(e => e.ApplicationRole == Domain.EmployeeAggregate.ApplicationRole.TeamLead).ToList();
+        var managers = allEmployees.Where(e => e.ApplicationRole == ApplicationRole.TeamLead).ToList();
         var totalManagers = managers.Count;
 
         var totalAssignments = allAssignments.Count;

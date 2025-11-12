@@ -1,5 +1,7 @@
-using ti8m.BeachBreak.Client.Models;
 using System.Net.Http.Json;
+using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.DTOs;
+using ti8m.BeachBreak.Client.Models.DTOs.Api;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -26,7 +28,66 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
 
     public async Task<QuestionnaireResponse?> GetResponseByAssignmentIdAsync(Guid assignmentId)
     {
-        return await GetBySubPathAsync<QuestionnaireResponse>(ResponseQueryEndpoint, "assignment", assignmentId);
+        try
+        {
+            // API returns ApiQuestionnaireResponseDto directly (not wrapped in Result)
+            var apiResponse = await HttpQueryClient.GetFromJsonAsync<ApiQuestionnaireResponseDto>($"{ResponseQueryEndpoint}/assignment/{assignmentId}", JsonOptions);
+
+            if (apiResponse == null)
+            {
+                return null;
+            }
+
+            // Build QuestionnaireResponse with strongly-typed data
+            var questionnaireResponse = new QuestionnaireResponse
+            {
+                AssignmentId = assignmentId,
+                SectionResponses = new Dictionary<Guid, SectionResponse>()
+            };
+
+            // Map nested API structure to frontend structure
+            foreach (var sectionKvp in apiResponse.SectionResponses)
+            {
+                var apiSection = sectionKvp.Value;
+                var sectionResponse = new SectionResponse
+                {
+                    SectionId = apiSection.SectionId,
+                    RoleResponses = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponse>>()
+                };
+
+                // Map each role's responses
+                foreach (var roleKvp in apiSection.RoleResponses)
+                {
+                    var role = roleKvp.Key;
+                    var roleQuestions = roleKvp.Value;
+
+                    sectionResponse.RoleResponses[role] = new Dictionary<Guid, QuestionResponse>();
+
+                    foreach (var questionKvp in roleQuestions)
+                    {
+                        var apiQuestion = questionKvp.Value;
+                        var questionResponse = new QuestionResponse
+                        {
+                            QuestionId = apiQuestion.QuestionId,
+                            QuestionType = apiQuestion.QuestionType,
+                            LastModified = apiQuestion.LastModified,
+                            ResponseData = apiQuestion.ResponseData
+                        };
+
+                        sectionResponse.RoleResponses[role][apiQuestion.QuestionId] = questionResponse;
+                    }
+                }
+
+                questionnaireResponse.SectionResponses[sectionKvp.Key] = sectionResponse;
+            }
+
+            return questionnaireResponse;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error getting response for assignment {assignmentId}", ex);
+            return null;
+        }
     }
 
     public async Task<bool> DeleteResponseAsync(Guid id)
@@ -37,16 +98,54 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
     // Response management
     public async Task<QuestionnaireResponse> SaveResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
     {
-        var result = await PostToSubPathAsync<Dictionary<Guid, SectionResponse>, QuestionnaireResponse>(ResponseCommandEndpoint, "assignment", assignmentId, sectionResponses);
-        return result ?? throw new Exception("Failed to save response");
+        return await SaveResponseAsync(assignmentId, sectionResponses, templateId: null);
+    }
+
+    /// <summary>
+    /// Saves response with templateId optimization for better performance.
+    /// </summary>
+    public async Task<QuestionnaireResponse> SaveResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses, Guid? templateId)
+    {
+        try
+        {
+            // Convert section-based responses to question-based DTO format expected by backend
+            var dto = QuestionnaireResponseConverter.ConvertToSaveQuestionnaireResponseDto(sectionResponses, templateId);
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/assignment/{assignmentId}", dto, JsonOptions);
+            response.EnsureSuccessStatusCode();
+
+            var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
+            if (result?.Succeeded == true && result.Payload != default)
+            {
+                return new QuestionnaireResponse { Id = result.Payload, AssignmentId = assignmentId, SectionResponses = sectionResponses };
+            }
+            throw new Exception(result?.Message ?? "Failed to save response");
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error saving response for assignment {assignmentId}", ex);
+            throw;
+        }
     }
 
     public async Task<QuestionnaireResponse> SaveManagerResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses)
     {
+        return await SaveManagerResponseAsync(assignmentId, sectionResponses, templateId: null);
+    }
+
+    /// <summary>
+    /// Saves manager response with templateId optimization for better performance.
+    /// </summary>
+    public async Task<QuestionnaireResponse> SaveManagerResponseAsync(Guid assignmentId, Dictionary<Guid, SectionResponse> sectionResponses, Guid? templateId)
+    {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/manager/assignment/{assignmentId}", sectionResponses);
+            // Convert section-based responses to question-based DTO format expected by backend
+            var dto = QuestionnaireResponseConverter.ConvertToSaveQuestionnaireResponseDto(sectionResponses, templateId);
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{ResponseCommandEndpoint}/manager/assignment/{assignmentId}", dto, JsonOptions);
             response.EnsureSuccessStatusCode();
+
             var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
             if (result?.Succeeded == true && result.Payload != default)
             {

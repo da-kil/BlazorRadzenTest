@@ -10,16 +10,10 @@ namespace ti8m.BeachBreak.Client.Services;
 /// </summary>
 public class QuestionConfigurationService
 {
-    private readonly JsonSerializerOptions jsonOptions;
-
-    public QuestionConfigurationService()
+    private static readonly JsonSerializerOptions jsonOptions = new()
     {
-        jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-    }
-
+        PropertyNameCaseInsensitive = true
+    };
     /// <summary>
     /// Generic method to extract and deserialize configuration lists from question configuration dictionary.
     /// Handles three formats: direct List cast, JsonElement deserialization, and string deserialization.

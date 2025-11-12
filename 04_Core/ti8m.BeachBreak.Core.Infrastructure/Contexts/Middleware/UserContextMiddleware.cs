@@ -34,14 +34,28 @@ internal class UserContextMiddleware : IMiddleware
     /// </remarks>
     protected virtual void ReadUserInformationFromToken(JwtSecurityToken authorizationToken)
     {
-        userContext.Id = GetId(authorizationToken)!;
-        userContext.TenantId = GetTenantId(authorizationToken)!;
-        userContext.Name = GetName(authorizationToken)!;
+        var userId = GetId(authorizationToken);
+        var tenantId = GetTenantId(authorizationToken);
+        var name = GetName(authorizationToken);
+
+        logger.LogInformation("UserContextMiddleware: Extracted userId='{UserId}', tenantId='{TenantId}', name='{Name}' from JWT token",
+            userId, tenantId, name);
+
+        userContext.Id = userId ?? string.Empty;
+        userContext.TenantId = tenantId ?? string.Empty;
+        userContext.Name = name ?? string.Empty;
     }
 
     private string? GetId(JwtSecurityToken authorizationToken)
     {
+        // Debug: Log all claims to understand what's available
+        var allClaims = authorizationToken.Claims.Select(c => $"{c.Type}={c.Value}").ToList();
+        logger.LogInformation("UserContextMiddleware: All JWT claims: {Claims}", string.Join(", ", allClaims));
+
         var claim = authorizationToken.Claims.FirstOrDefault(claim => claim.Type == "oid");
+        logger.LogInformation("UserContextMiddleware: 'oid' claim found = {Found}, value = '{Value}'",
+            claim != null, claim?.Value ?? "null");
+
         return claim?.Value;
     }
 

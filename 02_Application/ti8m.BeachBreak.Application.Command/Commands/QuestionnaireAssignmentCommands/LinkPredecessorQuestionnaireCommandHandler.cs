@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Command.Mappers;
 using ti8m.BeachBreak.Application.Command.Repositories;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
@@ -50,7 +51,7 @@ public class LinkPredecessorQuestionnaireCommandHandler
             assignment.LinkPredecessorQuestionnaire(
                 command.QuestionId,
                 command.PredecessorAssignmentId,
-                command.LinkedByRole,
+                ApplicationRoleMapper.MapToDomain(command.LinkedByRole),
                 command.LinkedByEmployeeId);
 
             await repository.StoreAsync(assignment, cancellationToken);

@@ -94,6 +94,10 @@ public class ResponseQueryHandler :
         }
     }
 
+    /// <summary>
+    /// Direct mapping from ReadModel to strongly-typed QuestionnaireResponse.
+    /// No conversion needed since both use the same strongly-typed structure.
+    /// </summary>
     private static QuestionnaireResponse MapToResponse(QuestionnaireResponseReadModel readModel)
     {
         return new QuestionnaireResponse
@@ -102,10 +106,7 @@ public class ResponseQueryHandler :
             AssignmentId = readModel.AssignmentId,
             TemplateId = readModel.TemplateId,
             EmployeeId = readModel.EmployeeId,
-            SectionResponses = readModel.SectionResponses.ToDictionary(
-                kvp => kvp.Key,
-                kvp => (object)kvp.Value
-            ),
+            SectionResponses = readModel.SectionResponses,
             LastModified = readModel.LastModified,
             StartedDate = readModel.CreatedAt
         };

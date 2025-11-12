@@ -1,5 +1,5 @@
+using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Repositories;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
@@ -41,125 +41,15 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
             dto.PredecessorAssignmentId = predecessorId;
         }
 
-        // Get goals for this question with role-based filtering
-        if (assignment.GoalsByQuestion.TryGetValue(query.QuestionId, out var goals))
-        {
-            var filteredGoals = FilterGoalsByWorkflowState(goals, assignment.WorkflowState, query.CurrentUserRole);
+        // Goals are now stored in QuestionnaireResponse.SectionResponses, not in QuestionnaireAssignment
+        // Goals should be read from the main questionnaire response via GetQuestionnaireResponseQuery
+        // This query handler now returns empty goals list - goals are accessed through the response data
+        dto.Goals = new List<GoalDto>();
 
-            dto.Goals = filteredGoals.Select(g => new GoalDto
-            {
-                Id = g.Id,
-                QuestionId = g.QuestionId,
-                AddedByRole = g.AddedByRole.ToString(), // Convert enum to string
-                TimeframeFrom = g.TimeframeFrom,
-                TimeframeTo = g.TimeframeTo,
-                ObjectiveDescription = g.ObjectiveDescription,
-                MeasurementMetric = g.MeasurementMetric,
-                WeightingPercentage = g.WeightingPercentage,
-                AddedAt = g.AddedAt,
-                AddedByEmployeeId = g.AddedByEmployeeId,
-                Modifications = g.Modifications.Select(m => new GoalModificationDto
-                {
-                    ModifiedByRole = m.ModifiedByRole.ToString(), // Convert enum to string
-                    ChangeReason = m.ChangeReason,
-                    ModifiedAt = m.ModifiedAt,
-                    ModifiedByEmployeeId = m.ModifiedByEmployeeId,
-                    TimeframeFrom = m.TimeframeFrom,
-                    TimeframeTo = m.TimeframeTo,
-                    ObjectiveDescription = m.ObjectiveDescription,
-                    MeasurementMetric = m.MeasurementMetric,
-                    WeightingPercentage = m.WeightingPercentage
-                }).ToList()
-            }).ToList();
-        }
-
-        // Get predecessor goals and ratings for this question
-        if (dto.PredecessorAssignmentId.HasValue)
-        {
-            // Load predecessor assignment from read model
-            var predecessor = await _repository.GetAssignmentByIdAsync(dto.PredecessorAssignmentId.Value, cancellationToken);
-
-            if (predecessor != null)
-            {
-                if (predecessor.GoalsByQuestion.TryGetValue(query.QuestionId, out var predecessorGoals) && predecessorGoals.Any())
-                {
-                    // Create rating entries for each predecessor goal (with default values if not rated yet)
-                    var existingRatingsMap = assignment.GoalRatingsByQuestion.TryGetValue(query.QuestionId, out var existingRatings)
-                        ? existingRatings.ToDictionary(r => r.SourceGoalId, r => r)
-                        : new Dictionary<Guid, Projections.GoalRatingReadModel>();
-
-                    dto.PredecessorGoalRatings = predecessorGoals.Select(goal =>
-                    {
-                        var existingRating = existingRatingsMap.TryGetValue(goal.Id, out var rating) ? rating : null;
-
-                        return new GoalRatingDto
-                        {
-                            Id = existingRating?.Id ?? Guid.NewGuid(),
-                            SourceAssignmentId = dto.PredecessorAssignmentId.Value,
-                            SourceGoalId = goal.Id,
-                            QuestionId = query.QuestionId,
-                            RatedByRole = (existingRating?.RatedByRole ?? ApplicationRole.Employee).ToString(),
-                            DegreeOfAchievement = existingRating?.DegreeOfAchievement ?? 0m,
-                            Justification = existingRating?.Justification ?? "",
-                            OriginalObjectiveDescription = goal.ObjectiveDescription,
-                            OriginalTimeframeFrom = goal.TimeframeFrom,
-                            OriginalTimeframeTo = goal.TimeframeTo,
-                            OriginalMeasurementMetric = goal.MeasurementMetric,
-                            OriginalAddedByRole = goal.AddedByRole.ToString(),
-                            OriginalWeightingPercentage = goal.WeightingPercentage
-                        };
-                    }).ToList();
-                }
-            }
-        }
+        // Predecessor goal ratings are now stored in QuestionnaireResponse.SectionResponses alongside goals
+        // No longer stored in QuestionnaireAssignment aggregate
+        dto.PredecessorGoalRatings = new List<GoalRatingDto>();
 
         return Result<GoalQuestionDataDto>.Success(dto);
-    }
-
-    /// <summary>
-    /// Filters goals based on workflow state and user role.
-    /// In-Progress (including BothInProgress): Each role sees only their own goals.
-    /// InReview and later: Manager sees all, Employee sees only their own.
-    /// Post-Review: Both see all.
-    /// </summary>
-    private IEnumerable<Projections.GoalReadModel> FilterGoalsByWorkflowState(
-        IEnumerable<Projections.GoalReadModel> goals,
-        WorkflowState workflowState,
-        ApplicationRole currentUserRole)
-    {
-        // Post-review states: Both Employee and Manager see all goals
-        if (workflowState is WorkflowState.ManagerReviewConfirmed or
-                              WorkflowState.EmployeeReviewConfirmed or
-                              WorkflowState.Finalized)
-        {
-            return goals;
-        }
-
-        // InReview state: Manager sees all, Employee sees only their own
-        // This covers review meetings where managers need to see both perspectives
-        if (workflowState >= WorkflowState.InReview)
-        {
-            if (currentUserRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin)
-            {
-                return goals; // Manager/Admin sees all goals during review
-            }
-            else
-            {
-                return goals.Where(g => g.AddedByRole == currentUserRole); // Employee sees only their own
-            }
-        }
-
-        // All In-Progress states (including BothInProgress): Each role sees only their own goals
-        // This ensures privacy during active goal creation and editing phases
-        return goals.Where(g => g.AddedByRole == currentUserRole);
-    }
-
-    /// <summary>
-    /// Determines if predecessor ratings should be shown based on workflow state.
-    /// Ratings are visible from InReview onwards.
-    /// </summary>
-    private bool ShouldShowPredecessorRatings(WorkflowState workflowState)
-    {
-        return workflowState >= WorkflowState.InReview;
     }
 }

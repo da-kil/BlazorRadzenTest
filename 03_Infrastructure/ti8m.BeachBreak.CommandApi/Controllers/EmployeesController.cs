@@ -3,12 +3,16 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
+using ti8m.BeachBreak.Application.Command.Models;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.CommandApi.Dto;
-using ti8m.BeachBreak.CommandApi.Models;
+using ti8m.BeachBreak.CommandApi.DTOs;
+using ti8m.BeachBreak.CommandApi.Mappers;
+using ti8m.BeachBreak.CommandApi.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using CommandResult = ti8m.BeachBreak.Application.Command.Commands.Result;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
@@ -20,17 +24,23 @@ public class EmployeesController : BaseController
     private readonly ICommandDispatcher commandDispatcher;
     private readonly IQueryDispatcher queryDispatcher;
     private readonly UserContext userContext;
+    private readonly QuestionResponseMappingService mappingService;
+    private readonly SectionMappingService sectionMappingService;
     private readonly ILogger<EmployeesController> logger;
 
     public EmployeesController(
         ICommandDispatcher commandDispatcher,
         IQueryDispatcher queryDispatcher,
         UserContext userContext,
+        QuestionResponseMappingService mappingService,
+        SectionMappingService sectionMappingService,
         ILogger<EmployeesController> logger)
     {
         this.commandDispatcher = commandDispatcher;
         this.queryDispatcher = queryDispatcher;
         this.userContext = userContext;
+        this.mappingService = mappingService;
+        this.sectionMappingService = sectionMappingService;
         this.logger = logger;
     }
 
@@ -120,7 +130,7 @@ public class EmployeesController : BaseController
     {
         // Infrastructure responsibility: Fetch requester's role from database using UserContext
         // If user is not an employee (e.g., service principal), default to Admin role
-        ApplicationRole requesterRole = ApplicationRole.Admin;
+        ApplicationRole commandRequesterRole = ApplicationRole.Admin;
 
         if (Guid.TryParse(userContext.Id, out var userId))
         {
@@ -130,7 +140,7 @@ public class EmployeesController : BaseController
 
             if (requesterRoleResult != null)
             {
-                requesterRole = requesterRoleResult.ApplicationRole;
+                commandRequesterRole = ApplicationRoleMapper.MapFromQuery(requesterRoleResult.ApplicationRole);
             }
             else
             {
@@ -142,12 +152,15 @@ public class EmployeesController : BaseController
             logger.LogInformation("No user ID in context, treating as Admin (likely service principal)");
         }
 
+        var domainRequesterRole = ApplicationRoleMapper.MapToDomain(commandRequesterRole);
+        var domainNewRole = (Domain.EmployeeAggregate.ApplicationRole)dto.NewRole;
+
         // Dispatch command with requester's role - business rules validated in domain
         CommandResult result = await commandDispatcher.SendAsync(
             new ChangeEmployeeApplicationRoleCommand(
                 employeeId,
-                (ApplicationRole)dto.NewRole,
-                requesterRole));
+                ApplicationRoleMapper.MapFromDomain(domainNewRole),
+                ApplicationRoleMapper.MapFromDomain(domainRequesterRole)));
 
         return CreateResponse(result);
     }
@@ -164,7 +177,7 @@ public class EmployeesController : BaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> SaveMyResponse(
         Guid assignmentId,
-        [FromBody] Dictionary<Guid, SectionResponse> sectionResponses)
+        [FromBody] SaveQuestionnaireResponseDto request)
     {
         // Get employee ID from authenticated user context
         if (!Guid.TryParse(userContext.Id, out var employeeId))
@@ -176,28 +189,22 @@ public class EmployeesController : BaseController
         logger.LogInformation("Received SaveMyResponse request for authenticated EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
             employeeId, assignmentId);
 
-        if (sectionResponses == null)
+        if (request?.Responses == null)
         {
-            logger.LogWarning("SaveMyResponse failed: Section responses are null");
-            return CreateResponse(Application.Command.Commands.Result<Guid>.Fail("Section responses are required", StatusCodes.Status400BadRequest));
+            logger.LogWarning("SaveMyResponse failed: Responses are null");
+            return CreateResponse(Application.Command.Commands.Result<Guid>.Fail("Responses are required", StatusCodes.Status400BadRequest));
         }
 
-        // Extract role-based responses from each SectionResponse and flatten to domain structure
-        var responsesAsObjects = sectionResponses.ToDictionary(
-            kvp => kvp.Key,
-            kvp => (object)kvp.Value.RoleResponses.ToDictionary(
-                roleKvp => roleKvp.Key.ToString(), // Convert ResponseRole enum to string for domain layer
-                roleKvp => (object)roleKvp.Value.ToDictionary(
-                    q => q.Key,  // Question ID
-                    q => (object)q.Value // QuestionResponse
-                )
-            )
-        );
+        // Convert from strongly-typed DTOs to domain format
+        var questionResponses = mappingService.ConvertToTypeSafeFormat(request);
+
+        // Get template structure to organize responses by actual sections
+        var typeSafeSectionResponses = await sectionMappingService.OrganizeResponsesBySectionsAsync(assignmentId, request.TemplateId, questionResponses, CompletionRole.Employee, HttpContext.RequestAborted);
 
         var command = new SaveEmployeeResponseCommand(
             employeeId: employeeId,
             assignmentId: assignmentId,
-            sectionResponses: responsesAsObjects
+            sectionResponses: typeSafeSectionResponses
         );
 
         var result = await commandDispatcher.SendAsync(command);
@@ -257,5 +264,4 @@ public class EmployeesController : BaseController
 
         return CreateResponse(result);
     }
-
 }

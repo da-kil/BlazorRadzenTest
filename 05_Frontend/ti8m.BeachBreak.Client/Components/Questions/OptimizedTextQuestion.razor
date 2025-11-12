@@ -1,5 +1,6 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits OptimizedComponentBase
 
@@ -131,9 +132,16 @@ else
 
     protected override bool HasStateChanged()
     {
-        var simpleValue = Response.ComplexValue?.TryGetValue("value", out var val) == true ? val?.ToString() : "";
-        return HasParameterChanged("SimpleValue", simpleValue) ||
-               HasParameterChanged(nameof(Response.ComplexValue), Response.ComplexValue?.Count ?? 0);
+        // Get current simple value from ResponseData
+        var currentValue = "";
+        if (Response.ResponseData is TextResponseDataDto textData && textData.TextSections.Any())
+        {
+            currentValue = textData.TextSections[0];
+        }
+
+        var responseDataHash = Response.ResponseData?.GetHashCode() ?? 0;
+        return HasParameterChanged("CurrentValue", currentValue) ||
+               HasParameterChanged(nameof(Response.ResponseData), responseDataHash);
     }
 
     private List<TextSectionDefinition> GetTextSectionsFromConfiguration()
@@ -154,8 +162,7 @@ else
                 try
                 {
                     var deserializedSections = System.Text.Json.JsonSerializer.Deserialize<List<TextSectionDefinition>>(
-                        jsonElement.GetRawText(),
-                        new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                        jsonElement.GetRawText()
                     );
 
                     if (deserializedSections != null && deserializedSections.Any())
@@ -200,33 +207,62 @@ else
 
     private string GetSectionValue(string sectionKey)
     {
-        if (textSections.Count == 1)
+        if (Response.ResponseData is not TextResponseDataDto textData)
         {
-            // Single section uses "value" key in ComplexValue
-            return Response.ComplexValue?.TryGetValue("value", out var val) == true ? val?.ToString() ?? "" : "";
+            return "";
         }
 
-        // Multiple sections use ComplexValue with section keys
-        return Response.ComplexValue?.TryGetValue(sectionKey, out var value) == true
-            ? value.ToString() ?? ""
-            : "";
+        if (textSections.Count == 1)
+        {
+            // Single section - return first text section
+            return textData.TextSections.FirstOrDefault() ?? "";
+        }
+
+        // Multiple sections - extract section index from key like "section_0", "section_1"
+        if (sectionKey.StartsWith("section_") && int.TryParse(sectionKey.Substring(8), out var index))
+        {
+            return index < textData.TextSections.Count ? textData.TextSections[index] : "";
+        }
+
+        return "";
     }
 
     private async Task SetSectionValue(string sectionKey, string value)
     {
         if (IsReadOnly) return;
 
+        // Ensure we have a TextResponseDataDto
+        if (Response.ResponseData is not TextResponseDataDto textData)
+        {
+            textData = new TextResponseDataDto();
+            Response.ResponseData = textData;
+        }
+
         if (textSections.Count == 1)
         {
-            // Single section uses "value" key in ComplexValue
-            if (Response.ComplexValue == null) Response.ComplexValue = new Dictionary<string, object>();
-            Response.ComplexValue["value"] = value;
+            // Single section - set or update the first text section
+            if (textData.TextSections.Count == 0)
+            {
+                textData.TextSections.Add(value ?? "");
+            }
+            else
+            {
+                textData.TextSections[0] = value ?? "";
+            }
         }
         else
         {
-            // Multiple sections use ComplexValue
-            Response.ComplexValue ??= new Dictionary<string, object>();
-            Response.ComplexValue[sectionKey] = value ?? "";
+            // Multiple sections - extract section index from key like "section_0", "section_1"
+            if (sectionKey.StartsWith("section_") && int.TryParse(sectionKey.Substring(8), out var index))
+            {
+                // Ensure the list is large enough
+                while (textData.TextSections.Count <= index)
+                {
+                    textData.TextSections.Add("");
+                }
+
+                textData.TextSections[index] = value ?? "";
+            }
         }
 
         Response.LastModified = DateTime.Now;

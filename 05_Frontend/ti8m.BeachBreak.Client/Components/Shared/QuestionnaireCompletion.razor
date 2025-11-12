@@ -1,5 +1,6 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Questions
 @using Microsoft.AspNetCore.Components.Authorization
@@ -671,7 +672,13 @@
                     {
                         QuestionId = question.Id,
                         QuestionType = question.Type,
-                        ComplexValue = new Dictionary<string, object>()
+                        ResponseData = question.Type switch
+                        {
+                            QuestionType.TextQuestion => new TextResponseDataDto(),
+                            QuestionType.Assessment => new AssessmentResponseDataDto(),
+                            QuestionType.Goal => new GoalResponseDataDto(),
+                            _ => null
+                        }
                     };
                 }
             }
@@ -853,20 +860,29 @@
         {
             QuestionType.Assessment => IsCompetencyAssessmentComplete(question, response),
             QuestionType.Goal => IsGoalComplete(response),
-            QuestionType.TextQuestion => response.ComplexValue?.TryGetValue("value", out var val) == true && !string.IsNullOrWhiteSpace(val?.ToString()),
+            QuestionType.TextQuestion => IsTextQuestionAnswered(response),
             _ => false
         };
     }
 
+    private bool IsTextQuestionAnswered(QuestionResponse response)
+    {
+        if (response.ResponseData is not TextResponseDataDto textData)
+            return false;
+
+        return textData.TextSections.Any(section => !string.IsNullOrWhiteSpace(section));
+    }
+
     private bool IsCompetencyAssessmentComplete(QuestionItem question, QuestionResponse response)
     {
+        if (response.ResponseData is not AssessmentResponseDataDto assessmentData)
+            return false;
+
         var competencies = GetCompetenciesFromConfiguration(question);
         foreach (var competency in competencies.Where(c => c.IsRequired))
         {
-            var ratingKey = $"competency_{competency.Key}_rating";
-            if (response.ComplexValue == null ||
-                !response.ComplexValue.ContainsKey(ratingKey) ||
-                response.ComplexValue[ratingKey]?.ToString() == "0")
+            if (!assessmentData.Competencies.TryGetValue(competency.Key, out var competencyRating) ||
+                competencyRating.Rating == 0)
             {
                 return false;
             }
@@ -876,8 +892,11 @@
 
     private bool IsGoalComplete(QuestionResponse response)
     {
-        return response.ComplexValue?.ContainsKey("GoalDescription") == true &&
-               !string.IsNullOrWhiteSpace(response.ComplexValue["GoalDescription"]?.ToString());
+        if (response.ResponseData is not GoalResponseDataDto goalData)
+            return false;
+
+        // Goal is complete if it has at least one goal with an objective
+        return goalData.Goals.Any(goal => !string.IsNullOrWhiteSpace(goal.ObjectiveDescription));
     }
 
     private string GetQuestionTypeLabel(QuestionItem question)
@@ -922,91 +941,78 @@
     // Helper methods for data binding and change handling (kept for backward compatibility)
     private int GetCompetencyRating(QuestionResponse response, string competencyId)
     {
-        var key = $"competency_{competencyId}_rating";
-        if (response.ComplexValue?.TryGetValue(key, out var value) == true)
+        if (response.ResponseData is AssessmentResponseDataDto assessmentData &&
+            assessmentData.Competencies.TryGetValue(competencyId, out var competencyRating))
         {
-            if (int.TryParse(value.ToString(), out var rating))
-                return rating;
+            return competencyRating.Rating;
         }
         return 0;
     }
 
     private string GetCompetencyComments(QuestionResponse response, string competencyId)
     {
-        var key = $"competency_{competencyId}_comments";
-        return response.ComplexValue?.GetValueOrDefault(key)?.ToString() ?? "";
+        if (response.ResponseData is AssessmentResponseDataDto assessmentData &&
+            assessmentData.Competencies.TryGetValue(competencyId, out var competencyRating))
+        {
+            return competencyRating.Comment;
+        }
+        return "";
     }
 
     private async Task OnCompetencyRatingChange(QuestionResponse response, string competencyId, int rating)
     {
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"competency_{competencyId}_rating"] = rating;
+        if (response.ResponseData is not AssessmentResponseDataDto assessmentData)
+        {
+            assessmentData = new AssessmentResponseDataDto();
+            response.ResponseData = assessmentData;
+        }
+
+        if (!assessmentData.Competencies.ContainsKey(competencyId))
+        {
+            assessmentData.Competencies[competencyId] = new CompetencyRatingDto();
+        }
+
+        assessmentData.Competencies[competencyId].Rating = rating;
         response.LastModified = DateTime.Now;
         MarkChanged();
     }
 
     private async Task OnCompetencyCommentsChange(QuestionResponse response, string competencyId, string comments)
     {
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[$"competency_{competencyId}_comments"] = comments;
-        response.LastModified = DateTime.Now;
-        MarkChanged();
-    }
-
-    private string GetGoalField(QuestionResponse response, string fieldName)
-    {
-        return response.ComplexValue?.GetValueOrDefault(fieldName)?.ToString() ?? "";
-    }
-
-    private DateTime? GetGoalDateField(QuestionResponse response, string fieldName)
-    {
-        if (response.ComplexValue?.TryGetValue(fieldName, out var value) == true &&
-            DateTime.TryParse(value.ToString(), out var date))
+        if (response.ResponseData is not AssessmentResponseDataDto assessmentData)
         {
-            return date;
+            assessmentData = new AssessmentResponseDataDto();
+            response.ResponseData = assessmentData;
         }
-        return null;
-    }
 
-    private int GetGoalNumberField(QuestionResponse response, string fieldName)
-    {
-        if (response.ComplexValue?.TryGetValue(fieldName, out var value) == true &&
-            int.TryParse(value.ToString(), out var number))
+        if (!assessmentData.Competencies.ContainsKey(competencyId))
         {
-            return number;
+            assessmentData.Competencies[competencyId] = new CompetencyRatingDto();
         }
-        return 0;
-    }
 
-    private async Task OnGoalFieldChange(QuestionResponse response, string fieldName, string value)
-    {
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[fieldName] = value;
-        response.LastModified = DateTime.Now;
-        MarkChanged();
-    }
-
-    private async Task OnGoalDateChange(QuestionResponse response, string fieldName, DateTime? value)
-    {
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[fieldName] = value?.ToString("yyyy-MM-dd") ?? "";
-        response.LastModified = DateTime.Now;
-        MarkChanged();
-    }
-
-    private async Task OnGoalNumberChange(QuestionResponse response, string fieldName, int value)
-    {
-        if (response.ComplexValue == null) response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue[fieldName] = value;
+        assessmentData.Competencies[competencyId].Comment = comments;
         response.LastModified = DateTime.Now;
         MarkChanged();
     }
 
     private async Task OnTextResponseChange(QuestionResponse response, string value)
     {
-        if (response.ComplexValue == null)
-            response.ComplexValue = new Dictionary<string, object>();
-        response.ComplexValue["value"] = value;
+        if (response.ResponseData is not TextResponseDataDto textData)
+        {
+            textData = new TextResponseDataDto();
+            response.ResponseData = textData;
+        }
+
+        // Ensure at least one section exists
+        if (textData.TextSections.Count == 0)
+        {
+            textData.TextSections.Add(value);
+        }
+        else
+        {
+            textData.TextSections[0] = value;
+        }
+
         response.LastModified = DateTime.Now;
         MarkChanged();
     }
@@ -1027,8 +1033,7 @@
             try
             {
                 return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
-                    jsonElement.GetRawText(),
-                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    jsonElement.GetRawText()
                 ) ?? new List<CompetencyDefinition>();
             }
             catch { /* Ignore deserialization errors */ }

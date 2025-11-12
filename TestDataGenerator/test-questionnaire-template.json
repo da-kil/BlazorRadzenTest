@@ -27,67 +27,67 @@
           "Configuration": {
             "Competencies": [
               {
-                "key": "competency_1",
-                "title": "Fachkenntnisse",
-                "description": "Bewertung der eigenen Expertise und des Fachwissens in Bezug auf die beruflichen Aufgaben.",
-                "isRequired": true,
-                "order": 0
+                "Key": "competency_1",
+                "Title": "Fachkenntnisse",
+                "Description": "Bewertung der eigenen Expertise und des Fachwissens in Bezug auf die beruflichen Aufgaben.",
+                "IsRequired": true,
+                "Order": 0
               },
               {
-                "key": "competency_2",
-                "title": "Arbeitsqualität",
-                "description": "Einschätzung der Genauigkeit, Effizienz und Vollständigkeit der erbrachten Arbeit.",
-                "isRequired": true,
-                "order": 1
+                "Key": "competency_2",
+                "Title": "Arbeitsqualität",
+                "Description": "Einschätzung der Genauigkeit, Effizienz und Vollständigkeit der erbrachten Arbeit.",
+                "IsRequired": true,
+                "Order": 1
               },
               {
-                "key": "competency_3",
-                "title": "Zuverlässigkeit ",
-                "description": "Reflexion über die Pünktlichkeit, Termintreue und Zuverlässigkeit bei der Erfüllung von Aufgaben und Zusagen.",
-                "isRequired": true,
-                "order": 2
+                "Key": "competency_3",
+                "Title": "Zuverlässigkeit ",
+                "Description": "Reflexion über die Pünktlichkeit, Termintreue und Zuverlässigkeit bei der Erfüllung von Aufgaben und Zusagen.",
+                "IsRequired": true,
+                "Order": 2
               },
               {
-                "key": "competency_4",
-                "title": "Belastbarkeit",
-                "description": "Beurteilung der Fähigkeit, unter Druck effektiv zu arbeiten und mit Stress umzugehen.",
-                "isRequired": true,
-                "order": 3
+                "Key": "competency_4",
+                "Title": "Belastbarkeit",
+                "Description": "Beurteilung der Fähigkeit, unter Druck effektiv zu arbeiten und mit Stress umzugehen.",
+                "IsRequired": true,
+                "Order": 3
               },
               {
-                "key": "competency_5",
-                "title": "Selbstständigkeit",
-                "description": "Einschätzung der Fähigkeit, Aufgaben eigenverantwortlich und ohne ständige Anleitung zu erledigen.",
-                "isRequired": true,
-                "order": 4
+                "Key": "competency_5",
+                "Title": "Selbstständigkeit",
+                "Description": "Einschätzung der Fähigkeit, Aufgaben eigenverantwortlich und ohne ständige Anleitung zu erledigen.",
+                "IsRequired": true,
+                "Order": 4
               },
               {
-                "key": "competency_6",
-                "title": "Kommunikationsfähigkeit",
-                "description": "Einschätzung der Fähigkeit zur klaren und verständlichen Übermittlung von Informationen sowie des Verständnisses für den Bedarf an Kommunikation.",
-                "isRequired": true,
-                "order": 5
+                "Key": "competency_6",
+                "Title": "Kommunikationsfähigkeit",
+                "Description": "Einschätzung der Fähigkeit zur klaren und verständlichen Übermittlung von Informationen sowie des Verständnisses für den Bedarf an Kommunikation.",
+                "IsRequired": true,
+                "Order": 5
               },
               {
-                "key": "competency_7",
-                "title": "Proaktivität und Initiative",
-                "description": "Beurteilung der Neigung, eigenständig zu handeln und neue Ideen oder Lösungen vorzuschlagen.",
-                "isRequired": true,
-                "order": 6
+                "Key": "competency_7",
+                "Title": "Proaktivität und Initiative",
+                "Description": "Beurteilung der Neigung, eigenständig zu handeln und neue Ideen oder Lösungen vorzuschlagen.",
+                "IsRequired": true,
+                "Order": 6
               },
               {
-                "key": "competency_8",
-                "title": "Problemlösungsfähigkeit",
-                "description": "Bewertung der Fähigkeit, Herausforderungen zu erkennen und effektive Lösungen zu entwickeln.",
-                "isRequired": true,
-                "order": 7
+                "Key": "competency_8",
+                "Title": "Problemlösungsfähigkeit",
+                "Description": "Bewertung der Fähigkeit, HerausfOrderungen zu erkennen und effektive Lösungen zu entwickeln.",
+                "IsRequired": true,
+                "Order": 7
               },
               {
-                "key": "competency_9",
-                "title": "Verhalten",
-                "description": "Einschätzung des eigenen Verhaltens im Arbeitskontext, insbesondere im Umgang mit Kolleginnen und Kollegen, Vorgesetzten und gegebenenfalls Kunden.",
-                "isRequired": true,
-                "order": 8
+                "Key": "competency_9",
+                "Title": "Verhalten",
+                "Description": "Einschätzung des eigenen Verhaltens im Arbeitskontext, insbesondere im Umgang mit Kolleginnen und Kollegen, Vorgesetzten und gegebenenfalls Kunden.",
+                "IsRequired": true,
+                "Order": 8
               }
             ],
             "RatingScale": 4,
@@ -115,16 +115,16 @@
           "Configuration": {
             "TextSections": [
               {
-                "title": "Was schätzt du besonders an deinem/r Vorgesetzten? In welchen Bereichen hat er/sie deine Erwartungen erfüllt oder übertroffen?",
-                "description": "",
-                "isRequired": true,
-                "order": 0
+                "Title": "Was schätzt du besonders an deinem/r Vorgesetzten? In welchen Bereichen hat er/sie deine Erwartungen erfüllt oder übertroffen?",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 0
               },
               {
-                "title": "Gibt es Bereiche, in denen sich dein/e Vorgesetzte/n verbessern könnte? Wo benötigst du mehr Unterstützung von deinem/r Vorgesetzten?",
-                "description": "",
-                "isRequired": true,
-                "order": 1
+                "Title": "Gibt es Bereiche, in denen sich dein/e Vorgesetzte/n verbessern könnte? Wo benötigst du mehr Unterstützung von deinem/r Vorgesetzten?",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 1
               }
             ]
           }

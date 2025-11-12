@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -6,6 +7,15 @@ public abstract class BaseApiService
 {
     protected readonly HttpClient HttpCommandClient;
     protected readonly HttpClient HttpQueryClient;
+
+    /// <summary>
+    /// JSON serialization options configured for PascalCase consistency with backend
+    /// </summary>
+    protected static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = null, // PascalCase
+        PropertyNameCaseInsensitive = false // Strict enforcement
+    };
 
     protected BaseApiService(IHttpClientFactory factory)
     {
@@ -59,7 +69,7 @@ public abstract class BaseApiService
     {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync(endpoint, request);
+            var response = await HttpCommandClient.PostAsJsonAsync(endpoint, request, JsonOptions);
 
             if (response.IsSuccessStatusCode)
             {
@@ -80,7 +90,7 @@ public abstract class BaseApiService
     {
         try
         {
-            var response = await HttpCommandClient.PutAsJsonAsync($"{endpoint}/{id}", request);
+            var response = await HttpCommandClient.PutAsJsonAsync($"{endpoint}/{id}", request, JsonOptions);
 
             if (response.IsSuccessStatusCode)
             {
@@ -130,7 +140,7 @@ public abstract class BaseApiService
     {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync(endpoint, request);
+            var response = await HttpCommandClient.PostAsJsonAsync(endpoint, request, JsonOptions);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<TResult>();
@@ -148,7 +158,7 @@ public abstract class BaseApiService
     {
         try
         {
-            var response = await HttpCommandClient.PutAsJsonAsync($"{endpoint}/{id}", request);
+            var response = await HttpCommandClient.PutAsJsonAsync($"{endpoint}/{id}", request, JsonOptions);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -172,7 +182,7 @@ public abstract class BaseApiService
     {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync(endpoint, request);
+            var response = await HttpCommandClient.PostAsJsonAsync(endpoint, request, JsonOptions);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<List<TResult>>();
@@ -221,7 +231,7 @@ public abstract class BaseApiService
     {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{endpoint}/{subPath}/{id}", request);
+            var response = await HttpCommandClient.PostAsJsonAsync($"{endpoint}/{subPath}/{id}", request, JsonOptions);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<TResult>();
@@ -259,7 +269,7 @@ public abstract class BaseApiService
             HttpResponseMessage response;
             if (requestBody != null)
             {
-                response = await HttpCommandClient.PostAsJsonAsync($"{commandEndpoint}/{id}/{action}", requestBody);
+                response = await HttpCommandClient.PostAsJsonAsync($"{commandEndpoint}/{id}/{action}", requestBody, JsonOptions);
             }
             else
             {
@@ -407,7 +417,7 @@ public abstract class BaseApiService
     {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{commandEndpoint}/{employeeId}/{resource}/{resourceId}", request);
+            var response = await HttpCommandClient.PostAsJsonAsync($"{commandEndpoint}/{employeeId}/{resource}/{resourceId}", request, JsonOptions);
             response.EnsureSuccessStatusCode();
 
             var result = await response.Content.ReadFromJsonAsync<TResult>();

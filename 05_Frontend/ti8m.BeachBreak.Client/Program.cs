@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Radzen;
+using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using ti8m.BeachBreak.Client.Configuration;
 using ti8m.BeachBreak.Client.Services;
 
@@ -21,6 +23,14 @@ internal class Program
 
         builder.Services.AddCascadingAuthenticationState();
         builder.Services.AddAuthenticationStateDeserialization();
+
+        // Configure JSON serialization to use PascalCase (consistent with backend)
+        builder.Services.Configure<JsonSerializerOptions>(options =>
+        {
+            options.PropertyNamingPolicy = null; // PascalCase for both sending and receiving
+            options.PropertyNameCaseInsensitive = false; // Enforce strict PascalCase consistency
+            options.TypeInfoResolver = new DefaultJsonTypeInfoResolver(); // Enable polymorphic type discrimination
+        });
 
         // Configure HttpClients for API communication
         // In WebAssembly, these will call back to the host server which proxies to the actual APIs

@@ -362,3 +362,10 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 .azure
+/02_Application/ti8m.BeachBreak.Application.Query/temp_output
+/01_Domain/ti8m.BeachBreak.Domain/temp_output
+/04_Core/ti8m.BeachBreak.Core.Domain/temp_output
+/04_Core/ti8m.BeachBreak.Core.Infrastructure/temp_output
+/Aspire/ti8m.BeachBreak.ServiceDefaults/temp_output
+/02_Application/ti8m.BeachBreak.Application.Command/temp_output
+/03_Infrastructure/ti8m.BeachBreak.Infrastructure.Marten/temp_output

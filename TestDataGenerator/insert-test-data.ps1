@@ -126,6 +126,11 @@ try {
       -Method POST `
       -Headers $headers `
       -InFile "test-categories.json"
+
+    $categoryResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/categories" `
+      -Method POST `
+      -Headers $headers `
+      -InFile "test-categories-2.json"
     Write-Host "Category inserted successfully!" -ForegroundColor Green
 } catch {
     Write-Host "Error inserting category: $($_.Exception.Message)" -ForegroundColor Red
@@ -145,11 +150,21 @@ try {
       -Method POST `
       -Headers $headers `
       -InFile "test-questionnaire-template.json"
+
+    $templateResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/questionnaire-templates" `
+      -Method POST `
+      -Headers $headers `
+      -InFile "test-questionnaire-template-2.json"
     Write-Host "Questionnaire template inserted successfully!" -ForegroundColor Green
 
     # Publish the template
     Write-Host "Publishing questionnaire template..." -ForegroundColor Cyan
     $templateId = "960e40e9-30bd-4e4a-a16b-b0107cbe3dba"
+    $publishResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/questionnaire-templates/$templateId/publish" `
+      -Method POST `
+      -Headers $headers
+
+    $templateId = "68f7fb75-0e17-4593-9e68-83091d4e7e71"
     $publishResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/questionnaire-templates/$templateId/publish" `
       -Method POST `
       -Headers $headers
@@ -211,12 +226,12 @@ Write-Host "`nUpdating employee application roles..." -ForegroundColor Cyan
 $roleUpdates = @(
     @{
         Id = "9d159666-0126-4d36-beff-057b68512efa"
-        NewRole = 2
+        NewRole = 1
         RoleName = "TeamLead"
     },
     @{
         Id = "e91731e2-fb48-4a69-b740-075bf5d39eaf"
-        NewRole = 5
+        NewRole = 4
         RoleName = "Admin"
     }
 )

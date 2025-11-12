@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authorization.Policy;
 using System.Security.Claims;
-using ti8m.BeachBreak.Application.Query.Queries;
-using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
+using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Infrastructure;
-using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.QueryApi.Authorization;
 
@@ -16,20 +15,17 @@ namespace ti8m.BeachBreak.QueryApi.Authorization;
 public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddlewareResultHandler
 {
     private readonly IAuthorizationMiddlewareResultHandler defaultHandler = new AuthorizationMiddlewareResultHandler();
-    private readonly IAuthorizationCacheService cacheService;
-    private readonly IQueryDispatcher queryDispatcher;
+    private readonly IEmployeeRoleService employeeRoleService;
     private readonly ILogger<RoleBasedAuthorizationMiddlewareResultHandler> logger;
 
     // Policy to ApplicationRole mappings - from domain service
     private static Dictionary<string, ApplicationRole[]> PolicyRoleMappings => ApplicationRoleAuthorizationService.PolicyRoleMappings;
 
     public RoleBasedAuthorizationMiddlewareResultHandler(
-        IAuthorizationCacheService cacheService,
-        IQueryDispatcher queryDispatcher,
+        IEmployeeRoleService employeeRoleService,
         ILogger<RoleBasedAuthorizationMiddlewareResultHandler> logger)
     {
-        this.cacheService = cacheService;
-        this.queryDispatcher = queryDispatcher;
+        this.employeeRoleService = employeeRoleService;
         this.logger = logger;
     }
 
@@ -74,8 +70,8 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
             return;
         }
 
-        // Get employee role from cache or database
-        var employeeRole = await GetEmployeeRoleAsync(userId.Value, context.RequestAborted);
+        // Get employee role using service (cache-through pattern)
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId.Value, context.RequestAborted);
         if (employeeRole == null)
         {
             logger.LogAuthorizationFailedEmployeeNotFound(userId.Value);
@@ -111,12 +107,14 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
         // Check each policy to see if user's role satisfies it
         var hasAccess = false;
 
+        var domainRole = ApplicationRoleMapper.MapToDomain(employeeRole.ApplicationRole);
+
         // Check policy-based authorization
         foreach (var policyName in requiredPolicyNames)
         {
             if (PolicyRoleMappings.TryGetValue(policyName, out var allowedRoles))
             {
-                if (allowedRoles.Contains(employeeRole.ApplicationRole))
+                if (allowedRoles.Contains(domainRole))
                 {
                     hasAccess = true;
                     break;
@@ -131,13 +129,13 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
             {
                 if (PolicyRoleMappings.TryGetValue(roleName, out var allowedRoles))
                 {
-                    if (allowedRoles.Contains(employeeRole.ApplicationRole))
+                    if (allowedRoles.Contains(domainRole))
                     {
                         hasAccess = true;
                         break;
                     }
                 }
-                else if (Enum.TryParse<ApplicationRole>(roleName, out var role) && role == employeeRole.ApplicationRole)
+                else if (Enum.TryParse<ApplicationRole>(roleName, out var role) && role == domainRole)
                 {
                     hasAccess = true;
                     break;
@@ -179,35 +177,5 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
         return Guid.TryParse(userIdClaim, out var userId) ? userId : null;
     }
 
-    private async Task<EmployeeRoleResult?> GetEmployeeRoleAsync(Guid userId, CancellationToken cancellationToken)
-    {
-        try
-        {
-            // Try to get from cache
-            var cached = await cacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, cancellationToken);
-            if (cached != null)
-            {
-                return cached;
-            }
-
-            // Not in cache, query database
-            var result = await queryDispatcher.QueryAsync(new GetEmployeeRoleByIdQuery(userId), cancellationToken);
-            if (result == null)
-            {
-                return null;
-            }
-
-            // Store in cache
-            await cacheService.SetEmployeeRoleCacheAsync(userId, result, cancellationToken);
-
-            logger.LogDebug("Employee role retrieved from database and cached for user ID: {UserId}", userId);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving employee role for user ID: {UserId}", userId);
-            return null;
-        }
-    }
 
 }

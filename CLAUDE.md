@@ -46,13 +46,6 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - **Debugging Auth Issues**: Check database records, NOT JWT token claims
 - **Common Mistake**: Assuming roles are in JWT - they're dynamically looked up per request
 
-## Domain Model
-
-### Aggregates
-- **Category**: Core entity with multilingual support via Translation value object
-- **Employee**: Employee management (referenced in EmployeePrompt.md)
-- **Questionnaire**: Template and assignment management
-
 ## Domain Events Guidelines
 
 ### Event Characteristics
@@ -73,9 +66,6 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - "Data Updated"
 - "Field Changed"
 - "Status Modified"
-
-### Value Objects
-- **Translation**: Multilingual text with German and English properties
 
 ### Event Sourcing Implementation
 - All aggregates inherit from `AggregateRoot` which tracks domain events
@@ -177,26 +167,6 @@ dotnet run
 - **ABSOLUTELY FORBIDDEN**: The `dynamic` keyword must NEVER be used in this codebase
 - **ALWAYS** create strongly-typed classes or records instead
 - **REASON**: Loss of compile-time type safety, IntelliSense, and refactoring support
-- **EXAMPLE - BAD**:
-  ```csharp
-  TemplateOptions = items.Select(i => (dynamic)new { Id = i.Id, Name = i.Name }).ToList()
-  ```
-- **EXAMPLE - GOOD**:
-  ```csharp
-  // Create a proper model class
-  public class QuestionnaireTemplateOption
-  {
-      public Guid Id { get; set; }
-      public string Name { get; set; } = string.Empty;
-  }
-
-  // Use it
-  TemplateOptions = items.Select(i => new QuestionnaireTemplateOption
-  {
-      Id = i.Id,
-      Name = i.Name
-  }).ToList()
-  ```
 
 ### 6. UserContext Pattern for User Identification
 - **ALWAYS** use `UserContext` to get the current user's ID in API controllers
@@ -205,51 +175,7 @@ dotnet run
 - **USER ID TYPE**: UserContext.Id is a string representation of a GUID - always parse it to Guid when needed for commands
 - **SECURITY**: UserContext is populated by middleware and provides authenticated user information consistently
 
-**EXAMPLE - BAD**:
-```csharp
-[HttpPost("start")]
-public async Task<IActionResult> StartReplay([FromBody] StartReplayDto request)
-{
-    var initiatedBy = User.Identity?.Name ?? "Unknown"; // DON'T DO THIS
-    var command = new StartReplayCommand(request.Name, initiatedBy);
-    // ...
-}
-```
-
-**EXAMPLE - GOOD**:
-```csharp
-public class ReplayController : BaseController
-{
-    private readonly UserContext _userContext;
-
-    public ReplayController(UserContext userContext, /* other dependencies */)
-    {
-        _userContext = userContext;
-    }
-
-    [HttpPost("start")]
-    public async Task<IActionResult> StartReplay([FromBody] StartReplayDto request)
-    {
-        // Parse UserContext.Id (string) to Guid
-        if (!Guid.TryParse(_userContext.Id, out var initiatedBy))
-        {
-            return CreateResponse(Result.Fail("User identification failed", 401));
-        }
-
-        var command = new StartReplayCommand(request.Name, initiatedBy);
-        // ...
-    }
-}
-```
-
 **COMMAND PATTERN**: Commands that track user actions should use `Guid` for user identifiers (InitiatedBy, CancelledBy, CreatedBy, etc.), not strings:
-```csharp
-// CORRECT - Use Guid for user identifiers
-public record StartReplayCommand(string Name, Guid InitiatedBy, string Reason);
-
-// INCORRECT - Don't use string for user identifiers
-public record StartReplayCommand(string Name, string InitiatedBy, string Reason);
-```
 
 ### 7. Frontend Component Architecture - Questionnaire Rendering
 
@@ -259,22 +185,6 @@ public record StartReplayCommand(string Name, string InitiatedBy, string Reason)
 
 **NEVER** write inline question rendering logic. **ALWAYS** use the centralized Optimized components:
 
-```csharp
-// ✅ CORRECT - Use OptimizedQuestionRenderer
-<OptimizedQuestionRenderer
-    Question="@question"
-    Response="@response"
-    OnResponseChanged="@HandleResponseChanged"
-    IsReadOnly="@isReadOnly"
-    HideHeader="@hideHeader" />
-
-// ❌ WRONG - Inline rendering (causes duplication)
-@if (question.Type == QuestionType.Assessment)
-{
-    // DON'T duplicate rendering logic here!
-}
-```
-
 #### Component Locations
 
 - **OptimizedQuestionRenderer.razor**: Master dispatcher for all question types
@@ -282,22 +192,6 @@ public record StartReplayCommand(string Name, string InitiatedBy, string Reason)
 - **OptimizedAssessmentQuestion.razor**: Assessment questions with competency ratings
 - **OptimizedTextQuestion.razor**: Text questions with single or multiple sections
 - **OptimizedGoalQuestion.razor**: Goal achievement questions
-
-#### Data Format Standards (CRITICAL - Prevents Data Loss Bugs)
-
-**Text Question Response Keys**:
-- **Single section**: Use key `"value"`
-- **Multiple sections**: Use keys `"section_0"`, `"section_1"`, `"section_2"`, etc.
-- **NEVER** use old format `"text_0"`, `"text_1"` (deprecated, causes data loss bugs)
-
-**Assessment Response Keys**:
-- **Ratings**: Use key `"rating_{competencyKey}"` (e.g., `"rating_communication"`)
-- **Comments**: Use key `"comment_{competencyKey}"` (e.g., `"comment_communication"`)
-
-**Goal Achievement Response Keys**:
-- **Description**: Use key `"Description"`
-- **Percentage**: Use key `"AchievementPercentage"`
-- **Justification**: Use key `"Justification"`
 
 #### Configuration Parsing
 
@@ -311,83 +205,9 @@ public record StartReplayCommand(string Name, string InitiatedBy, string Reason)
 
 **ALWAYS** initialize data in `OnInitialized()` in addition to `OnParametersSet()`:
 
-```csharp
-// ✅ CORRECT - Handles first render
-protected override void OnInitialized()
-{
-    base.OnInitialized();
-    LoadData(); // Populate data on first render
-}
-
-protected override void OnParametersSet()
-{
-    if (HasParameterChanged(nameof(Question), Question))
-    {
-        LoadData(); // Repopulate when parameters change
-    }
-}
-
-// ❌ WRONG - Only in OnParametersSet (may not fire on first render)
-protected override void OnParametersSet()
-{
-    LoadData(); // This might not execute on first render!
-}
-```
-
 #### Validation Pattern
 
 When validating question responses, **ALWAYS** match the data keys used by the Optimized components:
-
-```csharp
-// ✅ CORRECT - Matches OptimizedTextQuestion format
-private bool IsTextQuestionCompleted(QuestionItem question, QuestionResponse response)
-{
-    if (textSections.Count == 1)
-    {
-        // Single section uses "value" key
-        return response.ComplexValue?.TryGetValue("value", out var val) == true &&
-               !string.IsNullOrWhiteSpace(val?.ToString());
-    }
-
-    // Multiple sections use "section_0", "section_1", etc.
-    for (int i = 0; i < textSections.Count; i++)
-    {
-        var key = $"section_{i}";
-        if (!response.ComplexValue?.TryGetValue(key, out var val) == true ||
-            string.IsNullOrWhiteSpace(val?.ToString()))
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
-// ❌ WRONG - Uses old "text_" format (causes validation bugs)
-private bool IsTextQuestionCompleted(QuestionItem question, QuestionResponse response)
-{
-    var key = $"text_{sectionOrder}"; // DON'T USE THIS FORMAT!
-    return response.ComplexValue?.TryGetValue(key, out var val) == true;
-}
-```
-
-#### Triggering Validation Updates
-
-When responses change, **ALWAYS** update validation state:
-
-```csharp
-// ✅ CORRECT - Updates validation and progress
-private async Task HandleQuestionResponseChanged(QuestionResponse updatedResponse)
-{
-    UpdateProgress(); // Recalculate validation state
-    await InvokeAsync(StateHasChanged);
-}
-
-// ❌ WRONG - Only re-renders, doesn't recalculate validation
-private async Task HandleQuestionResponseChanged(QuestionResponse updatedResponse)
-{
-    await InvokeAsync(StateHasChanged); // Submit button won't update!
-}
-```
 
 #### Code Review Checklist for Question Rendering
 
@@ -436,26 +256,25 @@ The refactoring effort to create the Optimized components was significant. Don't
 - **REASON**: Prevents serialization bugs when enum definitions differ across layers (CQRS/Event Sourcing architecture)
 - **CRITICAL**: This codebase uses separate assemblies for Domain, Application, CommandApi, QueryApi, and Frontend - implicit enum values can lead to ordering mismatches
 
-**EXAMPLE - BAD**:
-```csharp
-public enum QuestionType
-{
-    Assessment,      // Implicitly 0
-    Goal,            // Implicitly 1 - DANGEROUS if order differs in another assembly
-    TextQuestion     // Implicitly 2
-}
-```
-
-**EXAMPLE - GOOD**:
-```csharp
-public enum QuestionType
-{
-    Assessment = 0,      // Explicitly 0 - consistent across all assemblies
-    TextQuestion = 1,    // Explicitly 1
-    Goal = 2             // Explicitly 2
-}
-```
-
 **Historical Bug**: QuestionType enum had different implicit ordering in CommandApi (Assessment, Goal, TextQuestion) vs other layers (Assessment, TextQuestion, Goal), causing Goal questions (saved as Type=1) to be deserialized as TextQuestion (Type=1) in other layers, rendering them incorrectly.
 
 **Rule**: Set explicit integer values for ALL enums in this codebase, even if they seem to have a natural sequential order.
+
+### 9. Domain Validation Pattern - Template Configuration vs Response Data
+- **CRITICAL**: When validating questionnaire responses, you must validate response data AGAINST template configuration
+- **NEVER** validate only the response data in isolation
+- **ALWAYS** extract the expected structure from template configuration, then verify ALL required elements are present in the response
+- **PRINCIPLE**: Follows DDD's Information Expert pattern - the aggregate owns the data and knows how to validate itself using the template as a specification
+
+**Configuration Parsing Pattern**:
+
+**Where This Pattern Applies**:
+- `QuestionnaireResponse.GetCompletedSections()` - Domain aggregate validation (01_Domain)
+- Frontend validation in question components - Must match domain validation logic
+- Command handlers that validate before submission - Use domain aggregate methods
+
+**Key Locations**:
+- `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireResponseAggregate/QuestionnaireResponse.cs` - Canonical validation logic
+- See pattern #7 (Frontend Component Architecture) for matching validation in the UI layer
+
+**Historical Bug** (Fixed 2025-11-10): Assessment validation only checked if ANY competency was rated (`Any(c => c.Rating > 0)`), rather than validating that ALL competencies defined in the template configuration were rated. This allowed incomplete assessments to be marked as complete.

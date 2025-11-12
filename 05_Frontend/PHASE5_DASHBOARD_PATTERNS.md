@@ -3,6 +3,8 @@
 ## Overview
 Phase 5 focused on extracting duplicate CSS patterns from dashboard components into a shared stylesheet, significantly reducing code duplication and improving maintainability.
 
+> **⚠️ COMPONENTS REMOVED (2025-11-12):** The dialog components referenced in this document (DepartmentDetailsDialog.razor, TeamMemberDetailsDialog.razor, QuestionnaireAnalyticsDialog.razor) have been removed as unused dead code. This document is preserved for historical reference of the refactoring work completed, but the referenced components no longer exist in the codebase.
+
 ---
 
 ## Achievements

@@ -53,6 +53,9 @@ public class Program
         // Register authorization cache service
         builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
 
+        // Register employee role service for cache-through role retrieval
+        builder.Services.AddScoped<Application.Query.Services.IEmployeeRoleService, Services.EmployeeRoleService>();
+
         builder.Services.AddControllers();
 
         builder.Services.AddSwaggerGen(option =>
@@ -93,15 +96,17 @@ public class Program
         // Register manager authorization service
         builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
 
-        // Configure JSON serialization to use PascalCase (C# naming conventions)
+        // Configure JSON serialization to explicitly use PascalCase (C# naming conventions)
         builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
         {
             options.SerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+            options.SerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase enforcement
         });
 
         builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
         {
             options.JsonSerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase enforcement
         });
 
         var app = builder.Build();

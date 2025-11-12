@@ -1,10 +1,12 @@
+using ti8m.BeachBreak.Application.Query.Models;
+
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
 public class GoalDto
 {
     public Guid Id { get; set; }
     public Guid QuestionId { get; set; }
-    public string AddedByRole { get; set; } = string.Empty; // String representation of CompletionRole enum
+    public ApplicationRole AddedByRole { get; set; } = ApplicationRole.Employee;
     public DateTime TimeframeFrom { get; set; }
     public DateTime TimeframeTo { get; set; }
     public string ObjectiveDescription { get; set; } = string.Empty;

@@ -86,8 +86,9 @@ public static class WorkflowStateHelper
 
         // Employee can edit until they themselves submit
         // Employee can continue editing even if manager has already submitted (ManagerSubmitted)
+        // Employee and manager can work simultaneously before any submission
         // Employee is READ-ONLY during InReview (manager-led review meeting)
-        return state is WorkflowState.Assigned or WorkflowState.EmployeeInProgress or WorkflowState.BothInProgress or WorkflowState.ManagerSubmitted;
+        return state is WorkflowState.Assigned or WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress or WorkflowState.ManagerSubmitted;
 
         // Cannot edit after employee submits: EmployeeSubmitted, BothSubmitted
         // Cannot edit during review: InReview

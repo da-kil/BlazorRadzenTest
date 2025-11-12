@@ -121,6 +121,10 @@ namespace ti8m.BeachBreak.CommandApi
 
             builder.Services.AddScoped<UserContext>();
 
+            // Register mapping services
+            builder.Services.AddScoped<ti8m.BeachBreak.CommandApi.Services.QuestionResponseMappingService>();
+            builder.Services.AddScoped<ti8m.BeachBreak.CommandApi.Services.SectionMappingService>();
+
             // Register EmployeeHierarchyService (Command-side only)
             // This service depends on IEmployeeAggregateRepository and is used for authorization checks
             builder.Services.AddScoped<Domain.EmployeeAggregate.Services.IEmployeeHierarchyService,
@@ -134,6 +138,9 @@ namespace ti8m.BeachBreak.CommandApi
 
             // Register manager authorization service for command operations
             builder.Services.AddScoped<IManagerAuthorizationService, ManagerAuthorizationService>();
+
+            // Register employee role service for cache-through role retrieval
+            builder.Services.AddScoped<Application.Command.Services.IEmployeeRoleService, Services.EmployeeRoleService>();
 
             // Configure JSON serialization to use PascalCase (C# naming conventions)
             builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>

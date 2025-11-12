@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Services
@@ -109,9 +110,11 @@
         }
         else
         {
-            <RadzenTextBox @bind-Value="@SimpleTextValue"
-                          Placeholder="Enter your answer..."
-                          Style="width: 100%;" />
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                <RadzenText TextStyle="TextStyle.Body1">
+                    This question type is not supported for editing during review.
+                </RadzenText>
+            </RadzenAlert>
         }
         </div>
     </div>
@@ -136,23 +139,11 @@
     [Parameter] public CompletionRole CompletionRole { get; set; }
     [Parameter] public string SectionTitle { get; set; } = string.Empty;
     [Parameter] public Guid AssignmentId { get; set; }
-    [Parameter] public string CurrentUserRole { get; set; } = "Employee";
+    [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
 
     private QuestionResponse editResponse = new();
     private OptimizedGoalQuestion? goalQuestionRef;
-
-    // Helper property for simple text binding
-    private string SimpleTextValue
-    {
-        get => editResponse.ComplexValue?.TryGetValue("value", out var val) == true ? val?.ToString() ?? "" : "";
-        set
-        {
-            if (editResponse.ComplexValue == null)
-                editResponse.ComplexValue = new Dictionary<string, object>();
-            editResponse.ComplexValue["value"] = value;
-        }
-    }
 
     protected override void OnInitialized()
     {
@@ -163,14 +154,22 @@
             LastModified = DateTime.Now
         };
 
-        if (CurrentAnswer is Dictionary<string, object> complexValue)
+        // Initialize ResponseData based on question type and current answer
+        if (CurrentAnswer is QuestionResponseDataDto responseData)
         {
-            editResponse.ComplexValue = new Dictionary<string, object>(complexValue);
+            // Use strongly-typed ResponseData directly
+            editResponse.ResponseData = responseData;
         }
-        else if (Question.Type == QuestionType.TextQuestion)
+        else
         {
-            // Initialize empty ComplexValue for text sections
-            editResponse.ComplexValue = new Dictionary<string, object>();
+            // Initialize empty strongly-typed ResponseData
+            editResponse.ResponseData = Question.Type switch
+            {
+                QuestionType.TextQuestion => new TextResponseDataDto(),
+                QuestionType.Assessment => new AssessmentResponseDataDto(),
+                QuestionType.Goal => new GoalResponseDataDto(),
+                _ => null
+            };
         }
     }
 
@@ -233,7 +232,7 @@
             QuestionId = Question.Id,
             QuestionType = Question.Type,
             LastModified = DateTime.Now,
-            ComplexValue = editResponse.ComplexValue
+            ResponseData = editResponse.ResponseData
         };
 
         DialogService.Close(questionResponse);
@@ -241,62 +240,49 @@
 
     private bool IsAnswerValid()
     {
-        if (Question.Type == QuestionType.TextQuestion)
-        {
-            if (editResponse.ComplexValue == null || !editResponse.ComplexValue.Any())
-                return false;
-
-            // Check for single section format ("value" key)
-            if (editResponse.ComplexValue.ContainsKey("value"))
-            {
-                return !string.IsNullOrWhiteSpace(editResponse.ComplexValue["value"]?.ToString());
-            }
-
-            // Check for multiple sections format ("section_0", "section_1", etc.)
-            var sectionKeys = editResponse.ComplexValue.Keys.Where(k => k.StartsWith("section_")).ToList();
-            if (sectionKeys.Any())
-            {
-                // At least one section must have content
-                return sectionKeys.Any(key =>
-                    !string.IsNullOrWhiteSpace(editResponse.ComplexValue[key]?.ToString()));
-            }
-
-            return false;
-        }
-
         return Question.Type switch
         {
-            QuestionType.Assessment => editResponse.ComplexValue != null &&
-                                      editResponse.ComplexValue.Any(kvp => kvp.Key.StartsWith("rating_") &&
-                                                                           kvp.Value != null &&
-                                                                           !kvp.Value.Equals(0)),
+            QuestionType.TextQuestion => IsTextQuestionValid(),
+            QuestionType.Assessment => IsAssessmentQuestionValid(),
             QuestionType.Goal => IsGoalQuestionValid(),
-            _ => !string.IsNullOrWhiteSpace(SimpleTextValue) || editResponse.ComplexValue != null
+            _ => editResponse.ResponseData != null
         };
+    }
+
+    private bool IsTextQuestionValid()
+    {
+        if (editResponse.ResponseData is not TextResponseDataDto textData)
+            return false;
+
+        // Check if any text section has content
+        return textData.TextSections.Any(section => !string.IsNullOrWhiteSpace(section));
+    }
+
+    private bool IsAssessmentQuestionValid()
+    {
+        if (editResponse.ResponseData is not AssessmentResponseDataDto assessmentData)
+            return false;
+
+        // Check if any competency has been rated
+        return assessmentData.Competencies.Any(kvp => kvp.Value.Rating > 0);
     }
 
     private bool IsGoalQuestionValid()
     {
-        // Goal questions are considered valid if they have existing complex value data
+        // Goal questions are considered valid if they have existing goal data
         // During review/edit phases, goals have already been validated and saved
         // The validation should be more lenient since we're editing existing data
-        if (editResponse.ComplexValue == null)
+        if (editResponse.ResponseData is not GoalResponseDataDto goalData)
             return false;
 
         // Check if there are goals or predecessor ratings (either indicates valid goal data)
-        bool hasGoals = editResponse.ComplexValue.ContainsKey("Goals") &&
-                       editResponse.ComplexValue["Goals"] is IEnumerable<object> goals &&
-                       goals.Any();
-
-        bool hasPredecessorRatings = editResponse.ComplexValue.ContainsKey("PredecessorRatings") &&
-                                   editResponse.ComplexValue["PredecessorRatings"] is IEnumerable<object> ratings &&
-                                   ratings.Any();
-
-        bool hasPredecessorAssignmentId = editResponse.ComplexValue.ContainsKey("PredecessorAssignmentId");
+        bool hasGoals = goalData.Goals.Any();
+        bool hasPredecessorRatings = goalData.PredecessorRatings.Any();
+        bool hasPredecessorAssignmentId = goalData.PredecessorAssignmentId.HasValue;
 
         // Goal question is valid if it has any goal-related data structure
         // This is appropriate for edit dialogs where goal data is already established
-        return hasGoals || hasPredecessorRatings || hasPredecessorAssignmentId || editResponse.ComplexValue.Any();
+        return hasGoals || hasPredecessorRatings || hasPredecessorAssignmentId;
     }
 
     /// <summary>

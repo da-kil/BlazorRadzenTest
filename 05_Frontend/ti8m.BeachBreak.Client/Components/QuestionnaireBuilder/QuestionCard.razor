@@ -420,7 +420,7 @@
                 {
                     if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
                     {
-                        return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<CompetencyDefinition>();
+                        return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText()) ?? new List<CompetencyDefinition>();
                     }
                 }
                 catch (Exception ex)
@@ -537,7 +537,7 @@
                 {
                     if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
                     {
-                        return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<GoalCategory>();
+                        return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(jsonElement.GetRawText()) ?? new List<GoalCategory>();
                     }
                 }
                 catch (Exception ex)
@@ -567,7 +567,7 @@
                 try
                 {
                     var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                    return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<GoalCategory>();
+                    return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(json) ?? new List<GoalCategory>();
                 }
                 catch (Exception ex)
                 {
@@ -662,7 +662,7 @@
                 {
                     if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
                     {
-                        return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(jsonElement.GetRawText(), new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<TextSection>();
+                        return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(jsonElement.GetRawText()) ?? new List<TextSection>();
                     }
                 }
                 catch (Exception ex)
@@ -692,7 +692,7 @@
                 try
                 {
                     var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                    return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(json, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? new List<TextSection>();
+                    return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(json) ?? new List<TextSection>();
                 }
                 catch (Exception ex)
                 {

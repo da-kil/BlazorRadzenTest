@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using ti8m.BeachBreak.Client.Models;
 using ti8m.BeachBreak.Client.Models.Dto;
+using ti8m.BeachBreak.Client.Models.Dto.Shared;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -46,143 +47,26 @@ public class GoalApiService : BaseApiService, IGoalApiService
         }
     }
 
-    public async Task<Result<Guid>> AddGoalAsync(Guid assignmentId, AddGoalDto dto)
+    public async Task<Result<IEnumerable<AvailablePredecessorDto>>> GetAvailablePredecessorsAsync(Guid assignmentId)
     {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync(
-                $"{CommandEndpoint}/{assignmentId}/goals",
-                dto);
+            var response = await HttpQueryClient.GetAsync(
+                $"{QueryEndpoint}/{assignmentId}/predecessors");
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
-                return result ?? Result<Guid>.Fail("No response from server", 500);
+                var data = await response.Content.ReadFromJsonAsync<IEnumerable<AvailablePredecessorDto>>();
+                if (data != null)
+                {
+                    return Result<IEnumerable<AvailablePredecessorDto>>.Success(data);
+                }
+                return Result<IEnumerable<AvailablePredecessorDto>>.Fail("No predecessors found", 404);
             }
 
             var errorMessage = await ExtractErrorMessageAsync(response);
-            LogError($"Failed to add goal: {errorMessage}", null);
-            return Result<Guid>.Fail(errorMessage, (int)response.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("Error adding goal", ex);
-            return Result<Guid>.Fail($"Error adding goal: {ex.Message}", 500);
-        }
-    }
-
-    public async Task<Result> ModifyGoalAsync(Guid assignmentId, Guid goalId, ModifyGoalDto dto)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PutAsJsonAsync(
-                $"{CommandEndpoint}/{assignmentId}/goals/{goalId}",
-                dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<Result>();
-                return result ?? Result.Success();
-            }
-
-            var errorMessage = await ExtractErrorMessageAsync(response);
-            LogError($"Failed to modify goal: {errorMessage}", null);
-            return Result.Fail(errorMessage, (int)response.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("Error modifying goal", ex);
-            return Result.Fail($"Error modifying goal: {ex.Message}", 500);
-        }
-    }
-
-    public async Task<Result> DeleteGoalAsync(Guid assignmentId, Guid goalId)
-    {
-        try
-        {
-            var response = await HttpCommandClient.DeleteAsync(
-                $"{CommandEndpoint}/{assignmentId}/goals/{goalId}");
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<Result>();
-                return result ?? Result.Success();
-            }
-
-            var errorMessage = await ExtractErrorMessageAsync(response);
-            LogError($"Failed to delete goal: {errorMessage}", null);
-            return Result.Fail(errorMessage, (int)response.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("Error deleting goal", ex);
-            return Result.Fail($"Error deleting goal: {ex.Message}", 500);
-        }
-    }
-
-    public async Task<Result> RatePredecessorGoalAsync(Guid assignmentId, RatePredecessorGoalDto dto)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsJsonAsync(
-                $"{CommandEndpoint}/{assignmentId}/goals/rate-predecessor",
-                dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<Result>();
-                return result ?? Result.Success();
-            }
-
-            var errorMessage = await ExtractErrorMessageAsync(response);
-            LogError($"Failed to rate predecessor goal: {errorMessage}", null);
-            return Result.Fail(errorMessage, (int)response.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("Error rating predecessor goal", ex);
-            return Result.Fail($"Error rating predecessor goal: {ex.Message}", 500);
-        }
-    }
-
-    public async Task<Result> ModifyPredecessorGoalRatingAsync(Guid assignmentId, Guid sourceGoalId, ModifyPredecessorGoalRatingDto dto)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PutAsJsonAsync(
-                $"{CommandEndpoint}/{assignmentId}/goals/ratings/{sourceGoalId}",
-                dto);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var result = await response.Content.ReadFromJsonAsync<Result>();
-                return result ?? Result.Success();
-            }
-
-            var errorMessage = await ExtractErrorMessageAsync(response);
-            LogError($"Failed to modify predecessor goal rating: {errorMessage}", null);
-            return Result.Fail(errorMessage, (int)response.StatusCode);
-        }
-        catch (Exception ex)
-        {
-            LogError("Error modifying predecessor goal rating", ex);
-            return Result.Fail($"Error modifying rating: {ex.Message}", 500);
-        }
-    }
-
-    public async Task<Result<IEnumerable<AvailablePredecessorDto>>> GetAvailablePredecessorsAsync(Guid assignmentId, Guid questionId)
-    {
-        try
-        {
-            var response = await HttpQueryClient.GetFromJsonAsync<IEnumerable<AvailablePredecessorDto>>(
-                $"{QueryEndpoint}/{assignmentId}/predecessors/{questionId}");
-
-            if (response != null)
-            {
-                return Result<IEnumerable<AvailablePredecessorDto>>.Success(response);
-            }
-
-            return Result<IEnumerable<AvailablePredecessorDto>>.Fail("No predecessors found", 404);
+            LogError($"Failed to fetch predecessors: {errorMessage}", null);
+            return Result<IEnumerable<AvailablePredecessorDto>>.Fail(errorMessage, (int)response.StatusCode);
         }
         catch (Exception ex)
         {

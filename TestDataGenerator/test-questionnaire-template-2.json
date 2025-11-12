@@ -1,0 +1,162 @@
+{
+  "Id": "68f7fb75-0e17-4593-9e68-83091d4e7e71",
+  "Name": "1 Jahresgespräch",
+  "Description": "",
+  "CategoryId": "4BA94BB8-5437-4A5B-8450-86411191D53C",
+  "RequiresManagerReview": false,
+  "Status": 0,
+  "PublishedDate": null,
+  "LastPublishedDate": null,
+  "PublishedByEmployeeId": null,
+  "Sections": [
+    {
+      "Id": "ceb00776-1974-48cb-98ae-a73100e18ccb",
+      "Title": "Jahresgespräch",
+      "Description": "",
+      "Order": 0,
+      "IsRequired": true,
+      "CompletionRole": 0,
+      "Questions": [
+        {
+          "Id": "47e5ae6b-3176-44b6-a9e8-39810350e338",
+          "Title": "Career Development & Planning",
+          "Description": "",
+          "Type": 1,
+          "Order": 0,
+          "IsRequired": true,
+          "Configuration": {
+            "TextSections": [
+              {
+                "Title": "Wie hast du dich bei der ti&m eingelebt?",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 0
+              },
+              {
+                "Title": "Was gefällt dir besonders gut?",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 1
+              },
+              {
+                "Title": "Wo gibt es Verbesserungspotenzial / Was würdest du gerne ändern?",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "Id": "1e6b9233-f568-485a-a5c3-122dd7c2cdfe",
+      "Title": "Wie zufrieden bist du mit folgenden Themen?",
+      "Description": "",
+      "Order": 1,
+      "IsRequired": true,
+      "CompletionRole": 0,
+      "Questions": [
+        {
+          "Id": "7a4523ca-273d-49bb-a211-8a2bf7e618d1",
+          "Title": "Competency Assessment",
+          "Description": "",
+          "Type": 0,
+          "Order": 0,
+          "IsRequired": true,
+          "Configuration": {
+            "Competencies": [
+              {
+                "Key": "competency_1",
+                "Title": "Salär",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 0
+              },
+              {
+                "Key": "competency_2",
+                "Title": "Weiterbildung",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 1
+              },
+              {
+                "Key": "competency_3",
+                "Title": "Karriereentwicklung",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 2
+              },
+              {
+                "Key": "competency_4",
+                "Title": "Vorgesetzte Person",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 3
+              },
+              {
+                "Key": "competency_5",
+                "Title": "Arbeitsinhalt",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 4
+              },
+              {
+                "Key": "competency_6",
+                "Title": "Aktuelles Projekt",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 5
+              },
+              {
+                "Key": "competency_7",
+                "Title": "Fachaustausch",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 6
+              },
+              {
+                "Key": "competency_8",
+                "Title": "Unternehmenskultur",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 7
+              },
+              {
+                "Key": "competency_9",
+                "Title": "Soziales Umfeld",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 8
+              },
+              {
+                "Key": "competency_10",
+                "Title": "Kommunikation",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 9
+              },
+              {
+                "Key": "competency_11",
+                "Title": "Information und Transparenz",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 10
+              },
+              {
+                "Key": "competency_12",
+                "Title": "Gesamtzufriedenheit",
+                "Description": "",
+                "IsRequired": true,
+                "Order": 11
+              }
+            ],
+            "RatingScale": 10,
+            "ScaleLowLabel": "Poor",
+            "ScaleHighLabel": "Excellent"
+          }
+        }
+      ]
+    }
+  ]
+}

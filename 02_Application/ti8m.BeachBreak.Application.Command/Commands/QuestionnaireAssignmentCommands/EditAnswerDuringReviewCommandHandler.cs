@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Command.Mappers;
 using ti8m.BeachBreak.Application.Command.Repositories;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ti8m.BeachBreak.Application.Command.Models;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
@@ -39,7 +41,7 @@ public class EditAnswerDuringReviewCommandHandler
             assignment.EditAnswerAsManagerDuringReview(
                 command.SectionId,
                 command.QuestionId,
-                command.OriginalCompletionRole,
+                ApplicationRoleMapper.MapToDomain(command.OriginalCompletionRole),
                 command.Answer,
                 command.EditedByEmployeeId);
             await repository.StoreAsync(assignment, cancellationToken);
@@ -53,53 +55,63 @@ public class EditAnswerDuringReviewCommandHandler
             }
 
             // Get current section responses for this role
-            var currentSectionResponses = new Dictionary<Guid, object>();
+            var currentSectionResponses = new Dictionary<Guid, QuestionResponseValue>();
             // Map ApplicationRole to CompletionRole for compatibility with Response aggregate
             var completionRole = command.OriginalCompletionRole == ApplicationRole.Employee ? CompletionRole.Employee : CompletionRole.Manager;
             if (response.SectionResponses.TryGetValue(command.SectionId, out var roleResponses) &&
                 roleResponses.TryGetValue(completionRole, out var existingQuestions))
             {
                 // Copy existing responses
-                currentSectionResponses = new Dictionary<Guid, object>(existingQuestions);
+                currentSectionResponses = new Dictionary<Guid, QuestionResponseValue>(existingQuestions);
             }
 
-            // Parse the answer - frontend now sends complete QuestionResponse structure as JSON
-            object questionResponseStructure = command.Answer;
+            // Parse the answer - frontend sends QuestionResponseValue as JSON
+            QuestionResponseValue? convertedResponse = null;
 
-            // Deserialize the JSON string to a dictionary (QuestionResponse structure from frontend)
+            // Deserialize QuestionResponseValue directly from JSON
             if (command.Answer is string answerString && answerString.TrimStart().StartsWith("{"))
             {
                 try
                 {
-                    var deserialized = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(
-                        answerString,
-                        new System.Text.Json.JsonSerializerOptions
-                        {
-                            PropertyNameCaseInsensitive = true
-                        });
+                    // Directly deserialize the type-safe QuestionResponseValue from JSON
+                    convertedResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseValue>(answerString);
 
-                    if (deserialized != null)
-                    {
-                        // Add metadata to track edit during review
-                        deserialized["EditedDuringReview"] = true;
-                        deserialized["EditedDuringReviewBy"] = command.EditedByEmployeeId.ToString();
-                        deserialized["EditedDuringReviewAt"] = DateTime.UtcNow.ToString("O"); // ISO 8601 format
-
-                        questionResponseStructure = deserialized;
-                    }
+                    // TODO: Add audit metadata for edit tracking if needed
+                    // This could be handled by adding metadata to the domain event instead
                 }
                 catch (System.Text.Json.JsonException jsonEx)
                 {
-                    // If deserialization fails, keep as string (fallback for unexpected format)
                     logger.LogWarning(jsonEx,
-                        "Failed to deserialize answer JSON for assignment {AssignmentId}, question {QuestionId}. Using string fallback.",
+                        "Failed to deserialize QuestionResponseValue JSON for assignment {AssignmentId}, question {QuestionId}. Attempting text fallback.",
                         command.AssignmentId, command.QuestionId);
-                    questionResponseStructure = answerString;
+
+                    // Fallback - create a simple TextResponse from the string
+                    convertedResponse = new QuestionResponseValue.TextResponse(new[] { answerString });
                 }
             }
+            else if (command.Answer is string textAnswer)
+            {
+                // Handle simple text answers
+                convertedResponse = new QuestionResponseValue.TextResponse(new[] { textAnswer });
+            }
+            else
+            {
+                logger.LogWarning("Unsupported answer format for assignment {AssignmentId}, question {QuestionId}. Answer type: {Type}",
+                    command.AssignmentId, command.QuestionId, command.Answer?.GetType()?.Name ?? "null");
+                return Result.Fail("Unsupported answer format", 400);
+            }
 
-            // Update or add the question answer (frontend provides complete structure with metadata)
-            currentSectionResponses[command.QuestionId] = questionResponseStructure;
+            // Update or add the question answer if conversion was successful
+            if (convertedResponse != null)
+            {
+                currentSectionResponses[command.QuestionId] = convertedResponse;
+            }
+            else
+            {
+                logger.LogWarning("Failed to convert answer for assignment {AssignmentId}, question {QuestionId}. Answer will be skipped.",
+                    command.AssignmentId, command.QuestionId);
+                return Result.Fail("Unable to convert answer to the required format", 400);
+            }
 
             // Record the updated section response
             response.RecordSectionResponse(command.SectionId, completionRole, currentSectionResponses);

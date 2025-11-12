@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Globalization;
+using ti8m.BeachBreak.Application.Command.Mappers;
 using ti8m.BeachBreak.Application.Command.Repositories;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
@@ -186,8 +187,8 @@ public class EmployeeCommandHandler :
             var userName = string.IsNullOrEmpty(userContext.Name) ? "System" : userContext.Name;
 
             var domainResult = employee.ChangeApplicationRole(
-                command.NewRole,
-                command.RequesterRole,
+                ApplicationRoleMapper.MapToDomain(command.NewRole),
+                ApplicationRoleMapper.MapToDomain(command.RequesterRole),
                 userId,
                 userName);
 

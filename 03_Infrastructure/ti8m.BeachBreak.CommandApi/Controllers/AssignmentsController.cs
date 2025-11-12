@@ -2,14 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
+using ti8m.BeachBreak.Application.Command.Models;
+using ti8m.BeachBreak.Application.Command.Services;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Dto;
-using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.CommandApi.Mappers;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -23,7 +24,7 @@ public class AssignmentsController : BaseController
     private readonly UserContext userContext;
     private readonly ILogger<AssignmentsController> logger;
     private readonly IManagerAuthorizationService authorizationService;
-    private readonly IAuthorizationCacheService authorizationCacheService;
+    private readonly IEmployeeRoleService employeeRoleService;
 
     public AssignmentsController(
         ICommandDispatcher commandDispatcher,
@@ -31,14 +32,14 @@ public class AssignmentsController : BaseController
         UserContext userContext,
         ILogger<AssignmentsController> logger,
         IManagerAuthorizationService authorizationService,
-        IAuthorizationCacheService authorizationCacheService)
+        IEmployeeRoleService employeeRoleService)
     {
         this.commandDispatcher = commandDispatcher;
         this.queryDispatcher = queryDispatcher;
         this.userContext = userContext;
         this.logger = logger;
         this.authorizationService = authorizationService;
-        this.authorizationCacheService = authorizationCacheService;
+        this.employeeRoleService = employeeRoleService;
     }
 
     /// <summary>
@@ -499,7 +500,7 @@ public class AssignmentsController : BaseController
     {
         try
         {
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(editDto.OriginalCompletionRole, out var applicationRole))
+            if (!Enum.TryParse<ApplicationRole>(editDto.OriginalCompletionRole, out var commandRole))
                 return BadRequest("Invalid ApplicationRole value");
 
             // Get user ID from authenticated user context
@@ -509,11 +510,13 @@ public class AssignmentsController : BaseController
                 return Unauthorized("User ID not found in authentication context");
             }
 
+            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
+
             var command = new EditAnswerDuringReviewCommand(
                 assignmentId,
                 editDto.SectionId,
                 editDto.QuestionId,
-                applicationRole,
+                ApplicationRoleMapper.MapFromDomain(domainRole),
                 editDto.Answer,
                 userId);
             var result = await commandDispatcher.SendAsync(command);
@@ -681,16 +684,18 @@ public class AssignmentsController : BaseController
     /// </summary>
     private async Task<bool> HasElevatedRoleAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, cancellationToken);
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, cancellationToken);
         if (employeeRole == null)
         {
             logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
             return false;
         }
 
-        return employeeRole.ApplicationRole == ApplicationRole.HR ||
-               employeeRole.ApplicationRole == ApplicationRole.HRLead ||
-               employeeRole.ApplicationRole == ApplicationRole.Admin;
+        var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+        var commandRole = ApplicationRoleMapper.MapFromQuery(queryRole);
+        return commandRole == ApplicationRole.HR ||
+               commandRole == ApplicationRole.HRLead ||
+               commandRole == ApplicationRole.Admin;
     }
 
     /// <summary>
@@ -724,10 +729,8 @@ public class AssignmentsController : BaseController
                 return Unauthorized("User ID not found in authentication context");
             }
 
-            // Get user role from cache
-            var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(
-                userId,
-                HttpContext.RequestAborted);
+            // Get user role with cache-through pattern
+            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
 
             if (employeeRole == null)
             {
@@ -736,7 +739,8 @@ public class AssignmentsController : BaseController
             }
 
             // Map ApplicationRole enum to string for command
-            var roleString = employeeRole.ApplicationRole.ToString();
+            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+            var roleString = queryRole.ToString();
 
             var command = new ReopenQuestionnaireCommand(
                 assignmentId,
@@ -775,16 +779,18 @@ public class AssignmentsController : BaseController
             }
 
             // Parse role from DTO
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.LinkedByRole, out var linkedByRole))
+            if (!Enum.TryParse<ApplicationRole>(dto.LinkedByRole, out var commandRole))
             {
                 return BadRequest($"Invalid role: {dto.LinkedByRole}");
             }
+
+            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
 
             var command = new LinkPredecessorQuestionnaireCommand(
                 assignmentId,
                 dto.QuestionId,
                 dto.PredecessorAssignmentId,
-                linkedByRole,
+                ApplicationRoleMapper.MapFromDomain(domainRole),
                 userId);
 
             var result = await commandDispatcher.SendAsync(command);
@@ -794,220 +800,6 @@ public class AssignmentsController : BaseController
         {
             logger.LogError(ex, "Error linking predecessor questionnaire for assignment {AssignmentId}", assignmentId);
             return StatusCode(500, "An error occurred while linking predecessor questionnaire");
-        }
-    }
-
-    /// <summary>
-    /// Adds a new goal to a questionnaire assignment during in-progress states.
-    /// Employee and Manager add goals separately.
-    /// </summary>
-    [HttpPost("{assignmentId}/goals")]
-    public async Task<IActionResult> AddGoal(
-        Guid assignmentId,
-        [FromBody] AddGoalDto dto)
-    {
-        try
-        {
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("AddGoal failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            // Parse role from DTO
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.AddedByRole, out var addedByRole))
-            {
-                return BadRequest($"Invalid role: {dto.AddedByRole}");
-            }
-
-            var command = new AddGoalCommand(
-                assignmentId,
-                dto.QuestionId,
-                addedByRole,
-                dto.TimeframeFrom,
-                dto.TimeframeTo,
-                dto.ObjectiveDescription,
-                dto.MeasurementMetric,
-                dto.WeightingPercentage,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error adding goal to assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while adding goal");
-        }
-    }
-
-    /// <summary>
-    /// Modifies an existing goal during review meeting.
-    /// </summary>
-    [HttpPut("{assignmentId}/goals/{goalId}")]
-    public async Task<IActionResult> ModifyGoal(
-        Guid assignmentId,
-        Guid goalId,
-        [FromBody] ModifyGoalDto dto)
-    {
-        try
-        {
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("ModifyGoal failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            // Parse role from DTO with better validation and case-insensitive parsing
-            if (string.IsNullOrWhiteSpace(dto.ModifiedByRole))
-            {
-                logger.LogWarning("ModifyGoal failed: ModifiedByRole is null or empty");
-                return BadRequest("ModifiedByRole is required");
-            }
-
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.ModifiedByRole, ignoreCase: true, out var modifiedByRole))
-            {
-                logger.LogWarning("ModifyGoal failed: Invalid role '{Role}'. Valid roles: {ValidRoles}",
-                    dto.ModifiedByRole,
-                    string.Join(", ", Enum.GetNames<Domain.EmployeeAggregate.ApplicationRole>()));
-                return BadRequest($"Invalid role: '{dto.ModifiedByRole}'. Valid roles: {string.Join(", ", Enum.GetNames<Domain.EmployeeAggregate.ApplicationRole>())}");
-            }
-
-            var command = new ModifyGoalCommand(
-                assignmentId,
-                goalId,
-                dto.TimeframeFrom,
-                dto.TimeframeTo,
-                dto.ObjectiveDescription,
-                dto.MeasurementMetric,
-                dto.WeightingPercentage,
-                modifiedByRole,
-                dto.ChangeReason,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error modifying goal {GoalId} in assignment {AssignmentId}", goalId, assignmentId);
-            return StatusCode(500, "An error occurred while modifying goal");
-        }
-    }
-
-    /// <summary>
-    /// Deletes an existing goal from a questionnaire assignment during in-progress states.
-    /// </summary>
-    [HttpDelete("{assignmentId}/goals/{goalId}")]
-    public async Task<IActionResult> DeleteGoal(
-        Guid assignmentId,
-        Guid goalId)
-    {
-        try
-        {
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("DeleteGoal failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            var command = new DeleteGoalCommand(
-                assignmentId,
-                goalId,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error deleting goal {GoalId} from assignment {AssignmentId}", goalId, assignmentId);
-            return StatusCode(500, "An error occurred while deleting goal");
-        }
-    }
-
-    /// <summary>
-    /// Rates a goal from a predecessor questionnaire.
-    /// Employee and Manager rate separately during their respective in-progress states.
-    /// </summary>
-    [HttpPost("{assignmentId}/goals/rate-predecessor")]
-    public async Task<IActionResult> RatePredecessorGoal(
-        Guid assignmentId,
-        [FromBody] RatePredecessorGoalDto dto)
-    {
-        try
-        {
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("RatePredecessorGoal failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            // Parse role from DTO
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.RatedByRole, out var ratedByRole))
-            {
-                return BadRequest($"Invalid role: {dto.RatedByRole}");
-            }
-
-            var command = new RatePredecessorGoalCommand(
-                assignmentId,
-                dto.QuestionId,
-                dto.SourceAssignmentId,
-                dto.SourceGoalId,
-                ratedByRole,
-                dto.DegreeOfAchievement,
-                dto.Justification,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error rating predecessor goal for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while rating predecessor goal");
-        }
-    }
-
-    /// <summary>
-    /// Modifies a predecessor goal rating during review meeting.
-    /// </summary>
-    [HttpPut("{assignmentId}/goals/ratings/{sourceGoalId}")]
-    public async Task<IActionResult> ModifyPredecessorGoalRating(
-        Guid assignmentId,
-        Guid sourceGoalId,
-        [FromBody] ModifyPredecessorGoalRatingDto dto)
-    {
-        try
-        {
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("ModifyPredecessorGoalRating failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            // Parse role from DTO
-            if (!Enum.TryParse<Domain.EmployeeAggregate.ApplicationRole>(dto.ModifiedByRole, out var modifiedByRole))
-            {
-                return BadRequest($"Invalid role: {dto.ModifiedByRole}");
-            }
-
-            var command = new ModifyPredecessorGoalRatingCommand(
-                assignmentId,
-                dto.SourceGoalId,
-                dto.DegreeOfAchievement,
-                dto.Justification,
-                modifiedByRole,
-                dto.ChangeReason,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error modifying predecessor goal rating for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while modifying predecessor goal rating");
         }
     }
 

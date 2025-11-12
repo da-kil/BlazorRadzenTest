@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Services;
 

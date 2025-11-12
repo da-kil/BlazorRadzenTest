@@ -30,10 +30,6 @@ public interface IQuestionnaireAssignmentService
     Task<Dictionary<string, object>> GetTemplateAssignmentStatsAsync(Guid templateId);
 
     // Workflow operations
-    Task<bool> CompleteSectionAsEmployeeAsync(Guid assignmentId, Guid sectionId);
-    Task<bool> CompleteBulkSectionsAsEmployeeAsync(Guid assignmentId, List<Guid> sectionIds);
-    Task<bool> CompleteSectionAsManagerAsync(Guid assignmentId, Guid sectionId);
-    Task<bool> CompleteBulkSectionsAsManagerAsync(Guid assignmentId, List<Guid> sectionIds);
     Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> SubmitManagerQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> InitiateReviewAsync(Guid assignmentId, string initiatedBy);

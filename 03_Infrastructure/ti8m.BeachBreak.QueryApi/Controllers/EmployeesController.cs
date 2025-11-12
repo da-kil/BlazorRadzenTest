@@ -3,11 +3,11 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
-using ti8m.BeachBreak.Core.Infrastructure.Authorization;
+using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Dto;
+using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -20,20 +20,20 @@ public class EmployeesController : BaseController
     private readonly ILogger<EmployeesController> logger;
     private readonly UserContext userContext;
     private readonly IManagerAuthorizationService authorizationService;
-    private readonly IAuthorizationCacheService authorizationCacheService;
+    private readonly IEmployeeRoleService employeeRoleService;
 
     public EmployeesController(
         IQueryDispatcher queryDispatcher,
         ILogger<EmployeesController> logger,
         UserContext userContext,
         IManagerAuthorizationService authorizationService,
-        IAuthorizationCacheService authorizationCacheService)
+        IEmployeeRoleService employeeRoleService)
     {
         this.queryDispatcher = queryDispatcher;
         this.logger = logger;
         this.userContext = userContext;
         this.authorizationService = authorizationService;
-        this.authorizationCacheService = authorizationCacheService;
+        this.employeeRoleService = employeeRoleService;
     }
 
     [HttpGet]
@@ -553,56 +553,34 @@ public class EmployeesController : BaseController
             logger.LogInformation("GetMyResponse completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
                 employeeId, assignmentId);
 
-            // Map section responses - deserialize from Marten's JSON storage
-            // Note: Response structure is Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, object>>>
+            // Map section responses
+            // Note: Response structure is Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>
             // For employee "me" endpoint, we only return EMPLOYEE responses
             var sectionResponsesDto = new Dictionary<Guid, SectionResponseDto>();
             foreach (var sectionKvp in response.SectionResponses)
             {
                 var sectionId = sectionKvp.Key;
-                Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>? roleBasedResponses = null;
-
-                // Handle the fact that sectionKvp.Value might be a JsonElement or already the correct type
-                if (sectionKvp.Value is System.Text.Json.JsonElement roleJsonElement)
-                {
-                    roleBasedResponses = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>>>(roleJsonElement.GetRawText());
-                }
-                else if (sectionKvp.Value is Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, Dictionary<Guid, object>> typedRoleResponses)
-                {
-                    roleBasedResponses = typedRoleResponses;
-                }
-
-                if (roleBasedResponses == null) continue;
+                var roleBasedResponses = sectionKvp.Value;
 
                 var questionResponsesDict = new Dictionary<Guid, QuestionResponseDto>();
 
                 // Only extract Employee role responses for this endpoint
                 if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponses))
                 {
-                    // employeeResponses is Dictionary<Guid, object> where each value might be JsonElement
+                    // employeeResponses is Dictionary<Guid, QuestionResponseValue>
                     foreach (var questionKvp in employeeResponses)
                     {
-                        if (questionKvp.Value is System.Text.Json.JsonElement qJsonElement)
-                        {
-                            var questionResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseDto>(qJsonElement.GetRawText());
-                            if (questionResponse != null)
-                            {
-                                questionResponsesDict[questionKvp.Key] = questionResponse;
-                            }
-                        }
-                        else
-                        {
-                            // Fallback: create a simple response with just the value
-                            var complexValue = questionKvp.Value is Dictionary<string, object> dict
-                                ? dict
-                                : new Dictionary<string, object> { { "value", questionKvp.Value } };
+                        var responseValue = questionKvp.Value;
+                        var questionId = questionKvp.Key;
 
-                            questionResponsesDict[questionKvp.Key] = new QuestionResponseDto
-                            {
-                                QuestionId = questionKvp.Key,
-                                ComplexValue = complexValue
-                            };
-                        }
+                        var questionResponseDto = new QuestionResponseDto
+                        {
+                            QuestionId = questionId,
+                            ResponseData = QuestionResponseMapper.MapToDto(responseValue),
+                            QuestionType = QuestionResponseMapper.InferQuestionType(responseValue)
+                        };
+
+                        questionResponsesDict[questionId] = questionResponseDto;
                     }
                 }
 
@@ -675,7 +653,7 @@ public class EmployeesController : BaseController
 
             // Employees always see goals with Employee role filter
             var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
-                assignmentId, questionId, Domain.EmployeeAggregate.ApplicationRole.Employee);
+                assignmentId, questionId, ApplicationRoleMapper.MapFromDomain(Domain.EmployeeAggregate.ApplicationRole.Employee));
 
             var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 
@@ -799,16 +777,16 @@ public class EmployeesController : BaseController
     /// </summary>
     private async Task<bool> HasElevatedRoleAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var employeeRole = await authorizationCacheService.GetEmployeeRoleCacheAsync<EmployeeRoleResult>(userId, cancellationToken);
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, cancellationToken);
         if (employeeRole == null)
         {
             logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
             return false;
         }
 
-        return employeeRole.ApplicationRole == ApplicationRole.HR ||
-               employeeRole.ApplicationRole == ApplicationRole.HRLead ||
-               employeeRole.ApplicationRole == ApplicationRole.Admin;
+        // EmployeeRoleResult.ApplicationRole is already Application.Query.ApplicationRole
+        return employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HR ||
+               employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HRLead ||
+               employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.Admin;
     }
-
 }

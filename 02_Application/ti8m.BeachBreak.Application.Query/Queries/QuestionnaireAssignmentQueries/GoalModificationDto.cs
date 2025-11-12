@@ -1,8 +1,10 @@
+using ti8m.BeachBreak.Application.Query.Models;
+
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
 public class GoalModificationDto
 {
-    public string ModifiedByRole { get; set; } = string.Empty; // String representation of CompletionRole enum
+    public ApplicationRole ModifiedByRole { get; set; } = ApplicationRole.Employee;
     public string ChangeReason { get; set; } = string.Empty;
     public DateTime ModifiedAt { get; set; }
     public Guid ModifiedByEmployeeId { get; set; }

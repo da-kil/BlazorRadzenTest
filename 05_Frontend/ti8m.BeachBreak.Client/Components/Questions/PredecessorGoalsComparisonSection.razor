@@ -1,0 +1,484 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
+@using ti8m.BeachBreak.Client.Models.Dto.Queries
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Extensions
+@using ti8m.BeachBreak.Client.Components.Shared
+@inject NotificationService NotificationService
+@inject GoalService GoalService
+@inherits OptimizedComponentBase
+
+<RadzenFieldset Class="mb-4 predecessor-goals-section">
+    <HeaderTemplate>
+        <RadzenIcon Icon="assessment" Class="me-2" />
+        <span class="fw-bold">Predecessor Goals Assessment</span>
+        <RadzenText TextStyle="TextStyle.Caption" Class="ms-2 text-muted">
+            (Review achievement from previous period)
+        </RadzenText>
+    </HeaderTemplate>
+    <ChildContent>
+        @if (!predecessorGoalGroups.Any())
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    No predecessor goals available for rating.
+                </RadzenText>
+            </RadzenAlert>
+        }
+        else
+        {
+            @foreach (var group in predecessorGoalGroups)
+            {
+                <div class="predecessor-goal-group mb-4 p-3 border rounded" @key="@group.Key">
+                    @RenderPredecessorGoalComparison(group.Key, group.Value)
+                </div>
+            }
+
+            @* Validation Summary *@
+            @if (validationErrors.Any())
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Danger" Class="mt-3">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                        Required Actions:
+                    </RadzenText>
+                    <ul class="mb-0">
+                        @foreach (var error in validationErrors)
+                        {
+                            <li>@error</li>
+                        }
+                    </ul>
+                </RadzenAlert>
+            }
+            else
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Success" Class="mt-3">
+                    <RadzenIcon Icon="check_circle" Class="me-2" />
+                    All predecessor goals have been assessed with justifications.
+                </RadzenAlert>
+            }
+        }
+    </ChildContent>
+</RadzenFieldset>
+
+@code {
+    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
+    [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; } = false;
+    [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
+
+    // Groups predecessor ratings by SourceGoalId to show comparison
+    private Dictionary<Guid, List<PredecessorRatingDto>> predecessorGoalGroups = new();
+    private List<string> validationErrors = new();
+
+    protected override void OnInitialized()
+    {
+        LoadPredecessorData();
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (HasParameterChanged(nameof(Response), Response))
+        {
+            LoadPredecessorData();
+        }
+        base.OnParametersSet();
+    }
+
+    private void LoadPredecessorData()
+    {
+        var allRatings = GoalService.GetPredecessorRatings(Response);
+
+        // Group ratings by SourceGoalId to compare Employee vs Manager assessments
+        predecessorGoalGroups = allRatings
+            .Where(r => r.SourceGoalId != Guid.Empty)
+            .GroupBy(r => r.SourceGoalId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        // Validate completion status
+        ValidateCompletion();
+    }
+
+    private void ValidateCompletion()
+    {
+        validationErrors.Clear();
+
+        foreach (var kvp in predecessorGoalGroups)
+        {
+            var sourceGoalId = kvp.Key;
+            var ratings = kvp.Value;
+
+            // Get the original goal objective for display
+            var originalObjective = ratings.FirstOrDefault()?.OriginalObjective ?? "Unknown Goal";
+
+            // Check if we have ratings from both employee and manager perspectives
+            var employeeRating = ratings.FirstOrDefault(r => r.RatedByRole == ApplicationRole.Employee);
+
+            var managerRating = ratings.FirstOrDefault(r =>
+                r.RatedByRole == ApplicationRole.TeamLead ||
+                r.RatedByRole == ApplicationRole.HR ||
+                r.RatedByRole == ApplicationRole.HRLead ||
+                r.RatedByRole == ApplicationRole.Admin);
+
+            // Check for missing ratings
+            if (employeeRating == null)
+            {
+                validationErrors.Add($"Employee assessment required for: \"{originalObjective}\"");
+            }
+            else if (!HasValidJustification(employeeRating))
+            {
+                validationErrors.Add($"Employee justification required for: \"{originalObjective}\"");
+            }
+
+            if (managerRating == null)
+            {
+                validationErrors.Add($"Manager assessment required for: \"{originalObjective}\"");
+            }
+            else if (!HasValidJustification(managerRating))
+            {
+                validationErrors.Add($"Manager justification required for: \"{originalObjective}\"");
+            }
+        }
+    }
+
+    private bool HasValidJustification(PredecessorRatingDto rating)
+    {
+        return !string.IsNullOrWhiteSpace(rating.Justification);
+    }
+
+    private bool IsManagerRole(string role)
+    {
+        return role == "TeamLead" || role == "HR" || role == "HRLead" || role == "Admin" || role == "Manager";
+    }
+
+    private bool IsManagerRole(ApplicationRole role)
+    {
+        return role == ApplicationRole.TeamLead || role == ApplicationRole.HR || role == ApplicationRole.HRLead || role == ApplicationRole.Admin;
+    }
+
+    private RenderFragment RenderPredecessorGoalComparison(Guid sourceGoalId, List<PredecessorRatingDto> ratings) => __builder =>
+    {
+        // Get goal information from first rating (all ratings for same goal have same original data)
+        var firstRating = ratings.FirstOrDefault();
+        if (firstRating == null) return;
+
+        var originalObjective = firstRating.OriginalObjective ?? "Unknown Goal";
+        var originalAddedByRole = "Employee"; // Default assumption - could be enhanced with additional data if needed
+
+        // Separate employee and manager ratings
+        var employeeRating = ratings.FirstOrDefault(r => r.RatedByRole == ApplicationRole.Employee);
+        var managerRating = ratings.FirstOrDefault(r =>
+            r.RatedByRole == ApplicationRole.TeamLead ||
+            r.RatedByRole == ApplicationRole.HR ||
+            r.RatedByRole == ApplicationRole.HRLead ||
+            r.RatedByRole == ApplicationRole.Admin);
+
+        <RadzenRow>
+            <RadzenColumn Size="12" Class="mb-3">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                    @originalObjective
+                </RadzenText>
+                <RadzenBadge Text="@GetDisplayRole(originalAddedByRole)" BadgeStyle="BadgeStyle.Info" Class="ms-2" />
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow>
+            @* Employee Assessment *@
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard Class="h-100 employee-assessment">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2 text-primary">
+                        <RadzenIcon Icon="person" Class="me-1" />
+                        Employee Assessment
+                    </RadzenText>
+
+                    @if (employeeRating != null)
+                    {
+                        @RenderRatingContent(employeeRating, sourceGoalId, "Employee")
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
+                            <RadzenText TextStyle="TextStyle.Caption">No employee assessment yet</RadzenText>
+                        </RadzenAlert>
+                        @if (!IsReadOnly && CurrentUserRole == ApplicationRole.Employee)
+                        {
+                            <RadzenButton Text="Provide Assessment"
+                                        Icon="add"
+                                        ButtonStyle="ButtonStyle.Primary"
+                                        Size="ButtonSize.Small"
+                                        Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Employee"))" />
+                        }
+                    }
+                </RadzenCard>
+            </RadzenColumn>
+
+            @* Manager Assessment *@
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenCard Class="h-100 manager-assessment">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2 text-success">
+                        <RadzenIcon Icon="business_center" Class="me-1" />
+                        Manager Assessment
+                    </RadzenText>
+
+                    @if (managerRating != null)
+                    {
+                        @RenderRatingContent(managerRating, sourceGoalId, "Manager")
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
+                            <RadzenText TextStyle="TextStyle.Caption">No manager assessment yet</RadzenText>
+                        </RadzenAlert>
+                        @if (!IsReadOnly && IsManagerRole(CurrentUserRole))
+                        {
+                            <RadzenButton Text="Provide Assessment"
+                                        Icon="add"
+                                        ButtonStyle="ButtonStyle.Secondary"
+                                        Size="ButtonSize.Small"
+                                        Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Manager"))" />
+                        }
+                    }
+                </RadzenCard>
+            </RadzenColumn>
+        </RadzenRow>
+    };
+
+    private RenderFragment RenderRatingContent(PredecessorRatingDto rating, Guid sourceGoalId, string perspective) => __builder =>
+    {
+        var degree = rating.DegreeOfAchievement;
+        var justification = rating.Justification ?? "";
+        var ratedByRole = rating.RatedByRole.ToString();
+
+        // Check if current user can edit this rating
+        bool canEdit = !IsReadOnly &&
+                      ((perspective == "Employee" && CurrentUserRole == ApplicationRole.Employee) ||
+                       (perspective == "Manager" && IsManagerRole(CurrentUserRole)));
+
+        <div class="rating-content">
+            <RadzenRow Class="mb-3">
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Achievement Percentage:</RadzenText>
+                    @if (canEdit)
+                    {
+                        <RadzenNumeric Value="@degree"
+                                     ValueChanged="@((decimal value) => SetRatingDegree(sourceGoalId, ratedByRole, value))"
+                                     Min="0"
+                                     Max="100"
+                                     Step="5"
+                                     Class="w-100" />
+                    }
+                    else
+                    {
+                        <div class="achievement-display p-2 bg-light rounded">
+                            <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-0">
+                                @degree.ToString("0")%
+                            </RadzenText>
+                        </div>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+
+            <RadzenRow>
+                <RadzenColumn Size="12">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Justification:</RadzenText>
+                    @if (canEdit)
+                    {
+                        <RadzenTextArea Value="@justification"
+                                      ValueChanged="@((string value) => SetRatingJustification(sourceGoalId, ratedByRole, value))"
+                                      Placeholder="Explain the reasoning behind this achievement assessment..."
+                                      Rows="4"
+                                      Class="w-100" />
+                    }
+                    else if (!string.IsNullOrEmpty(justification))
+                    {
+                        <div class="justification-display p-2 bg-light rounded">
+                            <RadzenText TextStyle="TextStyle.Body2">@justification</RadzenText>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="justification-display p-2 bg-light rounded text-muted">
+                            <em>No justification provided</em>
+                        </div>
+                    }
+
+                    @if (canEdit && !HasValidJustification(rating))
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Size="AlertSize.Small" Class="mt-2">
+                            <RadzenText TextStyle="TextStyle.Caption">Justification is required for all assessments</RadzenText>
+                        </RadzenAlert>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+        </div>
+    };
+
+    private async Task AddNewRating(Guid sourceGoalId, string originalObjective, string perspectiveRole)
+    {
+        // Determine the actual role based on perspective and current user role
+        ApplicationRole actualRole;
+        if (perspectiveRole == "Employee")
+        {
+            actualRole = ApplicationRole.Employee;
+        }
+        else
+        {
+            // CurrentUserRole is already an ApplicationRole enum
+            actualRole = CurrentUserRole;
+        }
+
+        // Ensure we have GoalResponseDataDto
+        if (Response.ResponseData is not GoalResponseDataDto goalData)
+        {
+            goalData = new GoalResponseDataDto();
+            Response.ResponseData = goalData;
+        }
+
+        // Get SourceAssignmentId from goal data (must be set when predecessor is linked)
+        if (!goalData.PredecessorAssignmentId.HasValue)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = "Predecessor assignment not linked. Please link a predecessor first.",
+                Duration = 4000
+            });
+            return;
+        }
+
+        // Create new rating entry using strongly-typed DTO
+        var newRating = new PredecessorRatingDto
+        {
+            SourceAssignmentId = goalData.PredecessorAssignmentId.Value,
+            SourceGoalId = sourceGoalId,
+            DegreeOfAchievement = 0,
+            Justification = "",
+            RatedByRole = actualRole,
+            OriginalObjective = originalObjective
+        };
+
+        // Add to existing ratings
+        goalData.PredecessorRatings.Add(newRating);
+        Response.LastModified = DateTime.Now;
+
+        // Reload data and notify parent
+        LoadPredecessorData();
+        await NotifyResponseChanged();
+    }
+
+    private async Task SetRatingDegree(Guid sourceGoalId, string ratedByRole, decimal value)
+    {
+        // Ensure we have GoalResponseDataDto
+        if (Response.ResponseData is not GoalResponseDataDto goalData)
+        {
+            goalData = new GoalResponseDataDto();
+            Response.ResponseData = goalData;
+        }
+
+        // Find the rating to update
+        var rating = goalData.PredecessorRatings.FirstOrDefault(r =>
+            r.SourceGoalId == sourceGoalId &&
+            r.RatedByRole.ToString() == ratedByRole);
+
+        if (rating != null)
+        {
+            rating.DegreeOfAchievement = (int)value;
+            Response.LastModified = DateTime.Now;
+
+            LoadPredecessorData();
+            await NotifyResponseChanged();
+        }
+    }
+
+    private async Task SetRatingJustification(Guid sourceGoalId, string ratedByRole, string value)
+    {
+        // Ensure we have GoalResponseDataDto
+        if (Response.ResponseData is not GoalResponseDataDto goalData)
+        {
+            goalData = new GoalResponseDataDto();
+            Response.ResponseData = goalData;
+        }
+
+        // Find the rating to update
+        var rating = goalData.PredecessorRatings.FirstOrDefault(r =>
+            r.SourceGoalId == sourceGoalId &&
+            r.RatedByRole.ToString() == ratedByRole);
+
+        if (rating != null)
+        {
+            rating.Justification = value ?? "";
+            Response.LastModified = DateTime.Now;
+
+            LoadPredecessorData();
+            await NotifyResponseChanged();
+        }
+    }
+
+    private async Task NotifyResponseChanged()
+    {
+        if (OnResponseChanged.HasDelegate)
+        {
+            await OnResponseChanged.InvokeAsync(Response);
+        }
+    }
+
+    private string GetDisplayRole(string roleString)
+    {
+        if (string.IsNullOrEmpty(roleString))
+            return "Employee";
+
+        return roleString switch
+        {
+            "Employee" => "Employee",
+            "TeamLead" => "Manager",
+            "HR" => "Manager",
+            "HRLead" => "Manager",
+            "Admin" => "Manager",
+            "Manager" => "Manager",
+            _ => "Employee"
+        };
+    }
+
+    /// <summary>
+    /// Public method to check if all predecessor goals have complete assessments
+    /// </summary>
+    public bool IsComplete => !validationErrors.Any();
+
+    /// <summary>
+    /// Public method to get validation errors for parent components
+    /// </summary>
+    public IReadOnlyList<string> ValidationErrors => validationErrors.AsReadOnly();
+}
+
+<style>
+.predecessor-goals-section .employee-assessment {
+    border-left: 3px solid var(--rz-primary);
+}
+
+.predecessor-goals-section .manager-assessment {
+    border-left: 3px solid var(--rz-success);
+}
+
+.predecessor-goal-group {
+    transition: all 0.2s ease;
+    border-color: var(--border-light, #e2e8f0) !important;
+}
+
+.predecessor-goal-group:hover {
+    border-color: var(--primary-color, #2563eb) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.achievement-display, .justification-display {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.rating-content .rz-numeric, .rating-content .rz-textarea {
+    border-radius: 6px;
+}
+</style>
