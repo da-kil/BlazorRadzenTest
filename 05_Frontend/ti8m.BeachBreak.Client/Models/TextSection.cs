@@ -8,7 +8,7 @@ public class TextSection
     public bool IsRequired { get; set; } = false;
     public int Order { get; set; }
 
-    // UI state properties (used by TextQuestionEditor)
+    // UI state properties (used for inline editing in QuestionCard)
     public bool? IsExpanded { get; set; } = false;
     public bool IsEditingTitle { get; set; } = false;
     public bool IsSelected { get; set; } = false;
