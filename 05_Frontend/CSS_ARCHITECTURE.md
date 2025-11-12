@@ -250,9 +250,6 @@ When reviewing CSS in pull requests, ask:
 - FinishReviewMeetingDialog
 - ConfirmEmployeeReviewDialog
 - FinalizeQuestionnaireDialog
-- DepartmentDetailsDialog
-- TeamMemberDetailsDialog
-- QuestionnaireAnalyticsDialog
 - AssignmentDetailsDialog
 - EditAnswerDialog
 - EditAssignmentDialog
