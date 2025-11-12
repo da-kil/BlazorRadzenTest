@@ -16,4 +16,28 @@ internal class QuestionnaireResponseRepository(IDocumentStore store) : IQuestion
         return await session.Query<QuestionnaireResponseReadModel>()
             .SingleOrDefaultAsync(r => r.AssignmentId == assignmentId, cancellationToken);
     }
+
+    public async Task<List<QuestionnaireResponseReadModel>> GetByAssignmentIdsAsync(IEnumerable<Guid> assignmentIds, CancellationToken cancellationToken = default)
+    {
+        using var session = await store.LightweightSerializableSessionAsync();
+        var results = await session.Query<QuestionnaireResponseReadModel>()
+            .Where(r => assignmentIds.Contains(r.AssignmentId))
+            .ToListAsync(cancellationToken);
+        return results.ToList();
+    }
+
+    public async Task<List<QuestionnaireResponseReadModel>> GetAllResponsesAsync(CancellationToken cancellationToken = default)
+    {
+        using var session = await store.LightweightSerializableSessionAsync();
+        var results = await session.Query<QuestionnaireResponseReadModel>()
+            .OrderByDescending(r => r.LastModified)
+            .ToListAsync(cancellationToken);
+        return results.ToList();
+    }
+
+    public async Task<QuestionnaireResponseReadModel?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        using var session = await store.LightweightSerializableSessionAsync();
+        return await session.LoadAsync<QuestionnaireResponseReadModel>(id, cancellationToken);
+    }
 }

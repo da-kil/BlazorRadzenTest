@@ -41,9 +41,14 @@
       "Bash(printf '%s\\n' \"2. BLUE ''CONTINUE'' - When can edit (EmployeeInProgress, BothInProgress, ManagerSubmitted)\")",
       "Bash(cat:*)",
       "Bash(/tmp/idx.txt)",
-      "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\Authorization\\EmployeeRoleResult.cs\" -Force)"
+      "Bash(Remove-Item \"C:\\projects\\BlazorRadzenTest\\04_Core\\ti8m.BeachBreak.Core.Infrastructure\\Authorization\\EmployeeRoleResult.cs\" -Force)",
+      "Bash(nul)"
     ],
     "deny": [],
     "ask": []
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y @owloops/claude-powerline@latest --style=powerline"
   }
 }

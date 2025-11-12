@@ -1,5 +1,5 @@
-using Marten;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Application.Query.Repositories;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.ReviewQueries;
 
@@ -10,20 +10,15 @@ namespace ti8m.BeachBreak.Application.Query.Queries.ReviewQueries;
 /// </summary>
 public class GetReviewChangesQueryHandler : IQueryHandler<GetReviewChangesQuery, List<ReviewChangeLogReadModel>>
 {
-    private readonly IQuerySession session;
+    private readonly IReviewChangeLogRepository reviewChangeLogRepository;
 
-    public GetReviewChangesQueryHandler(IQuerySession session)
+    public GetReviewChangesQueryHandler(IReviewChangeLogRepository reviewChangeLogRepository)
     {
-        this.session = session;
+        this.reviewChangeLogRepository = reviewChangeLogRepository;
     }
 
     public async Task<List<ReviewChangeLogReadModel>> HandleAsync(GetReviewChangesQuery query, CancellationToken cancellationToken = default)
     {
-        var changes = await session.Query<ReviewChangeLogReadModel>()
-            .Where(c => c.AssignmentId == query.AssignmentId)
-            .OrderBy(c => c.ChangedAt)
-            .ToListAsync(cancellationToken);
-
-        return changes.ToList();
+        return await reviewChangeLogRepository.GetByAssignmentIdAsync(query.AssignmentId, cancellationToken);
     }
 }

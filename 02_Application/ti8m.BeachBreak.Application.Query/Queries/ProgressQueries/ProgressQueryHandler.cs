@@ -1,4 +1,3 @@
-using Marten;
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Repositories;
@@ -10,18 +9,18 @@ public class ProgressQueryHandler :
 {
     private readonly IQuestionnaireAssignmentRepository assignmentRepository;
     private readonly IQuestionnaireTemplateRepository templateRepository;
-    private readonly IDocumentStore documentStore;
+    private readonly IQuestionnaireResponseRepository responseRepository;
     private readonly ILogger<ProgressQueryHandler> logger;
 
     public ProgressQueryHandler(
         IQuestionnaireAssignmentRepository assignmentRepository,
         IQuestionnaireTemplateRepository templateRepository,
-        IDocumentStore documentStore,
+        IQuestionnaireResponseRepository responseRepository,
         ILogger<ProgressQueryHandler> logger)
     {
         this.assignmentRepository = assignmentRepository;
         this.templateRepository = templateRepository;
-        this.documentStore = documentStore;
+        this.responseRepository = responseRepository;
         this.logger = logger;
     }
 
@@ -49,11 +48,8 @@ public class ProgressQueryHandler :
                 .ToDictionary(t => t.Id, t => t.Sections.Sum(s => s.Questions.Count));
 
             // Get all responses for these assignments
-            using var session = documentStore.LightweightSession();
             var assignmentIds = assignmentsList.Select(a => a.Id).ToList();
-            var responses = await session.Query<QuestionnaireResponseReadModel>()
-                .Where(r => assignmentIds.Contains(r.AssignmentId))
-                .ToListAsync(token: cancellationToken);
+            var responses = await responseRepository.GetByAssignmentIdsAsync(assignmentIds, cancellationToken);
 
             var responseLookup = responses.ToDictionary(r => r.AssignmentId);
 

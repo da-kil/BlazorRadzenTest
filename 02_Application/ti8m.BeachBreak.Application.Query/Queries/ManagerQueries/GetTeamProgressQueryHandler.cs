@@ -1,4 +1,3 @@
-using Marten;
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries.ProgressQueries;
@@ -15,7 +14,7 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
     private readonly IEmployeeRepository employeeRepository;
     private readonly IQueryDispatcher queryDispatcher;
     private readonly IProgressCalculationService progressCalculationService;
-    private readonly IDocumentStore documentStore;
+    private readonly IQuestionnaireResponseRepository responseRepository;
     private readonly ILogger<GetTeamProgressQueryHandler> logger;
 
     public GetTeamProgressQueryHandler(
@@ -23,14 +22,14 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
         IEmployeeRepository employeeRepository,
         IQueryDispatcher queryDispatcher,
         IProgressCalculationService progressCalculationService,
-        IDocumentStore documentStore,
+        IQuestionnaireResponseRepository responseRepository,
         ILogger<GetTeamProgressQueryHandler> logger)
     {
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
         this.queryDispatcher = queryDispatcher;
         this.progressCalculationService = progressCalculationService;
-        this.documentStore = documentStore;
+        this.responseRepository = responseRepository;
         this.logger = logger;
     }
 
@@ -67,10 +66,7 @@ public class GetTeamProgressQueryHandler : IQueryHandler<GetTeamProgressQuery, R
                     try
                     {
                         // Load ReadModel to get typed SectionResponses for progress calculation
-                        using var session = documentStore.LightweightSession();
-                        var readModel = await session.Query<QuestionnaireResponseReadModel>()
-                            .Where(r => r.AssignmentId == assignment.Id)
-                            .FirstOrDefaultAsync(cancellationToken);
+                        var readModel = await responseRepository.GetByAssignmentIdAsync(assignment.Id, cancellationToken);
 
                         if (readModel != null)
                         {
