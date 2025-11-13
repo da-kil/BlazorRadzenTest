@@ -132,7 +132,7 @@
 							<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Review your questionnaire and make it available for assignments</RadzenText>
 						</div>
 					</div>
-					<PreviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" />
+					<PreviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" Categories="@categories" />
 					<div class="step-navigation mt-4 d-flex justify-content-between">
 						<RadzenButton Text="Previous: Build Sections" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
 						<div class="d-flex gap-2">

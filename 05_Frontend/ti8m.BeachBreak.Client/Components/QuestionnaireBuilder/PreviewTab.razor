@@ -1,229 +1,251 @@
+@using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @inject QuestionConfigurationService ConfigService
 
 <style>
-    .clean-preview {
-        --primary-color: #2563eb;
-        --text-color: #374151;
-        --text-muted: #6b7280;
-        --border-light: #f3f4f6;
-
+    .summary-container {
         padding: 2rem;
-        max-width: 800px;
+        max-width: 1200px;
         margin: 0 auto;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     }
 
-    .preview-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--text-color);
-        margin-bottom: 2rem;
-    }
-
-    .questionnaire-title {
-        font-size: 1.875rem;
-        font-weight: 700;
-        color: var(--text-color);
-        margin-bottom: 1rem;
-        letter-spacing: -0.025em;
-    }
-
-    .questionnaire-description {
-        font-size: 1rem;
-        color: var(--text-muted);
-        line-height: 1.6;
-        margin-bottom: 3rem;
-    }
-
-    .section-spacing {
-        margin-bottom: 4rem;
-    }
-
-    .section-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-color);
-        margin-bottom: 0.75rem;
-        letter-spacing: -0.025em;
-    }
-
-    .section-description {
-        font-size: 1rem;
-        color: var(--text-muted);
-        line-height: 1.6;
-        margin-bottom: 2rem;
-    }
-
-    .question-spacing {
-        margin-bottom: 3rem;
-    }
-
-    .question-label {
-        font-size: 1rem;
-        font-weight: 500;
-        color: var(--text-color);
-        margin-bottom: 1rem;
-        line-height: 1.5;
-    }
-
-    .required-indicator {
-        color: #dc2626;
-        font-weight: 700;
-        margin-left: 0.25rem;
-    }
-
-    .question-description {
-        font-size: 0.875rem;
-        color: var(--text-muted);
-        line-height: 1.5;
-        margin-bottom: 1rem;
-    }
-
-    .preview-field {
-        border: 1px solid var(--border-light);
-        border-radius: 4px;
-        padding: 0.875rem;
-        font-size: 0.95rem;
-        background: white;
-        color: var(--text-muted);
-        font-family: inherit;
-        width: 100%;
-        min-height: 80px;
-        resize: none;
-        cursor: not-allowed;
-    }
-
-    .rating-preview {
-        display: flex;
-        align-items: center;
+    .info-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    .competency-preview {
         margin-bottom: 2rem;
     }
 
-    .competency-title {
-        font-size: 1rem;
-        font-weight: 500;
-        color: var(--text-color);
+    .stat-cards-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .stat-card {
+        text-align: center;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .stat-card.sections {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+
+    .stat-card.items {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        line-height: 1;
         margin-bottom: 0.5rem;
     }
 
-    .competency-description {
+    .stat-label {
         font-size: 0.875rem;
-        color: var(--text-muted);
-        margin-bottom: 1rem;
-        line-height: 1.5;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        opacity: 0.9;
     }
 
-    .goal-preview-field {
-        display: flex;
-        flex-direction: column;
-        gap: 0.75rem;
-        margin-bottom: 1.5rem;
+    .structure-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
     }
 
-    .goal-field-label {
-        font-size: 0.875rem;
+    .structure-table th {
+        background: #f9fafb;
+        padding: 1rem;
+        text-align: left;
         font-weight: 600;
-        color: var(--text-color);
+        color: #374151;
+        border-bottom: 2px solid #e5e7eb;
+        font-size: 0.875rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
     }
 
-    .goal-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
+    .structure-table td {
+        padding: 0.875rem 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        color: #374151;
+    }
+
+    .structure-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .section-row {
+        background: #fefefe;
+    }
+
+    .role-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.875rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: white;
+    }
+
+    .review-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.875rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .review-badge.required {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .review-badge.not-required {
+        background: #f3f4f6;
+        color: #6b7280;
     }
 
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
-        color: var(--text-muted);
+        color: #6b7280;
     }
 
     .empty-icon {
         font-size: 3rem;
-        color: var(--text-muted);
         margin-bottom: 1rem;
     }
 
     @@media (max-width: 768px) {
-        .clean-preview {
-            padding: 1.5rem;
+        .summary-container {
+            padding: 1rem;
         }
 
-        .questionnaire-title {
-            font-size: 1.5rem;
-        }
-
-        .section-title {
-            font-size: 1.25rem;
-        }
-
-        .goal-row {
+        .stat-cards-row {
             grid-template-columns: 1fr;
-            gap: 1rem;
+            max-width: 100%;
+        }
+
+        .structure-table {
+            font-size: 0.875rem;
         }
     }
 </style>
 
-<div class="clean-preview">
-    <h2 class="preview-title">Questionnaire Preview</h2>
-
+<div class="summary-container">
     @if (Template.Sections.Any())
     {
-        <div class="questionnaire-preview">
-            <h1 class="questionnaire-title">@Template.Name</h1>
-            @if (!string.IsNullOrWhiteSpace(Template.Description))
-            {
-                <p class="questionnaire-description">@Template.Description</p>
-            }
+        <!-- Template Information Cards -->
+        <div class="info-cards-grid">
+            <RadzenCard>
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Template Name</h3>
+                <p style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;">@Template.Name</p>
+            </RadzenCard>
 
-            @foreach (var templateSection in Template.Sections.OrderBy(s => s.Order))
-            {
-                <div class="section-spacing">
-                    <h2 class="section-title">@templateSection.Title</h2>
-                    @if (!string.IsNullOrWhiteSpace(templateSection.Description))
+            <RadzenCard>
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Category</h3>
+                <p style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;">@GetCategoryName()</p>
+            </RadzenCard>
+
+            <RadzenCard>
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Review Required</h3>
+                <div style="margin-top: 0.25rem;">
+                    @if (Template.RequiresManagerReview)
                     {
-                        <p class="section-description">@templateSection.Description</p>
+                        <span class="review-badge required">
+                            <RadzenIcon Icon="check_circle" Style="font-size: 1rem;" />
+                            Yes
+                        </span>
                     }
-
-                    @foreach (var question in templateSection.Questions.OrderBy(q => q.Order))
+                    else
                     {
-                        <div class="question-spacing">
-                            <label class="question-label">
-                                @GetQuestionTypeLabel(question)
-                                @if (question.IsRequired)
-                                {
-                                    <span class="required-indicator">*</span>
-                                }
-                            </label>
-                            @if (!string.IsNullOrWhiteSpace(question.Description))
-                            {
-                                <p class="question-description">@question.Description</p>
-                            }
-                            <div class="preview-input">
-                                @GetQuestionPreview(question)
-                            </div>
-                        </div>
+                        <span class="review-badge not-required">
+                            <RadzenIcon Icon="cancel" Style="font-size: 1rem;" />
+                            No
+                        </span>
                     }
                 </div>
-            }
+            </RadzenCard>
         </div>
+
+        @if (!string.IsNullOrWhiteSpace(Template.Description))
+        {
+            <RadzenCard style="margin-bottom: 2rem;">
+                <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Description</h3>
+                <p style="margin: 0; font-size: 1rem; color: #374151; line-height: 1.6;">@Template.Description</p>
+            </RadzenCard>
+        }
+
+        <!-- Aggregate Statistics -->
+        <div class="stat-cards-row">
+            <div class="stat-card sections">
+                <div class="stat-number">@Template.Sections.Count</div>
+                <div class="stat-label">Total Sections</div>
+            </div>
+            <div class="stat-card items">
+                <div class="stat-number">@GetTotalItems()</div>
+                <div class="stat-label">Total Items*</div>
+            </div>
+        </div>
+
+        <!-- Structure Table -->
+        <RadzenCard style="padding: 0;">
+            <table class="structure-table">
+                <thead>
+                    <tr>
+                        <th>Section</th>
+                        <th style="text-align: center; width: 200px;">Completed By</th>
+                        <th style="text-align: center; width: 250px;">Items</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var templateSection in Template.Sections.OrderBy(s => s.Order))
+                    {
+                        <tr class="section-row">
+                            <td>
+                                <strong>@templateSection.Title</strong>
+                            </td>
+                            <td style="text-align: center;">
+                                @GetCompletionRoleBadge(templateSection)
+                            </td>
+                            <td style="text-align: center;">
+                                @GetSectionItemsText(templateSection)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </RadzenCard>
+
+        <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280; font-style: italic;">
+            * Items include competencies (Assessment questions) and text sections (Text questions). Goal questions have items added during response.
+        </p>
     }
     else
     {
         <div class="empty-state">
             <div class="empty-icon">📋</div>
-            <p>Add sections and questions to see the preview</p>
+            <p>Add sections and questions to see the summary</p>
         </div>
     }
 </div>
@@ -231,148 +253,104 @@
 @code {
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
     [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
+    [Parameter] public List<Category> Categories { get; set; } = new();
 
-    private string GetQuestionTypeIcon(QuestionType type) => type switch
+    private string GetCategoryName()
     {
-        QuestionType.Assessment => "self_improvement",
-        QuestionType.Goal => "track_changes",
-        QuestionType.TextQuestion => "psychology",
-        _ => "help"
-    };
-
-    private string GetQuestionTypeLabel(QuestionItem question)
-    {
-        // Check if question has a custom type label stored in configuration
-        if (question.Configuration.ContainsKey("QuestionTitle"))
+        if (Template.CategoryId == Guid.Empty)
         {
-            var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
-            if (!string.IsNullOrWhiteSpace(customTitle))
-            {
-                return customTitle;
-            }
+            return "No category selected";
         }
 
-        // Fall back to global labels
-        return QuestionTypeLabels.TryGetValue(question.Type, out var label) ? label : question.Type.ToString();
+        var category = Categories.FirstOrDefault(c => c.Id == Template.CategoryId);
+        return category?.NameEn ?? "Unknown category";
     }
 
-    private RenderFragment GetQuestionPreview(QuestionItem question)
+    private int GetTotalItems()
+    {
+        int total = 0;
+        foreach (var section in Template.Sections)
+        {
+            foreach (var question in section.Questions)
+            {
+                total += GetItemCount(question);
+            }
+        }
+        return total;
+    }
+
+    private int GetItemCount(QuestionItem question)
     {
         return question.Type switch
         {
-            QuestionType.Assessment => GetAssessmentPreview(question),
-            QuestionType.Goal => GetGoalPreview(),
-            QuestionType.TextQuestion => GetTextQuestionPreview(question),
-            _ => @<RadzenTextBox Placeholder="Preview not available" Disabled="true" Class="w-100" />
+            QuestionType.Assessment => ConfigService.GetCompetencies(question).Count,
+            QuestionType.TextQuestion => ConfigService.GetTextSections(question).Count,
+            QuestionType.Goal => 0, // Goals are added during response
+            _ => 0
         };
     }
 
-    private RenderFragment GetAssessmentPreview(QuestionItem question)
+    private string GetSectionItemsText(QuestionSection section)
     {
-        return @<div class="assessment-preview">
-            @{
-                var competencies = ConfigService.GetCompetencies(question);
-            }
-            @if (competencies.Count > 0)
-            {
-                @foreach (var competency in competencies.Take(2)) // Show first 2 competencies as preview
-                {
-                    <div class="competency-preview">
-                        <div class="competency-title">@competency.Title</div>
-                        @if (!string.IsNullOrWhiteSpace(competency.Description))
-                        {
-                            <div class="competency-description">@competency.Description</div>
-                        }
-                        <div class="rating-preview">
-                            @{
-                                var ratingScale = ConfigService.GetRatingScale(question);
-                                var scaleLowLabel = ConfigService.GetScaleLowLabel(question);
-                                var scaleHighLabel = ConfigService.GetScaleHighLabel(question);
-                            }
-                            @if (ratingScale <= 5)
-                            {
-                                <RadzenRating Value="0" Disabled="true" Stars="@ratingScale" />
-                            }
-                            else
-                            {
-                                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <input type="number" value="0" disabled style="width: 80px; padding: 0.5rem; border: 1px solid var(--border-light); border-radius: 4px;" min="1" max="@ratingScale" />
-                                    <span style="color: var(--text-muted);">/ @ratingScale</span>
-                                </div>
-                            }
-                            @if (!string.IsNullOrWhiteSpace(scaleLowLabel) && !string.IsNullOrWhiteSpace(scaleHighLabel))
-                            {
-                                <span style="color: var(--text-muted); font-size: 0.875rem;">@scaleLowLabel to @scaleHighLabel</span>
-                            }
-                        </div>
-                        <textarea class="preview-field" placeholder="Optional comments..." disabled></textarea>
-                    </div>
-                }
-                @if (competencies.Count > 2)
-                {
-                    <p style="color: var(--text-muted); font-size: 0.875rem; margin: 1rem 0 0 0;">... and @(competencies.Count - 2) more competencies</p>
-                }
-            }
-            else
-            {
-                <p style="color: var(--text-muted); font-size: 0.875rem;">Click Edit to configure competencies</p>
-            }
-        </div>;
-    }
+        var itemCounts = new List<string>();
+        int assessmentCount = 0;
+        int textSectionCount = 0;
+        bool hasGoals = false;
 
-    private RenderFragment GetGoalPreview()
-    {
-        return @<div class="goal-achievement-preview">
-            <div class="goal-preview-field">
-                <label class="goal-field-label">Goal Description</label>
-                <textarea class="preview-field" placeholder="Describe your goal..." disabled></textarea>
-            </div>
-
-            <div class="goal-row">
-                <div class="goal-preview-field">
-                    <label class="goal-field-label">Start Date</label>
-                    <input type="date" class="preview-field" disabled style="min-height: auto; padding: 0.75rem;" />
-                </div>
-                <div class="goal-preview-field">
-                    <label class="goal-field-label">End Date</label>
-                    <input type="date" class="preview-field" disabled style="min-height: auto; padding: 0.75rem;" />
-                </div>
-            </div>
-
-            <div class="goal-preview-field">
-                <label class="goal-field-label">Measurement Criteria</label>
-                <input type="text" class="preview-field" placeholder="How will success be measured?" disabled style="min-height: auto; padding: 0.75rem;" />
-            </div>
-
-            <div class="goal-preview-field">
-                <label class="goal-field-label">Achievement Percentage (%)</label>
-                <input type="number" class="preview-field" placeholder="0" disabled style="min-height: auto; padding: 0.75rem;" min="0" max="100" />
-            </div>
-        </div>;
-    }
-
-    private RenderFragment GetTextQuestionPreview(QuestionItem question)
-    {
-        return @<div class="text-question-preview">
-            <textarea class="preview-field" placeholder="Your response..." disabled></textarea>
-        </div>;
-    }
-
-    private string GetTextQuestionSectionTitle(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("SectionTitle"))
+        foreach (var question in section.Questions)
         {
-            return question.Configuration["SectionTitle"].ToString() ?? "Career Ambitions";
+            switch (question.Type)
+            {
+                case QuestionType.Assessment:
+                    assessmentCount += ConfigService.GetCompetencies(question).Count;
+                    break;
+                case QuestionType.TextQuestion:
+                    textSectionCount += ConfigService.GetTextSections(question).Count;
+                    break;
+                case QuestionType.Goal:
+                    hasGoals = true;
+                    break;
+            }
         }
-        return "Career Ambitions";
+
+        if (assessmentCount > 0)
+        {
+            itemCounts.Add($"{assessmentCount} competenc{(assessmentCount != 1 ? "ies" : "y")}");
+        }
+
+        if (textSectionCount > 0)
+        {
+            itemCounts.Add($"{textSectionCount} section{(textSectionCount != 1 ? "s" : "")}");
+        }
+
+        if (hasGoals)
+        {
+            itemCounts.Add("Goals added during response");
+        }
+
+        return itemCounts.Any() ? string.Join(", ", itemCounts) : "—";
     }
 
-    private string GetTextQuestionSectionDescription(QuestionItem question)
+    private RenderFragment GetCompletionRoleBadge(QuestionSection section)
     {
-        if (question.Configuration.ContainsKey("SectionDescription"))
+        var roleColor = section.GetRoleColor();
+        var roleIcon = section.GetRoleIcon();
+        var roleText = GetCompletionRoleText(section.CompletionRole);
+
+        return @<span class="role-badge" style="background-color: @roleColor;">
+            <RadzenIcon Icon="@roleIcon" Style="font-size: 1rem;" />
+            @roleText
+        </span>;
+    }
+
+    private string GetCompletionRoleText(CompletionRole role)
+    {
+        return role switch
         {
-            return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
-        }
-        return "Where do you see yourself long-term in your professional career?";
+            CompletionRole.Employee => "Employee",
+            CompletionRole.Manager => "Manager",
+            CompletionRole.Both => "Both",
+            _ => "Unknown"
+        };
     }
 }
