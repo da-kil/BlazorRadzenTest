@@ -184,42 +184,34 @@
                 }
             </RadzenSteps>
 
-            <div class="questionnaire-content">
+            <section class="questionnaire-content">
                 @if (currentSection != null)
                 {
-                    <RadzenCard Class="section-card p-4">
-                        <div class="section-card-header">
-                            <div class="section-title-container flex-grow-1">
-                                <RadzenText TextStyle="TextStyle.H4" Class="section-title text-primary mb-2">
-                                    @currentSection.Title
-                                </RadzenText>
-                                @if (!string.IsNullOrWhiteSpace(currentSection.Description))
-                                {
-                                    <RadzenText TextStyle="TextStyle.Body1" Class="section-description text-muted">
-                                        @currentSection.Description
-                                    </RadzenText>
-                                }
+                    <header class="section-header">
+                        <div class="section-title-container">
+                            <h2 class="section-title">@currentSection.Title</h2>
+                            @if (!string.IsNullOrWhiteSpace(currentSection.Description))
+                            {
+                                <p class="section-description">@currentSection.Description</p>
+                            }
+                        </div>
+                        @if (currentSection.CompletionRole != CompletionRole.Both)
+                        {
+                            <div class="completion-role-badge @GetRoleBadgeClass(currentSection.CompletionRole)">
+                                <RadzenIcon Icon="@GetRoleIconForSection(currentSection.CompletionRole)" />
+                                @currentSection.CompletionRole.ToString()
                             </div>
-                            @if (currentSection.CompletionRole != CompletionRole.Both)
-                            {
-                                <div class="completion-role-badge @GetRoleBadgeClass(currentSection.CompletionRole)">
-                                    <RadzenIcon Icon="@GetRoleIconForSection(currentSection.CompletionRole)" />
-                                    @currentSection.CompletionRole.ToString()
-                                </div>
-                            }
-                        </div>
+                        }
+                    </header>
 
-                        <div class="questions-container">
-                            @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
-                            {
-                                <div class="question-wrapper mb-4">
-                                    @RenderQuestionWithRef(question)
-                                </div>
-                            }
-                        </div>
-                    </RadzenCard>
+                    <div class="questions-container">
+                        @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
+                        {
+                            @RenderQuestionWithRef(question)
+                        }
+                    </div>
                 }
-            </div>
+            </section>
 
             <div class="navigation-footer d-flex justify-content-between mt-4">
                 <RadzenButton Text="Previous"

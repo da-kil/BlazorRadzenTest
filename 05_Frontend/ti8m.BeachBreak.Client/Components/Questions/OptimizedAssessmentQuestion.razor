@@ -2,28 +2,30 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.Questions
 @inherits OptimizedComponentBase
 
 @if (!HideHeader)
 {
-    <RadzenCard Class="assessment-question">
-        <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
-            <RadzenIcon Icon="self_improvement" Class="me-2" />
-            @Question.Title
-            @if (Question.IsRequired) { <span class="text-danger">*</span> }
-            <EditedDuringReviewBadge Response="@Response" />
-        </RadzenText>
+    <div class="assessment-question">
+        <header class="question-header">
+            <h3 class="question-title">
+                <RadzenIcon Icon="self_improvement" Class="me-2" />
+                @Question.Title
+                @if (Question.IsRequired) { <span class="text-danger">*</span> }
+                <EditedDuringReviewBadge Response="@Response" />
+            </h3>
 
-        @if (!string.IsNullOrWhiteSpace(Question.Description))
-        {
-            <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
-        }
+            @if (!string.IsNullOrWhiteSpace(Question.Description))
+            {
+                <p class="question-description">@Question.Description</p>
+            }
 
-        <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-4" ShowIcon="true">
-            <RadzenText TextStyle="TextStyle.Body2">
+            <div class="rating-scale-info">
+                <RadzenIcon Icon="info" Class="me-2" />
                 <strong>Rating Scale:</strong> @GetRatingScaleDescription()
-            </RadzenText>
-        </RadzenAlert>
+            </div>
+        </header>
 
         <div class="competencies-container">
         @if (!competencies.Any())
@@ -46,69 +48,26 @@
             }
             @foreach (var competency in competencies)
             {
-                var competencyKey = competency.Key;
-                var currentRating = GetCompetencyRating(competencyKey);
-                var currentComment = GetCompetencyComment(competencyKey);
-                var ratingText = GetRatingText(currentRating);
-                var displayTitle = string.IsNullOrWhiteSpace(competency.Title) ? $"[Unnamed Competency - {competencyKey}]" : competency.Title;
-
-                <div class="competency-card mb-3 p-3 border rounded" @key="@competencyKey">
-                    <RadzenRow>
-                        <RadzenColumn Size="12" SizeMD="8">
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2" Style="@(string.IsNullOrWhiteSpace(competency.Title) ? "color: #dc3545;" : "")">
-                                @displayTitle
-                            </RadzenText>
-                            @if (!string.IsNullOrWhiteSpace(competency.Description))
-                            {
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                                    @competency.Description
-                                </RadzenText>
-                            }
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="4" Class="text-end">
-                            <div class="rating-section">
-                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
-                                <RadzenRating Value="@currentRating"
-                                            ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
-                                            Stars="@ratingScale"
-                                            ReadOnly="@IsReadOnly"
-                                            Class="mb-2" />
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
-                                    @ratingText
-                                </RadzenText>
-                            </div>
-                        </RadzenColumn>
-                    </RadzenRow>
-
-                    @if (!IsReadOnly)
-                    {
-                        <RadzenTextArea Value="@currentComment"
-                                      ValueChanged="@((string value) => SetCompetencyComment(competencyKey, value))"
-                                      Placeholder="Optional: Add your comments here..."
-                                      Rows="2"
-                                      Class="w-100 mt-2"
-                                      Disabled="@IsReadOnly" />
-                    }
-                    else if (!string.IsNullOrEmpty(currentComment))
-                    {
-                        <div class="mt-2 p-2 bg-light rounded">
-                            <small class="text-muted d-block mb-1">Comment:</small>
-                            <span>@currentComment</span>
-                        </div>
-                    }
-                </div>
+                var competencyRating = GetCompetencyRatingDto(competency.Key);
+                <CompetencyRatingItem @key="@competency.Key"
+                                     Competency="@competency"
+                                     Rating="@competencyRating"
+                                     OnRatingChanged="@((rating) => OnCompetencyRatingChanged(competency.Key, rating))"
+                                     IsReadOnly="@IsReadOnly"
+                                     RatingScale="@ratingScale"
+                                     ScaleLowLabel="@scaleLowLabel"
+                                     ScaleHighLabel="@scaleHighLabel" />
             }
         }
         </div>
-    </RadzenCard>
+    </div>
 }
 else
 {
-    <RadzenAlert AlertStyle="AlertStyle.Info" Class="mb-3" ShowIcon="true">
-        <RadzenText TextStyle="TextStyle.Body2">
-            <strong>Rating Scale:</strong> @GetRatingScaleDescription()
-        </RadzenText>
-    </RadzenAlert>
+    <div class="rating-scale-info">
+        <RadzenIcon Icon="info" Class="me-2" />
+        <strong>Rating Scale:</strong> @GetRatingScaleDescription()
+    </div>
 
     <div class="competencies-container">
         @if (!competencies.Any())
@@ -131,57 +90,15 @@ else
             }
             @foreach (var competency in competencies)
             {
-                var competencyKey = competency.Key;
-                var currentRating = GetCompetencyRating(competencyKey);
-                var currentComment = GetCompetencyComment(competencyKey);
-                var ratingText = GetRatingText(currentRating);
-                var displayTitle = string.IsNullOrWhiteSpace(competency.Title) ? $"[Unnamed Competency - {competencyKey}]" : competency.Title;
-
-                <div class="competency-card mb-3 p-3 border rounded" @key="@competencyKey">
-                    <RadzenRow>
-                        <RadzenColumn Size="12" SizeMD="8">
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2" Style="@(string.IsNullOrWhiteSpace(competency.Title) ? "color: #dc3545;" : "")">
-                                @displayTitle
-                            </RadzenText>
-                            @if (!string.IsNullOrWhiteSpace(competency.Description))
-                            {
-                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                                    @competency.Description
-                                </RadzenText>
-                            }
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="4" Class="text-end">
-                            <div class="rating-section">
-                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">Rate your satisfaction:</RadzenText>
-                                <RadzenRating Value="@currentRating"
-                                            ValueChanged="@((int value) => SetCompetencyRating(competencyKey, value))"
-                                            Stars="@ratingScale"
-                                            ReadOnly="@IsReadOnly"
-                                            Class="mb-2" />
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-primary">
-                                    @ratingText
-                                </RadzenText>
-                            </div>
-                        </RadzenColumn>
-                    </RadzenRow>
-
-                    @if (!IsReadOnly)
-                    {
-                        <RadzenTextArea Value="@currentComment"
-                                      ValueChanged="@((string value) => SetCompetencyComment(competencyKey, value))"
-                                      Placeholder="Optional: Add your comments here..."
-                                      Rows="2"
-                                      Class="w-100 mt-2"
-                                      Disabled="@IsReadOnly" />
-                    }
-                    else if (!string.IsNullOrEmpty(currentComment))
-                    {
-                        <div class="mt-2 p-2 bg-light rounded">
-                            <small class="text-muted d-block mb-1">Comment:</small>
-                            <span>@currentComment</span>
-                        </div>
-                    }
-                </div>
+                var competencyRating = GetCompetencyRatingDto(competency.Key);
+                <CompetencyRatingItem @key="@competency.Key"
+                                     Competency="@competency"
+                                     Rating="@competencyRating"
+                                     OnRatingChanged="@((rating) => OnCompetencyRatingChanged(competency.Key, rating))"
+                                     IsReadOnly="@IsReadOnly"
+                                     RatingScale="@ratingScale"
+                                     ScaleLowLabel="@scaleLowLabel"
+                                     ScaleHighLabel="@scaleHighLabel" />
             }
         }
     </div>
@@ -477,25 +394,58 @@ else
             _ => scaleLowLabel
         };
     }
+
+    private CompetencyRatingDto GetCompetencyRatingDto(string competencyKey)
+    {
+        // Ensure we have an AssessmentResponseDataDto
+        if (Response.ResponseData is not AssessmentResponseDataDto assessmentData)
+        {
+            assessmentData = new AssessmentResponseDataDto();
+            Response.ResponseData = assessmentData;
+        }
+
+        // Get existing competency or create new one
+        if (!assessmentData.Competencies.TryGetValue(competencyKey, out var existingRating))
+        {
+            existingRating = new CompetencyRatingDto();
+            assessmentData.Competencies[competencyKey] = existingRating;
+        }
+
+        return existingRating;
+    }
+
+    private async Task OnCompetencyRatingChanged(string competencyKey, CompetencyRatingDto rating)
+    {
+        if (IsReadOnly) return;
+
+        // Ensure we have an AssessmentResponseDataDto
+        if (Response.ResponseData is not AssessmentResponseDataDto assessmentData)
+        {
+            assessmentData = new AssessmentResponseDataDto();
+            Response.ResponseData = assessmentData;
+        }
+
+        // Update the competency rating in the response data
+        assessmentData.Competencies[competencyKey] = rating;
+        Response.LastModified = DateTime.Now;
+
+        await NotifyResponseChanged();
+    }
 }
 
 <style>
-.competency-card {
-    transition: all 0.2s ease;
-    border-color: var(--border-light, #e2e8f0) !important;
+.competencies-container {
+    background: white;
+    border-radius: 6px;
 }
 
-.competency-card:hover {
-    border-color: var(--primary-color, #2563eb) !important;
+/* Reduce visual weight of assessment card */
+.assessment-question {
+    border: 1px solid #e9ecef;
+    box-shadow: none;
+}
+
+.assessment-question:hover {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.rating-section {
-    min-width: 200px;
-}
-
-/* Optimize re-renders by hiding rating animations */
-.competency-card[data-updating="true"] .rating-section {
-    opacity: 0.7;
 }
 </style>
