@@ -176,13 +176,31 @@
 	};
 
 	private List<Category> categories = new();
+	private Guid? lastLoadedTemplateId = null;
 
-	protected override async Task OnInitializedAsync()
+	protected override void OnInitialized()
 	{
 		State.OnStateChanged += HandleStateChanged;
+	}
 
+	protected override async Task OnParametersSetAsync()
+	{
+		// Only reload if the template ID has changed or this is the first load
+		// This prevents duplicate loading on initial render
+		if (lastLoadedTemplateId != TemplateId)
+		{
+			lastLoadedTemplateId = TemplateId;
+			await LoadQuestionnaireData();
+		}
+	}
+
+	private async Task LoadQuestionnaireData()
+	{
 		await ExecuteSafelyAsync(async () =>
 		{
+			// Reset to step 1 whenever loading a template
+			State.CurrentStep = 1;
+
 			if (IsEditMode && TemplateId.HasValue)
 			{
 				// Load categories and template in parallel for better performance
