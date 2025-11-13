@@ -5,20 +5,39 @@
 
 <link href="css/assignment-dialogs.css" rel="stylesheet" />
 
-<div class="employee-selection">
+<div class="employee-selection-optimized">
     @if (Employees.Any())
     {
-        @foreach (var employee in Employees)
+        @if (Employees.Count > VIRTUALIZATION_THRESHOLD)
         {
-            <EmployeeCard Employee="@employee"
-                         IsSelected="@IsEmployeeSelected(employee)"
-                         IsCurrent="@IsCurrentAssignee(employee)"
-                         OnClick="@OnEmployeeToggle" />
+            <!-- Virtual scrolling for large datasets -->
+            <RadzenDataList Data="@Employees"
+                           WrapItems="false"
+                           AllowPaging="false"
+                           Style="max-height: 400px; overflow-y: auto;">
+                <Template Context="employee">
+                    <EmployeeCard Employee="@employee"
+                                 IsSelected="@IsEmployeeSelected(employee)"
+                                 IsCurrent="@IsCurrentAssignee(employee)"
+                                 OnClick="@OnEmployeeToggle" />
+                </Template>
+            </RadzenDataList>
+        }
+        else
+        {
+            <!-- Direct rendering for smaller datasets -->
+            @foreach (var employee in Employees)
+            {
+                <EmployeeCard Employee="@employee"
+                             IsSelected="@IsEmployeeSelected(employee)"
+                             IsCurrent="@IsCurrentAssignee(employee)"
+                             OnClick="@OnEmployeeToggle" />
+            }
         }
     }
     else
     {
-        <div class="text-center text-muted p-3" style="grid-column: 1 / -1;">
+        <div class="text-center text-muted p-3">
             <RadzenIcon Icon="search_off" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
             <RadzenText TextStyle="TextStyle.Body2">@EmptyMessage</RadzenText>
         </div>
@@ -33,6 +52,8 @@
 }
 
 @code {
+    private const int VIRTUALIZATION_THRESHOLD = 50; // Use virtual scrolling for 50+ employees
+
     [Parameter] public List<EmployeeDto> Employees { get; set; } = new();
     [Parameter] public List<string> SelectedEmployeeIds { get; set; } = new();
     [Parameter] public string? CurrentAssigneeId { get; set; }

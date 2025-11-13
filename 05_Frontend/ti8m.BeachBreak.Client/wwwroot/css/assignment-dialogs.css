@@ -47,6 +47,204 @@
     background: rgba(40, 167, 69, 0.05);
 }
 
+/* ========================================
+   FLATTENED EMPLOYEE CARD OPTIMIZATION
+   ======================================== */
+
+/* Flattened employee card - reduces DOM nesting from 6-8 levels to 3 levels */
+.employee-card-flat {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    margin-bottom: 0.5rem;
+    min-height: 60px;
+}
+
+.employee-card-flat:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    transform: translateY(-1px);
+}
+
+.employee-card-flat.selected {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.employee-card-flat.current {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.05);
+}
+
+/* Employee avatar - replaces nested avatar container */
+.employee-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.employee-card-flat.current .employee-avatar {
+    background: #28a745;
+}
+
+/* Employee info container - single div instead of nested structure */
+.employee-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0; /* Allow text truncation */
+}
+
+.employee-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.employee-email {
+    font-size: 0.75rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.employee-dept {
+    font-size: 0.75rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.current-assignee {
+    font-size: 0.7rem;
+    color: #28a745;
+    font-weight: 600;
+    margin-top: 0.1rem;
+}
+
+/* Selection status - replaces nested selection indicator */
+.selection-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #667eea;
+    font-weight: bold;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.selection-status.selected {
+    background: #667eea;
+    border-color: #667eea;
+    color: white;
+}
+
+/* Grid layout optimization for flattened cards */
+.employee-selection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+/* Optimized employee selection with virtualization support */
+.employee-selection-optimized {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 0.5rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+/* Override RadzenDataList styling for employee cards */
+.employee-selection-optimized .rz-datalist {
+    border: none;
+    background: transparent;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.employee-selection-optimized .rz-datalist-item {
+    border: none;
+    padding: 0;
+    margin-bottom: 0.5rem;
+    background: transparent;
+}
+
+/* Responsive design for flattened cards */
+@media (max-width: 768px) {
+    .employee-card-flat {
+        padding: 0.5rem;
+        gap: 0.75rem;
+    }
+
+    .employee-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8rem;
+    }
+
+    .employee-name {
+        font-size: 0.8rem;
+    }
+
+    .employee-email,
+    .employee-dept {
+        font-size: 0.7rem;
+    }
+}
+
+/* Accessibility improvements */
+.employee-card-flat:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+.employee-card-flat[aria-pressed="true"] {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+/* Performance optimization - GPU acceleration */
+.employee-card-flat {
+    will-change: transform;
+}
+
 /* Employee card content layout */
 .employee-header {
     display: flex;

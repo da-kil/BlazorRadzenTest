@@ -1,0 +1,257 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+
+<AsyncButton
+    Text="@Text"
+    ProcessingText="@ProcessingText"
+    Icon="@GetActionIcon()"
+    ButtonStyle="@GetActionButtonStyle()"
+    Size="@Size"
+    Click="@Click"
+    ClickAsync="@ClickAsync"
+    Disabled="@Disabled"
+    Class="@Class"
+    Style="@Style"
+    Tooltip="@Tooltip"
+    Title="@Title"
+    ShowProcessingIndicator="@ShowProcessingIndicator"
+    ShowBusyIndicator="@ShowBusyIndicator"
+    BusyText="@BusyText"
+    Variant="@Variant"
+    Shade="@Shade"
+    ButtonType="@ButtonType" />
+
+@code {
+    /// <summary>
+    /// Semantic action type for consistent styling across the application
+    /// </summary>
+    public enum ButtonAction
+    {
+        // Primary Actions (Blue)
+        Primary = 0,        // General primary action
+        Save = 1,           // Save/Update data
+        Submit = 2,         // Submit forms
+        Create = 3,         // Create new items
+        Next = 4,           // Navigation forward
+
+        // Secondary Actions (Gray)
+        Secondary = 10,     // Secondary action
+        Cancel = 11,        // Cancel operations
+        Previous = 12,      // Navigation backward
+        Edit = 13,          // Edit operations
+        View = 14,          // View/Details
+        Clone = 15,         // Clone/Duplicate
+
+        // Success Actions (Green)
+        Success = 20,       // Success confirmation
+        Publish = 21,       // Publish content
+        Complete = 22,      // Mark complete
+        Approve = 23,       // Approve actions
+        Restore = 24,       // Restore from archive
+
+        // Destructive Actions (Red)
+        Danger = 30,        // Dangerous action
+        Delete = 31,        // Delete items
+        Remove = 32,        // Remove items
+        Unpublish = 33,     // Unpublish content
+
+        // Neutral Actions (Light)
+        Neutral = 40,       // Neutral actions
+        Archive = 41,       // Archive items
+        Close = 42,         // Close dialogs
+        Reset = 43          // Reset forms
+    }
+
+    /// <summary>
+    /// Semantic action type - determines icon and color automatically
+    /// </summary>
+    [Parameter] public ButtonAction Action { get; set; } = ButtonAction.Primary;
+
+    /// <summary>
+    /// Button text to display. If not provided, uses default text for the action.
+    /// </summary>
+    [Parameter] public string? Text { get; set; }
+
+    /// <summary>
+    /// Text to display when processing. If not provided, uses default for the action.
+    /// </summary>
+    [Parameter] public string? ProcessingText { get; set; }
+
+    /// <summary>
+    /// Custom icon override. If not provided, uses default icon for the action.
+    /// </summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>
+    /// Button size
+    /// </summary>
+    [Parameter] public ButtonSize Size { get; set; } = ButtonSize.Medium;
+
+    /// <summary>
+    /// Click handler
+    /// </summary>
+    [Parameter] public EventCallback<MouseEventArgs> Click { get; set; }
+
+    /// <summary>
+    /// Async click handler
+    /// </summary>
+    [Parameter] public Func<Task>? ClickAsync { get; set; }
+
+    /// <summary>
+    /// Disabled state
+    /// </summary>
+    [Parameter] public bool Disabled { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes
+    /// </summary>
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>
+    /// Inline styles
+    /// </summary>
+    [Parameter] public string? Style { get; set; }
+
+    /// <summary>
+    /// Tooltip text
+    /// </summary>
+    [Parameter] public string? Tooltip { get; set; }
+
+    /// <summary>
+    /// Title attribute
+    /// </summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>
+    /// Show processing indicator
+    /// </summary>
+    [Parameter] public bool ShowProcessingIndicator { get; set; } = true;
+
+    /// <summary>
+    /// Show busy indicator
+    /// </summary>
+    [Parameter] public bool ShowBusyIndicator { get; set; } = false;
+
+    /// <summary>
+    /// Busy text
+    /// </summary>
+    [Parameter] public string? BusyText { get; set; }
+
+    /// <summary>
+    /// Button variant
+    /// </summary>
+    [Parameter] public Variant Variant { get; set; } = Variant.Filled;
+
+    /// <summary>
+    /// Button shade
+    /// </summary>
+    [Parameter] public Shade Shade { get; set; } = Shade.Default;
+
+    /// <summary>
+    /// Button type
+    /// </summary>
+    [Parameter] public ButtonType ButtonType { get; set; } = ButtonType.Button;
+
+    private ButtonStyle GetActionButtonStyle()
+    {
+        return Action switch
+        {
+            // Primary Actions - Blue
+            ButtonAction.Primary => ButtonStyle.Primary,
+            ButtonAction.Save => ButtonStyle.Primary,
+            ButtonAction.Submit => ButtonStyle.Primary,
+            ButtonAction.Create => ButtonStyle.Primary,
+            ButtonAction.Next => ButtonStyle.Primary,
+
+            // Secondary Actions - Gray/Light
+            ButtonAction.Secondary => ButtonStyle.Secondary,
+            ButtonAction.Cancel => ButtonStyle.Secondary,
+            ButtonAction.Previous => ButtonStyle.Secondary,
+            ButtonAction.Edit => ButtonStyle.Secondary,
+            ButtonAction.View => ButtonStyle.Secondary,
+            ButtonAction.Clone => ButtonStyle.Secondary,
+
+            // Success Actions - Green
+            ButtonAction.Success => ButtonStyle.Success,
+            ButtonAction.Publish => ButtonStyle.Success,
+            ButtonAction.Complete => ButtonStyle.Success,
+            ButtonAction.Approve => ButtonStyle.Success,
+            ButtonAction.Restore => ButtonStyle.Success,
+
+            // Destructive Actions - Red
+            ButtonAction.Danger => ButtonStyle.Danger,
+            ButtonAction.Delete => ButtonStyle.Danger,
+            ButtonAction.Remove => ButtonStyle.Danger,
+            ButtonAction.Unpublish => ButtonStyle.Danger,
+
+            // Neutral Actions - Light
+            ButtonAction.Neutral => ButtonStyle.Light,
+            ButtonAction.Archive => ButtonStyle.Light,
+            ButtonAction.Close => ButtonStyle.Light,
+            ButtonAction.Reset => ButtonStyle.Light,
+
+            _ => ButtonStyle.Primary
+        };
+    }
+
+    private string? GetActionIcon()
+    {
+        if (!string.IsNullOrEmpty(Icon))
+            return Icon;
+
+        return Action switch
+        {
+            ButtonAction.Save => "save",
+            ButtonAction.Submit => "send",
+            ButtonAction.Create => "add",
+            ButtonAction.Next => "arrow_forward",
+            ButtonAction.Cancel => "cancel",
+            ButtonAction.Previous => "arrow_back",
+            ButtonAction.Edit => "edit",
+            ButtonAction.View => "visibility",
+            ButtonAction.Clone => "content_copy",
+            ButtonAction.Publish => "publish",
+            ButtonAction.Complete => "check_circle",
+            ButtonAction.Approve => "thumb_up",
+            ButtonAction.Restore => "restore",
+            ButtonAction.Delete => "delete",
+            ButtonAction.Remove => "remove_circle",
+            ButtonAction.Unpublish => "unpublished",
+            ButtonAction.Archive => "archive",
+            ButtonAction.Close => "close",
+            ButtonAction.Reset => "refresh",
+            _ => null
+        };
+    }
+
+    private string GetDefaultText()
+    {
+        if (!string.IsNullOrEmpty(Text))
+            return Text;
+
+        return Action switch
+        {
+            ButtonAction.Save => "Save",
+            ButtonAction.Submit => "Submit",
+            ButtonAction.Create => "Create",
+            ButtonAction.Next => "Next",
+            ButtonAction.Cancel => "Cancel",
+            ButtonAction.Previous => "Previous",
+            ButtonAction.Edit => "Edit",
+            ButtonAction.View => "View",
+            ButtonAction.Clone => "Clone",
+            ButtonAction.Publish => "Publish",
+            ButtonAction.Complete => "Complete",
+            ButtonAction.Approve => "Approve",
+            ButtonAction.Restore => "Restore",
+            ButtonAction.Delete => "Delete",
+            ButtonAction.Remove => "Remove",
+            ButtonAction.Unpublish => "Unpublish",
+            ButtonAction.Archive => "Archive",
+            ButtonAction.Close => "Close",
+            ButtonAction.Reset => "Reset",
+            _ => "Action"
+        };
+    }
+}

@@ -39,103 +39,94 @@
 	CurrentStep="@State.CurrentStep"
 	OnStepClick="@SetCurrentStep" />
 
-<!-- Main Content -->
-<div class="main-content-modern">
-	<div class="container-fluid">
-		@if (State.ShowQuestionEditor)
-		{
-			<!-- Full-screen Question Editor -->
-			<div class="question-editor-fullscreen">
-				<div class="editor-header">
-					<div class="d-flex justify-content-between align-items-center py-3">
-						<div class="d-flex align-items-center">
-							<RadzenButton ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@CloseQuestionEditor" Class="me-3" />
-							<RadzenText TextStyle="TextStyle.H5" Class="mb-0 fw-bold">Edit Question: @GetCurrentQuestionTitle()</RadzenText>
-						</div>
-						<div class="d-flex gap-2">
-							<RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CloseQuestionEditor" />
-							<RadzenButton Text="Save Question" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveCurrentQuestion" />
-						</div>
-					</div>
+<!-- Flattened Main Content -->
+<main class="questionnaire-builder-content">
+	@if (State.ShowQuestionEditor)
+	{
+		<!-- Full-screen Question Editor -->
+		<section class="question-editor-section">
+			<header class="editor-toolbar">
+				<div class="toolbar-left">
+					<RadzenButton ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@CloseQuestionEditor" Class="me-3" />
+					<h2 class="editor-title">Edit Question: @GetCurrentQuestionTitle()</h2>
 				</div>
-				<div class="editor-content p-4">
-					@if (State.EditingQuestion != null)
-					{
-						<QuestionCard Question="@State.EditingQuestion"
-									  Template="@State.Template"
-									  CanMoveUp="false"
-									  CanMoveDown="false"
-									  QuestionTypeLabels="@questionTypeLabels"
-									  OnEdit="@(() => { })"
-									  OnMoveUp="@(() => { })"
-									  OnMoveDown="@(() => { })"
-									  OnDelete="@(() => { })" />
-					}
+				<div class="toolbar-actions">
+					<RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CloseQuestionEditor" />
+					<RadzenButton Text="Save Question" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveCurrentQuestion" />
 				</div>
-			</div>
-		}
-		else
-		{
-			<!-- Step Content -->
-			@if (State.CurrentStep == 1)
-			{
-				<div class="step-content-modern">
-					<div class="step-header">
-						<div class="d-flex flex-column">
-							<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Template Information</RadzenText>
-							<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">@GetStatusDescription()</RadzenText>
-						</div>
-					</div>
-					<BasicInfoTab Template="@State.Template" Categories="@categories" />
-					<div class="step-navigation mt-4 d-flex justify-content-end">
-						<RadzenButton Text="Next: Build Sections" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(2))" />
-					</div>
-				</div>
-			}
-			else if (State.CurrentStep == 2)
-			{
-				<div class="step-content-modern">
-					<div class="step-header">
-						<div class="d-flex flex-column">
-							<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Build Sections</RadzenText>
-							<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Organize your assessment into logical sections and configure questions</RadzenText>
-						</div>
-					</div>
-					<QuestionsTab Template="@State.Template"
-								  ShowQuestionTypeSelection="@State.ShowQuestionTypeSelection"
-								  SelectedSectionIndex="@State.SelectedSectionIndex"
+			</header>
+			<div class="editor-content">
+				@if (State.EditingQuestion != null)
+				{
+					<QuestionCard Question="@State.EditingQuestion"
+								  Template="@State.Template"
+								  CanMoveUp="false"
+								  CanMoveDown="false"
 								  QuestionTypeLabels="@questionTypeLabels"
-								  OnAddSectionWithType="@AddSectionWithType"
-								  OnMoveSectionUp="@MoveSectionUp"
-								  OnMoveSectionDown="@MoveSectionDown"
-								  OnRemoveSection="@RemoveSection"
-								  OnShowAddQuestionDialog="@ShowAddQuestionDialog"
-								  OnAddItemDirectly="@AddItemDirectly"
-								  OnCancelQuestionTypeSelection="@CancelQuestionTypeSelection"
-								  OnAddQuestionOfType="@AddQuestionOfType"
-								  OnEditQuestion="@OpenQuestionEditor"
-								  OnMoveQuestionUp="@MoveQuestionUp"
-								  OnMoveQuestionDown="@MoveQuestionDown"
-								  OnRemoveQuestion="@RemoveQuestion" />
-					<div class="step-navigation mt-4 d-flex justify-content-between">
-						<RadzenButton Text="Previous: Basic Info" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(1))" />
-						<RadzenButton Text="Next: Review" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(3))" />
-					</div>
-				</div>
-			}
-			else if (State.CurrentStep == 3)
-			{
-				<div class="step-content-modern">
-					<div class="step-header">
-						<div class="d-flex flex-column">
-							<RadzenText TextStyle="TextStyle.H4" Class="mb-2">Review & Publish</RadzenText>
-							<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-4">Review your questionnaire and make it available for assignments</RadzenText>
-						</div>
-					</div>
-					<PreviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" Categories="@categories" />
-					<div class="step-navigation mt-4 d-flex justify-content-between">
-						<RadzenButton Text="Previous: Build Sections" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
-						<div class="d-flex gap-2">
+								  OnEdit="@(() => { })"
+								  OnMoveUp="@(() => { })"
+								  OnMoveDown="@(() => { })"
+								  OnDelete="@(() => { })" />
+				}
+			</div>
+		</section>
+	}
+	else
+	{
+		<!-- Flattened Step Content -->
+		@if (State.CurrentStep == 1)
+		{
+			<section class="step-section" data-step="1">
+				<header class="step-header">
+					<h2 class="step-title">Template Information</h2>
+					<p class="step-description">@GetStatusDescription()</p>
+				</header>
+				<BasicInfoTab Template="@State.Template" Categories="@categories" />
+				<nav class="step-navigation">
+					<RadzenButton Text="Next: Build Sections" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(2))" />
+				</nav>
+			</section>
+		}
+		else if (State.CurrentStep == 2)
+		{
+			<section class="step-section" data-step="2">
+				<header class="step-header">
+					<h2 class="step-title">Build Sections</h2>
+					<p class="step-description">Organize your assessment into logical sections and configure questions</p>
+				</header>
+				<QuestionsTab Template="@State.Template"
+							  ShowQuestionTypeSelection="@State.ShowQuestionTypeSelection"
+							  SelectedSectionIndex="@State.SelectedSectionIndex"
+							  QuestionTypeLabels="@questionTypeLabels"
+							  OnAddSectionWithType="@AddSectionWithType"
+							  OnMoveSectionUp="@MoveSectionUp"
+							  OnMoveSectionDown="@MoveSectionDown"
+							  OnRemoveSection="@RemoveSection"
+							  OnShowAddQuestionDialog="@ShowAddQuestionDialog"
+							  OnAddItemDirectly="@AddItemDirectly"
+							  OnCancelQuestionTypeSelection="@CancelQuestionTypeSelection"
+							  OnAddQuestionOfType="@AddQuestionOfType"
+							  OnEditQuestion="@OpenQuestionEditor"
+							  OnMoveQuestionUp="@MoveQuestionUp"
+							  OnMoveQuestionDown="@MoveQuestionDown"
+							  OnRemoveQuestion="@RemoveQuestion" />
+				<nav class="step-navigation-dual">
+					<RadzenButton Text="Previous: Basic Info" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(1))" />
+					<RadzenButton Text="Next: Review" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(3))" />
+				</nav>
+			</section>
+		}
+		else if (State.CurrentStep == 3)
+		{
+			<section class="step-section" data-step="3">
+				<header class="step-header">
+					<h2 class="step-title">Review & Publish</h2>
+					<p class="step-description">Review your questionnaire and make it available for assignments</p>
+				</header>
+				<PreviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" Categories="@categories" />
+				<nav class="step-navigation-dual">
+					<RadzenButton Text="Previous: Build Sections" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
+					<div class="publish-actions">
 							@{
 								var stepNavStatus = State.IsEditMode ? State.Template.Status : TemplateStatus.Draft;
 							}
@@ -153,12 +144,12 @@
 									break;
 							}
 						</div>
-					</div>
-				</div>
+					</nav>
+				</section>
 			}
 		}
-	</div>
-</div>
+	}
+</main>
 
 @code {
 	[Parameter] public Guid? TemplateId { get; set; }

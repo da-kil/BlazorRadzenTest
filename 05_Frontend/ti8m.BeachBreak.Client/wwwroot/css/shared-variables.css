@@ -9,40 +9,36 @@
     --primary-color-light: #3b82f6;
     --primary-color-dark: #1d4ed8;
     --primary-color-alpha: rgba(37, 99, 235, 0.1);
+    --primary-color-rgb: 37, 99, 235;
 
     /* Secondary Colors */
-    --secondary-color: #6366f1;
-    --secondary-color-light: #8b5cf6;
-    --secondary-color-dark: #4c1d95;
-    --secondary-gradient-start: #667eea;
-    --secondary-gradient-end: #764ba2;
+    --secondary-color: #6b7280;        /* Updated to match design system */
+    --secondary-color-light: #9ca3af;
+    --secondary-color-dark: #4b5563;
+    --secondary-color-rgb: 107, 114, 128;
 
-    /* Status Colors */
+    /* Status Colors with RGB values for transparency support */
     --success-color: #059669;
     --success-color-light: #10b981;
     --success-color-dark: #047857;
     --success-color-bg: #d1e7dd;
-    --success-gradient-start: #4CAF50;
-    --success-gradient-end: #45a049;
+    --success-color-rgb: 5, 150, 105;
 
     --warning-color: #d97706;
     --warning-color-light: #f59e0b;
     --warning-color-dark: #b45309;
     --warning-color-bg: #fff3cd;
-    --warning-gradient-start: #FF9800;
-    --warning-gradient-end: #F57C00;
+    --warning-color-rgb: 217, 119, 6;
 
     --danger-color: #dc2626;
     --danger-color-light: #ef4444;
     --danger-color-dark: #b91c1c;
-    --danger-gradient-start: #dc3545;
-    --danger-gradient-end: #c82333;
+    --danger-color-rgb: 220, 38, 38;
 
     --info-color: #0284c7;
     --info-color-light: #0ea5e9;
     --info-color-dark: #0369a1;
-    --info-gradient-start: #0f69ff;
-    --info-gradient-end: #0056d1;
+    --info-color-rgb: 2, 132, 199;
 
     /* Text Colors */
     --text-color: #374151;

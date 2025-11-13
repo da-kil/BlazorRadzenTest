@@ -4,35 +4,24 @@
 
 <link href="css/assignment-dialogs.css" rel="stylesheet" />
 
-<div class="employee-card @(IsSelected ? "selected" : "") @(IsCurrent ? "current" : "")"
-     @onclick="@HandleClick">
+<div class="employee-card-flat @(IsSelected ? "selected" : "") @(IsCurrent ? "current" : "")"
+     @onclick="@HandleClick"
+     data-employee-id="@Employee.Id"
+     title="@($"{Employee.FullName} - {Employee.EMail}")">
 
-    <div class="selection-indicator">
-        <RadzenIcon Icon="@(IsCurrent ? "star" : "check")" />
-    </div>
-
-    <div class="employee-header">
-        <div class="employee-mini-avatar">
-            @GetEmployeeInitials()
-        </div>
-        <div class="employee-details">
-            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@Employee.FullName</RadzenText>
-            <div class="employee-email" title="@Employee.EMail">
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@Employee.EMail</RadzenText>
-            </div>
-        </div>
-    </div>
-
-    <div class="employee-meta">
-        @Employee.Department • @Employee.Role
+    <span class="employee-avatar">@GetEmployeeInitials()</span>
+    <div class="employee-info">
+        <span class="employee-name">@Employee.FullName</span>
+        <span class="employee-email">@Employee.EMail</span>
+        <span class="employee-dept">@Employee.Department • @Employee.Role</span>
         @if (IsCurrent)
         {
-            <div style="color: #28a745; font-weight: 600; margin-top: 0.25rem;">
-                <RadzenIcon Icon="star" Style="font-size: 0.75rem; margin-right: 0.25rem;" />
-                Current Assignee
-            </div>
+            <span class="current-assignee">★ Current Assignee</span>
         }
     </div>
+    <span class="selection-status @(IsSelected ? "selected" : "")" aria-label="@(IsSelected ? "Selected" : "Not selected")">
+        @(IsSelected ? "✓" : "")
+    </span>
 </div>
 
 @code {

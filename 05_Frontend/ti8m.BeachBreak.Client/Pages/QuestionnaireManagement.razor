@@ -15,45 +15,40 @@
 
 <PageTitle>Questionnaire Management</PageTitle>
 
-<div class="container-fluid">
-    <RadzenCard Class="p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
-                    <RadzenIcon Icon="quiz" Class="me-2" />
-                    Questionnaire Management
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                    Manage your questionnaire templates and view responses
-                </RadzenText>
-            </div>
-            <AsyncButton Text="Create New"
-                        ButtonStyle="ButtonStyle.Primary"
-                        Icon="add"
-                        Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
-        </div>
+<main class="page-container">
+    <header class="page-header">
+        <h1 class="page-title">
+            <RadzenIcon Icon="quiz" Class="me-2" />
+            Questionnaire Management
+        </h1>
+        <p class="page-subtitle">Manage your questionnaire templates and view responses</p>
+        <AsyncButton Text="Create New"
+                    ButtonStyle="ButtonStyle.Primary"
+                    Icon="add"
+                    Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
+    </header>
 
-        <RadzenTabs>
-            <Tabs>
-                <RadzenTabsItem Text="Templates">
-                    <div class="p-3">
-                        <div class="d-flex justify-content-between mb-3">
-                            <div class="d-flex gap-2">
-                                <RadzenDropDown @bind-Value="@categoryFilter"
-                                               Data="@categories"
-                                               TextProperty="NameEn"
-                                               ValueProperty="Id"
-                                               Placeholder="Filter by Type"
-                                               AllowClear="true"
-                                               Change="@FilterTemplates" />
-                                <RadzenTextBox @bind-Value="@searchText"
-                                              Placeholder="Search templates..."
-                                              @oninput="@OnSearchTextChanged" />
-                            </div>
-                            <RadzenToggleButton @bind-Value="@showArchivedTemplates"
-                                               Text="Show Archived"
-                                               Change="@FilterTemplates" />
+    <RadzenTabs>
+        <Tabs>
+            <RadzenTabsItem Text="Templates">
+                <section class="templates-content">
+                    <div class="templates-toolbar">
+                        <div class="filters-group">
+                            <RadzenDropDown @bind-Value="@categoryFilter"
+                                           Data="@categories"
+                                           TextProperty="NameEn"
+                                           ValueProperty="Id"
+                                           Placeholder="Filter by Type"
+                                           AllowClear="true"
+                                           Change="@FilterTemplates" />
+                            <RadzenTextBox @bind-Value="@searchText"
+                                          Placeholder="Search templates..."
+                                          @oninput="@OnSearchTextChanged" />
                         </div>
+                        <RadzenToggleButton @bind-Value="@showArchivedTemplates"
+                                           Text="Show Archived"
+                                           Change="@FilterTemplates" />
+                    </div>
 
                         <RadzenDataGrid Data="@filteredTemplates" 
                                        AllowFiltering="true" 
@@ -62,27 +57,27 @@
                                        AllowSorting="true" 
                                        PageSize="10" 
                                        AllowPaging="true">
-                            <Columns>
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.Name)" Title="Template Name" Width="300px">
-                                    <Template Context="template">
-                                        <div>
-                                            <RadzenLink Text="@template.Name" 
-                                                       Path="@($"/questionnaire-builder/{template.Id}")" 
-                                                       Style="font-weight: bold" />
-                                            <br />
-                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@template.Description</RadzenText>
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CategoryId)" Title="Category" Width="150px">
-                                    <Template Context="template">
-                                        @{
-                                            var category = categories.FirstOrDefault(c => c.Id == template.CategoryId);
-                                        }
-                                        <RadzenText TextStyle="TextStyle.Body2">@(category?.NameEn ?? "Uncategorized")</RadzenText>
-                                    </Template>
-                                </RadzenDataGridColumn>
+                        <Columns>
+                            <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.Name)" Title="Template Name" Width="300px">
+                                <Template Context="template">
+                                    <div class="template-name-cell">
+                                        <RadzenLink Text="@template.Name"
+                                                   Path="@($"/questionnaire-builder/{template.Id}")"
+                                                   Style="font-weight: bold" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted template-description">
+                                            @template.Description
+                                        </RadzenText>
+                                    </div>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CategoryId)" Title="Category" Width="150px">
+                                <Template Context="template">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        @(categories.FirstOrDefault(c => c.Id == template.CategoryId)?.NameEn ?? "Uncategorized")
+                                    </RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
                                 
                                 <RadzenDataGridColumn Property="SectionCount" Title="Sections" Width="100px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
@@ -131,111 +126,79 @@
                                     </Template>
                                 </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="240px" TextAlign="TextAlign.Center">
-                                    <Template Context="template">
-                                        <div class="d-flex gap-1">
-                                            <AsyncButton ButtonStyle="ButtonStyle.Light"
-                                                        Icon="edit"
-                                                        Size="ButtonSize.Small"
-                                                        Title="Edit"
-                                                        Click="@(() => EditTemplate(template))" />
-                                            <AsyncButton ButtonStyle="ButtonStyle.Light"
-                                                        ProcessingText="Cloning"
-                                                        Icon="content_copy"
-                                                        Size="ButtonSize.Small"
-                                                        Title="Clone"
-                                                        Click="@(() => CloneTemplate(template))" />
-                                            @if (template.Status == TemplateStatus.Draft)
-                                            {
-                                                <AsyncButton ButtonStyle="ButtonStyle.Success"
-                                                            ProcessingText="Publishing"
-                                                            Icon="publish"
-                                                            Size="ButtonSize.Small"
-                                                            Title="Publish"
-                                                            Click="@(() => PublishTemplate(template))" />
-                                            }
-                                            else if (template.Status == TemplateStatus.Published)
-                                            {
-                                                <AsyncButton ButtonStyle="ButtonStyle.Warning"
-                                                            ProcessingText="Unpublishing"
-                                                            Icon="unpublished"
-                                                            Size="ButtonSize.Small"
-                                                            Title="Unpublish"
-                                                            Click="@(() => UnpublishTemplate(template))" />
-                                            }
-                                            <AsyncButton ButtonStyle="@GetToggleButtonStyle(template.Status)"
-                                                        Icon="@GetToggleButtonIcon(template.Status)"
-                                                        Size="ButtonSize.Small"
-                                                        Title="@GetToggleButtonTitle(template.Status)"
-                                                        Click="@(() => ToggleTemplateStatus(template))" />
-                                            @if (template.Status != TemplateStatus.Archived)
-                                            {
-                                                <AsyncButton ButtonStyle="ButtonStyle.Danger"
-                                                            ProcessingText="Deleting"
-                                                            Icon="delete"
-                                                            Size="ButtonSize.Small"
-                                                            Title="Delete"
-                                                            Click="@(() => DeleteTemplate(template))" />
-                                            }
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Filterable="false" Sortable="false" Width="240px" TextAlign="TextAlign.Center">
+                                <Template Context="template">
+                                    <div class="template-actions">
+                                        <AsyncButton ButtonStyle="ButtonStyle.Light" Icon="edit" Size="ButtonSize.Small" Title="Edit" Click="@(() => EditTemplate(template))" />
+                                        <AsyncButton ButtonStyle="ButtonStyle.Light" ProcessingText="Cloning" Icon="content_copy" Size="ButtonSize.Small" Title="Clone" Click="@(() => CloneTemplate(template))" />
+                                        @if (template.Status == TemplateStatus.Draft)
+                                        {
+                                            <AsyncButton ButtonStyle="ButtonStyle.Success" ProcessingText="Publishing" Icon="publish" Size="ButtonSize.Small" Title="Publish" Click="@(() => PublishTemplate(template))" />
+                                        }
+                                        else if (template.Status == TemplateStatus.Published)
+                                        {
+                                            <AsyncButton ButtonStyle="ButtonStyle.Warning" ProcessingText="Unpublishing" Icon="unpublished" Size="ButtonSize.Small" Title="Unpublish" Click="@(() => UnpublishTemplate(template))" />
+                                        }
+                                        <AsyncButton ButtonStyle="@GetToggleButtonStyle(template.Status)" Icon="@GetToggleButtonIcon(template.Status)" Size="ButtonSize.Small" Title="@GetToggleButtonTitle(template.Status)" Click="@(() => ToggleTemplateStatus(template))" />
+                                        @if (template.Status != TemplateStatus.Archived)
+                                        {
+                                            <AsyncButton ButtonStyle="ButtonStyle.Danger" ProcessingText="Deleting" Icon="delete" Size="ButtonSize.Small" Title="Delete" Click="@(() => DeleteTemplate(template))" />
+                                        }
+                                    </div>
+                                </Template>
+                            </RadzenDataGridColumn>
                             </Columns>
                         </RadzenDataGrid>
-                    </div>
-                </RadzenTabsItem>
+                </section>
+            </RadzenTabsItem>
 
 
-                <RadzenTabsItem Text="Settings">
-                    <div class="p-3">
-                        <RadzenText TextStyle="TextStyle.H5" Class="mb-3">System Settings</RadzenText>
-                        
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenCard Class="p-3">
-                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Email Notifications</RadzenText>
-                                    <div class="settings-group">
-                                        <RadzenCheckBox @bind-Value="@settings.SendAssignmentEmails" Name="assignmentEmails" />
-                                        <RadzenLabel Text="Send assignment notifications" Component="assignmentEmails" Class="ms-2" />
-                                    </div>
-                                    <div class="settings-group mt-2">
-                                        <RadzenCheckBox @bind-Value="@settings.SendReminderEmails" Name="reminderEmails" />
-                                        <RadzenLabel Text="Send reminder emails" Component="reminderEmails" Class="ms-2" />
-                                    </div>
-                                    <div class="settings-group mt-2">
-                                        <RadzenCheckBox @bind-Value="@settings.SendCompletionEmails" Name="completionEmails" />
-                                        <RadzenLabel Text="Send completion confirmations" Component="completionEmails" Class="ms-2" />
-                                    </div>
-                                </RadzenCard>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenCard Class="p-3">
-                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Default Settings</RadzenText>
-                                    <div class="mb-3">
-                                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Default Due Days</RadzenText>
-                                        <RadzenNumeric @bind-Value="@settings.DefaultDueDays" Min="1" Max="365" Class="w-100" />
-                                    </div>
-                                    <div class="mb-3">
-                                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Reminder Days Before Due</RadzenText>
-                                        <RadzenNumeric @bind-Value="@settings.ReminderDaysBeforeDue" Min="1" Max="30" Class="w-100" />
-                                    </div>
-                                </RadzenCard>
-                            </RadzenColumn>
-                        </RadzenRow>
+            <RadzenTabsItem Text="Settings">
+                <section class="settings-content">
+                    <h2 class="settings-title">System Settings</h2>
 
-                        <div class="mt-4">
-                            <AsyncButton Text="Save Settings"
-                                        ProcessingText="Saving"
-                                        ButtonStyle="ButtonStyle.Primary"
-                                        Icon="save"
-                                        Click="@SaveSettings" />
+                    <div class="settings-grid">
+                        <div class="settings-card">
+                            <h3 class="card-title">Email Notifications</h3>
+                            <div class="setting-item">
+                                <RadzenCheckBox @bind-Value="@settings.SendAssignmentEmails" Name="assignmentEmails" />
+                                <RadzenLabel Text="Send assignment notifications" Component="assignmentEmails" Class="ms-2" />
+                            </div>
+                            <div class="setting-item">
+                                <RadzenCheckBox @bind-Value="@settings.SendReminderEmails" Name="reminderEmails" />
+                                <RadzenLabel Text="Send reminder emails" Component="reminderEmails" Class="ms-2" />
+                            </div>
+                            <div class="setting-item">
+                                <RadzenCheckBox @bind-Value="@settings.SendCompletionEmails" Name="completionEmails" />
+                                <RadzenLabel Text="Send completion confirmations" Component="completionEmails" Class="ms-2" />
+                            </div>
+                        </div>
+
+                        <div class="settings-card">
+                            <h3 class="card-title">Default Settings</h3>
+                            <div class="number-setting">
+                                <label class="setting-label">Default Due Days</label>
+                                <RadzenNumeric @bind-Value="@settings.DefaultDueDays" Min="1" Max="365" Class="w-100" />
+                            </div>
+                            <div class="number-setting">
+                                <label class="setting-label">Reminder Days Before Due</label>
+                                <RadzenNumeric @bind-Value="@settings.ReminderDaysBeforeDue" Min="1" Max="30" Class="w-100" />
+                            </div>
                         </div>
                     </div>
-                </RadzenTabsItem>
-            </Tabs>
-        </RadzenTabs>
-    </RadzenCard>
-</div>
+
+                    <div class="settings-actions">
+                        <AsyncButton Text="Save Settings"
+                                    ProcessingText="Saving"
+                                    ButtonStyle="ButtonStyle.Primary"
+                                    Icon="save"
+                                    Click="@SaveSettings" />
+                    </div>
+                </section>
+            </RadzenTabsItem>
+        </Tabs>
+    </RadzenTabs>
+</main>
 
 @code {
 

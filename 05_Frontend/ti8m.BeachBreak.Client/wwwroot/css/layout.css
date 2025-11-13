@@ -150,9 +150,9 @@
     padding: var(--spacing-lg);
 }
 
-/* Page Headers */
+/* Page Headers - Standardized to solid color */
 .page-header-modern {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-color-dark) 100%);
+    background: var(--primary-color);
     color: var(--text-white);
     padding: var(--spacing-2xl);
     border-radius: var(--radius-xl);

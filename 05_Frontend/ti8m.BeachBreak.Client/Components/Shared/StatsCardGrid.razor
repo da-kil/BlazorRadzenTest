@@ -4,23 +4,46 @@
     @foreach (var stat in Stats)
     {
         <div class="col-md-@GetColumnSize() col-sm-6 mb-3">
-            <RadzenCard Class="@($"text-center stats-card {stat.CssClass}")" Style="cursor: default; transition: none !important; transform: none !important;">
-                <RadzenIcon Icon="@stat.Icon"
-                           Size="@IconSize"
-                           Class="@($"{stat.IconClass} mb-2")" />
-                <RadzenText TextStyle="TextStyle.H4" Class="mb-1">
-                    @stat.Value
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                    @stat.Label
-                </RadzenText>
-                @if (!string.IsNullOrEmpty(stat.SubLabel))
-                {
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                        @stat.SubLabel
+            @if (UseCards)
+            {
+                <RadzenCard Class="@($"text-center stats-card {stat.CssClass}")" Style="cursor: default; transition: none !important; transform: none !important;">
+                    <RadzenIcon Icon="@stat.Icon"
+                               Size="@IconSize"
+                               Class="@($"{stat.IconClass} mb-2")" />
+                    <RadzenText TextStyle="TextStyle.H4" Class="mb-1">
+                        @stat.Value
                     </RadzenText>
-                }
-            </RadzenCard>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                        @stat.Label
+                    </RadzenText>
+                    @if (!string.IsNullOrEmpty(stat.SubLabel))
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            @stat.SubLabel
+                        </RadzenText>
+                    }
+                </RadzenCard>
+            }
+            else
+            {
+                <div class="@($"text-center stat-item rz-background-color-base-100 rz-p-3 rz-border-radius-3 {stat.CssClass}")" style="border: 1px solid var(--rz-base-300); transition: box-shadow 0.2s;">
+                    <RadzenIcon Icon="@stat.Icon"
+                               Size="@IconSize"
+                               Class="@($"{stat.IconClass} mb-2")" />
+                    <RadzenText TextStyle="TextStyle.H4" Class="mb-1">
+                        @stat.Value
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                        @stat.Label
+                    </RadzenText>
+                    @if (!string.IsNullOrEmpty(stat.SubLabel))
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            @stat.SubLabel
+                        </RadzenText>
+                    }
+                </div>
+            }
         </div>
     }
 </div>
@@ -29,6 +52,7 @@
     [Parameter] public List<StatCard> Stats { get; set; } = new();
     [Parameter] public int Columns { get; set; } = 4;
     [Parameter] public string IconSize { get; set; } = "2rem";
+    [Parameter] public bool UseCards { get; set; } = true;
     [Parameter] public EventCallback<StatCard> OnStatCardClick { get; set; }
 
     private int GetColumnSize()

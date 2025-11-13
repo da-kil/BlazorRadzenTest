@@ -199,9 +199,9 @@ input[type="submit"]:focus-visible {
  * They maintain the same visual appearance while using our consolidated CSS architecture.
  */
 
-/* Questionnaire Builder Migration */
+/* Questionnaire Builder Migration - Standardized to solid color */
 .questionnaire-builder-header {
-    background: linear-gradient(135deg, var(--primary-color-dark) 0%, var(--primary-color) 100%);
+    background: var(--primary-color);
     color: var(--text-white);
     padding: var(--spacing-2xl);
     border-radius: var(--radius-xl);
@@ -237,7 +237,7 @@ input[type="submit"]:focus-visible {
 
 .assignment-header,
 .bulk-header {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    background: var(--primary-color);
     color: var(--text-white);
     padding: var(--spacing-2xl);
     margin: calc(-1 * var(--spacing-lg)) calc(-1 * var(--spacing-lg)) var(--spacing-2xl) calc(-1 * var(--spacing-lg));
@@ -521,4 +521,510 @@ input[type="submit"]:focus-visible {
     padding: 2px 4px;
     border-radius: 2px;
     z-index: 9999;
+}
+
+/* =============================================
+   GRADIENT STANDARDIZATION
+   ============================================= */
+
+/* Remove all gradients and standardize to solid colors per UI analysis */
+.page-header-modern,
+.questionnaire-builder-header,
+.assignment-header,
+.bulk-header,
+.dialog-header,
+.modal-header {
+    background: var(--primary-color) !important;
+}
+
+/* Standardize metric cards to consistent colors */
+.metric-card[style*="linear-gradient"] {
+    background: var(--primary-color) !important;
+}
+
+/* Remove inline gradients from commonly used components */
+[style*="linear-gradient(135deg, #667eea"] {
+    background: var(--primary-color) !important;
+}
+
+[style*="linear-gradient(135deg, #f093fb"] {
+    background: var(--secondary-color) !important;
+}
+
+[style*="linear-gradient(135deg, #4facfe"] {
+    background: var(--info-color) !important;
+}
+
+[style*="linear-gradient(135deg, #43e97b"] {
+    background: var(--success-color) !important;
+}
+
+/* =============================================
+   QUESTIONNAIRE BUILDER FLATTENING
+   ============================================= */
+
+/* Main content container - replaces nested div structure */
+.questionnaire-builder-content {
+    padding: var(--spacing-lg);
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* Question editor section - flattened structure */
+.question-editor-section {
+    background: var(--background-color);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+}
+
+.editor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    background: var(--background-light);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.editor-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-color);
+    margin: 0;
+}
+
+.toolbar-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.editor-content {
+    padding: var(--spacing-xl);
+    background: var(--background-color);
+}
+
+/* Step sections - semantic structure */
+.step-section {
+    background: var(--background-color);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.step-header {
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.step-title {
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-color);
+    margin: 0 0 var(--spacing-sm) 0;
+}
+
+.step-description {
+    font-size: var(--font-size-md);
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Step navigation - simplified layout */
+.step-navigation {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-light);
+}
+
+.step-navigation-dual {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-light);
+}
+
+.publish-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+/* Responsive design for questionnaire builder */
+@media (max-width: 768px) {
+    .questionnaire-builder-content {
+        padding: var(--spacing-md);
+    }
+
+    .editor-toolbar {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: stretch;
+    }
+
+    .toolbar-left {
+        justify-content: center;
+    }
+
+    .step-navigation-dual {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: stretch;
+    }
+
+    .publish-actions {
+        justify-content: center;
+    }
+}
+
+/* Performance optimizations */
+.questionnaire-builder-content,
+.question-editor-section,
+.step-section {
+    will-change: transform;
+}
+
+/* Focus management */
+.step-section:focus-within {
+    border-color: var(--focus-border);
+    box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* =============================================
+   TABLE PERFORMANCE OPTIMIZATION
+   ============================================= */
+
+/* Virtualized list optimizations */
+.virtualized-list-optimized {
+    /* Enable GPU acceleration */
+    will-change: scroll-position;
+    transform: translateZ(0);
+
+    /* Smooth scrolling */
+    scroll-behavior: smooth;
+
+    /* Optimize scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--background-light);
+}
+
+.virtualized-list-optimized::-webkit-scrollbar {
+    width: 8px;
+}
+
+.virtualized-list-optimized::-webkit-scrollbar-track {
+    background: var(--background-light);
+}
+
+.virtualized-list-optimized::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+.virtualized-list-optimized::-webkit-scrollbar-thumb:hover {
+    background: var(--border-dark);
+}
+
+/* Optimize card rendering within virtualized list */
+.virtualized-list-optimized .questionnaire-card {
+    /* Enable GPU layering */
+    will-change: transform;
+    transform: translateZ(0);
+
+    /* Optimize repaints */
+    backface-visibility: hidden;
+
+    /* Contain layout changes */
+    contain: layout style paint;
+
+    /* Prevent layout shifts */
+    box-sizing: border-box;
+    min-height: 180px; /* Match ItemHeight from component */
+}
+
+/* Performance optimizations for table rows */
+.rz-datatable-data tr {
+    /* Enable GPU acceleration for row interactions */
+    will-change: background-color;
+    transform: translateZ(0);
+}
+
+.rz-datatable-data td {
+    /* Contain content changes */
+    contain: layout style;
+}
+
+/* Optimize large data grids */
+.rz-datatable {
+    /* Enable smooth scrolling */
+    scroll-behavior: smooth;
+
+    /* Optimize rendering */
+    will-change: scroll-position;
+    transform: translateZ(0);
+}
+
+/* Memory management for large lists */
+@supports (content-visibility: auto) {
+    .virtualized-list-optimized .questionnaire-card {
+        /* Enable content visibility for better memory usage */
+        content-visibility: auto;
+        contain-intrinsic-size: 180px;
+    }
+}
+
+/* Reduce paint complexity */
+.large-table-container {
+    /* Isolate repaints */
+    isolation: isolate;
+
+    /* Optimize scrolling */
+    overflow: auto;
+    will-change: scroll-position;
+}
+
+/* Performance optimizations for filters and search */
+.table-filters {
+    /* Prevent layout shifts during filtering */
+    contain: layout style;
+
+    /* Enable GPU acceleration for filter interactions */
+    will-change: opacity;
+    transform: translateZ(0);
+}
+
+/* Loading state optimizations */
+.table-loading-overlay {
+    /* Use GPU acceleration */
+    will-change: opacity;
+    transform: translateZ(0);
+
+    /* Optimize backdrop blur */
+    backdrop-filter: blur(2px);
+}
+
+/* Responsive performance optimizations */
+@media (max-width: 768px) {
+    .virtualized-list-optimized {
+        /* Reduce scroll smoothness on mobile for better performance */
+        scroll-behavior: auto;
+    }
+
+    .virtualized-list-optimized .questionnaire-card {
+        /* Disable GPU acceleration on low-end mobile devices */
+        will-change: auto;
+        transform: none;
+    }
+}
+
+/* Print optimizations */
+@media print {
+    .virtualized-list-optimized {
+        /* Disable virtualization for print */
+        height: auto !important;
+        overflow: visible !important;
+    }
+}
+
+/* =============================================
+   FLATTENED PAGE STRUCTURE OPTIMIZATION
+   ============================================= */
+
+/* Page Container - Replaces nested div structure */
+.page-container {
+    background: var(--background-color);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Page Header - Semantic header structure */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.page-title {
+    display: flex;
+    align-items: center;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--primary-color);
+    margin: 0 0 var(--spacing-xs) 0;
+}
+
+.page-subtitle {
+    font-size: var(--font-size-md);
+    color: var(--text-muted);
+    margin: 0;
+    margin-top: var(--spacing-xs);
+}
+
+/* Templates Tab Content */
+.templates-content {
+    padding: var(--spacing-lg);
+}
+
+.templates-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    gap: var(--spacing-md);
+}
+
+.filters-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+/* Data Grid Optimizations */
+.template-name-cell {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.template-description {
+    display: block;
+    margin-top: var(--spacing-xs);
+}
+
+.template-actions {
+    display: flex;
+    gap: var(--spacing-xs);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Settings Tab Optimization */
+.settings-content {
+    padding: var(--spacing-lg);
+}
+
+.settings-title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-color);
+    margin: 0 0 var(--spacing-lg) 0;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.settings-card {
+    background: var(--background-light);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.card-title {
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-color);
+    margin: 0 0 var(--spacing-md) 0;
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    transition: var(--transition-fast);
+}
+
+.setting-item:hover {
+    background: var(--hover-background);
+}
+
+.number-setting {
+    margin-bottom: var(--spacing-md);
+}
+
+.setting-label {
+    display: block;
+    font-weight: var(--font-weight-medium);
+    color: var(--text-color);
+    margin-bottom: var(--spacing-sm);
+}
+
+.settings-actions {
+    display: flex;
+    justify-content: flex-start;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-light);
+}
+
+/* Responsive Design for Flattened Structure */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+    }
+
+    .templates-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--spacing-sm);
+    }
+
+    .filters-group {
+        flex-wrap: wrap;
+    }
+
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .template-actions {
+        justify-content: flex-start;
+    }
+}
+
+/* Performance Optimizations for Flattened Structure */
+.page-container,
+.settings-card,
+.template-actions {
+    will-change: transform;
+}
+
+/* Focus Management for Flattened Structure */
+.page-container:focus-within {
+    box-shadow: var(--shadow-md);
+}
+
+.settings-card:focus-within {
+    border-color: var(--focus-border);
+    box-shadow: 0 0 0 3px var(--focus-ring);
 }

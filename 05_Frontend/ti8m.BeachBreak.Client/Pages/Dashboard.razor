@@ -77,7 +77,7 @@ else if (dashboard != null)
     <!-- Urgent Assignments Section -->
     @if (dashboard.UrgentAssignments.Any())
     {
-        <RadzenCard Class="rz-mb-4">
+        <div class="rz-mb-4">
             <div class="d-flex align-items-center rz-mb-3">
                 <RadzenIcon Icon="warning" Style="color: #ff6b6b; font-size: 1.5rem; margin-right: 0.5rem;" />
                 <RadzenText TextStyle="TextStyle.H5" Class="mb-0">Urgent Assignments</RadzenText>
@@ -126,7 +126,7 @@ else if (dashboard != null)
                     </RadzenCard>
                 </Template>
             </RadzenDataList>
-        </RadzenCard>
+        </div>
     }
     else
     {

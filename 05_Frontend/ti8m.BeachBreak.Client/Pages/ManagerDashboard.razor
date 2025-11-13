@@ -137,7 +137,7 @@
         @if (dashboard.UrgentAssignments.Any())
         {
             <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Urgent Assignments</RadzenText>
-            <RadzenCard>
+            <div class="rz-background-color-base-100 rz-p-4 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                 <RadzenDataList Data="@dashboard.UrgentAssignments" TItem="TeamUrgentAssignmentDto" AllowPaging="true" PageSize="5">
                     <Template Context="assignment">
                         <RadzenCard Class="rz-shadow-0 rz-border-base-300" Style="margin-bottom: 0.5rem;">
@@ -170,7 +170,7 @@
                         </RadzenCard>
                     </Template>
                 </RadzenDataList>
-            </RadzenCard>
+            </div>
         }
         else if (dashboard.TeamMembers.Any())
         {

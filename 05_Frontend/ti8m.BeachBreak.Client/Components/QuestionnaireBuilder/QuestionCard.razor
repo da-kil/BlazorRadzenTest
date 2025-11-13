@@ -139,7 +139,7 @@
                         var sectionIndex = i;
                         var textSection = textSections[sectionIndex];
 
-                        <RadzenCard Class="text-section-item mb-2 p-3 border border-text-response">
+                        <div class="text-section-item rz-background-color-base-100 rz-p-3 rz-mb-2 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-text-response">
                                     Text Section @(sectionIndex + 1)
@@ -197,7 +197,7 @@
                                                Rows="2"
                                                Class="w-100" />
                             </div>
-                        </RadzenCard>
+                        </div>
                     }
                 }
             </div>

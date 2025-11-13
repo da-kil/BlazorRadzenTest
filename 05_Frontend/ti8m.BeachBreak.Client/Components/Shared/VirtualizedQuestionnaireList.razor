@@ -3,7 +3,7 @@
 @using ti8m.BeachBreak.Client.Services.Enhanced
 @inherits OptimizedComponentBase
 
-<div class="virtualized-list" style="height: @ContainerHeight; overflow-y: auto;" @onscroll="HandleScroll">
+<div class="virtualized-list-optimized" style="height: @ContainerHeight; overflow-y: auto;" @onscroll="HandleScroll" @onscroll:throttle="true">
     @if (isLoading)
     {
         <div class="d-flex justify-content-center align-items-center" style="height: 200px;">

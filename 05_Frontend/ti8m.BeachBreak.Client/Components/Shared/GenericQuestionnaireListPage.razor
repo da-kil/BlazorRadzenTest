@@ -14,7 +14,7 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <RadzenCard Class="mb-4">
+            <div class="page-container mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
@@ -42,12 +42,12 @@
                 </div>
 
                 <!-- Stats Cards -->
-                <StatsCardGrid Stats="@GetStatsCards()" Columns="@Configuration.StatsConfig.Columns" />
+                <StatsCardGrid Stats="@GetStatsCards()" Columns="@Configuration.StatsConfig.Columns" UseCards="false" />
 
                 <!-- Filters -->
                 @if (Configuration.Filters.Any(f => f.IsVisible))
                 {
-                    <RadzenCard Class="mb-4">
+                    <div class="rz-background-color-base-200 rz-p-3 rz-mb-4 rz-border-radius-3">
                         <div class="row align-items-center">
                             @foreach (var filter in Configuration.Filters.Where(f => f.IsVisible))
                             {
@@ -56,7 +56,7 @@
                                 </div>
                             }
                         </div>
-                    </RadzenCard>
+                    </div>
                 }
 
                 <!-- Tab Content -->
@@ -70,7 +70,7 @@
                         }
                     </Tabs>
                 </RadzenTabs>
-            </RadzenCard>
+            </div>
         </div>
     </div>
 </div>
@@ -638,7 +638,7 @@
                 <div class="department-overview-container">
                     @foreach (var dept in departmentGroups)
                     {
-                        <RadzenCard Class="mb-4">
+                        <div class="department-container rz-background-color-base-100 rz-p-4 rz-mb-4 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                             <!-- Department Header -->
                             <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
                                 <div>
@@ -725,7 +725,7 @@
                                     </RadzenText>
                                 </div>
                             }
-                        </RadzenCard>
+                        </div>
                     }
                 </div>
             }

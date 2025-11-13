@@ -46,19 +46,19 @@
 				@switch (currentStatus)
 				{
 					case TemplateStatus.Draft:
-						<AsyncButton Text="Clone" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" Disabled="@IsSaving" />
-						<AsyncButton Text="Save" ProcessingText="Saving" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@OnSave" Disabled="@IsSaving" />
-						<AsyncButton Text="Publish" ProcessingText="Publishing" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@OnPublish" Disabled="@IsSaving" />
-						<AsyncButton Text="Archive" ProcessingText="Archiving" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" Disabled="@IsSaving" />
+						<StandardizedButton Action="StandardizedButton.ButtonAction.Clone" Click="@OnClone" Disabled="@IsSaving" />
+						<StandardizedButton Action="StandardizedButton.ButtonAction.Save" ProcessingText="Saving" Click="@OnSave" Disabled="@IsSaving" />
+						<StandardizedButton Action="StandardizedButton.ButtonAction.Publish" ProcessingText="Publishing" Click="@OnPublish" Disabled="@IsSaving" />
+						<StandardizedButton Action="StandardizedButton.ButtonAction.Archive" ProcessingText="Archiving" Click="@OnArchive" Disabled="@IsSaving" />
 						break;
 					case TemplateStatus.Published:
-						<AsyncButton Text="Clone" ProcessingText="Cloning" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" />
-						<AsyncButton Text="Unpublish" ProcessingText="Unpublishing" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@OnUnpublish" />
-						<AsyncButton Text="Archive" ProcessingText="Archiving" ButtonStyle="ButtonStyle.Light" Icon="archive" Click="@OnArchive" />
+						<StandardizedButton Action="StandardizedButton.ButtonAction.Clone" ProcessingText="Cloning" Click="@OnClone" />
+						<StandardizedButton Action="StandardizedButton.ButtonAction.Unpublish" ProcessingText="Unpublishing" Click="@OnUnpublish" />
+						<StandardizedButton Action="StandardizedButton.ButtonAction.Archive" ProcessingText="Archiving" Click="@OnArchive" />
 						break;
 					case TemplateStatus.Archived:
-						<AsyncButton Text="Clone" ProcessingText="Cloning" ButtonStyle="ButtonStyle.Info" Icon="content_copy" Click="@OnClone" />
-						<AsyncButton Text="Restore" ProcessingText="Restoring" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@OnRestore" />
+						<StandardizedButton Action="StandardizedButton.ButtonAction.Clone" ProcessingText="Cloning" Click="@OnClone" />
+						<StandardizedButton Action="StandardizedButton.ButtonAction.Restore" ProcessingText="Restoring" Click="@OnRestore" />
 						break;
 				}
 			</div>

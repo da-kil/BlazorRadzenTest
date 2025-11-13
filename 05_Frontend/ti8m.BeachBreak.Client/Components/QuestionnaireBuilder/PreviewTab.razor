@@ -157,17 +157,17 @@
     {
         <!-- Template Information Cards -->
         <div class="info-cards-grid">
-            <RadzenCard>
+            <div class="info-card rz-background-color-base-100 rz-p-3 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                 <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Template Name</h3>
                 <p style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;">@Template.Name</p>
-            </RadzenCard>
+            </div>
 
-            <RadzenCard>
+            <div class="info-card rz-background-color-base-100 rz-p-3 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                 <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Category</h3>
                 <p style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;">@GetCategoryName()</p>
-            </RadzenCard>
+            </div>
 
-            <RadzenCard>
+            <div class="info-card rz-background-color-base-100 rz-p-3 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                 <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Review Required</h3>
                 <div style="margin-top: 0.25rem;">
                     @if (Template.RequiresManagerReview)
@@ -185,15 +185,15 @@
                         </span>
                     }
                 </div>
-            </RadzenCard>
+            </div>
         </div>
 
         @if (!string.IsNullOrWhiteSpace(Template.Description))
         {
-            <RadzenCard style="margin-bottom: 2rem;">
+            <div class="info-card rz-background-color-base-100 rz-p-3 rz-border-radius-3" style="border: 1px solid var(--rz-base-300); margin-bottom: 2rem;">
                 <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Description</h3>
                 <p style="margin: 0; font-size: 1rem; color: #374151; line-height: 1.6;">@Template.Description</p>
-            </RadzenCard>
+            </div>
         }
 
         <!-- Aggregate Statistics -->
