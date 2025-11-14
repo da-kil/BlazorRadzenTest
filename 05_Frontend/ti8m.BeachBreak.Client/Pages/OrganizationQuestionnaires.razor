@@ -6,10 +6,13 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using System.Text
 @inherits BaseQuestionnaireListPage
 @inject IHRQuestionnaireService HRQuestionnaireService
 @inject IOrganizationApiService OrganizationService
 @inject IQuestionnaireTemplateService TemplateService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 
 <PageTitle>Organization Questionnaires</PageTitle>
 
@@ -80,11 +83,136 @@ else if (isLoading)
 
 	private async Task ExportOrganizationReport()
 	{
-		ShowInfo("Organization report export functionality would be implemented here");
+		try
+		{
+			ShowInfo("Generating organization report...");
+
+			// Generate export data
+			var exportData = GenerateOrganizationReportData();
+
+			// Create CSV content
+			var csvContent = GenerateCSVContent(exportData);
+
+			// Download file
+			var fileName = $"Organization_Questionnaires_Report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv";
+			DownloadFile(csvContent, fileName, "text/csv");
+
+			ShowSuccess($"Report exported successfully: {fileName}");
+		}
+		catch (Exception ex)
+		{
+			ShowWarning($"Failed to export report: {ex.Message}");
+		}
 	}
 
-	private async Task OpenAnalyticsDashboard()
+	private Task OpenAnalyticsDashboard()
 	{
-		ShowInfo("Analytics dashboard functionality would be implemented here");
+		// Guide user to analytics tab instead of programmatic navigation
+		ShowInfo("Please click on the 'Analytics & Insights' tab above to view the dashboard");
+		return Task.CompletedTask;
+	}
+
+	private OrganizationReportData GenerateOrganizationReportData()
+	{
+		var now = DateTime.Now;
+
+		var reportData = new OrganizationReportData
+		{
+			GeneratedDate = now,
+			TotalEmployees = allEmployees.Count,
+			TotalAssignments = allAssignments.Count,
+			CompletedAssignments = allAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized),
+			PendingAssignments = allAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized &&
+										(!a.DueDate.HasValue || a.DueDate.Value >= now)),
+			OverdueAssignments = allAssignments.Count(a => a.DueDate.HasValue &&
+										a.DueDate.Value < now &&
+										a.WorkflowState != WorkflowState.Finalized),
+			EmployeeDetails = allEmployees.Select(emp =>
+			{
+				var empAssignments = allAssignments.Where(a => a.EmployeeId == emp.Id).ToList();
+				return new EmployeeReportData
+				{
+					EmployeeId = emp.Id,
+					EmployeeName = $"{emp.FirstName} {emp.LastName}",
+					Email = emp.EMail,
+					Department = emp.Organization ?? "Unknown",
+					Role = emp.ApplicationRole.ToString(),
+					TotalAssignments = empAssignments.Count,
+					CompletedAssignments = empAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized),
+					PendingAssignments = empAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized &&
+										(!a.DueDate.HasValue || a.DueDate.Value >= now)),
+					OverdueAssignments = empAssignments.Count(a => a.DueDate.HasValue &&
+										a.DueDate.Value < now &&
+										a.WorkflowState != WorkflowState.Finalized),
+					CompletionPercentage = empAssignments.Any()
+						? Math.Round((double)empAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized) / empAssignments.Count * 100, 1)
+						: 0
+				};
+			}).OrderBy(e => e.EmployeeName).ToList()
+		};
+
+		return reportData;
+	}
+
+	private string GenerateCSVContent(OrganizationReportData data)
+	{
+		var sb = new StringBuilder();
+
+		// Header information
+		sb.AppendLine($"Organization Questionnaires Report");
+		sb.AppendLine($"Generated: {data.GeneratedDate:yyyy-MM-dd HH:mm:ss}");
+		sb.AppendLine($"Total Employees: {data.TotalEmployees}");
+		sb.AppendLine($"Total Assignments: {data.TotalAssignments}");
+		sb.AppendLine($"Completed: {data.CompletedAssignments}");
+		sb.AppendLine($"Pending: {data.PendingAssignments}");
+		sb.AppendLine($"Overdue: {data.OverdueAssignments}");
+		sb.AppendLine($"Overall Completion Rate: {(data.TotalAssignments > 0 ? Math.Round((double)data.CompletedAssignments / data.TotalAssignments * 100, 1) : 0):F1}%");
+		sb.AppendLine();
+
+		// Employee details header
+		sb.AppendLine("Employee Name,Email,Department,Role,Total Assignments,Completed,Pending,Overdue,Completion %");
+
+		// Employee data rows
+		foreach (var employee in data.EmployeeDetails)
+		{
+			sb.AppendLine($"\"{employee.EmployeeName}\",\"{employee.Email}\",\"{employee.Department}\",\"{employee.Role}\",{employee.TotalAssignments},{employee.CompletedAssignments},{employee.PendingAssignments},{employee.OverdueAssignments},{employee.CompletionPercentage:F1}%");
+		}
+
+		return sb.ToString();
+	}
+
+	private void DownloadFile(string content, string fileName, string contentType)
+	{
+		var bytes = Encoding.UTF8.GetBytes(content);
+		var base64 = Convert.ToBase64String(bytes);
+		var dataUri = $"data:{contentType};base64,{base64}";
+
+		// Simple data URI download - opens in new tab, user can save
+		Navigation.NavigateTo(dataUri, true);
+	}
+
+	public class OrganizationReportData
+	{
+		public DateTime GeneratedDate { get; set; }
+		public int TotalEmployees { get; set; }
+		public int TotalAssignments { get; set; }
+		public int CompletedAssignments { get; set; }
+		public int PendingAssignments { get; set; }
+		public int OverdueAssignments { get; set; }
+		public List<EmployeeReportData> EmployeeDetails { get; set; } = new();
+	}
+
+	public class EmployeeReportData
+	{
+		public Guid EmployeeId { get; set; }
+		public string EmployeeName { get; set; } = "";
+		public string Email { get; set; } = "";
+		public string Department { get; set; } = "";
+		public string Role { get; set; } = "";
+		public int TotalAssignments { get; set; }
+		public int CompletedAssignments { get; set; }
+		public int PendingAssignments { get; set; }
+		public int OverdueAssignments { get; set; }
+		public double CompletionPercentage { get; set; }
 	}
 }

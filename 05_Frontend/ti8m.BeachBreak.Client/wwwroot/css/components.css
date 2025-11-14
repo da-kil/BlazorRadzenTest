@@ -1080,3 +1080,172 @@
     font-weight: bold;
     opacity: 0.7;
 }
+
+/* =============================================
+   QUESTIONNAIRE LIST COMPONENTS - Clickability Improvements
+   ============================================= */
+
+/* Date Range Preset Badge Enhancement */
+.date-preset-badge {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    user-select: none;
+}
+
+.date-preset-badge:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: var(--rz-primary-lighter, #93c5fd);
+}
+
+.date-preset-badge.active:hover {
+    box-shadow: 0 4px 16px rgba(var(--rz-primary-rgb, 59, 130, 246), 0.4);
+    border-color: var(--rz-primary, #3b82f6);
+}
+
+.date-preset-badge:active {
+    transform: translateY(-1px) scale(1.01);
+    transition: all 0.1s ease;
+}
+
+/* Team Member Card Interactive Elements */
+.team-member-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.team-member-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    border-left-width: 4px !important;
+}
+
+/* Assignment Row Hover Effects */
+.assignment-row {
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.assignment-row::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--rz-primary-rgb, 59, 130, 246), 0.08), transparent);
+    transition: left 0.3s ease;
+}
+
+.assignment-row:hover::before {
+    left: 100%;
+}
+
+.assignment-row:hover {
+    background-color: var(--rz-background-color-lighter, rgba(0, 0, 0, 0.02));
+    transform: translateX(4px);
+}
+
+.assignment-row:active {
+    transform: translateX(2px);
+    transition: all 0.1s ease;
+}
+
+/* Hover Background Utility */
+.hover-bg {
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.hover-bg:hover {
+    background-color: var(--rz-background-color-lighter, rgba(0, 0, 0, 0.03));
+}
+
+/* Action Button Hover Visibility */
+.hover-visible {
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.team-member-item:hover .hover-visible,
+.assignment-row:hover .hover-visible {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.hover-visible:hover {
+    opacity: 1 !important;
+    transform: scale(1.2) !important;
+    background-color: var(--rz-background-color-light, rgba(0, 0, 0, 0.05)) !important;
+}
+
+/* Status Badge Enhancements for Better Clickability */
+.rz-badge {
+    transition: all 0.15s ease;
+}
+
+.rz-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Pulse Animation for Overdue Items */
+@keyframes pulse-overdue {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+    }
+}
+
+.assignment-row:has(.text-danger) {
+    animation: pulse-overdue 2s infinite;
+}
+
+/* Enhanced Focus States for Accessibility */
+.date-preset-badge:focus-visible,
+.assignment-row:focus-visible,
+.team-member-item:focus-visible {
+    outline: 2px solid var(--rz-primary, #3b82f6);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) {
+    .date-preset-badge:hover,
+    .assignment-row:hover,
+    .team-member-item:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .date-preset-badge:active,
+    .assignment-row:active,
+    .team-member-item:active {
+        transform: scale(0.98);
+        opacity: 0.8;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .date-preset-badge,
+    .assignment-row,
+    .team-member-item,
+    .hover-visible {
+        transition: none;
+        animation: none;
+    }
+
+    .date-preset-badge:hover,
+    .assignment-row:hover,
+    .team-member-item:hover {
+        transform: none;
+    }
+}
