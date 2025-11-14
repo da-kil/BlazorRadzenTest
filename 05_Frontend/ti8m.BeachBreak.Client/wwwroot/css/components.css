@@ -1249,3 +1249,48 @@
         transform: none;
     }
 }
+
+/* =============================================
+   ADVANCED FILTERS
+   ============================================= */
+
+.advanced-filters-container {
+    background: rgba(248, 249, 250, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--rz-border-radius, 8px);
+    padding: 1.25rem;
+    margin-top: 0.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.advanced-filters-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--rz-primary-lighter, #e3f2fd) 50%,
+        transparent 100%);
+}
+
+/* Responsive behavior for advanced filters */
+@media (max-width: 768px) {
+    .advanced-filters-container .d-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .advanced-filters-container > div > div {
+        min-width: auto !important;
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .advanced-filters-container .d-flex.gap-2 {
+        flex-direction: row !important;
+    }
+}

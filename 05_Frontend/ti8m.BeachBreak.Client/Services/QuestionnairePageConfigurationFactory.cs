@@ -125,36 +125,35 @@ public static class QuestionnairePageConfigurationFactory
                 },
                 new()
                 {
-                    Id = "template",
-                    Label = "Questionnaire Filter",
-                    Type = QuestionnaireFilterType.Template,
-                    IsVisible = true,
-                    TemplateOptions = allAssignments
-                        .GroupBy(a => new { a.TemplateId, a.TemplateName })
-                        .Select(g => new QuestionnaireTemplateOption
-                        {
-                            Id = g.Key.TemplateId,
-                            Name = g.Key.TemplateName
-                        })
-                        .OrderBy(t => t.Name)
-                        .ToList()
-                },
-                new()
-                {
-                    Id = "status",
-                    Label = "Status Filter",
-                    Type = QuestionnaireFilterType.Status,
-                    IsVisible = true,
-                    Options = new List<string> { "All", "Pending", "In Progress", "Completed", "Overdue" }
-                },
-                new()
-                {
                     Id = "category",
-                    Label = "Category Filter",
+                    Label = "Filter by Category",
                     Type = QuestionnaireFilterType.Category,
                     IsVisible = categories.Count > 0,
                     Options = categories.Select(c => c.NameEn).ToList(),
                     CategoryOptions = categories
+                },
+                new()
+                {
+                    Id = "status",
+                    Label = "Filter by Status",
+                    Type = QuestionnaireFilterType.Status,
+                    IsVisible = true,
+                    Options = new List<string>
+                    {
+                        "Assigned",
+                        "In Progress",
+                        "Submitted",
+                        "In Review",
+                        "Finalized",
+                        "Overdue"
+                    }
+                },
+                new()
+                {
+                    Id = "dateRange",
+                    Label = "Filter by Due Date",
+                    Type = QuestionnaireFilterType.DateRange,
+                    IsVisible = true
                 }
             },
 
@@ -283,22 +282,6 @@ public static class QuestionnairePageConfigurationFactory
                 },
                 new()
                 {
-                    Id = "template",
-                    Label = "Questionnaire Filter",
-                    Type = QuestionnaireFilterType.Template,
-                    IsVisible = true,
-                    TemplateOptions = allAssignments
-                        .GroupBy(a => new { a.TemplateId, a.TemplateName })
-                        .Select(g => new QuestionnaireTemplateOption
-                        {
-                            Id = g.Key.TemplateId,
-                            Name = g.Key.TemplateName
-                        })
-                        .OrderBy(t => t.Name)
-                        .ToList()
-                },
-                new()
-                {
                     Id = "department",
                     Label = "Organization Filter",
                     Type = QuestionnaireFilterType.Department,
@@ -311,16 +294,8 @@ public static class QuestionnairePageConfigurationFactory
                 },
                 new()
                 {
-                    Id = "status",
-                    Label = "Status Filter",
-                    Type = QuestionnaireFilterType.Status,
-                    IsVisible = true,
-                    Options = new List<string> { "All", "Assigned", "In Progress", "Completed", "Overdue" }
-                },
-                new()
-                {
                     Id = "category",
-                    Label = "Category Filter",
+                    Label = "Filter by Category",
                     Type = QuestionnaireFilterType.Category,
                     IsVisible = categories.Count > 0,
                     Options = categories.Select(c => c.NameEn).ToList(),
@@ -328,8 +303,36 @@ public static class QuestionnairePageConfigurationFactory
                 },
                 new()
                 {
-                    Id = "daterange",
-                    Label = "Date Range",
+                    Id = "template",
+                    Label = "Filter by Questionnaire",
+                    Type = QuestionnaireFilterType.Template,
+                    IsVisible = allTemplates.Count > 0,
+                    TemplateOptions = allTemplates.Select(t => new QuestionnaireTemplateOption
+                    {
+                        Id = t.Id,
+                        Name = t.Name
+                    }).ToList()
+                },
+                new()
+                {
+                    Id = "status",
+                    Label = "Filter by Status",
+                    Type = QuestionnaireFilterType.Status,
+                    IsVisible = true,
+                    Options = new List<string>
+                    {
+                        "Assigned",
+                        "In Progress",
+                        "Submitted",
+                        "In Review",
+                        "Finalized",
+                        "Overdue"
+                    }
+                },
+                new()
+                {
+                    Id = "dateRange",
+                    Label = "Filter by Due Date",
                     Type = QuestionnaireFilterType.DateRange,
                     IsVisible = true
                 }
