@@ -14,11 +14,16 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<!-- Page Header -->
-<div class="mb-4">
-    <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-2">Dashboard</RadzenText>
-    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Overview of your questionnaire assignments</RadzenText>
-</div>
+<main class="page-container">
+    <header class="page-header rz-mb-4">
+        <h1 class="page-title">
+            <RadzenIcon Icon="dashboard" Class="page-icon rz-me-2" />
+            <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-2">Dashboard</RadzenText>
+        </h1>
+        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Overview of your questionnaire assignments</RadzenText>
+    </header>
+
+    <section class="dashboard-content">
 
 @if (isLoading)
 {
@@ -33,44 +38,29 @@ else if (dashboard != null)
     <RadzenRow Gap="1rem" Class="rz-mb-4">
         <!-- Pending Card -->
         <RadzenColumn Size="12" SizeMD="4">
-            <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer;"
-                        @onclick="@(() => NavigateToMyQuestionnaires())">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Pending</RadzenText>
-                        <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.PendingCount</RadzenText>
-                    </div>
-                    <RadzenIcon Icon="pending_actions" Style="font-size: 3rem; opacity: 0.3;" />
-                </div>
-            </RadzenCard>
+            <MetricCard Title="Pending"
+                       Value="@dashboard.PendingCount.ToString()"
+                       Icon="pending_actions"
+                       Type="MetricType.Pending"
+                       OnClick="@(() => NavigateToMyQuestionnaires())" />
         </RadzenColumn>
 
         <!-- In Progress Card -->
         <RadzenColumn Size="12" SizeMD="4">
-            <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; cursor: pointer;"
-                        @onclick="@(() => NavigateToMyQuestionnaires())">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">In Progress</RadzenText>
-                        <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.InProgressCount</RadzenText>
-                    </div>
-                    <RadzenIcon Icon="edit_note" Style="font-size: 3rem; opacity: 0.3;" />
-                </div>
-            </RadzenCard>
+            <MetricCard Title="In Progress"
+                       Value="@dashboard.InProgressCount.ToString()"
+                       Icon="edit_note"
+                       Type="MetricType.Progress"
+                       OnClick="@(() => NavigateToMyQuestionnaires())" />
         </RadzenColumn>
 
         <!-- Completed Card -->
         <RadzenColumn Size="12" SizeMD="4">
-            <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; cursor: pointer;"
-                        @onclick="@(() => NavigateToMyQuestionnaires())">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Completed</RadzenText>
-                        <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.CompletedCount</RadzenText>
-                    </div>
-                    <RadzenIcon Icon="check_circle" Style="font-size: 3rem; opacity: 0.3;" />
-                </div>
-            </RadzenCard>
+            <MetricCard Title="Completed"
+                       Value="@dashboard.CompletedCount.ToString()"
+                       Icon="check_circle"
+                       Type="MetricType.Completed"
+                       OnClick="@(() => NavigateToMyQuestionnaires())" />
         </RadzenColumn>
     </RadzenRow>
 
@@ -214,3 +204,6 @@ else
         return (int)Math.Ceiling(timeSpan.TotalDays);
     }
 }
+
+    </section>
+</main>

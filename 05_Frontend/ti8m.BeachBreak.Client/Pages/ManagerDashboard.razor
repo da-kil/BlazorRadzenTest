@@ -1,13 +1,23 @@
 @page "/manager-dashboard"
 @using Microsoft.AspNetCore.Authorization
+@using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
 @inject IManagerQuestionnaireService ManagerService
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = "TeamLead")]
 
-<RadzenStack Gap="1.5rem">
-    <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">Manager Dashboard</RadzenText>
+<main class="page-container">
+    <header class="page-header">
+        <h1 class="page-title">
+            <RadzenIcon Icon="supervisor_account" Class="page-icon rz-me-2" />
+            <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">Manager Dashboard</RadzenText>
+        </h1>
+    </header>
+
+    <section class="dashboard-content">
+        <RadzenStack Gap="1.5rem">
 
     @if (isLoading)
     {
@@ -30,54 +40,34 @@
         <RadzenText TextStyle="TextStyle.H5" Class="rz-mb-2">Team Overview</RadzenText>
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="3">
-                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; cursor: pointer;"
-                            @onclick="@(() => NavigateToTeamQuestionnaires())">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Team Pending</RadzenText>
-                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TeamPendingCount</RadzenText>
-                        </div>
-                        <RadzenIcon Icon="pending_actions" Style="font-size: 3rem; opacity: 0.3;" />
-                    </div>
-                </RadzenCard>
+                <MetricCard Title="Team Pending"
+                           Value="@dashboard.TeamPendingCount.ToString()"
+                           Icon="pending_actions"
+                           Type="MetricType.Pending"
+                           OnClick="@(() => NavigateToTeamQuestionnaires())" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; cursor: pointer;"
-                            @onclick="@(() => NavigateToTeamQuestionnaires())">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Team In Progress</RadzenText>
-                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TeamInProgressCount</RadzenText>
-                        </div>
-                        <RadzenIcon Icon="hourglass_top" Style="font-size: 3rem; opacity: 0.3;" />
-                    </div>
-                </RadzenCard>
+                <MetricCard Title="Team In Progress"
+                           Value="@dashboard.TeamInProgressCount.ToString()"
+                           Icon="hourglass_top"
+                           Type="MetricType.Progress"
+                           OnClick="@(() => NavigateToTeamQuestionnaires())" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white; cursor: pointer;"
-                            @onclick="@(() => NavigateToTeamQuestionnaires())">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Team Completed</RadzenText>
-                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TeamCompletedCount</RadzenText>
-                        </div>
-                        <RadzenIcon Icon="check_circle" Style="font-size: 3rem; opacity: 0.3;" />
-                    </div>
-                </RadzenCard>
+                <MetricCard Title="Team Completed"
+                           Value="@dashboard.TeamCompletedCount.ToString()"
+                           Icon="check_circle"
+                           Type="MetricType.Completed"
+                           OnClick="@(() => NavigateToTeamQuestionnaires())" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Team Members</RadzenText>
-                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TeamMemberCount</RadzenText>
-                        </div>
-                        <RadzenIcon Icon="group" Style="font-size: 3rem; opacity: 0.3;" />
-                    </div>
-                </RadzenCard>
+                <MetricCard Title="Team Members"
+                           Value="@dashboard.TeamMemberCount.ToString()"
+                           Icon="group"
+                           Type="MetricType.Info" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -184,7 +174,10 @@
             Last updated: @dashboard.LastUpdated.ToString("MMM dd, yyyy HH:mm")
         </RadzenText>
     }
-</RadzenStack>
+
+        </RadzenStack>
+    </section>
+</main>
 
 @code {
     private ManagerDashboardDto? dashboard;
