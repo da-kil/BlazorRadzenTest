@@ -8,8 +8,8 @@
 @inject NavigationManager NavigationManager
 @inject DialogService DialogService
 @inject NotificationService NotificationService
-@inject IQuestionnaireAssignmentService AssignmentService
 @inject IJSRuntime JSRuntime
+@inject IQuestionnaireAssignmentService AssignmentService
 @inherits OptimizedComponentBase
 
 <div class="container-fluid">
@@ -64,23 +64,30 @@
                     @if (departmentFilterConfig != null && departmentFilterConfig.IsVisible)
                     {
                         <div style="min-width: 200px;">
-                            <RadzenDropDown @bind-Value="departmentFilter"
+                            <RadzenDropDown Value="@departmentFilter"
                                            Data="@GetDepartmentFilterOptions()"
                                            Placeholder="Select Organization..."
                                            AllowClear="true"
                                            Multiple="true"
-                                           Change="@ApplyFilters"
+                                           ValueChanged="@((IEnumerable<string> value) => OnDepartmentFilterChanged(value))"
                                            Style="width: 100%;" />
                         </div>
                     }
 
-                    <!-- Advanced Filters Toggle -->
-                    <RadzenButton Text="@(showAdvancedFilters ? "Hide Filters" : "Advanced Filters")"
-                                 Icon="@(showAdvancedFilters ? "expand_less" : "expand_more")"
-                                 ButtonStyle="ButtonStyle.Light"
-                                 Size="ButtonSize.Small"
-                                 Click="@ToggleAdvancedFilters"
-                                 Style="white-space: nowrap;" />
+                    <!-- Advanced Filters Toggle - SUPER DEBUG MODE -->
+                    <button type="button"
+                            id="advanced-filters-toggle"
+                            class="btn btn-light btn-sm"
+                            @onclick="SuperDebugToggle"
+                            @onclick:preventDefault="true"
+                            @onclick:stopPropagation="true"
+                            @onmousedown="OnMouseDown"
+                            @onmouseup="OnMouseUp"
+                            data-render-key="@renderKey"
+                            style="white-space: nowrap; background-color: @(showAdvancedFilters ? "lightgreen" : "lightcoral"); border: 3px solid @(showAdvancedFilters ? "darkgreen" : "darkred");">
+                        <i class="material-icons">@(showAdvancedFilters ? "expand_less" : "expand_more")</i>
+                        @(showAdvancedFilters ? "HIDE" : "SHOW") [@showAdvancedFilters] clicks:@clickCount key:@renderKey
+                    </button>
 
                     <!-- Clear Filters -->
                     @if (HasActiveFilters())
@@ -93,10 +100,11 @@
                     }
                 </div>
 
-                <!-- Collapsible Advanced Filters -->
-                @if (showAdvancedFilters)
-                {
-                    <div class="advanced-filters-container mb-4">
+                <!-- Collapsible Advanced Filters - Debug visibility -->
+                <div class="advanced-filters-container mb-4"
+                     data-render-key="@renderKey"
+                     style="@(showAdvancedFilters ? "display: block; border: 2px solid green;" : "display: none; border: 2px solid red;")"
+                     title="showAdvancedFilters = @showAdvancedFilters key = @renderKey">
                         <div class="d-flex flex-wrap gap-3 align-items-center">
                             <!-- Category Filter -->
                             @{
@@ -105,12 +113,12 @@
                             @if (categoryFilterConfig != null && categoryFilterConfig.IsVisible)
                             {
                                 <div style="min-width: 180px;">
-                                    <RadzenDropDown @bind-Value="categoryFilter"
+                                    <RadzenDropDown Value="@categoryFilter"
                                                    Data="@categoryFilterConfig.Options"
                                                    Placeholder="All Categories"
                                                    AllowClear="true"
                                                    Multiple="true"
-                                                   Change="@ApplyFilters"
+                                                   ValueChanged="@((IEnumerable<string> value) => OnCategoryFilterChanged(value))"
                                                    Style="width: 100%;" />
                                 </div>
                             }
@@ -122,14 +130,14 @@
                             @if (templateFilterConfig != null && templateFilterConfig.IsVisible)
                             {
                                 <div style="min-width: 200px;">
-                                    <RadzenDropDown @bind-Value="templateFilter"
+                                    <RadzenDropDown Value="@templateFilter"
                                                    Data="@templateFilterConfig.TemplateOptions"
                                                    TextProperty="Name"
                                                    ValueProperty="Id"
                                                    Placeholder="All Questionnaires"
                                                    AllowClear="true"
                                                    Multiple="true"
-                                                   Change="@ApplyFilters"
+                                                   ValueChanged="@((IEnumerable<Guid> value) => OnTemplateFilterChanged(value))"
                                                    Style="width: 100%;" />
                                 </div>
                             }
@@ -141,12 +149,12 @@
                             @if (statusFilterConfig != null && statusFilterConfig.IsVisible)
                             {
                                 <div style="min-width: 200px;">
-                                    <RadzenDropDown @bind-Value="statusFilters"
+                                    <RadzenDropDown Value="@statusFilters"
                                                    Data="@statusFilterConfig.Options"
                                                    Placeholder="All Statuses"
                                                    AllowClear="true"
                                                    Multiple="true"
-                                                   Change="@ApplyFilters"
+                                                   ValueChanged="@((IEnumerable<string> value) => OnStatusFilterChanged(value))"
                                                    Style="width: 100%;" />
                                 </div>
                             }
@@ -158,21 +166,20 @@
                             @if (dateRangeFilterConfig != null && dateRangeFilterConfig.IsVisible)
                             {
                                 <div class="d-flex gap-2" style="min-width: 300px;">
-                                    <RadzenDatePicker @bind-Value="dateRangeFrom"
+                                    <RadzenDatePicker Value="@dateRangeFrom"
                                                      Placeholder="From Date"
                                                      Style="width: 100%;"
                                                      DateFormat="MM/dd/yyyy"
-                                                     Change="@ApplyFilters" />
-                                    <RadzenDatePicker @bind-Value="dateRangeTo"
+                                                     ValueChanged="@((DateTime? value) => OnDateFromFilterChanged(value))" />
+                                    <RadzenDatePicker Value="@dateRangeTo"
                                                      Placeholder="To Date"
                                                      Style="width: 100%;"
                                                      DateFormat="MM/dd/yyyy"
-                                                     Change="@ApplyFilters" />
+                                                     ValueChanged="@((DateTime? value) => OnDateToFilterChanged(value))" />
                                 </div>
                             }
                         </div>
-                    </div>
-                }
+                </div>
 
                 <!-- Tab Content -->
                 <RadzenTabs @bind-SelectedIndex="SelectedTabIndex">
@@ -221,10 +228,18 @@
 
     // Advanced filters state
     private bool showAdvancedFilters = false;
+    private int clickCount = 0;
+    private string renderKey = Guid.NewGuid().ToString("N")[..8]; // Force re-render key
 
     // Search debouncing
     private CancellationTokenSource? searchCancellationTokenSource;
     private const int SearchDebounceMs = 300; // Wait 300ms after last keystroke
+
+    // Filter debouncing for multi-select operations
+    private CancellationTokenSource? filterCancellationTokenSource;
+    private const int FilterDebounceMs = 150; // Wait 150ms after last filter change
+
+    // Toggle is now handled by isolated component - no re-entrancy guard needed
 
     // Department expansion state
     private HashSet<Guid> expandedDepartments = new();
@@ -1366,7 +1381,7 @@
             // Apply filters on the UI thread
             await InvokeAsync(() =>
             {
-                ApplyFilters();
+                OnFilterChanged();
                 StateHasChanged();
             });
         }
@@ -1380,7 +1395,7 @@
     private void ClearSearch()
     {
         searchFilter = "";
-        ApplyFilters();
+        OnFilterChanged();
         StateHasChanged();
     }
 
@@ -1400,16 +1415,78 @@
     }
 
 
-    private void ApplyFilters()
+    // Individual filter change handlers that update fields and trigger filtering
+    private void OnDepartmentFilterChanged(IEnumerable<string> value)
     {
-        // Recompute filtered/sorted lists when filters change
-        UpdateFilteredTeamMembers();
+        departmentFilter = value;
+        OnFilterChanged();
+    }
 
-        // Save filter state to localStorage
-        _ = SaveFilterStateAsync(); // Fire and forget - don't block UI
+    private void OnCategoryFilterChanged(IEnumerable<string> value)
+    {
+        categoryFilter = value;
+        OnFilterChanged();
+    }
 
-        // Force immediate synchronous state change
-        StateHasChanged();
+    private void OnTemplateFilterChanged(IEnumerable<Guid> value)
+    {
+        templateFilter = value;
+        OnFilterChanged();
+    }
+
+    private void OnStatusFilterChanged(IEnumerable<string> value)
+    {
+        statusFilters = value;
+        OnFilterChanged();
+    }
+
+    private void OnDateFromFilterChanged(DateTime? value)
+    {
+        dateRangeFrom = value;
+        OnFilterChanged();
+    }
+
+    private void OnDateToFilterChanged(DateTime? value)
+    {
+        dateRangeTo = value;
+        OnFilterChanged();
+    }
+
+    private void OnFilterChanged()
+    {
+        // Cancel previous debounced filter operation
+        filterCancellationTokenSource?.Cancel();
+        filterCancellationTokenSource = new CancellationTokenSource();
+
+        // Use shorter debounce for manual binding (no conflicts)
+        _ = ApplyFiltersDebounced(filterCancellationTokenSource.Token);
+    }
+
+    private async Task ApplyFiltersDebounced(CancellationToken cancellationToken)
+    {
+        try
+        {
+            // Shorter delay since we're not competing with @bind-Value
+            await Task.Delay(50, cancellationToken);
+
+            // If we weren't cancelled, apply the filters
+            if (!cancellationToken.IsCancellationRequested)
+            {
+                // Recompute filtered/sorted lists when filters change
+                UpdateFilteredTeamMembers();
+
+                // Save filter state to localStorage
+                _ = SaveFilterStateAsync(); // Fire and forget - don't block UI
+
+                // Update UI to reflect filtered data changes
+                // The isolated toggle component should not be affected by this
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (TaskCanceledException)
+        {
+            // Expected when debouncing - ignore
+        }
     }
 
     private void UpdateFilteredTeamMembers()
@@ -1438,7 +1515,7 @@
         }
 
         // Apply department filter
-        if (departmentFilter.Any())
+        if (departmentFilter?.Any() == true)
         {
             var selectedOrgNumbers = departmentFilter.Select(ExtractOrganizationNumber).Where(x => x.HasValue).Select(x => x!.Value).ToList();
             if (selectedOrgNumbers.Any())
@@ -1474,7 +1551,7 @@
         }
 
         // Apply department filter (organization-based)
-        if (departmentFilter.Any())
+        if (departmentFilter?.Any() == true)
         {
             // Parse the selected organizations from "Number - Name" format
             var selectedOrgNumbers = departmentFilter.Select(ExtractOrganizationNumber).Where(x => x.HasValue).Select(x => x!.Value).ToList();
@@ -1492,7 +1569,7 @@
         }
 
         // Apply category filter
-        if (categoryFilter.Any())
+        if (categoryFilter?.Any() == true)
         {
             // Get category options from configuration
             var categoryFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
@@ -1514,14 +1591,14 @@
         }
 
         // Apply template filter
-        if (templateFilter.Any())
+        if (templateFilter?.Any() == true)
         {
             filteredAssignments = filteredAssignments.Where(a =>
                 templateFilter.Contains(a.TemplateId));
         }
 
         // Apply status filter
-        if (statusFilters.Any())
+        if (statusFilters?.Any() == true)
         {
             filteredAssignments = filteredAssignments.Where(a =>
                 statusFilters.Contains(a.WorkflowState.ToString()));
@@ -2370,13 +2447,69 @@
         dateRangeFrom = null;
         dateRangeTo = null;
 
-        ApplyFilters();
+        OnFilterChanged();
     }
 
-    private void ToggleAdvancedFilters()
+    private void OnMouseDown()
     {
+        Console.WriteLine($"MOUSEDOWN at {DateTime.Now:HH:mm:ss.fff}");
+    }
+
+    private void OnMouseUp()
+    {
+        Console.WriteLine($"MOUSEUP at {DateTime.Now:HH:mm:ss.fff}");
+    }
+
+    private async Task SuperDebugToggle()
+    {
+        clickCount++;
+        var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+
+        Console.WriteLine($"🚨 NUCLEAR OPTION [{timestamp}] METHOD ENTRY - Click #{clickCount}");
+        Console.WriteLine($"BEFORE: showAdvancedFilters = {showAdvancedFilters}");
+
+        // Toggle the state
+        var oldValue = showAdvancedFilters;
         showAdvancedFilters = !showAdvancedFilters;
-        StateHasChanged();
+        var newValue = showAdvancedFilters;
+        renderKey = Guid.NewGuid().ToString("N")[..8];
+
+        Console.WriteLine($"ASSIGNMENT: {oldValue} -> {newValue}");
+
+        // 🚨 NUCLEAR OPTION: Bypass Blazor entirely - Direct JavaScript DOM manipulation
+        var backgroundColor = newValue ? "lightgreen" : "lightcoral";
+        var borderColor = newValue ? "darkgreen" : "darkred";
+        var iconText = newValue ? "expand_less" : "expand_more";
+        var buttonText = $"{(newValue ? "HIDE" : "SHOW")} [{newValue}] clicks:{clickCount} key:{renderKey}";
+        var panelDisplay = newValue ? "block" : "none";
+        var panelBorderColor = newValue ? "green" : "red";
+
+        await JSRuntime.InvokeVoidAsync("eval", $@"
+console.log('🚨 DIRECT JS: Forcing DOM update for showAdvancedFilters = {newValue.ToString().ToLower()}');
+var button = document.getElementById('advanced-filters-toggle');
+if (button) {{
+    button.style.backgroundColor = '{backgroundColor}';
+    button.style.border = '3px solid {borderColor}';
+    var icon = button.querySelector('.material-icons');
+    if (icon) icon.textContent = '{iconText}';
+    var textNodes = button.childNodes;
+    for (var i = 0; i < textNodes.length; i++) {{
+        if (textNodes[i].nodeType === Node.TEXT_NODE) {{
+            textNodes[i].textContent = '{buttonText}';
+            break;
+        }}
+    }}
+}}
+var panel = document.querySelector('.advanced-filters-container');
+if (panel) {{
+    panel.style.display = '{panelDisplay}';
+    panel.style.border = '2px solid {panelBorderColor}';
+    console.log('🚨 DIRECT JS: Panel display set to ' + panel.style.display);
+}}
+console.log('🚨 DIRECT JS: DOM manipulation complete');");
+
+        Console.WriteLine($"🚨 NUCLEAR: JavaScript DOM manipulation executed");
+        Console.WriteLine($"🚨 NUCLEAR: Final state: {showAdvancedFilters}");
     }
 
     // Compact inline filter support methods
@@ -2568,7 +2701,7 @@
     private void OnTeamMemberSortChanged(string value)
     {
         teamMemberSortBy = value;
-        ApplyFilters();
+        OnFilterChanged();
     }
 
     private async void OnQuestionnaireSortChanged()

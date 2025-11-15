@@ -1,0 +1,21 @@
+@* Ultra-basic HTML button - no Radzen, no complications *@
+
+<button type="button"
+        class="btn btn-light btn-sm"
+        @onclick="HandleToggleClick"
+        style="white-space: nowrap;">
+    <i class="material-icons">@(IsExpanded ? "expand_less" : "expand_more")</i>
+    @(IsExpanded ? "Hide Filters" : "Advanced Filters")
+</button>
+
+@code {
+    [Parameter] public bool IsExpanded { get; set; }
+    [Parameter] public EventCallback<bool> IsExpandedChanged { get; set; }
+
+    private async Task HandleToggleClick()
+    {
+        IsExpanded = !IsExpanded;
+        await IsExpandedChanged.InvokeAsync(IsExpanded);
+        StateHasChanged();
+    }
+}
