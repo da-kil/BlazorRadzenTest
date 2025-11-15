@@ -67,20 +67,52 @@
     private bool showAdvancedFilters = false;
     private AdvancedFiltersPanel.AdvancedFilterState AdvancedFilters = new();
 
+    // Track state changes for optimization
+    private bool _lastShowAdvancedFilters = false;
+    private int _lastFiltersHash = 0;
+
     protected override void OnInitialized()
     {
         // Initialize advanced filters from current filters
         SyncAdvancedFilters();
+
+        // Initialize state tracking
+        _lastShowAdvancedFilters = showAdvancedFilters;
+        _lastFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
     }
 
     protected override void OnParametersSet()
     {
         // Sync advanced filters when parameters change
         SyncAdvancedFilters();
+
+        // Update state tracking
+        _lastFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
     }
 
-    // Disable parameter optimization to ensure toggle works properly
-    protected override bool EnableParameterOptimization => false;
+    /// <summary>
+    /// Override HasStateChanged to properly detect when internal state changes
+    /// This allows us to keep optimization enabled while ensuring proper re-rendering
+    /// </summary>
+    protected override bool HasStateChanged()
+    {
+        // Check if showAdvancedFilters toggle state changed
+        if (_lastShowAdvancedFilters != showAdvancedFilters)
+        {
+            _lastShowAdvancedFilters = showAdvancedFilters;
+            return true;
+        }
+
+        // Check if filter state changed
+        var currentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
+        if (_lastFiltersHash != currentFiltersHash)
+        {
+            _lastFiltersHash = currentFiltersHash;
+            return true;
+        }
+
+        return false;
+    }
 
     private void SyncAdvancedFilters()
     {
@@ -97,8 +129,8 @@
     private void ToggleAdvancedFilters()
     {
         showAdvancedFilters = !showAdvancedFilters;
-        Console.WriteLine($"ToggleAdvancedFilters called: showAdvancedFilters = {showAdvancedFilters}");
-        StateHasChanged();
+        // Use the optimized base class method for state change notification
+        NotifyStateChanged();
     }
 
     private async Task OnSearchInputChanged(ChangeEventArgs e)

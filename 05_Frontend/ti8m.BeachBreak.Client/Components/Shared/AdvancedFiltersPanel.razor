@@ -4,9 +4,6 @@
 @inherits OptimizedComponentBase
 
 <!-- Collapsible Advanced Filters Panel -->
-@{
-    Console.WriteLine($"AdvancedFiltersPanel render: IsExpanded = {IsExpanded}");
-}
 @if (IsExpanded)
 {
     <div class="advanced-filters-container mb-4">
@@ -88,10 +85,47 @@
 }
 
 @code {
+    // Track previous parameter values for proper change detection
+    private bool _lastIsExpanded;
+    private int _lastFiltersHash;
+
     [Parameter, EditorRequired] public bool IsExpanded { get; set; }
     [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
     [Parameter, EditorRequired] public AdvancedFilterState CurrentFilters { get; set; } = default!;
     [Parameter] public EventCallback OnFiltersChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        // Track parameter changes for optimization
+        _lastIsExpanded = IsExpanded;
+        _lastFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
+    }
+
+    /// <summary>
+    /// Override HasStateChanged to properly detect when parameters that affect rendering change
+    /// This allows us to keep optimization enabled while ensuring proper re-rendering
+    /// </summary>
+    protected override bool HasStateChanged()
+    {
+        // Check if IsExpanded parameter changed
+        if (_lastIsExpanded != IsExpanded)
+        {
+            _lastIsExpanded = IsExpanded;
+            return true;
+        }
+
+        // Check if filter state changed
+        var currentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
+        if (_lastFiltersHash != currentFiltersHash)
+        {
+            _lastFiltersHash = currentFiltersHash;
+            return true;
+        }
+
+        return false;
+    }
 
     /// <summary>
     /// Represents the state of advanced filters to enable proper change tracking
