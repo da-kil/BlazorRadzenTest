@@ -278,6 +278,20 @@
             ? string.Join(",", expandedDepartments.OrderBy(x => x))
             : "";
 
+        // Track filter collections by creating deterministic hashes
+        var departmentFilterState = departmentFilter?.Any() == true
+            ? string.Join(",", departmentFilter.OrderBy(x => x))
+            : "";
+        var categoryFilterState = categoryFilter?.Any() == true
+            ? string.Join(",", categoryFilter.OrderBy(x => x))
+            : "";
+        var templateFilterState = templateFilter?.Any() == true
+            ? string.Join(",", templateFilter.OrderBy(x => x))
+            : "";
+        var statusFilterState = statusFilters?.Any() == true
+            ? string.Join(",", statusFilters.OrderBy(x => x))
+            : "";
+
         return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
                HasParameterChanged(nameof(isLoading), isLoading) ||
                HasParameterChanged(nameof(isLoadingMore), isLoadingMore) ||
@@ -285,7 +299,16 @@
                HasParameterChanged(nameof(filteredTeamMembers), filteredMembersIdentity) ||
                HasParameterChanged(nameof(teamMemberSortBy), teamMemberSortBy) ||
                HasParameterChanged(nameof(memberAssignmentsCache), memberAssignmentsCache.Count) ||
-               HasParameterChanged(nameof(expandedDepartments), expandedDepartmentsState);
+               HasParameterChanged(nameof(expandedDepartments), expandedDepartmentsState) ||
+               HasParameterChanged(nameof(showAdvancedFilters), showAdvancedFilters) ||
+               // Filter state tracking - critical for filter toggle functionality
+               HasParameterChanged(nameof(searchFilter), searchFilter) ||
+               HasParameterChanged(nameof(departmentFilter), departmentFilterState) ||
+               HasParameterChanged(nameof(categoryFilter), categoryFilterState) ||
+               HasParameterChanged(nameof(templateFilter), templateFilterState) ||
+               HasParameterChanged(nameof(statusFilters), statusFilterState) ||
+               HasParameterChanged(nameof(dateRangeFrom), dateRangeFrom) ||
+               HasParameterChanged(nameof(dateRangeTo), dateRangeTo);
     }
 
     private async Task LoadData()
