@@ -45,134 +45,12 @@
                 <!-- Stats Cards -->
                 <StatsCardGrid Stats="@GetStatsCards()" Columns="@Configuration.StatsConfig.Columns" UseCards="false" />
 
-                <!-- Main Filter Bar -->
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    <!-- Search Filter -->
-                    <div class="flex-grow-1" style="max-width: 400px;">
-                        <RadzenTextBox @bind-Value="searchFilter"
-                                      Placeholder="Search employees, emails, questionnaires..."
-                                      @oninput="OnSearchInputChanged"
-                                      Style="width: 100%;">
-                            <RadzenIcon Icon="search" Slot="start" />
-                        </RadzenTextBox>
-                    </div>
-
-                    <!-- Department/Organization Filter -->
-                    @{
-                        var departmentFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Department);
-                    }
-                    @if (departmentFilterConfig != null && departmentFilterConfig.IsVisible)
-                    {
-                        <div style="min-width: 200px;">
-                            <RadzenDropDown @bind-Value="departmentFilter"
-                                           Data="@GetDepartmentFilterOptions()"
-                                           Placeholder="Select Organization..."
-                                           AllowClear="true"
-                                           Multiple="true"
-                                           Change="@ApplyFilters"
-                                           Style="width: 100%;" />
-                        </div>
-                    }
-
-                    <!-- Advanced Filters Toggle -->
-                    <RadzenButton Text="@(showAdvancedFilters ? "Hide Filters" : "Advanced Filters")"
-                                 Icon="@(showAdvancedFilters ? "expand_less" : "expand_more")"
-                                 ButtonStyle="ButtonStyle.Light"
-                                 Size="ButtonSize.Small"
-                                 Click="@ToggleAdvancedFilters"
-                                 Style="white-space: nowrap;" />
-
-                    <!-- Clear Filters -->
-                    @if (HasActiveFilters())
-                    {
-                        <RadzenButton Icon="clear"
-                                     Text="Clear"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Size="ButtonSize.Small"
-                                     Click="@ClearAllFilters" />
-                    }
-                </div>
-
-                <!-- Collapsible Advanced Filters -->
-                @if (showAdvancedFilters)
-                {
-                    <div class="advanced-filters-container mb-4">
-                        <div class="d-flex flex-wrap gap-3 align-items-center">
-                            <!-- Category Filter -->
-                            @{
-                                var categoryFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
-                            }
-                            @if (categoryFilterConfig != null && categoryFilterConfig.IsVisible)
-                            {
-                                <div style="min-width: 180px;">
-                                    <RadzenDropDown @bind-Value="categoryFilter"
-                                                   Data="@categoryFilterConfig.Options"
-                                                   Placeholder="All Categories"
-                                                   AllowClear="true"
-                                                   Multiple="true"
-                                                   Change="@ApplyFilters"
-                                                   Style="width: 100%;" />
-                                </div>
-                            }
-
-                            <!-- Template Filter -->
-                            @{
-                                var templateFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Template);
-                            }
-                            @if (templateFilterConfig != null && templateFilterConfig.IsVisible)
-                            {
-                                <div style="min-width: 200px;">
-                                    <RadzenDropDown @bind-Value="templateFilter"
-                                                   Data="@templateFilterConfig.TemplateOptions"
-                                                   TextProperty="Name"
-                                                   ValueProperty="Id"
-                                                   Placeholder="All Questionnaires"
-                                                   AllowClear="true"
-                                                   Multiple="true"
-                                                   Change="@ApplyFilters"
-                                                   Style="width: 100%;" />
-                                </div>
-                            }
-
-                            <!-- Status Filter (Multi-select) -->
-                            @{
-                                var statusFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
-                            }
-                            @if (statusFilterConfig != null && statusFilterConfig.IsVisible)
-                            {
-                                <div style="min-width: 200px;">
-                                    <RadzenDropDown @bind-Value="statusFilters"
-                                                   Data="@statusFilterConfig.Options"
-                                                   Placeholder="All Statuses"
-                                                   AllowClear="true"
-                                                   Multiple="true"
-                                                   Change="@ApplyFilters"
-                                                   Style="width: 100%;" />
-                                </div>
-                            }
-
-                            <!-- Date Range Filter -->
-                            @{
-                                var dateRangeFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.DateRange);
-                            }
-                            @if (dateRangeFilterConfig != null && dateRangeFilterConfig.IsVisible)
-                            {
-                                <div class="d-flex gap-2" style="min-width: 300px;">
-                                    <RadzenDatePicker @bind-Value="dateRangeFrom"
-                                                     Placeholder="From Date"
-                                                     Style="width: 100%;"
-                                                     DateFormat="MM/dd/yyyy"
-                                                     Change="@ApplyFilters" />
-                                    <RadzenDatePicker @bind-Value="dateRangeTo"
-                                                     Placeholder="To Date"
-                                                     Style="width: 100%;"
-                                                     DateFormat="MM/dd/yyyy"
-                                                     Change="@ApplyFilters" />
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
+                <!-- Filter Bar Component -->
+                <QuestionnaireFilterBar Configuration="Configuration"
+                                       CurrentFilters="filterState"
+                                       OnFiltersChanged="ApplyFilters"
+                                       OnClearFilters="ClearAllFilters"
+                                       OnSearchChanged="OnSearchChanged" />
 
                 <!-- Tab Content -->
                 <RadzenTabs @bind-SelectedIndex="SelectedTabIndex">
@@ -208,19 +86,20 @@
     private bool hasMoreData = true;
     private bool isLoadingMore = false;
 
-    // Filter values - main filters (always visible)
-    private string searchFilter = "";
-    private IEnumerable<string> departmentFilter = new List<string>();
+    // Centralized filter state managed by QuestionnaireFilterBar component
+    private QuestionnaireFilterBar.FilterState filterState = new();
+    private int _lastFilterStateHash;
 
-    // Advanced filter values (collapsible section)
-    private IEnumerable<string> categoryFilter = new List<string>();
-    private IEnumerable<Guid> templateFilter = new List<Guid>();
-    private IEnumerable<string> statusFilters = new List<string>();
-    private DateTime? dateRangeFrom = null;
-    private DateTime? dateRangeTo = null;
-
-    // Advanced filters state
-    private bool showAdvancedFilters = false;
+    private bool CheckFilterStateChanged()
+    {
+        var currentHash = filterState?.GetHashCode() ?? 0;
+        if (_lastFilterStateHash != currentHash)
+        {
+            _lastFilterStateHash = currentHash;
+            return true;
+        }
+        return false;
+    }
 
     // Search debouncing
     private CancellationTokenSource? searchCancellationTokenSource;
@@ -278,20 +157,6 @@
             ? string.Join(",", expandedDepartments.OrderBy(x => x))
             : "";
 
-        // Track filter collections by creating deterministic hashes
-        var departmentFilterState = departmentFilter?.Any() == true
-            ? string.Join(",", departmentFilter.OrderBy(x => x))
-            : "";
-        var categoryFilterState = categoryFilter?.Any() == true
-            ? string.Join(",", categoryFilter.OrderBy(x => x))
-            : "";
-        var templateFilterState = templateFilter?.Any() == true
-            ? string.Join(",", templateFilter.OrderBy(x => x))
-            : "";
-        var statusFilterState = statusFilters?.Any() == true
-            ? string.Join(",", statusFilters.OrderBy(x => x))
-            : "";
-
         return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
                HasParameterChanged(nameof(isLoading), isLoading) ||
                HasParameterChanged(nameof(isLoadingMore), isLoadingMore) ||
@@ -300,15 +165,8 @@
                HasParameterChanged(nameof(teamMemberSortBy), teamMemberSortBy) ||
                HasParameterChanged(nameof(memberAssignmentsCache), memberAssignmentsCache.Count) ||
                HasParameterChanged(nameof(expandedDepartments), expandedDepartmentsState) ||
-               HasParameterChanged(nameof(showAdvancedFilters), showAdvancedFilters) ||
-               // Filter state tracking - critical for filter toggle functionality
-               HasParameterChanged(nameof(searchFilter), searchFilter) ||
-               HasParameterChanged(nameof(departmentFilter), departmentFilterState) ||
-               HasParameterChanged(nameof(categoryFilter), categoryFilterState) ||
-               HasParameterChanged(nameof(templateFilter), templateFilterState) ||
-               HasParameterChanged(nameof(statusFilters), statusFilterState) ||
-               HasParameterChanged(nameof(dateRangeFrom), dateRangeFrom) ||
-               HasParameterChanged(nameof(dateRangeTo), dateRangeTo);
+               // Filter state is now managed by QuestionnaireFilterBar component
+               CheckFilterStateChanged();
     }
 
     private async Task LoadData()
@@ -1368,41 +1226,10 @@
         }
     }
 
-    private async Task OnSearchChanged(string value)
-    {
-        searchFilter = value;
-
-        // Cancel any existing search operation
-        searchCancellationTokenSource?.Cancel();
-        searchCancellationTokenSource?.Dispose();
-        searchCancellationTokenSource = new CancellationTokenSource();
-
-        try
-        {
-            // Wait for the debounce delay
-            await Task.Delay(SearchDebounceMs, searchCancellationTokenSource.Token);
-
-            // If we get here, the delay completed without cancellation
-            // Save search state immediately
-            await SaveFilterStateAsync();
-
-            // Apply filters on the UI thread
-            await InvokeAsync(() =>
-            {
-                ApplyFilters();
-                StateHasChanged();
-            });
-        }
-        catch (TaskCanceledException)
-        {
-            // Expected when user types again before delay completes
-            // Do nothing - the new keystroke will start a new delay
-        }
-    }
 
     private void ClearSearch()
     {
-        searchFilter = "";
+        filterState.SearchFilter = "";
         ApplyFilters();
         StateHasChanged();
     }
@@ -1453,17 +1280,17 @@
         var filteredMembers = employees.AsEnumerable();
 
         // Apply search filter
-        if (!string.IsNullOrEmpty(searchFilter))
+        if (!string.IsNullOrEmpty(filterState.SearchFilter))
         {
             filteredMembers = filteredMembers.Where(e =>
-                $"{e.FirstName} {e.LastName}".Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ||
-                e.EMail.Contains(searchFilter, StringComparison.OrdinalIgnoreCase));
+                $"{e.FirstName} {e.LastName}".Contains(filterState.SearchFilter, StringComparison.OrdinalIgnoreCase) ||
+                e.EMail.Contains(filterState.SearchFilter, StringComparison.OrdinalIgnoreCase));
         }
 
         // Apply department filter
-        if (departmentFilter.Any())
+        if (filterState.DepartmentFilter.Any())
         {
-            var selectedOrgNumbers = departmentFilter.Select(ExtractOrganizationNumber).Where(x => x.HasValue).Select(x => x!.Value).ToList();
+            var selectedOrgNumbers = filterState.DepartmentFilter.Select(ExtractOrganizationNumber).Where(x => x.HasValue).Select(x => x!.Value).ToList();
             if (selectedOrgNumbers.Any())
             {
                 filteredMembers = filteredMembers.Where(e => selectedOrgNumbers.Contains(e.OrganizationNumber));
@@ -1489,18 +1316,18 @@
         var filteredAssignments = assignments.AsEnumerable();
 
         // Apply search filter
-        if (!string.IsNullOrEmpty(searchFilter))
+        if (!string.IsNullOrEmpty(filterState.SearchFilter))
         {
             filteredAssignments = filteredAssignments.Where(a =>
-                a.EmployeeName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ||
-                GetTemplateName(a).Contains(searchFilter, StringComparison.OrdinalIgnoreCase));
+                a.EmployeeName.Contains(filterState.SearchFilter, StringComparison.OrdinalIgnoreCase) ||
+                GetTemplateName(a).Contains(filterState.SearchFilter, StringComparison.OrdinalIgnoreCase));
         }
 
         // Apply department filter (organization-based)
-        if (departmentFilter.Any())
+        if (filterState.DepartmentFilter.Any())
         {
             // Parse the selected organizations from "Number - Name" format
-            var selectedOrgNumbers = departmentFilter.Select(ExtractOrganizationNumber).Where(x => x.HasValue).Select(x => x!.Value).ToList();
+            var selectedOrgNumbers = filterState.DepartmentFilter.Select(ExtractOrganizationNumber).Where(x => x.HasValue).Select(x => x!.Value).ToList();
             if (selectedOrgNumbers.Any())
             {
                 // Get employee IDs that belong to the selected organizations
@@ -1515,7 +1342,7 @@
         }
 
         // Apply category filter
-        if (categoryFilter.Any())
+        if (filterState.CategoryFilter.Any())
         {
             // Get category options from configuration
             var categoryFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
@@ -1525,7 +1352,7 @@
                 var categoryLookup = categoryFilterConfig.CategoryOptions.ToDictionary(c => c.NameEn, c => c.Id);
 
                 // Get the category IDs for the selected category names
-                var selectedCategoryIds = categoryFilter
+                var selectedCategoryIds = filterState.CategoryFilter
                     .Where(categoryName => categoryLookup.ContainsKey(categoryName))
                     .Select(categoryName => categoryLookup[categoryName])
                     .ToHashSet();
@@ -1537,29 +1364,29 @@
         }
 
         // Apply template filter
-        if (templateFilter.Any())
+        if (filterState.TemplateFilter.Any())
         {
             filteredAssignments = filteredAssignments.Where(a =>
-                templateFilter.Contains(a.TemplateId));
+                filterState.TemplateFilter.Contains(a.TemplateId));
         }
 
         // Apply status filter
-        if (statusFilters.Any())
+        if (filterState.StatusFilters.Any())
         {
             filteredAssignments = filteredAssignments.Where(a =>
-                statusFilters.Contains(a.WorkflowState.ToString()));
+                filterState.StatusFilters.Contains(a.WorkflowState.ToString()));
         }
 
         // Apply date range filter
-        if (dateRangeFrom.HasValue)
+        if (filterState.DateRangeFrom.HasValue)
         {
             filteredAssignments = filteredAssignments.Where(a =>
-                a.DueDate.HasValue && a.DueDate.Value >= dateRangeFrom.Value);
+                a.DueDate.HasValue && a.DueDate.Value >= filterState.DateRangeFrom.Value);
         }
-        if (dateRangeTo.HasValue)
+        if (filterState.DateRangeTo.HasValue)
         {
             filteredAssignments = filteredAssignments.Where(a =>
-                a.DueDate.HasValue && a.DueDate.Value <= dateRangeTo.Value);
+                a.DueDate.HasValue && a.DueDate.Value <= filterState.DateRangeTo.Value);
         }
 
         return filteredAssignments.ToList();
@@ -2218,8 +2045,7 @@
 
     private string GetQuestionnaireEmptyStateMessage()
     {
-        var hasFilters = !string.IsNullOrEmpty(searchFilter) ||
-                        departmentFilter.Any();
+        var hasFilters = filterState.HasActiveFilters();
 
         if (hasFilters)
         {
@@ -2239,8 +2065,7 @@
     {
         var actions = new List<EmptyStateAction>();
 
-        var hasFilters = !string.IsNullOrEmpty(searchFilter) ||
-                        departmentFilter.Any();
+        var hasFilters = filterState.HasActiveFilters();
 
         if (hasFilters)
         {
@@ -2300,7 +2125,7 @@
 
     private string GetDepartmentsEmptyStateMessage()
     {
-        var hasFilters = !string.IsNullOrEmpty(searchFilter);
+        var hasFilters = filterState.HasActiveFilters();
 
         if (hasFilters)
         {
@@ -2314,7 +2139,7 @@
     {
         var actions = new List<EmptyStateAction>();
 
-        var hasFilters = !string.IsNullOrEmpty(searchFilter);
+        var hasFilters = filterState.HasActiveFilters();
 
         if (hasFilters)
         {
@@ -2340,8 +2165,7 @@
 
     private string GetEmployeesEmptyStateMessage()
     {
-        var hasFilters = !string.IsNullOrEmpty(searchFilter) ||
-                        departmentFilter.Any();
+        var hasFilters = filterState.HasActiveFilters();
 
         if (hasFilters)
         {
@@ -2355,8 +2179,7 @@
     {
         var actions = new List<EmptyStateAction>();
 
-        var hasFilters = !string.IsNullOrEmpty(searchFilter) ||
-                        departmentFilter.Any();
+        var hasFilters = filterState.HasActiveFilters();
 
         if (hasFilters)
         {
@@ -2380,49 +2203,42 @@
         return actions;
     }
 
+
+    // Event handlers for filter component
+    private async Task OnSearchChanged(string searchValue)
+    {
+        // Handle search with debouncing
+        searchCancellationTokenSource?.Cancel();
+        searchCancellationTokenSource?.Dispose();
+        searchCancellationTokenSource = new CancellationTokenSource();
+
+        try
+        {
+            // Wait for the debounce delay
+            await Task.Delay(SearchDebounceMs, searchCancellationTokenSource.Token);
+
+            // If we get here, the delay completed without cancellation
+            // Save search state immediately
+            await SaveFilterStateAsync();
+
+            // Apply filters on the UI thread
+            await InvokeAsync(() =>
+            {
+                ApplyFilters();
+                StateHasChanged();
+            });
+        }
+        catch (TaskCanceledException)
+        {
+            // Expected when user types again before delay completes
+            // Do nothing - the new keystroke will start a new delay
+        }
+    }
+
     private void ClearAllFilters()
     {
-        // Clear main filters
-        searchFilter = "";
-        departmentFilter = new List<string>();
-
-        // Clear advanced filters
-        categoryFilter = new List<string>();
-        templateFilter = new List<Guid>();
-        statusFilters = new List<string>();
-        dateRangeFrom = null;
-        dateRangeTo = null;
-
+        filterState.Clear();
         ApplyFilters();
-    }
-
-    private void ToggleAdvancedFilters()
-    {
-        showAdvancedFilters = !showAdvancedFilters;
-        StateHasChanged();
-    }
-
-    // Compact inline filter support methods
-    private bool HasActiveFilters()
-    {
-        return !string.IsNullOrEmpty(searchFilter) ||
-               (departmentFilter?.Any() ?? false) ||
-               (categoryFilter?.Any() ?? false) ||
-               (templateFilter?.Any() ?? false) ||
-               (statusFilters?.Any() ?? false) ||
-               dateRangeFrom.HasValue ||
-               dateRangeTo.HasValue;
-    }
-
-    private async Task OnSearchInputChanged(ChangeEventArgs e)
-    {
-        await OnSearchChanged(e.Value?.ToString() ?? string.Empty);
-    }
-
-    private List<string> GetDepartmentFilterOptions()
-    {
-        var departmentFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Department);
-        return departmentFilterConfig?.Options ?? new List<string>();
     }
 
 
@@ -2536,18 +2352,18 @@
     {
         try
         {
-            var filterState = new FilterState
+            var persistenceState = new FilterState
             {
-                SearchFilter = searchFilter,
-                MultiDepartmentFilter = departmentFilter.ToList(),
-                MultiCategoryFilter = categoryFilter.ToList(),
-                MultiTemplateFilter = templateFilter.ToList(),
+                SearchFilter = filterState.SearchFilter,
+                MultiDepartmentFilter = filterState.DepartmentFilter.ToList(),
+                MultiCategoryFilter = filterState.CategoryFilter.ToList(),
+                MultiTemplateFilter = filterState.TemplateFilter.ToList(),
                 SelectedTabIndex = _selectedTabIndex,
                 TeamMemberSortBy = teamMemberSortBy,
                 QuestionnaireSortBy = questionnaireSortBy
             };
 
-            var json = System.Text.Json.JsonSerializer.Serialize(filterState);
+            var json = System.Text.Json.JsonSerializer.Serialize(persistenceState);
             var storageKey = $"questionnaire_filters_{Configuration.PageType}";
 
             await JSRuntime.InvokeVoidAsync("localStorage.setItem", storageKey, json);
@@ -2567,18 +2383,18 @@
 
             if (!string.IsNullOrEmpty(json))
             {
-                var filterState = System.Text.Json.JsonSerializer.Deserialize<FilterState>(json);
-                if (filterState != null)
+                var loadedFilterState = System.Text.Json.JsonSerializer.Deserialize<FilterState>(json);
+                if (loadedFilterState != null)
                 {
-                    searchFilter = filterState.SearchFilter ?? "";
+                    // Update the existing filterState object
+                    filterState.SearchFilter = loadedFilterState.SearchFilter ?? "";
+                    filterState.DepartmentFilter = loadedFilterState.MultiDepartmentFilter ?? new List<string>();
+                    filterState.CategoryFilter = loadedFilterState.MultiCategoryFilter ?? new List<string>();
+                    filterState.TemplateFilter = loadedFilterState.MultiTemplateFilter ?? new List<Guid>();
 
-                    departmentFilter = filterState.MultiDepartmentFilter ?? new List<string>();
-                    categoryFilter = filterState.MultiCategoryFilter ?? new List<string>();
-                    templateFilter = filterState.MultiTemplateFilter ?? new List<Guid>();
-
-                    _selectedTabIndex = filterState.SelectedTabIndex;
-                    teamMemberSortBy = filterState.TeamMemberSortBy ?? "Name";
-                    questionnaireSortBy = filterState.QuestionnaireSortBy ?? "Name";
+                    _selectedTabIndex = loadedFilterState.SelectedTabIndex;
+                    teamMemberSortBy = loadedFilterState.TeamMemberSortBy ?? "Name";
+                    questionnaireSortBy = loadedFilterState.QuestionnaireSortBy ?? "Name";
                 }
             }
         }

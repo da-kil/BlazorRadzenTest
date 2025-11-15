@@ -1,0 +1,263 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services.Enhanced
+@inherits OptimizedComponentBase
+
+<!-- Main Filter Bar -->
+<div class="d-flex align-items-center gap-3 mb-3">
+    <!-- Search Filter -->
+    <div class="flex-grow-1" style="max-width: 400px;">
+        <RadzenTextBox @bind-Value="CurrentFilters.SearchFilter"
+                      Placeholder="Search employees, emails, questionnaires..."
+                      @oninput="OnSearchInputChanged"
+                      Style="width: 100%;">
+            <RadzenIcon Icon="search" Slot="start" />
+        </RadzenTextBox>
+    </div>
+
+    <!-- Department/Organization Filter -->
+    @{
+        var departmentFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Department);
+    }
+    @if (departmentFilterConfig != null && departmentFilterConfig.IsVisible)
+    {
+        <div style="min-width: 200px;">
+            <RadzenDropDown @bind-Value="CurrentFilters.DepartmentFilter"
+                           Data="@GetDepartmentFilterOptions()"
+                           Placeholder="Select Organization..."
+                           AllowClear="true"
+                           Multiple="true"
+                           Change="@HandleFiltersChanged"
+                           Style="width: 100%;" />
+        </div>
+    }
+
+    <!-- Advanced Filters Toggle -->
+    <RadzenButton Text="@(showAdvancedFilters ? "Hide Filters" : "Advanced Filters")"
+                 Icon="@(showAdvancedFilters ? "expand_less" : "expand_more")"
+                 ButtonStyle="ButtonStyle.Light"
+                 Size="ButtonSize.Small"
+                 Click="@ToggleAdvancedFilters"
+                 Style="white-space: nowrap;" />
+
+    <!-- Clear Filters -->
+    @if (HasActiveFilters())
+    {
+        <RadzenButton Icon="clear"
+                     Text="Clear"
+                     ButtonStyle="ButtonStyle.Light"
+                     Size="ButtonSize.Small"
+                     Click="@ClearAllFilters" />
+    }
+</div>
+
+<!-- Advanced Filters Panel -->
+<AdvancedFiltersPanel IsExpanded="showAdvancedFilters"
+                     Configuration="Configuration"
+                     CurrentFilters="AdvancedFilters"
+                     OnFiltersChanged="HandleFiltersChanged" />
+
+@code {
+    [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
+    [Parameter, EditorRequired] public FilterState CurrentFilters { get; set; } = default!;
+    [Parameter] public EventCallback OnFiltersChanged { get; set; }
+    [Parameter] public EventCallback OnClearFilters { get; set; }
+    [Parameter] public EventCallback<string> OnSearchChanged { get; set; }
+
+    private bool showAdvancedFilters = false;
+    private AdvancedFiltersPanel.AdvancedFilterState AdvancedFilters = new();
+
+    protected override void OnInitialized()
+    {
+        // Initialize advanced filters from current filters
+        SyncAdvancedFilters();
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Sync advanced filters when parameters change
+        SyncAdvancedFilters();
+    }
+
+    private bool _lastShowAdvancedFilters;
+    private int _lastCurrentFiltersHash;
+    private int _lastAdvancedFiltersHash;
+
+    protected override bool HasStateChanged()
+    {
+        var showAdvancedChanged = _lastShowAdvancedFilters != showAdvancedFilters;
+        var currentFiltersChanged = _lastCurrentFiltersHash != (CurrentFilters?.GetHashCode() ?? 0);
+        var advancedFiltersChanged = _lastAdvancedFiltersHash != (AdvancedFilters?.GetHashCode() ?? 0);
+
+        if (showAdvancedChanged || currentFiltersChanged || advancedFiltersChanged)
+        {
+            _lastShowAdvancedFilters = showAdvancedFilters;
+            _lastCurrentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
+            _lastAdvancedFiltersHash = AdvancedFilters?.GetHashCode() ?? 0;
+            return true;
+        }
+
+        return false;
+    }
+
+    private void SyncAdvancedFilters()
+    {
+        if (CurrentFilters != null && AdvancedFilters != null)
+        {
+            AdvancedFilters.CategoryFilter = CurrentFilters.CategoryFilter;
+            AdvancedFilters.TemplateFilter = CurrentFilters.TemplateFilter;
+            AdvancedFilters.StatusFilters = CurrentFilters.StatusFilters;
+            AdvancedFilters.DateRangeFrom = CurrentFilters.DateRangeFrom;
+            AdvancedFilters.DateRangeTo = CurrentFilters.DateRangeTo;
+        }
+    }
+
+    private void ToggleAdvancedFilters()
+    {
+        showAdvancedFilters = !showAdvancedFilters;
+        StateHasChanged();
+    }
+
+    private async Task OnSearchInputChanged(ChangeEventArgs e)
+    {
+        CurrentFilters.SearchFilter = e.Value?.ToString() ?? string.Empty;
+        if (OnSearchChanged.HasDelegate)
+        {
+            await OnSearchChanged.InvokeAsync(CurrentFilters.SearchFilter);
+        }
+        else if (OnFiltersChanged.HasDelegate)
+        {
+            await OnFiltersChanged.InvokeAsync();
+        }
+    }
+
+    private async Task HandleFiltersChanged()
+    {
+        // Sync advanced filters back to main filter state
+        if (CurrentFilters != null && AdvancedFilters != null)
+        {
+            CurrentFilters.CategoryFilter = AdvancedFilters.CategoryFilter;
+            CurrentFilters.TemplateFilter = AdvancedFilters.TemplateFilter;
+            CurrentFilters.StatusFilters = AdvancedFilters.StatusFilters;
+            CurrentFilters.DateRangeFrom = AdvancedFilters.DateRangeFrom;
+            CurrentFilters.DateRangeTo = AdvancedFilters.DateRangeTo;
+        }
+
+        if (OnFiltersChanged.HasDelegate)
+        {
+            await OnFiltersChanged.InvokeAsync();
+        }
+    }
+
+    private async Task ClearAllFilters()
+    {
+        // Clear all filters
+        CurrentFilters.Clear();
+        AdvancedFilters.Clear();
+        showAdvancedFilters = false;
+
+        if (OnClearFilters.HasDelegate)
+        {
+            await OnClearFilters.InvokeAsync();
+        }
+        else if (OnFiltersChanged.HasDelegate)
+        {
+            await OnFiltersChanged.InvokeAsync();
+        }
+    }
+
+    private List<string> GetDepartmentFilterOptions()
+    {
+        var departmentFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Department);
+        return departmentFilterConfig?.Options ?? new List<string>();
+    }
+
+    private bool HasActiveFilters()
+    {
+        return CurrentFilters?.HasActiveFilters() ?? false;
+    }
+
+    /// <summary>
+    /// Main filter state for the filter bar
+    /// </summary>
+    public class FilterState
+    {
+        public string SearchFilter { get; set; } = "";
+        public IEnumerable<string> DepartmentFilter { get; set; } = new List<string>();
+        public IEnumerable<string> CategoryFilter { get; set; } = new List<string>();
+        public IEnumerable<Guid> TemplateFilter { get; set; } = new List<Guid>();
+        public IEnumerable<string> StatusFilters { get; set; } = new List<string>();
+        public DateTime? DateRangeFrom { get; set; }
+        public DateTime? DateRangeTo { get; set; }
+
+        public override int GetHashCode()
+        {
+            var hash = new HashCode();
+            hash.Add(SearchFilter);
+
+            // Department filter hash
+            if (DepartmentFilter?.Any() == true)
+            {
+                foreach (var dept in DepartmentFilter.OrderBy(x => x))
+                {
+                    hash.Add(dept);
+                }
+            }
+
+            // Category filter hash
+            if (CategoryFilter?.Any() == true)
+            {
+                foreach (var category in CategoryFilter.OrderBy(x => x))
+                {
+                    hash.Add(category);
+                }
+            }
+
+            // Template filter hash
+            if (TemplateFilter?.Any() == true)
+            {
+                foreach (var template in TemplateFilter.OrderBy(x => x))
+                {
+                    hash.Add(template);
+                }
+            }
+
+            // Status filter hash
+            if (StatusFilters?.Any() == true)
+            {
+                foreach (var status in StatusFilters.OrderBy(x => x))
+                {
+                    hash.Add(status);
+                }
+            }
+
+            // Date range hash
+            hash.Add(DateRangeFrom);
+            hash.Add(DateRangeTo);
+
+            return hash.ToHashCode();
+        }
+
+        public void Clear()
+        {
+            SearchFilter = "";
+            DepartmentFilter = new List<string>();
+            CategoryFilter = new List<string>();
+            TemplateFilter = new List<Guid>();
+            StatusFilters = new List<string>();
+            DateRangeFrom = null;
+            DateRangeTo = null;
+        }
+
+        public bool HasActiveFilters()
+        {
+            return !string.IsNullOrEmpty(SearchFilter) ||
+                   (DepartmentFilter?.Any() ?? false) ||
+                   (CategoryFilter?.Any() ?? false) ||
+                   (TemplateFilter?.Any() ?? false) ||
+                   (StatusFilters?.Any() ?? false) ||
+                   DateRangeFrom.HasValue ||
+                   DateRangeTo.HasValue;
+        }
+    }
+}

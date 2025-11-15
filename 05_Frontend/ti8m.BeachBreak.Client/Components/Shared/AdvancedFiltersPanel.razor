@@ -1,0 +1,179 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services.Enhanced
+@inherits OptimizedComponentBase
+
+<!-- Collapsible Advanced Filters Panel -->
+@if (IsExpanded)
+{
+    <div class="advanced-filters-container mb-4">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <!-- Category Filter -->
+            @{
+                var categoryFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
+            }
+            @if (categoryFilterConfig != null && categoryFilterConfig.IsVisible)
+            {
+                <div style="min-width: 180px;">
+                    <RadzenDropDown @bind-Value="CurrentFilters.CategoryFilter"
+                                   Data="@categoryFilterConfig.Options"
+                                   Placeholder="All Categories"
+                                   AllowClear="true"
+                                   Multiple="true"
+                                   Change="@OnFiltersChanged"
+                                   Style="width: 100%;" />
+                </div>
+            }
+
+            <!-- Template Filter -->
+            @{
+                var templateFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Template);
+            }
+            @if (templateFilterConfig != null && templateFilterConfig.IsVisible)
+            {
+                <div style="min-width: 200px;">
+                    <RadzenDropDown @bind-Value="CurrentFilters.TemplateFilter"
+                                   Data="@templateFilterConfig.TemplateOptions"
+                                   TextProperty="Name"
+                                   ValueProperty="Id"
+                                   Placeholder="All Questionnaires"
+                                   AllowClear="true"
+                                   Multiple="true"
+                                   Change="@OnFiltersChanged"
+                                   Style="width: 100%;" />
+                </div>
+            }
+
+            <!-- Status Filter (Multi-select) -->
+            @{
+                var statusFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
+            }
+            @if (statusFilterConfig != null && statusFilterConfig.IsVisible)
+            {
+                <div style="min-width: 200px;">
+                    <RadzenDropDown @bind-Value="CurrentFilters.StatusFilters"
+                                   Data="@statusFilterConfig.Options"
+                                   Placeholder="All Statuses"
+                                   AllowClear="true"
+                                   Multiple="true"
+                                   Change="@OnFiltersChanged"
+                                   Style="width: 100%;" />
+                </div>
+            }
+
+            <!-- Date Range Filter -->
+            @{
+                var dateRangeFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.DateRange);
+            }
+            @if (dateRangeFilterConfig != null && dateRangeFilterConfig.IsVisible)
+            {
+                <div class="d-flex gap-2" style="min-width: 300px;">
+                    <RadzenDatePicker @bind-Value="CurrentFilters.DateRangeFrom"
+                                     Placeholder="From Date"
+                                     Style="width: 100%;"
+                                     DateFormat="MM/dd/yyyy"
+                                     Change="@OnFiltersChanged" />
+                    <RadzenDatePicker @bind-Value="CurrentFilters.DateRangeTo"
+                                     Placeholder="To Date"
+                                     Style="width: 100%;"
+                                     DateFormat="MM/dd/yyyy"
+                                     Change="@OnFiltersChanged" />
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public bool IsExpanded { get; set; }
+    [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
+    [Parameter, EditorRequired] public AdvancedFilterState CurrentFilters { get; set; } = default!;
+    [Parameter] public EventCallback OnFiltersChanged { get; set; }
+
+    private bool _lastIsExpanded;
+    private int _lastCurrentFiltersHash;
+
+    protected override bool HasStateChanged()
+    {
+        var isExpandedChanged = _lastIsExpanded != IsExpanded;
+        var currentFiltersChanged = _lastCurrentFiltersHash != (CurrentFilters?.GetHashCode() ?? 0);
+
+        if (isExpandedChanged || currentFiltersChanged)
+        {
+            _lastIsExpanded = IsExpanded;
+            _lastCurrentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Represents the state of advanced filters to enable proper change tracking
+    /// </summary>
+    public class AdvancedFilterState
+    {
+        public IEnumerable<string> CategoryFilter { get; set; } = new List<string>();
+        public IEnumerable<Guid> TemplateFilter { get; set; } = new List<Guid>();
+        public IEnumerable<string> StatusFilters { get; set; } = new List<string>();
+        public DateTime? DateRangeFrom { get; set; }
+        public DateTime? DateRangeTo { get; set; }
+
+        public override int GetHashCode()
+        {
+            // Create a deterministic hash based on filter values
+            var hash = new HashCode();
+
+            // Category filter hash
+            if (CategoryFilter?.Any() == true)
+            {
+                foreach (var category in CategoryFilter.OrderBy(x => x))
+                {
+                    hash.Add(category);
+                }
+            }
+
+            // Template filter hash
+            if (TemplateFilter?.Any() == true)
+            {
+                foreach (var template in TemplateFilter.OrderBy(x => x))
+                {
+                    hash.Add(template);
+                }
+            }
+
+            // Status filter hash
+            if (StatusFilters?.Any() == true)
+            {
+                foreach (var status in StatusFilters.OrderBy(x => x))
+                {
+                    hash.Add(status);
+                }
+            }
+
+            // Date range hash
+            hash.Add(DateRangeFrom);
+            hash.Add(DateRangeTo);
+
+            return hash.ToHashCode();
+        }
+
+        public void Clear()
+        {
+            CategoryFilter = new List<string>();
+            TemplateFilter = new List<Guid>();
+            StatusFilters = new List<string>();
+            DateRangeFrom = null;
+            DateRangeTo = null;
+        }
+
+        public bool HasActiveFilters()
+        {
+            return (CategoryFilter?.Any() ?? false) ||
+                   (TemplateFilter?.Any() ?? false) ||
+                   (StatusFilters?.Any() ?? false) ||
+                   DateRangeFrom.HasValue ||
+                   DateRangeTo.HasValue;
+        }
+    }
+}
