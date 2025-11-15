@@ -79,26 +79,8 @@
         SyncAdvancedFilters();
     }
 
-    private bool _lastShowAdvancedFilters;
-    private int _lastCurrentFiltersHash;
-    private int _lastAdvancedFiltersHash;
-
-    protected override bool HasStateChanged()
-    {
-        var showAdvancedChanged = _lastShowAdvancedFilters != showAdvancedFilters;
-        var currentFiltersChanged = _lastCurrentFiltersHash != (CurrentFilters?.GetHashCode() ?? 0);
-        var advancedFiltersChanged = _lastAdvancedFiltersHash != (AdvancedFilters?.GetHashCode() ?? 0);
-
-        if (showAdvancedChanged || currentFiltersChanged || advancedFiltersChanged)
-        {
-            _lastShowAdvancedFilters = showAdvancedFilters;
-            _lastCurrentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
-            _lastAdvancedFiltersHash = AdvancedFilters?.GetHashCode() ?? 0;
-            return true;
-        }
-
-        return false;
-    }
+    // Disable parameter optimization to ensure toggle works properly
+    protected override bool EnableParameterOptimization => false;
 
     private void SyncAdvancedFilters()
     {
@@ -115,6 +97,7 @@
     private void ToggleAdvancedFilters()
     {
         showAdvancedFilters = !showAdvancedFilters;
+        Console.WriteLine($"ToggleAdvancedFilters called: showAdvancedFilters = {showAdvancedFilters}");
         StateHasChanged();
     }
 

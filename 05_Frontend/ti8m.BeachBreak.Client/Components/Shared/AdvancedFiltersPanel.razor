@@ -4,6 +4,9 @@
 @inherits OptimizedComponentBase
 
 <!-- Collapsible Advanced Filters Panel -->
+@{
+    Console.WriteLine($"AdvancedFiltersPanel render: IsExpanded = {IsExpanded}");
+}
 @if (IsExpanded)
 {
     <div class="advanced-filters-container mb-4">
@@ -89,24 +92,6 @@
     [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
     [Parameter, EditorRequired] public AdvancedFilterState CurrentFilters { get; set; } = default!;
     [Parameter] public EventCallback OnFiltersChanged { get; set; }
-
-    private bool _lastIsExpanded;
-    private int _lastCurrentFiltersHash;
-
-    protected override bool HasStateChanged()
-    {
-        var isExpandedChanged = _lastIsExpanded != IsExpanded;
-        var currentFiltersChanged = _lastCurrentFiltersHash != (CurrentFilters?.GetHashCode() ?? 0);
-
-        if (isExpandedChanged || currentFiltersChanged)
-        {
-            _lastIsExpanded = IsExpanded;
-            _lastCurrentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
-            return true;
-        }
-
-        return false;
-    }
 
     /// <summary>
     /// Represents the state of advanced filters to enable proper change tracking
