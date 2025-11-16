@@ -1,22 +1,32 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services.Enhanced
-@inherits OptimizedComponentBase
+@using Microsoft.AspNetCore.Components
+@inherits ComponentBase
 
 <!-- Collapsible Advanced Filters Panel -->
 @if (IsExpanded)
 {
     <div class="advanced-filters-container mb-4">
+        <!-- Test dropdown with hardcoded data -->
+        <div class="d-flex flex-wrap gap-3 align-items-center mb-3">
+            <div style="min-width: 200px;">
+                <label>Test Dropdown:</label>
+                <RadzenDropDown @bind-Value="testValue"
+                               Data="@testOptions"
+                               Placeholder="Select Test Option"
+                               AllowClear="true"
+                               Style="width: 100%;" />
+            </div>
+        </div>
+
         <div class="d-flex flex-wrap gap-3 align-items-center">
             <!-- Category Filter -->
-            @{
-                var categoryFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
-            }
-            @if (categoryFilterConfig != null && categoryFilterConfig.IsVisible)
+            @if (IsCategoryFilterVisible())
             {
                 <div style="min-width: 180px;">
                     <RadzenDropDown @bind-Value="CurrentFilters.CategoryFilter"
-                                   Data="@categoryFilterConfig.Options"
+                                   Data="@GetCategoryFilterOptions()"
                                    Placeholder="All Categories"
                                    AllowClear="true"
                                    Multiple="true"
@@ -26,14 +36,11 @@
             }
 
             <!-- Template Filter -->
-            @{
-                var templateFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Template);
-            }
-            @if (templateFilterConfig != null && templateFilterConfig.IsVisible)
+            @if (IsTemplateFilterVisible())
             {
                 <div style="min-width: 200px;">
                     <RadzenDropDown @bind-Value="CurrentFilters.TemplateFilter"
-                                   Data="@templateFilterConfig.TemplateOptions"
+                                   Data="@GetTemplateFilterOptions()"
                                    TextProperty="Name"
                                    ValueProperty="Id"
                                    Placeholder="All Questionnaires"
@@ -45,14 +52,11 @@
             }
 
             <!-- Status Filter (Multi-select) -->
-            @{
-                var statusFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
-            }
-            @if (statusFilterConfig != null && statusFilterConfig.IsVisible)
+            @if (IsStatusFilterVisible())
             {
                 <div style="min-width: 200px;">
                     <RadzenDropDown @bind-Value="CurrentFilters.StatusFilters"
-                                   Data="@statusFilterConfig.Options"
+                                   Data="@GetStatusFilterOptions()"
                                    Placeholder="All Statuses"
                                    AllowClear="true"
                                    Multiple="true"
@@ -62,10 +66,7 @@
             }
 
             <!-- Date Range Filter -->
-            @{
-                var dateRangeFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.DateRange);
-            }
-            @if (dateRangeFilterConfig != null && dateRangeFilterConfig.IsVisible)
+            @if (IsDateRangeFilterVisible())
             {
                 <div class="d-flex gap-2" style="min-width: 300px;">
                     <RadzenDatePicker @bind-Value="CurrentFilters.DateRangeFrom"
@@ -85,114 +86,94 @@
 }
 
 @code {
-    // Track previous parameter values for proper change detection
-    private bool _lastIsExpanded;
-    private int _lastFiltersHash;
-
     [Parameter, EditorRequired] public bool IsExpanded { get; set; }
     [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
-    [Parameter, EditorRequired] public AdvancedFilterState CurrentFilters { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionnaireFilterBar.FilterState CurrentFilters { get; set; } = default!;
     [Parameter] public EventCallback OnFiltersChanged { get; set; }
+
+    // Test variables
+    private string testValue = "";
+    private List<string> testOptions = new() { "Option 1", "Option 2", "Option 3" };
 
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
 
-        // Track parameter changes for optimization
-        _lastIsExpanded = IsExpanded;
-        _lastFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
+        // Debug logging to understand configuration data
+        Console.WriteLine($"[AdvancedFiltersPanel] Configuration filters count: {Configuration?.Filters?.Count ?? 0}");
+        if (Configuration?.Filters != null)
+        {
+            foreach (var filter in Configuration.Filters)
+            {
+                Console.WriteLine($"[AdvancedFiltersPanel] Filter: {filter.Type} - IsVisible: {filter.IsVisible} - Options count: {filter.Options?.Count ?? 0}");
+                if (filter.Type == QuestionnaireFilterType.Status)
+                {
+                    Console.WriteLine($"[AdvancedFiltersPanel] Status filter options: {string.Join(", ", filter.Options ?? new List<string>())}");
+                }
+                if (filter.Type == QuestionnaireFilterType.Template)
+                {
+                    Console.WriteLine($"[AdvancedFiltersPanel] Template filter options: {filter.TemplateOptions?.Count ?? 0}");
+                }
+                if (filter.Type == QuestionnaireFilterType.Category)
+                {
+                    Console.WriteLine($"[AdvancedFiltersPanel] Category filter options: {string.Join(", ", filter.Options ?? new List<string>())}");
+                }
+            }
+        }
+
+        // Additional debugging for dropdown data sources
+        var categoryConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
+        var templateConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Template);
+        var statusConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
+
+        Console.WriteLine($"[AdvancedFiltersPanel] Category dropdown data: {categoryConfig?.Options?.Count ?? 0} items");
+        Console.WriteLine($"[AdvancedFiltersPanel] Template dropdown data: {templateConfig?.TemplateOptions?.Count ?? 0} items");
+        Console.WriteLine($"[AdvancedFiltersPanel] Status dropdown data: {statusConfig?.Options?.Count ?? 0} items");
     }
 
-    /// <summary>
-    /// Override HasStateChanged to properly detect when parameters that affect rendering change
-    /// This allows us to keep optimization enabled while ensuring proper re-rendering
-    /// </summary>
-    protected override bool HasStateChanged()
+    // Helper methods for filter visibility (following the working pattern from QuestionnaireFilterBar)
+    private bool IsCategoryFilterVisible()
     {
-        // Check if IsExpanded parameter changed
-        if (_lastIsExpanded != IsExpanded)
-        {
-            _lastIsExpanded = IsExpanded;
-            return true;
-        }
-
-        // Check if filter state changed
-        var currentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
-        if (_lastFiltersHash != currentFiltersHash)
-        {
-            _lastFiltersHash = currentFiltersHash;
-            return true;
-        }
-
-        return false;
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
+        return filterConfig != null && filterConfig.IsVisible;
     }
 
-    /// <summary>
-    /// Represents the state of advanced filters to enable proper change tracking
-    /// </summary>
-    public class AdvancedFilterState
+    private bool IsTemplateFilterVisible()
     {
-        public IEnumerable<string> CategoryFilter { get; set; } = new List<string>();
-        public IEnumerable<Guid> TemplateFilter { get; set; } = new List<Guid>();
-        public IEnumerable<string> StatusFilters { get; set; } = new List<string>();
-        public DateTime? DateRangeFrom { get; set; }
-        public DateTime? DateRangeTo { get; set; }
-
-        public override int GetHashCode()
-        {
-            // Create a deterministic hash based on filter values
-            var hash = new HashCode();
-
-            // Category filter hash
-            if (CategoryFilter?.Any() == true)
-            {
-                foreach (var category in CategoryFilter.OrderBy(x => x))
-                {
-                    hash.Add(category);
-                }
-            }
-
-            // Template filter hash
-            if (TemplateFilter?.Any() == true)
-            {
-                foreach (var template in TemplateFilter.OrderBy(x => x))
-                {
-                    hash.Add(template);
-                }
-            }
-
-            // Status filter hash
-            if (StatusFilters?.Any() == true)
-            {
-                foreach (var status in StatusFilters.OrderBy(x => x))
-                {
-                    hash.Add(status);
-                }
-            }
-
-            // Date range hash
-            hash.Add(DateRangeFrom);
-            hash.Add(DateRangeTo);
-
-            return hash.ToHashCode();
-        }
-
-        public void Clear()
-        {
-            CategoryFilter = new List<string>();
-            TemplateFilter = new List<Guid>();
-            StatusFilters = new List<string>();
-            DateRangeFrom = null;
-            DateRangeTo = null;
-        }
-
-        public bool HasActiveFilters()
-        {
-            return (CategoryFilter?.Any() ?? false) ||
-                   (TemplateFilter?.Any() ?? false) ||
-                   (StatusFilters?.Any() ?? false) ||
-                   DateRangeFrom.HasValue ||
-                   DateRangeTo.HasValue;
-        }
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Template);
+        return filterConfig != null && filterConfig.IsVisible;
     }
+
+    private bool IsStatusFilterVisible()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
+        return filterConfig != null && filterConfig.IsVisible;
+    }
+
+    private bool IsDateRangeFilterVisible()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.DateRange);
+        return filterConfig != null && filterConfig.IsVisible;
+    }
+
+    // Helper methods for filter options (following the working pattern from QuestionnaireFilterBar)
+    private List<string> GetCategoryFilterOptions()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
+        return filterConfig?.Options ?? new List<string>();
+    }
+
+    private List<QuestionnaireTemplateOption> GetTemplateFilterOptions()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Template);
+        return filterConfig?.TemplateOptions ?? new List<QuestionnaireTemplateOption>();
+    }
+
+    private List<string> GetStatusFilterOptions()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
+        return filterConfig?.Options ?? new List<string>();
+    }
+
+    // AdvancedFilterState class removed - now using QuestionnaireFilterBar.FilterState directly
 }

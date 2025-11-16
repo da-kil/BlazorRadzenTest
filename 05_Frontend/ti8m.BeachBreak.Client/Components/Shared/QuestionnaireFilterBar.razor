@@ -49,6 +49,16 @@
         </div>
     }
 
+    <!-- Advanced Filters Toggle -->
+    @if (HasAdvancedFilters())
+    {
+        <RadzenButton Icon="@(showAdvancedFilters ? "expand_less" : "tune")"
+                     Text="@(showAdvancedFilters ? "Less" : "More Filters")"
+                     ButtonStyle="ButtonStyle.Light"
+                     Size="ButtonSize.Small"
+                     Click="@ToggleAdvancedFilters" />
+    }
+
     <!-- Clear Filters -->
     @if (HasActiveFilters())
     {
@@ -60,6 +70,15 @@
     }
 </div>
 
+<!-- Advanced Filters Panel -->
+@if (showAdvancedFilters)
+{
+    <AdvancedFiltersPanel Configuration="@Configuration"
+                         CurrentFilters="@CurrentFilters"
+                         IsExpanded="@showAdvancedFilters"
+                         OnFiltersChanged="@HandleFiltersChanged" />
+}
+
 
 @code {
     [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
@@ -68,37 +87,33 @@
     [Parameter] public EventCallback OnClearFilters { get; set; }
     [Parameter] public EventCallback<string> OnSearchChanged { get; set; }
 
-    // Track state changes for optimization
-    private int _lastFiltersHash = 0;
-
     protected override void OnInitialized()
     {
-        // Initialize state tracking
-        _lastFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
+        // Base initialization
+        base.OnInitialized();
     }
 
     protected override void OnParametersSet()
     {
-        // Update state tracking
-        _lastFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
-    }
+        // Base parameter handling
+        base.OnParametersSet();
 
-    /// <summary>
-    /// Override HasStateChanged to properly detect when internal state changes
-    /// This allows us to keep optimization enabled while ensuring proper re-rendering
-    /// </summary>
-    protected override bool HasStateChanged()
-    {
-        // Check if filter state changed
-        var currentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
-        if (_lastFiltersHash != currentFiltersHash)
+        // Debug logging to understand configuration data
+        Console.WriteLine($"[QuestionnaireFilterBar] Configuration filters count: {Configuration?.Filters?.Count ?? 0}");
+        if (Configuration?.Filters != null)
         {
-            _lastFiltersHash = currentFiltersHash;
-            return true;
+            foreach (var filter in Configuration.Filters)
+            {
+                Console.WriteLine($"[QuestionnaireFilterBar] Filter: {filter.Type} - IsVisible: {filter.IsVisible} - Options count: {filter.Options?.Count ?? 0}");
+            }
         }
-
-        return false;
     }
+
+    // Disable parameter optimization to ensure filter rendering works properly
+    protected override bool EnableParameterOptimization => false;
+
+    // Advanced filters state
+    private bool showAdvancedFilters = false;
 
 
     private async Task OnSearchInputChanged(ChangeEventArgs e)
@@ -153,6 +168,22 @@
     {
         return CurrentFilters?.HasActiveFilters() ?? false;
     }
+
+    private bool HasAdvancedFilters()
+    {
+        return Configuration.Filters.Any(f => f.Type == QuestionnaireFilterType.Category ||
+                                            f.Type == QuestionnaireFilterType.Template ||
+                                            f.Type == QuestionnaireFilterType.Status ||
+                                            f.Type == QuestionnaireFilterType.DateRange) &&
+               Configuration.Filters.Any(f => f.IsVisible);
+    }
+
+    private void ToggleAdvancedFilters()
+    {
+        showAdvancedFilters = !showAdvancedFilters;
+    }
+
+    // Remove the separate AdvancedFilterState - use CurrentFilters directly
 
     /// <summary>
     /// Main filter state for the filter bar

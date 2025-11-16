@@ -1288,7 +1288,7 @@
         }
 
         // Apply department filter
-        if (filterState.DepartmentFilter.Any())
+        if (filterState.DepartmentFilter?.Any() == true)
         {
             var selectedOrgNumbers = filterState.DepartmentFilter.Select(ExtractOrganizationNumber).Where(x => x.HasValue).Select(x => x!.Value).ToList();
             if (selectedOrgNumbers.Any())
@@ -1324,7 +1324,7 @@
         }
 
         // Apply department filter (organization-based)
-        if (filterState.DepartmentFilter.Any())
+        if (filterState.DepartmentFilter?.Any() == true)
         {
             // Parse the selected organizations from "Number - Name" format
             var selectedOrgNumbers = filterState.DepartmentFilter.Select(ExtractOrganizationNumber).Where(x => x.HasValue).Select(x => x!.Value).ToList();
@@ -1342,7 +1342,7 @@
         }
 
         // Apply category filter
-        if (filterState.CategoryFilter.Any())
+        if (filterState.CategoryFilter?.Any() == true)
         {
             // Get category options from configuration
             var categoryFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
@@ -1364,14 +1364,14 @@
         }
 
         // Apply template filter
-        if (filterState.TemplateFilter.Any())
+        if (filterState.TemplateFilter?.Any() == true)
         {
             filteredAssignments = filteredAssignments.Where(a =>
                 filterState.TemplateFilter.Contains(a.TemplateId));
         }
 
         // Apply status filter
-        if (filterState.StatusFilters.Any())
+        if (filterState.StatusFilters?.Any() == true)
         {
             filteredAssignments = filteredAssignments.Where(a =>
                 filterState.StatusFilters.Contains(a.WorkflowState.ToString()));
