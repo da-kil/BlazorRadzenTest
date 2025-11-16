@@ -14,26 +14,17 @@
 @inject IQuestionnaireTemplateService TemplateService
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject IOrganizationApiService OrganizationService
 
 <PageTitle>Questionnaire Assignments</PageTitle>
 
 <link href="css/assignment-dialogs.css" rel="stylesheet" />
 
 <style>
-    .assignment-header {
-        background: var(--primary-color);
-        color: white;
-        padding: 2rem;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-    }
 
-    .assignment-form {
-        background: rgba(var(--blue-new-rgb), 0.05);
-        border: 2px solid rgba(var(--blue-new-rgb), 0.1);
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
+    .assignment-container {
+        padding: 1rem 0;
+        margin-bottom: 1rem;
     }
 
     .form-section {
@@ -57,19 +48,19 @@
     }
 
     .questionnaire-item:hover {
-        border-color: var(--purple-rain);
-        background: rgba(var(--purple-rain-rgb), 0.05);
+        border-color: var(--rz-primary);
+        background: var(--rz-primary-lighter);
     }
 
     .questionnaire-item.selected {
-        border-color: var(--purple-rain);
-        background: rgba(var(--purple-rain-rgb), 0.1);
+        border-color: var(--rz-primary);
+        background: var(--rz-primary-light);
     }
 
     .selected-summary {
-        background: linear-gradient(135deg, rgba(var(--green-new-rgb), 0.1), rgba(var(--blue-new-rgb), 0.1));
-        border: 2px solid var(--green-new);
-        border-radius: 12px;
+        background: var(--rz-success-lighter);
+        border: 1px solid var(--rz-success);
+        border-radius: var(--rz-border-radius);
         padding: 1.5rem;
         margin: 1.5rem 0;
     }
@@ -80,28 +71,25 @@
         box-shadow: 0 4px 20px rgba(0,0,0,0.05);
     }
 
-    :root {
-        --blue-new-rgb: 15, 105, 255;
-        --purple-rain-rgb: 147, 91, 169;
-        --green-new-rgb: 0, 230, 200;
-    }
 
     /* Employee card responsive behavior moved to shared css/assignment-dialogs.css */
 </style>
 
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="assignment-header">
-        <div class="d-flex align-items-center">
-            <RadzenIcon Icon="assignment_ind" Style="font-size: 3rem; margin-right: 1.5rem;" />
-            <div>
-                <RadzenText TextStyle="TextStyle.H3" Class="mb-2">Questionnaire Assignments</RadzenText>
-                <RadzenText TextStyle="TextStyle.H6" Style="opacity: 0.9;">
-                    Create and manage questionnaire assignments with real-time API integration
-                </RadzenText>
+<div class="row">
+    <div class="col-12">
+        <div class="page-container mb-4">
+            <!-- Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
+                        <RadzenIcon Icon="assignment_ind" Class="me-2" />
+                        Questionnaire Assignments
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                        Create and manage questionnaire assignments with real-time API integration
+                    </RadzenText>
+                </div>
             </div>
-        </div>
-    </div>
 
     <RadzenTabs>
         <Tabs>
@@ -119,106 +107,101 @@
                     }
                     else
                     {
-                        <div class="assignment-form">
-                            <RadzenRow Gap="2rem">
-                                <!-- Employee Selection -->
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <div class="form-section">
-                                        <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
-                                            <RadzenIcon Icon="people" Class="me-2" Style="color: var(--blue-new);" />
-                                            Select Employees
-                                        </RadzenText>
+                        <div class="assignment-container">
+                            <!-- Employee Selection -->
+                            <div class="form-section">
+                                <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
+                                    <RadzenIcon Icon="people" Class="me-2" Style="color: var(--rz-primary);" />
+                                    Select Employees
+                                </RadzenText>
 
-                                        <div class="mb-3">
-                                            <RadzenTextBox @bind-Value="@employeeSearchText"
-                                                         Placeholder="Search employees by name, email, or department..."
-                                                         Class="w-100 mb-2"
-                                                         @oninput="@(async (args) => { employeeSearchText = args.Value?.ToString() ?? ""; FilterEmployees(); })" />
+                                <!-- Employee Filter Bar -->
+                                <div class="mb-3">
+                                    <QuestionnaireFilterBar Configuration="@employeeFilterConfiguration"
+                                                          CurrentFilters="@employeeFilters"
+                                                          OnFiltersChanged="@HandleEmployeeFiltersChanged" />
+                                </div>
 
-                                            <div class="d-flex gap-2 mb-2">
-                                                <AsyncButton Text="@($"Select All Filtered ({filteredEmployees.Count})")"
-                                                            ButtonStyle="ButtonStyle.Secondary"
-                                                            Size="ButtonSize.Small"
-                                                            Icon="select_all"
-                                                            Click="@SelectAllFilteredEmployees" />
-                                                <AsyncButton Text="Clear Selection"
-                                                            ButtonStyle="ButtonStyle.Light"
-                                                            Size="ButtonSize.Small"
-                                                            Icon="clear"
-                                                            Click="@ClearEmployeeSelection" />
-                                            </div>
-                                        </div>
+                                <!-- Employee Selection Actions -->
+                                <div class="d-flex gap-2 mb-3">
+                                    <AsyncButton Text="@($"Select All Filtered ({filteredEmployees.Count})")"
+                                                ButtonStyle="ButtonStyle.Secondary"
+                                                Size="ButtonSize.Small"
+                                                Icon="select_all"
+                                                Click="@SelectAllFilteredEmployees" />
+                                    <AsyncButton Text="Clear Selection"
+                                                ButtonStyle="ButtonStyle.Light"
+                                                Size="ButtonSize.Small"
+                                                Icon="clear"
+                                                Click="@ClearEmployeeSelection" />
+                                </div>
 
-                                        <EmployeeSelectionGrid Employees="@filteredEmployees"
-                                                              SelectedEmployeeIds="@selectedEmployeeIds.Select(id => id.ToString()).ToList()"
-                                                              OnEmployeeToggle="@ToggleEmployeeSelection" />
-                                    </div>
-                                </RadzenColumn>
+                                <EmployeeSelectionGrid Employees="@filteredEmployees"
+                                                      SelectedEmployeeIds="@selectedEmployeeIds.Select(id => id.ToString()).ToList()"
+                                                      OnEmployeeToggle="@ToggleEmployeeSelection" />
+                            </div>
 
-                                <!-- Questionnaire Selection -->
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <div class="form-section">
-                                        <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
-                                            <RadzenIcon Icon="quiz" Class="me-2" Style="color: var(--purple-rain);" />
-                                            Select Questionnaire
-                                        </RadzenText>
+                            <!-- Questionnaire Selection -->
+                            <div class="form-section">
+                                <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
+                                    <RadzenIcon Icon="quiz" Class="me-2" Style="color: var(--rz-secondary);" />
+                                    Select Questionnaire
+                                </RadzenText>
 
-                                        <div class="mb-3">
-                                            <RadzenDropDown @bind-Value="@selectedCategoryId"
-                                                          Data="@availableCategories"
-                                                          TextProperty="NameEn"
-                                                          ValueProperty="Id"
-                                                          AllowClear="true"
-                                                          Placeholder="Filter by category"
-                                                          Change="@FilterQuestionnaires"
-                                                          Class="w-100" />
-                                        </div>
+                                <div class="mb-3">
+                                    <RadzenDropDown @bind-Value="@selectedCategoryId"
+                                                  Data="@availableCategories"
+                                                  TextProperty="NameEn"
+                                                  ValueProperty="Id"
+                                                  AllowClear="true"
+                                                  Placeholder="Filter by category"
+                                                  Change="@FilterQuestionnaires"
+                                                  Class="w-100" />
+                                </div>
 
-                                        <div style="max-height: 400px; overflow-y: auto;">
-                                            @if (filteredQuestionnaires.Any())
-                                            {
-                                                @foreach (var questionnaire in filteredQuestionnaires)
-                                                {
-                                                    <div class="questionnaire-item @(selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id ? "selected" : "")"
-                                                         @onclick="() => SelectQuestionnaire(questionnaire.Id)">
-                                                        <div class="d-flex align-items-start">
-                                                            <div class="flex-grow-1">
-                                                                <div class="d-flex justify-content-between align-items-start">
-                                                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@questionnaire.Name</RadzenText>
-                                                                    <RadzenBadge Text="@GetCategoryName(questionnaire.CategoryId)" BadgeStyle="BadgeStyle.Info" />
-                                                                </div>
-                                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@questionnaire.Description</RadzenText>
-                                                                <div class="d-flex gap-3 mt-2">
-                                                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                                                        <RadzenIcon Icon="layers" Style="font-size: 0.85rem; margin-right: 4px;" />
-                                                                        @questionnaire.Sections.Count sections
-                                                                    </RadzenText>
-                                                                </div>
-                                                            </div>
-                                                            @if (selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id)
-                                                            {
-                                                                <RadzenIcon Icon="check_circle" Style="color: var(--green-new); font-size: 1.5rem;" />
-                                                            }
+                                <div style="max-height: 400px; overflow-y: auto;">
+                                    @if (filteredQuestionnaires.Any())
+                                    {
+                                        @foreach (var questionnaire in filteredQuestionnaires)
+                                        {
+                                            <div class="questionnaire-item @(selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id ? "selected" : "")"
+                                                 @onclick="() => SelectQuestionnaire(questionnaire.Id)">
+                                                <div class="d-flex align-items-start">
+                                                    <div class="flex-grow-1">
+                                                        <div class="d-flex justify-content-between align-items-start">
+                                                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@questionnaire.Name</RadzenText>
+                                                            <RadzenBadge Text="@GetCategoryName(questionnaire.CategoryId)" BadgeStyle="BadgeStyle.Info" />
+                                                        </div>
+                                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@questionnaire.Description</RadzenText>
+                                                        <div class="d-flex gap-3 mt-2">
+                                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                                                <RadzenIcon Icon="layers" Style="font-size: 0.85rem; margin-right: 4px;" />
+                                                                @questionnaire.Sections.Count sections
+                                                            </RadzenText>
                                                         </div>
                                                     </div>
-                                                }
-                                            }
-                                            else
-                                            {
-                                                <div class="text-center text-muted p-3">
-                                                    <RadzenIcon Icon="quiz" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
-                                                    <RadzenText TextStyle="TextStyle.Body2">No questionnaires available.</RadzenText>
+                                                    @if (selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id)
+                                                    {
+                                                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 1.5rem;" />
+                                                    }
                                                 </div>
-                                            }
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="text-center text-muted p-3">
+                                            <RadzenIcon Icon="quiz" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
+                                            <RadzenText TextStyle="TextStyle.Body2">No questionnaires available.</RadzenText>
                                         </div>
-                                    </div>
-                                </RadzenColumn>
-                            </RadzenRow>
+                                    }
+                                </div>
+                            </div>
 
                             <!-- Assignment Configuration -->
                             <div class="form-section">
                                 <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
-                                    <RadzenIcon Icon="settings" Class="me-2" Style="color: var(--golden-milk);" />
+                                    <RadzenIcon Icon="settings" Class="me-2" Style="color: var(--rz-warning);" />
                                     Assignment Settings
                                 </RadzenText>
 
@@ -253,7 +236,7 @@
                                     <RadzenRow Gap="1rem">
                                         <RadzenColumn Size="12" SizeMD="4">
                                             <div class="text-center">
-                                                <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--blue-new); margin-bottom: 0.5rem;" />
+                                                <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-primary); margin-bottom: 0.5rem;" />
                                                 <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@selectedEmployeeIds.Count</RadzenText>
                                                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Employee(s)</RadzenText>
                                             </div>
@@ -261,7 +244,7 @@
 
                                         <RadzenColumn Size="12" SizeMD="4">
                                             <div class="text-center">
-                                                <RadzenIcon Icon="quiz" Style="font-size: 2rem; color: var(--purple-rain); margin-bottom: 0.5rem;" />
+                                                <RadzenIcon Icon="quiz" Style="font-size: 2rem; color: var(--rz-secondary); margin-bottom: 0.5rem;" />
                                                 <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">1</RadzenText>
                                                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Questionnaire</RadzenText>
                                             </div>
@@ -269,7 +252,7 @@
 
                                         <RadzenColumn Size="12" SizeMD="4">
                                             <div class="text-center">
-                                                <RadzenIcon Icon="event" Style="font-size: 2rem; color: var(--golden-milk); margin-bottom: 0.5rem;" />
+                                                <RadzenIcon Icon="event" Style="font-size: 2rem; color: var(--rz-warning); margin-bottom: 0.5rem;" />
                                                 <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@(assignmentDueDate?.ToString("dd/MM") ?? "No Date")</RadzenText>
                                                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Due Date</RadzenText>
                                             </div>
@@ -430,6 +413,8 @@
             </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
+        </div>
+    </div>
 </div>
 
 @code {
@@ -442,6 +427,11 @@
     private List<QuestionnaireAssignment> assignments = new();
     private List<QuestionnaireAssignment> filteredAssignments = new();
     private List<Category> categories = new();
+    private List<Organization> organizations = new();
+
+    // Employee Filtering
+    private QuestionnairePageConfiguration employeeFilterConfiguration = new();
+    private QuestionnaireFilterBar.FilterState employeeFilters = new();
 
     // UI State
     private RadzenDataGrid<QuestionnaireAssignment> assignmentsGrid = default!;
@@ -450,7 +440,6 @@
     private bool isProcessingAction = false;
 
     // Form State
-    private string employeeSearchText = "";
     private List<Guid> selectedEmployeeIds = new();
     private Guid? selectedQuestionnaireId = null;
     private DateTime? assignmentDueDate;
@@ -490,18 +479,20 @@
 
         try
         {
-            // Load employees and questionnaires in parallel
+            // Load employees, questionnaires, and organizations in parallel
             var employeesTask = EmployeeApiService.GetAllEmployeesAsync();
             var questionnairesTask = TemplateService.GetAllTemplatesAsync();
             var assignmentsTask = AssignmentService.GetAllAssignmentsAsync();
             var categoriesTask = CategoryApiService.GetAllCategoriesAsync();
+            var organizationsTask = OrganizationService.GetAllOrganizationsAsync(includeDeleted: false, includeIgnored: false);
 
-            await Task.WhenAll(employeesTask, questionnairesTask, assignmentsTask, categoriesTask);
+            await Task.WhenAll(employeesTask, questionnairesTask, assignmentsTask, categoriesTask, organizationsTask);
 
             allEmployees = await employeesTask;
             allQuestionnaires = await questionnairesTask;
             assignments = await assignmentsTask;
             categories = await categoriesTask;
+            organizations = await organizationsTask;
 
             // Set up initial filtered data
             filteredEmployees = allEmployees.ToList();
@@ -513,9 +504,15 @@
             // Extract available categories
             availableCategories = categories.Where(o=> allQuestionnaires.Select(q => q.CategoryId).Distinct().Contains(o.Id)).ToList();
 
+            // Initialize employee filter configuration
+            InitializeEmployeeFilterConfiguration();
+
             NotificationService.Notify(NotificationSeverity.Success,
                 "Data Loaded",
                 $"Loaded {allEmployees.Count} employees ({filteredEmployees.Count} available), {allQuestionnaires.Count} questionnaires ({filteredQuestionnaires.Count} published)");
+
+            // Force re-render after filter configuration is initialized
+            StateHasChanged();
         }
         catch (Exception ex)
         {
@@ -533,19 +530,30 @@
 
     private void FilterEmployees()
     {
-        if (string.IsNullOrWhiteSpace(employeeSearchText))
+        var employees = allEmployees.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrWhiteSpace(employeeFilters.SearchFilter))
         {
-            filteredEmployees = allEmployees.ToList();
+            var searchTerm = employeeFilters.SearchFilter.Trim();
+            employees = employees.Where(e =>
+                e.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.EMail.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.Department.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) ||
+                e.Organization?.Contains(searchTerm, StringComparison.OrdinalIgnoreCase) == true ||
+                e.Role.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            );
         }
-        else
+
+        // Apply department/organization filter
+        if (employeeFilters.DepartmentFilter?.Any() == true)
         {
-            filteredEmployees = allEmployees.Where(e =>
-                (e.FullName.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
-                 e.EMail.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
-                 e.Department.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase) ||
-                 e.Role.Contains(employeeSearchText, StringComparison.OrdinalIgnoreCase))
-            ).ToList();
+            employees = employees.Where(e =>
+                employeeFilters.DepartmentFilter.Contains(e.Organization ?? "Unknown")
+            );
         }
+
+        filteredEmployees = employees.ToList();
         StateHasChanged();
     }
 
@@ -654,7 +662,10 @@
                 selectedQuestionnaireId = null;
                 assignmentDueDate = null;
                 assignmentNotes = "";
-                employeeSearchText = "";
+
+                // Reset employee filters
+                employeeFilters.SearchFilter = "";
+                employeeFilters.DepartmentFilter = new List<string>();
                 FilterEmployees();
             }
             else
@@ -992,6 +1003,74 @@
             return $"{names[0][0]}{names[1][0]}".ToUpper();
         }
         return names.Length > 0 ? names[0][0].ToString().ToUpper() : "?";
+    }
+
+    private void InitializeEmployeeFilterConfiguration()
+    {
+        // Get distinct organization names from employees and loaded organizations
+        var organizationOptions = new List<string>();
+
+        // First, try to use loaded organizations
+        if (organizations?.Any() == true)
+        {
+            organizationOptions.AddRange(organizations.Select(o => o.Name).Where(name => !string.IsNullOrWhiteSpace(name)));
+        }
+
+        // Also include organizations from employee data as fallback
+        if (allEmployees?.Any() == true)
+        {
+            var employeeOrgs = allEmployees
+                .Where(e => !string.IsNullOrWhiteSpace(e.Organization))
+                .Select(e => e.Organization!)
+                .Distinct()
+                .Where(org => !organizationOptions.Contains(org));
+            organizationOptions.AddRange(employeeOrgs);
+        }
+
+        organizationOptions = organizationOptions.Distinct().OrderBy(o => o).ToList();
+
+        employeeFilterConfiguration = new QuestionnairePageConfiguration
+        {
+            PageTitle = "Employee Selection",
+            PageIcon = "people",
+            Filters = new List<QuestionnairePageFilter>
+            {
+                new()
+                {
+                    Id = "search",
+                    Label = "Search employees",
+                    Type = QuestionnaireFilterType.Search,
+                    IsVisible = true
+                },
+                new()
+                {
+                    Id = "department",
+                    Label = "Filter by Organization",
+                    Type = QuestionnaireFilterType.Department,
+                    IsVisible = organizationOptions.Any(),
+                    Options = organizationOptions
+                }
+            }
+        };
+
+        // Initialize filter state - ensure it matches QuestionnaireFilterBar.FilterState structure
+        employeeFilters = new QuestionnaireFilterBar.FilterState
+        {
+            SearchFilter = "",
+            DepartmentFilter = new List<string>(),
+            CategoryFilter = new List<string>(),
+            TemplateFilter = new List<Guid>(),
+            StatusFilters = new List<string>(),
+            DateRangeFrom = null,
+            DateRangeTo = null
+        };
+    }
+
+    private Task HandleEmployeeFiltersChanged()
+    {
+        FilterEmployees();
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 
     // Helper classes

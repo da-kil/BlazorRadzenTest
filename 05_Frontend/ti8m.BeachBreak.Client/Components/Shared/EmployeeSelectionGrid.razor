@@ -8,24 +8,7 @@
 <div class="employee-selection-optimized">
     @if (Employees.Any())
     {
-        @if (Employees.Count > VIRTUALIZATION_THRESHOLD)
-        {
-            <!-- Virtual scrolling for large datasets -->
-            <RadzenDataList Data="@Employees"
-                           WrapItems="false"
-                           AllowPaging="false"
-                           Style="max-height: 400px; overflow-y: auto;">
-                <Template Context="employee">
-                    <EmployeeCard Employee="@employee"
-                                 IsSelected="@IsEmployeeSelected(employee)"
-                                 IsCurrent="@IsCurrentAssignee(employee)"
-                                 OnClick="@OnEmployeeToggle" />
-                </Template>
-            </RadzenDataList>
-        }
-        else
-        {
-            <!-- Direct rendering for smaller datasets -->
+        <div class="employee-grid-container" style="max-height: 400px; overflow-y: auto;">
             @foreach (var employee in Employees)
             {
                 <EmployeeCard Employee="@employee"
@@ -33,7 +16,7 @@
                              IsCurrent="@IsCurrentAssignee(employee)"
                              OnClick="@OnEmployeeToggle" />
             }
-        }
+        </div>
     }
     else
     {
@@ -52,8 +35,6 @@
 }
 
 @code {
-    private const int VIRTUALIZATION_THRESHOLD = 50; // Use virtual scrolling for 50+ employees
-
     [Parameter] public List<EmployeeDto> Employees { get; set; } = new();
     [Parameter] public List<string> SelectedEmployeeIds { get; set; } = new();
     [Parameter] public string? CurrentAssigneeId { get; set; }
