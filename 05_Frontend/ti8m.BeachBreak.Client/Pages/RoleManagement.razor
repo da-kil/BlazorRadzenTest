@@ -149,8 +149,7 @@
 </AuthorizeView>
 
 @code {
-    // Disable parameter optimization to ensure component re-renders
-    protected override bool EnableParameterOptimization => false;
+    protected override bool EnableParameterOptimization => true;
 
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
@@ -161,10 +160,40 @@
     string searchText = string.Empty;
     ApplicationRole currentUserRole = ApplicationRole.Employee;
 
+    // State tracking fields for optimization
+    private List<EmployeeDto> _lastEmployees = new();
+    private string _lastSearchText = string.Empty;
+    private ApplicationRole _lastCurrentUserRole = ApplicationRole.Employee;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadCurrentUserRole();
         await LoadEmployees();
+
+        // Initialize state tracking after loading data
+        _lastEmployees = employees;
+        _lastSearchText = searchText;
+        _lastCurrentUserRole = currentUserRole;
+    }
+
+    protected override bool HasStateChanged()
+    {
+        // Check if employees list reference or content changed
+        bool employeesChanged = !ReferenceEquals(_lastEmployees, employees) ||
+                               _lastEmployees.Count != employees.Count;
+
+        // Check if search text changed
+        bool searchChanged = _lastSearchText != searchText;
+
+        // Check if role changed
+        bool roleChanged = _lastCurrentUserRole != currentUserRole;
+
+        // Update tracked values if changed
+        if (employeesChanged) _lastEmployees = employees;
+        if (searchChanged) _lastSearchText = searchText;
+        if (roleChanged) _lastCurrentUserRole = currentUserRole;
+
+        return employeesChanged || searchChanged || roleChanged;
     }
 
     async Task LoadCurrentUserRole()
