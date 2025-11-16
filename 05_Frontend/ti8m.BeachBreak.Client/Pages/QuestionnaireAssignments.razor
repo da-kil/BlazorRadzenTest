@@ -54,7 +54,22 @@
 
     .questionnaire-item.selected {
         border-color: var(--rz-primary);
-        background: var(--rz-primary-light);
+        background: var(--rz-primary-lighter);
+        color: var(--rz-text-color);
+    }
+
+    .questionnaire-item.selected .text-muted {
+        color: var(--rz-text-secondary-color) !important;
+        opacity: 0.8;
+    }
+
+    .questionnaire-item.selected .fw-bold {
+        color: var(--rz-text-color);
+    }
+
+    /* Ensure badge contrast on selected items */
+    .questionnaire-item.selected .rz-badge {
+        filter: brightness(1.1) contrast(1.1);
     }
 
     .selected-summary {
