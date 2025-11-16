@@ -8,18 +8,6 @@
 @if (IsExpanded)
 {
     <div class="advanced-filters-container mb-4">
-        <!-- Test dropdown with hardcoded data -->
-        <div class="d-flex flex-wrap gap-3 align-items-center mb-3">
-            <div style="min-width: 200px;">
-                <label>Test Dropdown:</label>
-                <RadzenDropDown @bind-Value="testValue"
-                               Data="@testOptions"
-                               Placeholder="Select Test Option"
-                               AllowClear="true"
-                               Style="width: 100%;" />
-            </div>
-        </div>
-
         <div class="d-flex flex-wrap gap-3 align-items-center">
             <!-- Category Filter -->
             @if (IsCategoryFilterVisible())
@@ -91,44 +79,9 @@
     [Parameter, EditorRequired] public QuestionnaireFilterBar.FilterState CurrentFilters { get; set; } = default!;
     [Parameter] public EventCallback OnFiltersChanged { get; set; }
 
-    // Test variables
-    private string testValue = "";
-    private List<string> testOptions = new() { "Option 1", "Option 2", "Option 3" };
-
     protected override void OnParametersSet()
     {
         base.OnParametersSet();
-
-        // Debug logging to understand configuration data
-        Console.WriteLine($"[AdvancedFiltersPanel] Configuration filters count: {Configuration?.Filters?.Count ?? 0}");
-        if (Configuration?.Filters != null)
-        {
-            foreach (var filter in Configuration.Filters)
-            {
-                Console.WriteLine($"[AdvancedFiltersPanel] Filter: {filter.Type} - IsVisible: {filter.IsVisible} - Options count: {filter.Options?.Count ?? 0}");
-                if (filter.Type == QuestionnaireFilterType.Status)
-                {
-                    Console.WriteLine($"[AdvancedFiltersPanel] Status filter options: {string.Join(", ", filter.Options ?? new List<string>())}");
-                }
-                if (filter.Type == QuestionnaireFilterType.Template)
-                {
-                    Console.WriteLine($"[AdvancedFiltersPanel] Template filter options: {filter.TemplateOptions?.Count ?? 0}");
-                }
-                if (filter.Type == QuestionnaireFilterType.Category)
-                {
-                    Console.WriteLine($"[AdvancedFiltersPanel] Category filter options: {string.Join(", ", filter.Options ?? new List<string>())}");
-                }
-            }
-        }
-
-        // Additional debugging for dropdown data sources
-        var categoryConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
-        var templateConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Template);
-        var statusConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
-
-        Console.WriteLine($"[AdvancedFiltersPanel] Category dropdown data: {categoryConfig?.Options?.Count ?? 0} items");
-        Console.WriteLine($"[AdvancedFiltersPanel] Template dropdown data: {templateConfig?.TemplateOptions?.Count ?? 0} items");
-        Console.WriteLine($"[AdvancedFiltersPanel] Status dropdown data: {statusConfig?.Options?.Count ?? 0} items");
     }
 
     // Helper methods for filter visibility (following the working pattern from QuestionnaireFilterBar)

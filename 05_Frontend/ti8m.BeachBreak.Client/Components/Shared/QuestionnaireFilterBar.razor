@@ -97,16 +97,6 @@
     {
         // Base parameter handling
         base.OnParametersSet();
-
-        // Debug logging to understand configuration data
-        Console.WriteLine($"[QuestionnaireFilterBar] Configuration filters count: {Configuration?.Filters?.Count ?? 0}");
-        if (Configuration?.Filters != null)
-        {
-            foreach (var filter in Configuration.Filters)
-            {
-                Console.WriteLine($"[QuestionnaireFilterBar] Filter: {filter.Type} - IsVisible: {filter.IsVisible} - Options count: {filter.Options?.Count ?? 0}");
-            }
-        }
     }
 
     // Disable parameter optimization to ensure filter rendering works properly
