@@ -32,13 +32,22 @@
         </div>
     }
 
-    <!-- Advanced Filters Toggle -->
-    <RadzenButton Text="@(showAdvancedFilters ? "Hide Filters" : "Advanced Filters")"
-                 Icon="@(showAdvancedFilters ? "expand_less" : "expand_more")"
-                 ButtonStyle="ButtonStyle.Light"
-                 Size="ButtonSize.Small"
-                 Click="@ToggleAdvancedFilters"
-                 Style="white-space: nowrap;" />
+    <!-- Role Filter -->
+    @{
+        var roleFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Role);
+    }
+    @if (roleFilterConfig != null && roleFilterConfig.IsVisible)
+    {
+        <div style="min-width: 200px;">
+            <RadzenDropDown @bind-Value="CurrentFilters.RoleFilter"
+                           Data="@GetRoleFilterOptions()"
+                           Placeholder="Select Role..."
+                           AllowClear="true"
+                           Multiple="true"
+                           Change="@HandleFiltersChanged"
+                           Style="width: 100%;" />
+        </div>
+    }
 
     <!-- Clear Filters -->
     @if (HasActiveFilters())
@@ -51,11 +60,6 @@
     }
 </div>
 
-<!-- Advanced Filters Panel -->
-<AdvancedFiltersPanel IsExpanded="showAdvancedFilters"
-                     Configuration="Configuration"
-                     CurrentFilters="AdvancedFilters"
-                     OnFiltersChanged="HandleFiltersChanged" />
 
 @code {
     [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
@@ -64,28 +68,17 @@
     [Parameter] public EventCallback OnClearFilters { get; set; }
     [Parameter] public EventCallback<string> OnSearchChanged { get; set; }
 
-    private bool showAdvancedFilters = false;
-    private AdvancedFiltersPanel.AdvancedFilterState AdvancedFilters = new();
-
     // Track state changes for optimization
-    private bool _lastShowAdvancedFilters = false;
     private int _lastFiltersHash = 0;
 
     protected override void OnInitialized()
     {
-        // Initialize advanced filters from current filters
-        SyncAdvancedFilters();
-
         // Initialize state tracking
-        _lastShowAdvancedFilters = showAdvancedFilters;
         _lastFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
     }
 
     protected override void OnParametersSet()
     {
-        // Sync advanced filters when parameters change
-        SyncAdvancedFilters();
-
         // Update state tracking
         _lastFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
     }
@@ -96,13 +89,6 @@
     /// </summary>
     protected override bool HasStateChanged()
     {
-        // Check if showAdvancedFilters toggle state changed
-        if (_lastShowAdvancedFilters != showAdvancedFilters)
-        {
-            _lastShowAdvancedFilters = showAdvancedFilters;
-            return true;
-        }
-
         // Check if filter state changed
         var currentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
         if (_lastFiltersHash != currentFiltersHash)
@@ -114,24 +100,6 @@
         return false;
     }
 
-    private void SyncAdvancedFilters()
-    {
-        if (CurrentFilters != null && AdvancedFilters != null)
-        {
-            AdvancedFilters.CategoryFilter = CurrentFilters.CategoryFilter;
-            AdvancedFilters.TemplateFilter = CurrentFilters.TemplateFilter;
-            AdvancedFilters.StatusFilters = CurrentFilters.StatusFilters;
-            AdvancedFilters.DateRangeFrom = CurrentFilters.DateRangeFrom;
-            AdvancedFilters.DateRangeTo = CurrentFilters.DateRangeTo;
-        }
-    }
-
-    private void ToggleAdvancedFilters()
-    {
-        showAdvancedFilters = !showAdvancedFilters;
-        // Use the optimized base class method for state change notification
-        NotifyStateChanged();
-    }
 
     private async Task OnSearchInputChanged(ChangeEventArgs e)
     {
@@ -148,16 +116,6 @@
 
     private async Task HandleFiltersChanged()
     {
-        // Sync advanced filters back to main filter state
-        if (CurrentFilters != null && AdvancedFilters != null)
-        {
-            CurrentFilters.CategoryFilter = AdvancedFilters.CategoryFilter;
-            CurrentFilters.TemplateFilter = AdvancedFilters.TemplateFilter;
-            CurrentFilters.StatusFilters = AdvancedFilters.StatusFilters;
-            CurrentFilters.DateRangeFrom = AdvancedFilters.DateRangeFrom;
-            CurrentFilters.DateRangeTo = AdvancedFilters.DateRangeTo;
-        }
-
         if (OnFiltersChanged.HasDelegate)
         {
             await OnFiltersChanged.InvokeAsync();
@@ -168,8 +126,6 @@
     {
         // Clear all filters
         CurrentFilters.Clear();
-        AdvancedFilters.Clear();
-        showAdvancedFilters = false;
 
         if (OnClearFilters.HasDelegate)
         {
@@ -187,6 +143,12 @@
         return departmentFilterConfig?.Options ?? new List<string>();
     }
 
+    private List<string> GetRoleFilterOptions()
+    {
+        var roleFilterConfig = Configuration.Filters.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Role);
+        return roleFilterConfig?.Options ?? new List<string>();
+    }
+
     private bool HasActiveFilters()
     {
         return CurrentFilters?.HasActiveFilters() ?? false;
@@ -199,6 +161,7 @@
     {
         public string SearchFilter { get; set; } = "";
         public IEnumerable<string> DepartmentFilter { get; set; } = new List<string>();
+        public IEnumerable<string> RoleFilter { get; set; } = new List<string>();
         public IEnumerable<string> CategoryFilter { get; set; } = new List<string>();
         public IEnumerable<Guid> TemplateFilter { get; set; } = new List<Guid>();
         public IEnumerable<string> StatusFilters { get; set; } = new List<string>();
@@ -216,6 +179,15 @@
                 foreach (var dept in DepartmentFilter.OrderBy(x => x))
                 {
                     hash.Add(dept);
+                }
+            }
+
+            // Role filter hash
+            if (RoleFilter?.Any() == true)
+            {
+                foreach (var role in RoleFilter.OrderBy(x => x))
+                {
+                    hash.Add(role);
                 }
             }
 
@@ -257,6 +229,7 @@
         {
             SearchFilter = "";
             DepartmentFilter = new List<string>();
+            RoleFilter = new List<string>();
             CategoryFilter = new List<string>();
             TemplateFilter = new List<Guid>();
             StatusFilters = new List<string>();
@@ -268,6 +241,7 @@
         {
             return !string.IsNullOrEmpty(SearchFilter) ||
                    (DepartmentFilter?.Any() ?? false) ||
+                   (RoleFilter?.Any() ?? false) ||
                    (CategoryFilter?.Any() ?? false) ||
                    (TemplateFilter?.Any() ?? false) ||
                    (StatusFilters?.Any() ?? false) ||

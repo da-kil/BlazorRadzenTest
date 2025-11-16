@@ -7,5 +7,6 @@ public enum QuestionnaireFilterType
     Template = 2,
     Status = 3,
     Department = 4,
-    DateRange = 5
+    DateRange = 5,
+    Role = 6
 }
