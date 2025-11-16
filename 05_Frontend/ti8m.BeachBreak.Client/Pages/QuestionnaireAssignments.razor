@@ -35,6 +35,18 @@
         box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
+    /* Flat design alternative to form-section - removes card depth */
+    .form-section-flat {
+        background: transparent;
+        padding: 1.5rem 0;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .form-section-flat:last-child {
+        border-bottom: none;
+    }
+
     /* Employee card styles moved to shared css/assignment-dialogs.css */
 
     .questionnaire-item {
@@ -125,7 +137,7 @@
                                 {
                                     <div class="assignment-container">
                                         <!-- Employee Selection -->
-                                        <div class="form-section">
+                                        <div class="form-section-flat">
                                             <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
                                                 <RadzenIcon Icon="people" Class="me-2" Style="color: var(--rz-primary);" />
                                                 Select Employees
@@ -158,7 +170,7 @@
                                         </div>
 
                                         <!-- Questionnaire Selection -->
-                                        <div class="form-section">
+                                        <div class="form-section-flat">
                                             <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
                                                 <RadzenIcon Icon="quiz" Class="me-2" Style="color: var(--rz-secondary);" />
                                                 Select Questionnaire
@@ -215,7 +227,7 @@
                                         </div>
 
                                         <!-- Assignment Configuration -->
-                                        <div class="form-section">
+                                        <div class="form-section-flat">
                                             <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
                                                 <RadzenIcon Icon="settings" Class="me-2" Style="color: var(--rz-warning);" />
                                                 Assignment Settings
