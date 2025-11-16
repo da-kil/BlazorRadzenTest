@@ -1049,6 +1049,50 @@
                     Type = QuestionnaireFilterType.Department,
                     IsVisible = organizationOptions.Any(),
                     Options = organizationOptions
+                },
+                new()
+                {
+                    Id = "category",
+                    Label = "Filter by Category",
+                    Type = QuestionnaireFilterType.Category,
+                    IsVisible = categories?.Count > 0,
+                    Options = categories?.Select(c => c.NameEn).ToList() ?? new List<string>(),
+                    CategoryOptions = categories ?? new List<Category>()
+                },
+                new()
+                {
+                    Id = "template",
+                    Label = "Filter by Questionnaire",
+                    Type = QuestionnaireFilterType.Template,
+                    IsVisible = allQuestionnaires?.Count > 0,
+                    TemplateOptions = allQuestionnaires?.Select(t => new QuestionnaireTemplateOption
+                    {
+                        Id = t.Id,
+                        Name = t.Name
+                    }).ToList() ?? new List<QuestionnaireTemplateOption>()
+                },
+                new()
+                {
+                    Id = "status",
+                    Label = "Filter by Status",
+                    Type = QuestionnaireFilterType.Status,
+                    IsVisible = true,
+                    Options = new List<string>
+                    {
+                        "Assigned",
+                        "In Progress",
+                        "Submitted",
+                        "In Review",
+                        "Finalized",
+                        "Overdue"
+                    }
+                },
+                new()
+                {
+                    Id = "dateRange",
+                    Label = "Filter by Due Date",
+                    Type = QuestionnaireFilterType.DateRange,
+                    IsVisible = true
                 }
             }
         };
