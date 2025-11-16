@@ -47,30 +47,30 @@
         background: white;
     }
 
-    .questionnaire-item:hover {
-        border-color: var(--rz-primary);
-        background: var(--rz-primary-lighter);
-    }
+        .questionnaire-item:hover {
+            border-color: var(--rz-primary);
+            background: var(--rz-primary-lighter);
+        }
 
-    .questionnaire-item.selected {
-        border-color: var(--rz-primary);
-        background: var(--rz-primary-lighter);
-        color: var(--rz-text-color);
-    }
+        .questionnaire-item.selected {
+            border-color: var(--rz-primary);
+            background: var(--rz-primary-lighter);
+            color: var(--rz-text-color);
+        }
 
-    .questionnaire-item.selected .text-muted {
-        color: var(--rz-text-secondary-color) !important;
-        opacity: 0.8;
-    }
+            .questionnaire-item.selected .text-muted {
+                color: var(--rz-text-secondary-color) !important;
+                opacity: 0.8;
+            }
 
-    .questionnaire-item.selected .fw-bold {
-        color: var(--rz-text-color);
-    }
+            .questionnaire-item.selected .fw-bold {
+                color: var(--rz-text-color);
+            }
 
-    /* Ensure badge contrast on selected items */
-    .questionnaire-item.selected .rz-badge {
-        filter: brightness(1.1) contrast(1.1);
-    }
+            /* Ensure badge contrast on selected items */
+            .questionnaire-item.selected .rz-badge {
+                filter: brightness(1.1) contrast(1.1);
+            }
 
     .selected-summary {
         background: var(--rz-success-lighter);
@@ -90,344 +90,349 @@
     /* Employee card responsive behavior moved to shared css/assignment-dialogs.css */
 </style>
 
-<div class="row">
-    <div class="col-12">
-        <div class="page-container mb-4">
-            <!-- Header -->
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
-                        <RadzenIcon Icon="assignment_ind" Class="me-2" />
-                        Questionnaire Assignments
-                    </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                        Create and manage questionnaire assignments with real-time API integration
-                    </RadzenText>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-container mb-4">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
+                            <RadzenIcon Icon="assignment_ind" Class="me-2" />
+                            Questionnaire Assignments
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                            Create and manage questionnaire assignments with real-time API integration
+                        </RadzenText>
+                    </div>
                 </div>
-            </div>
 
-    <RadzenTabs>
-        <Tabs>
-            <!-- Create Assignment Tab -->
-            <RadzenTabsItem Text="Create Assignment">
-                <div class="p-3">
-                    @if (isLoading)
-                    {
-                        <div class="text-center p-5">
-                            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary"
-                                                     Value="100"
-                                                     Size="ProgressBarCircularSize.Large" />
-                            <RadzenText TextStyle="TextStyle.H6" Class="mt-3">Loading data...</RadzenText>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="assignment-container">
-                            <!-- Employee Selection -->
-                            <div class="form-section">
-                                <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
-                                    <RadzenIcon Icon="people" Class="me-2" Style="color: var(--rz-primary);" />
-                                    Select Employees
-                                </RadzenText>
+                <RadzenTabs>
+                    <Tabs>
+                        <!-- Create Assignment Tab -->
+                        <RadzenTabsItem Text="Create Assignment">
+                            <div class="p-3">
+                                @if (isLoading)
+                                {
+                                    <div class="text-center p-5">
+                                        <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary"
+                                                                   Value="100"
+                                                                   Size="ProgressBarCircularSize.Large" />
+                                        <RadzenText TextStyle="TextStyle.H6" Class="mt-3">Loading data...</RadzenText>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="assignment-container">
+                                        <!-- Employee Selection -->
+                                        <div class="form-section">
+                                            <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
+                                                <RadzenIcon Icon="people" Class="me-2" Style="color: var(--rz-primary);" />
+                                                Select Employees
+                                            </RadzenText>
 
-                                <!-- Employee Filter Bar -->
-                                <div class="mb-3">
-                                    <QuestionnaireFilterBar Configuration="@employeeFilterConfiguration"
-                                                          CurrentFilters="@employeeFilters"
-                                                          OnFiltersChanged="@HandleEmployeeFiltersChanged" />
-                                </div>
+                                            <!-- Employee Filter Bar -->
+                                            <div class="mb-3">
+                                                <QuestionnaireFilterBar Configuration="@employeeFilterConfiguration"
+                                                                        CurrentFilters="@employeeFilters"
+                                                                        OnFiltersChanged="@HandleEmployeeFiltersChanged" />
+                                            </div>
 
-                                <!-- Employee Selection Actions -->
-                                <div class="d-flex gap-2 mb-3">
-                                    <AsyncButton Text="@($"Select All Filtered ({filteredEmployees.Count})")"
-                                                ButtonStyle="ButtonStyle.Secondary"
-                                                Size="ButtonSize.Small"
-                                                Icon="select_all"
-                                                Click="@SelectAllFilteredEmployees" />
-                                    <AsyncButton Text="Clear Selection"
-                                                ButtonStyle="ButtonStyle.Light"
-                                                Size="ButtonSize.Small"
-                                                Icon="clear"
-                                                Click="@ClearEmployeeSelection" />
-                                </div>
+                                            <!-- Employee Selection Actions -->
+                                            <div class="d-flex gap-2 mb-3">
+                                                <AsyncButton Text="@($"Select All Filtered ({filteredEmployees.Count})")"
+                                                             ButtonStyle="ButtonStyle.Secondary"
+                                                             Size="ButtonSize.Small"
+                                                             Icon="select_all"
+                                                             Click="@SelectAllFilteredEmployees" />
+                                                <AsyncButton Text="Clear Selection"
+                                                             ButtonStyle="ButtonStyle.Light"
+                                                             Size="ButtonSize.Small"
+                                                             Icon="clear"
+                                                             Click="@ClearEmployeeSelection" />
+                                            </div>
 
-                                <EmployeeSelectionGrid Employees="@filteredEmployees"
-                                                      SelectedEmployeeIds="@selectedEmployeeIds.Select(id => id.ToString()).ToList()"
-                                                      OnEmployeeToggle="@ToggleEmployeeSelection" />
-                            </div>
+                                            <EmployeeSelectionGrid Employees="@filteredEmployees"
+                                                                   SelectedEmployeeIds="@selectedEmployeeIds.Select(id => id.ToString()).ToList()"
+                                                                   OnEmployeeToggle="@ToggleEmployeeSelection" />
+                                        </div>
 
-                            <!-- Questionnaire Selection -->
-                            <div class="form-section">
-                                <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
-                                    <RadzenIcon Icon="quiz" Class="me-2" Style="color: var(--rz-secondary);" />
-                                    Select Questionnaire
-                                </RadzenText>
+                                        <!-- Questionnaire Selection -->
+                                        <div class="form-section">
+                                            <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
+                                                <RadzenIcon Icon="quiz" Class="me-2" Style="color: var(--rz-secondary);" />
+                                                Select Questionnaire
+                                            </RadzenText>
 
-                                <div class="mb-3">
-                                    <RadzenDropDown @bind-Value="@selectedCategoryId"
-                                                  Data="@availableCategories"
-                                                  TextProperty="NameEn"
-                                                  ValueProperty="Id"
-                                                  AllowClear="true"
-                                                  Placeholder="Filter by category"
-                                                  Change="@FilterQuestionnaires"
-                                                  Class="w-100" />
-                                </div>
+                                            <div class="mb-3">
+                                                <RadzenDropDown @bind-Value="@selectedCategoryId"
+                                                                Data="@availableCategories"
+                                                                TextProperty="NameEn"
+                                                                ValueProperty="Id"
+                                                                AllowClear="true"
+                                                                Placeholder="Filter by category"
+                                                                Change="@FilterQuestionnaires"
+                                                                Class="w-100" />
+                                            </div>
 
-                                <div style="max-height: 400px; overflow-y: auto;">
-                                    @if (filteredQuestionnaires.Any())
-                                    {
-                                        @foreach (var questionnaire in filteredQuestionnaires)
-                                        {
-                                            <div class="questionnaire-item @(selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id ? "selected" : "")"
-                                                 @onclick="() => SelectQuestionnaire(questionnaire.Id)">
-                                                <div class="d-flex align-items-start">
-                                                    <div class="flex-grow-1">
-                                                        <div class="d-flex justify-content-between align-items-start">
-                                                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@questionnaire.Name</RadzenText>
-                                                            <RadzenBadge Text="@GetCategoryName(questionnaire.CategoryId)" BadgeStyle="BadgeStyle.Info" />
-                                                        </div>
-                                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@questionnaire.Description</RadzenText>
-                                                        <div class="d-flex gap-3 mt-2">
-                                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                                                <RadzenIcon Icon="layers" Style="font-size: 0.85rem; margin-right: 4px;" />
-                                                                @questionnaire.Sections.Count sections
-                                                            </RadzenText>
-                                                        </div>
-                                                    </div>
-                                                    @if (selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id)
+                                            <div style="max-height: 400px; overflow-y: auto;">
+                                                @if (filteredQuestionnaires.Any())
+                                                {
+                                                    @foreach (var questionnaire in filteredQuestionnaires)
                                                     {
-                                                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 1.5rem;" />
+                                                        <div class="questionnaire-item @(selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id ? "selected" : "")"
+                                                             @onclick="() => SelectQuestionnaire(questionnaire.Id)">
+                                                            <div class="d-flex align-items-start">
+                                                                <div class="flex-grow-1">
+                                                                    <div class="d-flex justify-content-between align-items-start">
+                                                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@questionnaire.Name</RadzenText>
+                                                                        <RadzenBadge Text="@GetCategoryName(questionnaire.CategoryId)" BadgeStyle="BadgeStyle.Info" />
+                                                                    </div>
+                                                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@questionnaire.Description</RadzenText>
+                                                                    <div class="d-flex gap-3 mt-2">
+                                                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                                                            <RadzenIcon Icon="layers" Style="font-size: 0.85rem; margin-right: 4px;" />
+                                                                            @questionnaire.Sections.Count sections
+                                                                        </RadzenText>
+                                                                    </div>
+                                                                </div>
+                                                                @if (selectedQuestionnaireId.HasValue && selectedQuestionnaireId.Value == questionnaire.Id)
+                                                                {
+                                                                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); font-size: 1.5rem;" />
+                                                                }
+                                                            </div>
+                                                        </div>
                                                     }
+                                                }
+                                                else
+                                                {
+                                                    <div class="text-center text-muted p-3">
+                                                        <RadzenIcon Icon="quiz" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
+                                                        <RadzenText TextStyle="TextStyle.Body2">No questionnaires available.</RadzenText>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+
+                                        <!-- Assignment Configuration -->
+                                        <div class="form-section">
+                                            <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
+                                                <RadzenIcon Icon="settings" Class="me-2" Style="color: var(--rz-warning);" />
+                                                Assignment Settings
+                                            </RadzenText>
+
+                                            <RadzenRow Gap="1rem">
+                                                <RadzenColumn Size="12" SizeMD="4">
+                                                    <RadzenLabel Text="Due Date (Optional)" />
+                                                    <RadzenDatePicker @bind-Value="@assignmentDueDate"
+                                                                      DateFormat="dd/MM/yyyy"
+                                                                      Min="@DateTime.Today"
+                                                                      Class="w-100" />
+                                                </RadzenColumn>
+
+                                                <RadzenColumn Size="12" SizeMD="8">
+                                                    <RadzenLabel Text="Notes (Optional)" />
+                                                    <RadzenTextArea @bind-Value="@assignmentNotes"
+                                                                    Placeholder="Add any specific instructions or context for this assignment..."
+                                                                    Rows="3"
+                                                                    Class="w-100" />
+                                                </RadzenColumn>
+                                            </RadzenRow>
+                                        </div>
+
+                                        <!-- Assignment Summary -->
+                                        @if (CanCreateAssignment())
+                                        {
+                                            <div class="selected-summary">
+                                                <RadzenText TextStyle="TextStyle.H6" Class="mb-3 d-flex align-items-center">
+                                                    <RadzenIcon Icon="preview" Class="me-2" />
+                                                    Assignment Summary
+                                                </RadzenText>
+
+                                                <RadzenRow Gap="1rem">
+                                                    <RadzenColumn Size="12" SizeMD="4">
+                                                        <div class="text-center">
+                                                            <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-primary); margin-bottom: 0.5rem;" />
+                                                            <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@selectedEmployeeIds.Count</RadzenText>
+                                                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Employee(s)</RadzenText>
+                                                        </div>
+                                                    </RadzenColumn>
+
+                                                    <RadzenColumn Size="12" SizeMD="4">
+                                                        <div class="text-center">
+                                                            <RadzenIcon Icon="quiz" Style="font-size: 2rem; color: var(--rz-secondary); margin-bottom: 0.5rem;" />
+                                                            <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">1</RadzenText>
+                                                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Questionnaire</RadzenText>
+                                                        </div>
+                                                    </RadzenColumn>
+
+                                                    <RadzenColumn Size="12" SizeMD="4">
+                                                        <div class="text-center">
+                                                            <RadzenIcon Icon="event" Style="font-size: 2rem; color: var(--rz-warning); margin-bottom: 0.5rem;" />
+                                                            <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@(assignmentDueDate?.ToString("dd/MM") ?? "No Date")</RadzenText>
+                                                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Due Date</RadzenText>
+                                                        </div>
+                                                    </RadzenColumn>
+                                                </RadzenRow>
+
+                                                <div class="mt-3">
+                                                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-semibold">Selected Questionnaire:</RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body1">@GetSelectedQuestionnaireName()</RadzenText>
                                                 </div>
                                             </div>
                                         }
-                                    }
-                                    else
-                                    {
-                                        <div class="text-center text-muted p-3">
-                                            <RadzenIcon Icon="quiz" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
-                                            <RadzenText TextStyle="TextStyle.Body2">No questionnaires available.</RadzenText>
+
+                                        <!-- Create Assignment Button -->
+                                        <div class="text-center mt-4">
+                                            <AsyncButton Text="Create Assignment"
+                                                         ProcessingText="Creating Assignments"
+                                                         ButtonStyle="ButtonStyle.Primary"
+                                                         Icon="assignment_turned_in"
+                                                         ProcessingIcon="hourglass_empty"
+                                                         Size="ButtonSize.Large"
+                                                         Disabled="@(!CanCreateAssignment() || isCreatingAssignment)"
+                                                         Click="@CreateAssignment"
+                                                         Style="min-width: 250px; padding: 1rem 2rem;" />
                                         </div>
-                                    }
-                                </div>
-                            </div>
-
-                            <!-- Assignment Configuration -->
-                            <div class="form-section">
-                                <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
-                                    <RadzenIcon Icon="settings" Class="me-2" Style="color: var(--rz-warning);" />
-                                    Assignment Settings
-                                </RadzenText>
-
-                                <RadzenRow Gap="1rem">
-                                    <RadzenColumn Size="12" SizeMD="4">
-                                        <RadzenLabel Text="Due Date (Optional)" />
-                                        <RadzenDatePicker @bind-Value="@assignmentDueDate"
-                                                        DateFormat="dd/MM/yyyy"
-                                                        Min="@DateTime.Today"
-                                                        Class="w-100" />
-                                    </RadzenColumn>
-
-                                    <RadzenColumn Size="12" SizeMD="8">
-                                        <RadzenLabel Text="Notes (Optional)" />
-                                        <RadzenTextArea @bind-Value="@assignmentNotes"
-                                                       Placeholder="Add any specific instructions or context for this assignment..."
-                                                       Rows="3"
-                                                       Class="w-100" />
-                                    </RadzenColumn>
-                                </RadzenRow>
-                            </div>
-
-                            <!-- Assignment Summary -->
-                            @if (CanCreateAssignment())
-                            {
-                                <div class="selected-summary">
-                                    <RadzenText TextStyle="TextStyle.H6" Class="mb-3 d-flex align-items-center">
-                                        <RadzenIcon Icon="preview" Class="me-2" />
-                                        Assignment Summary
-                                    </RadzenText>
-
-                                    <RadzenRow Gap="1rem">
-                                        <RadzenColumn Size="12" SizeMD="4">
-                                            <div class="text-center">
-                                                <RadzenIcon Icon="people" Style="font-size: 2rem; color: var(--rz-primary); margin-bottom: 0.5rem;" />
-                                                <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@selectedEmployeeIds.Count</RadzenText>
-                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Employee(s)</RadzenText>
-                                            </div>
-                                        </RadzenColumn>
-
-                                        <RadzenColumn Size="12" SizeMD="4">
-                                            <div class="text-center">
-                                                <RadzenIcon Icon="quiz" Style="font-size: 2rem; color: var(--rz-secondary); margin-bottom: 0.5rem;" />
-                                                <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">1</RadzenText>
-                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Questionnaire</RadzenText>
-                                            </div>
-                                        </RadzenColumn>
-
-                                        <RadzenColumn Size="12" SizeMD="4">
-                                            <div class="text-center">
-                                                <RadzenIcon Icon="event" Style="font-size: 2rem; color: var(--rz-warning); margin-bottom: 0.5rem;" />
-                                                <RadzenText TextStyle="TextStyle.H4" Class="fw-bold">@(assignmentDueDate?.ToString("dd/MM") ?? "No Date")</RadzenText>
-                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Due Date</RadzenText>
-                                            </div>
-                                        </RadzenColumn>
-                                    </RadzenRow>
-
-                                    <div class="mt-3">
-                                        <RadzenText TextStyle="TextStyle.Body1" Class="fw-semibold">Selected Questionnaire:</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body1">@GetSelectedQuestionnaireName()</RadzenText>
                                     </div>
-                                </div>
-                            }
-
-                            <!-- Create Assignment Button -->
-                            <div class="text-center mt-4">
-                                <AsyncButton Text="Create Assignment"
-                                            ProcessingText="Creating Assignments"
-                                            ButtonStyle="ButtonStyle.Primary"
-                                            Icon="assignment_turned_in"
-                                            ProcessingIcon="hourglass_empty"
-                                            Size="ButtonSize.Large"
-                                            Disabled="@(!CanCreateAssignment() || isCreatingAssignment)"
-                                            Click="@CreateAssignment"
-                                            Style="min-width: 250px; padding: 1rem 2rem;" />
+                                }
                             </div>
-                        </div>
-                    }
-                </div>
-            </RadzenTabsItem>
+                        </RadzenTabsItem>
 
-            <!-- Existing Assignments Tab -->
-            <RadzenTabsItem Text="Manage Assignments">
-                <div class="p-3">
-                    <div class="assignment-grid">
-                        <!-- Filters -->
-                        <div class="p-3 border-bottom">
-                            <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
-                                <RadzenColumn Size="12" SizeMD="3">
-                                    <RadzenLabel Text="Filter by Status" />
-                                    <RadzenDropDown @bind-Value="@statusFilter"
-                                                   Data="@statusOptions"
-                                                   TextProperty="Text"
-                                                   ValueProperty="Value"
-                                                   AllowClear="true"
-                                                   Change="@FilterAssignments"
-                                                   Class="w-100" />
-                                </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenLabel Text="Search" />
-                                    <RadzenTextBox @bind-Value="@searchText"
-                                                  Placeholder="Search by employee name or email..."
-                                                  oninput="@(() => FilterAssignments())"
-                                                  Class="w-100" />
-                                </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="3">
-                                    <AsyncButton Text="Refresh"
-                                                ProcessingText="Loading"
-                                                ButtonStyle="ButtonStyle.Secondary"
-                                                Icon="refresh"
-                                                Click="@(() => LoadAssignments())"
-                                                Class="w-100" />
-                                </RadzenColumn>
-                            </RadzenRow>
-                        </div>
+                        <!-- Existing Assignments Tab -->
+                        <RadzenTabsItem Text="Manage Assignments">
+                            <div class="p-3">
+                                <div class="assignment-grid">
+                                    <!-- Filters -->
+                                    <div class="p-3 border-bottom">
+                                        <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
+                                            <RadzenColumn Size="12" SizeMD="3">
+                                                <RadzenLabel Text="Filter by Status" />
+                                                <RadzenDropDown @bind-Value="@statusFilter"
+                                                                Data="@statusOptions"
+                                                                TextProperty="Text"
+                                                                ValueProperty="Value"
+                                                                AllowClear="true"
+                                                                Change="@FilterAssignments"
+                                                                Class="w-100" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="6">
+                                                <RadzenLabel Text="Search" />
+                                                <RadzenTextBox @bind-Value="@searchText"
+                                                               Placeholder="Search by employee name or email..."
+                                                               oninput="@(() => FilterAssignments())"
+                                                               Class="w-100" />
+                                            </RadzenColumn>
+                                            <RadzenColumn Size="12" SizeMD="3">
+                                                <AsyncButton Text="Refresh"
+                                                             ProcessingText="Loading"
+                                                             ButtonStyle="ButtonStyle.Secondary"
+                                                             Icon="refresh"
+                                                             Click="@(() => LoadAssignments())"
+                                                             Class="w-100" />
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                    </div>
 
-                        <!-- Assignments Grid -->
-                        <RadzenDataGrid @ref="assignmentsGrid"
-                                       Data="@filteredAssignments"
-                                       AllowFiltering="true"
-                                       AllowColumnResize="true"
-                                       AllowAlternatingRows="true"
-                                       FilterMode="FilterMode.Advanced"
-                                       AllowSorting="true"
-                                       PageSize="20"
-                                       AllowPaging="true"
-                                       PagerHorizontalAlign="HorizontalAlign.Left"
-                                       ShowPagingSummary="true"
-                                       LoadData="@LoadAssignments">
+                                    <!-- Assignments Grid -->
+                                    <RadzenDataGrid @ref="assignmentsGrid"
+                                                    Data="@filteredAssignments"
+                                                    AllowFiltering="true"
+                                                    AllowColumnResize="true"
+                                                    AllowAlternatingRows="true"
+                                                    FilterMode="FilterMode.Advanced"
+                                                    AllowSorting="true"
+                                                    PageSize="20"
+                                                    AllowPaging="true"
+                                                    PagerHorizontalAlign="HorizontalAlign.Left"
+                                                    ShowPagingSummary="true"
+                                                    LoadData="@LoadAssignments">
 
-                            <Columns>
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.EmployeeName)" Title="Employee" Frozen="true" Width="200px">
-                                    <Template Context="assignment">
-                                        <div>
-                                            <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@assignment.EmployeeName</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@assignment.EmployeeEmail</RadzenText>
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
+                                        <Columns>
+                                            <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.EmployeeName)" Title="Employee" Frozen="true" Width="200px">
+                                                <Template Context="assignment">
+                                                    <div>
+                                                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@assignment.EmployeeName</RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@assignment.EmployeeEmail</RadzenText>
+                                                    </div>
+                                                </Template>
+                                            </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="TemplateName" Title="Questionnaire" Width="250px">
-                                    <Template Context="assignment">
-                                        <div>
-                                            <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@GetTemplateName(assignment.TemplateId)</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@GetTemplateCategory(assignment.TemplateId)</RadzenText>
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
+                                            <RadzenDataGridColumn Property="TemplateName" Title="Questionnaire" Width="250px">
+                                                <Template Context="assignment">
+                                                    <div>
+                                                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold">@GetTemplateName(assignment.TemplateId)</RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@GetTemplateCategory(assignment.TemplateId)</RadzenText>
+                                                    </div>
+                                                </Template>
+                                            </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.WorkflowState)" Title="Status" Width="180px">
-                                    <Template Context="assignment">
-                                        <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
-                                                   BadgeStyle="BadgeStyle.Light"
-                                                   Style="@($"font-size: 0.75rem; background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
-                                    </Template>
-                                </RadzenDataGridColumn>
+                                            <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.WorkflowState)" Title="Status" Width="180px">
+                                                <Template Context="assignment">
+                                                    <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
+                                                                 BadgeStyle="BadgeStyle.Light"
+                                                                 Style="@($"font-size: 0.75rem; background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
+                                                </Template>
+                                            </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedDate)" Title="Assigned" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+                                            <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedDate)" Title="Assigned" Width="120px" FormatString="{0:dd/MM/yyyy}" />
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.DueDate)" Title="Due Date" Width="120px">
-                                    <Template Context="assignment">
-                                        @if (assignment.DueDate.HasValue)
-                                        {
-                                            var isOverdue = assignment.DueDate < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized;
-                                            <RadzenText TextStyle="TextStyle.Body2"
-                                                       Class="@(isOverdue ? "text-danger fw-bold" : "")">
-                                                @assignment.DueDate.Value.ToString("dd/MM/yyyy")
-                                                @if (isOverdue) { <RadzenIcon Icon="warning" Class="ms-1" /> }
-                                            </RadzenText>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">No due date</span>
-                                        }
-                                    </Template>
-                                </RadzenDataGridColumn>
+                                            <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.DueDate)" Title="Due Date" Width="120px">
+                                                <Template Context="assignment">
+                                                    @if (assignment.DueDate.HasValue)
+                                                    {
+                                                        var isOverdue = assignment.DueDate < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized;
+                                                        <RadzenText TextStyle="TextStyle.Body2"
+                                                                    Class="@(isOverdue ? "text-danger fw-bold" : "")">
+                                                            @assignment.DueDate.Value.ToString("dd/MM/yyyy")
+                                                            @if (isOverdue)
+                                                            {
+                                                                <RadzenIcon Icon="warning" Class="ms-1" />
+                                                            }
+                                                        </RadzenText>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">No due date</span>
+                                                    }
+                                                </Template>
+                                            </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.FinalizedDate)" Title="Completed" Width="120px">
-                                    <Template Context="assignment">
-                                        @if (assignment.FinalizedDate.HasValue)
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Body2">@assignment.FinalizedDate.Value.ToString("dd/MM/yyyy")</RadzenText>
-                                        }
-                                        else
-                                        {
-                                            <span class="text-muted">-</span>
-                                        }
-                                    </Template>
-                                </RadzenDataGridColumn>
+                                            <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.FinalizedDate)" Title="Completed" Width="120px">
+                                                <Template Context="assignment">
+                                                    @if (assignment.FinalizedDate.HasValue)
+                                                    {
+                                                        <RadzenText TextStyle="TextStyle.Body2">@assignment.FinalizedDate.Value.ToString("dd/MM/yyyy")</RadzenText>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-muted">-</span>
+                                                    }
+                                                </Template>
+                                            </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedBy)" Title="Assigned By" Width="150px" />
+                                            <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.AssignedBy)" Title="Assigned By" Width="150px" />
 
-                                <RadzenDataGridColumn Filterable="false" Sortable="false" Width="250px" TextAlign="TextAlign.Center" Title="Actions">
-                                    <Template Context="assignment">
-                                        <div class="d-flex justify-content-center">
-                                            <AssignmentActionButtons Assignment="@assignment"
-                                                                   OnActionClick="@HandleAssignmentActionClick"
-                                                                   ShowViewAction="true"
-                                                                   ShowEditAction="true"
-                                                                   ShowReminderAction="true"
-                                                                   ShowCancelAction="true" />
-                                        </div>
-                                    </Template>
-                                </RadzenDataGridColumn>
-                            </Columns>
-                        </RadzenDataGrid>
-                    </div>
-                </div>
-            </RadzenTabsItem>
-        </Tabs>
-    </RadzenTabs>
+                                            <RadzenDataGridColumn Filterable="false" Sortable="false" Width="250px" TextAlign="TextAlign.Center" Title="Actions">
+                                                <Template Context="assignment">
+                                                    <div class="d-flex justify-content-center">
+                                                        <AssignmentActionButtons Assignment="@assignment"
+                                                                                 OnActionClick="@HandleAssignmentActionClick"
+                                                                                 ShowViewAction="true"
+                                                                                 ShowEditAction="true"
+                                                                                 ShowReminderAction="true"
+                                                                                 ShowCancelAction="true" />
+                                                    </div>
+                                                </Template>
+                                            </RadzenDataGridColumn>
+                                        </Columns>
+                                    </RadzenDataGrid>
+                                </div>
+                            </div>
+                        </RadzenTabsItem>
+                    </Tabs>
+                </RadzenTabs>
+            </div>
         </div>
     </div>
 </div>
@@ -517,7 +522,7 @@
             filteredAssignments = assignments.ToList();
 
             // Extract available categories
-            availableCategories = categories.Where(o=> allQuestionnaires.Select(q => q.CategoryId).Distinct().Contains(o.Id)).ToList();
+            availableCategories = categories.Where(o => allQuestionnaires.Select(q => q.CategoryId).Distinct().Contains(o.Id)).ToList();
 
             // Initialize employee filter configuration
             InitializeEmployeeFilterConfiguration();
