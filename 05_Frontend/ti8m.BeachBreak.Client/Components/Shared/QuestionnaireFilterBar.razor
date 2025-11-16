@@ -91,6 +91,9 @@
     {
         // Base initialization
         base.OnInitialized();
+
+        // Capture initial state for change detection
+        CaptureCurrentState();
     }
 
     protected override void OnParametersSet()
@@ -99,11 +102,16 @@
         base.OnParametersSet();
     }
 
-    // Disable parameter optimization to ensure filter rendering works properly
-    protected override bool EnableParameterOptimization => false;
+    // Re-enable parameter optimization with proper state change detection
+    protected override bool EnableParameterOptimization => true;
 
     // Advanced filters state
     private bool showAdvancedFilters = false;
+
+    // State tracking for change detection
+    private bool _lastShowAdvancedFilters;
+    private int _lastConfigurationFiltersCount;
+    private int _lastFiltersHash;
 
 
     private async Task OnSearchInputChanged(ChangeEventArgs e)
@@ -171,6 +179,41 @@
     private void ToggleAdvancedFilters()
     {
         showAdvancedFilters = !showAdvancedFilters;
+    }
+
+    protected override bool HasStateChanged()
+    {
+        // Check Configuration parameter changes (filter count indicates structural changes)
+        var currentConfigFiltersCount = Configuration?.Filters?.Count ?? 0;
+        bool configChanged = _lastConfigurationFiltersCount != currentConfigFiltersCount;
+        if (configChanged)
+        {
+            _lastConfigurationFiltersCount = currentConfigFiltersCount;
+        }
+
+        // Check CurrentFilters parameter changes (using hash for mutable object)
+        var currentFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
+        bool filtersChanged = _lastFiltersHash != currentFiltersHash;
+        if (filtersChanged)
+        {
+            _lastFiltersHash = currentFiltersHash;
+        }
+
+        // Check internal state changes (advanced filters toggle)
+        bool advancedFiltersToggled = _lastShowAdvancedFilters != showAdvancedFilters;
+        if (advancedFiltersToggled)
+        {
+            _lastShowAdvancedFilters = showAdvancedFilters;
+        }
+
+        return configChanged || filtersChanged || advancedFiltersToggled;
+    }
+
+    private void CaptureCurrentState()
+    {
+        _lastShowAdvancedFilters = showAdvancedFilters;
+        _lastConfigurationFiltersCount = Configuration?.Filters?.Count ?? 0;
+        _lastFiltersHash = CurrentFilters?.GetHashCode() ?? 0;
     }
 
     // Remove the separate AdvancedFilterState - use CurrentFilters directly
