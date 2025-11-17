@@ -84,6 +84,7 @@
     transition: all 0.2s ease;
     cursor: pointer;
     background: white;
+    position: relative;
 }
 
 .employee-card:hover {
@@ -356,11 +357,6 @@
     opacity: 1;
 }
 
-.step-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
 
 .step-icon {
     width: 48px;
@@ -572,7 +568,7 @@
     font-size: 0.875rem;
 }
 
-.questionnaire-badge {
+.questionnaire-badge-dialog {
     background: rgba(255, 255, 255, 0.2);
     color: white;
     padding: 0.5rem 1rem;

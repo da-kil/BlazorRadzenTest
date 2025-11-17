@@ -620,7 +620,7 @@ input[type="submit"]:focus-visible {
     margin-bottom: var(--spacing-lg);
 }
 
-.step-header {
+.qb-step-header {
     margin-bottom: var(--spacing-xl);
     padding-bottom: var(--spacing-md);
     border-bottom: 1px solid var(--border-light);

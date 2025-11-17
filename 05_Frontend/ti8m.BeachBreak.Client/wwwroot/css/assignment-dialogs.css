@@ -19,27 +19,7 @@
     background: #f8f9fa;
 }
 
-/* Base employee card styling */
-.employee-card {
-    background: white;
-    border: 2px solid #e9ecef;
-    border-radius: 10px;
-    padding: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-}
-
-.employee-card:hover {
-    border-color: #667eea;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
-    transform: translateY(-1px);
-}
-
-.employee-card.selected {
-    border-color: #667eea;
-    background: rgba(102, 126, 234, 0.05);
-}
+/* Employee card styles are defined in shared-components.css */
 
 /* Special styling for current assignee (EditAssignmentDialog only) */
 .employee-card.current {
@@ -465,11 +445,6 @@
         margin-bottom: 1rem;
     }
 
-    .step-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
 
     .step-icon,
     .step-number {
