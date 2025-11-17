@@ -62,9 +62,8 @@
    ============================================= */
 
 .competencies-container {
-    background: #fafbfc;
-    border-radius: 8px;
-    padding: 1rem;
+    /* Removed background, border-radius, and padding to reduce visual depth */
+    /* Container kept for structural purposes only */
 }
 
 .competencies-config {
