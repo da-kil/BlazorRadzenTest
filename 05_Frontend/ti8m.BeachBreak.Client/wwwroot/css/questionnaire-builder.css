@@ -45,15 +45,12 @@
 }
 
 .sections-container .modern-section-card {
-    /* Reduced border weight and simplified shadow */
-    border: 1px solid #e9ecef;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    /* Removed border and shadow for cleaner design */
     transition: all 0.2s ease-in-out;
 }
 
 .sections-container .modern-section-card:hover {
-    border-color: #dee2e6;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    /* Subtle hover effect without borders or shadows */
     transform: translateY(-1px);
 }
 
@@ -155,12 +152,12 @@
     }
 
     .sections-container .modern-section-card {
-        border-width: 1px;
+        /* No border-specific mobile styling needed */
     }
 
     .sections-container .modern-section-card:hover {
+        /* No transform or shadow on mobile for better performance */
         transform: none;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
     }
 
     /* Competency Lists Mobile */
@@ -442,8 +439,7 @@
 /* High contrast mode support */
 @media (prefers-contrast: high) {
     .competency-item,
-    .questionnaire-summary,
-    .sections-container .modern-section-card {
+    .questionnaire-summary {
         border-width: 2px;
     }
 
@@ -469,15 +465,13 @@
 
 @media print {
     .questionnaire-summary,
-    .competency-item,
-    .sections-container .modern-section-card {
+    .competency-item {
         box-shadow: none !important;
         background: white !important;
         border: 1px solid #ccc !important;
     }
 
-    .competency-item:hover,
-    .sections-container .modern-section-card:hover {
+    .competency-item:hover {
         transform: none !important;
     }
 }
