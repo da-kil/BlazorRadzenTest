@@ -614,11 +614,10 @@ input[type="submit"]:focus-visible {
 /* Step sections - semantic structure */
 .step-section {
     background: var(--background-color);
-    border: 1px solid var(--border-light);
+    /* Removed border and shadow to reduce visual depth */
     border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
     margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-sm);
 }
 
 .step-header {
