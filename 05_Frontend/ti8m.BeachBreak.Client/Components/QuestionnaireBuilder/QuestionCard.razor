@@ -5,7 +5,7 @@
 @inject DialogService DialogService
 
 
-<link href="~/css/questionnaire-builder.css" rel="stylesheet" />
+<link href="css/questionnaire-builder.css" rel="stylesheet" />
 
 <div class="competencies-container">
         <!-- Assessment Configuration -->
@@ -88,6 +88,7 @@
                             <div class="mb-0">
                                 <RadzenTextArea Value="@competency.Description"
                                                ValueChanged="@((string value) => UpdateCompetencyDescription(competencyIndex, value))"
+                                               Disabled="@(!Template.IsAvailableForEditing)"
                                                Placeholder="Describe what this competency evaluates..."
                                                Rows="2"
                                                Class="w-100" />
