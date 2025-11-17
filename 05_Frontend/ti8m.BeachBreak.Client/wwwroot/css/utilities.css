@@ -578,6 +578,22 @@
     border: 0 !important;
 }
 
+.sr-only:focus {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    padding: var(--spacing-sm) !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+    background: var(--primary-color) !important;
+    color: var(--text-white) !important;
+    font-weight: var(--font-weight-bold) !important;
+    z-index: var(--z-notification) !important;
+    border-radius: var(--radius-sm) !important;
+}
+
 .not-sr-only {
     position: static !important;
     width: auto !important;
