@@ -127,7 +127,8 @@
 
 /* Section Content Area - Reduced padding for flatter design */
 .section-content-modern {
-    padding: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
 }
 
 .input-group-modern {
@@ -304,6 +305,7 @@
     }
 
     .section-content-modern {
-        padding: 1rem;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
     }
 }

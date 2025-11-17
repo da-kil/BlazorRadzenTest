@@ -88,6 +88,13 @@
                 var templateSection = Template.Sections[sectionIndex];
                 var currentSectionIndex = sectionIndex;
 
+                @if (sectionIndex > 0)
+                {
+                    <div class="section-separator mb-4">
+                        <hr class="border-0" style="height: 1px; background: linear-gradient(to right, transparent, #dee2e6, transparent);" />
+                    </div>
+                }
+
                 <SectionCard Section="@templateSection"
                            Template="@Template"
                            CanMoveUp="@(currentSectionIndex > 0)"
