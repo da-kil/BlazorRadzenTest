@@ -7,23 +7,20 @@
 
 @* Optimized question renderer that only re-renders when question data actually changes *@
 <div class="question-container" data-question-id="@Question.Id">
-    @if (shouldRender)
+    @switch (Question.Type)
     {
-        @switch (Question.Type)
-        {
-            case QuestionType.Assessment:
-                @RenderAssessmentOptimized()
-                break;
-            case QuestionType.TextQuestion:
-                @RenderTextQuestionOptimized()
-                break;
-            case QuestionType.Goal:
-                @RenderGoalQuestionOptimized()
-                break;
-            default:
-                @RenderUnsupportedQuestion()
-                break;
-        }
+        case QuestionType.Assessment:
+            @RenderAssessmentOptimized()
+            break;
+        case QuestionType.TextQuestion:
+            @RenderTextQuestionOptimized()
+            break;
+        case QuestionType.Goal:
+            @RenderGoalQuestionOptimized()
+            break;
+        default:
+            @RenderUnsupportedQuestion()
+            break;
     }
 </div>
 
@@ -166,20 +163,13 @@
 
 <style>
 .question-container {
-    margin-bottom: 2rem;
-    padding: 1.5rem;
-    background: white;
-    border-radius: 8px;
-    border: 1px solid var(--border-light, #e2e8f0);
-    transition: box-shadow 0.2s ease;
+    padding-bottom: 2.5rem;
 }
 
-.question-container:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.question-container:focus-within {
-    box-shadow: 0 0 0 2px var(--focus-ring, rgba(37, 99, 235, 0.1));
+.question-container:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
 }
 
 /* Performance optimization: reduce reflows */

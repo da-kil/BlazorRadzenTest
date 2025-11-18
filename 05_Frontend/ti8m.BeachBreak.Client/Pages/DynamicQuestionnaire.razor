@@ -45,18 +45,20 @@
     }
     else
     {
-        <div class="questionnaire-main-card rz-background-color-base-100 rz-p-4 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
-            <div class="questionnaire-header text-center mb-4">
-                <RadzenText TextStyle="TextStyle.H3" Class="questionnaire-title text-primary">
-                    <RadzenIcon Icon="quiz" Class="me-2" />
-                    @template.Name
-                </RadzenText>
-                @if (!string.IsNullOrWhiteSpace(template.Description))
-                {
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="questionnaire-subtitle text-muted">
-                        @template.Description
+        <div class="questionnaire-main-card">
+            <div class="page-header d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
+                        <RadzenIcon Icon="quiz" Class="me-2" />
+                        @template.Name
                     </RadzenText>
-                }
+                    @if (!string.IsNullOrWhiteSpace(template.Description))
+                    {
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                            @template.Description
+                        </RadzenText>
+                    }
+                </div>
             </div>
 
             @* Workflow Action Buttons - Sticky Banner *@
@@ -168,7 +170,7 @@
                 <ReviewChangesSummary Response="@response" AssignmentId="@assignmentId.Value" />
             }
 
-            <div class="section-counter mb-4">
+            <div class="section-counter mb-4 mt-3">
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted text-end">
                     Section @(currentSectionIndex + 1) of @visibleSections.Count
                 </RadzenText>
@@ -195,13 +197,6 @@
                                 <p class="section-description">@currentSection.Description</p>
                             }
                         </div>
-                        @if (currentSection.CompletionRole != CompletionRole.Both)
-                        {
-                            <div class="completion-role-badge @GetRoleBadgeClass(currentSection.CompletionRole)">
-                                <RadzenIcon Icon="@GetRoleIconForSection(currentSection.CompletionRole)" />
-                                @currentSection.CompletionRole.ToString()
-                            </div>
-                        }
                     </header>
 
                     <div class="questions-container">
@@ -1692,29 +1687,6 @@
             return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
         }
         return "Where do you see yourself long-term in your professional career?";
-    }
-
-    // Helper methods for unified styling
-    private string GetRoleBadgeClass(CompletionRole role)
-    {
-        return role switch
-        {
-            CompletionRole.Employee => "role-employee",
-            CompletionRole.Manager => "role-manager",
-            CompletionRole.Both => "role-both",
-            _ => ""
-        };
-    }
-
-    private string GetRoleIconForSection(CompletionRole role)
-    {
-        return role switch
-        {
-            CompletionRole.Employee => "person",
-            CompletionRole.Manager => "supervisor_account",
-            CompletionRole.Both => "groups",
-            _ => "help"
-        };
     }
 
     private bool IsManagerRole(string role)

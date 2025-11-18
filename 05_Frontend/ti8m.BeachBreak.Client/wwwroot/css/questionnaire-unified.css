@@ -9,42 +9,33 @@
    ============================================= */
 
 .questionnaire-unified-container {
-    max-width: 100%;
-    padding: 0;
+    max-width: none;
+    margin: 0;
+    padding: 0 1rem;
+    width: 100%;
 }
 
 .questionnaire-main-card {
-    background: var(--background-color);
-    border: 1px solid var(--border-light);
-    border-radius: var(--card-border-radius);
-    padding: var(--card-padding);
-    box-shadow: var(--card-shadow);
+    background: #ffffff;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .questionnaire-main-card {
+        padding: 1.5rem;
+    }
 }
 
 /* =============================================
-   HEADER SECTION
+   HEADER SECTION (Left-aligned like other pages)
    ============================================= */
 
-.questionnaire-header {
-    text-align: center;
+.page-header {
     margin-bottom: 2rem;
-}
-
-.questionnaire-title {
-    color: var(--primary-color);
-    font-size: var(--font-size-3xl);
-    font-weight: var(--font-weight-semibold);
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.questionnaire-subtitle {
-    color: var(--text-muted);
-    font-size: var(--font-size-lg);
-    margin-bottom: 0;
 }
 
 .questionnaire-info-banner {
@@ -80,9 +71,8 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--background-muted);
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.25rem;
 }
 
 .section-title-container {
@@ -142,7 +132,9 @@
 .questions-container {
     display: flex;
     flex-direction: column;
-    gap: 2rem;
+    gap: 3rem;
+    margin-top: 1.5rem;
+    padding: 0 1rem;
 }
 
 /* =============================================
@@ -171,13 +163,13 @@
 }
 
 .rating-scale-info {
-    background: rgba(var(--info-color-rgb, 2, 132, 199), 0.1);
-    border: 1px solid rgba(var(--info-color-rgb, 2, 132, 199), 0.3);
-    border-radius: var(--radius-md);
+    background: rgba(var(--info-color-rgb, 2, 132, 199), 0.05);
+    border-radius: 6px;
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
+    gap: 0.75rem;
     font-size: var(--font-size-sm);
     color: var(--text-color);
 }

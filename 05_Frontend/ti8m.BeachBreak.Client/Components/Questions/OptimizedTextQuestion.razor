@@ -6,24 +6,29 @@
 
 @if (!HideHeader)
 {
-    <RadzenCard Class="text-question">
-        <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
-            <RadzenIcon Icon="psychology" Class="me-2" />
-            @Question.Title
-            @if (Question.IsRequired) { <span class="text-danger">*</span> }
-            <EditedDuringReviewBadge Response="@Response" />
-        </RadzenText>
+    <div class="text-question">
+        <header class="question-header">
+            <h3 class="question-title">
+                <RadzenIcon Icon="psychology" Class="me-2" />
+                @Question.Title
+                @if (Question.IsRequired) { <span class="text-danger">*</span> }
+                <EditedDuringReviewBadge Response="@Response" />
+            </h3>
 
-        @if (!string.IsNullOrWhiteSpace(Question.Description))
-        {
-            <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
-        }
+            @if (!string.IsNullOrWhiteSpace(Question.Description))
+            {
+                <p class="question-description">@Question.Description</p>
+            }
+        </header>
 
         <div class="text-sections">
-        @foreach (var section in textSections)
+        @{
+            var sectionsToRender = textSections.Any() ? textSections : GetTextSectionsFromConfiguration();
+        }
+        @foreach (var section in sectionsToRender)
         {
-            var sectionKey = $"section_{textSections.IndexOf(section)}";
-            <RadzenCard Class="text-section-card mb-4 p-3 border-start border-primary border-3" @key="@sectionKey">
+            var sectionKey = $"section_{sectionsToRender.IndexOf(section)}";
+            <div class="text-section-card" @key="@sectionKey">
                 @if (!string.IsNullOrWhiteSpace(section.Title))
                 {
                     <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold text-primary mb-3">
@@ -61,18 +66,21 @@
                         <em>No response provided</em>
                     </div>
                 }
-            </RadzenCard>
+            </div>
         }
     </div>
-</RadzenCard>
+</div>
 }
 else
 {
     <div class="text-sections">
-        @foreach (var textSection in textSections)
+        @{
+            var sectionsToRenderNoHeader = textSections.Any() ? textSections : GetTextSectionsFromConfiguration();
+        }
+        @foreach (var textSection in sectionsToRenderNoHeader)
         {
-            var sectionKey = $"section_{textSections.IndexOf(textSection)}";
-            <RadzenCard Class="text-section-card mb-4 p-3 border-start border-primary border-3" @key="@sectionKey">
+            var sectionKey = $"section_{sectionsToRenderNoHeader.IndexOf(textSection)}";
+            <div class="text-section-card" @key="@sectionKey">
                 <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
                     @textSection.Title
                     @if (textSection.IsRequired) { <span class="text-danger">*</span> }
@@ -101,7 +109,7 @@ else
                         <em>No response provided</em>
                     </div>
                 }
-            </RadzenCard>
+            </div>
         }
     </div>
 }
@@ -128,10 +136,23 @@ else
         {
             textSections = GetTextSectionsFromConfiguration();
         }
+
+        // Safety check: Ensure textSections is never empty after parameter updates
+        // This prevents textboxes from disappearing after save operations
+        if (!textSections.Any())
+        {
+            textSections = GetTextSectionsFromConfiguration();
+        }
     }
 
     protected override bool HasStateChanged()
     {
+        // Ensure textSections is always populated before checking state changes
+        if (!textSections.Any())
+        {
+            textSections = GetTextSectionsFromConfiguration();
+        }
+
         // Get current simple value from ResponseData
         var currentValue = "";
         if (Response.ResponseData is TextResponseDataDto textData && textData.TextSections.Any())
@@ -207,6 +228,12 @@ else
 
     private string GetSectionValue(string sectionKey)
     {
+        // Ensure textSections is populated before using it
+        if (!textSections.Any())
+        {
+            textSections = GetTextSectionsFromConfiguration();
+        }
+
         if (Response.ResponseData is not TextResponseDataDto textData)
         {
             return "";
@@ -230,6 +257,12 @@ else
     private async Task SetSectionValue(string sectionKey, string value)
     {
         if (IsReadOnly) return;
+
+        // Ensure textSections is populated before using it
+        if (!textSections.Any())
+        {
+            textSections = GetTextSectionsFromConfiguration();
+        }
 
         // Ensure we have a TextResponseDataDto
         if (Response.ResponseData is not TextResponseDataDto textData)
@@ -292,6 +325,14 @@ else
         return section.Rows > 0 ? section.Rows : 4;
     }
 
+    private string GetTextSectionsDescription()
+    {
+        var sectionCount = textSections.Count;
+        return sectionCount == 1
+            ? "Single text section"
+            : $"{sectionCount} text sections to complete";
+    }
+
     public class TextSectionDefinition
     {
         public string Title { get; set; } = "";
@@ -303,13 +344,13 @@ else
 }
 
 <style>
-.text-section-card {
-    transition: all 0.2s ease;
-    position: relative;
+.text-question {
 }
 
-.text-section-card:hover {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+.text-section-card {
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+    position: relative;
 }
 
 .text-section-card:focus-within {
