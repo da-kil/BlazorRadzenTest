@@ -135,65 +135,8 @@ public abstract class BaseApiService
         }
     }
 
-    // Enhanced create method that returns the created entity from response
-    protected async Task<TResult?> CreateWithResponseAsync<TRequest, TResult>(string endpoint, TRequest request)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsJsonAsync(endpoint, request, JsonOptions);
-            response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<TResult>();
-            return result ?? throw new Exception($"Failed to deserialize created {typeof(TResult).Name}");
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error creating {typeof(TResult).Name}", ex);
-            throw;
-        }
-    }
 
-    // Enhanced update method that returns the updated entity from response
-    protected async Task<TResult?> UpdateWithResponseAsync<TRequest, TResult>(string endpoint, Guid id, TRequest request)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PutAsJsonAsync($"{endpoint}/{id}", request, JsonOptions);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                LogError($"API Error updating {typeof(TResult).Name} {id}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
-                throw new HttpRequestException($"Failed to update {typeof(TResult).Name}: {response.StatusCode} - {response.ReasonPhrase}");
-            }
-
-            var result = await response.Content.ReadFromJsonAsync<TResult>();
-            return result;
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error updating {typeof(TResult).Name} with id {id}", ex);
-            throw;
-        }
-    }
-
-    // Enhanced create method that returns a list from response
-    protected async Task<List<TResult>> CreateWithListResponseAsync<TRequest, TResult>(string endpoint, TRequest request)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsJsonAsync(endpoint, request, JsonOptions);
-            response.EnsureSuccessStatusCode();
-
-            var result = await response.Content.ReadFromJsonAsync<List<TResult>>();
-            return result ?? new List<TResult>();
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error creating {typeof(TResult).Name} list", ex);
-            return new List<TResult>();
-        }
-    }
 
     // Patch method for partial updates
     protected async Task<TResult?> PatchAsync<TRequest, TResult>(string endpoint, Guid id, string subPath, TRequest request)
@@ -289,53 +232,8 @@ public abstract class BaseApiService
         }
     }
 
-    // Manager/context-specific endpoints (e.g., /api/managers/123/team)
-    protected async Task<List<T>> GetManagerResourceAsync<T>(string endpoint, string managerId, string resource)
-    {
-        try
-        {
-            var response = await HttpQueryClient.GetFromJsonAsync<List<T>>($"{endpoint}/{managerId}/{resource}");
-            return response ?? new List<T>();
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error fetching {typeof(T).Name} for manager {managerId}/{resource}", ex);
-            return new List<T>();
-        }
-    }
 
-    // Manager-specific single resource (e.g., /api/managers/123/analytics)
-    protected async Task<T?> GetManagerSingleResourceAsync<T>(string endpoint, string managerId, string resource)
-    {
-        try
-        {
-            var response = await HttpQueryClient.GetFromJsonAsync<T>($"{endpoint}/{managerId}/{resource}");
-            return response ?? default(T);
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error fetching {typeof(T).Name} for manager {managerId}/{resource}", ex);
-            return default(T);
-        }
-    }
 
-    // Manager-specific with query parameters
-    protected async Task<List<T>> GetManagerResourceWithQueryAsync<T>(string endpoint, string managerId, string resource, string queryString)
-    {
-        try
-        {
-            var fullEndpoint = string.IsNullOrEmpty(queryString)
-                ? $"{endpoint}/{managerId}/{resource}"
-                : $"{endpoint}/{managerId}/{resource}?{queryString}";
-            var response = await HttpQueryClient.GetFromJsonAsync<List<T>>(fullEndpoint);
-            return response ?? new List<T>();
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error fetching {typeof(T).Name} for manager {managerId}/{resource}", ex);
-            return new List<T>();
-        }
-    }
 
     // HR/Organization-wide endpoints (e.g., /api/hr/employees)
     protected async Task<List<T>> GetHRResourceAsync<T>(string hrEndpoint, string resource)
@@ -412,40 +310,7 @@ public abstract class BaseApiService
         }
     }
 
-    // Employee POST to sub-path (e.g., /api/employees/123/responses/assignment/456)
-    protected async Task<TResult?> PostEmployeeResourceAsync<TRequest, TResult>(string commandEndpoint, string employeeId, string resource, Guid resourceId, TRequest request)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsJsonAsync($"{commandEndpoint}/{employeeId}/{resource}/{resourceId}", request, JsonOptions);
-            response.EnsureSuccessStatusCode();
 
-            var result = await response.Content.ReadFromJsonAsync<TResult>();
-            return result ?? throw new Exception($"Failed to deserialize {typeof(TResult).Name}");
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error posting to {commandEndpoint}/{employeeId}/{resource}/{resourceId}", ex);
-            throw;
-        }
-    }
-
-    // Employee POST action (e.g., /api/employees/123/responses/assignment/456/submit)
-    protected async Task<TResult?> PostEmployeeActionAsync<TResult>(string commandEndpoint, string employeeId, string resource, Guid resourceId, string action)
-    {
-        try
-        {
-            var response = await HttpCommandClient.PostAsync($"{commandEndpoint}/{employeeId}/{resource}/{resourceId}/{action}", null);
-            response.EnsureSuccessStatusCode();
-
-            return await response.Content.ReadFromJsonAsync<TResult>();
-        }
-        catch (Exception ex)
-        {
-            LogError($"Error executing {action} for employee {employeeId}/{resource}/{resourceId}", ex);
-            return default(TResult);
-        }
-    }
 
     protected void LogError(string message, Exception? ex)
     {

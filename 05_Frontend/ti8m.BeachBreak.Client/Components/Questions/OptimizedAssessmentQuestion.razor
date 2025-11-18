@@ -310,89 +310,12 @@ else
         return 0;
     }
 
-    private string GetCompetencyComment(string competencyKey)
-    {
-        if (Response.ResponseData is AssessmentResponseDataDto assessmentData &&
-            assessmentData.Competencies.TryGetValue(competencyKey, out var competencyRating))
-        {
-            return competencyRating.Comment ?? "";
-        }
-
-        return "";
-    }
-
-    private async Task SetCompetencyRating(string competencyKey, int value)
-    {
-        if (IsReadOnly) return;
-
-        // Ensure we have an AssessmentResponseDataDto
-        if (Response.ResponseData is not AssessmentResponseDataDto assessmentData)
-        {
-            assessmentData = new AssessmentResponseDataDto();
-            Response.ResponseData = assessmentData;
-        }
-
-        // Get existing competency or create new one
-        if (!assessmentData.Competencies.TryGetValue(competencyKey, out var existingRating))
-        {
-            existingRating = new CompetencyRatingDto();
-            assessmentData.Competencies[competencyKey] = existingRating;
-        }
-
-        // Update the rating
-        existingRating.Rating = value;
-        Response.LastModified = DateTime.Now;
-
-        await NotifyResponseChanged();
-    }
-
-    private async Task SetCompetencyComment(string competencyKey, string value)
-    {
-        if (IsReadOnly) return;
-
-        // Ensure we have an AssessmentResponseDataDto
-        if (Response.ResponseData is not AssessmentResponseDataDto assessmentData)
-        {
-            assessmentData = new AssessmentResponseDataDto();
-            Response.ResponseData = assessmentData;
-        }
-
-        // Get existing competency or create new one
-        if (!assessmentData.Competencies.TryGetValue(competencyKey, out var existingRating))
-        {
-            existingRating = new CompetencyRatingDto();
-            assessmentData.Competencies[competencyKey] = existingRating;
-        }
-
-        // Update the comment
-        existingRating.Comment = value ?? "";
-        Response.LastModified = DateTime.Now;
-
-        // Debounce text input changes
-        await NotifyStateChangedDebounced(300);
-        await NotifyResponseChanged();
-    }
-
     private async Task NotifyResponseChanged()
     {
         if (OnResponseChanged.HasDelegate)
         {
             await OnResponseChanged.InvokeAsync(Response);
         }
-    }
-
-    private string GetRatingText(int rating)
-    {
-        if (rating == 0) return "Not rated";
-
-        var percentage = (double)rating / ratingScale;
-        return percentage switch
-        {
-            >= 0.75 => scaleHighLabel,
-            >= 0.5 => "Good",
-            >= 0.25 => "Fair",
-            _ => scaleLowLabel
-        };
     }
 
     private CompetencyRatingDto GetCompetencyRatingDto(string competencyKey)
@@ -432,11 +355,3 @@ else
         await NotifyResponseChanged();
     }
 }
-
-<style>
-.competencies-container {
-}
-
-.assessment-question {
-}
-</style>

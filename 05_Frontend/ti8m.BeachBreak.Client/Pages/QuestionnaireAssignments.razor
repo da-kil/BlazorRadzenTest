@@ -826,25 +826,7 @@
         {
             var questionnaire = allQuestionnaires.FirstOrDefault(q => q.Id == assignment.TemplateId);
 
-            var result = await DialogService.OpenAsync<EditAssignmentDialog>("Edit Assignment",
-                new Dictionary<string, object>
-                {
-                    { "Assignment", assignment },
-                    { "Questionnaire", questionnaire! },
-                    { "AllEmployees", allEmployees },
-                    { "OnSave", EventCallback.Factory.Create<EditAssignmentDialog.EditAssignmentModel>(this, (model) => SaveAssignmentChanges(assignment, model)) },
-                    { "OnCancel", EventCallback.Factory.Create(this, () => DialogService.Close()) },
-                    { "IsLoading", isProcessingAction }
-                },
-                new DialogOptions
-                {
-                    Width = "1200px",
-                    Height = "auto",
-                    Resizable = true,
-                    Draggable = true,
-                    CloseDialogOnOverlayClick = false,
-                    ShowClose = true
-                });
+            NotificationService.Notify(NotificationSeverity.Info, "Edit", "Here we show edit assignment dialog");
         }
         catch (Exception ex)
         {
@@ -933,79 +915,6 @@
         }
     }
 
-    private async Task SaveAssignmentChanges(QuestionnaireAssignment assignment, EditAssignmentDialog.EditAssignmentModel editModel)
-    {
-        isProcessingAction = true;
-        StateHasChanged();
-
-        try
-        {
-            // Handle employee changes - create new assignments for additional employees
-            if (editModel.SelectedEmployeeIds.Count > 1)
-            {
-                var newEmployeeGuids = editModel.SelectedEmployeeIds.Select(Guid.Parse).Where(id => id != assignment.EmployeeId).ToList();
-
-                if (newEmployeeGuids.Any())
-                {
-                    // Get the selected employees with full data
-                    var newEmployees = allEmployees.Where(e => newEmployeeGuids.Contains(e.Id)).ToList();
-
-                    // Create additional assignments for new employees
-                    var newAssignments = await AssignmentService.CreateAssignmentsAsync(
-                        assignment.TemplateId,
-                        newEmployees,
-                        editModel.DueDate,
-                        editModel.Notes
-                    );
-
-                    if (newAssignments.Any())
-                    {
-                        assignments.AddRange(newAssignments);
-
-                        NotificationService.Notify(NotificationSeverity.Info,
-                            "Additional Assignments Created",
-                            $"Created {newAssignments.Count} additional assignments for other selected employees",
-                            duration: 5000);
-                    }
-                }
-            }
-
-            // Update the original assignment
-            // TODO: Implement actual API call to update assignment
-            await Task.Delay(1000); // Simulate API call
-
-            // Update the local assignment object
-            assignment.WorkflowState = editModel.WorkflowState;
-            assignment.DueDate = editModel.DueDate;
-            assignment.Notes = editModel.Notes;
-            assignment.AssignedBy = editModel.AssignedBy;
-
-            // Refresh the filtered assignments
-            FilterAssignments();
-
-            var totalAssignments = editModel.SelectedEmployeeIds.Count;
-            var message = totalAssignments > 1
-                ? $"Assignment updated and {totalAssignments - 1} additional assignments created"
-                : $"Assignment for {assignment.EmployeeName} has been updated successfully";
-
-            NotificationService.Notify(NotificationSeverity.Success,
-                "Assignment Updated",
-                message,
-                duration: 5000);
-
-            DialogService.Close();
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Error",
-                $"Failed to update assignment: {ex.Message}");
-        }
-        finally
-        {
-            isProcessingAction = false;
-            StateHasChanged();
-        }
-    }
 
     private async Task HandleAssignToMoreAction(QuestionnaireAssignment assignment)
     {

@@ -2,7 +2,7 @@
 
 /* ========================================
    SHARED EMPLOYEE CARD STYLES
-   Used by: EditAssignmentDialog.razor, QuestionnaireAssignments.razor
+   Used by: QuestionnaireAssignments.razor, EmployeeCard.razor
    ======================================== */
 
 /* Employee card grid layouts */
@@ -21,7 +21,7 @@
 
 /* Employee card styles are defined in shared-components.css */
 
-/* Special styling for current assignee (EditAssignmentDialog only) */
+/* Special styling for current assignee */
 .employee-card.current {
     border-color: #28a745;
     background: rgba(40, 167, 69, 0.05);
