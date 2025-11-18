@@ -14,15 +14,11 @@
 @inject IAuthService AuthService
 @inherits OptimizedComponentBase
 
-<RadzenFieldset Class="mb-4 new-goals-section">
-    <HeaderTemplate>
-        <RadzenIcon Icon="track_changes" Class="me-2" />
-        <span class="fw-bold">New Goals</span>
-        <RadzenText TextStyle="TextStyle.Caption" Class="ms-2 text-muted">
-            (Set goals for upcoming period)
-        </RadzenText>
-    </HeaderTemplate>
-    <ChildContent>
+<div class="new-goals-section">
+    <header class="section-header">
+        <p class="section-description">Set goals for upcoming period</p>
+    </header>
+    <div class="section-content">
         @if (!allCurrentGoals.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
@@ -89,8 +85,8 @@
                 </RadzenRow>
             </div>
         }
-    </ChildContent>
-</RadzenFieldset>
+    </div>
+</div>
 
 @code {
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
@@ -833,52 +829,128 @@
 }
 
 <style>
-.new-goals-section .collaborative-goal {
-    transition: all 0.2s ease;
+.new-goals-section {
+    border-bottom: 1px solid #f1f3f5;
 }
 
-.new-goals-section .goal-card {
-    transition: all 0.2s ease;
-    border-color: var(--border-light, #e2e8f0) !important;
+.new-goals-section:first-child {
+    padding-top: 28px;
 }
 
-.new-goals-section .goal-card:hover {
-    border-color: var(--primary-color, #2563eb) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+.new-goals-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
 }
 
-.new-goals-section .pending-goal {
-    border-style: dashed !important;
-    border-color: var(--rz-info) !important;
-    background-color: rgba(33, 150, 243, 0.05);
+.section-header {
+    margin-bottom: 16px;
 }
 
-.new-goals-section .pending-delete {
-    opacity: 0.6;
-    background-color: rgba(244, 67, 54, 0.05);
-}
-
-.new-goals-section .pending-modify {
-    background-color: rgba(255, 152, 0, 0.05);
-}
-
-.new-goals-section .goal-actions {
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: #333;
     display: flex;
-    gap: 0.25rem;
-    flex-shrink: 0;
+    align-items: center;
 }
 
-.new-goals-section .goal-badges .rz-badge {
+.section-description {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.section-content {
+    /* Container for all goals content */
+}
+
+/* Goal item styling to exactly match competency items */
+.goal-card {
+    padding: 0;
+    margin-bottom: 0 !important;
+    border: none;
+    background: none;
+}
+
+.goal-card .collaborative-goal {
+    padding: 28px;
+    border-bottom: 1px solid #f1f3f5;
+    transition: all 0.2s ease;
+}
+
+.goal-card:last-child .collaborative-goal {
+    border-bottom: none;
+}
+
+.goal-card .collaborative-goal:hover {
+    background-color: #fafbfc;
+}
+
+/* Pending state styling - more subtle */
+.pending-goal .collaborative-goal {
+    border: 1px dashed #b3d9ff !important;
+    background-color: rgba(179, 217, 255, 0.03);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    padding: 24px;
+}
+
+.pending-delete .collaborative-goal {
+    opacity: 0.6;
+    background-color: rgba(244, 67, 54, 0.02);
+}
+
+.pending-modify .collaborative-goal {
+    background-color: rgba(255, 152, 0, 0.02);
+}
+
+/* Typography to match assessment */
+.collaborative-goal .goal-header .fw-bold {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.goal-badges .rz-badge {
     font-size: 0.75rem;
 }
 
-.new-goals-section .goals-summary {
-    border: 1px solid var(--border-light, #e2e8f0);
+/* Summary styling - more minimal */
+.goals-summary {
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #f1f3f5;
 }
 
-.new-goals-section .add-goal-section {
+/* Add button section - cleaner alignment */
+.add-goal-section {
     display: flex;
     align-items: center;
     gap: 1rem;
+    padding: 16px 0 0 0;
+    margin-top: 16px;
+}
+
+/* Alert styling to match assessment subtlety */
+.section-content .rz-alert {
+    background-color: rgba(179, 217, 255, 0.08);
+    border: 1px solid rgba(179, 217, 255, 0.2);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.section-content .rz-alert .rz-text {
+    color: #555;
+    font-size: 0.9rem;
+}
+
+/* Performance and accessibility */
+.new-goals-section * {
+    box-sizing: border-box;
 }
 </style>

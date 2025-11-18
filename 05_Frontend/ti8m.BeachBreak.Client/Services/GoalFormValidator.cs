@@ -33,7 +33,7 @@ public static class GoalFormValidator
         {
             errors.Add("Objective description is required");
         }
-        else if (objectiveDescription.Length < 10)
+        else if (objectiveDescription.Length < 5)
         {
             errors.Add("Objective description must be at least 10 characters");
         }
@@ -43,7 +43,7 @@ public static class GoalFormValidator
         {
             errors.Add("Measurement metric is required");
         }
-        else if (measurementMetric.Length < 5)
+        else if (measurementMetric.Length < 3)
         {
             errors.Add("Measurement metric must be at least 5 characters");
         }
@@ -81,7 +81,7 @@ public static class GoalFormValidator
             {
                 errors.Add("Reason for change is required");
             }
-            else if (changeReason.Length < 10)
+            else if (changeReason.Length < 5)
             {
                 errors.Add("Reason for change must be at least 10 characters");
             }

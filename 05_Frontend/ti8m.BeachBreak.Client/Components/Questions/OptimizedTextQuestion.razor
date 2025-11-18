@@ -31,11 +31,10 @@
             <div class="text-section-card" @key="@sectionKey">
                 @if (!string.IsNullOrWhiteSpace(section.Title))
                 {
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold text-primary mb-3">
-                        <RadzenIcon Icon="timeline" Class="me-2" />
+                    <h4 class="text-section-title">
                         @(section.Title)
                         @if (section.IsRequired) { <span class="text-danger">*</span> }
-                    </RadzenText>
+                    </h4>
                 }
 
                 @if (!string.IsNullOrWhiteSpace(section.Description))
@@ -81,10 +80,10 @@ else
         {
             var sectionKey = $"section_{sectionsToRenderNoHeader.IndexOf(textSection)}";
             <div class="text-section-card" @key="@sectionKey">
-                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                <h4 class="text-section-title">
                     @textSection.Title
                     @if (textSection.IsRequired) { <span class="text-danger">*</span> }
-                </RadzenText>
+                </h4>
                 @if (!string.IsNullOrWhiteSpace(textSection.Description))
                 {
                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">@textSection.Description</RadzenText>
@@ -351,6 +350,15 @@ else
     margin-bottom: 1.5rem;
     transition: all 0.2s ease;
     position: relative;
+}
+
+.text-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: var(--title-color) !important;
+    display: flex;
+    align-items: center;
 }
 
 .text-section-card:focus-within {

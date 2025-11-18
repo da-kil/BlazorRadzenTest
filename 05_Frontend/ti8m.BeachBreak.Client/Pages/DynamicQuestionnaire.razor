@@ -176,16 +176,6 @@
                 </RadzenText>
             </div>
 
-            <RadzenSteps Value="@currentSectionIndex" Change="@OnSectionChanged" Class="mb-4" ShowStepsButtons="false">
-                @for (int i = 0; i < visibleSections.Count; i++)
-                {
-                    var section = visibleSections[i];
-                    var isCompleted = IsSectionCompleted(section.Id);
-                    var sectionTitle = section.Title;
-                    <RadzenStepsItem Text="@sectionTitle" Icon="@(isCompleted ? "check_circle" : null)" />
-                }
-            </RadzenSteps>
-
             <section class="questionnaire-content">
                 @if (currentSection != null)
                 {

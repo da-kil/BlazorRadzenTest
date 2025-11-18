@@ -346,6 +346,23 @@
 }
 
 /* =============================================
+   WRAPPER DIV ALIGNMENT (for OptimizedQuestionRenderer containers)
+   ============================================= */
+
+.role-response-section {
+    margin-bottom: 3rem !important;
+}
+
+.role-response-section:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Ensure inner wrapper divs don't add extra spacing */
+.ps-3.border-start {
+    margin-bottom: 0 !important;
+}
+
+/* =============================================
    NAVIGATION FOOTER
    ============================================= */
 

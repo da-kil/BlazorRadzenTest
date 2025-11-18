@@ -14,21 +14,22 @@
 
 @if (!HideHeader)
 {
-    <RadzenCard Class="goal-question">
-        <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-3">
-            <RadzenIcon Icon="flag" Class="me-2" />
-            @Question.Title
-            @if (Question.IsRequired) { <span class="text-danger">*</span> }
-            <EditedDuringReviewBadge Response="@Response" />
-        </RadzenText>
+    <div class="goal-question">
+        <header class="question-header">
+            <h3 class="question-title">
+                <RadzenIcon Icon="track_changes" Class="me-2" />
+                @Question.Title
+                <EditedDuringReviewBadge Response="@Response" />
+            </h3>
 
-        @if (!string.IsNullOrWhiteSpace(Question.Description))
-        {
-            <RadzenText TextStyle="TextStyle.Body1" Class="mb-4">@Question.Description</RadzenText>
-        }
+            @if (!string.IsNullOrWhiteSpace(Question.Description))
+            {
+                <p class="question-description">@Question.Description</p>
+            }
+        </header>
 
         @RenderTwoSectionGoalContent()
-    </RadzenCard>
+    </div>
 }
 else
 {
@@ -106,13 +107,17 @@ else
     // Tracking for refresh token to detect when parent requests data reload
     private int lastGoalRefreshToken = 0;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        // Always load configuration on initialization
+        // This ensures the component works correctly when used in dialogs or other contexts
+        // where parameter change detection might not work as expected
         LoadBasicGoalData();
-        base.OnInitialized();
+
+        await base.OnInitializedAsync();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (HasParameterChanged(nameof(Question), Question) ||
             HasParameterChanged(nameof(Response), Response) ||
@@ -122,7 +127,7 @@ else
             LoadBasicGoalData();
         }
 
-        base.OnParametersSet();
+        await base.OnParametersSetAsync();
     }
 
     private void LoadBasicGoalData()
@@ -202,6 +207,28 @@ else
 }
 
 <style>
+/* Goal Question Container */
+.goal-question {
+    /* Container styling if needed */
+}
+
+.goal-question .question-header {
+    margin-bottom: 1.5rem;
+}
+
+.goal-question .question-title {
+    color: var(--rz-primary);
+    margin-bottom: 0.75rem;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.goal-question .question-description {
+    margin-bottom: 1rem;
+    color: var(--rz-text-secondary-color);
+}
+
+/* Goal Content Sections */
 .two-section-goal-content {
     display: flex;
     flex-direction: column;
