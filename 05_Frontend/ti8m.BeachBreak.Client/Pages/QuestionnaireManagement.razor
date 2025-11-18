@@ -42,8 +42,8 @@
         <Tabs>
             <RadzenTabsItem Text="Templates">
                 <section class="templates-content">
-                    <div class="templates-toolbar">
-                        <div class="filters-group">
+                    <div class="templates-toolbar d-flex justify-content-between align-items-center mb-3">
+                        <div class="filters-group d-flex gap-3">
                             <RadzenDropDown @bind-Value="@categoryFilter"
                                            Data="@categories"
                                            TextProperty="NameEn"

@@ -177,11 +177,4 @@
     --grid-columns: 12;
     --grid-gutter-width: var(--spacing-lg);
 
-    /* Deprecated - Legacy Support */
-    /* These will be removed in future versions */
-    --blue-new: var(--primary-color);
-    --green-new: var(--success-color);
-    --danger-color-dark: var(--danger-color-dark);
-    --warning-color-dark: var(--warning-color-dark);
-    --info-color-dark: var(--info-color-dark);
 }

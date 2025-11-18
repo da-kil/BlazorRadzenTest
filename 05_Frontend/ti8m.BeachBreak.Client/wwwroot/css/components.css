@@ -479,7 +479,6 @@
     max-width: 700px;
     margin: 0 auto;
     padding: var(--spacing-xl) 0;
-    border-bottom: 1px solid #e2e8f0;
     position: relative;
 }
 
@@ -650,6 +649,11 @@
 .step-modern.completed::after {
     width: 60%;
     background: #10b981;
+}
+
+/* Progress Steps Container */
+.progress-steps-container {
+    padding-bottom: var(--spacing-xl);
 }
 
 /* Step Content */
