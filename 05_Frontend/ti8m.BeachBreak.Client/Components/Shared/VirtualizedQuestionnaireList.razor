@@ -3,7 +3,7 @@
 @using ti8m.BeachBreak.Client.Services.Enhanced
 @inherits OptimizedComponentBase
 
-<div class="virtualized-list-optimized" style="height: @ContainerHeight; overflow-y: auto;" @onscroll="HandleScroll" @onscroll:throttle="true">
+<div class="virtualized-list-optimized" style="height: @ContainerHeight; overflow-y: auto;" @onscroll="HandleScroll">
     @if (isLoading)
     {
         <div class="d-flex justify-content-center align-items-center" style="height: 200px;">
@@ -13,17 +13,13 @@
     }
     else
     {
-        <!-- Virtual scrolling container -->
-        <div style="height: @(totalHeight)px; position: relative;">
-            <!-- Visible items container -->
-            <div style="position: absolute; top: @(scrollOffset)px; width: 100%;">
-                @foreach (var assignment in visibleItems)
-                {
-                    <div class="mb-3" style="height: @ItemHeight;">
-                        @RenderQuestionnaireCard(assignment)
-                    </div>
-                }
-            </div>
+        <div>
+            @foreach (var assignment in AllAssignments)
+            {
+                <div class="mb-3">
+                    @RenderQuestionnaireCard(assignment)
+                </div>
+            }
         </div>
 
         @if (hasMoreData && !isLoadingMore)
@@ -41,17 +37,6 @@
     [Parameter] public EventCallback<QuestionnaireAssignment> OnItemClick { get; set; }
     [Parameter] public Func<int, int, Task<List<QuestionnaireAssignment>>>? DataLoader { get; set; }
 
-    // Virtual scrolling parameters
-    private const int ItemHeight = 180; // Height of each questionnaire card
-    private const int OverscanCount = 5; // Extra items to render for smooth scrolling
-
-    private int scrollTop = 0;
-    private int visibleStartIndex = 0;
-    private int visibleEndIndex = 0;
-    private List<QuestionnaireAssignment> visibleItems = new();
-    private int totalHeight = 0;
-    private int scrollOffset = 0;
-
     // Lazy loading state
     private int currentPage = 1;
     private const int pageSize = 50;
@@ -59,16 +44,10 @@
     private bool isLoadingMore = false;
     private bool isLoading = false;
 
-    protected override void OnParametersSet()
-    {
-        UpdateVirtualization(); // Always update on parameter changes
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            UpdateVirtualization(); // Ensure virtualization runs on first render
             NotifyStateChanged();
         }
         await base.OnAfterRenderAsync(firstRender);
@@ -76,51 +55,22 @@
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(visibleItems), visibleItems.Count) ||
+        return HasParameterChanged(nameof(AllAssignments), AllAssignments.Count) ||
                HasParameterChanged(nameof(isLoading), isLoading) ||
                HasParameterChanged(nameof(isLoadingMore), isLoadingMore);
     }
 
-    private void UpdateVirtualization()
-    {
-        if (!AllAssignments.Any())
-        {
-            // Handle empty case properly
-            totalHeight = 0;
-            visibleItems = new List<QuestionnaireAssignment>();
-            scrollOffset = 0;
-            return;
-        }
 
-        totalHeight = AllAssignments.Count * ItemHeight;
-
-        var containerHeight = int.Parse(ContainerHeight.Replace("px", ""));
-        var visibleCount = (containerHeight / ItemHeight) + (OverscanCount * 2);
-
-        visibleStartIndex = Math.Max(0, (scrollTop / ItemHeight) - OverscanCount);
-        visibleEndIndex = Math.Min(AllAssignments.Count - 1, visibleStartIndex + visibleCount);
-
-        scrollOffset = visibleStartIndex * ItemHeight;
-
-        visibleItems = AllAssignments
-            .Skip(visibleStartIndex)
-            .Take(visibleEndIndex - visibleStartIndex + 1)
-            .ToList();
-    }
-
-    private async Task HandleScroll(object e)
+    private async Task HandleScroll(EventArgs e)
     {
         await ExecuteSafelyAsync(async () =>
         {
             // Throttle scroll events to avoid excessive re-renders
             if (await TryNotifyStateChangedThrottled(16)) // ~60fps
             {
-                // scrollTop = (int)e.ScrollTop; // Placeholder for now
-                UpdateVirtualization();
-
-                // Check if we need to load more data
-                var bottomThreshold = totalHeight - (int.Parse(ContainerHeight.Replace("px", "")) * 2);
-                if (scrollTop >= bottomThreshold && hasMoreData && !isLoadingMore && DataLoader != null)
+                // Check if we need to load more data (simplified check)
+                // Load more when we're near the end of the current list
+                if (AllAssignments.Count > 0 && hasMoreData && !isLoadingMore && DataLoader != null)
                 {
                     await LoadMoreData();
                 }
@@ -149,7 +99,6 @@
                 {
                     AllAssignments.AddRange(result.Data);
                     hasMoreData = result.Data.Count == pageSize;
-                    UpdateVirtualization();
                 }
                 else
                 {

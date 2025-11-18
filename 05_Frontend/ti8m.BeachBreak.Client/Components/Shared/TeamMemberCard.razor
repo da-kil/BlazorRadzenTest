@@ -2,8 +2,8 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
-<div class="team-member-item p-3 mb-2 rounded border-start border-3 @GetMemberBorderClass()"
-     style="background-color: var(--rz-background-color); border-left-color: @GetMemberBorderColor(); transition: all 0.2s ease;"
+<div class="team-member-item p-4 mb-3 rounded"
+     style="background-color: white; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);"
      @onmouseover="@(() => isHovered = true)"
      @onmouseout="@(() => isHovered = false)">
 
@@ -45,8 +45,8 @@
         <div class="assignment-list-simple mt-2">
             @foreach (var assignment in Assignments.Take(3))
             {
-                <div class="d-flex align-items-center justify-content-between py-1 px-2 rounded hover-bg assignment-row"
-                     style="cursor: pointer; margin-bottom: 2px;"
+                <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded assignment-row"
+                     style="cursor: pointer; margin-bottom: 6px; background-color: var(--rz-base-50, #f9fafb);"
                      @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
                     <div class="d-flex align-items-center flex-grow-1">
                         <div class="assignment-status-dot me-2"
@@ -200,20 +200,4 @@
         }
     }
 
-    // New methods for lighter styling
-    private string GetMemberBorderClass()
-    {
-        if (OverdueCount > 0) return "border-danger-subtle";
-        if (CompletedCount == TotalCount) return "border-success-subtle";
-        if (InProgressCount > 0) return "border-info-subtle";
-        return "border-light";
-    }
-
-    private string GetMemberBorderColor()
-    {
-        if (OverdueCount > 0) return "var(--rz-danger-lighter)";
-        if (CompletedCount == TotalCount) return "var(--rz-success-lighter)";
-        if (InProgressCount > 0) return "var(--rz-info-lighter)";
-        return "var(--rz-base-300)";
-    }
 }
