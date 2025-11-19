@@ -264,7 +264,7 @@
     }
 
     /// <summary>
-    /// Saves the current GoalWithState objects back to Response.ResponseData as GoalDataDto objects
+    /// Saves the current GoalWithState objects back to Response.ResponseData as GoalDataDto objects.
     /// </summary>
     private void SaveGoalsToResponse()
     {
@@ -275,8 +275,10 @@
             Response.ResponseData = goalData;
         }
 
-        // Convert GoalWithState objects back to GoalDataDto objects
-        goalData.Goals = allCurrentGoals.Select(ConvertGoalWithStateToGoalDataDto).ToList();
+        var goalsToSave = allCurrentGoals.Where(g => !g.IsPendingDelete).ToList();
+
+        // Convert GoalWithState objects back to GoalDataDto objects (excluding deleted goals)
+        goalData.Goals = goalsToSave.Select(ConvertGoalWithStateToGoalDataDto).ToList();
         Response.LastModified = DateTime.Now;
     }
 
@@ -711,6 +713,7 @@
 
         // Update Response data
         SaveGoalsToResponse();
+
         await NotifyResponseChanged();
         await InvokeAsync(StateHasChanged);
 
