@@ -20,19 +20,6 @@
 
         @* Weighting is hidden during in-progress states and will be set during InReview by manager *@
 
-        <RadzenFieldset>
-            <HeaderTemplate>
-                <RadzenIcon Icon="person" Class="me-2" />
-                <span class="fw-bold">Added By</span>
-            </HeaderTemplate>
-            <ChildContent>
-                <RadzenBadge Text="@GetDisplayRole(AddedByRole)" BadgeStyle="BadgeStyle.Info" IsPill="true" />
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted ms-2">
-                    This goal will be attributed to @GetDisplayRole(AddedByRole)
-                </RadzenText>
-            </ChildContent>
-        </RadzenFieldset>
-
         <div class="d-flex justify-content-end gap-2 mt-3">
             <RadzenButton Text="Cancel"
                         ButtonStyle="ButtonStyle.Light"
@@ -116,21 +103,6 @@
         DialogService.Close(false);
     }
 
-    /// <summary>
-    /// Converts ApplicationRole enum to the simplified Employee/Manager format for display.
-    /// </summary>
-    private string GetDisplayRole(ApplicationRole role)
-    {
-        return role switch
-        {
-            ApplicationRole.Employee => ResponseRole.Employee.ToRoleKey(),
-            ApplicationRole.TeamLead => ResponseRole.Manager.ToRoleKey(),
-            ApplicationRole.HR => ResponseRole.Manager.ToRoleKey(),
-            ApplicationRole.HRLead => ResponseRole.Manager.ToRoleKey(),
-            ApplicationRole.Admin => ResponseRole.Manager.ToRoleKey(),
-            _ => ResponseRole.Employee.ToRoleKey() // Default fallback
-        };
-    }
 }
 
 <style>

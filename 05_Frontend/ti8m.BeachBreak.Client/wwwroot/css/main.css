@@ -11,7 +11,6 @@
 @import url('./layout.css');
 @import url('./shared-components.css');
 @import url('./assignment-dialogs.css');
-@import url('./questionnaire-unified.css');
 
 /* =============================================
    ENHANCED BASE STYLES
@@ -48,7 +47,7 @@ p, h1, h2, h3, h4, h5, h6 {
 /* ✅ FIXED: Section Header Collision Resolution */
 /* Previously conflicting .section-header classes now have specific names:
  * - .section-header-form (components.css) - for form sections
- * - .section-header-questionnaire (questionnaire-unified.css) - for questionnaire sections
+ * - .section-header-questionnaire (migrated to questionnaire-system.css) - for questionnaire sections
  * - Removed minimal duplicate from shared-components.css
  */
 

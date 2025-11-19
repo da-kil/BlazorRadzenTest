@@ -7,7 +7,6 @@
     --golden-milk: #E6BF7F;
     --light-blue: #D8E0E6;
     --peach-kiss: #F08080;
-
     /* Semantic color assignments */
     --primary-color: var(--blue-new);
     --secondary-color: var(--ice-blue);
@@ -17,9 +16,10 @@
     --info-color: var(--purple-rain);
     --dark-color: var(--dark-blue);
     --light-color: var(--light-blue);
-
     /* General UI element colors */
-    --title-color: var(--blue-new);
+    --competency-title-color: var(--blue-new);
+    --textquestion-title-color: var(--purple-rain);
+    --goal-title-color: var(--green-new);
 
     /* Question type specific colors */
     --question-assessment: var(--blue-new);

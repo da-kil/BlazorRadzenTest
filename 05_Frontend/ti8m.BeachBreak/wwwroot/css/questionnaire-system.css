@@ -1,0 +1,1337 @@
+/*
+ * Questionnaire System - Consolidated CSS
+ * Master styles for questionnaire builder, viewer, and question types
+ * Combines questionnaire-builder.css, questionnaire-unified.css, and question-types.css
+ */
+
+/* =============================================
+   VARIABLES & TOKENS
+   ============================================= */
+
+/* Variables are defined in app.css and imported globally */
+
+/* =============================================
+   BASE QUESTION COMPONENTS - SHARED FOUNDATIONS
+   ============================================= */
+
+/* Base competency item styling - works across all contexts */
+.competency-item {
+    /* Base layout and spacing */
+    position: relative;
+    padding: 1.25rem;
+    margin-bottom: 0;
+
+    /* Theme colors */
+    background-color: rgba(15, 105, 255, 0.05) !important;
+
+    /* Transitions and performance */
+    transition: all 0.15s ease-in-out;
+    box-sizing: border-box;
+}
+
+.competency-item * {
+    box-sizing: border-box;
+}
+
+.competency-item .competency-title {
+    color: var(--competency-title-color) !important;
+}
+
+/* Context-specific modifiers for competency items */
+.competency-item.builder-context {
+    /* Builder-specific styling with colorful borders */
+    background: rgba(15, 105, 255, 0.05) !important;
+    border: none !important;
+    padding: 1.25rem !important;
+    margin-bottom: 0 !important;
+}
+
+.competency-item.builder-context:hover {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.competency-item.builder-context .fw-bold {
+    color: var(--competency-title-color) !important;
+}
+
+.competency-item.rating-context {
+    /* Rating-specific styling with bottom borders */
+    padding: 28px;
+    border: none;
+    background: transparent;
+}
+
+.competency-item.rating-context:first-child {
+    padding-top: 28px;
+}
+
+/* Rating-specific component styles */
+.competency-item.rating-context .competency-header {
+    margin-bottom: 16px;
+}
+
+.competency-item.rating-context .competency-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--dark-color);
+}
+
+.competency-item.rating-context .competency-description {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.competency-item.rating-context .rating-section {
+    margin-bottom: 16px;
+}
+
+.competency-item.rating-context .rating-label {
+    display: block;
+    font-size: 0.9rem;
+    color: var(--dark-color);
+    margin-bottom: 8px;
+}
+
+.competency-item.rating-context .star-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.competency-item.rating-context .star-rating input[type="radio"] {
+    display: none;
+}
+
+.competency-item.rating-context .star-label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    transition: color 0.2s ease;
+}
+
+.competency-item.rating-context .star-label:hover .rzi {
+    color: var(--warning-color) !important;
+}
+
+.competency-item.rating-context .star-rating input[type="radio"]:disabled + .star-label {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.competency-item.rating-context .rating-status {
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.competency-item.rating-context .comment-section {
+    margin-top: 16px;
+}
+
+.competency-item.rating-context .comment-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.competency-item.rating-context .comment-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(15, 105, 255, 0.1);
+}
+
+.competency-item.rating-context .comment-display {
+    margin-top: 16px;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.competency-item.rating-context .comment-label {
+    display: block;
+    color: var(--secondary-color);
+    font-size: 0.8rem;
+    margin-bottom: 4px;
+}
+
+.competency-item.rating-context .comment-text {
+    font-size: 0.9rem;
+    color: var(--dark-color);
+}
+
+.competency-item.rating-context .star-rating:focus-within {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* Base goal item styling */
+.collaborative-goal {
+    padding: 28px;
+    background-color: rgba(0, 230, 200, 0.05) !important;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+}
+
+.collaborative-goal:last-child {
+    margin-bottom: 0;
+}
+
+.collaborative-goal .goal-header .fw-bold {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.goal-badges .rz-badge {
+    font-size: 0.75rem;
+}
+
+/* Base text section styling */
+.text-section-card {
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+    position: relative;
+    background-color: rgba(147, 91, 169, 0.05) !important;
+    padding: 1.5rem;
+}
+
+.text-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 12px 0;
+    color: var(--textquestion-title-color) !important;
+    display: flex;
+    align-items: center;
+}
+
+.text-section-card:focus-within {
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.readonly-text {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.6;
+    min-height: 60px;
+}
+
+.no-response {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.text-section-card textarea {
+    resize: vertical;
+    transition: none; /* Disable transitions on input for better performance */
+}
+
+.text-section-card[data-updating="true"] {
+    opacity: 0.8;
+}
+
+/* =============================================
+   QUESTION TYPE SPECIFIC COLORS & BADGES
+   ============================================= */
+
+/* Assessment Question Colors */
+.question-assessment,
+.text-assessment {
+    color: var(--question-assessment) !important;
+}
+
+.bg-assessment {
+    background-color: var(--question-assessment) !important;
+}
+
+.bg-assessment-opacity {
+    background-color: rgba(15, 105, 255, 0.1) !important;
+}
+
+.border-assessment {
+    border-color: var(--question-assessment) !important;
+}
+
+.badge-assessment {
+    background-color: rgba(15, 105, 255, 0.1) !important;
+    color: var(--question-assessment) !important;
+}
+
+/* Goal Achievement Question Colors */
+.question-goal-achievement,
+.text-goal-achievement {
+    color: var(--question-goal-achievement) !important;
+}
+
+.bg-goal-achievement {
+    background-color: var(--question-goal-achievement) !important;
+}
+
+.bg-goal-achievement-opacity {
+    background-color: rgba(230, 191, 127, 0.1) !important;
+}
+
+.border-goal-achievement {
+    border-color: var(--question-goal-achievement) !important;
+}
+
+.badge-goal-achievement {
+    background-color: rgba(230, 191, 127, 0.1) !important;
+    color: var(--dark-color) !important;
+}
+
+/* Text Response Question Colors */
+.question-text-response,
+.text-text-response {
+    color: var(--textquestion-title-color) !important;
+}
+
+.bg-text-response {
+    background-color: var(--goal-title-color) !important;
+}
+
+.bg-text-response-opacity {
+    background-color: rgba(147, 91, 169, 0.1) !important;
+}
+
+.border-text-response {
+    border-color: var(--question-text-response) !important;
+}
+
+.badge-text-response {
+    background-color: rgba(147, 91, 169, 0.1) !important;
+    color: var(--question-text-response) !important;
+}
+
+/* Question Type Cards */
+.question-type-card.assessment {
+    border-color: var(--question-assessment) !important;
+    background-color: rgba(15, 105, 255, 0.05) !important;
+}
+
+.question-type-card.assessment:hover {
+    box-shadow: 0 8px 25px rgba(15, 105, 255, 0.15) !important;
+    border-color: var(--question-assessment) !important;
+}
+
+.question-type-card.goal-achievement {
+    border-color: var(--question-goal-achievement) !important;
+    background-color: rgba(230, 191, 127, 0.05) !important;
+}
+
+.question-type-card.goal-achievement:hover {
+    box-shadow: 0 8px 25px rgba(230, 191, 127, 0.15) !important;
+    border-color: var(--question-goal-achievement) !important;
+}
+
+.question-type-card.text-response {
+    border-color: var(--question-text-response) !important;
+    background-color: rgba(147, 91, 169, 0.05) !important;
+}
+
+.question-type-card.text-response:hover {
+    box-shadow: 0 8px 25px rgba(147, 91, 169, 0.15) !important;
+    border-color: var(--question-text-response) !important;
+}
+
+/* Border utilities for question types */
+.border-competency {
+    border-color: var(--question-assessment) !important;
+}
+
+.bg-competency {
+    background-color: var(--question-assessment) !important;
+}
+
+.bg-competency-opacity {
+    background-color: rgba(15, 105, 255, 0.1) !important;
+}
+
+.text-competency {
+    color: var(--question-assessment) !important;
+}
+
+.border-goal-category {
+    border-color: var(--question-goal-achievement) !important;
+}
+
+.bg-goal-category {
+    background-color: var(--question-goal-achievement) !important;
+}
+
+.bg-goal-category-opacity {
+    background-color: rgba(230, 191, 127, 0.1) !important;
+}
+
+.text-goal-category {
+    color: var(--question-goal-achievement) !important;
+}
+
+/* =============================================
+   GOAL QUESTION COMPONENTS
+   ============================================= */
+
+.goal-question {
+    /* Container styling if needed */
+}
+
+.goal-question .question-header {
+    margin-bottom: 1.5rem;
+}
+
+.goal-question .question-description {
+    margin-bottom: 1rem;
+    color: var(--secondary-color);
+}
+
+.goal-question .question-title {
+    color: var(--goal-title-color) !important;
+}
+
+/* Goal Content Sections */
+.two-section-goal-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Ensure proper section ordering */
+.two-section-goal-content > .predecessor-goals-section {
+    order: 1; /* Always first */
+}
+
+.two-section-goal-content > .new-goals-section {
+    order: 2; /* Always second */
+}
+
+.two-section-goal-content[data-updating="true"] {
+    opacity: 0.8;
+}
+
+/* New Goals Section Styling */
+.new-goals-section {
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.new-goals-section:first-child {
+    padding-top: 28px;
+}
+
+.new-goals-section:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.goal-section-header {
+    margin-bottom: 16px;
+}
+
+.goal-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--dark-color);
+    display: flex;
+    align-items: center;
+}
+
+.goal-section-description {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin: 0;
+    line-height: 1.4;
+}
+
+.section-content {
+    /* Container for all goals content */
+}
+
+/* Goal category item styling */
+.goal-category-item {
+    border-color: var(--question-goal-achievement) !important;
+    background-color: rgba(230, 191, 127, 0.05) !important;
+}
+
+.goal-category-item .goal-title {
+    color: var(--question-goal-achievement) !important;
+}
+
+/* Goals summary styling - more minimal */
+.goals-summary {
+    margin-top: 16px;
+    padding: 16px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #f1f3f5;
+}
+
+/* Add button section - cleaner alignment */
+.add-goal-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 16px 0 0 0;
+    margin-top: 16px;
+}
+
+/* Alert styling to match assessment subtlety */
+.section-content .rz-alert {
+    background-color: rgba(179, 217, 255, 0.08);
+    border: 1px solid rgba(179, 217, 255, 0.2);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.section-content .rz-alert .rz-text {
+    color: var(--dark-color);
+    font-size: 0.9rem;
+}
+
+/* Text section item styling */
+.text-section-item {
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: rgba(147, 91, 169, 0.05) !important;
+}
+
+.text-section-item .section-title {
+    color: var(--question-text-response) !important;
+}
+
+.text-question .question-title {
+    color: var(--textquestion-title-color) !important;
+}
+
+/* =============================================
+   BUILDER-SPECIFIC LAYOUTS
+   ============================================= */
+
+/* Review Tab - Integrated Summary */
+.questionnaire-summary {
+    text-align: center;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.summary-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.2;
+}
+
+.summary-stats {
+    font-size: 1rem;
+    color: var(--secondary-color);
+    margin: 0;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+/* Build Sections - Section Containers */
+.sections-container {
+    gap: 2.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.sections-container .modern-section-card {
+    /* Removed border and shadow for cleaner design */
+    transition: all 0.2s ease-in-out;
+}
+
+.sections-container .modern-section-card:hover {
+    /* Subtle hover effect without borders or shadows */
+    transform: translateY(-1px);
+}
+
+/* Competency Lists - Enhanced Organization */
+.competencies-container {
+    /* Removed background, border-radius, and padding to reduce visual depth */
+    /* Container kept for structural purposes only */
+}
+
+.competencies-config {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.competency-input-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 1rem;
+    align-items: start;
+    margin-bottom: 0.75rem;
+}
+
+.required-checkbox-container {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    padding-top: 0.5rem;
+}
+
+/* Visual Polish & Micro-Interactions */
+.questionnaire-header-modern + div .progress-steps-modern {
+    margin-top: -1px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.questionnaire-builder-container {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.action-buttons-group .rz-button {
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-buttons-group .rz-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.action-buttons-group .rz-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.6s;
+}
+
+.action-buttons-group .rz-button:hover::before {
+    left: 100%;
+}
+
+.status-badge-enhanced.new {
+    animation: subtle-pulse 3s ease-in-out infinite;
+}
+
+@keyframes subtle-pulse {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    50% {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 0 4px rgba(59, 130, 246, 0.1);
+    }
+}
+
+.save-indicator {
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.save-indicator.saving .save-icon {
+    animation: rotate 2s linear infinite, pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        filter: drop-shadow(0 0 2px rgba(96, 165, 250, 0.3));
+    }
+    50% {
+        filter: drop-shadow(0 0 4px rgba(96, 165, 250, 0.6));
+    }
+}
+
+.step-modern:focus {
+    outline: none;
+    transform: translateY(-2px);
+}
+
+.step-modern:focus .step-number-modern {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.questionnaire-header-modern.loading {
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+.questionnaire-header-modern.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer-loading 2s infinite;
+}
+
+@keyframes shimmer-loading {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.questionnaire-content {
+    transition: all 0.3s ease;
+}
+
+.questionnaire-content.step-changing {
+    opacity: 0.7;
+    transform: translateY(10px);
+}
+
+/* =============================================
+   VIEWER-SPECIFIC LAYOUTS
+   ============================================= */
+
+/* Container & Layout */
+.questionnaire-unified-container {
+    max-width: none;
+    margin: 0;
+    padding: 0 1rem;
+    width: 100%;
+}
+
+.questionnaire-main-card {
+    background: #ffffff;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    margin-bottom: 1rem;
+}
+
+/* Header Section (Left-aligned like other pages) */
+.page-header {
+    margin-bottom: 2rem;
+}
+
+.questionnaire-info-banner {
+    background: rgba(2, 132, 199, 0.1);
+    border: 1px solid rgba(2, 132, 199, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--dark-color);
+}
+
+/* Section Counter */
+.section-counter {
+    text-align: right;
+    margin-bottom: 1rem;
+    color: var(--secondary-color);
+    font-size: 0.875rem;
+}
+
+/* Section Structure (Simplified) */
+.section-header-questionnaire {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1.25rem;
+}
+
+.section-title-container {
+    flex: 1;
+}
+
+.section-title {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.section-description {
+    color: var(--secondary-color);
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+/* Completion Role Badge */
+.completion-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+
+.role-employee {
+    background: rgba(59, 130, 246, 0.1);
+    color: #2563eb;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.role-manager {
+    background: rgba(139, 92, 246, 0.1);
+    color: #7c3aed;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.role-both {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* Question Container (Simplified) */
+.questions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+    margin-top: 1.5rem;
+    padding: 0 1rem;
+}
+
+/* Question Rendering Styles (Semantic) */
+.question-header {
+    margin-bottom: 1.5rem;
+}
+
+.question-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.question-description {
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.rating-scale-info {
+    background: rgba(2, 132, 199, 0.05);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--dark-color);
+}
+
+/* Assessment Question Styles (Simplified) */
+.assessment-question {
+    margin-bottom: 2rem;
+}
+
+.assessment-question .question-title {
+    color: var(--competency-title-color) !important;
+}
+
+.competencies-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.competency-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Text Question Styles */
+.text-question {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.planning-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.planning-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Goal Achievement Question Styles */
+.goal-achievement-question {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.goal-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+/* Navigation Footer */
+.navigation-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 2rem;
+    border-top: 2px solid #e9ecef;
+    margin-top: 2rem;
+}
+
+.navigation-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Workflow Status & Alerts */
+.workflow-alert {
+    margin-bottom: 1.5rem;
+}
+
+/* =============================================
+   REVIEW MODE SPECIFIC STYLES
+   ============================================= */
+
+.review-question-container {
+    margin-bottom: 2rem;
+}
+
+/* Single Answer View (Employee or Manager only sections) */
+.single-answer-view {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border-left: 4px solid var(--primary-color);
+}
+
+/* Side-by-Side View (Both sections) */
+.side-by-side-view {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 968px) {
+    .side-by-side-view {
+        grid-template-columns: 1fr;
+    }
+}
+
+.answer-column {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: relative;
+}
+
+.answer-column.employee {
+    border-left: 4px solid #2563eb;
+}
+
+.answer-column.manager {
+    border-left: 4px solid #7c3aed;
+}
+
+.answer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.answer-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.answer-content {
+    margin-bottom: 1rem;
+    min-height: 60px;
+}
+
+.answer-value {
+    font-size: 1rem;
+    color: var(--dark-color);
+    line-height: 1.6;
+}
+
+.empty-answer {
+    font-style: italic;
+    color: var(--secondary-color);
+    opacity: 0.7;
+}
+
+.answer-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Question Item Display (for read-only review) */
+.question-item-card {
+    margin-bottom: 1rem;
+    padding: 1rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.question-item-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--dark-color);
+}
+
+.question-item-description {
+    color: var(--secondary-color);
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+}
+
+.question-answer-box {
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    background: #f8f9fa;
+    white-space: pre-wrap;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+/* Wrapper div alignment (for OptimizedQuestionRenderer containers) */
+.role-response-section {
+    margin-bottom: 3rem !important;
+}
+
+.role-response-section:last-child {
+    margin-bottom: 0 !important;
+}
+
+/* Ensure inner wrapper divs don't add extra spacing */
+.ps-3.border-start {
+    margin-bottom: 0 !important;
+}
+
+/* =============================================
+   RESPONSIVE DESIGN - CONSOLIDATED
+   ============================================= */
+
+/* Tablet Optimizations */
+@media (max-width: 1024px) {
+    /* Builder responsive */
+    .questionnaire-summary {
+        padding: 1.5rem;
+    }
+
+    .d-flex.gap-2 {
+        flex-wrap: wrap;
+        gap: 0.5rem !important;
+    }
+
+    .d-flex.gap-2 .async-button {
+        flex: 1;
+        min-width: calc(33.333% - 0.5rem);
+    }
+}
+
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+    /* Builder mobile */
+    .questionnaire-summary {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .summary-title {
+        font-size: 1.25rem;
+    }
+
+    .summary-stats {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .sections-container {
+        gap: 1.5rem;
+    }
+
+    .sections-container .modern-section-card:hover {
+        transform: none;
+    }
+
+    .competencies-container {
+        padding: 1.5rem;
+        margin: 0 -0.25rem;
+    }
+
+    .competencies-config {
+        gap: 1rem;
+    }
+
+    .competency-input-row {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .required-checkbox-container {
+        padding-top: 0;
+        justify-content: flex-start;
+    }
+
+    /* Builder section type buttons */
+    .d-flex.justify-content-between.align-items-center {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 1rem;
+    }
+
+    .d-flex.gap-2 {
+        justify-content: center;
+    }
+
+    .d-flex.gap-2 .async-button {
+        flex: 1;
+        min-width: auto;
+    }
+
+    /* Viewer mobile */
+    .questionnaire-main-card {
+        padding: 1rem;
+    }
+
+    .section-card {
+        padding: 1rem;
+    }
+
+    .section-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .questionnaire-title {
+        font-size: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+    }
+
+    .navigation-footer {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .navigation-actions {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    /* Question types mobile */
+    .competency-item.builder-context {
+        padding: 1rem !important;
+    }
+}
+
+/* Small Mobile Optimizations */
+@media (max-width: 480px) {
+    /* Builder small mobile */
+    .questionnaire-summary {
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+
+    .summary-title {
+        font-size: 1.1rem;
+        line-height: 1.3;
+    }
+
+    .summary-stats {
+        font-size: 0.85rem;
+        line-height: 1.7;
+    }
+
+    .sections-container {
+        gap: 1rem;
+    }
+
+    .competencies-container {
+        padding: 1.5rem;
+        border-radius: 6px;
+    }
+
+    /* Builder section type buttons */
+    .d-flex.gap-2 {
+        flex-direction: column;
+        gap: 0.75rem !important;
+    }
+
+    .d-flex.gap-2 .async-button {
+        min-width: auto;
+        width: 100%;
+    }
+
+    /* Question types small mobile */
+    .competency-item.builder-context {
+        padding: 0.75rem !important;
+        margin: 0 !important;
+    }
+
+    .competency-item.builder-context:hover {
+        transform: none;
+    }
+}
+
+/* =============================================
+   ACCESSIBILITY - CONSOLIDATED
+   ============================================= */
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .sections-container .modern-section-card,
+    .questionnaire-summary,
+    .competency-item {
+        transition: none;
+    }
+
+    .sections-container .modern-section-card:hover,
+    .competency-item.builder-context:hover {
+        transform: none;
+    }
+
+    * {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .questionnaire-summary,
+    .questionnaire-main-card,
+    .section-card,
+    .competency-card,
+    .planning-card,
+    .goal-card,
+    .answer-column,
+    .competency-item {
+        border-width: 2px;
+    }
+}
+
+/* Focus states */
+.questionnaire-summary:focus-within,
+.competency-item:focus-within {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* =============================================
+   PRINT STYLES - CONSOLIDATED
+   ============================================= */
+
+@media print {
+    /* Builder print */
+    .questionnaire-summary {
+        box-shadow: none !important;
+        background: white !important;
+        border: 1px solid #ccc !important;
+    }
+
+    /* Viewer print */
+    .navigation-footer,
+    .answer-actions {
+        display: none;
+    }
+
+    .questionnaire-main-card,
+    .section-card {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+
+    /* Question types print */
+    .competency-item {
+        box-shadow: none !important;
+        background: white !important;
+        border: 1px solid #ccc !important;
+    }
+
+    .competency-item.builder-context:hover {
+        transform: none !important;
+    }
+}
+
+/* =============================================
+   PERFORMANCE OPTIMIZATIONS
+   ============================================= */
+
+/* Optimize rendering for complex layouts */
+.new-goals-section *,
+.competency-item * {
+    box-sizing: border-box;
+}
