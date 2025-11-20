@@ -36,8 +36,6 @@
             {
                 @RenderTypedGoal(goal, $"{goal.Id}_{goal.ObjectiveDescription?.GetHashCode()}_{goal.HasPendingChanges}")
             }
-
-            @* All goals including pending are now in allCurrentGoals *@
         }
 
         @if (!IsReadOnly)

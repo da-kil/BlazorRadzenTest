@@ -931,6 +931,7 @@
             var goalQuestionResponseWithRef = GetQuestionResponse(question.Id);
 
             return @<OptimizedQuestionRenderer
+                @ref="questionRenderers[question.Id]"
                 Question="@question"
                 Response="@goalQuestionResponseWithRef"
                 OnResponseChanged="@HandleQuestionResponseChangedDynamic"
