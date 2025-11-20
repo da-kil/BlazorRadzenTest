@@ -3,6 +3,7 @@
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Questions
+@using ti8m.BeachBreak.Client.Helpers
 @inherits OptimizedComponentBase
 
 @if (!HideHeader)
@@ -23,7 +24,7 @@
 
             <div class="rating-scale-info">
                 <RadzenIcon Icon="info" Class="me-2" />
-                <strong>Rating Scale:</strong> @GetRatingScaleDescription()
+                <strong>Rating Scale:</strong> @AssessmentConfigurationHelper.GetRatingScaleDescription(ratingScale, scaleLowLabel, scaleHighLabel)
             </div>
         </header>
 
@@ -66,7 +67,7 @@ else
 {
     <div class="rating-scale-info">
         <RadzenIcon Icon="info" Class="me-2" />
-        <strong>Rating Scale:</strong> @GetRatingScaleDescription()
+        <strong>Rating Scale:</strong> @AssessmentConfigurationHelper.GetRatingScaleDescription(ratingScale, scaleLowLabel, scaleHighLabel)
     </div>
 
     <div class="competencies-container">
@@ -137,10 +138,10 @@ else
 
     private void LoadConfigurationAsync()
     {
-        competencies = GetCompetenciesFromConfiguration();
-        ratingScale = GetRatingScaleFromConfiguration();
-        scaleLowLabel = GetScaleLowLabelFromConfiguration();
-        scaleHighLabel = GetScaleHighLabelFromConfiguration();
+        competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        ratingScale = AssessmentConfigurationHelper.GetRatingScaleFromConfiguration(Question);
+        scaleLowLabel = AssessmentConfigurationHelper.GetScaleLowLabelFromConfiguration(Question);
+        scaleHighLabel = AssessmentConfigurationHelper.GetScaleHighLabelFromConfiguration(Question);
     }
 
     protected override bool HasStateChanged()
@@ -149,154 +150,6 @@ else
         var responseDataHash = Response.ResponseData?.GetHashCode() ?? 0;
         return HasParameterChanged(nameof(Response.ResponseData), responseDataHash) ||
                HasParameterChanged(nameof(competencies), competencies.Count);
-    }
-
-    private List<CompetencyDefinition> GetCompetenciesFromConfiguration()
-    {
-        if (Question.Configuration?.ContainsKey("Competencies") != true)
-        {
-            return new List<CompetencyDefinition>();
-        }
-
-        var competenciesValue = Question.Configuration["Competencies"];
-
-        // Handle direct List<CompetencyDefinition>
-        if (competenciesValue is List<CompetencyDefinition> comps)
-        {
-            return comps;
-        }
-
-        // Handle JsonElement (from API deserialization)
-        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
-        {
-            try
-            {
-                var options = new System.Text.Json.JsonSerializerOptions
-                {
-                    Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
-                };
-
-                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
-                    jsonElement.GetRawText(),
-                    options
-                );
-
-                if (competencies != null && competencies.Any())
-                {
-                    return competencies;
-                }
-            }
-            catch { /* Skip deserialization errors */ }
-        }
-
-        // Handle IEnumerable<object> or other list types
-        if (competenciesValue is IEnumerable<object> enumerable)
-        {
-            var result = new List<CompetencyDefinition>();
-            foreach (var item in enumerable)
-            {
-                if (item is CompetencyDefinition compDef)
-                {
-                    result.Add(compDef);
-                }
-                else if (item is System.Text.Json.JsonElement itemJson)
-                {
-                    try
-                    {
-                        var deserializedComp = System.Text.Json.JsonSerializer.Deserialize<CompetencyDefinition>(
-                            itemJson.GetRawText()
-                        );
-                        if (deserializedComp != null) result.Add(deserializedComp);
-                    }
-                    catch { /* Skip invalid items */ }
-                }
-            }
-            if (result.Any()) return result;
-        }
-
-        return new List<CompetencyDefinition>();
-    }
-
-    private int GetRatingScaleFromConfiguration()
-    {
-        if (Question.Configuration?.ContainsKey("RatingScale") == true)
-        {
-            var value = Question.Configuration["RatingScale"];
-
-            if (value == null)
-            {
-                return 4;
-            }
-
-            try
-            {
-                // Try Convert.ToInt32 which handles many types including JsonElement
-                return Convert.ToInt32(value);
-            }
-            catch
-            {
-                // Fallback: Handle JsonElement explicitly
-                if (value is System.Text.Json.JsonElement jsonElement)
-                {
-                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Number)
-                    {
-                        return jsonElement.GetInt32();
-                    }
-                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.String)
-                    {
-                        if (int.TryParse(jsonElement.GetString(), out int parsed))
-                        {
-                            return parsed;
-                        }
-                    }
-                }
-
-                // Fallback: Try parsing string representation
-                if (int.TryParse(value.ToString(), out int scale))
-                {
-                    return scale;
-                }
-            }
-        }
-
-        return 4;
-    }
-
-    private string GetScaleLowLabelFromConfiguration()
-    {
-        if (Question.Configuration?.TryGetValue("ScaleLowLabel", out var value) == true)
-        {
-            // Handle JsonElement from API deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
-                    ? jsonElement.GetString() ?? "Poor"
-                    : "Poor";
-            }
-            return value.ToString() ?? "Poor";
-        }
-        return "Poor";
-    }
-
-    private string GetScaleHighLabelFromConfiguration()
-    {
-        if (Question.Configuration?.TryGetValue("ScaleHighLabel", out var value) == true)
-        {
-            // Handle JsonElement from API deserialization
-            if (value is System.Text.Json.JsonElement jsonElement)
-            {
-                return jsonElement.ValueKind == System.Text.Json.JsonValueKind.String
-                    ? jsonElement.GetString() ?? "Excellent"
-                    : "Excellent";
-            }
-            return value.ToString() ?? "Excellent";
-        }
-        return "Excellent";
-    }
-
-    private string GetRatingScaleDescription()
-    {
-        return $"1 ({scaleLowLabel}) - {ratingScale} ({scaleHighLabel})";
     }
 
     private int GetCompetencyRating(string competencyKey)

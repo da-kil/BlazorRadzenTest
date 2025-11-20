@@ -1,0 +1,133 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.Questions
+@using ti8m.BeachBreak.Client.Helpers
+
+<div class="rating-scale-info mb-3">
+    <RadzenIcon Icon="info" Class="me-2" />
+    <strong>Rating Scale:</strong> @AssessmentConfigurationHelper.GetRatingScaleDescription(ratingScale, scaleLowLabel, scaleHighLabel)
+</div>
+
+@if (!competencies.Any())
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
+        <RadzenText TextStyle="TextStyle.Body2">
+            <strong>Configuration Error:</strong> No competencies are defined for this question.
+        </RadzenText>
+    </RadzenAlert>
+}
+else
+{
+    @foreach (var competency in competencies)
+    {
+        <!-- Each competency gets its own comparison card -->
+        <div class="competency-comparison-card">
+            <div class="side-by-side-view">
+                <!-- Employee Rating -->
+                <div class="answer-column employee">
+                    <div class="answer-header">
+                        <span class="answer-label">
+                            <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                            Employee's Answer
+                        </span>
+                    </div>
+                    <div class="answer-content">
+                        @{
+                            var employeeRating = AssessmentConfigurationHelper.GetCompetencyRatingDto(EmployeeResponse, competency.Key);
+                        }
+                        <CompetencyRatingItem
+                            Competency="@competency"
+                            Rating="@employeeRating"
+                            OnRatingChanged="@((rating) => Task.CompletedTask)"
+                            IsReadOnly="true"
+                            RatingScale="@ratingScale"
+                            ScaleLowLabel="@scaleLowLabel"
+                            ScaleHighLabel="@scaleHighLabel" />
+                    </div>
+                    <div class="answer-actions">
+                        <RadzenButton Text="Copy to Manager →"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Icon="content_copy"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => OnCopyAnswer.InvokeAsync((Question, CompletionRole.Employee, CompletionRole.Manager)))"
+                                     Class="copy-button" />
+                        <RadzenButton Text="Edit"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Icon="edit"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => OnEditAnswer.InvokeAsync((Question, CompletionRole.Employee, competency.Key)))" />
+                    </div>
+                </div>
+
+                <!-- Manager Rating -->
+                <div class="answer-column manager">
+                    <div class="answer-header">
+                        <span class="answer-label">
+                            <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
+                            Manager's Answer
+                        </span>
+                    </div>
+                    <div class="answer-content">
+                        @{
+                            var managerRating = AssessmentConfigurationHelper.GetCompetencyRatingDto(ManagerResponse, competency.Key);
+                        }
+                        <CompetencyRatingItem
+                            Competency="@competency"
+                            Rating="@managerRating"
+                            OnRatingChanged="@((rating) => Task.CompletedTask)"
+                            IsReadOnly="true"
+                            RatingScale="@ratingScale"
+                            ScaleLowLabel="@scaleLowLabel"
+                            ScaleHighLabel="@scaleHighLabel" />
+                    </div>
+                    <div class="answer-actions">
+                        <RadzenButton Text="← Copy to Employee"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Icon="content_copy"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => OnCopyAnswer.InvokeAsync((Question, CompletionRole.Manager, CompletionRole.Employee)))"
+                                     Class="copy-button" />
+                        <RadzenButton Text="Edit"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Icon="edit"
+                                     Size="ButtonSize.Small"
+                                     Click="@(() => OnEditAnswer.InvokeAsync((Question, CompletionRole.Manager, competency.Key)))" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse EmployeeResponse { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionResponse ManagerResponse { get; set; } = default!;
+    [Parameter] public EventCallback<(QuestionItem, CompletionRole, string?)> OnEditAnswer { get; set; } // Added competency key
+    [Parameter] public EventCallback<(QuestionItem, CompletionRole, CompletionRole)> OnCopyAnswer { get; set; }
+
+    private List<CompetencyDefinition> competencies = new();
+    private int ratingScale = 4;
+    private string scaleLowLabel = "Poor";
+    private string scaleHighLabel = "Excellent";
+
+    protected override void OnInitialized()
+    {
+        LoadConfiguration();
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadConfiguration();
+    }
+
+    private void LoadConfiguration()
+    {
+        competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        ratingScale = AssessmentConfigurationHelper.GetRatingScaleFromConfiguration(Question);
+        scaleLowLabel = AssessmentConfigurationHelper.GetScaleLowLabelFromConfiguration(Question);
+        scaleHighLabel = AssessmentConfigurationHelper.GetScaleHighLabelFromConfiguration(Question);
+    }
+}

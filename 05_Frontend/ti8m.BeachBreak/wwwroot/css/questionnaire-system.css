@@ -960,6 +960,26 @@
     border-left: 4px solid var(--primary-color);
 }
 
+/* Question Comparison Card - each question gets its own card */
+.question-comparison-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Competency Comparison Card - each competency gets its own card in assessment reviews */
+.competency-comparison-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
 /* Side-by-Side View (Both sections) */
 .side-by-side-view {
     display: grid;
@@ -978,6 +998,8 @@
     border-radius: 12px;
     padding: 1.5rem;
     position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .answer-column.employee {
@@ -995,6 +1017,7 @@
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #e9ecef;
+    flex-shrink: 0;
 }
 
 .answer-label {
@@ -1010,7 +1033,7 @@
 
 .answer-content {
     margin-bottom: 1rem;
-    min-height: 60px;
+    flex-grow: 1;
 }
 
 .answer-value {
@@ -1029,6 +1052,8 @@
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
+    flex-shrink: 0;
+    margin-top: auto;
 }
 
 /* Question Item Display (for read-only review) */
