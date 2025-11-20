@@ -769,6 +769,25 @@
 }
 
 /* Section Structure (Simplified) */
+.section-card {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    margin-bottom: 2rem;
+}
+
+.section-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
 .section-header-questionnaire {
     display: flex;
     align-items: center;
@@ -786,13 +805,15 @@
     color: var(--primary-color);
     font-size: 1.5rem;
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin: 0;
+    line-height: 1.3;
 }
 
 .section-description {
     color: var(--secondary-color);
     font-size: 1rem;
-    margin-bottom: 0;
+    margin: 0.5rem 0 0 0;
+    line-height: 1.5;
 }
 
 /* Completion Role Badge */
@@ -831,7 +852,28 @@
     flex-direction: column;
     gap: 3rem;
     margin-top: 1.5rem;
-    padding: 0 1rem;
+    padding: 0;
+}
+
+.question-wrapper {
+    margin-bottom: 2rem;
+}
+
+.question-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.question-description {
+    font-size: 0.875rem;
+    color: var(--secondary-color);
+    margin-bottom: 1rem;
+    line-height: 1.5;
 }
 
 /* Question Rendering Styles (Semantic) */
@@ -954,60 +996,88 @@
 
 /* Single Answer View (Employee or Manager only sections) */
 .single-answer-view {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border-left: 4px solid var(--primary-color);
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
 }
 
 /* Question Comparison Card - each question gets its own card */
 .question-comparison-card {
-    background: #ffffff;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0 0 2rem 0;
+    margin-bottom: 2rem;
+    box-shadow: none;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.question-comparison-card:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
 }
 
 /* Competency Comparison Card - each competency gets its own card in assessment reviews */
 .competency-comparison-card {
-    background: #ffffff;
-    border: 1px solid #e9ecef;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0 0 2rem 0;
+    margin-bottom: 2rem;
+    box-shadow: none;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.competency-comparison-card:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
 }
 
 /* Side-by-Side View (Both sections) */
 .side-by-side-view {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+    gap: 2rem;
+    position: relative;
+}
+
+/* Add vertical divider between columns */
+.side-by-side-view::before {
+    content: '';
+    position: absolute;
+    top: 3rem;
+    bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: #e9ecef;
+    transform: translateX(-50%);
 }
 
 @media (max-width: 968px) {
     .side-by-side-view {
         grid-template-columns: 1fr;
     }
+
+    .side-by-side-view::before {
+        display: none;
+    }
 }
 
 .answer-column {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 1.5rem;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
     position: relative;
     display: flex;
     flex-direction: column;
 }
 
 .answer-column.employee {
-    border-left: 4px solid #2563eb;
+    /* No left border - using central divider instead */
 }
 
 .answer-column.manager {
-    border-left: 4px solid #7c3aed;
+    /* No left border - using central divider instead */
 }
 
 .answer-header {
@@ -1018,6 +1088,11 @@
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #e9ecef;
     flex-shrink: 0;
+}
+
+/* Show labels only for the first question */
+.questions-container .question-wrapper:not(:first-child) .answer-label {
+    display: none;
 }
 
 .answer-label {
