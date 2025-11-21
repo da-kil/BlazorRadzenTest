@@ -17,7 +17,6 @@ public static class QuestionnairePageConfigurationFactory
             PageRoute = "/my-questionnaires",
             PageTitle = "My Questionnaires",
             PageDescription = "View and complete your assigned questionnaires",
-            PageIcon = "assignment",
             PageType = QuestionnairePageType.Employee,
 
             // Store pre-categorized lists (order matches what MyQuestionnaires.razor passes)
@@ -104,7 +103,6 @@ public static class QuestionnairePageConfigurationFactory
             PageRoute = "/team/questionnaires",
             PageTitle = "Team Questionnaires",
             PageDescription = "Monitor and track your team's questionnaire progress",
-            PageIcon = "groups",
             PageType = QuestionnairePageType.Manager,
 
             Tabs = new List<QuestionnairePageTab>
@@ -260,7 +258,6 @@ public static class QuestionnairePageConfigurationFactory
             PageRoute = "/organization/questionnaires",
             PageTitle = "Organization Questionnaires",
             PageDescription = "Comprehensive overview of all questionnaire activities across the organization",
-            PageIcon = "corporate_fare",
             PageType = QuestionnairePageType.HR,
 
             Tabs = new List<QuestionnairePageTab>
