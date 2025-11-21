@@ -140,7 +140,7 @@
     border-color: var(--primary-color);
 }
 
-.section-header {
+.section-header-form {
     background: var(--background-light);
     border-bottom: 1px solid var(--border-light);
     padding: var(--spacing-md);
@@ -471,16 +471,53 @@
    STEP/WIZARD COMPONENTS
    ============================================= */
 
-/* Progress Steps */
+/* Enhanced Progress Steps with Connecting Lines - Design System Aligned */
 .progress-steps-modern {
     display: flex;
     align-items: center;
     justify-content: center;
-    max-width: 600px;
+    max-width: 700px;
     margin: 0 auto;
-    padding: var(--spacing-lg) 0;
-    background: var(--background-color);
-    border-bottom: 1px solid var(--border-light);
+    padding: var(--spacing-xl) 0;
+    position: relative;
+}
+
+/* Progress Line Background */
+.progress-steps-modern::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 15%;
+    right: 15%;
+    height: 3px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    z-index: 1;
+    transform: translateY(-50%);
+}
+
+/* Progress Line Fill - Design System Colors */
+.progress-steps-modern::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 15%;
+    height: 3px;
+    background: #3b82f6;
+    border-radius: 2px;
+    z-index: 2;
+    transform: translateY(-50%);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+}
+
+/* Dynamic progress line width based on current step */
+.progress-steps-modern[data-current-step="2"]::after {
+    width: 35%;
+}
+
+.progress-steps-modern[data-current-step="3"]::after {
+    width: 70%;
 }
 
 .step-modern {
@@ -488,56 +525,135 @@
     flex-direction: column;
     align-items: center;
     cursor: pointer;
-    transition: var(--transition-normal);
-    padding: var(--spacing-md);
-    border-radius: var(--radius-lg);
-    min-width: 120px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: var(--spacing-lg) var(--spacing-md);
+    border-radius: var(--radius-xl);
+    min-width: 140px;
     position: relative;
+    z-index: 3;
+    background: transparent;
 }
 
 .step-modern:hover {
-    background: var(--hover-background);
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.step-modern.active:hover,
+.step-modern.completed:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 .step-number-modern {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    background: var(--background-muted);
-    color: var(--text-muted);
+    background: #f8fafc;
+    color: #64748b;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: var(--font-weight-bold);
-    margin-bottom: var(--spacing-sm);
-    transition: var(--transition-normal);
-    border: 2px solid var(--border-color);
+    font-size: 1.1rem;
+    margin-bottom: var(--spacing-md);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 3px solid #cbd5e1;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.step-number-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.3), transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+}
+
+.step-modern:hover .step-number-modern::before {
+    transform: translateX(100%);
 }
 
 .step-modern.active .step-number-modern {
-    background: var(--primary-color);
-    color: var(--text-white);
-    border-color: var(--primary-color);
-    transform: scale(1.1);
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    transform: scale(1.15);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+    animation: pulse-active 2s infinite;
 }
 
 .step-modern.completed .step-number-modern {
-    background: var(--success-color);
-    color: var(--text-white);
-    border-color: var(--success-color);
+    background: #10b981;
+    color: white;
+    border-color: #10b981;
+    transform: scale(1.05);
+    box-shadow: 0 3px 12px rgba(16, 185, 129, 0.3);
+}
+
+@keyframes pulse-active {
+    0%, 100% {
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.6), 0 0 0 4px rgba(59, 130, 246, 0.2);
+    }
 }
 
 .step-text-modern {
-    font-size: var(--font-size-sm);
-    font-weight: var(--font-weight-medium);
-    color: var(--text-muted);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #64748b;
     text-align: center;
-    transition: var(--transition-fast);
+    transition: all 0.3s ease;
+    margin-top: 4px;
+    line-height: 1.3;
 }
 
 .step-modern.active .step-text-modern {
-    color: var(--primary-color);
-    font-weight: var(--font-weight-semibold);
+    color: #3b82f6;
+    font-weight: 600;
+    transform: scale(1.05);
+}
+
+.step-modern.completed .step-text-modern {
+    color: #10b981;
+    font-weight: 600;
+}
+
+/* Step Progress Indicator */
+.step-modern::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background: #3b82f6;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+.step-modern.active::after {
+    width: 60%;
+}
+
+.step-modern.completed::after {
+    width: 60%;
+    background: #10b981;
+}
+
+/* Progress Steps Container */
+.progress-steps-container {
+    padding-bottom: var(--spacing-xl);
 }
 
 /* Step Content */
@@ -643,18 +759,55 @@
         grid-template-columns: 1fr;
     }
 
+    /* Enhanced Progress Steps Mobile */
+    .progress-steps-modern {
+        padding: var(--spacing-md) 0;
+        max-width: 100%;
+    }
+
+    .progress-steps-modern::before {
+        left: 10%;
+        right: 10%;
+    }
+
+    .progress-steps-modern[data-current-step="2"]::after {
+        left: 10%;
+        width: 40%;
+    }
+
+    .progress-steps-modern[data-current-step="3"]::after {
+        left: 10%;
+        width: 80%;
+    }
+
     .step-modern {
-        min-width: 80px;
-        padding: var(--spacing-sm);
+        min-width: 100px;
+        padding: var(--spacing-md) var(--spacing-xs);
+    }
+
+    .step-modern:hover {
+        transform: none;
+        box-shadow: none;
     }
 
     .step-number-modern {
-        width: 32px;
-        height: 32px;
+        width: 42px;
+        height: 42px;
+        font-size: 1rem;
+    }
+
+    .step-modern.active .step-number-modern {
+        transform: scale(1.1);
+        animation: none;
+    }
+
+    .step-modern.completed .step-number-modern {
+        transform: scale(1.02);
     }
 
     .step-text-modern {
         font-size: var(--font-size-xs);
+        margin-top: 2px;
     }
 
     .modal-content-modern {
@@ -665,6 +818,54 @@
     .btn-modern {
         width: 100%;
         justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .progress-steps-modern {
+        padding: var(--spacing-sm) 0;
+    }
+
+    .progress-steps-modern::before {
+        left: 5%;
+        right: 5%;
+        height: 2px;
+    }
+
+    .progress-steps-modern::after {
+        height: 2px;
+    }
+
+    .progress-steps-modern[data-current-step="2"]::after {
+        left: 5%;
+        width: 45%;
+    }
+
+    .progress-steps-modern[data-current-step="3"]::after {
+        left: 5%;
+        width: 90%;
+    }
+
+    .step-modern {
+        min-width: 80px;
+        padding: var(--spacing-sm) var(--spacing-xs);
+    }
+
+    .step-number-modern {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+        border-width: 2px;
+    }
+
+    .step-text-modern {
+        font-size: 0.7rem;
+        margin-top: 0;
+    }
+
+    .step-modern::after {
+        bottom: -6px;
+        height: 2px;
     }
 }
 
@@ -882,4 +1083,211 @@
     color: currentColor;
     font-weight: bold;
     opacity: 0.7;
+}
+
+/* =============================================
+   QUESTIONNAIRE LIST COMPONENTS - Clickability Improvements
+   ============================================= */
+
+/* Date Range Preset Badge Enhancement */
+.date-preset-badge {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+    user-select: none;
+}
+
+.date-preset-badge:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: var(--rz-primary-lighter, #93c5fd);
+}
+
+.date-preset-badge.active:hover {
+    box-shadow: 0 4px 16px rgba(var(--rz-primary-rgb, 59, 130, 246), 0.4);
+    border-color: var(--rz-primary, #3b82f6);
+}
+
+.date-preset-badge:active {
+    transform: translateY(-1px) scale(1.01);
+    transition: all 0.1s ease;
+}
+
+/* Team Member Card Interactive Elements */
+.team-member-item {
+    cursor: pointer;
+}
+
+/* Assignment Row Hover Effects */
+.assignment-row {
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.assignment-row::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--rz-primary-rgb, 59, 130, 246), 0.08), transparent);
+    transition: left 0.3s ease;
+}
+
+.assignment-row:hover::before {
+    left: 100%;
+}
+
+.assignment-row:hover {
+    background-color: var(--rz-background-color-lighter, rgba(0, 0, 0, 0.02));
+    transform: translateX(4px);
+}
+
+.assignment-row:active {
+    transform: translateX(2px);
+    transition: all 0.1s ease;
+}
+
+/* Hover Background Utility */
+.hover-bg {
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.hover-bg:hover {
+    background-color: var(--rz-background-color-lighter, rgba(0, 0, 0, 0.03));
+}
+
+/* Action Button Hover Visibility */
+.hover-visible {
+    opacity: 0.6;
+    transition: all 0.2s ease;
+}
+
+.team-member-item:hover .hover-visible,
+.assignment-row:hover .hover-visible {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.hover-visible:hover {
+    opacity: 1 !important;
+    transform: scale(1.2) !important;
+    background-color: var(--rz-background-color-light, rgba(0, 0, 0, 0.05)) !important;
+}
+
+/* Status Badge Enhancements for Better Clickability */
+.rz-badge {
+    transition: all 0.15s ease;
+}
+
+.rz-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Pulse Animation for Overdue Items */
+@keyframes pulse-overdue {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.1);
+    }
+}
+
+.assignment-row:has(.text-danger) {
+    animation: pulse-overdue 2s infinite;
+}
+
+/* Enhanced Focus States for Accessibility */
+.date-preset-badge:focus-visible,
+.assignment-row:focus-visible,
+.team-member-item:focus-visible {
+    outline: 2px solid var(--rz-primary, #3b82f6);
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) {
+    .date-preset-badge:hover,
+    .assignment-row:hover,
+    .team-member-item:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .date-preset-badge:active,
+    .assignment-row:active,
+    .team-member-item:active {
+        transform: scale(0.98);
+        opacity: 0.8;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .date-preset-badge,
+    .assignment-row,
+    .team-member-item,
+    .hover-visible {
+        transition: none;
+        animation: none;
+    }
+
+    .date-preset-badge:hover,
+    .assignment-row:hover,
+    .team-member-item:hover {
+        transform: none;
+    }
+}
+
+/* =============================================
+   ADVANCED FILTERS
+   ============================================= */
+
+.advanced-filters-container {
+    background: rgba(248, 249, 250, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: var(--rz-border-radius, 8px);
+    padding: 1.25rem;
+    margin-top: 0.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.advanced-filters-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        var(--rz-primary-lighter, #e3f2fd) 50%,
+        transparent 100%);
+}
+
+/* Responsive behavior for advanced filters */
+@media (max-width: 768px) {
+    .advanced-filters-container .d-flex {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+
+    .advanced-filters-container > div > div {
+        min-width: auto !important;
+        width: 100% !important;
+        margin-bottom: 0.5rem;
+    }
+
+    .advanced-filters-container .d-flex.gap-2 {
+        flex-direction: row !important;
+    }
 }

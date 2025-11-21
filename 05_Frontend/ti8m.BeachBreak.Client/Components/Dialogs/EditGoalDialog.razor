@@ -61,19 +61,6 @@
             </RadzenFieldset>
         }
 
-        <RadzenFieldset>
-            <HeaderTemplate>
-                <RadzenIcon Icon="person" Class="me-2" />
-                <span class="fw-bold">Modified By</span>
-            </HeaderTemplate>
-            <ChildContent>
-                <RadzenBadge Text="@GetDisplayRole(ModifiedByRole)" BadgeStyle="BadgeStyle.Info" IsPill="true" />
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted ms-2">
-                    This modification will be attributed to @GetDisplayRole(ModifiedByRole)
-                </RadzenText>
-            </ChildContent>
-        </RadzenFieldset>
-
         <div class="d-flex justify-content-end gap-2 mt-3">
             <RadzenButton Text="Cancel"
                         ButtonStyle="ButtonStyle.Light"
@@ -169,50 +156,6 @@
         DialogService.Close(false);
     }
 
-    /// <summary>
-    /// Converts any role string (specific ApplicationRole or simplified ResponseRole)
-    /// to the simplified Employee/Manager format for display.
-    /// </summary>
-    private string GetDisplayRole(string roleString)
-    {
-        if (string.IsNullOrEmpty(roleString))
-        {
-            return ResponseRole.Employee.ToRoleKey();
-        }
-
-        // Handle simplified roles (already correct)
-        if (roleString == "Employee" || roleString == "Manager")
-        {
-            return roleString;
-        }
-
-        // Convert specific ApplicationRole strings to simplified format
-        return roleString switch
-        {
-            "Employee" => ResponseRole.Employee.ToRoleKey(),
-            "TeamLead" => ResponseRole.Manager.ToRoleKey(),
-            "HR" => ResponseRole.Manager.ToRoleKey(),
-            "HRLead" => ResponseRole.Manager.ToRoleKey(),
-            "Admin" => ResponseRole.Manager.ToRoleKey(),
-            _ => ResponseRole.Employee.ToRoleKey() // Default for unknown roles
-        };
-    }
-
-    /// <summary>
-    /// Converts ApplicationRole enum to the simplified Employee/Manager format for display.
-    /// </summary>
-    private string GetDisplayRole(ApplicationRole role)
-    {
-        return role switch
-        {
-            ApplicationRole.Employee => ResponseRole.Employee.ToRoleKey(),
-            ApplicationRole.TeamLead => ResponseRole.Manager.ToRoleKey(),
-            ApplicationRole.HR => ResponseRole.Manager.ToRoleKey(),
-            ApplicationRole.HRLead => ResponseRole.Manager.ToRoleKey(),
-            ApplicationRole.Admin => ResponseRole.Manager.ToRoleKey(),
-            _ => ResponseRole.Employee.ToRoleKey() // Default fallback
-        };
-    }
 }
 
 <style>

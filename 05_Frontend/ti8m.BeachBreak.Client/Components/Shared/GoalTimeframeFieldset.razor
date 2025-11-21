@@ -1,34 +1,26 @@
 @using Radzen
 @using Radzen.Blazor
 
-<RadzenFieldset>
-    <HeaderTemplate>
-        <RadzenIcon Icon="calendar_today" Class="me-2" />
-        <span class="fw-bold">Timeframe</span>
-    </HeaderTemplate>
-    <ChildContent>
-        <RadzenRow Gap="1rem">
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenLabel Text="Start Date*" Component="timeframeFrom" Class="fw-bold mb-1" />
-                <RadzenDatePicker Value="@TimeframeFrom"
-                                ValueChanged="@((DateTime? value) => OnTimeframeFromChanged(value))"
-                                Name="timeframeFrom"
-                                DateFormat="dd.MM.yyyy"
-                                Class="w-100"
-                                ShowTime="false" />
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenLabel Text="End Date*" Component="timeframeTo" Class="fw-bold mb-1" />
-                <RadzenDatePicker Value="@TimeframeTo"
-                                ValueChanged="@((DateTime? value) => OnTimeframeToChanged(value))"
-                                Name="timeframeTo"
-                                DateFormat="dd.MM.yyyy"
-                                Class="w-100"
-                                ShowTime="false" />
-            </RadzenColumn>
-        </RadzenRow>
-    </ChildContent>
-</RadzenFieldset>
+<RadzenRow Gap="1rem">
+    <RadzenColumn Size="12" SizeMD="6">
+        <RadzenLabel Text="Start Date*" Component="timeframeFrom" Class="fw-bold mb-1" />
+        <RadzenDatePicker Value="@TimeframeFrom"
+                        ValueChanged="@((DateTime? value) => OnTimeframeFromChanged(value))"
+                        Name="timeframeFrom"
+                        DateFormat="dd.MM.yyyy"
+                        Class="w-100"
+                        ShowTime="false" />
+    </RadzenColumn>
+    <RadzenColumn Size="12" SizeMD="6">
+        <RadzenLabel Text="End Date*" Component="timeframeTo" Class="fw-bold mb-1" />
+        <RadzenDatePicker Value="@TimeframeTo"
+                        ValueChanged="@((DateTime? value) => OnTimeframeToChanged(value))"
+                        Name="timeframeTo"
+                        DateFormat="dd.MM.yyyy"
+                        Class="w-100"
+                        ShowTime="false" />
+    </RadzenColumn>
+</RadzenRow>
 
 @code {
     /// <summary>

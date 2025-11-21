@@ -5,6 +5,7 @@
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Helpers
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject IAuthService AuthService
@@ -90,7 +91,7 @@
         }
         else if (Question.Type == QuestionType.Assessment)
         {
-            <OptimizedAssessmentQuestion Question="@Question"
+            <OptimizedAssessmentQuestion Question="@displayQuestion"
                                         Response="@editResponse"
                                         OnResponseChanged="@HandleResponseChanged"
                                         IsReadOnly="false"
@@ -141,12 +142,17 @@
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
+    [Parameter] public string? CompetencyKey { get; set; } // When set, only edit this specific competency
 
     private QuestionResponse editResponse = new();
     private OptimizedGoalQuestion? goalQuestionRef;
+    private QuestionItem displayQuestion = null!; // Filtered question for display
 
     protected override void OnInitialized()
     {
+        // Create the display question (filtered if editing a specific competency)
+        displayQuestion = CreateDisplayQuestion();
+
         editResponse = new QuestionResponse
         {
             QuestionId = Question.Id,
@@ -171,6 +177,41 @@
                 _ => null
             };
         }
+    }
+
+    private QuestionItem CreateDisplayQuestion()
+    {
+        // If no specific competency is targeted, return the original question
+        if (string.IsNullOrEmpty(CompetencyKey) || Question.Type != QuestionType.Assessment)
+        {
+            return Question;
+        }
+
+        // Create a filtered copy for single-competency editing
+        var filteredQuestion = new QuestionItem
+        {
+            Id = Question.Id,
+            Title = Question.Title,
+            Description = Question.Description,
+            Type = Question.Type,
+            IsRequired = Question.IsRequired,
+            Order = Question.Order,
+            Configuration = new Dictionary<string, object>(Question.Configuration ?? new Dictionary<string, object>())
+        };
+
+        // Filter competencies to only the target competency
+        if (filteredQuestion.Configuration.ContainsKey("Competencies"))
+        {
+            var allCompetencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+            var targetCompetency = allCompetencies.FirstOrDefault(c => c.Key == CompetencyKey);
+
+            if (targetCompetency != null)
+            {
+                filteredQuestion.Configuration["Competencies"] = new List<CompetencyDefinition> { targetCompetency };
+            }
+        }
+
+        return filteredQuestion;
     }
 
     private async Task HandleResponseChanged(QuestionResponse response)

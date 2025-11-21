@@ -84,6 +84,7 @@
     transition: all 0.2s ease;
     cursor: pointer;
     background: white;
+    position: relative;
 }
 
 .employee-card:hover {
@@ -356,11 +357,6 @@
     opacity: 1;
 }
 
-.step-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
 
 .step-icon {
     width: 48px;
@@ -386,121 +382,6 @@
     margin-top: 2rem;
 }
 
-/* Tabbed Dialog */
-.tabbed-dialog-container {
-    overflow-y: auto;
-    padding: 0;
-}
-
-.tabbed-hero {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-    margin: -1.5rem -1.5rem 0 -1.5rem;
-}
-
-.tabbed-hero::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 150px;
-    height: 150px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    transform: translate(-30%, -30%);
-}
-
-.hero-content {
-    position: relative;
-    z-index: 2;
-}
-
-.tabbed-body {
-    padding: 2rem;
-    background: #f8f9fa;
-    margin: 0 -1.5rem;
-}
-
-.tabbed-tabs {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-}
-
-.tab-headers {
-    display: flex;
-    background: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
-}
-
-.tab-header {
-    flex: 1;
-    padding: 1.5rem;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-weight: 600;
-    color: #6c757d;
-}
-
-.tab-header.active {
-    background: white;
-    color: #667eea;
-    border-bottom: 3px solid #667eea;
-}
-
-.tab-header:hover:not(.active) {
-    background: rgba(102, 126, 234, 0.05);
-    color: #667eea;
-}
-
-.tab-header:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.tab-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    background: #e9ecef;
-    color: #6c757d;
-    transition: all 0.2s ease;
-}
-
-.tab-header.active .tab-icon {
-    background: #667eea;
-    color: white;
-}
-
-.tab-content {
-    padding: 2rem;
-    min-height: 300px;
-}
-
-.tab-pane {
-    animation: fadeIn 0.3s ease;
-}
-
-.tabbed-footer {
-    border-top: 1px solid #e9ecef;
-    padding: 1.5rem 2rem;
-    background: #f8f9fa;
-    margin: 0 -1.5rem -1.5rem -1.5rem;
-    border-radius: 0 0 8px 8px;
-}
 
 /* Analytics Dialog */
 .analytics-dialog {
@@ -517,10 +398,6 @@
     justify-content: center;
 }
 
-.section-header {
-    display: flex;
-    align-items: center;
-}
 
 .analytics-footer {
     border-top: 1px solid #e9ecef;
@@ -572,7 +449,7 @@
     font-size: 0.875rem;
 }
 
-.questionnaire-badge {
+.questionnaire-badge-dialog {
     background: rgba(255, 255, 255, 0.2);
     color: white;
     padding: 0.5rem 1rem;

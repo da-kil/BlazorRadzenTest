@@ -6,9 +6,12 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using System.Text
 @inherits BaseQuestionnaireListPage
 @inject IManagerQuestionnaireService ManagerQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager Navigation
 
 <PageTitle>Team Questionnaires</PageTitle>
 
@@ -65,6 +68,127 @@ else if (isLoading)
 
 	private async Task ExportTeamReport()
 	{
-		ShowInfo("Team report export functionality would be implemented here");
+		try
+		{
+			ShowInfo("Generating team report...");
+
+			// Generate export data
+			var exportData = GenerateTeamReportData();
+
+			// Create CSV content
+			var csvContent = GenerateCSVContent(exportData);
+
+			// Download file
+			var fileName = $"Team_Questionnaires_Report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv";
+			DownloadFile(csvContent, fileName, "text/csv");
+
+			ShowSuccess($"Team report exported successfully: {fileName}");
+		}
+		catch (Exception ex)
+		{
+			ShowWarning($"Failed to export team report: {ex.Message}");
+		}
+	}
+
+	private TeamReportData GenerateTeamReportData()
+	{
+		var now = DateTime.Now;
+
+		var reportData = new TeamReportData
+		{
+			GeneratedDate = now,
+			TotalTeamMembers = teamMembers.Count,
+			TotalAssignments = allAssignments.Count,
+			CompletedAssignments = allAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized),
+			PendingAssignments = allAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized &&
+										(!a.DueDate.HasValue || a.DueDate.Value >= now)),
+			OverdueAssignments = allAssignments.Count(a => a.DueDate.HasValue &&
+										a.DueDate.Value < now &&
+										a.WorkflowState != WorkflowState.Finalized),
+			TeamMemberDetails = teamMembers.Select(member =>
+			{
+				var memberAssignments = allAssignments.Where(a => a.EmployeeId == member.Id).ToList();
+				return new TeamMemberReportData
+				{
+					MemberId = member.Id,
+					MemberName = $"{member.FirstName} {member.LastName}",
+					Email = member.EMail,
+					Role = member.ApplicationRole.ToString(),
+					TotalAssignments = memberAssignments.Count,
+					CompletedAssignments = memberAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized),
+					PendingAssignments = memberAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized &&
+										(!a.DueDate.HasValue || a.DueDate.Value >= now)),
+					OverdueAssignments = memberAssignments.Count(a => a.DueDate.HasValue &&
+										a.DueDate.Value < now &&
+										a.WorkflowState != WorkflowState.Finalized),
+					CompletionPercentage = memberAssignments.Any()
+						? Math.Round((double)memberAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized) / memberAssignments.Count * 100, 1)
+						: 0
+				};
+			}).OrderBy(m => m.MemberName).ToList()
+		};
+
+		return reportData;
+	}
+
+	private string GenerateCSVContent(TeamReportData data)
+	{
+		var sb = new StringBuilder();
+
+		// Header information
+		sb.AppendLine($"Team Questionnaires Report");
+		sb.AppendLine($"Generated: {data.GeneratedDate:yyyy-MM-dd HH:mm:ss}");
+		sb.AppendLine($"Total Team Members: {data.TotalTeamMembers}");
+		sb.AppendLine($"Total Assignments: {data.TotalAssignments}");
+		sb.AppendLine($"Completed: {data.CompletedAssignments}");
+		sb.AppendLine($"Pending: {data.PendingAssignments}");
+		sb.AppendLine($"Overdue: {data.OverdueAssignments}");
+		sb.AppendLine($"Team Completion Rate: {(data.TotalAssignments > 0 ? Math.Round((double)data.CompletedAssignments / data.TotalAssignments * 100, 1) : 0):F1}%");
+		sb.AppendLine();
+
+		// Team member details header
+		sb.AppendLine("Team Member,Email,Role,Total Assignments,Completed,Pending,Overdue,Completion %");
+
+		// Team member data rows
+		foreach (var member in data.TeamMemberDetails)
+		{
+			sb.AppendLine($"\"{member.MemberName}\",\"{member.Email}\",\"{member.Role}\",{member.TotalAssignments},{member.CompletedAssignments},{member.PendingAssignments},{member.OverdueAssignments},{member.CompletionPercentage:F1}%");
+		}
+
+		return sb.ToString();
+	}
+
+	private void DownloadFile(string content, string fileName, string contentType)
+	{
+		var bytes = Encoding.UTF8.GetBytes(content);
+		var base64 = Convert.ToBase64String(bytes);
+		var dataUri = $"data:{contentType};base64,{base64}";
+
+		// Simple data URI download - opens in new tab, user can save
+		Navigation.NavigateTo(dataUri, true);
+	}
+
+	public class TeamReportData
+	{
+		public DateTime GeneratedDate { get; set; }
+		public int TotalTeamMembers { get; set; }
+		public int TotalAssignments { get; set; }
+		public int CompletedAssignments { get; set; }
+		public int PendingAssignments { get; set; }
+		public int OverdueAssignments { get; set; }
+		public List<TeamMemberReportData> TeamMemberDetails { get; set; } = new();
+	}
+
+	public class TeamMemberReportData
+	{
+		public Guid MemberId { get; set; }
+		public string MemberName { get; set; } = "";
+		public string Email { get; set; } = "";
+		public string Role { get; set; } = "";
+		public int TotalAssignments { get; set; }
+		public int CompletedAssignments { get; set; }
+		public int PendingAssignments { get; set; }
+		public int OverdueAssignments { get; set; }
+		public double CompletionPercentage { get; set; }
 	}
 }

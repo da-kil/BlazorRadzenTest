@@ -5,6 +5,7 @@
 @inject DialogService DialogService
 
 
+
 <div class="competencies-container">
         <!-- Assessment Configuration -->
         @if (Question.Type == QuestionType.Assessment)
@@ -26,13 +27,9 @@
                         var competencyIndex = i;
                         var competency = competencies[competencyIndex];
 
-                        <div class="competency-item mb-3 p-3 border rounded bg-white">
+                        <div class="competency-item builder-context">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="d-flex align-items-center gap-2">
-                                    <div class="competency-number bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
-                                         style="width: 24px; height: 24px; font-size: 0.75rem; font-weight: bold;">
-                                        @(competencyIndex + 1)
-                                    </div>
                                     <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
                                         Competency @(competencyIndex + 1)
                                     </RadzenText>
@@ -86,6 +83,7 @@
                             <div class="mb-0">
                                 <RadzenTextArea Value="@competency.Description"
                                                ValueChanged="@((string value) => UpdateCompetencyDescription(competencyIndex, value))"
+                                               Disabled="@(!Template.IsAvailableForEditing)"
                                                Placeholder="Describe what this competency evaluates..."
                                                Rows="2"
                                                Class="w-100" />
@@ -139,7 +137,7 @@
                         var sectionIndex = i;
                         var textSection = textSections[sectionIndex];
 
-                        <RadzenCard Class="text-section-item mb-2 p-3 border border-text-response">
+                        <div class="text-section-item rz-p-3 rz-mb-2">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-text-response">
                                     Text Section @(sectionIndex + 1)
@@ -197,7 +195,7 @@
                                                Rows="2"
                                                Class="w-100" />
                             </div>
-                        </RadzenCard>
+                        </div>
                     }
                 }
             </div>

@@ -26,11 +26,10 @@
 @inject IAuthService AuthService
 @inherits OptimizedComponentBase
 
-<link href="css/questionnaire-unified.css" rel="stylesheet" />
 
 <PageTitle>@(template?.Name ?? "Questionnaire")</PageTitle>
 
-<div class="container-fluid questionnaire-unified-container">
+<div>
     @if (template == null)
     {
         <div class="text-center p-5">
@@ -45,18 +44,20 @@
     }
     else
     {
-        <RadzenCard Class="questionnaire-main-card p-4">
-            <div class="questionnaire-header text-center mb-4">
-                <RadzenText TextStyle="TextStyle.H3" Class="questionnaire-title text-primary">
-                    <RadzenIcon Icon="quiz" Class="me-2" />
-                    @template.Name
-                </RadzenText>
-                @if (!string.IsNullOrWhiteSpace(template.Description))
-                {
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="questionnaire-subtitle text-muted">
-                        @template.Description
+        <div class="questionnaire-main-card">
+            <div class="page-header d-flex justify-content-between align-items-start mb-4">
+                <div>
+                    <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
+                        <RadzenIcon Icon="quiz" Class="me-2" />
+                        @template.Name
                     </RadzenText>
-                }
+                    @if (!string.IsNullOrWhiteSpace(template.Description))
+                    {
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                            @template.Description
+                        </RadzenText>
+                    }
+                </div>
             </div>
 
             @* Workflow Action Buttons - Sticky Banner *@
@@ -168,58 +169,33 @@
                 <ReviewChangesSummary Response="@response" AssignmentId="@assignmentId.Value" />
             }
 
-            <div class="section-counter mb-4">
+            <div class="section-counter mb-4 mt-3">
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted text-end">
                     Section @(currentSectionIndex + 1) of @visibleSections.Count
                 </RadzenText>
             </div>
 
-            <RadzenSteps Value="@currentSectionIndex" Change="@OnSectionChanged" Class="mb-4" ShowStepsButtons="false">
-                @for (int i = 0; i < visibleSections.Count; i++)
-                {
-                    var section = visibleSections[i];
-                    var isCompleted = IsSectionCompleted(section.Id);
-                    var sectionTitle = section.Title;
-                    <RadzenStepsItem Text="@sectionTitle" Icon="@(isCompleted ? "check_circle" : null)" />
-                }
-            </RadzenSteps>
-
-            <div class="questionnaire-content">
+            <section class="questionnaire-content">
                 @if (currentSection != null)
                 {
-                    <RadzenCard Class="section-card p-4">
-                        <div class="section-card-header">
-                            <div class="section-title-container flex-grow-1">
-                                <RadzenText TextStyle="TextStyle.H4" Class="section-title text-primary mb-2">
-                                    @currentSection.Title
-                                </RadzenText>
-                                @if (!string.IsNullOrWhiteSpace(currentSection.Description))
-                                {
-                                    <RadzenText TextStyle="TextStyle.Body1" Class="section-description text-muted">
-                                        @currentSection.Description
-                                    </RadzenText>
-                                }
-                            </div>
-                            @if (currentSection.CompletionRole != CompletionRole.Both)
+                    <header class="section-header-questionnaire">
+                        <div class="section-title-container">
+                            <h2 class="section-title">@currentSection.Title</h2>
+                            @if (!string.IsNullOrWhiteSpace(currentSection.Description))
                             {
-                                <div class="completion-role-badge @GetRoleBadgeClass(currentSection.CompletionRole)">
-                                    <RadzenIcon Icon="@GetRoleIconForSection(currentSection.CompletionRole)" />
-                                    @currentSection.CompletionRole.ToString()
-                                </div>
+                                <p class="section-description">@currentSection.Description</p>
                             }
                         </div>
+                    </header>
 
-                        <div class="questions-container">
-                            @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
-                            {
-                                <div class="question-wrapper mb-4">
-                                    @RenderQuestionWithRef(question)
-                                </div>
-                            }
-                        </div>
-                    </RadzenCard>
+                    <div class="questions-container">
+                        @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
+                        {
+                            @RenderQuestionWithRef(question)
+                        }
+                    </div>
                 }
-            </div>
+            </section>
 
             <div class="navigation-footer d-flex justify-content-between mt-4">
                 <RadzenButton Text="Previous"
@@ -280,7 +256,7 @@
                                IsEmployee="@isEmployeeOnly"
                                IsManager="@isManager" />
             }
-        </RadzenCard>
+        </div>
     }
 </div>
 
@@ -955,6 +931,7 @@
             var goalQuestionResponseWithRef = GetQuestionResponse(question.Id);
 
             return @<OptimizedQuestionRenderer
+                @ref="questionRenderers[question.Id]"
                 Question="@question"
                 Response="@goalQuestionResponseWithRef"
                 OnResponseChanged="@HandleQuestionResponseChangedDynamic"
@@ -1140,7 +1117,7 @@
         var color = percentage switch
         {
             >= 90 => "background-color: var(--light-blue); border: 1px solid var(--success-color); color: var(--dark-blue);",
-            >= 70 => "background-color: rgba(0, 230, 200, 0.1); border: 1px solid var(--green-new); color: var(--dark-blue);",
+            >= 70 => "background-color: rgba(0, 230, 200, 0.1); border: 1px solid var(--success-color); color: var(--dark-blue);",
             >= 50 => "background-color: rgba(230, 191, 127, 0.2); border: 1px solid var(--golden-milk); color: var(--dark-blue);",
             _ => "background-color: rgba(240, 128, 128, 0.2); border: 1px solid var(--peach-kiss); color: var(--dark-blue);"
         };
@@ -1700,29 +1677,6 @@
             return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
         }
         return "Where do you see yourself long-term in your professional career?";
-    }
-
-    // Helper methods for unified styling
-    private string GetRoleBadgeClass(CompletionRole role)
-    {
-        return role switch
-        {
-            CompletionRole.Employee => "role-employee",
-            CompletionRole.Manager => "role-manager",
-            CompletionRole.Both => "role-both",
-            _ => ""
-        };
-    }
-
-    private string GetRoleIconForSection(CompletionRole role)
-    {
-        return role switch
-        {
-            CompletionRole.Employee => "person",
-            CompletionRole.Manager => "supervisor_account",
-            CompletionRole.Both => "groups",
-            _ => "help"
-        };
     }
 
     private bool IsManagerRole(string role)

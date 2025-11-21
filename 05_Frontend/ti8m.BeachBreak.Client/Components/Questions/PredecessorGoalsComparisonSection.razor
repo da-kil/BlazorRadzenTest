@@ -9,15 +9,11 @@
 @inject GoalService GoalService
 @inherits OptimizedComponentBase
 
-<RadzenFieldset Class="mb-4 predecessor-goals-section">
-    <HeaderTemplate>
-        <RadzenIcon Icon="assessment" Class="me-2" />
-        <span class="fw-bold">Predecessor Goals Assessment</span>
-        <RadzenText TextStyle="TextStyle.Caption" Class="ms-2 text-muted">
-            (Review achievement from previous period)
-        </RadzenText>
-    </HeaderTemplate>
-    <ChildContent>
+<div class="predecessor-goals-section">
+    <header class="section-header">
+        <p class="section-description">Review achievement from previous period</p>
+    </header>
+    <div class="section-content">
         @if (!predecessorGoalGroups.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
@@ -58,8 +54,8 @@
                 </RadzenAlert>
             }
         }
-    </ChildContent>
-</RadzenFieldset>
+    </div>
+</div>
 
 @code {
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;

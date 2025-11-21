@@ -2,137 +2,102 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
-<RadzenCard Class="team-member-card mb-3">
-    <div class="d-flex align-items-start justify-content-between mb-3">
-        <div class="d-flex align-items-center flex-grow-1">
-            <div class="team-member-avatar me-3">
-                <RadzenIcon Icon="person" Style="font-size: 2rem;" Class="text-primary" />
-            </div>
+<div class="team-member-item p-4 mb-3 rounded"
+     style="background-color: white; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);"
+     @onmouseover="@(() => isHovered = true)"
+     @onmouseout="@(() => isHovered = false)">
+
+    <!-- Member Header - Simplified -->
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="d-flex align-items-center">
+            <RadzenIcon Icon="person" Style="font-size: 1.25rem;" Class="text-primary me-2" />
             <div>
-                <RadzenText TextStyle="TextStyle.H6" Class="mb-1">@TeamMember.FirstName @TeamMember.LastName</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-1">@TeamMember.EMail</RadzenText>
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                    <RadzenIcon Icon="badge" Style="font-size: 0.875rem;" Class="me-1" />
-                    @TeamMember.Role
-                </RadzenText>
+                <span class="fw-medium">@TeamMember.FirstName @TeamMember.LastName</span>
+                <small class="text-muted ms-2">@TeamMember.EMail</small>
             </div>
         </div>
-        <div class="text-end">
-            <RadzenBadge Text="@($"{CompletedCount} of {TotalCount} Finalized")"
-                        BadgeStyle="@GetProgressBadgeStyle()"
-                        Class="px-3 py-2"
-                        data-toggle="tooltip"
-                        title="@($"{CompletedCount} questionnaires finalized out of {TotalCount} total assignments")" />
+        <div class="d-flex align-items-center gap-2">
+            <!-- Compact Status Summary -->
+            @if (OverdueCount > 0)
+            {
+                <RadzenBadge Text="@OverdueCount.ToString()"
+                            BadgeStyle="BadgeStyle.Danger"
+                            title="@($"{OverdueCount} overdue assignments")"
+                            Class="px-2 py-1" />
+            }
+            @if (InProgressCount > 0)
+            {
+                <RadzenBadge Text="@InProgressCount.ToString()"
+                            BadgeStyle="BadgeStyle.Info"
+                            title="@($"{InProgressCount} in progress")"
+                            Class="px-2 py-1" />
+            }
+            <RadzenBadge Text="@($"{CompletedCount}/{TotalCount}")"
+                        BadgeStyle="BadgeStyle.Success"
+                        title="@($"{CompletedCount} of {TotalCount} completed")"
+                        Class="px-2 py-1" />
         </div>
     </div>
 
     @if (Assignments.Any())
     {
-        <!-- Simplified Summary Line -->
-        <div class="mb-3">
-            <div class="d-flex align-items-center gap-3 flex-wrap">
-                @if (OverdueCount > 0)
-                {
-                    <RadzenBadge Text="@($"⚠️ {OverdueCount} Overdue")"
-                                BadgeStyle="BadgeStyle.Danger"
-                                Class="px-2 py-1" />
-                }
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">
-                    <RadzenIcon Icon="task_alt" Style="font-size: 0.875rem;" Class="text-success me-1" />
-                    @CompletedCount Finalized
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">
-                    <RadzenIcon Icon="pending_actions" Style="font-size: 0.875rem;" Class="text-info me-1" />
-                    @InProgressCount In Progress
-                </RadzenText>
-                @if (PendingCount > 0)
-                {
-                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">
-                        <RadzenIcon Icon="schedule" Style="font-size: 0.875rem;" Class="text-warning me-1" />
-                        @PendingCount Not Started
-                    </RadzenText>
-                }
-            </div>
-        </div>
-
-        <!-- Assignments List - Always Visible, Aligned with Questionnaire View -->
-        <div class="assignments-list mt-3">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary">
-                    <RadzenIcon Icon="touch_app" Style="font-size: 1rem;" Class="me-1" />
-                    Click to Review & Complete
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                    @Assignments.Count @(Assignments.Count == 1 ? "assignment" : "assignments")
-                </RadzenText>
-            </div>
-            <div class="assignment-details-list">
-                @foreach (var assignment in Assignments.Take(10))
-                {
-                    <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetBorderClass(assignment)">
-                        <div class="flex-grow-1" style="cursor: pointer;" @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
-                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
-                                <RadzenIcon Icon="description" Style="font-size: 0.875rem;" Class="me-1" />
-                                @assignment.TemplateName
-                            </RadzenText>
-                            @if (assignment.DueDate.HasValue)
-                            {
-                                <RadzenText TextStyle="TextStyle.Caption" Class="@GetDueDateClass(assignment)">
-                                    <RadzenIcon Icon="event" Style="font-size: 0.75rem;" />
-                                    Due: @assignment.DueDate.Value.ToString("MMM dd, yyyy")
-                                    @if (assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
-                                    {
-                                        <span class="text-danger fw-bold"> (Overdue by @((DateTime.Now - assignment.DueDate.Value).Days) days)</span>
-                                    }
-                                </RadzenText>
-                            }
-                        </div>
-                        <div class="d-flex align-items-center gap-2">
-                            <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
-                                        BadgeStyle="BadgeStyle.Light"
-                                        Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
-                            @if (CanReopen(assignment))
-                            {
-                                <RadzenButton Icon="restart_alt"
-                                            ButtonStyle="ButtonStyle.Warning"
-                                            Size="ButtonSize.Small"
-                                            Variant="Variant.Outlined"
-                                            Click="@((args) => OnReopenAssignment(assignment))"
-                                            title="Reopen this questionnaire for corrections"
-                                            @onclick:stopPropagation="true"
-                                            Style="min-width: 32px; padding: 4px 8px;" />
-                            }
-                            @if (OnSendReminder.HasDelegate && assignment.WorkflowState != WorkflowState.Finalized)
-                            {
-                                <RadzenButton Icon="notifications"
-                                            ButtonStyle="ButtonStyle.Secondary"
-                                            Size="ButtonSize.Small"
-                                            Variant="Variant.Outlined"
-                                            Click="@((args) => OnSendReminderForAssignment(assignment))"
-                                            title="Send reminder for this questionnaire"
-                                            @onclick:stopPropagation="true"
-                                            Style="min-width: 32px; padding: 4px 8px;" />
-                            }
-                        </div>
+        <!-- Clean Assignment List -->
+        <div class="assignment-list-simple mt-2">
+            @foreach (var assignment in Assignments.Take(3))
+            {
+                <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded assignment-row"
+                     style="cursor: pointer; margin-bottom: 6px; background-color: var(--rz-base-50, #f9fafb);"
+                     @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
+                    <div class="d-flex align-items-center flex-grow-1">
+                        <div class="assignment-status-dot me-2"
+                             style="width: 8px; height: 8px; border-radius: 50%; background-color: @WorkflowStateHelper.GetStateColor(assignment.WorkflowState);"></div>
+                        <span class="assignment-name text-truncate">@assignment.TemplateName</span>
+                        @if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
+                        {
+                            <RadzenIcon Icon="warning" Class="text-danger ms-1" Style="font-size: 0.75rem;" title="Overdue" />
+                        }
                     </div>
-                }
-                @if (Assignments.Count > 10)
-                {
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted text-center mt-2">
-                        +@(Assignments.Count - 10) more assignments
-                    </RadzenText>
-                }
-            </div>
+                    <div class="d-flex align-items-center gap-1">
+                        @if (OnSendReminder.HasDelegate && assignment.WorkflowState != WorkflowState.Finalized)
+                        {
+                            <RadzenButton Icon="notifications"
+                                        ButtonStyle="ButtonStyle.Light"
+                                        Size="ButtonSize.ExtraSmall"
+                                        Click="@((args) => OnSendReminderForAssignment(assignment))"
+                                        title="Send reminder"
+                                        @onclick:stopPropagation="true"
+                                        Class="hover-visible"
+                                        Style="padding: 2px 4px; opacity: 0.7;" />
+                        }
+                        @if (CanReopen(assignment))
+                        {
+                            <RadzenButton Icon="refresh"
+                                        ButtonStyle="ButtonStyle.Light"
+                                        Size="ButtonSize.ExtraSmall"
+                                        Click="@((args) => OnReopenAssignment(assignment))"
+                                        title="Reopen"
+                                        @onclick:stopPropagation="true"
+                                        Class="hover-visible"
+                                        Style="padding: 2px 4px; opacity: 0.7;" />
+                        }
+                    </div>
+                </div>
+            }
+            @if (Assignments.Count > 3)
+            {
+                <div class="text-muted text-center mt-1">
+                    <small>+@(Assignments.Count - 3) more assignments - click to view all</small>
+                </div>
+            }
         </div>
     }
     else
     {
-        <div class="text-center p-3">
-            <RadzenIcon Icon="assignment" Class="text-muted mb-2" Style="font-size: 2rem;" />
-            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">No assignments yet</RadzenText>
+        <div class="text-center py-2">
+            <small class="text-muted">No assignments yet</small>
         </div>
     }
-</RadzenCard>
+</div>
 
 @code {
     [Parameter, EditorRequired] public EmployeeDto TeamMember { get; set; } = default!;
@@ -141,6 +106,7 @@
     [Parameter] public EventCallback<Guid> OnAssignmentClick { get; set; }
     [Parameter] public EventCallback<QuestionnaireAssignment> OnReopenClick { get; set; }
 
+    private bool isHovered = false;
     private int TotalCount => Assignments.Count;
     // Completed: ONLY Finalized state (consistent with employee view)
     private int CompletedCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
@@ -233,4 +199,5 @@
             await OnReopenClick.InvokeAsync(assignment);
         }
     }
+
 }

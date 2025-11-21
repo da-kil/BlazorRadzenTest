@@ -1,0 +1,139 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
+@inherits ComponentBase
+
+@* Simplified competency rating item with reduced DOM nesting *@
+<div class="competency-item rating-context">
+    <header class="competency-header">
+        <h4 class="competency-title @(string.IsNullOrWhiteSpace(Competency.Title) ? "text-danger" : "")">
+            @displayTitle
+        </h4>
+        @if (!string.IsNullOrWhiteSpace(Competency.Description))
+        {
+            <p class="competency-description">@Competency.Description</p>
+        }
+    </header>
+
+    <div class="rating-section">
+        <label class="rating-label">Rate your satisfaction:</label>
+        <div class="star-rating" role="radiogroup" aria-label="Rating scale 1-@RatingScale">
+            @for (int i = 1; i <= RatingScale; i++)
+            {
+                var starIndex = i;
+                var isSelected = i <= currentRating;
+                <input type="radio"
+                       name="rating-@Competency.Key"
+                       value="@i"
+                       id="star-@Competency.Key-@i"
+                       checked="@isSelected"
+                       @onchange="@(e => SetRating(starIndex))"
+                       disabled="@IsReadOnly" />
+                <label for="star-@Competency.Key-@i" class="star-label">
+                    <RadzenIcon Icon="@(isSelected ? "star" : "star_border")" Style="@GetStarStyle(isSelected)" />
+                </label>
+            }
+        </div>
+        <span class="rating-status">@GetRatingText()</span>
+    </div>
+
+    @if (!IsReadOnly)
+    {
+        <div class="comment-section">
+            <textarea placeholder="Optional: Add your comments here..."
+                      @bind="currentComment"
+                      @bind:after="@(() => SetComment(currentComment))"
+                      rows="2"
+                      class="comment-textarea" />
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(currentComment))
+    {
+        <div class="comment-display">
+            <small class="comment-label">Comment:</small>
+            <span class="comment-text">@currentComment</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CompetencyDefinition Competency { get; set; } = default!;
+    [Parameter, EditorRequired] public CompetencyRatingDto Rating { get; set; } = default!;
+    [Parameter] public EventCallback<CompetencyRatingDto> OnRatingChanged { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; } = false;
+    [Parameter] public int RatingScale { get; set; } = 4;
+    [Parameter] public string ScaleLowLabel { get; set; } = "Poor";
+    [Parameter] public string ScaleHighLabel { get; set; } = "Excellent";
+
+    private int currentRating = 0;
+    private string currentComment = "";
+    private string displayTitle = "";
+
+    protected override void OnInitialized()
+    {
+        UpdateLocalState();
+    }
+
+    protected override void OnParametersSet()
+    {
+        UpdateLocalState();
+    }
+
+    private void UpdateLocalState()
+    {
+        currentRating = Rating?.Rating ?? 0;
+        currentComment = Rating?.Comment ?? "";
+        displayTitle = string.IsNullOrWhiteSpace(Competency.Title)
+            ? $"[Unnamed Competency - {Competency.Key}]"
+            : Competency.Title;
+    }
+
+    private async Task SetRating(int value)
+    {
+        if (IsReadOnly) return;
+
+        currentRating = value;
+        Rating.Rating = value;
+
+        await NotifyChanged();
+    }
+
+    private async Task SetComment(string value)
+    {
+        if (IsReadOnly) return;
+
+        currentComment = value ?? "";
+        Rating.Comment = currentComment;
+
+        await NotifyChanged();
+    }
+
+    private async Task NotifyChanged()
+    {
+        if (OnRatingChanged.HasDelegate)
+        {
+            await OnRatingChanged.InvokeAsync(Rating);
+        }
+    }
+
+    private string GetRatingText()
+    {
+        if (currentRating == 0) return "Not rated";
+
+        var percentage = (double)currentRating / RatingScale;
+        return percentage switch
+        {
+            >= 0.75 => ScaleHighLabel,
+            >= 0.5 => "Good",
+            >= 0.25 => "Fair",
+            _ => ScaleLowLabel
+        };
+    }
+
+    private string GetStarStyle(bool isSelected)
+    {
+        return $"font-size: 24px; color: {(isSelected ? "#ffc107" : "#ddd")};";
+    }
+}
+
+@* Styles now consolidated in question-types.css with rating-context modifier *@

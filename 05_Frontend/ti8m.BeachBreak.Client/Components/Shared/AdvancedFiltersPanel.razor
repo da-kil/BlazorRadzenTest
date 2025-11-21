@@ -1,0 +1,132 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services.Enhanced
+@using Microsoft.AspNetCore.Components
+@inherits ComponentBase
+
+<!-- Collapsible Advanced Filters Panel -->
+@if (IsExpanded)
+{
+    <div class="advanced-filters-container mb-4">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <!-- Category Filter -->
+            @if (IsCategoryFilterVisible())
+            {
+                <div style="min-width: 180px;">
+                    <RadzenDropDown @bind-Value="CurrentFilters.CategoryFilter"
+                                   Data="@GetCategoryFilterOptions()"
+                                   Placeholder="All Categories"
+                                   AllowClear="true"
+                                   Multiple="true"
+                                   Change="@OnFiltersChanged"
+                                   Style="width: 100%;" />
+                </div>
+            }
+
+            <!-- Template Filter -->
+            @if (IsTemplateFilterVisible())
+            {
+                <div style="min-width: 200px;">
+                    <RadzenDropDown @bind-Value="CurrentFilters.TemplateFilter"
+                                   Data="@GetTemplateFilterOptions()"
+                                   TextProperty="Name"
+                                   ValueProperty="Id"
+                                   Placeholder="All Questionnaires"
+                                   AllowClear="true"
+                                   Multiple="true"
+                                   Change="@OnFiltersChanged"
+                                   Style="width: 100%;" />
+                </div>
+            }
+
+            <!-- Status Filter (Multi-select) -->
+            @if (IsStatusFilterVisible())
+            {
+                <div style="min-width: 200px;">
+                    <RadzenDropDown @bind-Value="CurrentFilters.StatusFilters"
+                                   Data="@GetStatusFilterOptions()"
+                                   Placeholder="All Statuses"
+                                   AllowClear="true"
+                                   Multiple="true"
+                                   Change="@OnFiltersChanged"
+                                   Style="width: 100%;" />
+                </div>
+            }
+
+            <!-- Date Range Filter -->
+            @if (IsDateRangeFilterVisible())
+            {
+                <div class="d-flex gap-2" style="min-width: 300px;">
+                    <RadzenDatePicker @bind-Value="CurrentFilters.DateRangeFrom"
+                                     Placeholder="From Date"
+                                     Style="width: 100%;"
+                                     DateFormat="MM/dd/yyyy"
+                                     Change="@OnFiltersChanged" />
+                    <RadzenDatePicker @bind-Value="CurrentFilters.DateRangeTo"
+                                     Placeholder="To Date"
+                                     Style="width: 100%;"
+                                     DateFormat="MM/dd/yyyy"
+                                     Change="@OnFiltersChanged" />
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public bool IsExpanded { get; set; }
+    [Parameter, EditorRequired] public QuestionnairePageConfiguration Configuration { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionnaireFilterBar.FilterState CurrentFilters { get; set; } = default!;
+    [Parameter] public EventCallback OnFiltersChanged { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+    }
+
+    // Helper methods for filter visibility (following the working pattern from QuestionnaireFilterBar)
+    private bool IsCategoryFilterVisible()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
+        return filterConfig != null && filterConfig.IsVisible;
+    }
+
+    private bool IsTemplateFilterVisible()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Template);
+        return filterConfig != null && filterConfig.IsVisible;
+    }
+
+    private bool IsStatusFilterVisible()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
+        return filterConfig != null && filterConfig.IsVisible;
+    }
+
+    private bool IsDateRangeFilterVisible()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.DateRange);
+        return filterConfig != null && filterConfig.IsVisible;
+    }
+
+    // Helper methods for filter options (following the working pattern from QuestionnaireFilterBar)
+    private List<string> GetCategoryFilterOptions()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Category);
+        return filterConfig?.Options ?? new List<string>();
+    }
+
+    private List<QuestionnaireTemplateOption> GetTemplateFilterOptions()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Template);
+        return filterConfig?.TemplateOptions ?? new List<QuestionnaireTemplateOption>();
+    }
+
+    private List<string> GetStatusFilterOptions()
+    {
+        var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
+        return filterConfig?.Options ?? new List<string>();
+    }
+
+    // AdvancedFilterState class removed - now using QuestionnaireFilterBar.FilterState directly
+}

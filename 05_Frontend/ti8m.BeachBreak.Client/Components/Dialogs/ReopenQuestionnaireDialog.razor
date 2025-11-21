@@ -116,7 +116,6 @@
 
     protected override void OnInitialized()
     {
-        Console.WriteLine("[ReopenQuestionnaireDialog] OnInitialized");
         base.OnInitialized();
 
         // Pre-select the most common reopen state
@@ -129,23 +128,16 @@
 
     protected override void OnAfterRender(bool firstRender)
     {
-        if (firstRender)
-        {
-            Console.WriteLine("[ReopenQuestionnaireDialog] First render completed");
-        }
         base.OnAfterRender(firstRender);
     }
 
     private void Cancel()
     {
-        Console.WriteLine("[ReopenQuestionnaireDialog] Cancel clicked");
         DialogService.Close(null);
     }
 
     private void ReopenQuestionnaire()
     {
-        Console.WriteLine($"[ReopenQuestionnaireDialog] ReopenQuestionnaire clicked, target: {selectedTargetState}, reason length: {reopenReason?.Length ?? 0}");
-
         // Validate
         if (!CanReopen())
         {

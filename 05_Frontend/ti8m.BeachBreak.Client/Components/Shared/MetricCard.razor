@@ -1,0 +1,69 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+
+<RadzenCard Class="@($"metric-card {GetMetricTypeClass()}")" Style="@($"cursor: {(OnClick.HasDelegate ? "pointer" : "default")};")" @onclick="@OnClick">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">@Title</RadzenText>
+            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@Value</RadzenText>
+            @if (!string.IsNullOrEmpty(Subtitle))
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.8; margin-top: 0.25rem;">@Subtitle</RadzenText>
+            }
+        </div>
+        @if (!string.IsNullOrEmpty(Icon))
+        {
+            <RadzenIcon Icon="@Icon" Style="font-size: 3rem; opacity: 0.3;" />
+        }
+    </div>
+</RadzenCard>
+
+@code {
+    /// <summary>
+    /// The title/label displayed on the metric card
+    /// </summary>
+    [Parameter] public string Title { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The main value/number displayed prominently
+    /// </summary>
+    [Parameter] public string Value { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Optional subtitle text displayed below the value
+    /// </summary>
+    [Parameter] public string Subtitle { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Material Design icon name to display on the right side
+    /// </summary>
+    [Parameter] public string Icon { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The color theme/type for the metric card
+    /// </summary>
+    [Parameter] public MetricType Type { get; set; } = MetricType.Default;
+
+    /// <summary>
+    /// Optional click handler for making the card interactive
+    /// </summary>
+    [Parameter] public EventCallback OnClick { get; set; }
+
+    /// <summary>
+    /// Get the CSS class for the metric type
+    /// </summary>
+    private string GetMetricTypeClass()
+    {
+        return Type switch
+        {
+            MetricType.Pending => "metric-pending",
+            MetricType.Progress => "metric-progress",
+            MetricType.Completed => "metric-completed",
+            MetricType.Primary => "metric-primary",
+            MetricType.Secondary => "metric-secondary",
+            MetricType.Info => "metric-info",
+            MetricType.Success => "metric-success",
+            _ => ""
+        };
+    }
+}

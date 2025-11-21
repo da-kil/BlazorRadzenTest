@@ -5,20 +5,22 @@
 
 <link href="css/assignment-dialogs.css" rel="stylesheet" />
 
-<div class="employee-selection">
+<div class="employee-selection-optimized">
     @if (Employees.Any())
     {
-        @foreach (var employee in Employees)
-        {
-            <EmployeeCard Employee="@employee"
-                         IsSelected="@IsEmployeeSelected(employee)"
-                         IsCurrent="@IsCurrentAssignee(employee)"
-                         OnClick="@OnEmployeeToggle" />
-        }
+        <div class="employee-grid-container" style="max-height: 400px; overflow-y: auto;">
+            @foreach (var employee in Employees)
+            {
+                <EmployeeCard Employee="@employee"
+                             IsSelected="@IsEmployeeSelected(employee)"
+                             IsCurrent="@IsCurrentAssignee(employee)"
+                             OnClick="@OnEmployeeToggle" />
+            }
+        </div>
     }
     else
     {
-        <div class="text-center text-muted p-3" style="grid-column: 1 / -1;">
+        <div class="text-center text-muted p-3">
             <RadzenIcon Icon="search_off" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
             <RadzenText TextStyle="TextStyle.Body2">@EmptyMessage</RadzenText>
         </div>

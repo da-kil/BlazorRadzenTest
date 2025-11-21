@@ -15,142 +15,149 @@
 <AuthorizeView Policy="HR">
     <Authorized>
         <div class="container-fluid">
-            <RadzenCard Class="p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <RadzenText TextStyle="TextStyle.H3" Class="text-primary">
-                    <RadzenIcon Icon="admin_panel_settings" Class="me-2" />
-                    Application Role Management
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                    Manage employee application roles
-                </RadzenText>
-            </div>
-        </div>
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-container mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <div>
+                                <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
+                                    <RadzenIcon Icon="admin_panel_settings" Class="me-2" />
+                                    Application Role Management
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                                    Manage employee application roles
+                                </RadzenText>
+                            </div>
+                        </div>
 
-        <div class="mb-3 d-flex justify-content-between align-items-center gap-2">
-            <RadzenTextBox @bind-Value="@searchText"
-                          Placeholder="Search employees..."
-                          @oninput="@OnSearchTextChanged"
-                          Style="width: 300px;" />
-            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                Showing @filteredEmployees.Count employees
-            </RadzenText>
-        </div>
+                            <div class="mb-3 d-flex justify-content-between align-items-center gap-2">
+                                <RadzenTextBox @bind-Value="@searchText"
+                                               Placeholder="Search employees..."
+                                               @oninput="@OnSearchTextChanged"
+                                               Style="width: 300px;" />
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                    Showing @filteredEmployees.Count employees
+                                </RadzenText>
+                            </div>
 
-        @if (filteredEmployees.Count == 0)
-        {
-            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No employees found.</RadzenText>
-        }
-        else
-        {
-            <RadzenDataGrid @ref="employeesGrid"
-                           Data="@filteredEmployees"
-                           TItem="EmployeeDto"
-                           AllowFiltering="true"
-                           AllowColumnResize="true"
-                           AllowSorting="true"
-                           EditMode="DataGridEditMode.Single"
-                           RowUpdate="@OnUpdateRow"
-                           AllowAlternatingRows="false">
-            <Columns>
-                <RadzenDataGridColumn TItem="EmployeeDto" Property="FirstName" Title="First Name" Width="150px" Sortable="true" Filterable="true">
-                    <Template Context="employee">
-                        <RadzenText TextStyle="TextStyle.Body1">@employee.FirstName</RadzenText>
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="EmployeeDto" Property="LastName" Title="Last Name" Width="150px" Sortable="true" Filterable="true">
-                    <Template Context="employee">
-                        <RadzenText TextStyle="TextStyle.Body1">@employee.LastName</RadzenText>
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="EmployeeDto" Property="Role" Title="Job Role" Width="200px" Sortable="true" Filterable="true">
-                    <Template Context="employee">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@employee.Role</RadzenText>
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="EmployeeDto" Property="Organization" Title="Organization" Width="200px" Sortable="true" Filterable="true">
-                    <Template Context="employee">
-                        <RadzenText TextStyle="TextStyle.Body2">@employee.Organization</RadzenText>
-                    </Template>
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn TItem="EmployeeDto" Property="ApplicationRole" Title="Application Role" Width="180px" Sortable="true" Filterable="true">
-                    <Template Context="employee">
-                        @{
-                            var badgeStyle = employee.ApplicationRole switch
+                            @if (filteredEmployees.Count == 0)
                             {
-                                ApplicationRole.Admin => BadgeStyle.Danger,
-                                ApplicationRole.HRLead => BadgeStyle.Warning,
-                                ApplicationRole.HR => BadgeStyle.Info,
-                                ApplicationRole.TeamLead => BadgeStyle.Success,
-                                _ => BadgeStyle.Light
-                            };
-                        }
-                        <RadzenBadge Text="@employee.ApplicationRole.ToString()" BadgeStyle="@badgeStyle" />
-                    </Template>
-                    <EditTemplate Context="employee">
-                        <RadzenDropDown @bind-Value="employee.ApplicationRole"
-                                       Data="@GetAvailableRoles()"
-                                       TValue="ApplicationRole"
-                                       Class="w-100" />
-                    </EditTemplate>
-                </RadzenDataGridColumn>
+                                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No employees found.</RadzenText>
+                            }
+                            else
+                            {
+                                <RadzenDataGrid @ref="employeesGrid"
+                                                Data="@filteredEmployees"
+                                                TItem="EmployeeDto"
+                                                AllowFiltering="true"
+                                                AllowColumnResize="true"
+                                                AllowSorting="true"
+                                                EditMode="DataGridEditMode.Single"
+                                                RowUpdate="@OnUpdateRow"
+                                                AllowAlternatingRows="false">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="FirstName" Title="First Name" Width="150px" Sortable="true" Filterable="true">
+                                            <Template Context="employee">
+                                                <RadzenText TextStyle="TextStyle.Body1">@employee.FirstName</RadzenText>
+                                            </Template>
+                                        </RadzenDataGridColumn>
 
-                <RadzenDataGridColumn TItem="EmployeeDto" Context="employee" Filterable="false" Sortable="false" Width="160px" TextAlign="TextAlign.Right">
-                    <Template Context="employee">
-                        <RadzenButton Icon="edit"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Variant="Variant.Flat"
-                                     Size="ButtonSize.Small"
-                                     Click="@(args => EditRow(employee))"
-                                     @onclick:stopPropagation="true">
-                        </RadzenButton>
-                    </Template>
-                    <EditTemplate Context="employee">
-                        <RadzenButton Icon="check"
-                                     ButtonStyle="ButtonStyle.Success"
-                                     Variant="Variant.Flat"
-                                     Size="ButtonSize.Small"
-                                     Click="@((args) => SaveRow(employee))">
-                        </RadzenButton>
-                        <RadzenButton Icon="close"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Variant="Variant.Flat"
-                                     Size="ButtonSize.Small"
-                                     Click="@((args) => CancelEdit(employee))">
-                        </RadzenButton>
-                    </EditTemplate>
-                </RadzenDataGridColumn>
-                </Columns>
-            </RadzenDataGrid>
-        }
-    </RadzenCard>
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="LastName" Title="Last Name" Width="150px" Sortable="true" Filterable="true">
+                                            <Template Context="employee">
+                                                <RadzenText TextStyle="TextStyle.Body1">@employee.LastName</RadzenText>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="Role" Title="Job Role" Width="200px" Sortable="true" Filterable="true">
+                                            <Template Context="employee">
+                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@employee.Role</RadzenText>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="Organization" Title="Organization" Width="200px" Sortable="true" Filterable="true">
+                                            <Template Context="employee">
+                                                <RadzenText TextStyle="TextStyle.Body2">@employee.Organization</RadzenText>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="ApplicationRole" Title="Application Role" Width="180px" Sortable="true" Filterable="true">
+                                            <Template Context="employee">
+                                                @{
+                                                    var badgeStyle = employee.ApplicationRole switch
+                                                    {
+                                                        ApplicationRole.Admin => BadgeStyle.Danger,
+                                                        ApplicationRole.HRLead => BadgeStyle.Warning,
+                                                        ApplicationRole.HR => BadgeStyle.Info,
+                                                        ApplicationRole.TeamLead => BadgeStyle.Success,
+                                                        _ => BadgeStyle.Light
+                                                    };
+                                                }
+                                                <RadzenBadge Text="@employee.ApplicationRole.ToString()" BadgeStyle="@badgeStyle" />
+                                            </Template>
+                                            <EditTemplate Context="employee">
+                                                <RadzenDropDown @bind-Value="employee.ApplicationRole"
+                                                                Data="@GetAvailableRoles()"
+                                                                TValue="ApplicationRole"
+                                                                Class="w-100" />
+                                            </EditTemplate>
+                                        </RadzenDataGridColumn>
+
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Context="employee" Filterable="false" Sortable="false" Width="160px" TextAlign="TextAlign.Right">
+                                            <Template Context="employee">
+                                                <RadzenButton Icon="edit"
+                                                              ButtonStyle="ButtonStyle.Light"
+                                                              Variant="Variant.Flat"
+                                                              Size="ButtonSize.Small"
+                                                              Click="@(args => EditRow(employee))"
+                                                              @onclick:stopPropagation="true">
+                                                </RadzenButton>
+                                            </Template>
+                                            <EditTemplate Context="employee">
+                                                <RadzenButton Icon="check"
+                                                              ButtonStyle="ButtonStyle.Success"
+                                                              Variant="Variant.Flat"
+                                                              Size="ButtonSize.Small"
+                                                              Click="@((args) => SaveRow(employee))">
+                                                </RadzenButton>
+                                                <RadzenButton Icon="close"
+                                                              ButtonStyle="ButtonStyle.Light"
+                                                              Variant="Variant.Flat"
+                                                              Size="ButtonSize.Small"
+                                                              Click="@((args) => CancelEdit(employee))">
+                                                </RadzenButton>
+                                            </EditTemplate>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            }
+                    </div>
+                </div>
+            </div>
         </div>
     </Authorized>
     <NotAuthorized>
         <div class="container-fluid">
-            <RadzenCard Class="p-4">
-                <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
-                    <RadzenIcon Icon="block" Style="font-size: 4rem; color: var(--rz-danger);" Class="mb-3" />
-                    <RadzenText TextStyle="TextStyle.H4" Class="mb-2">Access Denied</RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted text-center">
-                        You do not have permission to access the Role Management page.
-                        <br />
-                        This page is restricted to administrators only.
-                    </RadzenText>
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-container mb-4">
+                        <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
+                            <RadzenIcon Icon="block" Style="font-size: 4rem; color: var(--rz-danger);" Class="mb-3" />
+                            <RadzenText TextStyle="TextStyle.H4" Class="mb-2">Access Denied</RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted text-center">
+                                You do not have permission to access the Role Management page.
+                                <br />
+                                This page is restricted to administrators only.
+                            </RadzenText>
+                        </div>
+                    </div>
                 </div>
-            </RadzenCard>
+            </div>
         </div>
     </NotAuthorized>
 </AuthorizeView>
 
 @code {
-    // Disable parameter optimization to ensure component re-renders
-    protected override bool EnableParameterOptimization => false;
+    protected override bool EnableParameterOptimization => true;
 
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationStateTask { get; set; }
@@ -161,10 +168,40 @@
     string searchText = string.Empty;
     ApplicationRole currentUserRole = ApplicationRole.Employee;
 
+    // State tracking fields for optimization
+    private List<EmployeeDto> _lastEmployees = new();
+    private string _lastSearchText = string.Empty;
+    private ApplicationRole _lastCurrentUserRole = ApplicationRole.Employee;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadCurrentUserRole();
         await LoadEmployees();
+
+        // Initialize state tracking after loading data
+        _lastEmployees = employees;
+        _lastSearchText = searchText;
+        _lastCurrentUserRole = currentUserRole;
+    }
+
+    protected override bool HasStateChanged()
+    {
+        // Check if employees list reference or content changed
+        bool employeesChanged = !ReferenceEquals(_lastEmployees, employees) ||
+                               _lastEmployees.Count != employees.Count;
+
+        // Check if search text changed
+        bool searchChanged = _lastSearchText != searchText;
+
+        // Check if role changed
+        bool roleChanged = _lastCurrentUserRole != currentUserRole;
+
+        // Update tracked values if changed
+        if (employeesChanged) _lastEmployees = employees;
+        if (searchChanged) _lastSearchText = searchText;
+        if (roleChanged) _lastCurrentUserRole = currentUserRole;
+
+        return employeesChanged || searchChanged || roleChanged;
     }
 
     async Task LoadCurrentUserRole()

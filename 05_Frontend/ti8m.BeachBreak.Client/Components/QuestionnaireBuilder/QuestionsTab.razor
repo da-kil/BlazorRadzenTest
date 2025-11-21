@@ -82,11 +82,18 @@
     }
     else
     {
-        <div class="sections-container space-y-3">
+        <div class="sections-container">
             @for (int sectionIndex = 0; sectionIndex < Template.Sections.Count; sectionIndex++)
             {
                 var templateSection = Template.Sections[sectionIndex];
                 var currentSectionIndex = sectionIndex;
+
+                @if (sectionIndex > 0)
+                {
+                    <div class="section-separator mb-4">
+                        <hr class="border-0" style="height: 1px; background: linear-gradient(to right, transparent, #dee2e6, transparent);" />
+                    </div>
+                }
 
                 <SectionCard Section="@templateSection"
                            Template="@Template"
@@ -112,6 +119,7 @@
     }
 </div>
 
+
 <style>
 .questions-tab-content {
     padding: 0;
@@ -127,8 +135,30 @@
     border-radius: 8px;
 }
 
-.space-y-3 > * + * {
-    margin-top: 1.5rem;
+/* Component-specific responsive styles */
+@@media (max-width: 768px) {
+    .questions-tab-content {
+        padding: 0.5rem;
+    }
+
+    .assessment-stats {
+        margin-bottom: 1.5rem !important;
+    }
+
+    .assessment-stats .d-flex.gap-4 {
+        flex-direction: column;
+        gap: 1rem !important;
+    }
+
+    .stat-item .d-flex {
+        justify-content: center;
+    }
+}
+
+@@media (max-width: 480px) {
+    .assessment-stats .bg-light.rounded {
+        padding: 1rem !important;
+    }
 }
 </style>
 

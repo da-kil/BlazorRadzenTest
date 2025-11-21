@@ -1,5 +1,4 @@
 :root {
-    /* Color Palette from Fargen.png */
     --blue-new: #0F69FF;
     --green-new: #00E6C8;
     --dark-blue: #002650;
@@ -8,7 +7,6 @@
     --golden-milk: #E6BF7F;
     --light-blue: #D8E0E6;
     --peach-kiss: #F08080;
-
     /* Semantic color assignments */
     --primary-color: var(--blue-new);
     --secondary-color: var(--ice-blue);
@@ -18,6 +16,10 @@
     --info-color: var(--purple-rain);
     --dark-color: var(--dark-blue);
     --light-color: var(--light-blue);
+    /* General UI element colors */
+    --competency-title-color: var(--blue-new);
+    --textquestion-title-color: var(--purple-rain);
+    --goal-title-color: var(--green-new);
 
     /* Question type specific colors */
     --question-assessment: var(--blue-new);

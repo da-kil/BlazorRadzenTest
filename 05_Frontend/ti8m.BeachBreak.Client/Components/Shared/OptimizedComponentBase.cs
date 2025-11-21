@@ -143,16 +143,21 @@ public abstract class OptimizedComponentBase : ComponentBase, IDisposable
 
     /// <summary>
     /// Checks if any parameters have changed since last render
+    /// This is now a fallback - prefer overriding HasStateChanged() in derived classes
+    /// for more specific change detection
     /// </summary>
     private bool HasParametersChanged()
     {
-        var currentParameterView = ParameterView.Empty; // This would need to be captured differently in actual use
+        // If no parameters were captured, assume change for first render
+        if (_lastParameterValues.Count == 0)
+        {
+            return true;
+        }
 
-        // For now, we'll assume parameters have changed if this is the first render
-        // In a real implementation, you'd need to store and compare actual parameter values
-
-        // This is a simplified version - a full implementation would need more sophisticated tracking
-        return _lastParameterValues.Count == 0;
+        // For now, this is a simplified implementation
+        // In practice, components should override HasStateChanged() for proper change detection
+        // This provides a conservative fallback that assumes changes may have occurred
+        return true;
     }
 
     /// <summary>

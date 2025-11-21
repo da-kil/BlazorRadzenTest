@@ -1,13 +1,23 @@
 @page "/hr-dashboard"
 @using Microsoft.AspNetCore.Authorization
+@using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
 @inject IHRApiService HRService
 @inject NavigationManager NavigationManager
 @attribute [Authorize(Policy = "HR")]
 
-<RadzenStack Gap="1.5rem">
-    <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">HR Dashboard</RadzenText>
+<main class="page-container">
+    <header class="page-header">
+        <h1 class="page-title">
+            <RadzenIcon Icon="people" Class="page-icon rz-me-2" />
+            <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">HR Dashboard</RadzenText>
+        </h1>
+    </header>
+
+    <section class="dashboard-content">
+        <RadzenStack Gap="1.5rem">
 
     @if (isLoading)
     {
@@ -30,52 +40,32 @@
         <RadzenText TextStyle="TextStyle.H5" Class="rz-mb-2">Organization Overview</RadzenText>
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="3">
-                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Total Employees</RadzenText>
-                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TotalEmployees</RadzenText>
-                        </div>
-                        <RadzenIcon Icon="group" Style="font-size: 3rem; opacity: 0.3;" />
-                    </div>
-                </RadzenCard>
+                <MetricCard Title="Total Employees"
+                           Value="@dashboard.TotalEmployees.ToString()"
+                           Icon="group"
+                           Type="MetricType.Primary" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Managers</RadzenText>
-                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TotalManagers</RadzenText>
-                        </div>
-                        <RadzenIcon Icon="supervised_user_circle" Style="font-size: 3rem; opacity: 0.3;" />
-                    </div>
-                </RadzenCard>
+                <MetricCard Title="Managers"
+                           Value="@dashboard.TotalManagers.ToString()"
+                           Icon="supervised_user_circle"
+                           Type="MetricType.Secondary" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); color: white;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Total Assignments</RadzenText>
-                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.TotalAssignments</RadzenText>
-                        </div>
-                        <RadzenIcon Icon="assignment" Style="font-size: 3rem; opacity: 0.3;" />
-                    </div>
-                </RadzenCard>
+                <MetricCard Title="Total Assignments"
+                           Value="@dashboard.TotalAssignments.ToString()"
+                           Icon="assignment"
+                           Type="MetricType.Info" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <RadzenCard Class="metric-card" Style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); color: white;">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">Completion Rate</RadzenText>
-                            <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@dashboard.OverallCompletionRate.ToString("F1")%</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="opacity: 0.8; margin-top: 0.25rem;">@dashboard.TotalCompletedAssignments of @dashboard.TotalAssignments assignments</RadzenText>
-                        </div>
-                        <RadzenIcon Icon="trending_up" Style="font-size: 3rem; opacity: 0.3;" />
-                    </div>
-                </RadzenCard>
+                <MetricCard Title="Completion Rate"
+                           Value="@($"{dashboard.OverallCompletionRate:F1}%")"
+                           Subtitle="@($"{dashboard.TotalCompletedAssignments} of {dashboard.TotalAssignments} assignments")"
+                           Icon="trending_up"
+                           Type="MetricType.Success" />
             </RadzenColumn>
         </RadzenRow>
 
@@ -152,7 +142,7 @@
         @if (dashboard.Organizations.Any())
         {
             <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Organizations</RadzenText>
-            <RadzenCard>
+            <div class="rz-background-color-base-100 rz-p-4 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                 <RadzenDataList Data="@dashboard.Organizations.OrderByDescending(o => o.TotalAssignments)" TItem="OrganizationMetricsDto" AllowPaging="true" PageSize="5">
                     <Template Context="org">
                         <RadzenCard Class="rz-shadow-0 rz-border-base-300" Style="margin-bottom: 0.5rem;">
@@ -194,14 +184,14 @@
                         </RadzenCard>
                     </Template>
                 </RadzenDataList>
-            </RadzenCard>
+            </div>
         }
 
         <!-- Managers -->
         @if (dashboard.Managers.Any())
         {
             <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Managers</RadzenText>
-            <RadzenCard>
+            <div class="rz-background-color-base-100 rz-p-4 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                 <RadzenDataList Data="@dashboard.Managers" TItem="ManagerOverviewDto" AllowPaging="true" PageSize="10">
                     <Template Context="manager">
                         <RadzenCard Class="rz-shadow-0 rz-border-base-300" Style="margin-bottom: 0.5rem;">
@@ -237,14 +227,14 @@
                         </RadzenCard>
                     </Template>
                 </RadzenDataList>
-            </RadzenCard>
+            </div>
         }
 
         <!-- Urgent Assignments -->
         @if (dashboard.UrgentAssignments.Any())
         {
             <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Urgent Assignments</RadzenText>
-            <RadzenCard>
+            <div class="rz-background-color-base-100 rz-p-4 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                 <RadzenDataList Data="@dashboard.UrgentAssignments" TItem="UrgentAssignmentDto" AllowPaging="true" PageSize="10">
                     <Template Context="assignment">
                         <RadzenCard Class="rz-shadow-0 rz-border-base-300" Style="margin-bottom: 0.5rem;">
@@ -277,14 +267,17 @@
                         </RadzenCard>
                     </Template>
                 </RadzenDataList>
-            </RadzenCard>
+            </div>
         }
 
         <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);" Class="rz-mt-3">
             Last updated: @dashboard.LastUpdated.ToString("MMM dd, yyyy HH:mm")
         </RadzenText>
     }
-</RadzenStack>
+
+        </RadzenStack>
+    </section>
+</main>
 
 @code {
     private HRDashboardDto? dashboard;

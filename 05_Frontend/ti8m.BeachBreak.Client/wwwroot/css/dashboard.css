@@ -12,6 +12,53 @@
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important;
 }
 
+/* Metric card color variants - replaces gradients with solid Radzen colors */
+.metric-pending {
+    background: var(--rz-secondary-lighter, #6c757d);
+    color: white;
+}
+
+.metric-progress {
+    background: var(--rz-info, #0dcaf0);
+    color: white;
+}
+
+.metric-completed {
+    background: var(--rz-success, #198754);
+    color: white;
+}
+
+.metric-primary {
+    background: var(--rz-primary, #0d6efd);
+    color: white;
+}
+
+.metric-secondary {
+    background: var(--rz-secondary, #6c757d);
+    color: white;
+}
+
+.metric-info {
+    background: var(--rz-info, #0dcaf0);
+    color: white;
+}
+
+.metric-success {
+    background: var(--rz-success, #198754);
+    color: white;
+}
+
+/* Maintain opacity for text elements within metric cards */
+.metric-pending .rz-text,
+.metric-progress .rz-text,
+.metric-completed .rz-text,
+.metric-primary .rz-text,
+.metric-secondary .rz-text,
+.metric-info .rz-text,
+.metric-success .rz-text {
+    color: white !important;
+}
+
 /* Responsive adjustments for metric cards */
 @media (max-width: 768px) {
     .metric-card {

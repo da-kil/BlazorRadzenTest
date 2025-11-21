@@ -14,15 +14,11 @@
 @inject IAuthService AuthService
 @inherits OptimizedComponentBase
 
-<RadzenFieldset Class="mb-4 new-goals-section">
-    <HeaderTemplate>
-        <RadzenIcon Icon="track_changes" Class="me-2" />
-        <span class="fw-bold">New Goals</span>
-        <RadzenText TextStyle="TextStyle.Caption" Class="ms-2 text-muted">
-            (Set goals for upcoming period)
-        </RadzenText>
-    </HeaderTemplate>
-    <ChildContent>
+<div class="new-goals-section">
+    <header class="section-header">
+        <p class="section-description">Set goals for upcoming period</p>
+    </header>
+    <div class="section-content">
         @if (!allCurrentGoals.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
@@ -38,14 +34,8 @@
             @* Render all goals (saved + pending) *@
             @foreach (var goal in allCurrentGoals.OrderBy(g => g.AddedAt))
             {
-                var cardClass = goal.HasPendingChanges ? "goal-card mb-3 p-3 border rounded pending-goal" : "goal-card mb-3 p-3 border rounded";
-
-                <div class="@cardClass" @key="@($"{goal.Id}_{goal.ObjectiveDescription?.GetHashCode()}_{goal.HasPendingChanges}")">
-                    @RenderTypedGoal(goal)
-                </div>
+                @RenderTypedGoal(goal, $"{goal.Id}_{goal.ObjectiveDescription?.GetHashCode()}_{goal.HasPendingChanges}")
             }
-
-            @* All goals including pending are now in allCurrentGoals *@
         }
 
         @if (!IsReadOnly)
@@ -89,8 +79,8 @@
                 </RadzenRow>
             </div>
         }
-    </ChildContent>
-</RadzenFieldset>
+    </div>
+</div>
 
 @code {
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
@@ -272,7 +262,7 @@
     }
 
     /// <summary>
-    /// Saves the current GoalWithState objects back to Response.ResponseData as GoalDataDto objects
+    /// Saves the current GoalWithState objects back to Response.ResponseData as GoalDataDto objects.
     /// </summary>
     private void SaveGoalsToResponse()
     {
@@ -283,8 +273,10 @@
             Response.ResponseData = goalData;
         }
 
-        // Convert GoalWithState objects back to GoalDataDto objects
-        goalData.Goals = allCurrentGoals.Select(ConvertGoalWithStateToGoalDataDto).ToList();
+        var goalsToSave = allCurrentGoals.Where(g => !g.IsPendingDelete).ToList();
+
+        // Convert GoalWithState objects back to GoalDataDto objects (excluding deleted goals)
+        goalData.Goals = goalsToSave.Select(ConvertGoalWithStateToGoalDataDto).ToList();
         Response.LastModified = DateTime.Now;
     }
 
@@ -369,15 +361,15 @@
     /// <summary>
     /// Renders a strongly-typed GoalWithState object (replaces Dictionary-based rendering)
     /// </summary>
-    private RenderFragment RenderTypedGoal(GoalWithState goal) => __builder =>
+    private RenderFragment RenderTypedGoal(GoalWithState goal, string key) => __builder =>
     {
-        <div class="collaborative-goal">
+        <div class="collaborative-goal" @key="@key">
             <RadzenRow>
                 <RadzenColumn Size="8">
                     <div class="goal-header">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-2">
+                        <h4 class="question-title">
                             @goal.ObjectiveDescription
-                        </RadzenText>
+                        </h4>
                         <div class="goal-badges mb-2">
                             <RadzenBadge Text="@GetDisplayRole(goal.AddedByRole.ToString())"
                                        BadgeStyle="@GetRoleBadgeStyle(GetDisplayRole(goal.AddedByRole.ToString()))"
@@ -719,6 +711,7 @@
 
         // Update Response data
         SaveGoalsToResponse();
+
         await NotifyResponseChanged();
         await InvokeAsync(StateHasChanged);
 
@@ -831,54 +824,3 @@
         };
     }
 }
-
-<style>
-.new-goals-section .collaborative-goal {
-    transition: all 0.2s ease;
-}
-
-.new-goals-section .goal-card {
-    transition: all 0.2s ease;
-    border-color: var(--border-light, #e2e8f0) !important;
-}
-
-.new-goals-section .goal-card:hover {
-    border-color: var(--primary-color, #2563eb) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.new-goals-section .pending-goal {
-    border-style: dashed !important;
-    border-color: var(--rz-info) !important;
-    background-color: rgba(33, 150, 243, 0.05);
-}
-
-.new-goals-section .pending-delete {
-    opacity: 0.6;
-    background-color: rgba(244, 67, 54, 0.05);
-}
-
-.new-goals-section .pending-modify {
-    background-color: rgba(255, 152, 0, 0.05);
-}
-
-.new-goals-section .goal-actions {
-    display: flex;
-    gap: 0.25rem;
-    flex-shrink: 0;
-}
-
-.new-goals-section .goal-badges .rz-badge {
-    font-size: 0.75rem;
-}
-
-.new-goals-section .goals-summary {
-    border: 1px solid var(--border-light, #e2e8f0);
-}
-
-.new-goals-section .add-goal-section {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-</style>
