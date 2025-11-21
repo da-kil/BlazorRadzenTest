@@ -1,14 +1,15 @@
 @page "/manager-dashboard"
-@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @inject IManagerQuestionnaireService ManagerService
 @inject NavigationManager NavigationManager
-@attribute [Authorize(Policy = "TeamLead")]
 
-<main class="page-container">
+<AuthorizeView Policy="TeamLead">
+    <Authorized>
+        <main class="page-container">
     <header class="page-header">
         <h1 class="page-title">
             <RadzenIcon Icon="supervisor_account" Class="page-icon rz-me-2" />
@@ -178,6 +179,11 @@
         </RadzenStack>
     </section>
 </main>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="TeamLead" PageName="Manager Dashboard" />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     private ManagerDashboardDto? dashboard;

@@ -5,6 +5,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
 @inject IEmployeeApiService EmployeeService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -14,20 +15,9 @@
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-container mb-4">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div>
-                                <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
-                                    Application Role Management
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                                    Manage employee application roles
-                                </RadzenText>
-                            </div>
-                        </div>
+        <StandardPageLayout Title="Application Role Management"
+                        Description="Manage employee application roles">
+            <ChildContent>
 
                             <div class="mb-3 d-flex justify-content-between align-items-center gap-2">
                                 <RadzenTextBox @bind-Value="@searchText"
@@ -129,29 +119,23 @@
                                     </Columns>
                                 </RadzenDataGrid>
                             }
-                    </div>
-                </div>
-            </div>
-        </div>
+            </ChildContent>
+        </StandardPageLayout>
     </Authorized>
     <NotAuthorized>
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-container mb-4">
-                        <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
-                            <RadzenIcon Icon="block" Style="font-size: 4rem; color: var(--rz-danger);" Class="mb-3" />
-                            <RadzenText TextStyle="TextStyle.H4" Class="mb-2">Access Denied</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted text-center">
-                                You do not have permission to access the Role Management page.
-                                <br />
-                                This page is restricted to administrators only.
-                            </RadzenText>
-                        </div>
-                    </div>
+        <StandardPageLayout Title="Access Denied" Description="You do not have permission to access this page">
+            <ChildContent>
+                <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
+                    <RadzenIcon Icon="block" Style="font-size: 4rem; color: var(--rz-danger);" Class="rz-mb-3" />
+                    <RadzenText TextStyle="TextStyle.H4" Class="rz-mb-2">Access Denied</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted text-center">
+                        You do not have permission to access the Role Management page.
+                        <br />
+                        This page is restricted to administrators only.
+                    </RadzenText>
                 </div>
-            </div>
-        </div>
+            </ChildContent>
+        </StandardPageLayout>
     </NotAuthorized>
 </AuthorizeView>
 

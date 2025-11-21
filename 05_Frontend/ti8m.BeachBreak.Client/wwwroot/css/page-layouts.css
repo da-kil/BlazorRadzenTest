@@ -1,0 +1,275 @@
+/* ==========================================================================
+   Standardized Page Layout System for ti8m.BeachBreak
+   ========================================================================== */
+
+/* ==========================================================================
+   Base Page Classes
+   ========================================================================== */
+
+/* Immersive Page Layout (Questionnaires, Forms) */
+.immersive-page {
+    min-height: 100vh;
+    background-color: var(--bs-body-bg, #ffffff);
+    display: flex;
+    flex-direction: column;
+}
+
+.immersive-page-header {
+    flex-shrink: 0;
+    padding: 1.5rem;
+    background-color: var(--bs-body-bg, #ffffff);
+    border-bottom: 1px solid var(--bs-border-color, #e0e0e0);
+}
+
+.immersive-page-content {
+    flex: 1;
+    padding: 1.5rem;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.immersive-page-footer {
+    flex-shrink: 0;
+    padding: 1.5rem;
+    background-color: var(--bs-body-bg, #ffffff);
+    border-top: 1px solid var(--bs-border-color, #e0e0e0);
+}
+
+/* Standard Page Layout (Management, Configuration) */
+.standard-page {
+    min-height: calc(100vh - 60px); /* Account for nav */
+    background-color: var(--bs-body-bg, #ffffff);
+}
+
+.standard-page-header {
+    padding: 1.5rem 0 1rem 0;
+    border-bottom: 1px solid var(--bs-border-color, #e0e0e0);
+    margin-bottom: 1.5rem;
+}
+
+.standard-page-content {
+    padding-bottom: 2rem;
+}
+
+.standard-page-title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.standard-page-description {
+    margin: 0.25rem 0 0 0;
+    color: var(--bs-secondary, #6c757d);
+}
+
+/* Dashboard Page Layout (Metrics, Overview) */
+.dashboard-page {
+    min-height: calc(100vh - 60px); /* Account for nav */
+    padding: 1.5rem;
+    background-color: var(--bs-body-bg, #ffffff);
+}
+
+.dashboard-page-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--bs-border-color, #e0e0e0);
+}
+
+.dashboard-page-title {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-weight: 600;
+    color: var(--bs-primary, #0d6efd);
+}
+
+.dashboard-page-title .page-icon {
+    margin-right: 0.5rem;
+    font-size: 1.75rem;
+}
+
+.dashboard-page-description {
+    margin: 0.5rem 0 0 0;
+    color: var(--bs-secondary, #6c757d);
+}
+
+.dashboard-page-content {
+    /* Content managed by Radzen components */
+}
+
+/* ==========================================================================
+   Specialized Components for Questionnaires
+   ========================================================================== */
+
+.questionnaire-header {
+    margin-bottom: 1.5rem;
+}
+
+.questionnaire-info-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    margin-top: 1rem;
+    background-color: rgba(13, 110, 253, 0.1);
+    border-left: 4px solid var(--bs-primary, #0d6efd);
+    border-radius: 0.375rem;
+}
+
+.questionnaire-content {
+    margin-bottom: 2rem;
+}
+
+.section-header-questionnaire {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--bs-border-color, #e0e0e0);
+}
+
+.section-title-container {
+    /* Container for section titles and descriptions */
+}
+
+.section-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--bs-dark, #212529);
+}
+
+.section-description {
+    margin: 0;
+    color: var(--bs-secondary, #6c757d);
+    font-size: 0.95rem;
+}
+
+.questions-container {
+    margin-bottom: 2rem;
+}
+
+.navigation-footer {
+    border-top: 1px solid var(--bs-border-color, #e0e0e0);
+    padding-top: 1.5rem;
+    background-color: var(--bs-body-bg, #ffffff);
+}
+
+/* ==========================================================================
+   Common Components
+   ========================================================================== */
+
+.section-counter {
+    text-align: right;
+    margin-bottom: 1rem;
+}
+
+.workflow-alert {
+    margin-bottom: 1.5rem;
+}
+
+/* ==========================================================================
+   Responsive Behavior
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* Mobile adjustments */
+    .immersive-page-header,
+    .immersive-page-content,
+    .immersive-page-footer {
+        padding: 1rem;
+    }
+
+    .dashboard-page {
+        padding: 1rem;
+    }
+
+    .standard-page-header {
+        padding: 1rem 0 0.75rem 0;
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+    }
+
+    .navigation-footer {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .navigation-footer .navigation-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Small mobile adjustments */
+    .dashboard-page-title {
+        font-size: 1.25rem;
+    }
+
+    .standard-page-header .rz-stack-horizontal {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+/* ==========================================================================
+   Integration with Existing Styles
+   ========================================================================== */
+
+/* Ensure compatibility with existing questionnaire styles */
+.immersive-page .questionnaire-main-card {
+    box-shadow: none;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    background: transparent;
+}
+
+/* Ensure standard pages work with existing tab systems */
+.standard-page .rz-tabview {
+    margin-top: 1rem;
+}
+
+.standard-page .rz-datatable {
+    margin-top: 1rem;
+}
+
+/* ==========================================================================
+   Accessibility Improvements
+   ========================================================================== */
+
+.immersive-page-header,
+.standard-page-header,
+.dashboard-page-header {
+    outline: none;
+}
+
+.section-header-questionnaire {
+    scroll-margin-top: 2rem; /* For anchor links */
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+    .navigation-footer,
+    .standard-page-header .rz-stack-horizontal > div:last-child {
+        display: none;
+    }
+
+    .immersive-page,
+    .standard-page,
+    .dashboard-page {
+        min-height: auto;
+    }
+}

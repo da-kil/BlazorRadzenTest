@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using ti8m.BeachBreak.Client.Configuration;
 using ti8m.BeachBreak.Client.Services;
+using ti8m.BeachBreak.Client.Services.Exports;
 
 namespace ti8m.BeachBreak.Client;
 
@@ -65,6 +66,9 @@ internal class Program
         builder.Services.AddScoped<QuestionConfigurationService>();
         builder.Services.AddScoped<QuestionnaireValidationService>();
         builder.Services.AddScoped<GoalService>();
+
+        // Register export services
+        builder.Services.AddScoped<IQuestionnaireReportExporter, QuestionnaireReportExporter>();
 
         // Register question type handlers (Strategy Pattern)
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.AssessmentQuestionHandler>();

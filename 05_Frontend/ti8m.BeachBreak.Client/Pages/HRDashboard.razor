@@ -1,14 +1,15 @@
 @page "/hr-dashboard"
-@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @inject IHRApiService HRService
 @inject NavigationManager NavigationManager
-@attribute [Authorize(Policy = "HR")]
 
-<main class="page-container">
+<AuthorizeView Policy="HR">
+    <Authorized>
+        <main class="page-container">
     <header class="page-header">
         <h1 class="page-title">
             <RadzenIcon Icon="people" Class="page-icon rz-me-2" />
@@ -278,6 +279,11 @@
         </RadzenStack>
     </section>
 </main>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="HR" PageName="HR Dashboard" />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     private HRDashboardDto? dashboard;

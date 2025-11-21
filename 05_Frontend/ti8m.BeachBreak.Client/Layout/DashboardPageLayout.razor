@@ -1,0 +1,129 @@
+@*
+    DashboardPageLayout.razor
+    Layout component for dashboards, reporting, and overview pages.
+    Uses semantic HTML with flexible card-based layout via Radzen components.
+*@
+@using Radzen
+@using Radzen.Blazor
+
+<main class="@GetContainerClasses()" style="@ContainerStyle">
+    @if (HeaderContent != null || !string.IsNullOrEmpty(Title))
+    {
+        <header class="dashboard-page-header">
+            @if (HeaderContent != null)
+            {
+                @HeaderContent
+            }
+            else
+            {
+                @if (!string.IsNullOrEmpty(Title))
+                {
+                    <h1 class="dashboard-page-title">
+                        @if (!string.IsNullOrEmpty(Icon))
+                        {
+                            <RadzenIcon Icon="@Icon" Class="page-icon rz-me-2" />
+                        }
+                        <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-2">
+                            @Title
+                        </RadzenText>
+                    </h1>
+                }
+                @if (!string.IsNullOrEmpty(Description))
+                {
+                    <RadzenText TextStyle="TextStyle.Body1" Class="text-muted dashboard-page-description">
+                        @Description
+                    </RadzenText>
+                }
+
+                @if (HeaderActions != null)
+                {
+                    <div class="dashboard-header-actions rz-mt-3">
+                        @HeaderActions
+                    </div>
+                }
+            }
+        </header>
+    }
+
+    <section class="dashboard-page-content">
+        @if (UseMetricsRow && MetricsContent != null)
+        {
+            <RadzenRow Gap="1rem" Class="rz-mb-4">
+                @MetricsContent
+            </RadzenRow>
+        }
+
+        @ChildContent
+    </section>
+</main>
+
+@code {
+    /// <summary>
+    /// Main content of the page
+    /// </summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Custom header content. If provided, overrides Title/Description/Icon
+    /// </summary>
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+
+    /// <summary>
+    /// Header actions (buttons, filters, etc.) shown below the title
+    /// </summary>
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+
+    /// <summary>
+    /// Metrics/KPI cards content - rendered in a RadzenRow if UseMetricsRow is true
+    /// </summary>
+    [Parameter] public RenderFragment? MetricsContent { get; set; }
+
+    /// <summary>
+    /// Page title - used when HeaderContent is not provided
+    /// </summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>
+    /// Page description/subtitle - used when HeaderContent is not provided
+    /// </summary>
+    [Parameter] public string? Description { get; set; }
+
+    /// <summary>
+    /// Icon name for the page title (Material Icons) - used when HeaderContent is not provided
+    /// </summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>
+    /// Whether to wrap MetricsContent in a RadzenRow (default: true)
+    /// Set to false if you want to manage the metrics layout yourself
+    /// </summary>
+    [Parameter] public bool UseMetricsRow { get; set; } = true;
+
+    /// <summary>
+    /// Additional CSS classes to apply to the outer container
+    /// </summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    /// <summary>
+    /// Additional inline styles to apply to the outer container
+    /// </summary>
+    [Parameter] public string? ContainerStyle { get; set; }
+
+    /// <summary>
+    /// Additional attributes to apply to the outer container
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetContainerClasses()
+    {
+        var classes = "dashboard-page";
+
+        if (!string.IsNullOrEmpty(CssClass))
+        {
+            classes += $" {CssClass}";
+        }
+
+        return classes;
+    }
+}

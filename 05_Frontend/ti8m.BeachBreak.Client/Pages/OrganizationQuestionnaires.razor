@@ -1,32 +1,62 @@
 @page "/organization/questionnaires"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "HR")]
+@using Microsoft.AspNetCore.Components.Authorization
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Layout
+@using ti8m.BeachBreak.Client.Models.Reports
+@using ti8m.BeachBreak.Client.Services.Exports
 @using System.Text
 @inherits BaseQuestionnaireListPage
 @inject IHRQuestionnaireService HRQuestionnaireService
 @inject IOrganizationApiService OrganizationService
 @inject IQuestionnaireTemplateService TemplateService
+@inject IQuestionnaireReportExporter ReportExporter
 @inject IJSRuntime JSRuntime
-@inject NavigationManager Navigation
 
 <PageTitle>Organization Questionnaires</PageTitle>
 
-@if (configuration != null && dataService != null)
-{
-	<GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
-}
-else if (isLoading)
-{
-	<div class="text-center p-5">
-		<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-		<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading organization data...</RadzenText>
-	</div>
-}
+<AuthorizeView Policy="HR">
+    <Authorized>
+        <StandardPageLayout Title="Organization Questionnaires"
+                   Description="View and manage questionnaires across the entire organization">
+	<HeaderActions>
+		@if (configuration?.Actions != null)
+		{
+			@foreach (var action in configuration.Actions.Where(a => a.IsVisible))
+			{
+				<RadzenButton Text="@action.Text"
+							 Icon="@action.Icon"
+							 ButtonStyle="@GetButtonStyle(action.ButtonStyle)"
+							 Click="@(() => HandleActionClick(action))"
+							 Size="ButtonSize.Medium" />
+			}
+		}
+	</HeaderActions>
+	<ChildContent>
+		@if (configuration != null && dataService != null)
+		{
+			<GenericQuestionnaireListPage Configuration="@configuration"
+										  DataService="@dataService"
+										  HideHeader="true" />
+		}
+		else if (isLoading)
+		{
+			<div class="text-center p-5">
+				<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading organization data...</RadzenText>
+			</div>
+		}
+	</ChildContent>
+</StandardPageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="HR" PageName="Organization Questionnaires" />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
 	// HR-specific state
@@ -87,15 +117,15 @@ else if (isLoading)
 		{
 			ShowInfo("Generating organization report...");
 
-			// Generate export data
+			// Generate export data using refactored method
 			var exportData = GenerateOrganizationReportData();
 
-			// Create CSV content
-			var csvContent = GenerateCSVContent(exportData);
+			// Use shared CSV generation
+			var csvContent = await ReportExporter.GenerateCSVAsync(exportData);
 
-			// Download file
+			// Use shared download method
 			var fileName = $"Organization_Questionnaires_Report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv";
-			DownloadFile(csvContent, fileName, "text/csv");
+			ReportExporter.DownloadFile(csvContent, fileName, "text/csv");
 
 			ShowSuccess($"Report exported successfully: {fileName}");
 		}
@@ -116,20 +146,22 @@ else if (isLoading)
 	{
 		var now = DateTime.Now;
 
+		// Use centralized metrics calculation for overall organization data
+		var orgMetrics = QuestionnaireMetricsCalculator.CalculateMetrics(allAssignments, now);
+
 		var reportData = new OrganizationReportData
 		{
 			GeneratedDate = now,
 			TotalEmployees = allEmployees.Count,
-			TotalAssignments = allAssignments.Count,
-			CompletedAssignments = allAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized),
-			PendingAssignments = allAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized &&
-										(!a.DueDate.HasValue || a.DueDate.Value >= now)),
-			OverdueAssignments = allAssignments.Count(a => a.DueDate.HasValue &&
-										a.DueDate.Value < now &&
-										a.WorkflowState != WorkflowState.Finalized),
+			TotalAssignments = orgMetrics.Total,
+			CompletedAssignments = orgMetrics.Completed,
+			PendingAssignments = orgMetrics.Pending,
+			OverdueAssignments = orgMetrics.Overdue,
 			EmployeeDetails = allEmployees.Select(emp =>
 			{
 				var empAssignments = allAssignments.Where(a => a.EmployeeId == emp.Id).ToList();
+				var empMetrics = QuestionnaireMetricsCalculator.CalculateMetrics(empAssignments, now);
+
 				return new EmployeeReportData
 				{
 					EmployeeId = emp.Id,
@@ -137,16 +169,11 @@ else if (isLoading)
 					Email = emp.EMail,
 					Department = emp.Organization ?? "Unknown",
 					Role = emp.ApplicationRole.ToString(),
-					TotalAssignments = empAssignments.Count,
-					CompletedAssignments = empAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized),
-					PendingAssignments = empAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized &&
-										(!a.DueDate.HasValue || a.DueDate.Value >= now)),
-					OverdueAssignments = empAssignments.Count(a => a.DueDate.HasValue &&
-										a.DueDate.Value < now &&
-										a.WorkflowState != WorkflowState.Finalized),
-					CompletionPercentage = empAssignments.Any()
-						? Math.Round((double)empAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized) / empAssignments.Count * 100, 1)
-						: 0
+					TotalAssignments = empMetrics.Total,
+					CompletedAssignments = empMetrics.Completed,
+					PendingAssignments = empMetrics.Pending,
+					OverdueAssignments = empMetrics.Overdue,
+					CompletionPercentage = empMetrics.CompletionPercentage
 				};
 			}).OrderBy(e => e.EmployeeName).ToList()
 		};
@@ -154,65 +181,7 @@ else if (isLoading)
 		return reportData;
 	}
 
-	private string GenerateCSVContent(OrganizationReportData data)
-	{
-		var sb = new StringBuilder();
 
-		// Header information
-		sb.AppendLine($"Organization Questionnaires Report");
-		sb.AppendLine($"Generated: {data.GeneratedDate:yyyy-MM-dd HH:mm:ss}");
-		sb.AppendLine($"Total Employees: {data.TotalEmployees}");
-		sb.AppendLine($"Total Assignments: {data.TotalAssignments}");
-		sb.AppendLine($"Completed: {data.CompletedAssignments}");
-		sb.AppendLine($"Pending: {data.PendingAssignments}");
-		sb.AppendLine($"Overdue: {data.OverdueAssignments}");
-		sb.AppendLine($"Overall Completion Rate: {(data.TotalAssignments > 0 ? Math.Round((double)data.CompletedAssignments / data.TotalAssignments * 100, 1) : 0):F1}%");
-		sb.AppendLine();
 
-		// Employee details header
-		sb.AppendLine("Employee Name,Email,Department,Role,Total Assignments,Completed,Pending,Overdue,Completion %");
 
-		// Employee data rows
-		foreach (var employee in data.EmployeeDetails)
-		{
-			sb.AppendLine($"\"{employee.EmployeeName}\",\"{employee.Email}\",\"{employee.Department}\",\"{employee.Role}\",{employee.TotalAssignments},{employee.CompletedAssignments},{employee.PendingAssignments},{employee.OverdueAssignments},{employee.CompletionPercentage:F1}%");
-		}
-
-		return sb.ToString();
-	}
-
-	private void DownloadFile(string content, string fileName, string contentType)
-	{
-		var bytes = Encoding.UTF8.GetBytes(content);
-		var base64 = Convert.ToBase64String(bytes);
-		var dataUri = $"data:{contentType};base64,{base64}";
-
-		// Simple data URI download - opens in new tab, user can save
-		Navigation.NavigateTo(dataUri, true);
-	}
-
-	public class OrganizationReportData
-	{
-		public DateTime GeneratedDate { get; set; }
-		public int TotalEmployees { get; set; }
-		public int TotalAssignments { get; set; }
-		public int CompletedAssignments { get; set; }
-		public int PendingAssignments { get; set; }
-		public int OverdueAssignments { get; set; }
-		public List<EmployeeReportData> EmployeeDetails { get; set; } = new();
-	}
-
-	public class EmployeeReportData
-	{
-		public Guid EmployeeId { get; set; }
-		public string EmployeeName { get; set; } = "";
-		public string Email { get; set; } = "";
-		public string Department { get; set; } = "";
-		public string Role { get; set; } = "";
-		public int TotalAssignments { get; set; }
-		public int CompletedAssignments { get; set; }
-		public int PendingAssignments { get; set; }
-		public int OverdueAssignments { get; set; }
-		public double CompletionPercentage { get; set; }
-	}
 }

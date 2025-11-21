@@ -10,6 +10,7 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Layout
 @using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Extensions
 @inject DialogService DialogService
@@ -29,36 +30,71 @@
 
 <PageTitle>@(template?.Name ?? "Questionnaire")</PageTitle>
 
-<div>
-    @if (template == null)
-    {
-        <div class="text-center p-5">
-            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
-            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Loading questionnaire...</RadzenText>
-        </div>
-    }
-    else if (assignment != null && assignment.WorkflowState == WorkflowState.InReview && isManager)
-    {
-        <!-- Show Review Mode for managers during InReview state -->
-        <QuestionnaireReviewMode Assignment="@assignment" OnReviewFinished="@OnReviewFinished" />
-    }
-    else
-    {
-        <div class="questionnaire-main-card">
-            <div class="page-header d-flex justify-content-between align-items-start mb-4">
-                <div>
-                    <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
-                        <RadzenIcon Icon="quiz" Class="me-2" />
-                        @template.Name
-                    </RadzenText>
-                    @if (!string.IsNullOrWhiteSpace(template.Description))
+@if (template == null)
+{
+    <div class="text-center p-5">
+        <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
+        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Loading questionnaire...</RadzenText>
+    </div>
+}
+else if (assignment != null && assignment.WorkflowState == WorkflowState.InReview && isManager)
+{
+    <!-- Show Review Mode for managers during InReview state -->
+    <QuestionnaireReviewMode Assignment="@assignment" OnReviewFinished="@OnReviewFinished" />
+}
+else
+{
+    <ImmersivePageLayout Title="@template.Name"
+                        Description="@template.Description"
+                        ShowDefaultFooter="true">
+        <DefaultFooterContent>
+            <RadzenButton Text="Previous"
+                         ButtonStyle="ButtonStyle.Light"
+                         Icon="arrow_back"
+                         Click="@PreviousSection"
+                         Disabled="@(currentSectionIndex == 0)" />
+
+            <div class="navigation-actions d-flex gap-2">
+                @if (!IsQuestionnaireCompleted())
+                {
+                    <RadzenButton Text="@(isSaving ? "Saving..." : "Save Progress")"
+                                 ButtonStyle="ButtonStyle.Info"
+                                 Icon="@(isSaving ? "hourglass_empty" : "save")"
+                                 Click="@SaveProgress"
+                                 Disabled="@isSaving" />
+
+                    @if (currentSectionIndex == visibleSections.Count - 1)
                     {
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                            @template.Description
-                        </RadzenText>
+                        <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
+                                     ButtonStyle="ButtonStyle.Success"
+                                     Icon="send"
+                                     Click="@ShowReview"
+                                     Disabled="@(!CanSubmit() || isSubmitting)" />
                     }
-                </div>
+                    else
+                    {
+                        <RadzenButton Text="Next"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Icon="arrow_forward"
+                                     Click="@NextSection"
+                                     Disabled="@(!CanProceedFromCurrentSection())" />
+                    }
+                }
+                else
+                {
+                    @* In read-only mode *@
+                    @if (currentSectionIndex < visibleSections.Count - 1)
+                    {
+                        @* Show Next button for navigation if not on last section *@
+                        <RadzenButton Text="Next"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Icon="arrow_forward"
+                                     Click="@NextSection" />
+                    }
+                }
             </div>
+        </DefaultFooterContent>
+        <ChildContent>
 
             @* Workflow Action Buttons - Sticky Banner *@
             @if (assignment != null && assignmentId.HasValue)
@@ -197,53 +233,6 @@
                 }
             </section>
 
-            <div class="navigation-footer d-flex justify-content-between mt-4">
-                <RadzenButton Text="Previous"
-                             ButtonStyle="ButtonStyle.Light"
-                             Icon="arrow_back"
-                             Click="@PreviousSection"
-                             Disabled="@(currentSectionIndex == 0)" />
-
-                <div class="navigation-actions d-flex gap-2">
-                    @if (!IsQuestionnaireCompleted())
-                    {
-                        <RadzenButton Text="@(isSaving ? "Saving..." : "Save Progress")"
-                                     ButtonStyle="ButtonStyle.Info"
-                                     Icon="@(isSaving ? "hourglass_empty" : "save")"
-                                     Click="@SaveProgress"
-                                     Disabled="@isSaving" />
-
-                        @if (currentSectionIndex == visibleSections.Count - 1)
-                        {
-                            <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
-                                         ButtonStyle="ButtonStyle.Success"
-                                         Icon="send"
-                                         Click="@ShowReview"
-                                         Disabled="@(!CanSubmit() || isSubmitting)" />
-                        }
-                        else
-                        {
-                            <RadzenButton Text="Next"
-                                         ButtonStyle="ButtonStyle.Primary"
-                                         Icon="arrow_forward"
-                                         Click="@NextSection"
-                                         Disabled="@(!CanProceedFromCurrentSection())" />
-                        }
-                    }
-                    else
-                    {
-                        @* In read-only mode *@
-                        @if (currentSectionIndex < visibleSections.Count - 1)
-                        {
-                            @* Show Next button for navigation if not on last section *@
-                            <RadzenButton Text="Next"
-                                         ButtonStyle="ButtonStyle.Primary"
-                                         Icon="arrow_forward"
-                                         Click="@NextSection" />
-                        }
-                    }
-                </div>
-            </div>
 
             @* Review Comments Display - Below Questionnaire *@
             @* Show after review meeting finishes so employee can see manager's summary before signing off *@
@@ -256,9 +245,9 @@
                                IsEmployee="@isEmployeeOnly"
                                IsManager="@isManager" />
             }
-        </div>
-    }
-</div>
+        </ChildContent>
+    </ImmersivePageLayout>
+}
 
 @code {
     [Parameter] public Guid? TemplateId { get; set; }

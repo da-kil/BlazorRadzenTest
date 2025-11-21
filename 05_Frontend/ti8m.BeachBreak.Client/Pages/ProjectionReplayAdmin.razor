@@ -1,5 +1,5 @@
 @page "/admin/projection-replay"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "Admin")]
+@using Microsoft.AspNetCore.Components.Authorization
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
@@ -7,6 +7,7 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Layout
 @inject IProjectionReplayApiService ReplayService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -15,27 +16,18 @@
 
 <PageTitle>Projection Replay Administration</PageTitle>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-container mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
-                            Projection Replay Administration
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                            Manage and monitor projection rebuilds
-                        </RadzenText>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <AsyncButton Text="Start New Replay"
-                                     ButtonStyle="ButtonStyle.Primary"
-                                     Icon="play_arrow"
-                                     Click="@ShowStartReplayDialog" />
-                        <RadzenButton Icon="refresh" Click="@LoadData" Disabled="@isLoading" ButtonStyle="ButtonStyle.Secondary" />
-                    </div>
-                </div>
+<AuthorizeView Policy="Admin">
+    <Authorized>
+        <StandardPageLayout Title="Projection Replay Administration"
+                Description="Manage and monitor projection rebuilds">
+    <HeaderActions>
+        <AsyncButton Text="Start New Replay"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="play_arrow"
+                     Click="@ShowStartReplayDialog" />
+        <RadzenButton Icon="refresh" Click="@LoadData" Disabled="@isLoading" ButtonStyle="ButtonStyle.Secondary" />
+    </HeaderActions>
+    <ChildContent>
 
                 <RadzenTabs>
                     <Tabs>
@@ -138,10 +130,13 @@
                         </RadzenTabsItem>
                     </Tabs>
                 </RadzenTabs>
-            </div>
-        </div>
-    </div>
-</div>
+    </ChildContent>
+</StandardPageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="Admin" PageName="Projection Replay Administration" />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     private List<ProjectionReplayStatus> allReplays = new();

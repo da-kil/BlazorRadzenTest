@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Questions
+@using ti8m.BeachBreak.Client.Layout
 @using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Extensions
 @inject IQuestionnaireTemplateService TemplateService
@@ -17,42 +18,58 @@
 @inject IAuthService AuthService
 
 
-<div>
-    @if (isLoading)
-    {
-        <div class="text-center p-5">
-            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
-            <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Loading review data...</RadzenText>
-        </div>
-    }
-    else if (template == null || response == null)
-    {
-        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
-            <RadzenText TextStyle="TextStyle.Body1">Unable to load questionnaire data for review.</RadzenText>
-        </RadzenAlert>
-    }
-    else
-    {
-        <div Class="questionnaire-main-card">
-            <!-- Header Section - Matches DynamicQuestionnaire -->
-            <div class="questionnaire-header mb-4">
-                <RadzenText TextStyle="TextStyle.H3" Class="questionnaire-title text-primary">
-                    Review Meeting: @template.Name
-                </RadzenText>
-                @if (!string.IsNullOrWhiteSpace(template.Description))
-                {
-                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="questionnaire-subtitle text-muted">
-                        @template.Description
-                    </RadzenText>
-                }
-                <div class="questionnaire-info-banner">
-                    <RadzenIcon Icon="info" />
-                    <div>
-                        <strong>Reviewing Employee:</strong> @Assignment.EmployeeName &nbsp;|&nbsp;
-                        As the manager, you can view and edit all answers during this review meeting. All changes are tracked.
-                    </div>
+@if (isLoading)
+{
+    <div class="text-center p-5">
+        <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
+        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Loading review data...</RadzenText>
+    </div>
+}
+else if (template == null || response == null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
+        <RadzenText TextStyle="TextStyle.Body1">Unable to load questionnaire data for review.</RadzenText>
+    </RadzenAlert>
+}
+else
+{
+    <ImmersivePageLayout Title="@($"Review Meeting: {template.Name}")"
+                        Description="@template.Description"
+                        ShowDefaultFooter="true">
+        <HeaderContent>
+            <div class="questionnaire-info-banner">
+                <RadzenIcon Icon="info" />
+                <div>
+                    <strong>Reviewing Employee:</strong> @Assignment.EmployeeName &nbsp;|&nbsp;
+                    As the manager, you can view and edit all answers during this review meeting. All changes are tracked.
                 </div>
             </div>
+        </HeaderContent>
+        <DefaultFooterContent>
+            <RadzenButton Text="Previous"
+                          ButtonStyle="ButtonStyle.Light"
+                          Icon="arrow_back"
+                          Click="@PreviousSection"
+                          Disabled="@(currentSectionIndex == 0)" />
+
+            <div class="navigation-actions d-flex gap-2">
+                @if (currentSectionIndex < template.Sections.Count - 1)
+                {
+                    <RadzenButton Text="Next"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Icon="arrow_forward"
+                                  Click="@NextSection" />
+                }
+                else
+                {
+                    <RadzenButton Text="Finish Review Meeting"
+                                  ButtonStyle="ButtonStyle.Success"
+                                  Icon="check_circle"
+                                  Click="@FinishReview" />
+                }
+            </div>
+        </DefaultFooterContent>
+        <ChildContent>
 
             <!-- Section Counter - Matches DynamicQuestionnaire -->
             <div class="section-counter mb-4">
@@ -276,35 +293,9 @@
                     </div>
                 }
             </div>
-
-            <!-- Navigation Footer - Matches DynamicQuestionnaire -->
-            <div class="navigation-footer d-flex justify-content-between mt-4">
-                <RadzenButton Text="Previous"
-                              ButtonStyle="ButtonStyle.Light"
-                              Icon="arrow_back"
-                              Click="@PreviousSection"
-                              Disabled="@(currentSectionIndex == 0)" />
-
-                <div class="navigation-actions d-flex gap-2">
-                    @if (currentSectionIndex < template.Sections.Count - 1)
-                    {
-                        <RadzenButton Text="Next"
-                                      ButtonStyle="ButtonStyle.Primary"
-                                      Icon="arrow_forward"
-                                      Click="@NextSection" />
-                    }
-                    else
-                    {
-                        <RadzenButton Text="Finish Review Meeting"
-                                      ButtonStyle="ButtonStyle.Success"
-                                      Icon="check_circle"
-                                      Click="@FinishReview" />
-                    }
-                </div>
-            </div>
-        </div>
-    }
-</div>
+        </ChildContent>
+    </ImmersivePageLayout>
+}
 
 @code {
     [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;

@@ -1,11 +1,12 @@
 @page "/questionnaire-management"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "HR")]
+@using Microsoft.AspNetCore.Components.Authorization
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Layout
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
@@ -15,27 +16,18 @@
 
 <PageTitle>Questionnaire Management</PageTitle>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-container mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
-                            Questionnaire Management
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                            Manage your questionnaire templates and view responses
-                        </RadzenText>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                        <RadzenButton Text="Create New"
-                                    ButtonStyle="ButtonStyle.Primary"
-                                    Icon="add"
-                                    Size="ButtonSize.Medium"
-                                    Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
-                    </div>
-                </div>
+<AuthorizeView Policy="HR">
+    <Authorized>
+        <StandardPageLayout Title="Questionnaire Management"
+                        Description="Manage your questionnaire templates and view responses">
+    <HeaderActions>
+        <RadzenButton Text="Create New"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="add"
+                     Size="ButtonSize.Medium"
+                     Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
+    </HeaderActions>
+    <ChildContent>
 
     <RadzenTabs>
         <Tabs>
@@ -207,10 +199,14 @@
             </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
-            </div>
-        </div>
-    </div>
-</div>
+
+    </ChildContent>
+</StandardPageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Management" />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
 

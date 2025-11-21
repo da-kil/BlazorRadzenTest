@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
 @inject IEmployeeApiService EmployeeApiService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
@@ -14,28 +15,14 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<main class="page-container">
-    <header class="page-header rz-mb-4">
-        <h1 class="page-title">
-            <RadzenIcon Icon="dashboard" Class="page-icon rz-me-2" />
-            <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-2">Dashboard</RadzenText>
-        </h1>
-        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Overview of your questionnaire assignments</RadzenText>
-    </header>
+<DashboardPageLayout Title="Dashboard"
+                    Description="Overview of your questionnaire assignments"
+                    Icon="dashboard">
+    <MetricsContent>
 
-    <section class="dashboard-content">
-
-@if (isLoading)
-{
-    <div class="text-center p-5">
-        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading dashboard...</RadzenText>
-    </div>
-}
-else if (dashboard != null)
-{
-    <!-- Metrics Cards Row -->
-    <RadzenRow Gap="1rem" Class="rz-mb-4">
+        @if (!isLoading && dashboard != null)
+        {
+            <!-- Metrics Cards Row -->
         <!-- Pending Card -->
         <RadzenColumn Size="12" SizeMD="4">
             <MetricCard Title="Pending"
@@ -62,9 +49,20 @@ else if (dashboard != null)
                        Type="MetricType.Completed"
                        OnClick="@(() => NavigateToMyQuestionnaires())" />
         </RadzenColumn>
-    </RadzenRow>
+        }
+    </MetricsContent>
 
-    <!-- Urgent Assignments Section -->
+    <ChildContent>
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading dashboard...</RadzenText>
+            </div>
+        }
+        else if (dashboard != null)
+        {
+            <!-- Urgent Assignments Section -->
     @if (dashboard.UrgentAssignments.Any())
     {
         <div class="rz-mb-4">
@@ -203,7 +201,6 @@ else
         var timeSpan = dueDate - DateTime.UtcNow;
         return (int)Math.Ceiling(timeSpan.TotalDays);
     }
-}
-
-    </section>
-</main>
+        }
+    </ChildContent>
+</DashboardPageLayout>

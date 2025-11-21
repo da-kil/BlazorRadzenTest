@@ -1,0 +1,122 @@
+@*
+    StandardPageLayout.razor
+    Layout component for management, configuration, and standard application pages.
+    Uses Radzen grid system with consistent header structure.
+*@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="0" Class="@GetContainerClasses()" style="@ContainerStyle">
+    <RadzenRow Gap="0">
+        <RadzenColumn Size="12">
+            @if (HeaderContent != null || !string.IsNullOrEmpty(Title))
+            {
+                <header class="standard-page-header">
+                    @if (HeaderContent != null)
+                    {
+                        @HeaderContent
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal"
+                                   JustifyContent="JustifyContent.SpaceBetween"
+                                   AlignItems="AlignItems.Center"
+                                   Wrap="FlexWrap.Wrap"
+                                   Gap="1rem">
+                            <div>
+                                @if (!string.IsNullOrEmpty(Title))
+                                {
+                                    <RadzenText TextStyle="TextStyle.H3" Class="text-primary rz-mb-1 standard-page-title">
+                                        @Title
+                                    </RadzenText>
+                                }
+                                @if (!string.IsNullOrEmpty(Description))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted standard-page-description">
+                                        @Description
+                                    </RadzenText>
+                                }
+                            </div>
+                            @if (HeaderActions != null)
+                            {
+                                <div class="d-flex align-items-center gap-3">
+                                    @HeaderActions
+                                </div>
+                            }
+                        </RadzenStack>
+                    }
+                </header>
+            }
+
+            <main class="standard-page-content">
+                @ChildContent
+            </main>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenStack>
+
+@code {
+    /// <summary>
+    /// Main content of the page
+    /// </summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary>
+    /// Custom header content. If provided, overrides Title/Description
+    /// </summary>
+    [Parameter] public RenderFragment? HeaderContent { get; set; }
+
+    /// <summary>
+    /// Header actions (buttons, filters, etc.) shown on the right side of header
+    /// </summary>
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+
+    /// <summary>
+    /// Page title - used when HeaderContent is not provided
+    /// </summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>
+    /// Page description/subtitle - used when HeaderContent is not provided
+    /// </summary>
+    [Parameter] public string? Description { get; set; }
+
+    /// <summary>
+    /// Additional CSS classes to apply to the outer container
+    /// </summary>
+    [Parameter] public string? CssClass { get; set; }
+
+    /// <summary>
+    /// Additional inline styles to apply to the outer container
+    /// </summary>
+    [Parameter] public string? ContainerStyle { get; set; }
+
+    /// <summary>
+    /// Whether to add container padding (default: true)
+    /// Set to false if you want to manage padding in your content
+    /// </summary>
+    [Parameter] public bool UseContainerPadding { get; set; } = true;
+
+    /// <summary>
+    /// Additional attributes to apply to the outer container
+    /// </summary>
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private string GetContainerClasses()
+    {
+        var classes = "standard-page";
+
+        if (UseContainerPadding)
+        {
+            classes += " rz-p-4";
+        }
+
+        if (!string.IsNullOrEmpty(CssClass))
+        {
+            classes += $" {CssClass}";
+        }
+
+        return classes;
+    }
+}

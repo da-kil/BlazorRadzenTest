@@ -1,5 +1,5 @@
 @page "/questionnaire-assignments"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "HR")]
+@using Microsoft.AspNetCore.Components.Authorization
 @using System.Linq
 @using Radzen
 @using Radzen.Blazor
@@ -8,6 +8,7 @@
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
 @inject IEmployeeApiService EmployeeApiService
 @inject ICategoryApiService CategoryApiService
 @inject IQuestionnaireAssignmentService AssignmentService
@@ -102,21 +103,11 @@
     /* Employee card responsive behavior moved to shared css/assignment-dialogs.css */
 </style>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-container mb-4">
-                <!-- Header -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
-                            Questionnaire Assignments
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                            Create and manage questionnaire assignments with real-time API integration
-                        </RadzenText>
-                    </div>
-                </div>
+<AuthorizeView Policy="HR">
+    <Authorized>
+        <StandardPageLayout Title="Questionnaire Assignments"
+                Description="Create and manage questionnaire assignments with real-time API integration">
+    <ChildContent>
 
                 <RadzenTabs>
                     <Tabs>
@@ -443,10 +434,13 @@
                         </RadzenTabsItem>
                     </Tabs>
                 </RadzenTabs>
-            </div>
-        </div>
-    </div>
-</div>
+    </ChildContent>
+</StandardPageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Assignments" />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
 

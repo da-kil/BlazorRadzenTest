@@ -5,6 +5,7 @@
 @using ti8m.BeachBreak.Client.Services.Enhanced
 @using Microsoft.AspNetCore.Components
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Layout
 @inject NavigationManager NavigationManager
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -15,31 +16,34 @@
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <div class="page-container mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
-                            @Configuration.PageTitle
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                            @Configuration.PageDescription
-                        </RadzenText>
-                    </div>
-                    <div class="d-flex align-items-center gap-3">
-                        <RadzenBadge BadgeStyle="@GetOverallStatusBadge()" Text="@GetOverallStatusText()" Class="px-3 py-2" />
-                        @foreach (var action in Configuration.Actions)
-                        {
-                            @if (action.IsVisible)
+            <div class="page-container @(HideHeader ? "" : "mb-4")">
+                @if (!HideHeader)
+                {
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
+                                @Configuration.PageTitle
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
+                                @Configuration.PageDescription
+                            </RadzenText>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <RadzenBadge BadgeStyle="@GetOverallStatusBadge()" Text="@GetOverallStatusText()" Class="px-3 py-2" />
+                            @foreach (var action in Configuration.Actions)
                             {
-                                <RadzenButton Text="@action.Text"
-                                             Icon="@action.Icon"
-                                             ButtonStyle="@GetButtonStyle(action.ButtonStyle)"
-                                             Click="@(() => HandleActionClick(action))"
-                                             Size="ButtonSize.Medium" />
+                                @if (action.IsVisible)
+                                {
+                                    <RadzenButton Text="@action.Text"
+                                                 Icon="@action.Icon"
+                                                 ButtonStyle="@GetButtonStyle(action.ButtonStyle)"
+                                                 Click="@(() => HandleActionClick(action))"
+                                                 Size="ButtonSize.Medium" />
+                                }
                             }
-                        }
+                        </div>
                     </div>
-                </div>
+                }
 
                 <!-- Stats Cards -->
                 <StatsCardGrid Stats="@GetStatsCards()" Columns="@Configuration.StatsConfig.Columns" UseCards="false" />
@@ -74,6 +78,7 @@
     [Parameter, EditorRequired] public IQuestionnaireDataService DataService { get; set; } = default!;
     [Parameter] public EventCallback<QuestionnaireAssignment> OnStartQuestionnaire { get; set; }
     [Parameter] public Func<Guid, bool>? HasProgressChecker { get; set; }
+    [Parameter] public bool HideHeader { get; set; } = false;
 
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> employees = new();

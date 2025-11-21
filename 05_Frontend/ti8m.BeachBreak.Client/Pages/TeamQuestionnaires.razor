@@ -1,31 +1,61 @@
 @page "/team/questionnaires"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "TeamLead")]
+@using Microsoft.AspNetCore.Components.Authorization
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Layout
+@using ti8m.BeachBreak.Client.Models.Reports
+@using ti8m.BeachBreak.Client.Services.Exports
 @using System.Text
 @inherits BaseQuestionnaireListPage
 @inject IManagerQuestionnaireService ManagerQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
+@inject IQuestionnaireReportExporter ReportExporter
 @inject IJSRuntime JSRuntime
-@inject NavigationManager Navigation
 
 <PageTitle>Team Questionnaires</PageTitle>
 
-@if (configuration != null && dataService != null)
-{
-	<GenericQuestionnaireListPage Configuration="@configuration" DataService="@dataService" />
-}
-else if (isLoading)
-{
-	<div class="text-center p-5">
-		<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-		<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading team data...</RadzenText>
-	</div>
-}
+<AuthorizeView Policy="TeamLead">
+    <Authorized>
+        <StandardPageLayout Title="Team Questionnaires"
+                   Description="View and manage questionnaires for your team members">
+	<HeaderActions>
+		@if (configuration?.Actions != null)
+		{
+			@foreach (var action in configuration.Actions.Where(a => a.IsVisible))
+			{
+				<RadzenButton Text="@action.Text"
+							 Icon="@action.Icon"
+							 ButtonStyle="@GetButtonStyle(action.ButtonStyle)"
+							 Click="@(() => HandleActionClick(action))"
+							 Size="ButtonSize.Medium" />
+			}
+		}
+	</HeaderActions>
+	<ChildContent>
+		@if (configuration != null && dataService != null)
+		{
+			<GenericQuestionnaireListPage Configuration="@configuration"
+										  DataService="@dataService"
+										  HideHeader="true" />
+		}
+		else if (isLoading)
+		{
+			<div class="text-center p-5">
+				<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading team data...</RadzenText>
+			</div>
+		}
+	</ChildContent>
+</StandardPageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="TeamLead" PageName="Team Questionnaires" />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
 	// Manager-specific state
@@ -72,15 +102,15 @@ else if (isLoading)
 		{
 			ShowInfo("Generating team report...");
 
-			// Generate export data
+			// Generate export data using refactored method
 			var exportData = GenerateTeamReportData();
 
-			// Create CSV content
-			var csvContent = GenerateCSVContent(exportData);
+			// Use shared CSV generation
+			var csvContent = await ReportExporter.GenerateCSVAsync(exportData);
 
-			// Download file
+			// Use shared download method
 			var fileName = $"Team_Questionnaires_Report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv";
-			DownloadFile(csvContent, fileName, "text/csv");
+			ReportExporter.DownloadFile(csvContent, fileName, "text/csv");
 
 			ShowSuccess($"Team report exported successfully: {fileName}");
 		}
@@ -94,36 +124,33 @@ else if (isLoading)
 	{
 		var now = DateTime.Now;
 
+		// Use centralized metrics calculation for overall team data
+		var teamMetrics = QuestionnaireMetricsCalculator.CalculateMetrics(allAssignments, now);
+
 		var reportData = new TeamReportData
 		{
 			GeneratedDate = now,
 			TotalTeamMembers = teamMembers.Count,
-			TotalAssignments = allAssignments.Count,
-			CompletedAssignments = allAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized),
-			PendingAssignments = allAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized &&
-										(!a.DueDate.HasValue || a.DueDate.Value >= now)),
-			OverdueAssignments = allAssignments.Count(a => a.DueDate.HasValue &&
-										a.DueDate.Value < now &&
-										a.WorkflowState != WorkflowState.Finalized),
+			TotalAssignments = teamMetrics.Total,
+			CompletedAssignments = teamMetrics.Completed,
+			PendingAssignments = teamMetrics.Pending,
+			OverdueAssignments = teamMetrics.Overdue,
 			TeamMemberDetails = teamMembers.Select(member =>
 			{
 				var memberAssignments = allAssignments.Where(a => a.EmployeeId == member.Id).ToList();
+				var memberMetrics = QuestionnaireMetricsCalculator.CalculateMetrics(memberAssignments, now);
+
 				return new TeamMemberReportData
 				{
 					MemberId = member.Id,
 					MemberName = $"{member.FirstName} {member.LastName}",
 					Email = member.EMail,
 					Role = member.ApplicationRole.ToString(),
-					TotalAssignments = memberAssignments.Count,
-					CompletedAssignments = memberAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized),
-					PendingAssignments = memberAssignments.Count(a => a.WorkflowState != WorkflowState.Finalized &&
-										(!a.DueDate.HasValue || a.DueDate.Value >= now)),
-					OverdueAssignments = memberAssignments.Count(a => a.DueDate.HasValue &&
-										a.DueDate.Value < now &&
-										a.WorkflowState != WorkflowState.Finalized),
-					CompletionPercentage = memberAssignments.Any()
-						? Math.Round((double)memberAssignments.Count(a => a.WorkflowState == WorkflowState.Finalized) / memberAssignments.Count * 100, 1)
-						: 0
+					TotalAssignments = memberMetrics.Total,
+					CompletedAssignments = memberMetrics.Completed,
+					PendingAssignments = memberMetrics.Pending,
+					OverdueAssignments = memberMetrics.Overdue,
+					CompletionPercentage = memberMetrics.CompletionPercentage
 				};
 			}).OrderBy(m => m.MemberName).ToList()
 		};
@@ -131,64 +158,7 @@ else if (isLoading)
 		return reportData;
 	}
 
-	private string GenerateCSVContent(TeamReportData data)
-	{
-		var sb = new StringBuilder();
 
-		// Header information
-		sb.AppendLine($"Team Questionnaires Report");
-		sb.AppendLine($"Generated: {data.GeneratedDate:yyyy-MM-dd HH:mm:ss}");
-		sb.AppendLine($"Total Team Members: {data.TotalTeamMembers}");
-		sb.AppendLine($"Total Assignments: {data.TotalAssignments}");
-		sb.AppendLine($"Completed: {data.CompletedAssignments}");
-		sb.AppendLine($"Pending: {data.PendingAssignments}");
-		sb.AppendLine($"Overdue: {data.OverdueAssignments}");
-		sb.AppendLine($"Team Completion Rate: {(data.TotalAssignments > 0 ? Math.Round((double)data.CompletedAssignments / data.TotalAssignments * 100, 1) : 0):F1}%");
-		sb.AppendLine();
 
-		// Team member details header
-		sb.AppendLine("Team Member,Email,Role,Total Assignments,Completed,Pending,Overdue,Completion %");
 
-		// Team member data rows
-		foreach (var member in data.TeamMemberDetails)
-		{
-			sb.AppendLine($"\"{member.MemberName}\",\"{member.Email}\",\"{member.Role}\",{member.TotalAssignments},{member.CompletedAssignments},{member.PendingAssignments},{member.OverdueAssignments},{member.CompletionPercentage:F1}%");
-		}
-
-		return sb.ToString();
-	}
-
-	private void DownloadFile(string content, string fileName, string contentType)
-	{
-		var bytes = Encoding.UTF8.GetBytes(content);
-		var base64 = Convert.ToBase64String(bytes);
-		var dataUri = $"data:{contentType};base64,{base64}";
-
-		// Simple data URI download - opens in new tab, user can save
-		Navigation.NavigateTo(dataUri, true);
-	}
-
-	public class TeamReportData
-	{
-		public DateTime GeneratedDate { get; set; }
-		public int TotalTeamMembers { get; set; }
-		public int TotalAssignments { get; set; }
-		public int CompletedAssignments { get; set; }
-		public int PendingAssignments { get; set; }
-		public int OverdueAssignments { get; set; }
-		public List<TeamMemberReportData> TeamMemberDetails { get; set; } = new();
-	}
-
-	public class TeamMemberReportData
-	{
-		public Guid MemberId { get; set; }
-		public string MemberName { get; set; } = "";
-		public string Email { get; set; } = "";
-		public string Role { get; set; } = "";
-		public int TotalAssignments { get; set; }
-		public int CompletedAssignments { get; set; }
-		public int PendingAssignments { get; set; }
-		public int OverdueAssignments { get; set; }
-		public double CompletionPercentage { get; set; }
-	}
 }

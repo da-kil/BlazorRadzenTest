@@ -1,11 +1,12 @@
 @page "/admin/categories"
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Policy = "HR")]
+@using Microsoft.AspNetCore.Components.Authorization
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
 @inject ICategoryApiService CategoryService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -13,26 +14,17 @@
 
 <PageTitle>Questionnaire Type Administration</PageTitle>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-container mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div>
-                        <RadzenText TextStyle="TextStyle.H3" Class="text-primary mb-1">
-                            Questionnaire Type Administration
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted">
-                            Manage questionnaire types (e.g., Annual Reviews, Quarterly Check-ins)
-                        </RadzenText>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <AsyncButton Text="Add New Type"
-                                     ButtonStyle="ButtonStyle.Primary"
-                                     Icon="add"
-                                     Click="@ShowAddCategoryDialog" />
-                    </div>
-                </div>
+<AuthorizeView Policy="HR">
+    <Authorized>
+        <StandardPageLayout Title="Questionnaire Type Administration"
+                Description="Manage questionnaire types (e.g., Annual Reviews, Quarterly Check-ins)">
+    <HeaderActions>
+        <AsyncButton Text="Add New Type"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="add"
+                     Click="@ShowAddCategoryDialog" />
+    </HeaderActions>
+    <ChildContent>
 
                 <div class="mb-3 d-flex justify-content-between">
                     <RadzenTextBox @bind-Value="@searchText"
@@ -148,10 +140,13 @@
                         </RadzenDataGridColumn>
                     </Columns>
                 </RadzenDataGrid>
-            </div>
-        </div>
-    </div>
-</div>
+    </ChildContent>
+</StandardPageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Type Administration" />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
 

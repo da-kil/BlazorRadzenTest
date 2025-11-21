@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Radzen;
+using Radzen.Blazor;
+using System.Text;
 using ti8m.BeachBreak.Client.Components.Shared;
 using ti8m.BeachBreak.Client.Models;
 using ti8m.BeachBreak.Client.Services;
@@ -15,6 +17,7 @@ public abstract class BaseQuestionnaireListPage : OptimizedComponentBase
 {
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
+    [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
 
     protected QuestionnairePageConfiguration? configuration;
     protected IQuestionnaireDataService? dataService;
@@ -155,6 +158,47 @@ public abstract class BaseQuestionnaireListPage : OptimizedComponentBase
     protected void ShowWarning(string message)
     {
         NotificationService.Notify(NotificationSeverity.Warning, "Warning", message);
+    }
+
+    /// <summary>
+    /// Handles action button clicks by invoking the action's OnClick delegate.
+    /// Shared across all questionnaire list pages.
+    /// </summary>
+    protected void HandleActionClick(QuestionnairePageAction action)
+    {
+        action.OnClick?.Invoke();
+    }
+
+    /// <summary>
+    /// Converts string button style names to Radzen ButtonStyle enum values.
+    /// Shared utility method for consistent button styling across all pages.
+    /// </summary>
+    protected static ButtonStyle GetButtonStyle(string buttonStyle)
+    {
+        return buttonStyle switch
+        {
+            "Primary" => ButtonStyle.Primary,
+            "Secondary" => ButtonStyle.Secondary,
+            "Success" => ButtonStyle.Success,
+            "Warning" => ButtonStyle.Warning,
+            "Danger" => ButtonStyle.Danger,
+            "Info" => ButtonStyle.Info,
+            "Light" => ButtonStyle.Light,
+            "Dark" => ButtonStyle.Dark,
+            _ => ButtonStyle.Primary
+        };
+    }
+
+    /// <summary>
+    /// Downloads a file by creating a data URI and navigating to it.
+    /// Shared utility method for report exports across Team and Organization pages.
+    /// </summary>
+    protected void DownloadFile(string content, string fileName, string contentType)
+    {
+        var bytes = Encoding.UTF8.GetBytes(content);
+        var base64 = Convert.ToBase64String(bytes);
+        var dataUri = $"data:{contentType};base64,{base64}";
+        NavigationManager.NavigateTo(dataUri, true);
     }
 
     #endregion

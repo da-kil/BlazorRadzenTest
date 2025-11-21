@@ -5,34 +5,53 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
 @inherits BaseQuestionnaireListPage
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
-@inject NavigationManager NavigationManager
 
 <PageTitle>My Questionnaires</PageTitle>
 
-@if (configuration != null && dataService != null)
-{
-	<GenericQuestionnaireListPage Configuration="@configuration"
-								  DataService="@dataService"
-								  OnStartQuestionnaire="@StartQuestionnaire"
-								  HasProgressChecker="@((assignmentId) => questionnaireResponses.ContainsKey(assignmentId))" />
-}
-else if (isLoading)
-{
-	<div class="text-center p-5">
-		<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-		<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading my questionnaires...</RadzenText>
-	</div>
-}
-else
-{
-	<div class="text-center p-5">
-		<RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No questionnaire data available.</RadzenText>
-	</div>
-}
+<StandardPageLayout Title="My Questionnaires"
+                   Description="View and complete your assigned questionnaires">
+	<HeaderActions>
+		@if (configuration?.Actions != null)
+		{
+			@foreach (var action in configuration.Actions.Where(a => a.IsVisible))
+			{
+				<RadzenButton Text="@action.Text"
+							 Icon="@action.Icon"
+							 ButtonStyle="@GetButtonStyle(action.ButtonStyle)"
+							 Click="@(() => HandleActionClick(action))"
+							 Size="ButtonSize.Medium" />
+			}
+		}
+	</HeaderActions>
+	<ChildContent>
+		@if (configuration != null && dataService != null)
+		{
+			<GenericQuestionnaireListPage Configuration="@configuration"
+										  DataService="@dataService"
+										  OnStartQuestionnaire="@StartQuestionnaire"
+										  HasProgressChecker="@((assignmentId) => questionnaireResponses.ContainsKey(assignmentId))"
+										  HideHeader="true" />
+		}
+		else if (isLoading)
+		{
+			<div class="text-center p-5">
+				<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading my questionnaires...</RadzenText>
+			</div>
+		}
+		else
+		{
+			<div class="text-center p-5">
+				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No questionnaire data available.</RadzenText>
+			</div>
+		}
+	</ChildContent>
+</StandardPageLayout>
 
 @code {
 	// Employee-specific state
@@ -186,5 +205,6 @@ else
 			HandleError(ex, "starting questionnaire");
 		}
 	}
+
 
 }
