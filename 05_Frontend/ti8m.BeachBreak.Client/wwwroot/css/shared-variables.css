@@ -88,7 +88,7 @@
     --spacing-3xl: 3rem;      /* 48px */
 
     /* Typography */
-    --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    --font-family-base: 'Roboto', sans-serif;
     --font-family-mono: 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
 
     --font-size-xs: 0.75rem;   /* 12px */
@@ -100,10 +100,25 @@
     --font-size-3xl: 1.875rem; /* 30px */
     --font-size-4xl: 2.25rem;  /* 36px */
 
-    --font-weight-normal: 400;
-    --font-weight-medium: 500;
-    --font-weight-semibold: 600;
-    --font-weight-bold: 700;
+    /* Base Roboto Font Weights */
+    --font-weight-light: 300;      /* Roboto Light */
+    --font-weight-regular: 400;    /* Roboto Regular */
+    --font-weight-medium: 500;     /* Roboto Medium */
+    --font-weight-semibold: 600;   /* Roboto Semibold (if needed) */
+
+    /* Semantic Typography Aliases */
+    --font-weight-body: var(--font-weight-light);           /* Body text default */
+    --font-weight-heading: var(--font-weight-medium);       /* All headings */
+    --font-weight-emphasis: var(--font-weight-medium);      /* Emphasized text */
+    --font-weight-strong: var(--font-weight-semibold);      /* Strong emphasis */
+
+    /* Component-Specific Semantic Variables */
+    --font-weight-card-title: var(--font-weight-medium);
+    --font-weight-section-title: var(--font-weight-medium);
+    --font-weight-form-label: var(--font-weight-medium);
+    --font-weight-badge: var(--font-weight-medium);
+    --font-weight-button: var(--font-weight-medium);
+    --font-weight-nav-item: var(--font-weight-medium);
 
     --line-height-tight: 1.25;
     --line-height-normal: 1.5;

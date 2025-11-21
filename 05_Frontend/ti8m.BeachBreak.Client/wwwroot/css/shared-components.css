@@ -737,3 +737,60 @@
     background: var(--rz-base-100);
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
+
+/* =============================================
+   TYPOGRAPHY PATTERNS - SEMANTIC FONT WEIGHTS
+   Consolidated typography classes to eliminate duplication
+   ============================================= */
+
+/* Card Components */
+.card-title,
+.card-header-title {
+    font-weight: var(--font-weight-card-title);
+}
+
+/* Section Headers */
+.section-title-semantic,
+.section-header-title {
+    font-weight: var(--font-weight-section-title);
+}
+
+/* Form Elements */
+.form-label-semantic,
+.input-label,
+.field-label {
+    font-weight: var(--font-weight-form-label);
+}
+
+/* Badges and Tags */
+.badge-text,
+.tag-label,
+.pill-label {
+    font-weight: var(--font-weight-badge);
+}
+
+/* Employee/User Info */
+.user-name,
+.employee-name-semantic,
+.person-name {
+    font-weight: var(--font-weight-emphasis);
+}
+
+/* Navigation */
+.nav-link-semantic,
+.menu-item {
+    font-weight: var(--font-weight-nav-item);
+}
+
+/* Generic Emphasis Classes */
+.text-emphasis {
+    font-weight: var(--font-weight-emphasis);
+}
+
+.text-strong {
+    font-weight: var(--font-weight-strong);
+}
+
+.text-subtle {
+    font-weight: var(--font-weight-light);
+}

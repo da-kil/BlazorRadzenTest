@@ -619,13 +619,13 @@
 
 .step-modern.active .step-text-modern {
     color: #3b82f6;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     transform: scale(1.05);
 }
 
 .step-modern.completed .step-text-modern {
     color: #10b981;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
 }
 
 /* Step Progress Indicator */

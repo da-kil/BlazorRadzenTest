@@ -72,7 +72,7 @@
 
 .competency-item.rating-context .competency-title {
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     margin: 0 0 8px 0;
     color: var(--dark-color);
 }
@@ -190,7 +190,7 @@
 
 .collaborative-goal .goal-header .fw-bold {
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     color: var(--dark-color);
 }
 
@@ -209,7 +209,7 @@
 
 .text-section-title {
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     margin: 0 0 12px 0;
     color: var(--textquestion-title-color) !important;
     display: flex;
@@ -441,7 +441,7 @@
 
 .goal-section-title {
     font-size: 1.1rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     margin: 0 0 8px 0;
     color: var(--dark-color);
     display: flex;
@@ -533,7 +533,7 @@
 
 .summary-title {
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     color: var(--dark-color);
     margin: 0 0 0.75rem 0;
     line-height: 1.2;
@@ -804,7 +804,7 @@
 .section-title {
     color: var(--primary-color);
     font-size: 1.5rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     margin: 0;
     line-height: 1.3;
 }
@@ -823,7 +823,7 @@
     gap: 0.5rem;
     padding: 0.5rem 1rem;
     border-radius: 20px;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     font-size: 0.875rem;
     white-space: nowrap;
 }
@@ -861,7 +861,7 @@
 
 .question-title {
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     color: var(--dark-color);
     margin-bottom: 0.75rem;
     display: flex;
@@ -883,7 +883,7 @@
 
 .question-title {
     font-size: 1.125rem;
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     color: var(--primary-color);
     margin-bottom: 0.75rem;
     display: flex;
@@ -1096,7 +1096,7 @@
 }
 
 .answer-label {
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1141,7 +1141,7 @@
 }
 
 .question-item-title {
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     font-size: 1rem;
     margin-bottom: 0.5rem;
     color: var(--dark-color);

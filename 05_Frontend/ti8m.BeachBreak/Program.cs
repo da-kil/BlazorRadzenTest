@@ -1,12 +1,10 @@
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Radzen;
 using ti8m.BeachBreak.Authentication;
-using ti8m.BeachBreak.Authorization;
 using ti8m.BeachBreak.Client.Configuration;
 using ti8m.BeachBreak.Client.Services;
+using ti8m.BeachBreak.Client.Services.Exports;
 using ti8m.BeachBreak.Components;
 
 namespace ti8m.BeachBreak;
@@ -324,6 +322,9 @@ public class Program
         builder.Services.AddScoped<QuestionConfigurationService>();
         builder.Services.AddScoped<QuestionnaireValidationService>();
         builder.Services.AddScoped<GoalService>();
+
+        // Register export services
+        builder.Services.AddScoped<IQuestionnaireReportExporter, QuestionnaireReportExporter>();
 
         // Register question type handlers (Strategy Pattern)
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.AssessmentQuestionHandler>();

@@ -142,7 +142,7 @@
     padding: 0.75rem 1rem !important;
     background: white !important;
     font-size: 1.125rem !important;
-    font-weight: 600 !important;
+    font-weight: var(--font-weight-emphasis) !important;
     transition: all 0.2s ease-in-out !important;
 }
 
@@ -194,7 +194,7 @@
 
 .config-title {
     color: var(--primary-color);
-    font-weight: 600;
+    font-weight: var(--font-weight-emphasis);
     margin: 0;
 }
 
@@ -261,7 +261,7 @@
 }
 
 .stat-number {
-    font-weight: 700;
+    font-weight: var(--font-weight-emphasis);
     color: var(--primary-color);
     font-size: 0.9375rem;
 }

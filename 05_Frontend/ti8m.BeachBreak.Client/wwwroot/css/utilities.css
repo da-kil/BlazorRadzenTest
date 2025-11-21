@@ -150,11 +150,17 @@
 .text-3xl { font-size: var(--font-size-3xl) !important; }
 .text-4xl { font-size: var(--font-size-4xl) !important; }
 
-/* Font Weights */
-.font-normal { font-weight: var(--font-weight-normal) !important; }
+/* Font Weights - Roboto Only */
+.font-light { font-weight: var(--font-weight-light) !important; }
+.font-regular { font-weight: var(--font-weight-regular) !important; }
 .font-medium { font-weight: var(--font-weight-medium) !important; }
 .font-semibold { font-weight: var(--font-weight-semibold) !important; }
-.font-bold { font-weight: var(--font-weight-bold) !important; }
+
+/* Semantic Font Weight Utilities */
+.font-body { font-weight: var(--font-weight-body) !important; }
+.font-heading { font-weight: var(--font-weight-heading) !important; }
+.font-emphasis { font-weight: var(--font-weight-emphasis) !important; }
+.font-strong { font-weight: var(--font-weight-strong) !important; }
 
 /* Text Colors */
 .text-primary { color: var(--primary-color) !important; }
