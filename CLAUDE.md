@@ -278,3 +278,179 @@ The refactoring effort to create the Optimized components was significant. Don't
 - See pattern #7 (Frontend Component Architecture) for matching validation in the UI layer
 
 **Historical Bug** (Fixed 2025-11-10): Assessment validation only checked if ANY competency was rated (`Any(c => c.Rating > 0)`), rather than validating that ALL competencies defined in the template configuration were rated. This allowed incomplete assessments to be marked as complete.
+
+### 10. Authorization Pattern - Consistent Page-Level Security
+
+**CRITICAL**: All admin pages use `<AuthorizeView Policy="...">` pattern for consistent user experience and clear access control.
+
+#### Standard Authorization Pattern for Admin Pages
+
+**ALWAYS** use the AuthorizeView component for admin pages instead of `@attribute [Authorize]`:
+
+```razor
+@page "/admin/some-page"
+@using Microsoft.AspNetCore.Components.Authorization
+
+<AuthorizeView Policy="PolicyName">
+    <Authorized>
+        <StandardPageLayout Title="Page Title" Description="Page description">
+            <!-- Page content here -->
+        </StandardPageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="RequiredRole" PageName="Descriptive Page Name" />
+    </NotAuthorized>
+</AuthorizeView>
+```
+
+#### Authorization Policies Available
+
+1. **Employee** - All authenticated users (Employee+)
+2. **TeamLead** - Team leads and above (TeamLead, HR, HRLead, Admin)
+3. **HR** - HR staff and above (HR, HRLead, Admin)
+4. **HRLead** - HR leads and above (HRLead, Admin)
+5. **Admin** - Administrator only
+
+#### Pages Using AuthorizeView Pattern
+
+**Admin Pages (HR Policy)**:
+- HRDashboard.razor
+- QuestionnaireManagement.razor
+- QuestionnaireBuilder.razor
+- QuestionnaireAssignments.razor
+- CategoryAdmin.razor
+- RoleManagement.razor
+- OrganizationQuestionnaires.razor
+
+**Manager Pages (TeamLead Policy)**:
+- ManagerDashboard.razor
+- TeamQuestionnaires.razor
+
+**System Admin (Admin Policy)**:
+- ProjectionReplayAdmin.razor
+
+**Employee Pages (Generic @attribute [Authorize])**:
+- Dashboard.razor
+- MyQuestionnaires.razor
+- DynamicQuestionnaire.razor
+- Home.razor
+
+#### Key Benefits of AuthorizeView Pattern
+
+1. **Consistent UX**: Users get clear "Access Denied" messages instead of blank pages
+2. **Professional Error Handling**: Custom error UI with icons and explanations
+3. **Maintainable**: Centralized AccessDeniedComponent for consistent styling
+4. **User-Friendly**: Clear messaging about required permissions
+
+#### AccessDeniedComponent Usage
+
+The reusable component accepts two parameters:
+- `RequiredRole`: Display name of required role (e.g., "HR", "Admin", "TeamLead")
+- `PageName`: Descriptive name of the page (e.g., "Questionnaire Builder", "Role Management")
+
+#### Historical Context
+
+This pattern was standardized (2025-11-21) to replace inconsistent authorization approaches. Previously, most admin pages used `@attribute [Authorize(Policy = "...")]` which resulted in blank pages for unauthorized users, while only RoleManagement.razor provided proper error messages.
+
+#### When to Use Each Pattern
+
+- **Use AuthorizeView**: For admin pages where users need clear feedback about access restrictions
+- **Use @attribute [Authorize]**: For employee-accessible pages where generic authentication is sufficient
+
+## Typography System Guidelines
+
+### Font Weight Architecture
+
+**CRITICAL**: This application uses a consolidated typography system with semantic CSS variables. Never hardcode font-weight values.
+
+#### Base Font System
+- **Font Family**: Roboto only (`font-family: 'Roboto', sans-serif`)
+- **Default Body Weight**: 300 (Roboto Light)
+- **Default Heading Weight**: 500 (Roboto Medium)
+
+#### Font Weight Variables (Use These)
+
+**Base Weights**:
+- `--font-weight-light: 300` - Roboto Light
+- `--font-weight-regular: 400` - Roboto Regular
+- `--font-weight-medium: 500` - Roboto Medium
+- `--font-weight-semibold: 600` - Roboto Semibold
+
+**Semantic Aliases (Preferred)**:
+- `--font-weight-body: 300` - Body text default
+- `--font-weight-heading: 500` - All headings (h1-h6)
+- `--font-weight-emphasis: 500` - Emphasized text
+- `--font-weight-strong: 600` - Strong emphasis
+
+**Component-Specific Variables**:
+- `--font-weight-card-title: 500` - Card headers
+- `--font-weight-section-title: 500` - Section headings
+- `--font-weight-form-label: 500` - Form labels
+- `--font-weight-badge: 500` - Badge text
+- `--font-weight-button: 500` - Button text
+- `--font-weight-nav-item: 500` - Navigation items
+
+#### Typography Rules
+
+**✅ DO**:
+```css
+/* Use semantic variables */
+.employee-name { font-weight: var(--font-weight-emphasis); }
+
+/* Use component-specific variables */
+.card-header { font-weight: var(--font-weight-card-title); }
+
+/* Rely on inheritance for headings */
+<h3 class="section-title">Title</h3> /* Already inherits font-weight: 500 */
+```
+
+**❌ DON'T**:
+```css
+/* Never hardcode numeric values */
+.title { font-weight: 500; }
+.label { font-weight: 600; }
+.text { font-weight: bold; }
+
+/* Don't override inherited heading weights unnecessarily */
+h3 { font-weight: 500; } /* Already inherited from root */
+```
+
+#### Utility Classes Available
+
+Use these for inline emphasis in HTML:
+- `.font-light` - Light text (300)
+- `.font-medium` - Medium emphasis (500)
+- `.font-semibold` - Strong emphasis (600)
+
+```html
+<!-- Good: Utility classes for emphasis -->
+<p class="font-medium">Important text</p>
+<span class="font-light">Subtle text</span>
+```
+
+#### Maintenance Guidelines
+
+**Single Source of Truth**: All font-weight changes happen in `shared-variables.css`
+
+**Component Changes**: Use semantic variables, not hardcoded values
+```css
+/* Component CSS - Use semantic variables */
+.special-title {
+    font-weight: var(--font-weight-section-title); /* Good */
+}
+```
+
+**Design System Evolution**: Change variable values to update entire application
+```css
+/* To make all sections bolder, change one variable: */
+--font-weight-section-title: var(--font-weight-semibold); /* Updates everywhere */
+```
+
+
+#### Historical Context
+
+This typography system was consolidated (2025-11-21) to eliminate 88+ hardcoded font-weight declarations scattered across 19+ CSS files. The new system provides:
+- Single source of truth for font decisions
+- Semantic variable names for clear intent
+- Component-specific variables for maintainability
+- 77% reduction in font-weight declarations
