@@ -445,12 +445,3 @@ Use these for inline emphasis in HTML:
 /* To make all sections bolder, change one variable: */
 --font-weight-section-title: var(--font-weight-semibold); /* Updates everywhere */
 ```
-
-
-#### Historical Context
-
-This typography system was consolidated (2025-11-21) to eliminate 88+ hardcoded font-weight declarations scattered across 19+ CSS files. The new system provides:
-- Single source of truth for font decisions
-- Semantic variable names for clear intent
-- Component-specific variables for maintainability
-- 77% reduction in font-weight declarations
