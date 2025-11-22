@@ -190,8 +190,8 @@
                         </div>
                     </div>
                     <div class="p-3">
-                        <div class="row g-2">
-                            <div class="col-md-4">
+                        <RadzenRow Gap="0.5rem">
+                            <RadzenColumn Size="12" SizeMD="4">
                                 <div class="question-type-card assessment h-100 p-3 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
                                      style="transition: all 0.15s ease-in-out; transform: scale(1);"
                                      @onclick="async () => await OnAddQuestionOfType(QuestionType.Assessment)"
@@ -218,8 +218,8 @@
                                         <span class="badge badge-assessment px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
                                 <div class="question-type-card goal-achievement h-100 p-3 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
                                      style="transition: all 0.15s ease-in-out; transform: scale(1);"
                                      @onclick="async () => await OnAddQuestionOfType(QuestionType.Goal)"
@@ -246,8 +246,8 @@
                                         <span class="badge badge-goal-achievement px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="col-md-4">
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="4">
                                 <div class="question-type-card text-response h-100 p-3 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
                                      style="transition: all 0.15s ease-in-out; transform: scale(1);"
                                      @onclick="async () => await OnAddQuestionOfType(QuestionType.TextQuestion)"
@@ -274,8 +274,8 @@
                                         <span class="badge badge-text-response px-2 py-1" style="font-size: 0.7rem;">Click to Add</span>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
+                            </RadzenColumn>
+                        </RadzenRow>
                     </div>
                 </div>
             </div>

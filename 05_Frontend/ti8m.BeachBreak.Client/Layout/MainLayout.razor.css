@@ -110,7 +110,7 @@
 
 .content-wrapper {
     flex: 1;
-    padding: 2rem;
+    padding: 1rem 0.5rem;  /* Reduced horizontal padding for full-width layouts */
     overflow-y: auto;
 }
 
@@ -141,7 +141,7 @@
     }
 
     .content-wrapper {
-        padding: 1rem;
+        padding: 1rem 0.25rem;  /* Even less horizontal padding on mobile */
     }
 }
 
@@ -152,7 +152,9 @@
 
     .sidebar {
         width: 280px;
+        flex-shrink: 0;
         min-height: calc(100vh - 5rem);
+        overflow-y: auto;
     }
 }
 

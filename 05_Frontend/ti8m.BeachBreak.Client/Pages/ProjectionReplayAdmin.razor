@@ -8,6 +8,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
+@using ti8m.BeachBreak.Client.Models
 @inject IProjectionReplayApiService ReplayService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -18,7 +19,8 @@
 
 <AuthorizeView Policy="Admin">
     <Authorized>
-        <StandardPageLayout Title="Projection Replay Administration"
+        <PageLayout Type="LayoutType.Standard"
+                   Title="Projection Replay Administration"
                 Description="Manage and monitor projection rebuilds">
     <HeaderActions>
         <AsyncButton Text="Start New Replay"
@@ -131,7 +133,7 @@
                     </Tabs>
                 </RadzenTabs>
     </ChildContent>
-</StandardPageLayout>
+</PageLayout>
     </Authorized>
     <NotAuthorized>
         <AccessDeniedComponent RequiredRole="Admin" PageName="Projection Replay Administration" />

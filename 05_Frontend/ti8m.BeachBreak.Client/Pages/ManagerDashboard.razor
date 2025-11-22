@@ -4,21 +4,18 @@
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
 @inject IManagerQuestionnaireService ManagerService
 @inject NavigationManager NavigationManager
 
 <AuthorizeView Policy="TeamLead">
     <Authorized>
-        <main class="page-container">
-    <header class="page-header">
-        <h1 class="page-title">
-            <RadzenIcon Icon="supervisor_account" Class="page-icon rz-me-2" />
-            <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">Manager Dashboard</RadzenText>
-        </h1>
-    </header>
-
-    <section class="dashboard-content">
-        <RadzenStack Gap="1.5rem">
+        <PageLayout Title="Manager Dashboard"
+                   Description="Team overview and management metrics">
+            <HeaderActions>
+                <RadzenIcon Icon="supervisor_account" Class="page-icon" />
+            </HeaderActions>
+            <ChildContent>
 
     @if (isLoading)
     {
@@ -176,9 +173,8 @@
         </RadzenText>
     }
 
-        </RadzenStack>
-    </section>
-</main>
+            </ChildContent>
+        </PageLayout>
     </Authorized>
     <NotAuthorized>
         <AccessDeniedComponent RequiredRole="TeamLead" PageName="Manager Dashboard" />

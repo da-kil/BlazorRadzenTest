@@ -2,7 +2,9 @@
 @using ti8m.BeachBreak.Client.Models
 
 <RadzenCard Class="@($"metric-card {GetMetricTypeClass()}")" Style="@($"cursor: {(OnClick.HasDelegate ? "pointer" : "default")};")" @onclick="@OnClick">
-    <div class="d-flex justify-content-between align-items-center">
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 JustifyContent="JustifyContent.SpaceBetween"
+                 AlignItems="AlignItems.Center">
         <div>
             <RadzenText TextStyle="TextStyle.Body2" Style="opacity: 0.9;">@Title</RadzenText>
             <RadzenText TextStyle="TextStyle.H3" Class="rz-mt-2">@Value</RadzenText>
@@ -15,7 +17,7 @@
         {
             <RadzenIcon Icon="@Icon" Style="font-size: 3rem; opacity: 0.3;" />
         }
-    </div>
+    </RadzenStack>
 </RadzenCard>
 
 @code {

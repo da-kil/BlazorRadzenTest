@@ -8,7 +8,7 @@
     --light-blue: #D8E0E6;
     --peach-kiss: #F08080;
     /* Semantic color assignments */
-    --primary-color: var(--blue-new);
+    --primary-color: var(--blue-new) !important;
     --secondary-color: var(--ice-blue);
     --success-color: var(--green-new);
     --warning-color: var(--golden-milk);
@@ -117,7 +117,7 @@ h1:focus {
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-    color: var(--bs-secondary-color);
+    color: var(--text-muted, #6c757d);
     text-align: end;
 }
 

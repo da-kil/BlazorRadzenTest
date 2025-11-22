@@ -1,9 +1,9 @@
 @using Radzen.Blazor
 
-<div class="row mb-4">
+<RadzenRow Gap="1rem" Class="rz-mb-4">
     @foreach (var stat in Stats)
     {
-        <div class="col-md-@GetColumnSize() col-sm-6 mb-3">
+        <RadzenColumn Size="12" SizeSM="6" SizeMD="@GetColumnSize()">
             @if (UseCards)
             {
                 <RadzenCard Class="@($"text-center stats-card {stat.CssClass}")" Style="cursor: default; transition: none !important; transform: none !important;">
@@ -44,9 +44,9 @@
                     }
                 </div>
             }
-        </div>
+        </RadzenColumn>
     }
-</div>
+</RadzenRow>
 
 @code {
     [Parameter] public List<StatCard> Stats { get; set; } = new();

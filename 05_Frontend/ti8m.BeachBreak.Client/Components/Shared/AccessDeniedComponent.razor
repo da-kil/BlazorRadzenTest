@@ -2,9 +2,12 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Layout
 
-<StandardPageLayout Title="Access Denied" Description="You do not have permission to access this page">
+<PageLayout Title="Access Denied" Description="You do not have permission to access this page">
     <ChildContent>
-        <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
+        <RadzenStack Orientation="Orientation.Vertical"
+                     AlignItems="AlignItems.Center"
+                     JustifyContent="JustifyContent.Center"
+                     Style="min-height: 400px;">
             <RadzenIcon Icon="block" Style="font-size: 4rem; color: var(--rz-danger);" Class="rz-mb-3" />
             <RadzenText TextStyle="TextStyle.H4" Class="rz-mb-2">Access Denied</RadzenText>
             <RadzenText TextStyle="TextStyle.Body1" Class="text-muted text-center">
@@ -12,9 +15,9 @@
                 <br />
                 This page is restricted to @RequiredRole users only.
             </RadzenText>
-        </div>
+        </RadzenStack>
     </ChildContent>
-</StandardPageLayout>
+</PageLayout>
 
 @code {
     [Parameter] public string RequiredRole { get; set; } = "authorized";

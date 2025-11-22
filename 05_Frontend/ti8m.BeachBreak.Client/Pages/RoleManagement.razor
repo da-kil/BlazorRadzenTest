@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Layout
+@using ti8m.BeachBreak.Client.Models
 @inject IEmployeeApiService EmployeeService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
@@ -15,8 +16,9 @@
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <StandardPageLayout Title="Application Role Management"
-                        Description="Manage employee application roles">
+        <PageLayout Type="LayoutType.Standard"
+                   Title="Application Role Management"
+                   Description="Manage employee application roles">
             <ChildContent>
 
                             <div class="mb-3 d-flex justify-content-between align-items-center gap-2">
@@ -120,10 +122,12 @@
                                 </RadzenDataGrid>
                             }
             </ChildContent>
-        </StandardPageLayout>
+        </PageLayout>
     </Authorized>
     <NotAuthorized>
-        <StandardPageLayout Title="Access Denied" Description="You do not have permission to access this page">
+        <PageLayout Type="LayoutType.Standard"
+                   Title="Access Denied"
+                   Description="You do not have permission to access this page">
             <ChildContent>
                 <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 400px;">
                     <RadzenIcon Icon="block" Style="font-size: 4rem; color: var(--rz-danger);" Class="rz-mb-3" />
@@ -135,7 +139,7 @@
                     </RadzenText>
                 </div>
             </ChildContent>
-        </StandardPageLayout>
+        </PageLayout>
     </NotAuthorized>
 </AuthorizeView>
 

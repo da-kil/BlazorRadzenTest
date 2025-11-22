@@ -15,9 +15,12 @@
 
 <PageTitle>Dashboard</PageTitle>
 
-<DashboardPageLayout Title="Dashboard"
-                    Description="Overview of your questionnaire assignments"
-                    Icon="dashboard">
+<PageLayout Title="Dashboard"
+           Description="Overview of your questionnaire assignments"
+           UseMetricsRow="true">
+    <HeaderActions>
+        <RadzenIcon Icon="dashboard" Class="page-icon" />
+    </HeaderActions>
     <MetricsContent>
 
         @if (!isLoading && dashboard != null)
@@ -203,4 +206,4 @@ else
     }
         }
     </ChildContent>
-</DashboardPageLayout>
+</PageLayout>

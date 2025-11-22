@@ -1,17 +1,17 @@
 @*
-    StandardPageLayout.razor
-    Layout component for management, configuration, and standard application pages.
-    Uses Radzen grid system with consistent header structure.
+    PageLayout.razor
+    Unified layout component providing consistent visual experience across all pages.
+    Supports metrics, footer content, and header actions while maintaining visual uniformity.
 *@
 @using Radzen
 @using Radzen.Blazor
 
-<RadzenStack Gap="0" Class="@GetContainerClasses()" style="@ContainerStyle">
+<RadzenStack Gap="0" Class="@GetContainerClass()" style="@ContainerStyle">
     <RadzenRow Gap="0">
         <RadzenColumn Size="12">
             @if (HeaderContent != null || !string.IsNullOrEmpty(Title))
             {
-                <header class="standard-page-header">
+                <header class="page-layout-header">
                     @if (HeaderContent != null)
                     {
                         @HeaderContent
@@ -26,13 +26,13 @@
                             <div>
                                 @if (!string.IsNullOrEmpty(Title))
                                 {
-                                    <RadzenText TextStyle="TextStyle.H3" Class="text-primary rz-mb-1 standard-page-title">
+                                    <RadzenText TextStyle="TextStyle.H3" Class="page-layout-title rz-mb-1">
                                         @Title
                                     </RadzenText>
                                 }
                                 @if (!string.IsNullOrEmpty(Description))
                                 {
-                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="text-muted standard-page-description">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="page-layout-description">
                                         @Description
                                     </RadzenText>
                                 }
@@ -48,9 +48,31 @@
                 </header>
             }
 
-            <main class="standard-page-content">
+            <main class="page-layout-content">
+                @if (UseMetricsRow && MetricsContent != null)
+                {
+                    <RadzenRow Gap="1rem" Class="rz-mb-4">
+                        @MetricsContent
+                    </RadzenRow>
+                }
                 @ChildContent
             </main>
+
+            @if (FooterContent != null || ShowDefaultFooter)
+            {
+                <footer class="page-layout-footer">
+                    @if (FooterContent != null)
+                    {
+                        @FooterContent
+                    }
+                    else if (ShowDefaultFooter)
+                    {
+                        <div class="navigation-footer d-flex justify-content-between">
+                            @DefaultFooterContent
+                        </div>
+                    }
+                </footer>
+            }
         </RadzenColumn>
     </RadzenRow>
 </RadzenStack>
@@ -103,9 +125,34 @@
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object>? AdditionalAttributes { get; set; }
 
-    private string GetContainerClasses()
+    /// <summary>
+    /// Custom footer content
+    /// </summary>
+    [Parameter] public RenderFragment? FooterContent { get; set; }
+
+    /// <summary>
+    /// Whether to show the default navigation footer
+    /// </summary>
+    [Parameter] public bool ShowDefaultFooter { get; set; } = false;
+
+    /// <summary>
+    /// Default footer content when ShowDefaultFooter is true
+    /// </summary>
+    [Parameter] public RenderFragment? DefaultFooterContent { get; set; }
+
+    /// <summary>
+    /// Metrics content for dashboard-style pages
+    /// </summary>
+    [Parameter] public RenderFragment? MetricsContent { get; set; }
+
+    /// <summary>
+    /// Whether to use metrics row for dashboard-style display
+    /// </summary>
+    [Parameter] public bool UseMetricsRow { get; set; } = false;
+
+    private string GetContainerClass()
     {
-        var classes = "standard-page";
+        var classes = "page-layout";
 
         if (UseContainerPadding)
         {

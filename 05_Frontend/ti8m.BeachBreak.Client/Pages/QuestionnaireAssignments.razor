@@ -9,6 +9,7 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Layout
+@using ti8m.BeachBreak.Client.Models
 @inject IEmployeeApiService EmployeeApiService
 @inject ICategoryApiService CategoryApiService
 @inject IQuestionnaireAssignmentService AssignmentService
@@ -105,8 +106,9 @@
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <StandardPageLayout Title="Questionnaire Assignments"
-                Description="Create and manage questionnaire assignments with real-time API integration">
+        <PageLayout Type="LayoutType.Standard"
+                   Title="Questionnaire Assignments"
+                   Description="Create and manage questionnaire assignments with real-time API integration">
     <ChildContent>
 
                 <RadzenTabs>
@@ -435,7 +437,7 @@
                     </Tabs>
                 </RadzenTabs>
     </ChildContent>
-</StandardPageLayout>
+</PageLayout>
     </Authorized>
     <NotAuthorized>
         <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Assignments" />

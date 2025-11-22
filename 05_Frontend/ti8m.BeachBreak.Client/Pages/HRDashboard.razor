@@ -4,21 +4,18 @@
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
 @inject IHRApiService HRService
 @inject NavigationManager NavigationManager
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <main class="page-container">
-    <header class="page-header">
-        <h1 class="page-title">
-            <RadzenIcon Icon="people" Class="page-icon rz-me-2" />
-            <RadzenText TextStyle="TextStyle.H3" Class="rz-mb-0">HR Dashboard</RadzenText>
-        </h1>
-    </header>
-
-    <section class="dashboard-content">
-        <RadzenStack Gap="1.5rem">
+        <PageLayout Title="HR Dashboard"
+                   Description="Organization overview and metrics">
+            <HeaderActions>
+                <RadzenIcon Icon="people" Class="page-icon" />
+            </HeaderActions>
+            <ChildContent>
 
     @if (isLoading)
     {
@@ -276,9 +273,8 @@
         </RadzenText>
     }
 
-        </RadzenStack>
-    </section>
-</main>
+            </ChildContent>
+        </PageLayout>
     </Authorized>
     <NotAuthorized>
         <AccessDeniedComponent RequiredRole="HR" PageName="HR Dashboard" />

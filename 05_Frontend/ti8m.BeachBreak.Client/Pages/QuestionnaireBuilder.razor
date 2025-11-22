@@ -26,8 +26,8 @@
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <StandardPageLayout Title="@(State.IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")"
-                            Description="@GetStatusDescription()">
+        <PageLayout Title="@(State.IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")"
+                   Description="@GetStatusDescription()">
             <HeaderActions>
                 @{
                     var status = State.IsEditMode ? State.Template.Status : TemplateStatus.Draft;
@@ -184,7 +184,7 @@
                     }
                 }
             </ChildContent>
-        </StandardPageLayout>
+        </PageLayout>
     </Authorized>
     <NotAuthorized>
         <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Builder" />

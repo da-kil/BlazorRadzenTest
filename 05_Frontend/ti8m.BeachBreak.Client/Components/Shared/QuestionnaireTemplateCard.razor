@@ -53,32 +53,32 @@
         </div>
 
         <!-- Status Grid -->
-        <div class="row g-2 mb-2">
-            <div class="col-3">
+        <RadzenRow Gap="0.5rem" Class="rz-mb-2">
+            <RadzenColumn Size="3">
                 <div class="stat-mini-box p-2 text-center border rounded">
                     <RadzenText TextStyle="TextStyle.H6" Class="text-secondary mb-1">@AssignedCount</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Assigned</RadzenText>
                 </div>
-            </div>
-            <div class="col-3">
+            </RadzenColumn>
+            <RadzenColumn Size="3">
                 <div class="stat-mini-box p-2 text-center border rounded">
                     <RadzenText TextStyle="TextStyle.H6" Class="text-info mb-1">@InProgressCount</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">In Progress</RadzenText>
                 </div>
-            </div>
-            <div class="col-3">
+            </RadzenColumn>
+            <RadzenColumn Size="3">
                 <div class="stat-mini-box p-2 text-center border rounded">
                     <RadzenText TextStyle="TextStyle.H6" Class="text-success mb-1">@CompletedCount</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Completed</RadzenText>
                 </div>
-            </div>
-            <div class="col-3">
+            </RadzenColumn>
+            <RadzenColumn Size="3">
                 <div class="stat-mini-box p-2 text-center border rounded">
                     <RadzenText TextStyle="TextStyle.H6" Class="text-danger mb-1">@OverdueCount</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overdue</RadzenText>
                 </div>
-            </div>
-        </div>
+            </RadzenColumn>
+        </RadzenRow>
     </div>
 
     <!-- Individual Team Member Assignments - Always Visible -->

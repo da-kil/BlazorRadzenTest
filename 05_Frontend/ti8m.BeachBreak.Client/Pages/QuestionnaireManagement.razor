@@ -18,8 +18,8 @@
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <StandardPageLayout Title="Questionnaire Management"
-                        Description="Manage your questionnaire templates and view responses">
+        <PageLayout Title="Questionnaire Management"
+                   Description="Manage your questionnaire templates and view responses">
     <HeaderActions>
         <RadzenButton Text="Create New"
                      ButtonStyle="ButtonStyle.Primary"
@@ -201,7 +201,7 @@
     </RadzenTabs>
 
     </ChildContent>
-</StandardPageLayout>
+</PageLayout>
     </Authorized>
     <NotAuthorized>
         <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Management" />

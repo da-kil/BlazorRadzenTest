@@ -44,7 +44,7 @@ else if (assignment != null && assignment.WorkflowState == WorkflowState.InRevie
 }
 else
 {
-    <ImmersivePageLayout Title="@template.Name"
+    <PageLayout Title="@template.Name"
                         Description="@template.Description"
                         ShowDefaultFooter="true">
         <DefaultFooterContent>
@@ -246,7 +246,7 @@ else
                                IsManager="@isManager" />
             }
         </ChildContent>
-    </ImmersivePageLayout>
+    </PageLayout>
 }
 
 @code {

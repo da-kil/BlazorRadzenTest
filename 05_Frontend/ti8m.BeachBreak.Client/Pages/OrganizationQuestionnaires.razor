@@ -7,6 +7,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
+@using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Reports
 @using ti8m.BeachBreak.Client.Services.Exports
 @using System.Text
@@ -21,7 +22,8 @@
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <StandardPageLayout Title="Organization Questionnaires"
+        <PageLayout Type="LayoutType.Standard"
+                   Title="Organization Questionnaires"
                    Description="View and manage questionnaires across the entire organization">
 	<HeaderActions>
 		@if (configuration?.Actions != null)
@@ -51,7 +53,7 @@
 			</div>
 		}
 	</ChildContent>
-</StandardPageLayout>
+</PageLayout>
     </Authorized>
     <NotAuthorized>
         <AccessDeniedComponent RequiredRole="HR" PageName="Organization Questionnaires" />

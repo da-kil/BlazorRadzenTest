@@ -16,8 +16,9 @@
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <StandardPageLayout Title="Questionnaire Type Administration"
-                Description="Manage questionnaire types (e.g., Annual Reviews, Quarterly Check-ins)">
+        <PageLayout
+                   Title="Questionnaire Type Administration"
+                   Description="Manage questionnaire types (e.g., Annual Reviews, Quarterly Check-ins)">
     <HeaderActions>
         <AsyncButton Text="Add New Type"
                      ButtonStyle="ButtonStyle.Primary"
@@ -141,7 +142,7 @@
                     </Columns>
                 </RadzenDataGrid>
     </ChildContent>
-</StandardPageLayout>
+</PageLayout>
     </Authorized>
     <NotAuthorized>
         <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Type Administration" />

@@ -1125,6 +1125,7 @@
     border-radius: 6px;
     position: relative;
     overflow: hidden;
+    padding: 12px;
 }
 
 .assignment-row::before {

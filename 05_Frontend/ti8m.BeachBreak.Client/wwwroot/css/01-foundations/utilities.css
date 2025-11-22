@@ -29,6 +29,26 @@
 .align-end { align-items: flex-end !important; }
 .align-stretch { align-items: stretch !important; }
 
+/* Bootstrap-compatible aliases for flexbox utilities */
+.justify-content-start { justify-content: flex-start !important; }
+.justify-content-center { justify-content: center !important; }
+.justify-content-end { justify-content: flex-end !important; }
+.justify-content-between { justify-content: space-between !important; }
+.justify-content-around { justify-content: space-around !important; }
+
+.align-items-start { align-items: flex-start !important; }
+.align-items-center { align-items: center !important; }
+.align-items-end { align-items: flex-end !important; }
+.align-items-stretch { align-items: stretch !important; }
+
+/* Gap Utilities (for flexbox and grid) */
+.gap-0 { gap: 0 !important; }
+.gap-1 { gap: var(--spacing-xs) !important; }
+.gap-2 { gap: var(--spacing-sm) !important; }
+.gap-3 { gap: var(--spacing-md) !important; }
+.gap-4 { gap: var(--spacing-lg) !important; }
+.gap-5 { gap: var(--spacing-xl) !important; }
+
 /* Spacing Utilities */
 .m-0 { margin: 0 !important; }
 .m-1 { margin: var(--spacing-xs) !important; }
@@ -107,6 +127,9 @@
 .text-success { color: var(--color-success) !important; }
 .text-warning { color: var(--color-warning) !important; }
 .text-error { color: var(--color-error) !important; }
+
+/* Bootstrap-compatible aliases for text colors */
+.text-danger { color: var(--color-error) !important; }
 
 /* Position Utilities */
 .position-relative { position: relative !important; }

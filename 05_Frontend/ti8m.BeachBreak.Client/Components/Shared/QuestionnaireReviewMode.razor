@@ -7,6 +7,7 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Layout
+@using ti8m.BeachBreak.Client.Models
 @using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Extensions
 @inject IQuestionnaireTemplateService TemplateService
@@ -33,7 +34,8 @@ else if (template == null || response == null)
 }
 else
 {
-    <ImmersivePageLayout Title="@($"Review Meeting: {template.Name}")"
+    <PageLayout Type="LayoutType.Immersive"
+                          Title="@($"Review Meeting: {template.Name}")"
                         Description="@template.Description"
                         ShowDefaultFooter="true">
         <HeaderContent>
@@ -294,7 +296,7 @@ else
                 }
             </div>
         </ChildContent>
-    </ImmersivePageLayout>
+    </PageLayout>
 }
 
 @code {

@@ -13,10 +13,7 @@
 @inject IJSRuntime JSRuntime
 @inherits OptimizedComponentBase
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-container @(HideHeader ? "" : "mb-4")">
+<div class="page-container @(HideHeader ? "" : "mb-4")">
                 @if (!HideHeader)
                 {
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -67,9 +64,6 @@
                     </Tabs>
                 </RadzenTabs>
             </div>
-        </div>
-    </div>
-</div>
 
 @implements IDisposable
 
@@ -339,8 +333,8 @@
                     }
 
                     <!-- Assignment Details Grid -->
-                    <div class="row g-3 mt-2">
-                        <div class="col-md-4">
+                    <RadzenRow Gap="1rem" Class="mt-2">
+                        <RadzenColumn Size="12" SizeMD="4">
                             <div class="d-flex align-items-center gap-2">
                                 <RadzenIcon Icon="person" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
                                 <div>
@@ -352,11 +346,11 @@
                                     </RadzenText>
                                 </div>
                             </div>
-                        </div>
+                        </RadzenColumn>
 
                         @if (assignment.DueDate.HasValue)
                         {
-                            <div class="col-md-4">
+                            <RadzenColumn Size="12" SizeMD="4">
                                 <div class="d-flex align-items-center gap-2">
                                     <RadzenIcon Icon="event" Style="@($"font-size: 1rem; color: {dueDateColor};")" />
                                     <div>
@@ -372,9 +366,9 @@
                                         </RadzenText>
                                     </div>
                                 </div>
-                            </div>
+                            </RadzenColumn>
                         }
-                    </div>
+                    </RadzenRow>
                 </div>
 
                 <!-- Action Button -->
@@ -537,8 +531,8 @@
         {
             <div class="analytics-dashboard">
                 <!-- Analytics Header -->
-                <div class="row mb-4">
-                    <div class="col-12">
+                <RadzenRow Gap="1rem" Class="rz-mb-4">
+                    <RadzenColumn Size="12">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <RadzenText TextStyle="TextStyle.H5" Class="mb-1">Analytics & Insights</RadzenText>
@@ -548,12 +542,12 @@
                                 <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@($"Last Updated: {DateTime.Now:MMM dd, HH:mm}")" />
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </RadzenColumn>
+                </RadzenRow>
 
                 <!-- Key Metrics Cards Row -->
-                <div class="row mb-4">
-                    <div class="col-md-3 col-sm-6 mb-3">
+                <RadzenRow Gap="1rem" Class="rz-mb-4">
+                    <RadzenColumn Size="12" SizeSM="6" SizeMD="3">
                         <div class="metric-card">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
@@ -563,8 +557,8 @@
                                 <RadzenIcon Icon="trending_up" Size="2rem" Class="text-success opacity-75" />
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeMD="3">
                         <div class="metric-card">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
@@ -574,8 +568,8 @@
                                 <RadzenIcon Icon="schedule" Size="2rem" Class="text-primary opacity-75" />
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeMD="3">
                         <div class="metric-card">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
@@ -585,8 +579,8 @@
                                 <RadzenIcon Icon="people" Size="2rem" Class="text-info opacity-75" />
                             </div>
                         </div>
-                    </div>
-                    <div class="col-md-3 col-sm-6 mb-3">
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeSM="6" SizeMD="3">
                         <div class="metric-card">
                             <div class="d-flex align-items-center justify-content-between">
                                 <div>
@@ -596,13 +590,13 @@
                                 <RadzenIcon Icon="warning" Size="2rem" Class="@((GetOverdueCount() > 0 ? "text-danger" : "text-muted") + " opacity-75")" />
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </RadzenColumn>
+                </RadzenRow>
 
                 <!-- Charts Row -->
-                <div class="row mb-4">
+                <RadzenRow Gap="1rem" Class="rz-mb-4">
                     <!-- Status Distribution Pie Chart -->
-                    <div class="col-lg-6 mb-4">
+                    <RadzenColumn Size="12" SizeLG="6">
                         <div class="chart-card">
                             <div class="chart-header">
                                 <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Assignment Status Distribution</RadzenText>
@@ -615,10 +609,10 @@
                                 </RadzenChart>
                             </div>
                         </div>
-                    </div>
+                    </RadzenColumn>
 
                     <!-- Department Performance Bar Chart -->
-                    <div class="col-lg-6 mb-4">
+                    <RadzenColumn Size="12" SizeLG="6">
                         <div class="chart-card">
                             <div class="chart-header">
                                 <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Department Performance Comparison</RadzenText>
@@ -636,13 +630,13 @@
                                 </RadzenChart>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </RadzenColumn>
+                </RadzenRow>
 
                 <!-- Template Performance & Trends Row -->
-                <div class="row mb-4">
+                <RadzenRow Gap="1rem" Class="rz-mb-4">
                     <!-- Template Popularity -->
-                    <div class="col-lg-8 mb-4">
+                    <RadzenColumn Size="12" SizeLG="8">
                         <div class="chart-card">
                             <div class="chart-header">
                                 <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Questionnaire Template Performance</RadzenText>
@@ -686,10 +680,10 @@
                                 </RadzenDataGrid>
                             </div>
                         </div>
-                    </div>
+                    </RadzenColumn>
 
                     <!-- Quick Stats -->
-                    <div class="col-lg-4 mb-4">
+                    <RadzenColumn Size="12" SizeLG="4">
                         <div class="chart-card">
                             <div class="chart-header">
                                 <RadzenText TextStyle="TextStyle.H6" Class="mb-3">Quick Insights</RadzenText>
@@ -725,8 +719,8 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </RadzenColumn>
+                </RadzenRow>
             </div>
 
             <style>
