@@ -3,7 +3,7 @@
    ============================================= */
 
 /* 1. Design Tokens & Variables */
-@import url('./01-foundations/variables.css');
+@import url('./shared-variables.css');
 @import url('./01-foundations/utilities.css');
 
 /* 2. Application Components */
@@ -61,33 +61,6 @@ p, h1, h2, h3, h4, h5, h6 {
    BEM NAMING PATTERNS IMPLEMENTATION
    ============================================= */
 
-/* Enhanced Employee Card Pattern */
-.employee-card {
-    position: relative;
-    background: var(--background-light);
-    border: 1px solid var(--border-light);
-    border-radius: var(--radius-md);
-    padding: var(--spacing-md);
-    transition: var(--transition-fast);
-}
-
-.employee-card--selected {
-    border-color: var(--primary-color);
-    background: rgba(var(--rz-primary-rgb), 0.05);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
-}
-
-.employee-card__name {
-    font-weight: var(--font-weight-semibold);
-    color: var(--text-color);
-    margin-bottom: var(--spacing-xs);
-}
-
-.employee-card__role {
-    color: var(--text-muted);
-    font-size: var(--font-size-sm);
-}
 
 /* Enhanced Questionnaire Badge Pattern */
 .questionnaire-badge {

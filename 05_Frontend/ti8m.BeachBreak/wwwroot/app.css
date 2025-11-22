@@ -1,85 +1,40 @@
-:root {
-    --blue-new: #0F69FF;
-    --green-new: #00E6C8;
-    --dark-blue: #002650;
-    --ice-blue: #7F9AAE;
-    --purple-rain: #935BA9;
-    --golden-milk: #E6BF7F;
-    --light-blue: #D8E0E6;
-    --peach-kiss: #F08080;
-    /* Semantic color assignments */
-    --primary-color: var(--blue-new) !important;
-    --secondary-color: var(--ice-blue);
-    --success-color: var(--green-new);
-    --warning-color: var(--golden-milk);
-    --danger-color: var(--peach-kiss);
-    --info-color: var(--purple-rain);
-    --dark-color: var(--dark-blue);
-    --light-color: var(--light-blue);
-    /* General UI element colors */
-    --competency-title-color: var(--blue-new);
-    --textquestion-title-color: var(--purple-rain);
-    --goal-title-color: var(--green-new);
+/* Import consolidated design system */
+@import url('../ti8m.BeachBreak.Client/wwwroot/css/shared-variables.css');
 
-    /* Question type specific colors */
-    --question-assessment: var(--blue-new);
-    --question-goal-achievement: var(--golden-milk);
-    --question-text-response: var(--purple-rain);
+/* Blazor Server specific overrides - use brand colors where needed */
+:root {
+    /* ti8m Brand Color Assignments (override Radzen where brand-specific) */
+    --competency-title-color: var(--brand-blue);
+    --textquestion-title-color: var(--brand-purple);
+    --goal-title-color: var(--brand-green);
 }
 
+/* Typography - inherits from shared-variables.css */
 html, body {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 300; /* Roboto Light as default */
-    color: var(--dark-blue);
+    font-family: var(--font-family-base);
+    font-weight: var(--font-weight-body);
+    color: var(--brand-navy);
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-family: 'Roboto', sans-serif;
-    font-weight: 500; /* Roboto Medium = 500 */
+    font-family: var(--font-family-base);
+    font-weight: var(--font-weight-heading);
 }
 
+/* Links and Buttons - using consolidated color system */
 a, .btn-link {
     color: var(--primary-color);
 }
 
 .btn-primary {
-    color: #fff;
+    color: var(--text-white);
     background-color: var(--primary-color);
     border-color: var(--primary-color);
 }
 
-.btn-secondary {
-    color: #fff;
-    background-color: var(--secondary-color);
-    border-color: var(--secondary-color);
-}
-
-.btn-success {
-    color: #fff;
-    background-color: var(--success-color);
-    border-color: var(--success-color);
-}
-
-.btn-warning {
-    color: var(--dark-blue);
-    background-color: var(--warning-color);
-    border-color: var(--warning-color);
-}
-
-.btn-danger {
-    color: #fff;
-    background-color: var(--danger-color);
-    border-color: var(--danger-color);
-}
-
-.btn-info {
-    color: #fff;
-    background-color: var(--info-color);
-    border-color: var(--info-color);
-}
-
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(15, 105, 255, 0.25);
+    box-shadow: 0 0 0 var(--focus-ring-offset) var(--text-white),
+                0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
 }
 
 .content {

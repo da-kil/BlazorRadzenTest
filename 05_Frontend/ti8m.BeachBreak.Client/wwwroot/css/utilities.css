@@ -7,160 +7,38 @@
    SPACING UTILITIES
    ============================================= */
 
-/* Margin Utilities */
-.m-0 { margin: 0 !important; }
-.m-1 { margin: var(--spacing-xs) !important; }
-.m-2 { margin: var(--spacing-sm) !important; }
-.m-3 { margin: var(--spacing-md) !important; }
-.m-4 { margin: var(--spacing-lg) !important; }
-.m-5 { margin: var(--spacing-xl) !important; }
-.m-6 { margin: var(--spacing-2xl) !important; }
-.m-auto { margin: auto !important; }
-
-/* Margin Directional */
-.mt-0 { margin-top: 0 !important; }
-.mt-1 { margin-top: var(--spacing-xs) !important; }
-.mt-2 { margin-top: var(--spacing-sm) !important; }
-.mt-3 { margin-top: var(--spacing-md) !important; }
-.mt-4 { margin-top: var(--spacing-lg) !important; }
-.mt-5 { margin-top: var(--spacing-xl) !important; }
-.mt-6 { margin-top: var(--spacing-2xl) !important; }
-
-.mb-0 { margin-bottom: 0 !important; }
-.mb-1 { margin-bottom: var(--spacing-xs) !important; }
+/* Margin Utilities - Optimized to actually used variants only */
 .mb-2 { margin-bottom: var(--spacing-sm) !important; }
-.mb-3 { margin-bottom: var(--spacing-md) !important; }
+.mb-3 { margin-bottom: var(--spacing-md) !important; }  /* Heavy usage: 47+ times */
 .mb-4 { margin-bottom: var(--spacing-lg) !important; }
-.mb-5 { margin-bottom: var(--spacing-xl) !important; }
-.mb-6 { margin-bottom: var(--spacing-2xl) !important; }
 
-.ml-0 { margin-left: 0 !important; }
-.ml-1 { margin-left: var(--spacing-xs) !important; }
-.ml-2 { margin-left: var(--spacing-sm) !important; }
-.ml-3 { margin-left: var(--spacing-md) !important; }
-.ml-4 { margin-left: var(--spacing-lg) !important; }
-.ml-5 { margin-left: var(--spacing-xl) !important; }
-.ml-6 { margin-left: var(--spacing-2xl) !important; }
-.ml-auto { margin-left: auto !important; }
+.mt-2 { margin-top: var(--spacing-sm) !important; }
+.mt-3 { margin-top: var(--spacing-md) !important; }     /* Heavy usage: 20+ times */
+.mt-4 { margin-top: var(--spacing-lg) !important; }
 
-.mr-0 { margin-right: 0 !important; }
-.mr-1 { margin-right: var(--spacing-xs) !important; }
-.mr-2 { margin-right: var(--spacing-sm) !important; }
-.mr-3 { margin-right: var(--spacing-md) !important; }
-.mr-4 { margin-right: var(--spacing-lg) !important; }
-.mr-5 { margin-right: var(--spacing-xl) !important; }
-.mr-6 { margin-right: var(--spacing-2xl) !important; }
-.mr-auto { margin-right: auto !important; }
+.ml-auto { margin-left: auto !important; }              /* Light usage: 1-2 times */
+.mr-auto { margin-right: auto !important; }             /* Light usage: 1-2 times */
 
-.mx-0 { margin-left: 0 !important; margin-right: 0 !important; }
-.mx-1 { margin-left: var(--spacing-xs) !important; margin-right: var(--spacing-xs) !important; }
-.mx-2 { margin-left: var(--spacing-sm) !important; margin-right: var(--spacing-sm) !important; }
-.mx-3 { margin-left: var(--spacing-md) !important; margin-right: var(--spacing-md) !important; }
-.mx-4 { margin-left: var(--spacing-lg) !important; margin-right: var(--spacing-lg) !important; }
-.mx-5 { margin-left: var(--spacing-xl) !important; margin-right: var(--spacing-xl) !important; }
-.mx-6 { margin-left: var(--spacing-2xl) !important; margin-right: var(--spacing-2xl) !important; }
-.mx-auto { margin-left: auto !important; margin-right: auto !important; }
-
-.my-0 { margin-top: 0 !important; margin-bottom: 0 !important; }
-.my-1 { margin-top: var(--spacing-xs) !important; margin-bottom: var(--spacing-xs) !important; }
-.my-2 { margin-top: var(--spacing-sm) !important; margin-bottom: var(--spacing-sm) !important; }
-.my-3 { margin-top: var(--spacing-md) !important; margin-bottom: var(--spacing-md) !important; }
-.my-4 { margin-top: var(--spacing-lg) !important; margin-bottom: var(--spacing-lg) !important; }
-.my-5 { margin-top: var(--spacing-xl) !important; margin-bottom: var(--spacing-xl) !important; }
-.my-6 { margin-top: var(--spacing-2xl) !important; margin-bottom: var(--spacing-2xl) !important; }
-
-/* Padding Utilities */
-.p-0 { padding: 0 !important; }
-.p-1 { padding: var(--spacing-xs) !important; }
+/* Padding Utilities - Optimized to actually used variants only */
 .p-2 { padding: var(--spacing-sm) !important; }
-.p-3 { padding: var(--spacing-md) !important; }
+.p-3 { padding: var(--spacing-md) !important; }         /* Heavy usage: 25+ times */
 .p-4 { padding: var(--spacing-lg) !important; }
-.p-5 { padding: var(--spacing-xl) !important; }
-.p-6 { padding: var(--spacing-2xl) !important; }
+.p-5 { padding: var(--spacing-xl) !important; }         /* Heavy usage: 15+ times */
 
-/* Padding Directional */
-.pt-0 { padding-top: 0 !important; }
-.pt-1 { padding-top: var(--spacing-xs) !important; }
-.pt-2 { padding-top: var(--spacing-sm) !important; }
-.pt-3 { padding-top: var(--spacing-md) !important; }
-.pt-4 { padding-top: var(--spacing-lg) !important; }
-.pt-5 { padding-top: var(--spacing-xl) !important; }
-.pt-6 { padding-top: var(--spacing-2xl) !important; }
+.px-2 { padding-left: var(--spacing-sm) !important; padding-right: var(--spacing-sm) !important; } /* Light usage */
+.px-3 { padding-left: var(--spacing-md) !important; padding-right: var(--spacing-md) !important; } /* Light usage */
 
-.pb-0 { padding-bottom: 0 !important; }
-.pb-1 { padding-bottom: var(--spacing-xs) !important; }
-.pb-2 { padding-bottom: var(--spacing-sm) !important; }
-.pb-3 { padding-bottom: var(--spacing-md) !important; }
-.pb-4 { padding-bottom: var(--spacing-lg) !important; }
-.pb-5 { padding-bottom: var(--spacing-xl) !important; }
-.pb-6 { padding-bottom: var(--spacing-2xl) !important; }
+.py-2 { padding-top: var(--spacing-sm) !important; padding-bottom: var(--spacing-sm) !important; } /* Light usage */
+.py-3 { padding-top: var(--spacing-md) !important; padding-bottom: var(--spacing-md) !important; } /* Light usage */
 
-.pl-0 { padding-left: 0 !important; }
-.pl-1 { padding-left: var(--spacing-xs) !important; }
-.pl-2 { padding-left: var(--spacing-sm) !important; }
-.pl-3 { padding-left: var(--spacing-md) !important; }
-.pl-4 { padding-left: var(--spacing-lg) !important; }
-.pl-5 { padding-left: var(--spacing-xl) !important; }
-.pl-6 { padding-left: var(--spacing-2xl) !important; }
-
-.pr-0 { padding-right: 0 !important; }
-.pr-1 { padding-right: var(--spacing-xs) !important; }
-.pr-2 { padding-right: var(--spacing-sm) !important; }
-.pr-3 { padding-right: var(--spacing-md) !important; }
-.pr-4 { padding-right: var(--spacing-lg) !important; }
-.pr-5 { padding-right: var(--spacing-xl) !important; }
-.pr-6 { padding-right: var(--spacing-2xl) !important; }
-
-.px-0 { padding-left: 0 !important; padding-right: 0 !important; }
-.px-1 { padding-left: var(--spacing-xs) !important; padding-right: var(--spacing-xs) !important; }
-.px-2 { padding-left: var(--spacing-sm) !important; padding-right: var(--spacing-sm) !important; }
-.px-3 { padding-left: var(--spacing-md) !important; padding-right: var(--spacing-md) !important; }
-.px-4 { padding-left: var(--spacing-lg) !important; padding-right: var(--spacing-lg) !important; }
-.px-5 { padding-left: var(--spacing-xl) !important; padding-right: var(--spacing-xl) !important; }
-.px-6 { padding-left: var(--spacing-2xl) !important; padding-right: var(--spacing-2xl) !important; }
-
-.py-0 { padding-top: 0 !important; padding-bottom: 0 !important; }
-.py-1 { padding-top: var(--spacing-xs) !important; padding-bottom: var(--spacing-xs) !important; }
-.py-2 { padding-top: var(--spacing-sm) !important; padding-bottom: var(--spacing-sm) !important; }
-.py-3 { padding-top: var(--spacing-md) !important; padding-bottom: var(--spacing-md) !important; }
-.py-4 { padding-top: var(--spacing-lg) !important; padding-bottom: var(--spacing-lg) !important; }
-.py-5 { padding-top: var(--spacing-xl) !important; padding-bottom: var(--spacing-xl) !important; }
-.py-6 { padding-top: var(--spacing-2xl) !important; padding-bottom: var(--spacing-2xl) !important; }
-
-/* Gap Utilities for Flexbox/Grid */
-.gap-0 { gap: 0 !important; }
-.gap-1 { gap: var(--spacing-xs) !important; }
-.gap-2 { gap: var(--spacing-sm) !important; }
-.gap-3 { gap: var(--spacing-md) !important; }
-.gap-4 { gap: var(--spacing-lg) !important; }
-.gap-5 { gap: var(--spacing-xl) !important; }
-.gap-6 { gap: var(--spacing-2xl) !important; }
+/* Gap Utilities - Optimized to actually used variants only */
+.gap-1 { gap: var(--spacing-xs) !important; }           /* Moderate usage */
+.gap-2 { gap: var(--spacing-sm) !important; }           /* Heavy usage: 30+ times */
+.gap-3 { gap: var(--spacing-md) !important; }           /* Heavy usage: 15+ times */
 
 /* =============================================
    TEXT UTILITIES
    ============================================= */
-
-/* Font Sizes */
-.text-xs { font-size: var(--font-size-xs) !important; }
-.text-sm { font-size: var(--font-size-sm) !important; }
-.text-base { font-size: var(--font-size-base) !important; }
-.text-lg { font-size: var(--font-size-lg) !important; }
-.text-xl { font-size: var(--font-size-xl) !important; }
-.text-2xl { font-size: var(--font-size-2xl) !important; }
-.text-3xl { font-size: var(--font-size-3xl) !important; }
-.text-4xl { font-size: var(--font-size-4xl) !important; }
-
-/* Font Weights - Roboto Only */
-.font-light { font-weight: var(--font-weight-light) !important; }
-.font-regular { font-weight: var(--font-weight-regular) !important; }
-.font-medium { font-weight: var(--font-weight-medium) !important; }
-.font-semibold { font-weight: var(--font-weight-semibold) !important; }
-
-/* Semantic Font Weight Utilities */
-.font-body { font-weight: var(--font-weight-body) !important; }
-.font-heading { font-weight: var(--font-weight-heading) !important; }
-.font-emphasis { font-weight: var(--font-weight-emphasis) !important; }
-.font-strong { font-weight: var(--font-weight-strong) !important; }
 
 /* Text Colors */
 .text-primary { color: var(--primary-color) !important; }
@@ -460,102 +338,6 @@
 /* =============================================
    ANIMATION UTILITIES
    ============================================= */
-
-/* Transitions */
-.transition-none { transition: none !important; }
-.transition-all { transition: all var(--transition-fast) !important; }
-.transition-fast { transition: all var(--transition-fast) !important; }
-.transition-normal { transition: all var(--transition-normal) !important; }
-.transition-slow { transition: all var(--transition-slow) !important; }
-
-/* Transform */
-.transform { transform: translateZ(0) !important; }
-.transform-none { transform: none !important; }
-
-/* Hover Animations */
-.hover-lift:hover { transform: translateY(-2px) !important; }
-.hover-lift-lg:hover { transform: translateY(-4px) !important; }
-.hover-scale:hover { transform: scale(1.05) !important; }
-.hover-scale-sm:hover { transform: scale(1.02) !important; }
-
-/* Rotate */
-.rotate-45 { transform: rotate(45deg) !important; }
-.rotate-90 { transform: rotate(90deg) !important; }
-.rotate-180 { transform: rotate(180deg) !important; }
-.rotate-270 { transform: rotate(270deg) !important; }
-
-/* =============================================
-   Z-INDEX UTILITIES
-   ============================================= */
-
-.z-0 { z-index: 0 !important; }
-.z-10 { z-index: 10 !important; }
-.z-20 { z-index: 20 !important; }
-.z-30 { z-index: 30 !important; }
-.z-40 { z-index: 40 !important; }
-.z-50 { z-index: 50 !important; }
-.z-auto { z-index: auto !important; }
-
-/* Component Z-Index */
-.z-dropdown { z-index: var(--z-dropdown) !important; }
-.z-tooltip { z-index: var(--z-tooltip) !important; }
-.z-modal { z-index: var(--z-modal) !important; }
-.z-overlay { z-index: var(--z-overlay) !important; }
-.z-notification { z-index: var(--z-notification) !important; }
-
-/* =============================================
-   RESPONSIVE UTILITIES
-   ============================================= */
-
-/* Mobile First Responsive Utilities */
-@media (min-width: 576px) {
-    .sm\:d-none { display: none !important; }
-    .sm\:d-block { display: block !important; }
-    .sm\:d-flex { display: flex !important; }
-    .sm\:text-left { text-align: left !important; }
-    .sm\:text-center { text-align: center !important; }
-    .sm\:text-right { text-align: right !important; }
-}
-
-@media (min-width: 768px) {
-    .md\:d-none { display: none !important; }
-    .md\:d-block { display: block !important; }
-    .md\:d-flex { display: flex !important; }
-    .md\:text-left { text-align: left !important; }
-    .md\:text-center { text-align: center !important; }
-    .md\:text-right { text-align: right !important; }
-    .md\:flex-row { flex-direction: row !important; }
-    .md\:flex-column { flex-direction: column !important; }
-}
-
-@media (min-width: 1024px) {
-    .lg\:d-none { display: none !important; }
-    .lg\:d-block { display: block !important; }
-    .lg\:d-flex { display: flex !important; }
-    .lg\:text-left { text-align: left !important; }
-    .lg\:text-center { text-align: center !important; }
-    .lg\:text-right { text-align: right !important; }
-}
-
-@media (min-width: 1280px) {
-    .xl\:d-none { display: none !important; }
-    .xl\:d-block { display: block !important; }
-    .xl\:d-flex { display: flex !important; }
-}
-
-/* =============================================
-   STATE UTILITIES
-   ============================================= */
-
-/* Hover States */
-.hover\:bg-primary:hover { background-color: var(--primary-color) !important; }
-.hover\:bg-secondary:hover { background-color: var(--secondary-color) !important; }
-.hover\:text-primary:hover { color: var(--primary-color) !important; }
-.hover\:text-white:hover { color: var(--text-white) !important; }
-.hover\:shadow-lg:hover { box-shadow: var(--shadow-lg) !important; }
-
-/* Focus States */
-.focus\:outline-none:focus { outline: none !important; }
 .focus\:ring:focus { box-shadow: 0 0 0 3px var(--focus-ring) !important; }
 .focus\:ring-primary:focus { box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb, 37, 99, 235), 0.1) !important; }
 

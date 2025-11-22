@@ -2,6 +2,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Helpers
 @inject DialogService DialogService
 
 
@@ -77,7 +78,7 @@
                                                    ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
                                                    Name="@($"comp_req_{Question.Id}_{competencyIndex}")"
                                                    Disabled="@(!Template.IsAvailableForEditing)" />
-                                    <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-2" />
+                                    <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" />
                                 </div>
                             </div>
                             <div class="mb-0">
@@ -105,11 +106,11 @@
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
                     No template configuration is required for Goal questions.
                 </RadzenText>
-                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Class="mb-0" ShowIcon="false">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="d-block mb-1">
+                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Class="mb-0" ShowIcon="false" Style="text-align: left !important;">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="d-block mb-1" Style="text-align: left !important;">
                         Goals are added dynamically during the questionnaire workflow:
                     </RadzenText>
-                    <ul class="text-start small mb-0" style="line-height: 1.8;">
+                    <ul class="small mb-0" style="line-height: 1.8; text-align: left !important;">
                         <li>Employee and Manager add goals during their completion phases</li>
                         <li>Goals can be linked to predecessor questionnaires for rating</li>
                         <li>Each goal includes objective, timeframe, measurement, and weighting</li>
@@ -185,7 +186,7 @@
                                                    ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
                                                    Name="@($"text_req_{Question.Id}_{sectionIndex}")"
                                                    Disabled="@(!Template.IsAvailableForEditing)" />
-                                    <RadzenLabel Text="Required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-2" />
+                                    <RadzenLabel Text="Required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" />
                                 </div>
                             </div>
                             <div class="mb-2">
@@ -399,55 +400,10 @@
 
 
     // Assessment methods
-    private List<CompetencyDefinition> GetCompetenciesFromConfiguration()
-    {
-        if (Question.Configuration.ContainsKey("Competencies"))
-        {
-            var competenciesObj = Question.Configuration["Competencies"];
-
-            // Handle direct cast (when set in editor)
-            if (competenciesObj is List<CompetencyDefinition> competencies)
-            {
-                return competencies;
-            }
-
-            // Handle JSON deserialization (when loaded from API)
-            if (competenciesObj is System.Text.Json.JsonElement jsonElement)
-            {
-                try
-                {
-                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                    {
-                        return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText()) ?? new List<CompetencyDefinition>();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing competencies: {ex.Message}");
-                }
-            }
-
-            // Handle string representation (backup case)
-            if (competenciesObj is string jsonString)
-            {
-                try
-                {
-                    return System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonString) ?? new List<CompetencyDefinition>();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing competencies from string: {ex.Message}");
-                }
-            }
-        }
-
-        // Return default competencies if none exist
-        return new List<CompetencyDefinition>();
-    }
 
     private List<CompetencyDefinition> GetOrderedCompetencies()
     {
-        var competencies = GetCompetenciesFromConfiguration();
+        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
 
         // Check if we need to initialize Order values (for legacy data or duplicates)
         var orderValues = competencies.Select(c => c.Order).ToList();
@@ -481,7 +437,7 @@
 
             if (confirmed == true)
             {
-                var allCompetencies = GetCompetenciesFromConfiguration();
+                var allCompetencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
                 allCompetencies.Remove(competencyToRemove);
                 Question.Configuration["Competencies"] = allCompetencies;
                 StateHasChanged();
@@ -491,7 +447,7 @@
 
     private void UpdateCompetencyTitle(int displayIndex, string value)
     {
-        var competencies = GetCompetenciesFromConfiguration();
+        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
         var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
@@ -504,7 +460,7 @@
 
     private void UpdateCompetencyDescription(int displayIndex, string value)
     {
-        var competencies = GetCompetenciesFromConfiguration();
+        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
         var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
@@ -835,7 +791,7 @@
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
             orderedCompetencies[displayIndex].IsRequired = value;
-            Question.Configuration["Competencies"] = GetCompetenciesFromConfiguration();
+            Question.Configuration["Competencies"] = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
             StateHasChanged();
             await OnRequiredChanged.InvokeAsync();
         }

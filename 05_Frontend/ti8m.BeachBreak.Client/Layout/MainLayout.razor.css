@@ -3,18 +3,18 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    background-color: #fafbfc;
+    background-color: var(--background-light);
 }
 
 /* Header Styles */
 .app-header {
-    background: #002650;
-    color: #ffffff;
+    background: var(--brand-navy);
+    color: var(--text-white);
     padding: 0;
-    box-shadow: 0 2px 4px rgba(0, 38, 80, 0.1);
+    box-shadow: 0 2px 4px var(--brand-navy-alpha);
     position: sticky;
     top: 0;
-    z-index: 1000;
+    z-index: var(--z-dropdown);
 }
 
 .header-content {
@@ -32,16 +32,16 @@
 }
 
 .brand-title {
-    font-size: 1.5rem;
-    font-weight: 700;
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-heading);
     margin: 0;
-    color: #ffffff;
+    color: var(--text-white);
 }
 
 .brand-subtitle {
-    font-size: 0.875rem;
-    color: #7F9AAE;
-    font-weight: 300; /* Roboto Light */
+    font-size: var(--font-size-sm);
+    color: var(--brand-navy-light);
+    font-weight: var(--font-weight-light);
 }
 
 .header-actions {
@@ -53,40 +53,40 @@
 .btn-icon {
     background: none;
     border: none;
-    color: #ffffff;
-    font-size: 1.25rem;
-    padding: 0.5rem;
+    color: var(--text-white);
+    font-size: var(--font-size-xl);
+    padding: var(--spacing-sm);
     border-radius: 50%;
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: var(--transition-fast);
 }
 
 .btn-icon:hover {
-    background-color: rgba(127, 154, 174, 0.2);
+    background-color: var(--brand-navy-light-alpha-20);
 }
 
 .user-menu {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background-color: rgba(127, 154, 174, 0.15);
-    border-radius: 2rem;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--brand-navy-light-alpha-15);
+    border-radius: var(--radius-full);
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition: var(--transition-fast);
 }
 
 .user-menu:hover {
-    background-color: rgba(127, 154, 174, 0.25);
+    background-color: var(--brand-navy-light-alpha-25);
 }
 
 .user-avatar {
-    font-size: 1.25rem;
+    font-size: var(--font-size-xl);
 }
 
 .user-name {
-    font-size: 0.875rem;
-    font-weight: 500;
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
 }
 
 /* App Body */
@@ -97,8 +97,8 @@
 }
 
 .sidebar {
-    background: #7F9AAE;
-    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.08);
+    background: var(--brand-navy-light);
+    box-shadow: var(--shadow-sm);
 }
 
 .main-content {
@@ -110,18 +110,17 @@
 
 .content-wrapper {
     flex: 1;
-    padding: 1rem 0.5rem;  /* Reduced horizontal padding for full-width layouts */
     overflow-y: auto;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
     .header-content {
-        padding: 0.75rem 1rem;
+        padding: var(--spacing-sm) var(--spacing-md);
     }
 
     .brand-title {
-        font-size: 1.25rem;
+        font-size: var(--font-size-xl);
     }
 
     .brand-subtitle {
@@ -141,7 +140,7 @@
     }
 
     .content-wrapper {
-        padding: 1rem 0.25rem;  /* Even less horizontal padding on mobile */
+        padding: var(--spacing-md) var(--spacing-xs);  /* Even less horizontal padding on mobile */
     }
 }
 
@@ -153,7 +152,7 @@
     .sidebar {
         width: 280px;
         flex-shrink: 0;
-        min-height: calc(100vh - 5rem);
+        min-height: calc(100vh - var(--spacing-3xl));
         overflow-y: auto;
     }
 }
@@ -161,26 +160,26 @@
 /* Error UI Styles */
 #blazor-error-ui {
     position: fixed;
-    bottom: 2rem;
-    right: 2rem;
+    bottom: var(--spacing-xl);
+    right: var(--spacing-xl);
     background: var(--danger-color);
-    color: white;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    color: var(--text-white);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-xl);
     display: none;
     max-width: 400px;
-    z-index: 1001;
+    z-index: var(--z-notification);
 }
 
 .error-content {
     display: flex;
     align-items: flex-start;
-    gap: 1rem;
+    gap: var(--spacing-md);
 }
 
 .error-icon {
-    font-size: 1.5rem;
+    font-size: var(--font-size-2xl);
     flex-shrink: 0;
 }
 
@@ -190,29 +189,29 @@
 
 .error-text strong {
     display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    font-weight: var(--font-weight-semibold);
 }
 
 .error-text p {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
     opacity: 0.9;
 }
 
 .error-actions {
     display: flex;
-    gap: 0.75rem;
-    margin-top: 1rem;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
 }
 
 .btn-text {
     background: none;
     border: none;
-    color: white;
+    color: var(--text-white);
     text-decoration: underline;
     cursor: pointer;
-    font-size: 0.875rem;
+    font-size: var(--font-size-sm);
 }
 
 .btn-text:hover {
