@@ -116,10 +116,10 @@ public class QuestionSection
     {
         return QuestionType switch
         {
-            QuestionType.Assessment => "#0F60FF", // primary-color
-            QuestionType.Goal => "#00E6C8", // success-color
-            QuestionType.TextQuestion => "#935BA9", // purple-rain
-            _ => "#6c757d"
+            QuestionType.Assessment => "var(--rz-primary)", // primary-color
+            QuestionType.Goal => "var(--rz-success)", // success-color
+            QuestionType.TextQuestion => "var(--rz-secondary)", // secondary-color
+            _ => "var(--rz-base-500)"
         };
     }
 
@@ -177,10 +177,10 @@ public class QuestionSection
     {
         return CompletionRole switch
         {
-            CompletionRole.Employee => "#0F60FF", // Blue
-            CompletionRole.Manager => "#00E6C8", // Green
-            CompletionRole.Both => "#935BA9", // Purple
-            _ => "#6c757d"
+            CompletionRole.Employee => "var(--rz-primary)", // Blue
+            CompletionRole.Manager => "var(--rz-success)", // Green
+            CompletionRole.Both => "var(--rz-secondary)", // Purple
+            _ => "var(--rz-base-500)"
         };
     }
 }

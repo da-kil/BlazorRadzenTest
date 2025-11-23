@@ -9,31 +9,52 @@
     --primary-color-light: var(--rz-primary-lighter);
     --primary-color-dark: var(--rz-primary-darker);
     --primary-color-alpha: rgba(var(--rz-primary-rgb), 0.1);
+    --primary-color-alpha-subtle: rgba(var(--rz-primary-rgb), 0.05);
     --primary-color-rgb: var(--rz-primary-rgb);
 
-    /* ti8m BeachBreak Brand Colors */
-    --brand-navy: #002650;           /* Header background */
-    --brand-navy-light: #7F9AAE;     /* Sidebar background */
-    --brand-navy-alpha: rgba(0, 38, 80, 0.1);
-    --brand-navy-light-alpha-15: rgba(127, 154, 174, 0.15);
-    --brand-navy-light-alpha-20: rgba(127, 154, 174, 0.2);
-    --brand-navy-light-alpha-25: rgba(127, 154, 174, 0.25);
+    /* Radzen Theme Override - ti8m Brand Colors Mapped to Radzen Variables */
+    --rz-primary: #0F69FF;           /* ti8m primary blue */
+    --rz-secondary: #935BA9;         /* ti8m purple accent */
+    --rz-success: #00E6C8;           /* ti8m success green */
+    --rz-warning: #E6BF7F;           /* ti8m warning gold */
+    --rz-info: #7F9AAE;              /* ti8m navy light for info */
+    --rz-danger: #dc3545;            /* Standard danger red */
 
-    /* Additional ti8m Brand Palette (from app.css) */
-    --brand-blue: #0F69FF;           /* ti8m primary blue */
-    --brand-green: #00E6C8;          /* ti8m success green */
-    --brand-purple: #935BA9;         /* ti8m purple accent */
-    --brand-gold: #E6BF7F;           /* ti8m warning gold */
+    /* Radzen Shade Variables (Theme-aware generation) */
+    --rz-primary-lighter: color-mix(in srgb, var(--rz-primary) 70%, var(--rz-base-0));
+    --rz-primary-light: color-mix(in srgb, var(--rz-primary) 85%, var(--rz-base-0));
+    --rz-primary-dark: color-mix(in srgb, var(--rz-primary) 85%, var(--rz-base-1000));
+    --rz-primary-darker: color-mix(in srgb, var(--rz-primary) 70%, var(--rz-base-1000));
 
-    /* Question Type Brand Colors */
-    --question-assessment-color: var(--brand-blue);
-    --question-goal-color: var(--brand-gold);
-    --question-text-color: var(--brand-purple);
+    --rz-secondary-lighter: color-mix(in srgb, var(--rz-secondary) 70%, var(--rz-base-0));
+    --rz-secondary-light: color-mix(in srgb, var(--rz-secondary) 85%, var(--rz-base-0));
+    --rz-secondary-dark: color-mix(in srgb, var(--rz-secondary) 85%, var(--rz-base-1000));
+    --rz-secondary-darker: color-mix(in srgb, var(--rz-secondary) 70%, var(--rz-base-1000));
+
+    /* Question Type Colors Using Radzen System */
+    --question-assessment-color: var(--rz-primary);    /* Main interactions */
+    --question-goal-color: var(--rz-warning);          /* Progress/achievements */
+    --question-text-color: var(--rz-secondary);        /* Supporting content */
+
+    /* Question Type Alpha Backgrounds */
+    --question-assessment-alpha: rgba(var(--rz-primary-rgb), 0.1);
+    --question-assessment-alpha-subtle: rgba(var(--rz-primary-rgb), 0.05);
+    --question-goal-alpha: rgba(var(--rz-warning-rgb), 0.1);
+    --question-goal-alpha-subtle: rgba(var(--rz-warning-rgb), 0.05);
+    --question-text-alpha: rgba(var(--rz-secondary-rgb), 0.1);
+    --question-text-alpha-subtle: rgba(var(--rz-secondary-rgb), 0.05);
+
+    /* Layout Colors Using Radzen System */
+    --header-background: var(--rz-primary-darker);     /* Dark primary for header */
+    --sidebar-background: var(--rz-primary-light);     /* Light primary for sidebar */
+    --sidebar-text: var(--rz-primary-lighter);         /* Lighter primary for sidebar text */
 
     /* Secondary Colors - Using Radzen Variables */
     --secondary-color: var(--rz-secondary);
     --secondary-color-light: var(--rz-secondary-lighter);
     --secondary-color-dark: var(--rz-secondary-darker);
+    --secondary-color-alpha: rgba(var(--rz-secondary-rgb), 0.1);
+    --secondary-color-alpha-subtle: rgba(var(--rz-secondary-rgb), 0.05);
     --secondary-color-rgb: var(--rz-secondary-rgb);
 
     /* Status Colors - Using Radzen Variables */
@@ -41,6 +62,7 @@
     --success-color-light: var(--rz-success-lighter);
     --success-color-dark: var(--rz-success-darker);
     --success-color-bg: rgba(var(--rz-success-rgb), 0.1);
+    --success-color-alpha-subtle: rgba(var(--rz-success-rgb), 0.05);
     --success-color-rgb: var(--rz-success-rgb);
 
     --warning-color: var(--rz-warning);
@@ -52,6 +74,7 @@
     --danger-color: var(--rz-danger);
     --danger-color-light: var(--rz-danger-lighter);
     --danger-color-dark: var(--rz-danger-darker);
+    --danger-color-alpha-subtle: rgba(var(--rz-danger-rgb), 0.05);
     --danger-color-rgb: var(--rz-danger-rgb);
 
     --info-color: var(--rz-info);
@@ -67,13 +90,13 @@
     --text-secondary: var(--rz-text-secondary-color);
     --text-disabled: var(--rz-text-disabled-color);
 
-    /* White text variations */
-    --text-white: #ffffff;
-    --text-white-75: rgba(255, 255, 255, 0.75);
-    --text-white-50: rgba(255, 255, 255, 0.5);
+    /* White text variations - Theme-aware */
+    --text-white: var(--rz-text-contrast-color);
+    --text-white-75: color-mix(in srgb, var(--rz-text-contrast-color) 75%, transparent);
+    --text-white-50: color-mix(in srgb, var(--rz-text-contrast-color) 50%, transparent);
 
     /* Background Colors - Using Radzen Base Palette */
-    --background-color: #ffffff;
+    --background-color: var(--rz-body-background-color);
     --background-light: var(--rz-base-50);
     --background-muted: var(--rz-base-100);
     --background-dark: var(--rz-base-200);
@@ -93,11 +116,16 @@
     --hover-background: var(--rz-base-50);
     --active-background: var(--rz-base-100);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    /* Shadows - Theme-aware using Radzen shadow system */
+    --shadow-color: color-mix(in srgb, var(--rz-base-1000) 10%, transparent);
+    --shadow-color-light: color-mix(in srgb, var(--rz-base-1000) 5%, transparent);
+    --shadow-color-medium: color-mix(in srgb, var(--rz-base-1000) 6%, transparent);
+    --shadow-color-heavy: color-mix(in srgb, var(--rz-base-1000) 4%, transparent);
+
+    --shadow-sm: 0 1px 2px 0 var(--shadow-color-light);
+    --shadow-md: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -1px var(--shadow-color-medium);
+    --shadow-lg: 0 10px 15px -3px var(--shadow-color), 0 4px 6px -2px var(--shadow-color-light);
+    --shadow-xl: 0 20px 25px -5px var(--shadow-color), 0 10px 10px -5px var(--shadow-color-heavy);
 
     /* Spacing Scale */
     --spacing-xs: 0.25rem;    /* 4px */
@@ -186,7 +214,7 @@
     --card-shadow: var(--shadow-sm);
 
     /* Modals */
-    --modal-overlay-background: rgba(0, 0, 0, 0.5);
+    --modal-overlay-background: color-mix(in srgb, var(--rz-base-1000) 50%, transparent);
     --modal-border-radius: var(--radius-lg);
     --modal-shadow: var(--shadow-xl);
 
@@ -213,16 +241,4 @@
     --grid-columns: 12;
     --grid-gutter-width: var(--spacing-lg);
 
-}
-
-/* Dark Theme Support (Future Enhancement) */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --background-light: #1a1a1a;
-        --background-muted: #2d2d2d;
-        --text-color: #ffffff;
-        --text-muted: #a0a0a0;
-        --border-light: #404040;
-        --border-medium: #606060;
-    }
 }

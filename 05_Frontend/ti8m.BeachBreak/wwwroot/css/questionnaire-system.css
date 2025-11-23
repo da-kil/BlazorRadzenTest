@@ -22,7 +22,7 @@
     margin-bottom: 0;
 
     /* Theme colors */
-    background-color: rgba(15, 105, 255, 0.05) !important;
+    background-color: var(--primary-color-alpha-subtle) !important;
 
     /* Transitions and performance */
     transition: all 0.15s ease-in-out;
@@ -40,7 +40,7 @@
 /* Context-specific modifiers for competency items */
 .competency-item.builder-context {
     /* Builder-specific styling with colorful borders */
-    background: rgba(15, 105, 255, 0.05) !important;
+    background: var(--primary-color-alpha-subtle) !important;
     border: none !important;
     padding: 1.25rem !important;
     margin-bottom: 0 !important;
@@ -138,7 +138,7 @@
 .competency-item.rating-context .comment-textarea {
     width: 100%;
     padding: 12px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-light);
     border-radius: 4px;
     font-size: 0.9rem;
     resize: vertical;
@@ -154,7 +154,7 @@
 .competency-item.rating-context .comment-display {
     margin-top: 16px;
     padding: 12px;
-    background-color: #f8f9fa;
+    background-color: var(--background-light);
     border-radius: 4px;
 }
 
@@ -179,7 +179,7 @@
 /* Base goal item styling */
 .collaborative-goal {
     padding: 28px;
-    background-color: rgba(0, 230, 200, 0.05) !important;
+    background-color: var(--success-color-alpha-subtle) !important;
     margin-bottom: 12px;
     transition: all 0.2s ease;
 }
@@ -203,7 +203,7 @@
     margin-bottom: 1.5rem;
     transition: all 0.2s ease;
     position: relative;
-    background-color: rgba(147, 91, 169, 0.05) !important;
+    background-color: var(--question-text-alpha-subtle) !important;
     padding: 1.5rem;
 }
 
@@ -258,7 +258,7 @@
 }
 
 .bg-assessment-opacity {
-    background-color: rgba(15, 105, 255, 0.1) !important;
+    background-color: var(--question-assessment-alpha) !important;
 }
 
 .border-assessment {
@@ -266,7 +266,7 @@
 }
 
 .badge-assessment {
-    background-color: rgba(15, 105, 255, 0.1) !important;
+    background-color: var(--question-assessment-alpha) !important;
     color: var(--question-assessment) !important;
 }
 
@@ -281,7 +281,7 @@
 }
 
 .bg-goal-achievement-opacity {
-    background-color: rgba(230, 191, 127, 0.1) !important;
+    background-color: var(--question-goal-alpha) !important;
 }
 
 .border-goal-achievement {
@@ -289,7 +289,7 @@
 }
 
 .badge-goal-achievement {
-    background-color: rgba(230, 191, 127, 0.1) !important;
+    background-color: var(--question-goal-alpha) !important;
     color: var(--dark-color) !important;
 }
 
@@ -304,7 +304,7 @@
 }
 
 .bg-text-response-opacity {
-    background-color: rgba(147, 91, 169, 0.1) !important;
+    background-color: var(--question-text-alpha) !important;
 }
 
 .border-text-response {
@@ -312,14 +312,14 @@
 }
 
 .badge-text-response {
-    background-color: rgba(147, 91, 169, 0.1) !important;
+    background-color: var(--question-text-alpha) !important;
     color: var(--question-text-response) !important;
 }
 
 /* Question Type Cards */
 .question-type-card.assessment {
     border-color: var(--question-assessment) !important;
-    background-color: rgba(15, 105, 255, 0.05) !important;
+    background-color: var(--primary-color-alpha-subtle) !important;
 }
 
 .question-type-card.assessment:hover {
@@ -329,7 +329,7 @@
 
 .question-type-card.goal-achievement {
     border-color: var(--question-goal-achievement) !important;
-    background-color: rgba(230, 191, 127, 0.05) !important;
+    background-color: var(--question-goal-alpha-subtle) !important;
 }
 
 .question-type-card.goal-achievement:hover {
@@ -339,7 +339,7 @@
 
 .question-type-card.text-response {
     border-color: var(--question-text-response) !important;
-    background-color: rgba(147, 91, 169, 0.05) !important;
+    background-color: var(--question-text-alpha-subtle) !important;
 }
 
 .question-type-card.text-response:hover {
@@ -357,7 +357,7 @@
 }
 
 .bg-competency-opacity {
-    background-color: rgba(15, 105, 255, 0.1) !important;
+    background-color: var(--question-assessment-alpha) !important;
 }
 
 .text-competency {
@@ -373,7 +373,7 @@
 }
 
 .bg-goal-category-opacity {
-    background-color: rgba(230, 191, 127, 0.1) !important;
+    background-color: var(--question-goal-alpha) !important;
 }
 
 .text-goal-category {
@@ -462,7 +462,7 @@
 /* Goal category item styling */
 .goal-category-item {
     border-color: var(--question-goal-achievement) !important;
-    background-color: rgba(230, 191, 127, 0.05) !important;
+    background-color: var(--question-goal-alpha-subtle) !important;
 }
 
 .goal-category-item .goal-title {
@@ -473,7 +473,7 @@
 .goals-summary {
     margin-top: 16px;
     padding: 16px;
-    background-color: #f8f9fa;
+    background-color: var(--background-light);
     border-radius: 4px;
     border: 1px solid #f1f3f5;
 }
@@ -505,7 +505,7 @@
 .text-section-item {
     border: none !important;
     border-radius: 0 !important;
-    background-color: rgba(147, 91, 169, 0.05) !important;
+    background-color: var(--question-text-alpha-subtle) !important;
 }
 
 .text-section-item .section-title {
@@ -734,7 +734,7 @@
 }
 
 .questionnaire-main-card {
-    background: #ffffff;
+    background: var(--background-color);
     border: none;
     border-radius: 0;
     padding: 0;
@@ -785,7 +785,7 @@
     gap: 1rem;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .section-header-questionnaire {
@@ -829,20 +829,20 @@
 }
 
 .role-employee {
-    background: rgba(59, 130, 246, 0.1);
-    color: #2563eb;
+    background: var(--primary-color-alpha);
+    color: var(--rz-primary);
     border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
 .role-manager {
-    background: rgba(139, 92, 246, 0.1);
-    color: #7c3aed;
+    background: var(--secondary-color-alpha);
+    color: var(--rz-secondary);
     border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
 .role-both {
-    background: rgba(16, 185, 129, 0.1);
-    color: #059669;
+    background: var(--success-color-bg);
+    color: var(--rz-success);
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
@@ -926,8 +926,8 @@
 }
 
 .competency-card {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: var(--background-light);
+    border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 1rem;
 }
@@ -946,8 +946,8 @@
 }
 
 .planning-card {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: var(--background-light);
+    border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 1rem;
 }
@@ -960,8 +960,8 @@
 }
 
 .goal-card {
-    background: #f8f9fa;
-    border: 1px solid #e9ecef;
+    background: var(--background-light);
+    border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 1rem;
 }
@@ -972,7 +972,7 @@
     justify-content: space-between;
     align-items: center;
     padding-top: 2rem;
-    border-top: 2px solid #e9ecef;
+    border-top: 2px solid var(--border-light);
     margin-top: 2rem;
 }
 
@@ -1009,7 +1009,7 @@
     padding: 0 0 2rem 0;
     margin-bottom: 2rem;
     box-shadow: none;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 2px solid var(--border-light);
 }
 
 .question-comparison-card:last-child {
@@ -1025,7 +1025,7 @@
     padding: 0 0 2rem 0;
     margin-bottom: 2rem;
     box-shadow: none;
-    border-bottom: 2px solid #e9ecef;
+    border-bottom: 2px solid var(--border-light);
 }
 
 .competency-comparison-card:last-child {
@@ -1049,7 +1049,7 @@
     bottom: 0;
     left: 50%;
     width: 1px;
-    background: #e9ecef;
+    background: var(--border-light);
     transform: translateX(-50%);
 }
 
@@ -1086,7 +1086,7 @@
     justify-content: space-between;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid #e9ecef;
+    border-bottom: 1px solid var(--border-light);
     flex-shrink: 0;
 }
 
@@ -1135,9 +1135,9 @@
 .question-item-card {
     margin-bottom: 1rem;
     padding: 1rem;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-light);
     border-radius: 8px;
-    background: #ffffff;
+    background: var(--background-color);
 }
 
 .question-item-title {
@@ -1155,9 +1155,9 @@
 
 .question-answer-box {
     padding: 0.75rem;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-light);
     border-radius: 8px;
-    background: #f8f9fa;
+    background: var(--background-light);
     white-space: pre-wrap;
     font-size: 0.875rem;
     line-height: 1.6;
@@ -1394,7 +1394,7 @@
     /* Builder print */
     .questionnaire-summary {
         box-shadow: none !important;
-        background: white !important;
+        background: var(--background-color) !important;
         border: 1px solid #ccc !important;
     }
 
@@ -1413,7 +1413,7 @@
     /* Question types print */
     .competency-item {
         box-shadow: none !important;
-        background: white !important;
+        background: var(--background-color) !important;
         border: 1px solid #ccc !important;
     }
 

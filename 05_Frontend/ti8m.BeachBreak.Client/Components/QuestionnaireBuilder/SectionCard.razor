@@ -171,7 +171,7 @@
         {
             <div class="question-type-selection mb-4">
                 <div class="border-2 rounded p-0" style="border-color: var(--primary-color);">
-                    <div class="p-3 rounded-top" style="background: var(--light-gray);">
+                    <div class="p-3 rounded-top" style="background: var(--background-light);">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-1" style="color: var(--primary-color);">
@@ -482,10 +482,10 @@
     {
         return Section.Questions.FirstOrDefault()?.Type switch
         {
-            QuestionType.Assessment => "#0F60FF",
-            QuestionType.Goal => "#00E6C8",
-            QuestionType.TextQuestion => "#935BA9",
-            _ => "#6c757d"
+            QuestionType.Assessment => "var(--rz-primary)",
+            QuestionType.Goal => "var(--rz-success)",
+            QuestionType.TextQuestion => "var(--rz-secondary)",
+            _ => "var(--rz-base-500)"
         };
     }
 

@@ -9,7 +9,7 @@
 /* Unified Page Layout - Single consistent approach for all pages */
 .page-layout {
     min-height: calc(100vh - 60px); /* Account for nav */
-    background-color: var(--background-color, #ffffff);
+    background-color: var(--background-color);
     display: flex;
     flex-direction: column;
 }
@@ -17,7 +17,7 @@
 .page-layout-header {
     flex-shrink: 0;
     padding: 1.5rem 0 1rem 0;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    border-bottom: 1px solid var(--border-color);
     margin-bottom: 1.5rem;
 }
 
@@ -30,7 +30,7 @@
     display: flex;
     align-items: center;
     margin: 0;
-    color: var(--primary-color, #0d6efd) !important;
+    color: var(--primary-color) !important;
 }
 
 .page-layout-title .page-icon {
@@ -40,14 +40,14 @@
 
 .page-layout-description {
     margin: 0.5rem 0 0 0;
-    color: var(--text-muted, #6c757d);
+    color: var(--text-muted);
 }
 
 .page-layout-footer {
     flex-shrink: 0;
     padding: 1.5rem;
-    background-color: var(--background-color, #ffffff);
-    border-top: 1px solid var(--border-color, #e0e0e0);
+    background-color: var(--background-color);
+    border-top: 1px solid var(--border-color);
 }
 
 /* ==========================================================================
@@ -64,8 +64,8 @@
     gap: 0.75rem;
     padding: 1rem;
     margin-top: 1rem;
-    background-color: rgba(13, 110, 253, 0.1);
-    border-left: 4px solid var(--primary-color, #0d6efd);
+    background-color: var(--primary-color-alpha);
+    border-left: 4px solid var(--primary-color);
     border-radius: 0.375rem;
 }
 
@@ -76,7 +76,7 @@
 .section-header-questionnaire {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .section-title-container {
@@ -87,12 +87,12 @@
     margin: 0 0 0.5rem 0;
     font-size: 1.5rem;
     /* font-weight inherited from h1-h6 (500) */
-    color: var(--text-color, #212529);
+    color: var(--text-color);
 }
 
 .section-description {
     margin: 0;
-    color: var(--text-muted, #6c757d);
+    color: var(--text-muted);
     font-size: 0.95rem;
 }
 
@@ -101,9 +101,9 @@
 }
 
 .navigation-footer {
-    border-top: 1px solid var(--border-color, #e0e0e0);
+    border-top: 1px solid var(--border-color);
     padding-top: 1.5rem;
-    background-color: var(--background-color, #ffffff);
+    background-color: var(--background-color);
 }
 
 /* ==========================================================================

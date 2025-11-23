@@ -54,13 +54,13 @@ public static class WorkflowStateHelper
     {
         return state switch
         {
-            WorkflowState.Assigned => "#6c757d",
-            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "#0F60FF",
-            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "#935BA9",
-            WorkflowState.InReview => "#FF9800",
-            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "#00E6C8",
-            WorkflowState.Finalized => "#4CAF50",
-            _ => "#6c757d"
+            WorkflowState.Assigned => "var(--rz-base-500)",
+            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "var(--rz-primary)",
+            WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "var(--rz-secondary)",
+            WorkflowState.InReview => "var(--rz-warning)",
+            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "var(--rz-success)",
+            WorkflowState.Finalized => "var(--rz-success-dark)",
+            _ => "var(--rz-base-500)"
         };
     }
 

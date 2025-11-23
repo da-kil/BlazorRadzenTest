@@ -1,19 +1,19 @@
 /* Import consolidated design system */
 @import url('../ti8m.BeachBreak.Client/wwwroot/css/shared-variables.css');
 
-/* Blazor Server specific overrides - use brand colors where needed */
+/* Blazor Server specific overrides - use Radzen colors where needed */
 :root {
-    /* ti8m Brand Color Assignments (override Radzen where brand-specific) */
-    --competency-title-color: var(--brand-blue);
-    --textquestion-title-color: var(--brand-purple);
-    --goal-title-color: var(--brand-green);
+    /* Question Type Color Assignments (using Radzen system) */
+    --competency-title-color: var(--rz-primary);
+    --textquestion-title-color: var(--rz-secondary);
+    --goal-title-color: var(--rz-success);
 }
 
 /* Typography - inherits from shared-variables.css */
 html, body {
     font-family: var(--font-family-base);
     font-weight: var(--font-weight-body);
-    color: var(--brand-navy);
+    color: var(--text-color);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -68,11 +68,11 @@ h1:focus {
     }
 
 .darker-border-checkbox.form-check-input {
-    border-color: #929292;
+    border-color: var(--rz-base-400);
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-    color: var(--text-muted, #6c757d);
+    color: var(--text-muted);
     text-align: end;
 }
 

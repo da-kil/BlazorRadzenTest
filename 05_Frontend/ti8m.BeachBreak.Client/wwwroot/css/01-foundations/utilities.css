@@ -117,19 +117,19 @@
 .text-uppercase { text-transform: uppercase !important; }
 .text-capitalize { text-transform: capitalize !important; }
 
-.font-weight-normal { font-weight: var(--font-weight-normal) !important; }
+.font-weight-normal { font-weight: var(--font-weight-regular) !important; }
 .font-weight-medium { font-weight: var(--font-weight-medium) !important; }
 .font-weight-semibold { font-weight: var(--font-weight-semibold) !important; }
-.font-weight-bold { font-weight: var(--font-weight-bold) !important; }
+.font-weight-bold { font-weight: var(--font-weight-strong) !important; }
 
 .text-muted { color: var(--text-muted) !important; }
 .text-primary { color: var(--primary-color) !important; }
-.text-success { color: var(--color-success) !important; }
-.text-warning { color: var(--color-warning) !important; }
-.text-error { color: var(--color-error) !important; }
+.text-success { color: var(--success-color) !important; }
+.text-warning { color: var(--warning-color) !important; }
+.text-error { color: var(--danger-color) !important; }
 
 /* Bootstrap-compatible aliases for text colors */
-.text-danger { color: var(--color-error) !important; }
+.text-danger { color: var(--danger-color) !important; }
 
 /* Position Utilities */
 .position-relative { position: relative !important; }
@@ -152,9 +152,9 @@
 .bg-light { background-color: var(--background-light) !important; }
 .bg-muted { background-color: var(--background-muted) !important; }
 .bg-primary { background-color: var(--primary-color) !important; }
-.bg-success { background-color: var(--color-success) !important; }
-.bg-warning { background-color: var(--color-warning) !important; }
-.bg-error { background-color: var(--color-error) !important; }
+.bg-success { background-color: var(--success-color) !important; }
+.bg-warning { background-color: var(--warning-color) !important; }
+.bg-error { background-color: var(--danger-color) !important; }
 
 /* Shadow Utilities */
 .shadow-sm { box-shadow: var(--shadow-sm) !important; }
@@ -186,7 +186,7 @@
     white-space: normal !important;
     background: var(--primary-color) !important;
     color: var(--text-white) !important;
-    font-weight: var(--font-weight-bold) !important;
+    font-weight: var(--font-weight-strong) !important;
     z-index: var(--z-notification) !important;
     border-radius: var(--radius-sm) !important;
 }

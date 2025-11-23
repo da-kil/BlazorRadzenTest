@@ -132,8 +132,6 @@
 
     private string GetStarStyle(bool isSelected)
     {
-        return $"font-size: 24px; color: {(isSelected ? "#ffc107" : "#ddd")};";
+        return $"font-size: 24px; color: {(isSelected ? "var(--rz-warning)" : "var(--rz-base-400)")};";
     }
 }
-
-@* Styles now consolidated in question-types.css with rating-context modifier *@

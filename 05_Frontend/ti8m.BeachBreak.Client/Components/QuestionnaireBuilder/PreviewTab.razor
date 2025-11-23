@@ -29,12 +29,12 @@
     }
 
     .structure-table th {
-        background: #f9fafb;
+        background: var(--rz-base-50);
         padding: 1rem;
         text-align: left;
         font-weight: 600;
-        color: #374151;
-        border-bottom: 2px solid #e5e7eb;
+        color: var(--rz-base-700);
+        border-bottom: 2px solid var(--rz-base-200);
         font-size: 0.875rem;
         text-transform: uppercase;
         letter-spacing: 0.05em;
@@ -42,8 +42,8 @@
 
     .structure-table td {
         padding: 0.875rem 1rem;
-        border-bottom: 1px solid #f3f4f6;
-        color: #374151;
+        border-bottom: 1px solid var(--rz-base-100);
+        color: var(--rz-base-700);
     }
 
     .structure-table tr:last-child td {
@@ -51,7 +51,7 @@
     }
 
     .section-row {
-        background: #fefefe;
+        background: var(--rz-white);
     }
 
     .role-badge {
@@ -76,19 +76,19 @@
     }
 
     .review-badge.required {
-        background: #d1fae5;
-        color: #065f46;
+        background: var(--rz-success-lighter);
+        color: var(--rz-success-darker);
     }
 
     .review-badge.not-required {
-        background: #f3f4f6;
-        color: #6b7280;
+        background: var(--rz-base-100);
+        color: var(--rz-base-500);
     }
 
     .empty-state {
         text-align: center;
         padding: 4rem 2rem;
-        color: #6b7280;
+        color: var(--rz-base-500);
     }
 
     .empty-icon {
@@ -168,6 +168,36 @@
             font-size: 1.1rem !important;
         }
     }
+
+    /* Preview Info Card Styles */
+    .preview-section-title {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.875rem;
+        color: var(--rz-base-500);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .preview-content-text {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--rz-base-900);
+    }
+
+    .preview-description-text {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--rz-base-700);
+        line-height: 1.6;
+    }
+
+    .preview-footer-note {
+        margin-top: 1rem;
+        font-size: 0.875rem;
+        color: var(--rz-base-500);
+        font-style: italic;
+    }
 </style>
 
 <div class="summary-container">
@@ -176,17 +206,17 @@
         <!-- Template Information Cards -->
         <div class="info-cards-grid">
             <div class="info-card rz-background-color-base-100 rz-p-3 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
-                <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Template Name</h3>
-                <p style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;">@Template.Name</p>
+                <h3 class="preview-section-title">Template Name</h3>
+                <p class="preview-content-text">@Template.Name</p>
             </div>
 
             <div class="info-card rz-background-color-base-100 rz-p-3 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
-                <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Category</h3>
-                <p style="margin: 0; font-size: 1.25rem; font-weight: 600; color: #111827;">@GetCategoryName()</p>
+                <h3 class="preview-section-title">Category</h3>
+                <p class="preview-content-text">@GetCategoryName()</p>
             </div>
 
             <div class="info-card rz-background-color-base-100 rz-p-3 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
-                <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Review Required</h3>
+                <h3 class="preview-section-title">Review Required</h3>
                 <div style="margin-top: 0.25rem;">
                     @if (Template.RequiresManagerReview)
                     {
@@ -209,8 +239,8 @@
         @if (!string.IsNullOrWhiteSpace(Template.Description))
         {
             <div class="info-card rz-background-color-base-100 rz-p-3 rz-border-radius-3" style="border: 1px solid var(--rz-base-300); margin-bottom: 2rem;">
-                <h3 style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;">Description</h3>
-                <p style="margin: 0; font-size: 1rem; color: #374151; line-height: 1.6;">@Template.Description</p>
+                <h3 class="preview-section-title">Description</h3>
+                <p class="preview-description-text">@Template.Description</p>
             </div>
         }
 
@@ -252,7 +282,7 @@
             </table>
         </RadzenCard>
 
-        <p style="margin-top: 1rem; font-size: 0.875rem; color: #6b7280; font-style: italic;">
+        <p class="preview-footer-note">
             * Items include competencies (Assessment questions) and text sections (Text questions). Goal questions have items added during response.
         </p>
     }

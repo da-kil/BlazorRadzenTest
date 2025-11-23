@@ -8,10 +8,10 @@
 
 /* Header Styles */
 .app-header {
-    background: var(--brand-navy);
+    background: var(--header-background);
     color: var(--text-white);
     padding: 0;
-    box-shadow: 0 2px 4px var(--brand-navy-alpha);
+    box-shadow: 0 2px 4px rgba(var(--rz-primary-rgb), 0.1);
     position: sticky;
     top: 0;
     z-index: var(--z-dropdown);
@@ -40,7 +40,7 @@
 
 .brand-subtitle {
     font-size: var(--font-size-sm);
-    color: var(--brand-navy-light);
+    color: var(--sidebar-text);
     font-weight: var(--font-weight-light);
 }
 
@@ -62,7 +62,7 @@
 }
 
 .btn-icon:hover {
-    background-color: var(--brand-navy-light-alpha-20);
+    background-color: rgba(var(--rz-primary-rgb), 0.2);
 }
 
 .user-menu {
@@ -70,14 +70,14 @@
     align-items: center;
     gap: var(--spacing-sm);
     padding: var(--spacing-sm) var(--spacing-md);
-    background-color: var(--brand-navy-light-alpha-15);
+    background-color: rgba(var(--rz-primary-rgb), 0.15);
     border-radius: var(--radius-full);
     cursor: pointer;
     transition: var(--transition-fast);
 }
 
 .user-menu:hover {
-    background-color: var(--brand-navy-light-alpha-25);
+    background-color: rgba(var(--rz-primary-rgb), 0.25);
 }
 
 .user-avatar {
@@ -97,7 +97,7 @@
 }
 
 .sidebar {
-    background: var(--brand-navy-light);
+    background: var(--sidebar-background);
     box-shadow: var(--shadow-sm);
 }
 
