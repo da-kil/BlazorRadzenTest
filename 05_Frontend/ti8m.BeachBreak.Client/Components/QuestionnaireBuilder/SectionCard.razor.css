@@ -1,6 +1,6 @@
 /* Modern Section Card Design - Minimal design without borders */
 .modern-section-card {
-    background: white;
+    background: var(--rz-body-background-color);
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.2s ease-in-out;
@@ -12,7 +12,7 @@
 
 /* Enhanced Header Layout - Clean without border separator */
 .section-header-modern {
-    background: var(--background-light);
+    /*background: var(--background-light);*/
     padding: 1rem;
 }
 
@@ -110,7 +110,7 @@
 }
 
 .role-label {
-    color: #6c757d;
+    color: var(--rz-text-secondary-color);
     font-weight: 500;
     margin-bottom: 0.5rem;
     display: block;
@@ -138,10 +138,10 @@
 
 .title-input-modern {
     width: 100% !important;
-    border: 2px solid #e9ecef !important;
+    border: 2px solid var(--rz-base-200) !important;
     border-radius: 8px !important;
     padding: 0.75rem 1rem !important;
-    background: white !important;
+    background: var(--rz-body-background-color) !important;
     font-size: 1.125rem !important;
     font-weight: var(--font-weight-emphasis) !important;
     transition: all 0.2s ease-in-out !important;
@@ -149,16 +149,16 @@
 
 .title-input-modern:focus {
     border-color: var(--primary-color) !important;
-    box-shadow: 0 0 0 0.2rem rgba(15, 96, 255, 0.15) !important;
+    box-shadow: 0 0 0 0.2rem var(--primary-color-alpha) !important;
     transform: translateY(-1px);
 }
 
 .description-input-modern {
     width: 100% !important;
-    border: 2px solid #e9ecef !important;
+    border: 2px solid var(--rz-base-200) !important;
     border-radius: 8px !important;
     padding: 0.75rem 1rem !important;
-    background: white !important;
+    background: var(--rz-body-background-color) !important;
     resize: vertical !important;
     min-height: 80px !important;
     line-height: 1.5 !important;
@@ -168,17 +168,19 @@
 
 .description-input-modern:focus {
     border-color: var(--primary-color) !important;
-    box-shadow: 0 0 0 0.2rem rgba(15, 96, 255, 0.15) !important;
+    box-shadow: 0 0 0 0.2rem var(--primary-color-alpha) !important;
     transform: translateY(-1px);
 }
 
-/* Rating Scale Configuration - Simplified background */
+/* Rating Scale Configuration - Theme-adaptive background */
 .rating-scale-config-modern {
-    background: var(--background-light);
+    background: var(--rz-background-color-light, rgba(0, 0, 0, 0.05));
     border: 1px solid var(--border-light);
     border-radius: 10px;
     padding: 1rem;
     margin-bottom: 1rem;
+    /* Ensure proper text contrast in both themes */
+    color: var(--rz-text-color);
 }
 
 .config-header {
@@ -219,7 +221,7 @@
 }
 
 .input-label {
-    color: #6c757d;
+    color: var(--rz-text-secondary-color);
     font-weight: 500;
     margin-bottom: 0.25rem;
     font-size: 0.8125rem;
@@ -227,7 +229,7 @@
 
 .modern-dropdown,
 .modern-textbox {
-    border: 1px solid #ced4da !important;
+    border: 1px solid var(--rz-base-300) !important;
     border-radius: 6px !important;
     padding: 0.5rem 0.75rem !important;
     transition: all 0.2s ease-in-out !important;
@@ -236,18 +238,20 @@
 .modern-dropdown:focus,
 .modern-textbox:focus {
     border-color: var(--primary-color) !important;
-    box-shadow: 0 0 0 0.15rem rgba(15, 96, 255, 0.1) !important;
+    box-shadow: 0 0 0 0.15rem var(--primary-color-alpha) !important;
 }
 
-/* Enhanced Section Stats - Simplified background */
+/* Enhanced Section Stats - Theme-adaptive background */
 .section-stats-modern {
     display: flex;
     align-items: center;
     gap: 1rem;
     padding: 0.875rem;
-    background: var(--background-light);
+    background: var(--rz-background-color-light, rgba(0, 0, 0, 0.05));
     border-radius: 8px;
     border: 1px solid var(--border-light);
+    /* Ensure proper text contrast in both themes */
+    color: var(--rz-text-color);
 }
 
 .stat-item {
@@ -268,7 +272,7 @@
 }
 
 .stat-label {
-    color: #6c757d;
+    color: var(--rz-text-secondary-color);
     font-size: 0.8125rem;
     font-weight: 500;
 }

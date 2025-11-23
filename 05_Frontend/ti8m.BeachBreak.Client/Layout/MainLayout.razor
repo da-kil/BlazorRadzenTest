@@ -1,4 +1,5 @@
 ﻿@inherits LayoutComponentBase
+@using ti8m.BeachBreak.Client.Components.Shared
 
 <RadzenComponents @rendermode="InteractiveAuto" />
 
@@ -15,6 +16,7 @@
                 <span class="brand-subtitle">Performance Management Platform</span>
             </div>
             <div class="header-actions">
+                <ThemeChooser />
                 <button class="btn-icon notification-btn" title="Notifications">
                     <span class="notification-icon">🔔</span>
                 </button>

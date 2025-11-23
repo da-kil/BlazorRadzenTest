@@ -5,6 +5,7 @@ using System.Text.Json.Serialization.Metadata;
 using ti8m.BeachBreak.Client.Configuration;
 using ti8m.BeachBreak.Client.Services;
 using ti8m.BeachBreak.Client.Services.Exports;
+using Blazored.LocalStorage;
 
 namespace ti8m.BeachBreak.Client;
 
@@ -15,6 +16,10 @@ internal class Program
         var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
         builder.Services.AddRadzenComponents();
+
+        // Add theme services for Radzen theme switching
+        builder.Services.AddBlazoredLocalStorage();
+        builder.Services.AddScoped<LocalStorageThemeService>();
 
         // Configure authorization with role-based policies (shared configuration)
         builder.Services.AddAuthorizationCore(options =>

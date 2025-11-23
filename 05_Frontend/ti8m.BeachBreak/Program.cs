@@ -6,6 +6,7 @@ using ti8m.BeachBreak.Client.Configuration;
 using ti8m.BeachBreak.Client.Services;
 using ti8m.BeachBreak.Client.Services.Exports;
 using ti8m.BeachBreak.Components;
+using Blazored.LocalStorage;
 
 namespace ti8m.BeachBreak;
 
@@ -268,6 +269,10 @@ public class Program
         builder.Services.AddCascadingAuthenticationState();
 
         builder.Services.AddRadzenComponents();
+
+        // Add theme services for Radzen theme switching
+        builder.Services.AddBlazoredLocalStorage();
+        builder.Services.AddScoped<LocalStorageThemeService>();
 
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents()

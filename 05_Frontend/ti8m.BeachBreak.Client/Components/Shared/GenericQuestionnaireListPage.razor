@@ -868,7 +868,7 @@
                             }
                             @if (dept.Members.Count > 5 && !expandedDepartments.Contains(dept.OrganizationId))
                             {
-                                <div class="text-center p-3 border rounded bg-light">
+                                <div class="text-center p-3 border rounded" style="background-color: var(--rz-background-color-light, rgba(0, 0, 0, 0.05)); color: var(--rz-text-color);">
                                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">
                                         <RadzenIcon Icon="expand_more" Style="font-size: 1.25rem;" Class="me-1" />
                                         +@(dept.Members.Count - 5) more team member@(dept.Members.Count - 5 == 1 ? "" : "s")

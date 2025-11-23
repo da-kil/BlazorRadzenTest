@@ -1,0 +1,66 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Services
+@inject LocalStorageThemeService LocalStorageThemeService
+
+<div class="theme-chooser">
+    <RadzenDropDown
+        @bind-Value="SelectedTheme"
+        Data="@AvailableThemes"
+        TextProperty="DisplayName"
+        ValueProperty="Value"
+        Change="@OnThemeChanged"
+        Placeholder="Choose theme..."
+        Style="min-width: 160px;"
+        Size="Radzen.ButtonSize.Small" />
+</div>
+
+@code {
+    private string SelectedTheme = "material";
+
+    private List<ThemeOption> AvailableThemes = new()
+    {
+        new ThemeOption { Value = "material", DisplayName = "Material Light" },
+        new ThemeOption { Value = "material-dark", DisplayName = "Material Dark" },
+        new ThemeOption { Value = "standard", DisplayName = "Standard Light" },
+        new ThemeOption { Value = "standard-dark", DisplayName = "Standard Dark" },
+        new ThemeOption { Value = "default", DisplayName = "Default Light" },
+        new ThemeOption { Value = "dark", DisplayName = "Default Dark" },
+        new ThemeOption { Value = "humanistic", DisplayName = "Humanistic Light" },
+        new ThemeOption { Value = "humanistic-dark", DisplayName = "Humanistic Dark" },
+        new ThemeOption { Value = "software", DisplayName = "Software Light" },
+        new ThemeOption { Value = "software-dark", DisplayName = "Software Dark" },
+        new ThemeOption { Value = "material3", DisplayName = "Material 3 Light" },
+        new ThemeOption { Value = "material3-dark", DisplayName = "Material 3 Dark" },
+        new ThemeOption { Value = "fluent", DisplayName = "Fluent Light" },
+        new ThemeOption { Value = "fluent-dark", DisplayName = "Fluent Dark" },
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LocalStorageThemeService.InitializeAsync();
+        SelectedTheme = LocalStorageThemeService.GetCurrentTheme();
+    }
+
+    private async Task OnThemeChanged(object value)
+    {
+        if (value is string theme)
+        {
+            SelectedTheme = theme;
+            await LocalStorageThemeService.SetThemeAsync(theme);
+        }
+    }
+
+    public class ThemeOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+    }
+}
+
+<style>
+    .theme-chooser {
+        display: flex;
+        align-items: center;
+    }
+</style>

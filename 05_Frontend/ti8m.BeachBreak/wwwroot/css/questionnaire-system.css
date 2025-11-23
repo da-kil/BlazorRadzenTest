@@ -154,7 +154,7 @@
 .competency-item.rating-context .comment-display {
     margin-top: 16px;
     padding: 12px;
-    background-color: var(--background-light);
+    background-color: var(--rz-body-background-color);
     border-radius: 4px;
 }
 
@@ -423,7 +423,7 @@
 
 /* New Goals Section Styling */
 .new-goals-section {
-    border-bottom: 1px solid #f1f3f5;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .new-goals-section:first-child {
@@ -473,9 +473,9 @@
 .goals-summary {
     margin-top: 16px;
     padding: 16px;
-    background-color: var(--background-light);
+    background-color: var(--rz-body-background-color);
     border-radius: 4px;
-    border: 1px solid #f1f3f5;
+    border: 1px solid var(--border-light);
 }
 
 /* Add button section - cleaner alignment */
@@ -489,8 +489,8 @@
 
 /* Alert styling to match assessment subtlety */
 .section-content .rz-alert {
-    background-color: rgba(179, 217, 255, 0.08);
-    border: 1px solid rgba(179, 217, 255, 0.2);
+    background-color: var(--primary-color-alpha-subtle);
+    border: 1px solid var(--primary-color-alpha);
     border-radius: 4px;
     padding: 16px;
     margin-bottom: 16px;
@@ -525,10 +525,10 @@
     text-align: center;
     padding: 2rem;
     margin-bottom: 2rem;
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    background: var(--rz-body-background-color);
     border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 1px 3px var(--shadow-color-light);
 }
 
 .summary-title {
@@ -748,8 +748,8 @@
 }
 
 .questionnaire-info-banner {
-    background: rgba(2, 132, 199, 0.1);
-    border: 1px solid rgba(2, 132, 199, 0.3);
+    background: var(--primary-color-alpha-subtle);
+    border: 1px solid var(--primary-color-alpha);
     border-radius: 8px;
     padding: 1rem;
     margin-top: 1rem;
@@ -757,7 +757,7 @@
     align-items: center;
     gap: 0.75rem;
     font-size: 0.875rem;
-    color: var(--dark-color);
+    color: var(--rz-text-color);
 }
 
 /* Section Counter */
@@ -831,19 +831,19 @@
 .role-employee {
     background: var(--primary-color-alpha);
     color: var(--rz-primary);
-    border: 1px solid rgba(59, 130, 246, 0.3);
+    border: 1px solid var(--primary-color-alpha);
 }
 
 .role-manager {
     background: var(--secondary-color-alpha);
     color: var(--rz-secondary);
-    border: 1px solid rgba(139, 92, 246, 0.3);
+    border: 1px solid var(--secondary-color-alpha);
 }
 
 .role-both {
     background: var(--success-color-bg);
     color: var(--rz-success);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    border: 1px solid var(--success-color-alpha-subtle);
 }
 
 /* Question Container (Simplified) */
@@ -899,7 +899,7 @@
 }
 
 .rating-scale-info {
-    background: rgba(2, 132, 199, 0.05);
+    background: var(--primary-color-alpha-subtle);
     border-radius: 6px;
     padding: 0.75rem 1rem;
     margin-bottom: 1rem;
@@ -907,7 +907,7 @@
     align-items: center;
     gap: 0.75rem;
     font-size: 0.875rem;
-    color: var(--dark-color);
+    color: var(--rz-text-color);
 }
 
 /* Assessment Question Styles (Simplified) */
@@ -926,7 +926,7 @@
 }
 
 .competency-card {
-    background: var(--background-light);
+    background: var(--rz-body-background-color);
     border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 1rem;
@@ -946,7 +946,7 @@
 }
 
 .planning-card {
-    background: var(--background-light);
+    background: var(--rz-body-background-color);
     border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 1rem;
@@ -960,7 +960,7 @@
 }
 
 .goal-card {
-    background: var(--background-light);
+    background: var(--rz-body-background-color);
     border: 1px solid var(--border-light);
     border-radius: 8px;
     padding: 1rem;
@@ -1157,7 +1157,7 @@
     padding: 0.75rem;
     border: 1px solid var(--border-light);
     border-radius: 8px;
-    background: var(--background-light);
+    background: var(--rz-body-background-color);
     white-space: pre-wrap;
     font-size: 0.875rem;
     line-height: 1.6;
