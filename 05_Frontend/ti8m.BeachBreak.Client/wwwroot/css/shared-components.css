@@ -8,6 +8,12 @@
     border-radius: 12px;
     padding: 1.5rem;
     cursor: pointer;
+    background-color: var(--rz-body-background-color);
+}
+
+/* Stat Item Styles (used when UseCards=false) */
+.stat-item {
+    background-color: var(--rz-body-background-color);
 }
 
 .stats-card:hover {

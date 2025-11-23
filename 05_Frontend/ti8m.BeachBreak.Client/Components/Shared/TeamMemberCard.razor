@@ -2,8 +2,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 
-<div class="team-member-item p-4 mb-3 rounded"
-     style="background-color: white; box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);"
+<div class="team-member-item team-member-card-adaptive p-4 mb-3 rounded"
      @onmouseover="@(() => isHovered = true)"
      @onmouseout="@(() => isHovered = false)">
 
@@ -45,8 +44,8 @@
         <div class="assignment-list-simple mt-2">
             @foreach (var assignment in Assignments.Take(3))
             {
-                <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded assignment-row"
-                     style="cursor: pointer; margin-bottom: 6px; background-color: var(--rz-base-50, #f9fafb);"
+                <div class="d-flex align-items-center justify-content-between py-2 px-3 rounded assignment-row assignment-row-adaptive"
+                     style="cursor: pointer; margin-bottom: 6px;"
                      @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
                     <div class="d-flex align-items-center flex-grow-1">
                         <div class="assignment-status-dot me-2"

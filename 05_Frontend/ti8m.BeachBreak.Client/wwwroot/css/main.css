@@ -6,7 +6,8 @@
 @import url('./shared-variables.css');
 @import url('./01-foundations/utilities.css');
 
-/* 2. Application Components */
+/* 2. Layout & Application Components */
+@import url('./layout.css');
 @import url('./components.css');
 @import url('./shared-components.css');
 @import url('./assignment-dialogs.css');

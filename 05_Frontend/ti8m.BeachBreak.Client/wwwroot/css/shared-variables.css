@@ -44,10 +44,11 @@
     --question-text-alpha: rgba(var(--rz-secondary-rgb), 0.1);
     --question-text-alpha-subtle: rgba(var(--rz-secondary-rgb), 0.05);
 
-    /* Layout Colors Using Radzen System */
-    --header-background: var(--rz-primary-darker);     /* Dark primary for header */
-    --sidebar-background: var(--rz-primary-light);     /* Light primary for sidebar */
-    --sidebar-text: var(--rz-primary-lighter);         /* Lighter primary for sidebar text */
+    /* Layout Colors Using Radzen System - Header Blue, Sidebar Theme-Aware */
+    --header-background: var(--rz-primary);            /* Blue primary color for header */
+    --sidebar-background: var(--rz-panel-background-color);  /* Theme-aware panel background */
+    --sidebar-text: var(--rz-text-color);              /* Theme-aware text color */
+    --sidebar-text-muted: var(--rz-text-secondary-color);  /* Muted text for section headers */
 
     /* Secondary Colors - Using Radzen Variables */
     --secondary-color: var(--rz-secondary);

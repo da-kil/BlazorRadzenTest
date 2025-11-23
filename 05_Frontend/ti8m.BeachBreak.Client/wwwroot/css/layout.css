@@ -1,0 +1,337 @@
+/*
+ * Main Application Layout Styles
+ * Matches Radzen Material theme colors for header and sidebar consistency
+ */
+
+/* =============================================
+   MAIN APPLICATION STRUCTURE
+   ============================================= */
+
+.page {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background-color: var(--background-color);
+}
+
+/* =============================================
+   APP HEADER STYLES
+   ============================================= */
+
+.app-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+    background-color: var(--header-background);
+    box-shadow: var(--shadow-sm);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--spacing-lg);
+    height: 64px;
+    max-width: 100%;
+}
+
+.brand-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.brand-title {
+    color: var(--text-white);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin: 0;
+    white-space: nowrap;
+}
+
+.brand-subtitle {
+    color: var(--text-white-75);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-regular);
+    opacity: 0.85;
+    white-space: nowrap;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.btn-icon {
+    background: transparent;
+    border: none;
+    color: var(--text-white-75);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-white);
+}
+
+.notification-icon {
+    font-size: 1.2rem;
+}
+
+/* =============================================
+   APP BODY AND LAYOUT
+   ============================================= */
+
+.app-body {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 64px);
+}
+
+/* =============================================
+   SIDEBAR NAVIGATION
+   ============================================= */
+
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-background);
+    border-right: 1px solid var(--border-light);
+    flex-shrink: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Hide the navbar toggler checkbox */
+.navbar-toggler {
+    display: none;
+}
+
+.nav-scrollable {
+    height: 100%;
+    padding: var(--spacing-md) 0;
+}
+
+/* Navigation sections and items are now handled by RadzenPanelMenu component */
+/* Radzen PanelMenu styling is handled natively - no custom CSS needed */
+
+/* =============================================
+   MAIN CONTENT AREA
+   ============================================= */
+
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.content-wrapper {
+    flex: 1;
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    background-color: var(--background-color);
+}
+
+/* =============================================
+   ERROR UI STYLES
+   ============================================= */
+
+#blazor-error-ui {
+    background: var(--danger-color);
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 3.5rem;
+    top: 0.5rem;
+}
+
+.error-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    color: var(--text-white);
+}
+
+.error-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.error-text {
+    flex: 1;
+}
+
+.error-text strong {
+    font-weight: var(--font-weight-semibold);
+    display: block;
+    margin-bottom: var(--spacing-xs);
+}
+
+.error-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.reload {
+    background: var(--text-white);
+    color: var(--danger-color);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+    font-size: var(--font-size-sm);
+}
+
+.btn-text {
+    background: none;
+    border: none;
+    color: var(--text-white-75);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-xs);
+}
+
+.btn-text:hover {
+    color: var(--text-white);
+}
+
+/* =============================================
+   RESPONSIVE DESIGN
+   ============================================= */
+
+@media (max-width: 768px) {
+    .app-body {
+        flex-direction: column;
+        height: auto;
+    }
+
+    .sidebar {
+        width: 100%;
+        height: auto;
+        order: -1;
+    }
+
+    .header-content {
+        padding: 0 var(--spacing-md);
+        height: 56px;
+    }
+
+    .brand-title {
+        font-size: var(--font-size-lg);
+    }
+
+    .brand-subtitle {
+        display: none;
+    }
+
+    .content-wrapper {
+        padding: var(--spacing-md);
+    }
+}
+
+@media (max-width: 576px) {
+    .nav-menu {
+        padding: 0 var(--spacing-sm);
+    }
+
+    .nav-link {
+        padding: var(--spacing-sm);
+    }
+
+    .header-content {
+        padding: 0 var(--spacing-sm);
+    }
+}
+
+/* =============================================
+   MOBILE MENU TOGGLE (if needed)
+   ============================================= */
+
+@media (max-width: 767.98px) {
+    .navbar-toggler {
+        display: block;
+        position: fixed;
+        top: 1rem;
+        left: 1rem;
+        z-index: 1001;
+        width: 2rem;
+        height: 2rem;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .navbar-toggler:checked ~ .nav-scrollable {
+        transform: translateX(0);
+    }
+
+    .nav-scrollable {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100vh;
+        background: var(--sidebar-background);
+        transform: translateX(-100%);
+        transition: transform var(--transition-normal);
+        z-index: 1000;
+        box-shadow: var(--shadow-lg);
+    }
+}
+
+/* =============================================
+   ACCESSIBILITY IMPROVEMENTS
+   ============================================= */
+
+.nav-link:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-link,
+    .btn-icon,
+    .nav-scrollable {
+        transition: none;
+    }
+}
+
+/* =============================================
+   PRINT STYLES
+   ============================================= */
+
+@media print {
+    .app-header,
+    .sidebar {
+        display: none;
+    }
+
+    .main-content {
+        margin: 0;
+        padding: 0;
+    }
+
+    .content-wrapper {
+        padding: 0;
+    }
+}

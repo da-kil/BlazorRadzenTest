@@ -1,127 +1,69 @@
 @using Microsoft.AspNetCore.Components.Authorization
+@using Radzen.Blazor
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-	<nav class="nav-menu">
+	<RadzenPanelMenu Style="width: 100%; padding: 0;">
 		<!-- Main Navigation -->
-		<div class="nav-section">
-			<div class="nav-section-header">
-				<span class="nav-section-title">Main</span>
-			</div>
-			<AuthorizeView Policy="HR">
-				<Authorized>
-					<div class="nav-item">
-						<NavLink class="nav-link" href="hr-dashboard">
-							<span class="nav-text">Dashboard</span>
-						</NavLink>
-					</div>
-				</Authorized>
-				<NotAuthorized>
-					<AuthorizeView Policy="TeamLead">
-						<Authorized Context="teamLeadContext">
-							<div class="nav-item">
-								<NavLink class="nav-link" href="manager-dashboard">
-									<span class="nav-text">Dashboard</span>
-								</NavLink>
-							</div>
-						</Authorized>
-						<NotAuthorized Context="employeeContext">
-							<div class="nav-item">
-								<NavLink class="nav-link" href="dashboard">
-									<span class="nav-text">Dashboard</span>
-								</NavLink>
-							</div>
-						</NotAuthorized>
-					</AuthorizeView>
-				</NotAuthorized>
-			</AuthorizeView>
-		</div>
+		<AuthorizeView Policy="HR">
+			<Authorized>
+				<RadzenPanelMenuItem Text="Dashboard" Path="hr-dashboard" Icon="dashboard" />
+			</Authorized>
+			<NotAuthorized>
+				<AuthorizeView Policy="TeamLead">
+					<Authorized Context="teamLeadContext">
+						<RadzenPanelMenuItem Text="Dashboard" Path="manager-dashboard" Icon="dashboard" />
+					</Authorized>
+					<NotAuthorized Context="employeeContext">
+						<RadzenPanelMenuItem Text="Dashboard" Path="dashboard" Icon="dashboard" />
+					</NotAuthorized>
+				</AuthorizeView>
+			</NotAuthorized>
+		</AuthorizeView>
 
-		<!-- My Work -->
-		<div class="nav-section">
-			<div class="nav-section-header">
-				<span class="nav-section-title">My Work</span>
-			</div>
-			<div class="nav-item">
-				<NavLink class="nav-link" href="my-questionnaires">
-					<span class="nav-text">My Questionnaires</span>
-				</NavLink>
-			</div>
+		<!-- My Work Section -->
+		<RadzenPanelMenuItem Text="My Work" Icon="work" Expanded="true">
+			<RadzenPanelMenuItem Text="My Questionnaires" Path="my-questionnaires" Icon="assignment" />
+
 			<AuthorizeView Policy="TeamLead">
 				<Authorized>
-					<div class="nav-item">
-						<NavLink class="nav-link" href="team/questionnaires">
-							<span class="nav-text">Team Overview</span>
-						</NavLink>
-					</div>
+					<RadzenPanelMenuItem Text="Team Overview" Path="team/questionnaires" Icon="group" />
 				</Authorized>
 			</AuthorizeView>
+
 			<AuthorizeView Policy="HR">
 				<Authorized>
-					<div class="nav-item">
-						<NavLink class="nav-link" href="organization/questionnaires">
-							<span class="nav-text">Organization</span>
-						</NavLink>
-					</div>
+					<RadzenPanelMenuItem Text="Organization" Path="organization/questionnaires" Icon="business" />
 				</Authorized>
 			</AuthorizeView>
-		</div>
+		</RadzenPanelMenuItem>
 
-		<!-- Management -->
+		<!-- Management Section -->
 		<AuthorizeView Policy="HR">
 			<Authorized>
-				<div class="nav-section">
-					<div class="nav-section-header">
-						<span class="nav-section-title">Management</span>
-					</div>
-					<div class="nav-item">
-						<NavLink class="nav-link" href="questionnaire-builder">
-							<span class="nav-text">Create Questionnaire</span>
-						</NavLink>
-					</div>
-					<div class="nav-item">
-						<NavLink class="nav-link" href="questionnaire-management">
-							<span class="nav-text">Manage Questionnaires</span>
-						</NavLink>
-					</div>
-					<div class="nav-item">
-						<NavLink class="nav-link" href="questionnaire-assignments">
-							<span class="nav-text">Assignments</span>
-						</NavLink>
-					</div>
-				</div>
+				<RadzenPanelMenuItem Text="Management" Icon="settings" Expanded="false">
+					<RadzenPanelMenuItem Text="Create Questionnaire" Path="questionnaire-builder" Icon="add_circle" />
+					<RadzenPanelMenuItem Text="Manage Questionnaires" Path="questionnaire-management" Icon="list" />
+					<RadzenPanelMenuItem Text="Assignments" Path="questionnaire-assignments" Icon="assignment_ind" />
+				</RadzenPanelMenuItem>
 			</Authorized>
 		</AuthorizeView>
 
-		<!-- Administration -->
+		<!-- Administration Section -->
 		<AuthorizeView Policy="HR">
 			<Authorized>
-				<div class="nav-section">
-					<div class="nav-section-header">
-						<span class="nav-section-title">Administration</span>
-					</div>
-					<div class="nav-item">
-						<NavLink class="nav-link" href="admin/categories">
-							<span class="nav-text">Categories</span>
-						</NavLink>
-					</div>
-					<div class="nav-item">
-						<NavLink class="nav-link" href="admin/roles">
-							<span class="nav-text">Role Management</span>
-						</NavLink>
-					</div>
+				<RadzenPanelMenuItem Text="Administration" Icon="admin_panel_settings" Expanded="false">
+					<RadzenPanelMenuItem Text="Categories" Path="admin/categories" Icon="category" />
+					<RadzenPanelMenuItem Text="Role Management" Path="admin/roles" Icon="manage_accounts" />
+
 					<AuthorizeView Policy="Admin">
 						<Authorized Context="adminContext">
-							<div class="nav-item">
-								<NavLink class="nav-link" href="admin/projection-replay">
-									<span class="nav-text">Projection Replay</span>
-								</NavLink>
-							</div>
+							<RadzenPanelMenuItem Text="Projection Replay" Path="admin/projection-replay" Icon="replay" />
 						</Authorized>
 					</AuthorizeView>
-				</div>
+				</RadzenPanelMenuItem>
 			</Authorized>
 		</AuthorizeView>
-	</nav>
+	</RadzenPanelMenu>
 </div>

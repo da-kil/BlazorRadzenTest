@@ -7,17 +7,18 @@
    QUESTIONNAIRE COMPONENTS
    ============================================= */
 
-/* Questionnaire Cards */
+/* Questionnaire Cards - Theme-aware */
 .questionnaire-card-modern {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--rz-panel-background-color);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--rz-border-color);
     border-radius: var(--radius-xl);
     padding: var(--spacing-lg);
     transition: var(--transition-normal);
     position: relative;
     overflow: hidden;
+    box-shadow: var(--shadow-sm);
 }
 
 .questionnaire-card-modern::before {
@@ -35,32 +36,32 @@
 .questionnaire-card-modern:hover {
     transform: translateY(-8px);
     box-shadow: var(--shadow-xl);
-    border-color: rgba(var(--primary-color-rgb, 37, 99, 235), 0.3);
+    border-color: var(--rz-primary-lighter);
 }
 
 .questionnaire-card-modern:hover::before {
     opacity: 1;
 }
 
-/* Status-based card styling */
+/* Status-based card styling - Theme-aware */
 .questionnaire-card-new {
-    border-left: 4px solid var(--info-color);
-    background: linear-gradient(135deg, rgba(var(--info-color-rgb, 2, 132, 199), 0.05), rgba(var(--info-color-rgb, 2, 132, 199), 0.02));
+    border-left: 4px solid var(--rz-info);
+    background: var(--rz-panel-background-color);
 }
 
 .questionnaire-card-inprogress {
-    border-left: 4px solid var(--warning-color);
-    background: linear-gradient(135deg, rgba(var(--warning-color-rgb, 217, 119, 6), 0.05), rgba(var(--warning-color-rgb, 217, 119, 6), 0.02));
+    border-left: 4px solid var(--rz-warning);
+    background: var(--rz-panel-background-color);
 }
 
 .questionnaire-card-completed {
-    border-left: 4px solid var(--success-color);
-    background: linear-gradient(135deg, rgba(var(--success-color-rgb, 5, 150, 105), 0.05), rgba(var(--success-color-rgb, 5, 150, 105), 0.02));
+    border-left: 4px solid var(--rz-success);
+    background: var(--rz-panel-background-color);
 }
 
 .questionnaire-card-overdue {
-    border-left: 4px solid var(--danger-color);
-    background: linear-gradient(135deg, rgba(var(--danger-color-rgb, 220, 38, 38), 0.05), rgba(var(--danger-color-rgb, 220, 38, 38), 0.02));
+    border-left: 4px solid var(--rz-danger);
+    background: var(--rz-panel-background-color);
 }
 
 /* Progress Bars with Animation */
@@ -102,8 +103,8 @@
 
 /* Question Editor Styles */
 .question-editor-container {
-    background: var(--background-color);
-    border: 1px solid var(--border-light);
+    background: var(--rz-panel-background-color);
+    border: 1px solid var(--rz-border-color);
     border-radius: var(--radius-lg);
     overflow: hidden;
     transition: var(--transition-normal);
@@ -128,8 +129,8 @@
 
 /* Section Cards */
 .section-card {
-    background: var(--background-color);
-    border: 1px solid var(--border-color);
+    background: var(--rz-panel-background-color);
+    border: 1px solid var(--rz-border-color);
     border-radius: var(--radius-lg);
     margin-bottom: var(--spacing-md);
     transition: var(--transition-normal);
@@ -137,7 +138,7 @@
 
 .section-card:hover {
     box-shadow: var(--shadow-md);
-    border-color: var(--primary-color);
+    border-color: var(--rz-primary);
 }
 
 .section-header-form {
@@ -306,9 +307,9 @@
     }
 
         .step-modern:hover {
-            background: rgba(255, 255, 255, 0.8);
+            background: var(--rz-base-100);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md);
         }
 
         .step-modern.active:hover,
@@ -492,28 +493,29 @@
     }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-    .questionnaire-card-modern {
-        background: rgba(42, 42, 42, 0.95);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
+/* Team Member Cards - Trust Radzen's Design System */
+.team-member-card-adaptive {
+    /* Use Radzen panel background - provides proper contrast in both themes */
+    background: var(--rz-panel-background-color);
+    border: 1px solid var(--rz-border-color);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-duration-fast) ease;
+}
 
-    .section-card,
-    .question-editor-container {
-        background: var(--rz-base-800);
-        border-color: var(--rz-base-600);
-    }
+.team-member-card-adaptive:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--rz-primary-lighter);
+}
 
-    .modal-content-modern {
-        background: var(--rz-base-900);
-    }
+.assignment-row-adaptive {
+    /* Use subtle background for assignment rows */
+    background: var(--rz-body-background-color);
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-duration-fast) ease;
+}
 
-    .form-input-modern {
-        background: var(--rz-base-800);
-        border-color: var(--rz-base-600);
-        color: var(--rz-white);
-    }
+.assignment-row-adaptive:hover {
+    background: var(--rz-base-100);
 }
 
 /* =============================================
@@ -844,8 +846,8 @@
    ============================================= */
 
 .advanced-filters-container {
-    background: rgba(248, 249, 250, 0.8);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    background: var(--rz-panel-background-color);
+    border: 1px solid var(--rz-border-color);
     border-radius: var(--rz-border-radius, 8px);
     padding: 1.25rem;
     margin-top: 0.5rem;
