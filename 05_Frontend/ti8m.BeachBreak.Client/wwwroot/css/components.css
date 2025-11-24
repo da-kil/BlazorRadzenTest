@@ -495,8 +495,8 @@
 
 /* Team Member Cards - Trust Radzen's Design System */
 .team-member-card-adaptive {
-    /* Use Radzen panel background - provides proper contrast in both themes */
-    background: var(--rz-panel-background-color);
+    /* Use body background for contrast against card containers */
+    background: var(--rz-body-background-color);
     border: 1px solid var(--rz-border-color);
     box-shadow: var(--shadow-sm);
     transition: all var(--transition-duration-fast) ease;
@@ -504,18 +504,22 @@
 
 .team-member-card-adaptive:hover {
     box-shadow: var(--shadow-md);
-    border-color: var(--rz-primary-lighter);
+    border-color: var(--rz-primary);
+    /* Use primary color with low opacity overlay for consistent hover across themes */
+    background: color-mix(in srgb, var(--rz-primary) 8%, var(--rz-body-background-color));
 }
 
 .assignment-row-adaptive {
-    /* Use subtle background for assignment rows */
-    background: var(--rz-body-background-color);
+    /* Use panel background for visibility against body background */
+    background: var(--rz-panel-background-color);
     border-radius: var(--radius-sm);
+    border: 1px solid var(--rz-border-color);
     transition: background-color var(--transition-duration-fast) ease;
 }
 
 .assignment-row-adaptive:hover {
-    background: var(--rz-base-100);
+    background: color-mix(in srgb, var(--rz-primary) 5%, var(--rz-panel-background-color));
+    border-color: var(--rz-primary);
 }
 
 /* =============================================
@@ -777,11 +781,6 @@
 /* Status Badge Enhancements for Better Clickability */
 .rz-badge {
     transition: all 0.15s ease;
-}
-
-.rz-badge:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Pulse Animation for Overdue Items */

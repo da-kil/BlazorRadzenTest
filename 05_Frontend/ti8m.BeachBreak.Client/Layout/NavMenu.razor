@@ -8,33 +8,33 @@
 		<!-- Main Navigation -->
 		<AuthorizeView Policy="HR">
 			<Authorized>
-				<RadzenPanelMenuItem Text="Dashboard" Path="hr-dashboard" Icon="dashboard" />
+				<RadzenPanelMenuItem Text="Dashboard" Path="hr-dashboard" />
 			</Authorized>
 			<NotAuthorized>
 				<AuthorizeView Policy="TeamLead">
 					<Authorized Context="teamLeadContext">
-						<RadzenPanelMenuItem Text="Dashboard" Path="manager-dashboard" Icon="dashboard" />
+						<RadzenPanelMenuItem Text="Dashboard" Path="manager-dashboard" />
 					</Authorized>
 					<NotAuthorized Context="employeeContext">
-						<RadzenPanelMenuItem Text="Dashboard" Path="dashboard" Icon="dashboard" />
+						<RadzenPanelMenuItem Text="Dashboard" Path="dashboard" />
 					</NotAuthorized>
 				</AuthorizeView>
 			</NotAuthorized>
 		</AuthorizeView>
 
 		<!-- My Work Section -->
-		<RadzenPanelMenuItem Text="My Work" Icon="work" Expanded="true">
-			<RadzenPanelMenuItem Text="My Questionnaires" Path="my-questionnaires" Icon="assignment" />
+		<RadzenPanelMenuItem Text="My Work" Expanded="true">
+			<RadzenPanelMenuItem Text="My Questionnaires" Path="my-questionnaires" />
 
 			<AuthorizeView Policy="TeamLead">
 				<Authorized>
-					<RadzenPanelMenuItem Text="Team Overview" Path="team/questionnaires" Icon="group" />
+					<RadzenPanelMenuItem Text="Team Overview" Path="team/questionnaires" />
 				</Authorized>
 			</AuthorizeView>
 
 			<AuthorizeView Policy="HR">
 				<Authorized>
-					<RadzenPanelMenuItem Text="Organization" Path="organization/questionnaires" Icon="business" />
+					<RadzenPanelMenuItem Text="Organization" Path="organization/questionnaires" />
 				</Authorized>
 			</AuthorizeView>
 		</RadzenPanelMenuItem>
@@ -42,10 +42,10 @@
 		<!-- Management Section -->
 		<AuthorizeView Policy="HR">
 			<Authorized>
-				<RadzenPanelMenuItem Text="Management" Icon="settings" Expanded="false">
-					<RadzenPanelMenuItem Text="Create Questionnaire" Path="questionnaire-builder" Icon="add_circle" />
-					<RadzenPanelMenuItem Text="Manage Questionnaires" Path="questionnaire-management" Icon="list" />
-					<RadzenPanelMenuItem Text="Assignments" Path="questionnaire-assignments" Icon="assignment_ind" />
+				<RadzenPanelMenuItem Text="Management" Expanded="false">
+					<RadzenPanelMenuItem Text="Create Questionnaire" Path="questionnaire-builder" />
+					<RadzenPanelMenuItem Text="Manage Questionnaires" Path="questionnaire-management" />
+					<RadzenPanelMenuItem Text="Assignments" Path="questionnaire-assignments" />
 				</RadzenPanelMenuItem>
 			</Authorized>
 		</AuthorizeView>
@@ -53,13 +53,13 @@
 		<!-- Administration Section -->
 		<AuthorizeView Policy="HR">
 			<Authorized>
-				<RadzenPanelMenuItem Text="Administration" Icon="admin_panel_settings" Expanded="false">
-					<RadzenPanelMenuItem Text="Categories" Path="admin/categories" Icon="category" />
-					<RadzenPanelMenuItem Text="Role Management" Path="admin/roles" Icon="manage_accounts" />
+				<RadzenPanelMenuItem Text="Administration" Expanded="false">
+					<RadzenPanelMenuItem Text="Categories" Path="admin/categories" />
+					<RadzenPanelMenuItem Text="Role Management" Path="admin/roles" />
 
 					<AuthorizeView Policy="Admin">
 						<Authorized Context="adminContext">
-							<RadzenPanelMenuItem Text="Projection Replay" Path="admin/projection-replay" Icon="replay" />
+							<RadzenPanelMenuItem Text="Projection Replay" Path="admin/projection-replay" />
 						</Authorized>
 					</AuthorizeView>
 				</RadzenPanelMenuItem>

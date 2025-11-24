@@ -1,15 +1,13 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
 
 <RadzenCard Class="questionnaire-template-card mb-3">
     <!-- Questionnaire Template Header with clear visual distinction -->
     <div class="template-header-section mb-3 pb-3 border-bottom">
         <div class="d-flex align-items-start justify-content-between">
             <div class="d-flex align-items-start flex-grow-1">
-                <div class="questionnaire-icon me-3">
-                    <RadzenIcon Icon="description" Style="font-size: 3rem;" Class="text-primary" />
-                </div>
                 <div class="flex-grow-1">
                     <RadzenText TextStyle="TextStyle.H6" Class="mb-2 fw-bold">@TemplateName</RadzenText>
                     <div class="d-flex align-items-center gap-2 mb-2">
@@ -33,7 +31,7 @@
     </div>
 
     <!-- Team Completion Summary Section -->
-    <div class="team-summary-section mb-3">
+    <div class="team-completion-summary mb-3 rounded">
         <div class="d-flex align-items-center justify-content-between mb-2">
             <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary fw-bold">
                 <RadzenIcon Icon="groups" Style="font-size: 1.2rem;" Class="me-2" />
@@ -55,25 +53,25 @@
         <!-- Status Grid -->
         <RadzenRow Gap="0.5rem" Class="rz-mb-2">
             <RadzenColumn Size="3">
-                <div class="stat-mini-box p-2 text-center border rounded">
+                <div class="p-2 text-center rounded" style="background: var(--rz-body-background-color); border: 1px solid var(--rz-border-color);">
                     <RadzenText TextStyle="TextStyle.H6" Class="text-secondary mb-1">@AssignedCount</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Assigned</RadzenText>
                 </div>
             </RadzenColumn>
             <RadzenColumn Size="3">
-                <div class="stat-mini-box p-2 text-center border rounded">
+                <div class="p-2 text-center rounded" style="background: var(--rz-body-background-color); border: 1px solid var(--rz-border-color);">
                     <RadzenText TextStyle="TextStyle.H6" Class="text-info mb-1">@InProgressCount</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">In Progress</RadzenText>
                 </div>
             </RadzenColumn>
             <RadzenColumn Size="3">
-                <div class="stat-mini-box p-2 text-center border rounded">
+                <div class="p-2 text-center rounded" style="background: var(--rz-body-background-color); border: 1px solid var(--rz-border-color);">
                     <RadzenText TextStyle="TextStyle.H6" Class="text-success mb-1">@CompletedCount</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Completed</RadzenText>
                 </div>
             </RadzenColumn>
             <RadzenColumn Size="3">
-                <div class="stat-mini-box p-2 text-center border rounded">
+                <div class="p-2 text-center rounded" style="background: var(--rz-body-background-color); border: 1px solid var(--rz-border-color);">
                     <RadzenText TextStyle="TextStyle.H6" Class="text-danger mb-1">@OverdueCount</RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Overdue</RadzenText>
                 </div>
@@ -82,7 +80,7 @@
     </div>
 
     <!-- Individual Team Member Assignments - Always Visible -->
-    <div class="rz-background-color-base-200 rz-p-3 rz-mb-3 rz-border-radius-3">
+    <div class="p-3 mb-3 rounded" style="background: var(--rz-body-background-color); border: 1px solid var(--rz-border-color);">
         <div class="d-flex align-items-center justify-content-between mb-3">
             <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-primary">
                 <RadzenIcon Icon="touch_app" Style="font-size: 1rem;" Class="me-2" />
@@ -98,8 +96,8 @@
             <div class="assignment-details-list">
                 @foreach (var assignment in Assignments.OrderByDescending(a => GetAssignmentPriority(a)).Take(10))
                 {
-                    <div class="assignment-detail-item d-flex justify-content-between align-items-center p-2 mb-2 border-start border-3 @GetAssignmentBorderClass(assignment)"
-                         style="cursor: pointer;"
+                    <div class="d-flex justify-content-between align-items-center p-2 mb-2 rounded border-start border-3 @GetAssignmentBorderClass(assignment)"
+                         style="cursor: pointer; background: var(--rz-panel-background-color); border-right: 1px solid var(--rz-border-color); border-top: 1px solid var(--rz-border-color); border-bottom: 1px solid var(--rz-border-color);"
                          @onclick="@(() => OnAssignmentClick.InvokeAsync(assignment.Id))">
                         <div class="flex-grow-1">
                             <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
@@ -118,7 +116,7 @@
                                 </RadzenText>
                             }
                         </div>
-                        <RadzenBadge Text="@assignment.WorkflowState.ToString()"
+                        <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
                                     BadgeStyle="@GetStatusBadgeStyle(assignment.WorkflowState)"
                                     Class="ms-2" />
                     </div>

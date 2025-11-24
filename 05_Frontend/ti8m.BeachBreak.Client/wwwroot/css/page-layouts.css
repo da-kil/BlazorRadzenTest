@@ -9,7 +9,7 @@
 /* Unified Page Layout - Single consistent approach for all pages */
 .page-layout {
     min-height: calc(100vh - 60px); /* Account for nav */
-    background-color: var(--background-color);
+    background-color: var(--rz-base-background-color);
     display: flex;
     flex-direction: column;
 }
@@ -17,7 +17,7 @@
 .page-layout-header {
     flex-shrink: 0;
     padding: 1.5rem 0 1rem 0;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--rz-border-color);
     margin-bottom: 1.5rem;
 }
 
@@ -46,8 +46,8 @@
 .page-layout-footer {
     flex-shrink: 0;
     padding: 1.5rem;
-    background-color: var(--background-color);
-    border-top: 1px solid var(--border-color);
+    background-color: var(--rz-base-background-color);
+    border-top: 1px solid var(--rz-border-color);
 }
 
 /* ==========================================================================
@@ -76,7 +76,7 @@
 .section-header-questionnaire {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--rz-border-color);
 }
 
 .section-title-container {
@@ -101,9 +101,9 @@
 }
 
 .navigation-footer {
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--rz-border-color);
     padding-top: 1.5rem;
-    background-color: var(--background-color);
+    background-color: var(--rz-base-background-color);
 }
 
 /* ==========================================================================

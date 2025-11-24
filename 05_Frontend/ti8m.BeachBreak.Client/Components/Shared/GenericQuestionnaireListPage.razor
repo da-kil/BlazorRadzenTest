@@ -46,11 +46,14 @@
                 <StatsCardGrid Stats="@GetStatsCards()" Columns="@Configuration.StatsConfig.Columns" UseCards="false" />
 
                 <!-- Filter Bar Component -->
-                <QuestionnaireFilterBar Configuration="Configuration"
-                                       CurrentFilters="filterState"
-                                       OnFiltersChanged="ApplyFilters"
-                                       OnClearFilters="ClearAllFilters"
-                                       OnSearchChanged="OnSearchChanged" />
+                @if (!HideFilterBar)
+                {
+                    <QuestionnaireFilterBar Configuration="Configuration"
+                                           CurrentFilters="filterState"
+                                           OnFiltersChanged="ApplyFilters"
+                                           OnClearFilters="ClearAllFilters"
+                                           OnSearchChanged="OnSearchChanged" />
+                }
 
                 <!-- Tab Content -->
                 <RadzenTabs @bind-SelectedIndex="SelectedTabIndex">
@@ -73,6 +76,7 @@
     [Parameter] public EventCallback<QuestionnaireAssignment> OnStartQuestionnaire { get; set; }
     [Parameter] public Func<Guid, bool>? HasProgressChecker { get; set; }
     [Parameter] public bool HideHeader { get; set; } = false;
+    [Parameter] public bool HideFilterBar { get; set; } = false;
 
     private List<QuestionnaireAssignment> allAssignments = new();
     private List<EmployeeDto> employees = new();
@@ -308,16 +312,13 @@
     private RenderFragment<QuestionnaireAssignment> RenderQuestionnaireCard => assignment => __builder =>
     {
         var isOverdue = IsOverdue(assignment);
-        var dueDateColor = isOverdue ? "var(--rz-danger)" : "var(--rz-text-secondary-color)";
-        var dueDateTextColor = isOverdue ? "var(--rz-danger)" : "inherit";
 
-        <RadzenCard Class="@($"questionnaire-card mb-3 {GetCardCssClass(assignment)}")" Style="border-left: 4px solid var(--rz-primary);">
+        <RadzenCard Class="questionnaire-card mb-3">
             <div class="d-flex justify-content-between align-items-start">
                 <div class="flex-grow-1">
                     <!-- Questionnaire Title -->
                     <div class="d-flex align-items-center gap-2 mb-2">
-                        <RadzenIcon Icon="quiz" Style="color: var(--rz-primary);" />
-                        <RadzenText TextStyle="TextStyle.H6" Class="mb-0" Style="font-weight: 600;">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-0 questionnaire-card-title">
                             @GetTemplateName(assignment)
                         </RadzenText>
                     </div>
@@ -328,7 +329,8 @@
                         <div class="mt-2">
                             <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
                                         BadgeStyle="BadgeStyle.Light"
-                                        Style="@($"font-size: 0.75rem; background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
+                                        Class="questionnaire-card-workflow-badge"
+                                        Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)};")" />
                         </div>
                     }
 
@@ -336,12 +338,12 @@
                     <RadzenRow Gap="1rem" Class="mt-2">
                         <RadzenColumn Size="12" SizeMD="4">
                             <div class="d-flex align-items-center gap-2">
-                                <RadzenIcon Icon="person" Style="font-size: 1rem; color: var(--rz-text-secondary-color);" />
-                                <div>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0" Style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <RadzenIcon Icon="person" Class="questionnaire-card-meta-icon" />
+                                <div class="questionnaire-card-meta-container">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0 questionnaire-card-meta-label">
                                         Assigned By
                                     </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-0" Style="font-weight: 500;">
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-0 questionnaire-card-meta-value">
                                         @assignment.AssignedBy
                                     </RadzenText>
                                 </div>
@@ -352,16 +354,16 @@
                         {
                             <RadzenColumn Size="12" SizeMD="4">
                                 <div class="d-flex align-items-center gap-2">
-                                    <RadzenIcon Icon="event" Style="@($"font-size: 1rem; color: {dueDateColor};")" />
-                                    <div>
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0" Style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <RadzenIcon Icon="event" Class="@($"questionnaire-card-meta-icon{(isOverdue ? " questionnaire-card-meta-icon--danger" : "")}")" />
+                                    <div class="questionnaire-card-meta-container">
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0 questionnaire-card-meta-label">
                                             Due Date
                                         </RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Class="mb-0" Style="@($"font-weight: 500; color: {dueDateTextColor};")">
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="@($"mb-0 questionnaire-card-meta-value{(isOverdue ? " questionnaire-card-meta-value--danger" : "")}")">
                                             @assignment.DueDate.Value.ToString("MMM dd, yyyy")
                                             @if (isOverdue)
                                             {
-                                                <span style="font-size: 0.75rem; color: var(--rz-danger);"> (Overdue)</span>
+                                                <span class="questionnaire-card-overdue-indicator"> (Overdue)</span>
                                             }
                                         </RadzenText>
                                     </div>
@@ -381,7 +383,7 @@
                                          Icon="visibility"
                                          ButtonStyle="ButtonStyle.Success"
                                          Size="ButtonSize.Medium"
-                                         Style="min-width: 120px; font-weight: 600;"
+                                         Class="questionnaire-card-action-button"
                                          Click="@(() => NavigateToQuestionnaire(assignment))" />
                         }
                         else if (WorkflowStateHelper.CanEmployeeEdit(assignment))
@@ -392,7 +394,7 @@
                                          Icon="@(hasProgress ? "play_circle" : "play_arrow")"
                                          ButtonStyle="ButtonStyle.Primary"
                                          Size="ButtonSize.Medium"
-                                         Style="min-width: 120px; font-weight: 600;"
+                                         Class="questionnaire-card-action-button"
                                          Click="@(() => NavigateToQuestionnaire(assignment))" />
                         }
                         else
@@ -402,7 +404,7 @@
                                          Icon="visibility"
                                          ButtonStyle="ButtonStyle.Info"
                                          Size="ButtonSize.Medium"
-                                         Style="min-width: 120px; font-weight: 600;"
+                                         Class="questionnaire-card-action-button"
                                          Disabled="@(!WorkflowStateHelper.CanEmployeeEdit(assignment))"
                                          Click="@(() => NavigateToQuestionnaire(assignment))" />
                         }
@@ -413,7 +415,7 @@
                                      Icon="info"
                                      ButtonStyle="ButtonStyle.Light"
                                      Size="ButtonSize.Medium"
-                                     Style="min-width: 120px;"
+                                     Class="questionnaire-card-action-button"
                                      Click="@(() => ViewAssignmentDetails(assignment))" />
                     }
                 </div>
@@ -798,15 +800,13 @@
             }
             else
             {
-                <div class="department-overview-container">
-                    @foreach (var dept in departmentGroups)
-                    {
-                        <div class="department-container rz-background-color-base-100 rz-p-4 rz-mb-4 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
+                @foreach (var dept in departmentGroups)
+                {
+                        <RadzenCard Class="mb-4 no-shadow">
                             <!-- Department Header -->
                             <div class="d-flex justify-content-between align-items-start mb-3 pb-3 border-bottom">
                                 <div>
                                     <RadzenText TextStyle="TextStyle.H5" Class="text-primary mb-2">
-                                        <RadzenIcon Icon="corporate_fare" Class="me-2" />
                                         @dept.OrganizationName
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="text-muted">
@@ -878,7 +878,7 @@
                                     </RadzenText>
                                 </div>
                             }
-                        </div>
+                        </RadzenCard>
 
                         @* Add section divider between departments *@
                         @if (!dept.Equals(departmentGroups.Last()))
@@ -886,7 +886,6 @@
                             <div class="department-divider mt-5 mb-4" style="border-bottom: 2px solid var(--rz-base-200);"></div>
                         }
                     }
-                </div>
             }
         }
     };
@@ -1126,20 +1125,6 @@
                 a.DueDate.Value < DateTime.Now &&
                 a.WorkflowState != WorkflowState.Finalized).ToList();
         return ApplyFilteringToAssignments(baseAssignments);
-    }
-
-    // UI Helper methods
-    private string GetCardCssClass(QuestionnaireAssignment assignment)
-    {
-        if (assignment.DueDate.HasValue && assignment.DueDate.Value < DateTime.Now && assignment.WorkflowState != WorkflowState.Finalized)
-            return "overdue-card";
-
-        return assignment.WorkflowState switch
-        {
-            WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "inprogress-card",
-            WorkflowState.Finalized => "completed-card",
-            _ => "assigned-card"
-        };
     }
 
     private bool IsOverdue(QuestionnaireAssignment assignment)

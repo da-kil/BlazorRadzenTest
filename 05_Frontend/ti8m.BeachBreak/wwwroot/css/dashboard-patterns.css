@@ -331,8 +331,7 @@
    ======================================== */
 
 .member-avatar-large,
-.department-icon-large,
-.questionnaire-icon-large {
+.department-icon-large {
     width: 80px;
     height: 80px;
     border-radius: var(--radius-xl);

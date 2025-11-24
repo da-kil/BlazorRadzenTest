@@ -35,7 +35,8 @@
 										  DataService="@dataService"
 										  OnStartQuestionnaire="@StartQuestionnaire"
 										  HasProgressChecker="@((assignmentId) => questionnaireResponses.ContainsKey(assignmentId))"
-										  HideHeader="true" />
+										  HideHeader="true"
+										  HideFilterBar="true" />
 		}
 		else if (isLoading)
 		{
