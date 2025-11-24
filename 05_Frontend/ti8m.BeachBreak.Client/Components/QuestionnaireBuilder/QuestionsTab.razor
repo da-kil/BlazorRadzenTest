@@ -74,7 +74,7 @@
     @if (Template.Sections.Count == 0)
     {
         <div class="empty-state text-center p-5">
-            <RadzenIcon Icon="quiz" Style="font-size: 3rem; color: #6c757d;" />
+            <RadzenIcon Icon="quiz" Style="font-size: 3rem; color: var(--text-muted);" />
             <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2">
                 No sections created yet. Click "Add Section" to get started.
             </RadzenText>
@@ -91,7 +91,7 @@
                 @if (sectionIndex > 0)
                 {
                     <div class="section-separator mb-4">
-                        <hr class="border-0" style="height: 1px; background: linear-gradient(to right, transparent, #dee2e6, transparent);" />
+                        <hr class="border-0" style="height: 1px; background: linear-gradient(to right, transparent, var(--border-light), transparent);" />
                     </div>
                 }
 
@@ -130,8 +130,8 @@
 }
 
 .empty-state {
-    background: #f8f9fa;
-    border: 2px dashed #dee2e6;
+    background: var(--rz-base-100);
+    border: 2px dashed var(--border-light);
     border-radius: 8px;
 }
 

@@ -98,7 +98,7 @@
 
 .action-btn-danger:hover {
     background: var(--danger-color) !important;
-    color: white !important;
+    color: var(--rz-text-contrast-color) !important;
 }
 
 .header-content-row {
