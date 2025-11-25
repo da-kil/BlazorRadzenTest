@@ -103,7 +103,7 @@
     padding: 1.25rem;
     margin-bottom: 0.75rem;
     transition: all 0.3s ease;
-    background: var(--background-color);
+    background: var(--background-color) !important;
     position: relative;
     box-shadow: none !important;
 }

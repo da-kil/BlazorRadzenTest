@@ -1,14 +1,6 @@
 /* Import consolidated design system */
 @import url('../ti8m.BeachBreak.Client/wwwroot/css/shared-variables.css');
 
-/* Blazor Server specific overrides - use Radzen colors where needed */
-:root {
-    /* Question Type Color Assignments (using Radzen system) */
-    --competency-title-color: var(--rz-primary);
-    --textquestion-title-color: var(--rz-secondary);
-    --goal-title-color: var(--rz-success);
-}
-
 /* Typography - inherits from shared-variables.css */
 html, body {
     font-family: var(--font-family-base);

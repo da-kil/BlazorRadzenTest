@@ -9,7 +9,6 @@
     <div class="text-question">
         <header class="question-header">
             <h3 class="question-title">
-                <RadzenIcon Icon="psychology" Class="me-2" />
                 @Question.Title
                 @if (Question.IsRequired) { <span class="text-danger">*</span> }
                 <EditedDuringReviewBadge Response="@Response" />
@@ -29,20 +28,16 @@
         {
             var sectionKey = $"section_{sectionsToRender.IndexOf(section)}";
             <div class="text-section-card" @key="@sectionKey">
-                @if (!string.IsNullOrWhiteSpace(section.Title))
-                {
-                    <h4 class="text-section-title">
+                <header class="question-section-header">
+                    <h4 class="question-title @(string.IsNullOrWhiteSpace(section.Title) ? "text-danger" : "")">
                         @(section.Title)
                         @if (section.IsRequired) { <span class="text-danger">*</span> }
                     </h4>
-                }
-
-                @if (!string.IsNullOrWhiteSpace(section.Description))
-                {
-                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-                        @(section.Description)
-                    </RadzenText>
-                }
+                    @if (!string.IsNullOrWhiteSpace(section.Description))
+                    {
+                        <p class="question-section-description">@(section.Description)</p>
+                    }
+                </header>
 
                 @if (!IsReadOnly)
                 {
@@ -80,14 +75,16 @@ else
         {
             var sectionKey = $"section_{sectionsToRenderNoHeader.IndexOf(textSection)}";
             <div class="text-section-card" @key="@sectionKey">
-                <h4 class="text-section-title">
-                    @textSection.Title
-                    @if (textSection.IsRequired) { <span class="text-danger">*</span> }
-                </h4>
-                @if (!string.IsNullOrWhiteSpace(textSection.Description))
-                {
-                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">@textSection.Description</RadzenText>
-                }
+                <header class="question-section-header">
+                    <h4 class="question-title @(string.IsNullOrWhiteSpace(textSection.Title) ? "text-danger" : "")">
+                        @textSection.Title
+                        @if (textSection.IsRequired) { <span class="text-danger">*</span> }
+                    </h4>
+                    @if (!string.IsNullOrWhiteSpace(textSection.Description))
+                    {
+                        <p class="question-section-description">@textSection.Description</p>
+                    }
+                </header>
                 @if (!IsReadOnly)
                 {
                     <RadzenTextArea Value="@GetSectionValue(sectionKey)"

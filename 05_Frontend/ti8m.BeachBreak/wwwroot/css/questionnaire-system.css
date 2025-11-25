@@ -33,8 +33,14 @@
     box-sizing: border-box;
 }
 
-.competency-item .competency-title {
-    color: var(--competency-title-color) !important;
+.question-title {
+    font-size: 1.125rem;
+    font-weight: var(--font-weight-emphasis);
+    color: var(--rz-primary) !important;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 /* Context-specific modifiers for competency items */
@@ -50,9 +56,6 @@
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.competency-item.builder-context .fw-bold {
-    color: var(--competency-title-color) !important;
-}
 
 .competency-item.rating-context {
     /* Rating-specific styling with bottom borders */
@@ -66,18 +69,17 @@
 }
 
 /* Rating-specific component styles */
-.competency-item.rating-context .competency-header {
+.competency-item.rating-context .question-section-header {
     margin-bottom: 16px;
 }
 
-.competency-item.rating-context .competency-title {
+/* Context-specific override for competency rating titles */
+.competency-item.rating-context .question-title {
     font-size: 1.1rem;
-    font-weight: var(--font-weight-emphasis);
     margin: 0 0 8px 0;
-    color: var(--dark-color);
 }
 
-.competency-item.rating-context .competency-description {
+.competency-item.rating-context .question-section-description {
     font-size: 0.9rem;
     color: var(--secondary-color);
     margin: 0;
@@ -207,18 +209,25 @@
     padding: 1.5rem;
 }
 
-.text-section-title {
-    font-size: 1.1rem;
-    font-weight: var(--font-weight-emphasis);
-    margin: 0 0 12px 0;
-    color: var(--textquestion-title-color) !important;
-    display: flex;
-    align-items: center;
+/* Generic question section styles - used by both competency and text sections */
+.text-section-card .question-section-header {
+    margin-bottom: 16px;
 }
 
-.text-section-card:focus-within {
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+/* Context-specific override for text section titles */
+.text-section-card .question-title {
+    font-size: 1.1rem;
+    margin: 0 0 12px 0;
 }
+
+
+.text-section-card .question-section-description {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin: 0;
+    line-height: 1.4;
+}
+
 
 .readonly-text {
     white-space: pre-wrap;
@@ -293,14 +302,10 @@
     color: var(--dark-color) !important;
 }
 
-/* Text Response Question Colors */
-.question-text-response,
-.text-text-response {
-    color: var(--textquestion-title-color) !important;
-}
+/* Text Response Question Colors - consolidated above */
 
 .bg-text-response {
-    background-color: var(--goal-title-color) !important;
+    background-color: var(--rz-primary) !important;
 }
 
 .bg-text-response-opacity {
@@ -397,9 +402,6 @@
     color: var(--secondary-color);
 }
 
-.goal-question .question-title {
-    color: var(--goal-title-color) !important;
-}
 
 /* Goal Content Sections */
 .two-section-goal-content {
@@ -512,9 +514,6 @@
     color: var(--question-text-response) !important;
 }
 
-.text-question .question-title {
-    color: var(--textquestion-title-color) !important;
-}
 
 /* =============================================
    BUILDER-SPECIFIC LAYOUTS
@@ -859,15 +858,6 @@
     margin-bottom: 2rem;
 }
 
-.question-title {
-    font-size: 1.125rem;
-    font-weight: var(--font-weight-emphasis);
-    color: var(--dark-color);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
 
 .question-description {
     font-size: 0.875rem;
@@ -881,15 +871,6 @@
     margin-bottom: 1.5rem;
 }
 
-.question-title {
-    font-size: 1.125rem;
-    font-weight: var(--font-weight-emphasis);
-    color: var(--primary-color);
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
 
 .question-description {
     font-size: 0.875rem;
@@ -915,9 +896,6 @@
     margin-bottom: 2rem;
 }
 
-.assessment-question .question-title {
-    color: var(--competency-title-color) !important;
-}
 
 .competencies-container {
     display: flex;

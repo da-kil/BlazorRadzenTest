@@ -5,13 +5,13 @@
 
 @* Simplified competency rating item with reduced DOM nesting *@
 <div class="competency-item rating-context">
-    <header class="competency-header">
-        <h4 class="competency-title @(string.IsNullOrWhiteSpace(Competency.Title) ? "text-danger" : "")">
+    <header class="question-section-header">
+        <h4 class="question-title @(string.IsNullOrWhiteSpace(Competency.Title) ? "text-danger" : "")">
             @displayTitle
         </h4>
         @if (!string.IsNullOrWhiteSpace(Competency.Description))
         {
-            <p class="competency-description">@Competency.Description</p>
+            <p class="question-section-description">@Competency.Description</p>
         }
     </header>
 

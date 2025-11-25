@@ -39,7 +39,7 @@
 
     <div class="settings-section mt-4 p-3 rounded" style="background-color: var(--rz-background-color-light, rgba(0, 0, 0, 0.05)); color: var(--rz-text-color);">
         <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Workflow Configuration</RadzenText>
-        <div class="mb-4 p-3 rounded border" style="background-color: var(--rz-background-color-lighter, rgba(0, 0, 0, 0.02)); color: var(--rz-text-color);">
+        <div class="p-3">
             <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
             <RadzenLabel Text="Requires Manager Review" Component="requiresManagerReview" Style="font-weight: 500;" />
             <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">

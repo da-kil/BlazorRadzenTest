@@ -377,15 +377,15 @@
 
                             @if (goal.IsPendingDelete)
                             {
-                                <RadzenBadge Text="Pending Delete" BadgeStyle="BadgeStyle.Danger" Class="me-2" />
+                                <RadzenBadge Text="Pending Delete" BadgeStyle="BadgeStyle.Danger" Class="me-2 ml-2" />
                             }
                             else if (goal.IsPendingModify)
                             {
-                                <RadzenBadge Text="Pending Edit" BadgeStyle="BadgeStyle.Warning" Class="me-2" />
+                                <RadzenBadge Text="Pending Edit" BadgeStyle="BadgeStyle.Warning" Class="me-2 ml-2" />
                             }
                             else if (goal.IsPendingAdd)
                             {
-                                <RadzenBadge Text="Pending Add" BadgeStyle="BadgeStyle.Info" Class="me-2" />
+                                <RadzenBadge Text="Pending Add" BadgeStyle="BadgeStyle.Info" Class="me-2 ml-2" />
                             }
                         </div>
                     </div>
