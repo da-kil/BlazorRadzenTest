@@ -158,7 +158,7 @@
                                 <h2 class="step-title">Review & Publish</h2>
                                 <p class="step-description">Review your questionnaire and make it available for assignments</p>
                             </header>
-                            <PreviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" Categories="@categories" />
+                            <ReviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" Categories="@categories" />
                             <nav class="step-navigation-dual">
                                 <RadzenButton Text="Previous: Build Sections" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
                                 <div class="publish-actions">

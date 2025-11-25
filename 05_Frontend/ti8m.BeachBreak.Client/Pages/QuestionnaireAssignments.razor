@@ -135,7 +135,6 @@
                                         <!-- Employee Selection -->
                                         <div class="form-section-flat">
                                             <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
-                                                <RadzenIcon Icon="people" Class="me-2" Style="color: var(--rz-primary);" />
                                                 Select Employees
                                             </RadzenText>
 
@@ -168,7 +167,6 @@
                                         <!-- Questionnaire Selection -->
                                         <div class="form-section-flat">
                                             <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
-                                                <RadzenIcon Icon="quiz" Class="me-2" Style="color: var(--rz-secondary);" />
                                                 Select Questionnaire
                                             </RadzenText>
 
@@ -194,7 +192,7 @@
                                                                 <div class="flex-grow-1">
                                                                     <div class="d-flex justify-content-between align-items-start">
                                                                         <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">@questionnaire.Name</RadzenText>
-                                                                        <RadzenBadge Text="@GetCategoryName(questionnaire.CategoryId)" BadgeStyle="BadgeStyle.Info" />
+                                                                        <RadzenBadge Class="ml-3" Text="@GetCategoryName(questionnaire.CategoryId)" BadgeStyle="BadgeStyle.Info" />
                                                                     </div>
                                                                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@questionnaire.Description</RadzenText>
                                                                     <div class="d-flex gap-3 mt-2">
@@ -225,7 +223,6 @@
                                         <!-- Assignment Configuration -->
                                         <div class="form-section-flat">
                                             <RadzenText TextStyle="TextStyle.H5" Class="mb-3 d-flex align-items-center">
-                                                <RadzenIcon Icon="settings" Class="me-2" Style="color: var(--rz-warning);" />
                                                 Assignment Settings
                                             </RadzenText>
 
