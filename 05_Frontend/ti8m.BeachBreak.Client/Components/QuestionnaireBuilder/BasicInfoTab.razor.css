@@ -1,0 +1,19 @@
+/*
+ * BasicInfoTab Component Styles
+ * Basic information form for questionnaire templates
+ */
+
+.basic-info-content {
+    padding: 0;
+}
+
+.settings-section {
+    border: 1px solid var(--border-light);
+    background-color: var(--rz-background-color-light, rgba(0, 0, 0, 0.05));
+    color: var(--rz-text-color);
+}
+
+.workflow-config-box {
+    background-color: var(--rz-background-color-lighter, rgba(0, 0, 0, 0.02));
+    color: var(--rz-text-color);
+}

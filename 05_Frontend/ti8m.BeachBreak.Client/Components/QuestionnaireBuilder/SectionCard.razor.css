@@ -314,3 +314,31 @@
         padding-bottom: 1rem;
     }
 }
+
+/* Question Type Selection */
+.question-type-selection-border {
+    border-color: var(--primary-color);
+}
+
+.question-type-selection-header {
+    background: var(--background-light);
+}
+
+.question-type-selection-title {
+    color: var(--primary-color);
+}
+
+.question-type-card {
+    transition: all 0.15s ease-in-out;
+    transform: scale(1);
+}
+
+.question-type-icon-badge {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+}
+
+.question-type-click-badge {
+    font-size: 0.7rem;
+}

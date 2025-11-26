@@ -80,3 +80,39 @@
 .text-section-item .validation-message {
     z-index: 1;
 }
+
+/* Empty state icons */
+.empty-state-competencies-icon {
+    font-size: 1.5rem;
+    opacity: 0.5;
+    color: var(--primary-color);
+}
+
+.empty-state-text-icon {
+    font-size: 1.5rem;
+    opacity: 0.5;
+    color: var(--info-color);
+}
+
+.validation-icon {
+    font-size: 0.85rem;
+}
+
+/* Goal configuration */
+.goal-config-icon {
+    font-size: 2rem;
+    color: var(--rz-primary);
+}
+
+.goal-workflow-alert {
+    text-align: left !important;
+}
+
+.goal-workflow-caption {
+    text-align: left !important;
+}
+
+.goal-workflow-list {
+    line-height: 1.8;
+    text-align: left !important;
+}

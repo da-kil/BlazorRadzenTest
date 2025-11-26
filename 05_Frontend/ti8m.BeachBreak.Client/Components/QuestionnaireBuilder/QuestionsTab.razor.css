@@ -1,0 +1,51 @@
+/*
+ * QuestionsTab Component Styles
+ * Displays sections and questions in the builder's second step
+ */
+
+.questions-tab-content {
+    padding: 0;
+}
+
+.empty-state {
+    background: var(--rz-background-color-lighter);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    color: var(--text-muted);
+}
+
+.stats-icon-primary {
+    color: var(--primary-color);
+}
+
+.stats-count-primary {
+    color: var(--primary-color);
+}
+
+.stats-icon-success {
+    color: var(--success-color);
+}
+
+.stats-count-success {
+    color: var(--success-color);
+}
+
+.section-separator-line {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-light), transparent);
+}
+
+/* Component-specific responsive styles */
+@media (max-width: 768px) {
+    .questions-tab-content {
+        padding: 0.5rem;
+    }
+
+    .assessment-stats .d-flex {
+        flex-direction: column;
+        gap: 1rem !important;
+        align-items: flex-start !important;
+    }
+}

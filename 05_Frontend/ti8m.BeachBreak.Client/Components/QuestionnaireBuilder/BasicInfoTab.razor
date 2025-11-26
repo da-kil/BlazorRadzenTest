@@ -37,9 +37,9 @@
                       Disabled="@(!Template.IsAvailableForEditing)" />
     </div>
 
-    <div class="settings-section mt-4 p-3 rounded" style="background-color: var(--rz-background-color-light, rgba(0, 0, 0, 0.05)); color: var(--rz-text-color);">
+    <div class="settings-section mt-4 p-3 rounded">
         <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Workflow Configuration</RadzenText>
-        <div class="p-3">
+        <div class="workflow-config-box mb-4 p-3 rounded border">
             <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
             <RadzenLabel Text="Requires Manager Review" Component="requiresManagerReview" Style="font-weight: 500;" />
             <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
@@ -49,16 +49,6 @@
         </div>
     </div>
 </div>
-
-<style>
-.basic-info-content {
-    padding: 0;
-}
-
-.settings-section {
-    border: 1px solid var(--border-light);
-}
-</style>
 
 @code {
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;

@@ -41,12 +41,12 @@
             <div class="assessment-stats mb-4">
                 <div class="d-flex gap-4 align-items-center justify-content-center">
                     <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-0">
-                        <RadzenIcon Icon="folder" Class="me-1" style="color: var(--primary-color);" />
-                        <strong style="color: var(--primary-color);">@Template.Sections.Count</strong> Sections
+                        <RadzenIcon Icon="folder" Class="me-1 stats-icon-primary" />
+                        <strong class="stats-count-primary">@Template.Sections.Count</strong> Sections
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-0">
-                        <RadzenIcon Icon="quiz" Class="me-1" style="color: var(--success-color);" />
-                        <strong style="color: var(--success-color);">@GetTotalItemsCount()</strong> Total Items
+                        <RadzenIcon Icon="quiz" Class="me-1 stats-icon-success" />
+                        <strong class="stats-count-success">@GetTotalItemsCount()</strong> Total Items
                     </RadzenText>
                 </div>
             </div>
@@ -56,7 +56,7 @@
     @if (Template.Sections.Count == 0)
     {
         <div class="empty-state text-center p-5">
-            <RadzenIcon Icon="quiz" Style="font-size: 3rem; color: var(--text-muted);" />
+            <RadzenIcon Icon="quiz" Class="empty-state-icon" />
             <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2">
                 No sections created yet. Click "Add Section" to get started.
             </RadzenText>
@@ -73,7 +73,7 @@
                 @if (sectionIndex > 0)
                 {
                     <div class="section-separator mb-4">
-                        <hr class="border-0" style="height: 1px; background: linear-gradient(to right, transparent, var(--border-light), transparent);" />
+                        <hr class="section-separator-line border-0" />
                     </div>
                 }
 
@@ -100,32 +100,6 @@
         </div>
     }
 </div>
-
-
-<style>
-.questions-tab-content {
-    padding: 0;
-}
-
-.empty-state {
-    background: var(--rz-base-100);
-    border: 2px dashed var(--border-light);
-    border-radius: 8px;
-}
-
-/* Component-specific responsive styles */
-@@media (max-width: 768px) {
-    .questions-tab-content {
-        padding: 0.5rem;
-    }
-
-    .assessment-stats .d-flex {
-        flex-direction: column;
-        gap: 1rem !important;
-        align-items: flex-start !important;
-    }
-}
-</style>
 
 @code {
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;

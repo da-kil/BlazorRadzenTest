@@ -913,20 +913,22 @@
                 </div>
 
                 <div class="employee-status-grid">
-                    <RadzenDataGrid @ref="employeeDataGrid"
-                                   Data="@GetEmployeeStatusData()"
-                                   TItem="EmployeeStatusRow"
-                                   AllowSorting="true"
-                                   AllowFiltering="false"
-                                   GridLines="DataGridGridLines.Both"
-                                   Class="mt-3"
-                                   EmptyText="No employees found"
-                                   PageSize="25"
-                                   AllowPaging="true"
-                                   ShowPagingSummary="true"
-                                   PagingSummaryFormat="Displaying {0} - {1} of {2} employees">
+                    <div class="employee-status-table-wrapper">
+                        <RadzenDataGrid @ref="employeeDataGrid"
+                                       Data="@GetEmployeeStatusData()"
+                                       TItem="EmployeeStatusRow"
+                                       AllowSorting="true"
+                                       AllowFiltering="false"
+                                       AllowColumnResize="true"
+                                       GridLines="DataGridGridLines.Both"
+                                       Class="mt-3"
+                                       EmptyText="No employees found"
+                                       PageSize="25"
+                                       AllowPaging="true"
+                                       ShowPagingSummary="true"
+                                       PagingSummaryFormat="Displaying {0} - {1} of {2} employees">
                         <Columns>
-                            <RadzenDataGridColumn TItem="EmployeeStatusRow" Property="EmployeeName" Title="Employee">
+                            <RadzenDataGridColumn TItem="EmployeeStatusRow" Property="EmployeeName" Title="Employee" Frozen="true" Width="250px">
                                 <Template Context="employee">
                                     <div class="d-flex align-items-center">
                                         <div class="me-2">
@@ -976,7 +978,7 @@
                                     }
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="EmployeeStatusRow" Property="CompletionPercentage" Title="Progress" Width="120px">
+                            <RadzenDataGridColumn TItem="EmployeeStatusRow" Property="CompletionPercentage" Title="Progress" Width="140px">
                                 <Template Context="employee">
                                     <div class="d-flex align-items-center gap-2">
                                         <RadzenProgressBarCircular Size="ProgressBarCircularSize.Small"
@@ -986,7 +988,7 @@
                                     </div>
                                 </Template>
                             </RadzenDataGridColumn>
-                            <RadzenDataGridColumn TItem="EmployeeStatusRow" Property="LastActivity" Title="Last Activity" Width="130px">
+                            <RadzenDataGridColumn TItem="EmployeeStatusRow" Property="LastActivity" Title="Last Activity" Width="140px">
                                 <Template Context="employee">
                                     @if (employee.LastActivity.HasValue)
                                     {
@@ -1025,6 +1027,7 @@
                             </RadzenDataGridColumn>
                         </Columns>
                     </RadzenDataGrid>
+                    </div>
                 </div>
             </div>
         }

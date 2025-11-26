@@ -17,7 +17,7 @@
                 @if (competencies.Count == 0)
                 {
                     <div class="text-center p-3 text-muted">
-                        <RadzenIcon Icon="self_improvement" Style="font-size: 1.5rem; opacity: 0.5; color: var(--primary-color);" />
+                        <RadzenIcon Icon="self_improvement" Class="empty-state-competencies-icon" />
                         <div class="mt-2 small">No competencies configured</div>
                     </div>
                 }
@@ -68,7 +68,7 @@
                                     @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
                                     {
                                         <div class="validation-message">
-                                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
+                                            <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
                                             Competency title is required
                                         </div>
                                     }
@@ -99,18 +99,18 @@
         @if (Question.Type == QuestionType.Goal)
         {
             <div class="goal-config text-center p-4">
-                <RadzenIcon Icon="flag" Style="font-size: 2rem; color: var(--rz-primary);" Class="mb-3" />
+                <RadzenIcon Icon="flag" Class="goal-config-icon mb-3" />
                 <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 fw-bold">
                     Goal Question Type
                 </RadzenText>
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
                     No template configuration is required for Goal questions.
                 </RadzenText>
-                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Class="mb-0" ShowIcon="false" Style="text-align: left !important;">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="d-block mb-1" Style="text-align: left !important;">
+                <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Class="mb-0 goal-workflow-alert" ShowIcon="false">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="d-block mb-1 goal-workflow-caption">
                         Goals are added dynamically during the questionnaire workflow:
                     </RadzenText>
-                    <ul class="small mb-0" style="line-height: 1.8; text-align: left !important;">
+                    <ul class="small mb-0 goal-workflow-list">
                         <li>Employee and Manager add goals during their completion phases</li>
                         <li>Goals can be linked to predecessor questionnaires for rating</li>
                         <li>Each goal includes objective, timeframe, measurement, and weighting</li>
@@ -127,7 +127,7 @@
                 @if (textSections.Count == 0)
                 {
                     <div class="text-center p-3 text-muted">
-                        <RadzenIcon Icon="psychology" Style="font-size: 1.5rem; opacity: 0.5; color: var(--info-color);" />
+                        <RadzenIcon Icon="psychology" Class="empty-state-text-icon" />
                         <div class="mt-2 small">No text sections configured</div>
                     </div>
                 }
@@ -176,7 +176,7 @@
                                     @if (!GetTextSectionTitleValid(sectionIndex) && GetTextSectionTitleValidated(sectionIndex))
                                     {
                                         <div class="validation-message">
-                                            <RadzenIcon Icon="error_outline" Style="font-size: 0.85rem;" Class="me-1" />
+                                            <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
                                             Text section title is required
                                         </div>
                                     }

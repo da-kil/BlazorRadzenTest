@@ -1,0 +1,8 @@
+/*
+ * ProgressSteps Component Styles
+ * Progress indicator for questionnaire builder wizard steps
+ */
+
+.progress-steps-wrapper {
+    border-bottom: 1px solid var(--border-light);
+}

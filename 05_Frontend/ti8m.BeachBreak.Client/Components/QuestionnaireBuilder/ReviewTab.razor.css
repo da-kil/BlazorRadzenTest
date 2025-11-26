@@ -99,9 +99,35 @@
     color: var(--text-muted);
 }
 
-.empty-icon {
-    font-size: 3rem;
+.empty-state-icon {
+    font-size: 4rem;
     margin-bottom: 1rem;
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.review-badge-container {
+    margin-top: 0.25rem;
+}
+
+.description-card {
+    margin-bottom: 2rem;
+}
+
+.table-header-center {
+    text-align: center;
+}
+
+.table-col-completed-by {
+    width: 200px;
+}
+
+.table-col-items {
+    width: 250px;
+}
+
+.table-cell-center {
+    text-align: center;
 }
 
 /* Review Info Card Styles */

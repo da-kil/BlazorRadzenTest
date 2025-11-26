@@ -1,5 +1,5 @@
 /* Import consolidated design system */
-@import url('../ti8m.BeachBreak.Client/wwwroot/css/shared-variables.css');
+@import url('_content/ti8m.BeachBreak.Client/css/shared-variables.css');
 
 /* Typography - inherits from shared-variables.css */
 html, body {

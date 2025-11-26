@@ -2,7 +2,7 @@
 @using Radzen.Blazor
 
 <!-- Progress Steps -->
-<div style="border-bottom: 1px solid var(--border-light);">
+<div class="progress-steps-wrapper">
 	<div class="progress-steps-container">
 		<div class="progress-steps-modern py-3" data-current-step="@CurrentStep">
 			<div class="step-modern @(CurrentStep == 1 ? "active" : CurrentStep > 1 ? "completed" : "")" @onclick="() => HandleStepClick(1)">

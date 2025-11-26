@@ -21,7 +21,7 @@
 
             <div class="info-card">
                 <h3 class="preview-section-title">Review Required</h3>
-                <div style="margin-top: 0.25rem;">
+                <div class="review-badge-container">
                     @if (Template.RequiresManagerReview)
                     {
                         <span class="review-badge required">
@@ -42,7 +42,7 @@
 
         @if (!string.IsNullOrWhiteSpace(Template.Description))
         {
-            <div class="info-card" style="margin-bottom: 2rem;">
+            <div class="info-card description-card">
                 <h3 class="preview-section-title">Description</h3>
                 <p class="preview-description-text">@Template.Description</p>
             </div>
@@ -63,8 +63,8 @@
                 <thead>
                     <tr>
                         <th>Section</th>
-                        <th style="text-align: center; width: 200px;">Completed By</th>
-                        <th style="text-align: center; width: 250px;">Items</th>
+                        <th class="table-header-center table-col-completed-by">Completed By</th>
+                        <th class="table-header-center table-col-items">Items</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -74,10 +74,10 @@
                             <td>
                                 <strong>@templateSection.Title</strong>
                             </td>
-                            <td style="text-align: center;">
+                            <td class="table-cell-center">
                                 @GetCompletionRoleBadge(templateSection)
                             </td>
-                            <td style="text-align: center;">
+                            <td class="table-cell-center">
                                 @GetSectionItemsText(templateSection)
                             </td>
                         </tr>
@@ -93,7 +93,7 @@
     else
     {
         <div class="empty-state">
-            <div class="empty-icon">📋</div>
+            <RadzenIcon Icon="description" class="empty-state-icon" />
             <p>Add sections and questions to see the summary</p>
         </div>
     }
