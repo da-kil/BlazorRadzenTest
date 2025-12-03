@@ -11,7 +11,6 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Layout
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject IQuestionnaireTemplateService ApiService
 @inject ICategoryApiService CategoryService
@@ -19,14 +18,14 @@
 @inject QuestionnaireValidationService ValidationService
 @inject ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory HandlerFactory
 @inject QuestionnaireBuilderState State
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 @implements IDisposable
 
-<PageTitle>Questionnaire Builder</PageTitle>
+<PageTitle>@T("pages.questionnaire-builder")</PageTitle>
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <PageLayout Title="@(State.IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")"
+        <PageLayout Title="@(State.IsEditMode ? T("pages.questionnaire-editor") : T("pages.questionnaire-builder"))"
                    Description="@GetStatusDescription()">
             <HeaderActions>
                 @{
@@ -40,14 +39,14 @@
                 {
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-flex align-items-center">
                         <RadzenIcon Icon="cloud_done" Class="me-1" />
-                        Last saved @lastSavedTime.Value.ToString("HH:mm")
+                        @T("labels.last-saved") @lastSavedTime.Value.ToString("HH:mm")
                     </RadzenText>
                 }
                 @if (isSaving)
                 {
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-flex align-items-center">
                         <RadzenIcon Icon="sync" Class="me-1" Style="animation: rotate 2s linear infinite;" />
-                        Saving...
+                        @T("messages.saving")
                     </RadzenText>
                 }
 
@@ -57,16 +56,16 @@
                 @switch (currentStatus)
                 {
                     case TemplateStatus.Draft:
-                        <RadzenButton Text="@(isSaving ? "Saving..." : "Save Draft")" ButtonStyle="ButtonStyle.Light" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
-                        <RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Primary" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@(isSaving ? T("messages.saving") : T("buttons.save-draft"))" ButtonStyle="ButtonStyle.Light" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.publish")" ButtonStyle="ButtonStyle.Primary" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
                         break;
                     case TemplateStatus.Published:
-                        <RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
-                        <RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Light" Icon="unpublished" Click="@UnpublishQuestionnaire" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.clone")" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.unpublish")" ButtonStyle="ButtonStyle.Light" Icon="unpublished" Click="@UnpublishQuestionnaire" Size="ButtonSize.Medium" />
                         break;
                     case TemplateStatus.Archived:
-                        <RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
-                        <RadzenButton Text="Restore" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.clone")" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.restore")" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" Size="ButtonSize.Medium" />
                         break;
                 }
             </HeaderActions>
@@ -83,11 +82,11 @@
                         <header class="editor-toolbar">
                             <div class="toolbar-left">
                                 <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@CloseQuestionEditor" Class="me-3" />
-                                <h2 class="editor-title">Edit Question: @GetCurrentQuestionTitle()</h2>
+                                <h2 class="editor-title">@T("labels.edit-question"): @GetCurrentQuestionTitle()</h2>
                             </div>
                             <div class="toolbar-actions">
-                                <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CloseQuestionEditor" />
-                                <RadzenButton Text="Save Question" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveCurrentQuestion" />
+                                <RadzenButton Text="@T("buttons.cancel")" ButtonStyle="ButtonStyle.Secondary" Click="@CloseQuestionEditor" />
+                                <RadzenButton Text="@T("buttons.save-question")" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveCurrentQuestion" />
                             </div>
                         </header>
                         <div class="editor-content">
@@ -187,7 +186,7 @@
         </PageLayout>
     </Authorized>
     <NotAuthorized>
-        <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Builder" />
+        <AccessDeniedComponent RequiredRole="HR" PageName="@T("pages.questionnaire-builder")" />
     </NotAuthorized>
 </AuthorizeView>
 
@@ -216,9 +215,11 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        // Only reload if the template ID has changed or this is the first load
-        // This prevents duplicate loading on initial render
-        if (lastLoadedTemplateId != TemplateId)
+        // Handle both initial load (both null) and template ID changes
+        // Use Equals to properly handle nullable Guid comparisons
+        bool shouldLoad = !Equals(lastLoadedTemplateId, TemplateId) || lastLoadedTemplateId == null;
+
+        if (shouldLoad)
         {
             lastLoadedTemplateId = TemplateId;
             await LoadQuestionnaireData();
@@ -249,8 +250,10 @@
                 State.Template = new QuestionnaireTemplate
                 {
                     Id = Guid.NewGuid(), // Generate ID upfront for efficient refetch after create
-                    Name = "",
-                    Description = "",
+                    NameEnglish = "",
+                    NameGerman = "",
+                    DescriptionEnglish = "",
+                    DescriptionGerman = "",
                     CategoryId = Guid.Empty
                 };
             }

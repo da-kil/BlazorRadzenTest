@@ -75,6 +75,10 @@ internal class Program
         // Register export services
         builder.Services.AddScoped<IQuestionnaireReportExporter, QuestionnaireReportExporter>();
 
+        // Register translation services
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.ILanguageContext, ti8m.BeachBreak.Client.Services.ClientLanguageContext>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.IUITranslationService, ti8m.BeachBreak.Client.Services.ClientUITranslationService>();
+
         // Register question type handlers (Strategy Pattern)
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.AssessmentQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.TextQuestionHandler>();

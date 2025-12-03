@@ -5,13 +5,14 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Layout
+@inherits OptimizedTranslatableComponentBase
 @inject IHRApiService HRService
 @inject NavigationManager NavigationManager
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <PageLayout Title="HR Dashboard"
-                   Description="Organization overview and metrics">
+        <PageLayout Title="@T("pages.hr-dashboard")"
+                   Description="@T("pages.hr-dashboard-description")">
             <HeaderActions>
                 <RadzenIcon Icon="people" Class="page-icon" />
             </HeaderActions>
@@ -22,46 +23,46 @@
         <RadzenCard>
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
-                <RadzenText>Loading dashboard...</RadzenText>
+                <RadzenText>@T("dashboard.loading")</RadzenText>
             </RadzenStack>
         </RadzenCard>
     }
     else if (dashboard == null)
     {
         <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
-            No dashboard data available. This is expected for a new system.
+            @T("dashboard.no-data-available")
         </RadzenAlert>
     }
     else
     {
         <!-- Organization-wide Metrics -->
-        <RadzenText TextStyle="TextStyle.H5" Class="rz-mb-2">Organization Overview</RadzenText>
+        <RadzenText TextStyle="TextStyle.H5" Class="rz-mb-2">@T("dashboard.organization-overview")</RadzenText>
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="3">
-                <MetricCard Title="Total Employees"
+                <MetricCard Title="@T("dashboard.total-employees")"
                            Value="@dashboard.TotalEmployees.ToString()"
                            Icon="group"
                            Type="MetricType.Primary" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <MetricCard Title="Managers"
+                <MetricCard Title="@T("dashboard.managers")"
                            Value="@dashboard.TotalManagers.ToString()"
                            Icon="supervised_user_circle"
                            Type="MetricType.Secondary" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <MetricCard Title="Total Assignments"
+                <MetricCard Title="@T("dashboard.total-assignments")"
                            Value="@dashboard.TotalAssignments.ToString()"
                            Icon="assignment"
                            Type="MetricType.Info" />
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <MetricCard Title="Completion Rate"
+                <MetricCard Title="@T("dashboard.completion-rate")"
                            Value="@($"{dashboard.OverallCompletionRate:F1}%")"
-                           Subtitle="@($"{dashboard.TotalCompletedAssignments} of {dashboard.TotalAssignments} assignments")"
+                           Subtitle="@(T("dashboard.assignments-completed").Replace("{completed}", dashboard.TotalCompletedAssignments.ToString()).Replace("{total}", dashboard.TotalAssignments.ToString()))"
                            Icon="trending_up"
                            Type="MetricType.Success" />
             </RadzenColumn>
@@ -72,7 +73,7 @@
             <RadzenColumn Size="12" SizeMD="3">
                 <RadzenCard Class="status-card">
                     <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Pending</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("status.pending")</RadzenText>
                         <RadzenText TextStyle="TextStyle.H4">@dashboard.TotalPendingAssignments</RadzenText>
                     </RadzenStack>
                 </RadzenCard>
@@ -81,7 +82,7 @@
             <RadzenColumn Size="12" SizeMD="3">
                 <RadzenCard Class="status-card">
                     <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">In Progress</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("status.in-progress")</RadzenText>
                         <RadzenText TextStyle="TextStyle.H4">@dashboard.TotalInProgressAssignments</RadzenText>
                     </RadzenStack>
                 </RadzenCard>
@@ -90,7 +91,7 @@
             <RadzenColumn Size="12" SizeMD="3">
                 <RadzenCard Class="status-card">
                     <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Completed</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("status.completed")</RadzenText>
                         <RadzenText TextStyle="TextStyle.H4">@dashboard.TotalCompletedAssignments</RadzenText>
                     </RadzenStack>
                 </RadzenCard>
@@ -99,7 +100,7 @@
             <RadzenColumn Size="12" SizeMD="3">
                 <RadzenCard Class="status-card" Style="@(dashboard.TotalOverdueAssignments > 0 ? "border-left: 4px solid var(--rz-danger);" : "")">
                     <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Overdue</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("status.overdue")</RadzenText>
                         <RadzenText TextStyle="TextStyle.H4" Style="@(dashboard.TotalOverdueAssignments > 0 ? "color: var(--rz-danger);" : "")">@dashboard.TotalOverdueAssignments</RadzenText>
                     </RadzenStack>
                 </RadzenCard>
@@ -111,7 +112,7 @@
             <RadzenColumn Size="12" SizeMD="4">
                 <RadzenCard Class="status-card">
                     <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Created (Last 7 Days)</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("dashboard.created-last-7-days")</RadzenText>
                         <RadzenText TextStyle="TextStyle.H5">@dashboard.AssignmentsCreatedLast7Days</RadzenText>
                     </RadzenStack>
                 </RadzenCard>
@@ -120,7 +121,7 @@
             <RadzenColumn Size="12" SizeMD="4">
                 <RadzenCard Class="status-card">
                     <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Completed (Last 7 Days)</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("dashboard.completed-last-7-days")</RadzenText>
                         <RadzenText TextStyle="TextStyle.H5">@dashboard.AssignmentsCompletedLast7Days</RadzenText>
                     </RadzenStack>
                 </RadzenCard>
@@ -129,8 +130,8 @@
             <RadzenColumn Size="12" SizeMD="4">
                 <RadzenCard Class="status-card">
                     <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Avg. Completion Time</RadzenText>
-                        <RadzenText TextStyle="TextStyle.H5">@dashboard.AverageCompletionTimeInDays.ToString("F1") days</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("dashboard.avg-completion-time")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H5">@(T("dashboard.completion-days").Replace("{days}", dashboard.AverageCompletionTimeInDays.ToString("F1")))</RadzenText>
                     </RadzenStack>
                 </RadzenCard>
             </RadzenColumn>
@@ -139,7 +140,7 @@
         <!-- Organizations -->
         @if (dashboard.Organizations.Any())
         {
-            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Organizations</RadzenText>
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">@T("dashboard.organizations")</RadzenText>
             <div class="rz-background-color-base-100 rz-p-4 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                 <RadzenDataList Data="@dashboard.Organizations.OrderByDescending(o => o.TotalAssignments)" TItem="OrganizationMetricsDto" AllowPaging="true" PageSize="5">
                     <Template Context="org">

@@ -1,27 +1,28 @@
 @using Radzen
 @using Radzen.Blazor
+@inherits OptimizedTranslatableComponentBase
 
 <RadzenStack Gap="1rem">
     <div>
-        <RadzenLabel Text="Objective Description*" Component="objectiveDescription" Class="fw-bold mb-1" />
+        <RadzenLabel Text="@T("forms.objective-description-required")" Component="objectiveDescription" Class="fw-bold mb-1" />
         <RadzenTextArea Value="@ObjectiveDescription"
                       ValueChanged="@((string value) => OnObjectiveDescriptionChanged(value))"
                       Name="objectiveDescription"
-                      Placeholder="Describe the goal objective..."
+                      Placeholder="@T("forms.describe-goal-objective")"
                       Rows="3"
                       Class="w-100"
                       MaxLength="1000" />
         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-            @ObjectiveDescription.Length / 1000 characters
+            @ObjectiveDescription.Length / 1000 @T("forms.characters")
         </RadzenText>
     </div>
 
     <div>
-        <RadzenLabel Text="Measurement Metric*" Component="measurementMetric" Class="fw-bold mb-1" />
+        <RadzenLabel Text="@T("forms.measurement-metric-required")" Component="measurementMetric" Class="fw-bold mb-1" />
         <RadzenTextBox Value="@MeasurementMetric"
                      ValueChanged="@((string value) => OnMeasurementMetricChanged(value))"
                      Name="measurementMetric"
-                     Placeholder="How will this goal be measured?"
+                     Placeholder="@T("forms.how-measured")"
                      Class="w-100"
                      MaxLength="500" />
     </div>

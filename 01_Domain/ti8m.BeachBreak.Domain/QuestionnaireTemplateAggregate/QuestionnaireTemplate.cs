@@ -6,8 +6,8 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 public class QuestionnaireTemplate : AggregateRoot
 {
-    public string Name { get; private set; } = string.Empty;
-    public string Description { get; private set; } = string.Empty;
+    public Translation Name { get; private set; } = new("", "");
+    public Translation Description { get; private set; } = new("", "");
     public Guid CategoryId { get; private set; }
     public bool RequiresManagerReview { get; private set; } = true;
 
@@ -25,19 +25,19 @@ public class QuestionnaireTemplate : AggregateRoot
 
     public QuestionnaireTemplate(
         Guid id,
-        string name,
-        string description,
+        Translation name,
+        Translation description,
         Guid categoryId,
         bool requiresManagerReview = true,
         List<QuestionSection>? sections = null)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name is required", nameof(name));
+        if (name == null || (string.IsNullOrWhiteSpace(name.English) && string.IsNullOrWhiteSpace(name.German)))
+            throw new ArgumentException("Name is required in at least one language", nameof(name));
 
         RaiseEvent(new QuestionnaireTemplateCreated(
             id,
             name,
-            description ?? string.Empty,
+            description ?? new Translation("", ""),
             categoryId,
             requiresManagerReview,
             QuestionnaireTemplateEventDataMapper.MapSectionsToData(sections ?? new()),
@@ -48,27 +48,27 @@ public class QuestionnaireTemplate : AggregateRoot
 
     public bool CanBeEdited() => Status == TemplateStatus.Draft;
 
-    public void ChangeName(string name)
+    public void ChangeName(Translation name)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Name is required", nameof(name));
+        if (name == null || (string.IsNullOrWhiteSpace(name.English) && string.IsNullOrWhiteSpace(name.German)))
+            throw new ArgumentException("Name is required in at least one language", nameof(name));
 
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
-        if (!string.Equals(Name, name, StringComparison.Ordinal))
+        if (!Name.Equals(name))
         {
             RaiseEvent(new QuestionnaireTemplateNameChanged(name));
         }
     }
 
-    public void ChangeDescription(string description)
+    public void ChangeDescription(Translation description)
     {
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
-        var newDescription = description ?? string.Empty;
-        if (!string.Equals(Description, newDescription, StringComparison.Ordinal))
+        var newDescription = description ?? new Translation("", "");
+        if (!Description.Equals(newDescription))
         {
             RaiseEvent(new QuestionnaireTemplateDescriptionChanged(newDescription));
         }
@@ -199,7 +199,7 @@ public class QuestionnaireTemplate : AggregateRoot
             if (nonEmployeeSections.Any())
             {
                 var sectionTitles = string.Join(", ", nonEmployeeSections.Select(s =>
-                    string.IsNullOrWhiteSpace(s.Title) ? $"Section {s.Order + 1}" : s.Title));
+                    string.IsNullOrWhiteSpace(s.Title.English) ? $"Section {s.Order + 1}" : s.Title.English));
 
                 throw new InvalidOperationException(
                     $"When manager review is not required, all sections must be completed by Employee only. " +
@@ -223,8 +223,10 @@ public class QuestionnaireTemplate : AggregateRoot
         if (source.IsDeleted)
             throw new InvalidOperationException("Cannot clone a deleted template");
 
-        // Generate new name
-        var clonedName = $"{namePrefix}{source.Name}";
+        // Generate new name - add prefix to both languages
+        var clonedName = new Translation(
+            $"{namePrefix}{source.Name.German}",
+            $"{namePrefix}{source.Name.English}");
 
         // Deep copy sections with new IDs
         var clonedSections = source.Sections.Select(section =>

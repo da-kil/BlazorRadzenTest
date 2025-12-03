@@ -1,6 +1,9 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Domain;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;
 
@@ -9,17 +12,20 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
     private readonly IQuestionnaireAssignmentRepository assignmentRepository;
     private readonly IEmployeeRepository employeeRepository;
     private readonly IQuestionnaireTemplateRepository templateRepository;
+    private readonly ILanguageContext languageContext;
     private readonly ILogger<GetTeamAssignmentsQueryHandler> logger;
 
     public GetTeamAssignmentsQueryHandler(
         IQuestionnaireAssignmentRepository assignmentRepository,
         IEmployeeRepository employeeRepository,
         IQuestionnaireTemplateRepository templateRepository,
+        ILanguageContext languageContext,
         ILogger<GetTeamAssignmentsQueryHandler> logger)
     {
         this.assignmentRepository = assignmentRepository;
         this.employeeRepository = employeeRepository;
         this.templateRepository = templateRepository;
+        this.languageContext = languageContext;
         this.logger = logger;
     }
 
@@ -87,9 +93,13 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
         var templates = await templateRepository.GetAllAsync(cancellationToken);
         var templateLookup = templates
             .Where(t => templateIds.Contains(t.Id))
-            .ToDictionary(t => t.Id, t => (t.Name, t.CategoryId));
+            .ToDictionary(t => t.Id, t => (template: t, t.CategoryId));
 
         // Map and enrich
+        // Get user's preferred language
+        var currentLanguageCode = await languageContext.GetCurrentLanguageCodeAsync();
+        var currentLanguage = LanguageMapper.FromLanguageCode(currentLanguageCode);
+
         return readModelsList.Select(readModel =>
         {
             var assignment = MapToQuestionnaireAssignment(readModel);
@@ -97,7 +107,7 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
             // Denormalize template metadata
             if (templateLookup.TryGetValue(readModel.TemplateId, out var templateMetadata))
             {
-                assignment.TemplateName = templateMetadata.Name;
+                assignment.TemplateName = GetLocalizedTemplateName(templateMetadata.template, currentLanguage);
                 assignment.TemplateCategoryId = templateMetadata.CategoryId;
             }
             else
@@ -158,5 +168,10 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
             ManagerFinalNotes = readModel.ManagerFinalNotes,
             IsLocked = readModel.IsLocked
         };
+    }
+
+    private static string GetLocalizedTemplateName(Projections.QuestionnaireTemplateReadModel template, Models.Language language)
+    {
+        return language == Models.Language.German ? template.NameGerman : template.NameEnglish;
     }
 }

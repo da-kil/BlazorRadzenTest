@@ -7,11 +7,12 @@
 @using ti8m.BeachBreak.Client.Layout
 @inject IManagerQuestionnaireService ManagerService
 @inject NavigationManager NavigationManager
+@inherits OptimizedTranslatableComponentBase
 
 <AuthorizeView Policy="TeamLead">
     <Authorized>
-        <PageLayout Title="Manager Dashboard"
-                   Description="Team overview and management metrics">
+        <PageLayout Title="@T("pages.manager-dashboard")"
+                   Description="@T("pages.manager-dashboard-description")">
             <HeaderActions>
                 <RadzenIcon Icon="supervisor_account" Class="page-icon" />
             </HeaderActions>
@@ -22,23 +23,23 @@
         <RadzenCard>
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
-                <RadzenText>Loading dashboard...</RadzenText>
+                <RadzenText>@T("messages.loading-dashboard")</RadzenText>
             </RadzenStack>
         </RadzenCard>
     }
     else if (dashboard == null)
     {
         <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
-            No dashboard data available. You may not have any team members assigned yet.
+            @T("messages.no-dashboard-data")
         </RadzenAlert>
     }
     else
     {
         <!-- Team-wide Metrics -->
-        <RadzenText TextStyle="TextStyle.H5" Class="rz-mb-2">Team Overview</RadzenText>
+        <RadzenText TextStyle="TextStyle.H5" Class="rz-mb-2">@T("sections.team-overview")</RadzenText>
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="3">
-                <MetricCard Title="Team Pending"
+                <MetricCard Title="@T("metrics.team-pending")"
                            Value="@dashboard.TeamPendingCount.ToString()"
                            Icon="pending_actions"
                            Type="MetricType.Pending"
@@ -46,7 +47,7 @@
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <MetricCard Title="Team In Progress"
+                <MetricCard Title="@T("metrics.team-in-progress")"
                            Value="@dashboard.TeamInProgressCount.ToString()"
                            Icon="hourglass_top"
                            Type="MetricType.Progress"
@@ -54,7 +55,7 @@
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <MetricCard Title="Team Completed"
+                <MetricCard Title="@T("metrics.team-completed")"
                            Value="@dashboard.TeamCompletedCount.ToString()"
                            Icon="check_circle"
                            Type="MetricType.Completed"
@@ -62,7 +63,7 @@
             </RadzenColumn>
 
             <RadzenColumn Size="12" SizeMD="3">
-                <MetricCard Title="Team Members"
+                <MetricCard Title="@T("metrics.team-members")"
                            Value="@dashboard.TeamMemberCount.ToString()"
                            Icon="group"
                            Type="MetricType.Info" />
@@ -72,7 +73,7 @@
         <!-- Team Members Section -->
         @if (dashboard.TeamMembers.Any())
         {
-            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Team Members</RadzenText>
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">@T("sections.team-members")</RadzenText>
             <RadzenRow Gap="1rem">
                 @foreach (var member in dashboard.TeamMembers)
                 {
@@ -86,30 +87,30 @@
                                     </div>
                                     @if (member.HasOverdueItems)
                                     {
-                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Overdue" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@T("status.overdue")" />
                                     }
                                     else if (member.UrgentCount > 0)
                                     {
-                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@($"{member.UrgentCount} Urgent")" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@($"{member.UrgentCount} {T("status.urgent")}")" />
                                     }
                                 </div>
 
                                 <RadzenRow Gap="0.5rem">
                                     <RadzenColumn Size="4">
                                         <div class="metric-small">
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Pending</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("status.pending")</RadzenText>
                                             <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@member.PendingCount</RadzenText>
                                         </div>
                                     </RadzenColumn>
                                     <RadzenColumn Size="4">
                                         <div class="metric-small">
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Active</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("status.active")</RadzenText>
                                             <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@member.InProgressCount</RadzenText>
                                         </div>
                                     </RadzenColumn>
                                     <RadzenColumn Size="4">
                                         <div class="metric-small">
-                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">Done</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">@T("status.done")</RadzenText>
                                             <RadzenText TextStyle="TextStyle.H6" Class="rz-mb-0">@member.CompletedCount</RadzenText>
                                         </div>
                                     </RadzenColumn>
@@ -124,7 +125,7 @@
         <!-- Urgent Assignments Section -->
         @if (dashboard.UrgentAssignments.Any())
         {
-            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Urgent Assignments</RadzenText>
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">@T("sections.urgent-assignments")</RadzenText>
             <div class="rz-background-color-base-100 rz-p-4 rz-border-radius-3" style="border: 1px solid var(--rz-base-300);">
                 <RadzenDataList Data="@dashboard.UrgentAssignments" TItem="TeamUrgentAssignmentDto" AllowPaging="true" PageSize="5">
                     <Template Context="assignment">
@@ -140,16 +141,16 @@
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                     @if (assignment.IsOverdue)
                                     {
-                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@($"Overdue")" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@T("status.overdue")" />
                                         <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
-                                            Due @assignment.DueDate.ToString("MMM dd, yyyy")
+                                            @T("labels.due") @assignment.DueDate.ToString("MMM dd, yyyy")
                                         </RadzenText>
                                     }
                                     else
                                     {
-                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@($"{assignment.DaysUntilDue}d left")" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@($"{assignment.DaysUntilDue} {T("labels.days-left")}")" />
                                         <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-warning);">
-                                            Due @assignment.DueDate.ToString("MMM dd, yyyy")
+                                            @T("labels.due") @assignment.DueDate.ToString("MMM dd, yyyy")
                                         </RadzenText>
                                     }
                                     <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@assignment.WorkflowState" />
@@ -162,14 +163,14 @@
         }
         else if (dashboard.TeamMembers.Any())
         {
-            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">Urgent Assignments</RadzenText>
+            <RadzenText TextStyle="TextStyle.H5" Class="rz-mt-4 rz-mb-2">@T("sections.urgent-assignments")</RadzenText>
             <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
-                No urgent assignments at this time. Great work, team!
+                @T("messages.no-urgent-assignments")
             </RadzenAlert>
         }
 
         <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);" Class="rz-mt-3">
-            Last updated: @dashboard.LastUpdated.ToString("MMM dd, yyyy HH:mm")
+            @T("labels.last-updated"): @dashboard.LastUpdated.ToString("MMM dd, yyyy HH:mm")
         </RadzenText>
     }
 
@@ -177,7 +178,7 @@
         </PageLayout>
     </Authorized>
     <NotAuthorized>
-        <AccessDeniedComponent RequiredRole="TeamLead" PageName="Manager Dashboard" />
+        <AccessDeniedComponent RequiredRole="TeamLead" PageName="@T("pages.manager-dashboard")" />
     </NotAuthorized>
 </AuthorizeView>
 

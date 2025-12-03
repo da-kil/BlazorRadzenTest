@@ -20,4 +20,5 @@ public class Employee
     public string Organization { get; set; } = string.Empty;
     public bool IsDeleted { get; set; }
     public ApplicationRole ApplicationRole { get; set; }
+    public Language PreferredLanguage { get; set; }
 }

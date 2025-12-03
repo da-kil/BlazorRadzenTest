@@ -1,8 +1,10 @@
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
 @using Radzen.Blazor
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject NotificationService NotificationService
+@inherits OptimizedTranslatableComponentBase
 
 <RadzenStack Gap="1rem">
     @if (isLoading)
@@ -10,7 +12,7 @@
         <div class="text-center py-5">
             <RadzenProgressBarCircular Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
             <RadzenText TextStyle="TextStyle.Body2" Class="mt-3 text-muted">
-                Loading change history...
+                @T("messages.loading-change-history")
             </RadzenText>
         </div>
     }
@@ -20,7 +22,7 @@
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                 <RadzenIcon Icon="info" />
                 <RadzenText TextStyle="TextStyle.Body1">
-                    No changes were made during the review meeting.
+                    @T("messages.no-changes-during-review")
                 </RadzenText>
             </RadzenStack>
         </RadzenAlert>

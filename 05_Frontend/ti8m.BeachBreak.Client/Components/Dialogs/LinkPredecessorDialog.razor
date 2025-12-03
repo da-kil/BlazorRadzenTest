@@ -2,17 +2,19 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject IGoalApiService GoalApiService
 @inject IAuthService AuthService
+@inherits OptimizedTranslatableComponentBase
 
 <div class="link-predecessor-dialog">
     <RadzenStack Gap="1rem">
         @if (validationErrors.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
-                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-2">Please fix the following errors:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-2">@T("messages.please-fix-errors")</RadzenText>
                 <ul class="mb-0">
                     @foreach (var error in validationErrors)
                     {
@@ -23,22 +25,21 @@
         }
 
         <RadzenText TextStyle="TextStyle.Body1" Class="mb-2">
-            Link a predecessor questionnaire to rate goals from a previous period.
+            @T("messages.link-predecessor-instruction")
         </RadzenText>
 
         @if (isLoadingPredecessors)
         {
             <div class="text-center p-4">
                 <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" />
-                <RadzenText TextStyle="TextStyle.Body2" Class="mt-2">Loading available predecessors...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="mt-2">@T("messages.loading-available-predecessors")</RadzenText>
             </div>
         }
         else if (!availablePredecessors.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3" ShowIcon="true">
                 <RadzenText TextStyle="TextStyle.Body2">
-                    No eligible predecessor questionnaires found.
-                    Predecessors must be from the same employee, same category, completed, and contain goals.
+                    @T("messages.no-eligible-predecessors")
                 </RadzenText>
             </RadzenAlert>
         }
@@ -47,7 +48,7 @@
             <RadzenFieldset>
                 <HeaderTemplate>
                     <RadzenIcon Icon="link" Class="me-2" />
-                    <span class="fw-bold">Select Predecessor Questionnaire</span>
+                    <span class="fw-bold">@T("labels.select-predecessor-questionnaire")</span>
                 </HeaderTemplate>
                 <ChildContent>
                     <RadzenDataList Data="@availablePredecessors" TItem="AvailablePredecessorDto">
@@ -71,10 +72,10 @@
                                         </RadzenText>
                                         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
                                             <RadzenIcon Icon="calendar_today" Style="font-size: 1rem;" />
-                                            Assigned: @predecessor.AssignedDate.ToShortDateString()
+                                            @T("labels.assigned"): @predecessor.AssignedDate.ToShortDateString()
                                             @if (predecessor.CompletedDate.HasValue)
                                             {
-                                                <span> | Completed: @predecessor.CompletedDate.Value.ToShortDateString()</span>
+                                                <span> | @T("labels.completed"): @predecessor.CompletedDate.Value.ToShortDateString()</span>
                                             }
                                         </RadzenText>
                                     </RadzenColumn>
@@ -87,11 +88,11 @@
         }
 
         <div class="d-flex justify-content-end gap-2 mt-3">
-            <RadzenButton Text="Cancel"
+            <RadzenButton Text="@T("buttons.cancel")"
                         ButtonStyle="ButtonStyle.Light"
                         Click="@Cancel"
                         Disabled="@isSubmitting" />
-            <RadzenButton Text="@(isSubmitting ? "Linking..." : "Link Predecessor")"
+            <RadzenButton Text="@(isSubmitting ? T("buttons.linking") : T("buttons.link-predecessor"))"
                         Icon="@(isSubmitting ? "" : "link")"
                         ButtonStyle="ButtonStyle.Primary"
                         Click="@Submit"

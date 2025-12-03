@@ -8,22 +8,20 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
-@using ti8m.BeachBreak.Client.Models
 @inject IProjectionReplayApiService ReplayService
 @inject DialogService DialogService
-@inject NotificationService NotificationService
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 @implements IDisposable
 
-<PageTitle>Projection Replay Administration</PageTitle>
+<PageTitle>@T("pages.projection-replay-administration")</PageTitle>
 
 <AuthorizeView Policy="Admin">
     <Authorized>
         <PageLayout Type="LayoutType.Standard"
-                   Title="Projection Replay Administration"
-                Description="Manage and monitor projection rebuilds">
+                   Title="@T("pages.projection-replay-administration")"
+                Description="@T("pages.projection-replay-administration-description")">
     <HeaderActions>
-        <AsyncButton Text="Start New Replay"
+        <AsyncButton Text="@T("buttons.start-new-replay")"
                      ButtonStyle="ButtonStyle.Primary"
                      Icon="play_arrow"
                      Click="@ShowStartReplayDialog" />
@@ -33,7 +31,7 @@
 
                 <RadzenTabs>
                     <Tabs>
-                        <RadzenTabsItem Text="Active Replays">
+                        <RadzenTabsItem Text="@T("tabs.active-replays")">
                             @if (isLoading)
                             {
                                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -42,30 +40,30 @@
                             {
                                 <RadzenDataGrid Data="@activeReplays" TItem="ProjectionReplayStatus" class="mt-3">
                                     <Columns>
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="ProjectionName" Title="Projection">
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="ProjectionName" Title="@T("columns.projection")">
                                             <Template Context="replay">
                                                 <RadzenText TextStyle="TextStyle.Body1"><strong>@replay.ProjectionName</strong></RadzenText>
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="Status" Title="Status">
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="Status" Title="@T("columns.status")">
                                             <Template Context="replay">
                                                 <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(replay.Status)" Text="@replay.Status" />
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="ProgressPercentage" Title="Progress">
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="ProgressPercentage" Title="@T("columns.progress")">
                                             <Template Context="replay">
                                                 <div style="width: 200px;">
                                                     <RadzenProgressBar Value="@replay.ProgressPercentage" ShowValue="true" Unit="%" Style="width: 100%;" />
                                                     <RadzenText TextStyle="TextStyle.Caption">
-                                                        @replay.ProcessedEvents / @replay.TotalEvents events
+                                                        @replay.ProcessedEvents / @replay.TotalEvents @T("labels.events")
                                                     </RadzenText>
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="StartedAt" Title="Started">
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="StartedAt" Title="@T("columns.started")">
                                             <Template Context="replay">
                                                 <RadzenText TextStyle="TextStyle.Body2">@replay.StartedAt.ToLocalTime().ToString("g")</RadzenText>
                                                 <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
@@ -74,7 +72,7 @@
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Title="Actions" Width="100px">
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Title="@T("columns.actions")" Width="100px">
                                             <Template Context="replay">
                                                 @if (replay.Status == "Pending" || replay.Status == "Validating" ||
                                                                                                 replay.Status == "DeletingSnapshots" || replay.Status == "Replaying")
@@ -90,12 +88,12 @@
                             else
                             {
                                 <RadzenAlert AlertStyle="AlertStyle.Info" Class="mt-3">
-                                    No active replays running.
+                                    @T("messages.no-active-replays")
                                 </RadzenAlert>
                             }
                         </RadzenTabsItem>
 
-                        <RadzenTabsItem Text="History">
+                        <RadzenTabsItem Text="@T("tabs.history")">
                             @if (isLoading)
                             {
                                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -104,24 +102,24 @@
                             {
                                 <RadzenDataGrid Data="@completedReplays" TItem="ProjectionReplayStatus" AllowSorting="true" class="mt-3">
                                     <Columns>
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="ProjectionName" Title="Projection" />
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="Status" Title="Status">
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="ProjectionName" Title="@T("columns.projection")" />
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="Status" Title="@T("columns.status")">
                                             <Template Context="replay">
                                                 <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(replay.Status)" Text="@replay.Status" />
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="StartedAt" Title="Started At">
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="StartedAt" Title="@T("columns.started-at")">
                                             <Template Context="replay">
                                                 @replay.StartedAt.ToLocalTime().ToString("g")
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="CompletedAt" Title="Completed At">
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="CompletedAt" Title="@T("columns.completed-at")">
                                             <Template Context="replay">
-                                                @(replay.CompletedAt?.ToLocalTime().ToString("g") ?? "N/A")
+                                                @(replay.CompletedAt?.ToLocalTime().ToString("g") ?? T("labels.not-available"))
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="InitiatedBy" Title="Initiated By" />
-                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="Reason" Title="Reason">
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="InitiatedBy" Title="@T("columns.initiated-by")" />
+                                        <RadzenDataGridColumn TItem="ProjectionReplayStatus" Property="Reason" Title="@T("columns.reason")">
                                             <Template Context="replay">
                                                 <RadzenText TextStyle="TextStyle.Caption">@replay.Reason</RadzenText>
                                             </Template>
@@ -136,7 +134,7 @@
 </PageLayout>
     </Authorized>
     <NotAuthorized>
-        <AccessDeniedComponent RequiredRole="Admin" PageName="Projection Replay Administration" />
+        <AccessDeniedComponent RequiredRole="Admin" PageName="@T("pages.projection-replay-administration")" />
     </NotAuthorized>
 </AuthorizeView>
 
@@ -175,8 +173,8 @@
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Error",
-                Detail = $"Failed to load data: {ex.Message}",
+                Summary = T("notifications.error"),
+                Detail = $"{T("messages.failed-to-load-data")}: {ex.Message}",
                 Duration = 4000
             });
         }
@@ -204,7 +202,7 @@
 
     private async Task ShowStartReplayDialog()
     {
-        var result = await DialogService.OpenAsync<StartReplayDialog>("Start Projection Replay",
+        var result = await DialogService.OpenAsync<StartReplayDialog>(T("dialogs.start-projection-replay"),
             new Dictionary<string, object> { { "Projections", availableProjections } },
             new DialogOptions { Width = "600px", Resizable = true });
 
@@ -225,8 +223,8 @@
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
-                    Summary = "Replay Started",
-                    Detail = $"Projection replay started for {request.ProjectionName}",
+                    Summary = T("notifications.replay-started"),
+                    Detail = $"{T("messages.projection-replay-started")} {request.ProjectionName}",
                     Duration = 4000
                 });
 
@@ -237,8 +235,8 @@
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Failed to start projection replay",
+                    Summary = T("notifications.error"),
+                    Detail = T("messages.failed-to-start-replay"),
                     Duration = 4000
                 });
             }
@@ -248,8 +246,8 @@
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Error",
-                Detail = $"Failed to start replay: {ex.Message}",
+                Summary = T("notifications.error"),
+                Detail = $"{T("messages.failed-to-start-replay")}: {ex.Message}",
                 Duration = 4000
             });
         }
@@ -257,8 +255,8 @@
 
     private async Task CancelReplay(Guid replayId)
     {
-        var confirmed = await DialogService.Confirm("Are you sure you want to cancel this replay?", "Cancel Replay",
-            new ConfirmOptions { OkButtonText = "Yes", CancelButtonText = "No" });
+        var confirmed = await DialogService.Confirm(T("dialogs.confirm-cancel-replay"), T("dialogs.cancel-replay"),
+            new ConfirmOptions { OkButtonText = T("buttons.yes"), CancelButtonText = T("buttons.no") });
 
         if (confirmed == true)
         {
@@ -269,8 +267,8 @@
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
-                    Summary = "Cancelled",
-                    Detail = "Projection replay cancelled",
+                    Summary = T("notifications.cancelled"),
+                    Detail = T("messages.projection-replay-cancelled"),
                     Duration = 4000
                 });
 
@@ -281,8 +279,8 @@
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Error,
-                    Summary = "Error",
-                    Detail = "Failed to cancel replay",
+                    Summary = T("notifications.error"),
+                    Detail = T("messages.failed-to-cancel-replay"),
                     Duration = 4000
                 });
             }

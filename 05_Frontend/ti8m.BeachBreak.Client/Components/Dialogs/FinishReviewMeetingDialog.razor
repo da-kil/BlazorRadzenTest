@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 @inject DialogService DialogService
 
 <div class="dialog-container">
@@ -8,10 +9,10 @@
         <div class="text-center">
             <RadzenIcon Icon="event_available" Class="dialog-header-icon" />
             <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
-                Finish Review Meeting
+                @T("dialogs.finish-review-meeting")
             </RadzenText>
             <RadzenText TextStyle="TextStyle.Body2">
-                You are about to complete the review meeting. The questionnaire will move to the next phase where the employee must confirm the review outcome.
+                @T("dialogs.complete-review-meeting-description")
             </RadzenText>
         </div>
     </div>
@@ -20,25 +21,25 @@
         <div class="icon-box">
             <RadzenIcon Icon="info" Style="color: #4CAF50;" />
             <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
-                What happens next?
+                @T("dialogs.what-happens-next")
             </RadzenText>
         </div>
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-            After finishing the review meeting:
+            @T("dialogs.after-finishing-review-meeting")
         </RadzenText>
         <ul style="margin-top: 0.5rem; margin-bottom: 0;">
-            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">All sections become read-only for both parties</RadzenText></li>
-            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Employee will be notified to confirm the review outcome</RadzenText></li>
-            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">You will be able to finalize after employee confirmation</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("dialogs.sections-become-readonly")</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("dialogs.employee-notified-confirm")</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("dialogs.able-finalize-after-confirmation")</RadzenText></li>
         </ul>
     </div>
 
     <div class="dialog-content-section">
         <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
-            Review Summary (Optional)
+            @T("dialogs.review-summary-optional")
         </RadzenText>
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-            Summarize the key points discussed during the review meeting, any action items, or important observations:
+            @T("dialogs.summarize-key-points-discussed")
         </RadzenText>
         @if (!string.IsNullOrWhiteSpace(ExistingReviewSummary))
         {
@@ -46,31 +47,31 @@
                 <div class="icon-box">
                     <RadzenIcon Icon="edit" Style="color: #ff9800;" />
                     <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-0" Style="color: #856404;">
-                        Existing Summary Loaded
+                        @T("dialogs.existing-summary-loaded")
                     </RadzenText>
                 </div>
                 <RadzenText TextStyle="TextStyle.Caption" Style="color: #856404;">
-                    You can edit or replace the previous review summary below.
+                    @T("dialogs.can-edit-replace-summary")
                 </RadzenText>
             </div>
         }
         <RadzenTextArea @bind-Value="@reviewSummary"
-                       Placeholder="Enter review summary here... (optional)"
+                       Placeholder="@T("placeholders.enter-review-summary-optional")"
                        Rows="8"
                        Style="width: 100%;"
                        MaxLength="5000" />
         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
-            @(reviewSummary?.Length ?? 0) / 5000 characters
+            @(reviewSummary?.Length ?? 0) / 5000 @T("forms.characters")
         </RadzenText>
     </div>
 
     <div class="dialog-actions">
-        <AsyncButton Text="Cancel"
+        <AsyncButton Text="@T("buttons.cancel")"
                     ButtonStyle="ButtonStyle.Light"
                     Click="@Cancel"
                     Size="ButtonSize.Medium" />
-        <AsyncButton Text="Finish Review Meeting"
-                    ProcessingText="Finishing"
+        <AsyncButton Text="@T("dialogs.finish-review-meeting")"
+                    ProcessingText="@T("dialogs.finishing")"
                     ButtonStyle="ButtonStyle.Success"
                     Icon="event_available"
                     Click="@FinishReview"

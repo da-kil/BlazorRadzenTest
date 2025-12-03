@@ -1,0 +1,807 @@
+[
+  {
+    "key": "nav.menu-toggle",
+    "german": "Navigationsmen\u00FC",
+    "english": "Navigation menu",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998128+00:00"
+  },
+  {
+    "key": "nav.dashboard",
+    "german": "Dashboard",
+    "english": "Dashboard",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998585+00:00"
+  },
+  {
+    "key": "nav.my-work",
+    "german": "Meine Arbeit",
+    "english": "My Work",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998586+00:00"
+  },
+  {
+    "key": "nav.questionnaires",
+    "german": "Fragebogen",
+    "english": "Questionnaires",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998587+00:00"
+  },
+  {
+    "key": "nav.my-questionnaires",
+    "german": "Meine Fragebogen",
+    "english": "My Questionnaires",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998588+00:00"
+  },
+  {
+    "key": "nav.team-overview",
+    "german": "Team \u00DCbersicht",
+    "english": "Team Overview",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998591+00:00"
+  },
+  {
+    "key": "nav.team-questionnaires",
+    "german": "Team Fragebogen",
+    "english": "Team Questionnaires",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998592+00:00"
+  },
+  {
+    "key": "nav.organization",
+    "german": "Organisation",
+    "english": "Organization",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998593+00:00"
+  },
+  {
+    "key": "nav.management",
+    "german": "Verwaltung",
+    "english": "Management",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998593+00:00"
+  },
+  {
+    "key": "nav.create-questionnaire",
+    "german": "Fragebogen erstellen",
+    "english": "Create Questionnaire",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998595+00:00"
+  },
+  {
+    "key": "nav.manage-questionnaires",
+    "german": "Fragebogen verwalten",
+    "english": "Manage Questionnaires",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998596+00:00"
+  },
+  {
+    "key": "nav.assignments",
+    "german": "Zuweisungen",
+    "english": "Assignments",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998596+00:00"
+  },
+  {
+    "key": "nav.administration",
+    "german": "Administration",
+    "english": "Administration",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998597+00:00"
+  },
+  {
+    "key": "nav.questionnaire-management",
+    "german": "Fragebogen Verwaltung",
+    "english": "Questionnaire Management",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998598+00:00"
+  },
+  {
+    "key": "nav.categories",
+    "german": "Kategorien",
+    "english": "Categories",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998598+00:00"
+  },
+  {
+    "key": "nav.role-management",
+    "german": "Rollenverwaltung",
+    "english": "Role Management",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998599+00:00"
+  },
+  {
+    "key": "nav.projection-replay",
+    "german": "Projektions-Wiederholung",
+    "english": "Projection Replay",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.89986+00:00"
+  },
+  {
+    "key": "buttons.save",
+    "german": "Speichern",
+    "english": "Save",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998601+00:00"
+  },
+  {
+    "key": "buttons.cancel",
+    "german": "Abbrechen",
+    "english": "Cancel",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998602+00:00"
+  },
+  {
+    "key": "buttons.delete",
+    "german": "L\u00F6schen",
+    "english": "Delete",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998603+00:00"
+  },
+  {
+    "key": "buttons.edit",
+    "german": "Bearbeiten",
+    "english": "Edit",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998603+00:00"
+  },
+  {
+    "key": "buttons.add",
+    "german": "Hinzuf\u00FCgen",
+    "english": "Add",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998604+00:00"
+  },
+  {
+    "key": "buttons.submit",
+    "german": "Absenden",
+    "english": "Submit",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998612+00:00"
+  },
+  {
+    "key": "buttons.close",
+    "german": "Schlie\u00DFen",
+    "english": "Close",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998612+00:00"
+  },
+  {
+    "key": "buttons.confirm",
+    "german": "Best\u00E4tigen",
+    "english": "Confirm",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998613+00:00"
+  },
+  {
+    "key": "buttons.previous",
+    "german": "Zur\u00FCck",
+    "english": "Previous",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998614+00:00"
+  },
+  {
+    "key": "buttons.next",
+    "german": "Weiter",
+    "english": "Next",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998614+00:00"
+  },
+  {
+    "key": "buttons.save-progress",
+    "german": "Fortschritt speichern",
+    "english": "Save Progress",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998615+00:00"
+  },
+  {
+    "key": "buttons.saving",
+    "german": "Speichere...",
+    "english": "Saving...",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998616+00:00"
+  },
+  {
+    "key": "buttons.submitting",
+    "german": "Sende...",
+    "english": "Submitting...",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998617+00:00"
+  },
+  {
+    "key": "buttons.retry",
+    "german": "Wiederholen",
+    "english": "Retry",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998617+00:00"
+  },
+  {
+    "key": "buttons.loading",
+    "german": "L\u00E4dt",
+    "english": "Loading",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998618+00:00"
+  },
+  {
+    "key": "buttons.create-new",
+    "german": "Neu erstellen",
+    "english": "Create New",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998619+00:00"
+  },
+  {
+    "key": "labels.name",
+    "german": "Name",
+    "english": "Name",
+    "category": "labels",
+    "createdDate": "2025-12-03T12:17:11.899862+00:00"
+  },
+  {
+    "key": "labels.description",
+    "german": "Beschreibung",
+    "english": "Description",
+    "category": "labels",
+    "createdDate": "2025-12-03T12:17:11.8998621+00:00"
+  },
+  {
+    "key": "labels.category",
+    "german": "Kategorie",
+    "english": "Category",
+    "category": "labels",
+    "createdDate": "2025-12-03T12:17:11.8998622+00:00"
+  },
+  {
+    "key": "labels.status",
+    "german": "Status",
+    "english": "Status",
+    "category": "labels",
+    "createdDate": "2025-12-03T12:17:11.8998622+00:00"
+  },
+  {
+    "key": "forms.objective-description-required",
+    "german": "Zielbeschreibung*",
+    "english": "Objective Description*",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998623+00:00"
+  },
+  {
+    "key": "forms.measurement-metric-required",
+    "german": "Messgr\u00F6\u00DFe*",
+    "english": "Measurement Metric*",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998624+00:00"
+  },
+  {
+    "key": "forms.start-date-required",
+    "german": "Startdatum*",
+    "english": "Start Date*",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998625+00:00"
+  },
+  {
+    "key": "forms.end-date-required",
+    "german": "Enddatum*",
+    "english": "End Date*",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998625+00:00"
+  },
+  {
+    "key": "forms.weighting",
+    "german": "Gewichtung",
+    "english": "Weighting",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998626+00:00"
+  },
+  {
+    "key": "forms.weighting-percentage-required",
+    "german": "Gewichtung Prozentsatz*",
+    "english": "Weighting Percentage*",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998627+00:00"
+  },
+  {
+    "key": "forms.reason-for-change-required",
+    "german": "Grund f\u00FCr \u00C4nderung*",
+    "english": "Reason for Change*",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998628+00:00"
+  },
+  {
+    "key": "forms.describe-goal-objective",
+    "german": "Beschreiben Sie das Ziel...",
+    "english": "Describe the goal objective...",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998628+00:00"
+  },
+  {
+    "key": "forms.how-measured",
+    "german": "Wie wird dieses Ziel gemessen?",
+    "english": "How will this goal be measured?",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998629+00:00"
+  },
+  {
+    "key": "forms.weighting-help-text",
+    "german": "Prozentsatz der Gesamtziele (0-100%). Setzen Sie die Gewichtung, um die Wichtigkeit zwischen den Zielen zu verteilen.",
+    "english": "Percentage of total goals (0-100%). Set weighting to allocate importance across goals.",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.899863+00:00"
+  },
+  {
+    "key": "forms.explain-goal-modification",
+    "german": "Erkl\u00E4ren Sie, warum dieses Ziel ge\u00E4ndert wird...",
+    "english": "Explain why this goal is being modified...",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.899863+00:00"
+  },
+  {
+    "key": "forms.characters",
+    "german": "Zeichen",
+    "english": "characters",
+    "category": "forms",
+    "createdDate": "2025-12-03T12:17:11.8998637+00:00"
+  },
+  {
+    "key": "validation.fix-errors",
+    "german": "Bitte beheben Sie die folgenden Fehler",
+    "english": "Please fix the following errors",
+    "category": "validation",
+    "createdDate": "2025-12-03T12:17:11.8998638+00:00"
+  },
+  {
+    "key": "validation.required",
+    "german": "Erforderlich",
+    "english": "Required",
+    "category": "validation",
+    "createdDate": "2025-12-03T12:17:11.8998638+00:00"
+  },
+  {
+    "key": "validation.email",
+    "german": "Ung\u00FCltige E-Mail-Adresse",
+    "english": "Invalid email address",
+    "category": "validation",
+    "createdDate": "2025-12-03T12:17:11.8998639+00:00"
+  },
+  {
+    "key": "validation.min-length",
+    "german": "Mindestl\u00E4nge erforderlich",
+    "english": "Minimum length required",
+    "category": "validation",
+    "createdDate": "2025-12-03T12:17:11.899864+00:00"
+  },
+  {
+    "key": "notifications.success",
+    "german": "Erfolg",
+    "english": "Success",
+    "category": "notifications",
+    "createdDate": "2025-12-03T12:17:11.899864+00:00"
+  },
+  {
+    "key": "notifications.error",
+    "german": "Fehler",
+    "english": "Error",
+    "category": "notifications",
+    "createdDate": "2025-12-03T12:17:11.8998641+00:00"
+  },
+  {
+    "key": "notifications.warning",
+    "german": "Warnung",
+    "english": "Warning",
+    "category": "notifications",
+    "createdDate": "2025-12-03T12:17:11.8998642+00:00"
+  },
+  {
+    "key": "notifications.info",
+    "german": "Information",
+    "english": "Information",
+    "category": "notifications",
+    "createdDate": "2025-12-03T12:17:11.8998643+00:00"
+  },
+  {
+    "key": "notifications.failed",
+    "german": "Fehlgeschlagen",
+    "english": "Failed",
+    "category": "notifications",
+    "createdDate": "2025-12-03T12:17:11.8998643+00:00"
+  },
+  {
+    "key": "dialogs.add-goal",
+    "german": "Ziel hinzuf\u00FCgen",
+    "english": "Add Goal",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998644+00:00"
+  },
+  {
+    "key": "dialogs.update-goal",
+    "german": "Ziel aktualisieren",
+    "english": "Update Goal",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998645+00:00"
+  },
+  {
+    "key": "dialogs.adding-goal",
+    "german": "Ziel wird hinzugef\u00FCgt...",
+    "english": "Adding Goal...",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998645+00:00"
+  },
+  {
+    "key": "dialogs.updating-goal",
+    "german": "Ziel wird aktualisiert...",
+    "english": "Updating Goal...",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998646+00:00"
+  },
+  {
+    "key": "dialogs.save-changes",
+    "german": "\u00C4nderungen speichern",
+    "english": "Save Changes",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998647+00:00"
+  },
+  {
+    "key": "dialogs.saving",
+    "german": "Speichere...",
+    "english": "Saving",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998648+00:00"
+  },
+  {
+    "key": "dialogs.employee-sign-off",
+    "german": "Mitarbeiter Best\u00E4tigung",
+    "english": "Employee Sign-Off",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998648+00:00"
+  },
+  {
+    "key": "dialogs.confirm-review-message",
+    "german": "Sie best\u00E4tigen, dass Sie die Fragebogen-Ergebnisse besprochen und zur Kenntnis genommen haben.",
+    "english": "You are about to confirm that you have reviewed and acknowledged the questionnaire results discussed with your manager.",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998681+00:00"
+  },
+  {
+    "key": "dialogs.sign-off-review",
+    "german": "Besprechung best\u00E4tigen",
+    "english": "Sign Off on Review",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998682+00:00"
+  },
+  {
+    "key": "dialogs.signing-off",
+    "german": "Best\u00E4tige...",
+    "english": "Signing Off",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998683+00:00"
+  },
+  {
+    "key": "dialogs.close",
+    "german": "Schlie\u00DFen",
+    "english": "Close",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998684+00:00"
+  },
+  {
+    "key": "dialogs.confirm",
+    "german": "Best\u00E4tigen",
+    "english": "Confirm",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998684+00:00"
+  },
+  {
+    "key": "status.overdue",
+    "german": "\u00DCberf\u00E4llig",
+    "english": "Overdue",
+    "category": "status",
+    "createdDate": "2025-12-03T12:17:11.8998685+00:00"
+  },
+  {
+    "key": "status.due-soon",
+    "german": "Bald f\u00E4llig",
+    "english": "Due Soon",
+    "category": "status",
+    "createdDate": "2025-12-03T12:17:11.8998686+00:00"
+  },
+  {
+    "key": "dashboard.no-data",
+    "german": "Keine Dashboard-Daten",
+    "english": "No Dashboard Data",
+    "category": "dashboard",
+    "createdDate": "2025-12-03T12:17:11.8998687+00:00"
+  },
+  {
+    "key": "dashboard.unable-to-load",
+    "german": "Dashboard-Informationen k\u00F6nnen nicht geladen werden.",
+    "english": "Unable to load dashboard information.",
+    "category": "dashboard",
+    "createdDate": "2025-12-03T12:17:11.8998693+00:00"
+  },
+  {
+    "key": "tabs.templates",
+    "german": "Vorlagen",
+    "english": "Templates",
+    "category": "tabs",
+    "createdDate": "2025-12-03T12:17:11.8998694+00:00"
+  },
+  {
+    "key": "tabs.settings",
+    "german": "Einstellungen",
+    "english": "Settings",
+    "category": "tabs",
+    "createdDate": "2025-12-03T12:17:11.8998695+00:00"
+  },
+  {
+    "key": "filters.filter-by-type",
+    "german": "Nach Typ filtern",
+    "english": "Filter by Type",
+    "category": "filters",
+    "createdDate": "2025-12-03T12:17:11.8998695+00:00"
+  },
+  {
+    "key": "filters.search-templates",
+    "german": "Vorlagen suchen...",
+    "english": "Search templates...",
+    "category": "filters",
+    "createdDate": "2025-12-03T12:17:11.8998696+00:00"
+  },
+  {
+    "key": "filters.show-archived",
+    "german": "Archivierte anzeigen",
+    "english": "Show Archived",
+    "category": "filters",
+    "createdDate": "2025-12-03T12:17:11.8998697+00:00"
+  },
+  {
+    "key": "settings.send-assignment-notifications",
+    "german": "Zuweisungsbenachrichtigungen senden",
+    "english": "Send assignment notifications",
+    "category": "settings",
+    "createdDate": "2025-12-03T12:17:11.8998697+00:00"
+  },
+  {
+    "key": "settings.send-reminder-emails",
+    "german": "Erinnerungs-E-Mails senden",
+    "english": "Send reminder emails",
+    "category": "settings",
+    "createdDate": "2025-12-03T12:17:11.8998698+00:00"
+  },
+  {
+    "key": "settings.send-completion-confirmations",
+    "german": "Abschlussbest\u00E4tigungen senden",
+    "english": "Send completion confirmations",
+    "category": "settings",
+    "createdDate": "2025-12-03T12:17:11.8998699+00:00"
+  },
+  {
+    "key": "pages.team-questionnaires",
+    "german": "Team Fragebogen",
+    "english": "Team Questionnaires",
+    "category": "pages",
+    "createdDate": "2025-12-03T12:17:11.8998699+00:00"
+  },
+  {
+    "key": "pages.team-questionnaires-description",
+    "german": "Fragebogen f\u00FCr Ihre Teammitglieder anzeigen und verwalten",
+    "english": "View and manage questionnaires for your team members",
+    "category": "pages",
+    "createdDate": "2025-12-03T12:17:11.89987+00:00"
+  },
+  {
+    "key": "columns.first-name",
+    "german": "Vorname",
+    "english": "First Name",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998701+00:00"
+  },
+  {
+    "key": "columns.last-name",
+    "german": "Nachname",
+    "english": "Last Name",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998702+00:00"
+  },
+  {
+    "key": "columns.job-role",
+    "german": "Berufsrolle",
+    "english": "Job Role",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998702+00:00"
+  },
+  {
+    "key": "columns.organization",
+    "german": "Organisation",
+    "english": "Organization",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998703+00:00"
+  },
+  {
+    "key": "columns.application-role",
+    "german": "Anwendungsrolle",
+    "english": "Application Role",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998704+00:00"
+  },
+  {
+    "key": "columns.template-name",
+    "german": "Vorlagenname",
+    "english": "Template Name",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998704+00:00"
+  },
+  {
+    "key": "columns.category",
+    "german": "Kategorie",
+    "english": "Category",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998705+00:00"
+  },
+  {
+    "key": "columns.sections",
+    "german": "Abschnitte",
+    "english": "Sections",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998706+00:00"
+  },
+  {
+    "key": "columns.questions",
+    "german": "Fragen",
+    "english": "Questions",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998706+00:00"
+  },
+  {
+    "key": "columns.status",
+    "german": "Status",
+    "english": "Status",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998707+00:00"
+  },
+  {
+    "key": "columns.created",
+    "german": "Erstellt",
+    "english": "Created",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998708+00:00"
+  },
+  {
+    "key": "columns.published",
+    "german": "Ver\u00F6ffentlicht",
+    "english": "Published",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998709+00:00"
+  },
+  {
+    "key": "columns.name-en",
+    "german": "Name EN",
+    "english": "Name EN",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998709+00:00"
+  },
+  {
+    "key": "columns.name-de",
+    "german": "Name DE",
+    "english": "Name DE",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.899871+00:00"
+  },
+  {
+    "key": "columns.description-en",
+    "german": "Beschreibung EN",
+    "english": "Description EN",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998711+00:00"
+  },
+  {
+    "key": "columns.description-de",
+    "german": "Beschreibung DE",
+    "english": "Description DE",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998711+00:00"
+  },
+  {
+    "key": "columns.sort-order",
+    "german": "Sortierreihenfolge",
+    "english": "Sort Order",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998712+00:00"
+  },
+  {
+    "key": "columns.actions",
+    "german": "Aktionen",
+    "english": "Actions",
+    "category": "columns",
+    "createdDate": "2025-12-03T12:17:11.8998713+00:00"
+  },
+  {
+    "key": "filters.search-employees",
+    "german": "Mitarbeiter suchen...",
+    "english": "Search employees...",
+    "category": "filters",
+    "createdDate": "2025-12-03T12:17:11.8998713+00:00"
+  },
+  {
+    "key": "filters.search-types",
+    "german": "Typen suchen...",
+    "english": "Search types...",
+    "category": "filters",
+    "createdDate": "2025-12-03T12:17:11.8998714+00:00"
+  },
+  {
+    "key": "filters.show-inactive",
+    "german": "Inaktive anzeigen",
+    "english": "Show Inactive",
+    "category": "filters",
+    "createdDate": "2025-12-03T12:17:11.8998715+00:00"
+  },
+  {
+    "key": "status.active",
+    "german": "Aktiv",
+    "english": "Active",
+    "category": "status",
+    "createdDate": "2025-12-03T12:17:11.8998716+00:00"
+  },
+  {
+    "key": "status.inactive",
+    "german": "Inaktiv",
+    "english": "Inactive",
+    "category": "status",
+    "createdDate": "2025-12-03T12:17:11.8998716+00:00"
+  },
+  {
+    "key": "buttons.add-new-type",
+    "german": "Neuen Typ hinzuf\u00FCgen",
+    "english": "Add New Type",
+    "category": "buttons",
+    "createdDate": "2025-12-03T12:17:11.8998717+00:00"
+  },
+  {
+    "key": "placeholders.enter-english-name",
+    "german": "Englischen Namen eingeben",
+    "english": "Enter English name",
+    "category": "placeholders",
+    "createdDate": "2025-12-03T12:17:11.8998718+00:00"
+  },
+  {
+    "key": "placeholders.enter-german-name",
+    "german": "Deutschen Namen eingeben",
+    "english": "Enter German name",
+    "category": "placeholders",
+    "createdDate": "2025-12-03T12:17:11.8998718+00:00"
+  },
+  {
+    "key": "placeholders.enter-english-description",
+    "german": "Englische Beschreibung eingeben (optional)",
+    "english": "Enter English description (optional)",
+    "category": "placeholders",
+    "createdDate": "2025-12-03T12:17:11.8998719+00:00"
+  },
+  {
+    "key": "placeholders.enter-german-description",
+    "german": "Deutsche Beschreibung eingeben (optional)",
+    "english": "Enter German description (optional)",
+    "category": "placeholders",
+    "createdDate": "2025-12-03T12:17:11.899872+00:00"
+  },
+  {
+    "key": "labels.uncategorized",
+    "german": "Unkategorisiert",
+    "english": "Uncategorized",
+    "category": "labels",
+    "createdDate": "2025-12-03T12:17:11.899872+00:00"
+  },
+  {
+    "key": "language.german",
+    "german": "Deutsch",
+    "english": "German",
+    "category": "language",
+    "createdDate": "2025-12-03T12:17:11.8998721+00:00"
+  },
+  {
+    "key": "language.english",
+    "german": "Englisch",
+    "english": "English",
+    "category": "language",
+    "createdDate": "2025-12-03T12:17:11.8998722+00:00"
+  }
+]

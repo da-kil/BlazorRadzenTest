@@ -1,0 +1,134 @@
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Models
+@inherits OptimizedTranslatableComponentBase
+
+<RadzenCard Style="margin: 16px;">
+    <RadzenText TextStyle="TextStyle.H4" Style="margin-bottom: 16px;">
+        Translation System Demo
+    </RadzenText>
+
+    <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 16px;">
+        Current Language: <strong>@CurrentLanguage</strong>
+    </RadzenText>
+
+    <RadzenStack Gap="16px" Orientation="Orientation.Vertical">
+
+        <!-- Language Switcher -->
+        <RadzenFieldset Text="Language Selection" Style="margin-bottom: 16px;">
+            <RadzenStack Gap="8px" Orientation="Orientation.Horizontal">
+                <RadzenButton Text="English" ButtonStyle="ButtonStyle.Primary"
+                    Disabled="@(CurrentLanguage == Language.English)"
+                    Click="@(() => SetLanguage(Language.English))" />
+                <RadzenButton Text="Deutsch" ButtonStyle="ButtonStyle.Success"
+                    Disabled="@(CurrentLanguage == Language.German)"
+                    Click="@(() => SetLanguage(Language.German))" />
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <!-- Common Buttons -->
+        <RadzenFieldset Text="Common Buttons">
+            <RadzenStack Gap="8px" Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap">
+                <RadzenButton Text="@T("buttons.save")" ButtonStyle="ButtonStyle.Primary" />
+                <RadzenButton Text="@T("buttons.cancel")" ButtonStyle="ButtonStyle.Light" />
+                <RadzenButton Text="@T("buttons.delete")" ButtonStyle="ButtonStyle.Danger" />
+                <RadzenButton Text="@T("buttons.edit")" ButtonStyle="ButtonStyle.Secondary" />
+                <RadzenButton Text="@T("buttons.add")" ButtonStyle="ButtonStyle.Success" />
+                <RadzenButton Text="@T("buttons.submit")" ButtonStyle="ButtonStyle.Info" />
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <!-- Navigation Items -->
+        <RadzenFieldset Text="Navigation">
+            <RadzenStack Gap="8px" Orientation="Orientation.Vertical">
+                <RadzenText>• @T("nav.dashboard")</RadzenText>
+                <RadzenText>• @T("nav.questionnaires")</RadzenText>
+                <RadzenText>• @T("nav.my-questionnaires")</RadzenText>
+                <RadzenText>• @T("nav.team-questionnaires")</RadzenText>
+                <RadzenText>• @T("nav.administration")</RadzenText>
+                <RadzenText>• @T("nav.questionnaire-management")</RadzenText>
+                <RadzenText>• @T("nav.categories")</RadzenText>
+                <RadzenText>• @T("nav.role-management")</RadzenText>
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <!-- Labels and Validation -->
+        <RadzenFieldset Text="Form Elements">
+            <RadzenStack Gap="16px" Orientation="Orientation.Vertical">
+                <div>
+                    <RadzenLabel Text="@T("labels.name")" />
+                    <RadzenTextBox Placeholder="@T("labels.name")" Style="width: 100%;" />
+                </div>
+                <div>
+                    <RadzenLabel Text="@T("labels.description")" />
+                    <RadzenTextArea Placeholder="@T("labels.description")" Style="width: 100%;" />
+                </div>
+                <RadzenText TextStyle="TextStyle.Caption" Style="color: red;">
+                    @T("validation.required")
+                </RadzenText>
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <!-- Notification Examples -->
+        <RadzenFieldset Text="Notifications">
+            <RadzenStack Gap="8px" Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap">
+                <RadzenAlert AlertStyle="AlertStyle.Success"
+                    Text="@($"{T("notifications.success")}: Operation completed")" />
+                <RadzenAlert AlertStyle="AlertStyle.Danger"
+                    Text="@($"{T("notifications.error")}: Something went wrong")" />
+                <RadzenAlert AlertStyle="AlertStyle.Warning"
+                    Text="@($"{T("notifications.warning")}: Please check your input")" />
+                <RadzenAlert AlertStyle="AlertStyle.Info"
+                    Text="@($"{T("notifications.info")}: This is informational")" />
+            </RadzenStack>
+        </RadzenFieldset>
+
+        <!-- Missing Translation Demo -->
+        <RadzenFieldset Text="Fallback Behavior">
+            <RadzenText TextStyle="TextStyle.Body2" Style="margin-bottom: 8px;">
+                Missing translation key shows the key itself:
+            </RadzenText>
+            <RadzenCode>@T("this.key.does.not.exist")</RadzenCode>
+        </RadzenFieldset>
+
+        <!-- Async Translation Demo -->
+        <RadzenFieldset Text="Async Translation">
+            <RadzenText TextStyle="TextStyle.Body2" Style="margin-bottom: 8px;">
+                Async translation result:
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1">
+                <strong>@asyncTranslationResult</strong>
+            </RadzenText>
+            <RadzenButton Text="Load Async" Click="LoadAsyncTranslation" Style="margin-top: 8px;" />
+        </RadzenFieldset>
+
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    private string asyncTranslationResult = "Click 'Load Async' to test";
+
+    private async Task SetLanguage(Language newLanguage)
+    {
+        await UpdateLanguageAsync(newLanguage);
+
+        // In a real app, you would also save this preference to the backend
+        // await LanguageContext.SetUserPreferredLanguageAsync(userId, newLanguage);
+    }
+
+    private async Task LoadAsyncTranslation()
+    {
+        asyncTranslationResult = "Loading...";
+        await InvokeAsync(StateHasChanged);
+
+        asyncTranslationResult = await TAsync("buttons.save");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        // Load an async translation on startup
+        asyncTranslationResult = await TAsync("nav.dashboard");
+    }
+}

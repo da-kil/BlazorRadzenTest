@@ -28,6 +28,15 @@ public class EmployeeDto
     public required string Manager { get; set; }
 }
 
+public class UITranslationDto
+{
+    public required string Key { get; set; }
+    public required string German { get; set; }
+    public required string English { get; set; }
+    public required string Category { get; set; }
+    public DateTimeOffset CreatedDate { get; set; } = DateTimeOffset.UtcNow;
+}
+
 public class TestDataGenerator
 {
     private readonly Random random = new Random(42); // Fixed seed for reproducible results
@@ -104,6 +113,167 @@ public class TestDataGenerator
         return organizations;
     }
 
+    public List<UITranslationDto> GenerateUITranslations()
+    {
+        return new List<UITranslationDto>
+        {
+            // Navigation
+            new() { Key = "nav.menu-toggle", German = "Navigationsmenü", English = "Navigation menu", Category = "navigation" },
+            new() { Key = "nav.dashboard", German = "Dashboard", English = "Dashboard", Category = "navigation" },
+            new() { Key = "nav.my-work", German = "Meine Arbeit", English = "My Work", Category = "navigation" },
+            new() { Key = "nav.questionnaires", German = "Fragebogen", English = "Questionnaires", Category = "navigation" },
+            new() { Key = "nav.my-questionnaires", German = "Meine Fragebogen", English = "My Questionnaires", Category = "navigation" },
+            new() { Key = "nav.team-overview", German = "Team Übersicht", English = "Team Overview", Category = "navigation" },
+            new() { Key = "nav.team-questionnaires", German = "Team Fragebogen", English = "Team Questionnaires", Category = "navigation" },
+            new() { Key = "nav.organization", German = "Organisation", English = "Organization", Category = "navigation" },
+            new() { Key = "nav.management", German = "Verwaltung", English = "Management", Category = "navigation" },
+            new() { Key = "nav.create-questionnaire", German = "Fragebogen erstellen", English = "Create Questionnaire", Category = "navigation" },
+            new() { Key = "nav.manage-questionnaires", German = "Fragebogen verwalten", English = "Manage Questionnaires", Category = "navigation" },
+            new() { Key = "nav.assignments", German = "Zuweisungen", English = "Assignments", Category = "navigation" },
+            new() { Key = "nav.administration", German = "Administration", English = "Administration", Category = "navigation" },
+            new() { Key = "nav.questionnaire-management", German = "Fragebogen Verwaltung", English = "Questionnaire Management", Category = "navigation" },
+            new() { Key = "nav.categories", German = "Kategorien", English = "Categories", Category = "navigation" },
+            new() { Key = "nav.role-management", German = "Rollenverwaltung", English = "Role Management", Category = "navigation" },
+            new() { Key = "nav.projection-replay", German = "Projektions-Wiederholung", English = "Projection Replay", Category = "navigation" },
+
+            // Common buttons
+            new() { Key = "buttons.save", German = "Speichern", English = "Save", Category = "buttons" },
+            new() { Key = "buttons.cancel", German = "Abbrechen", English = "Cancel", Category = "buttons" },
+            new() { Key = "buttons.delete", German = "Löschen", English = "Delete", Category = "buttons" },
+            new() { Key = "buttons.edit", German = "Bearbeiten", English = "Edit", Category = "buttons" },
+            new() { Key = "buttons.add", German = "Hinzufügen", English = "Add", Category = "buttons" },
+            new() { Key = "buttons.submit", German = "Absenden", English = "Submit", Category = "buttons" },
+            new() { Key = "buttons.close", German = "Schließen", English = "Close", Category = "buttons" },
+            new() { Key = "buttons.confirm", German = "Bestätigen", English = "Confirm", Category = "buttons" },
+            new() { Key = "buttons.previous", German = "Zurück", English = "Previous", Category = "buttons" },
+            new() { Key = "buttons.next", German = "Weiter", English = "Next", Category = "buttons" },
+            new() { Key = "buttons.save-progress", German = "Fortschritt speichern", English = "Save Progress", Category = "buttons" },
+            new() { Key = "buttons.saving", German = "Speichere...", English = "Saving...", Category = "buttons" },
+            new() { Key = "buttons.submitting", German = "Sende...", English = "Submitting...", Category = "buttons" },
+            new() { Key = "buttons.retry", German = "Wiederholen", English = "Retry", Category = "buttons" },
+            new() { Key = "buttons.loading", German = "Lädt", English = "Loading", Category = "buttons" },
+            new() { Key = "buttons.create-new", German = "Neu erstellen", English = "Create New", Category = "buttons" },
+
+            // Common labels
+            new() { Key = "labels.name", German = "Name", English = "Name", Category = "labels" },
+            new() { Key = "labels.description", German = "Beschreibung", English = "Description", Category = "labels" },
+            new() { Key = "labels.category", German = "Kategorie", English = "Category", Category = "labels" },
+            new() { Key = "labels.status", German = "Status", English = "Status", Category = "labels" },
+
+            // Form labels and placeholders
+            new() { Key = "forms.objective-description-required", German = "Zielbeschreibung*", English = "Objective Description*", Category = "forms" },
+            new() { Key = "forms.measurement-metric-required", German = "Messgröße*", English = "Measurement Metric*", Category = "forms" },
+            new() { Key = "forms.start-date-required", German = "Startdatum*", English = "Start Date*", Category = "forms" },
+            new() { Key = "forms.end-date-required", German = "Enddatum*", English = "End Date*", Category = "forms" },
+            new() { Key = "forms.weighting", German = "Gewichtung", English = "Weighting", Category = "forms" },
+            new() { Key = "forms.weighting-percentage-required", German = "Gewichtung Prozentsatz*", English = "Weighting Percentage*", Category = "forms" },
+            new() { Key = "forms.reason-for-change-required", German = "Grund für Änderung*", English = "Reason for Change*", Category = "forms" },
+            new() { Key = "forms.describe-goal-objective", German = "Beschreiben Sie das Ziel...", English = "Describe the goal objective...", Category = "forms" },
+            new() { Key = "forms.how-measured", German = "Wie wird dieses Ziel gemessen?", English = "How will this goal be measured?", Category = "forms" },
+            new() { Key = "forms.weighting-help-text", German = "Prozentsatz der Gesamtziele (0-100%). Setzen Sie die Gewichtung, um die Wichtigkeit zwischen den Zielen zu verteilen.", English = "Percentage of total goals (0-100%). Set weighting to allocate importance across goals.", Category = "forms" },
+            new() { Key = "forms.explain-goal-modification", German = "Erklären Sie, warum dieses Ziel geändert wird...", English = "Explain why this goal is being modified...", Category = "forms" },
+            new() { Key = "forms.characters", German = "Zeichen", English = "characters", Category = "forms" },
+
+            // Validation messages
+            new() { Key = "validation.fix-errors", German = "Bitte beheben Sie die folgenden Fehler", English = "Please fix the following errors", Category = "validation" },
+            new() { Key = "validation.required", German = "Erforderlich", English = "Required", Category = "validation" },
+            new() { Key = "validation.email", German = "Ungültige E-Mail-Adresse", English = "Invalid email address", Category = "validation" },
+            new() { Key = "validation.min-length", German = "Mindestlänge erforderlich", English = "Minimum length required", Category = "validation" },
+
+            // Notification titles
+            new() { Key = "notifications.success", German = "Erfolg", English = "Success", Category = "notifications" },
+            new() { Key = "notifications.error", German = "Fehler", English = "Error", Category = "notifications" },
+            new() { Key = "notifications.warning", German = "Warnung", English = "Warning", Category = "notifications" },
+            new() { Key = "notifications.info", German = "Information", English = "Information", Category = "notifications" },
+            new() { Key = "notifications.failed", German = "Fehlgeschlagen", English = "Failed", Category = "notifications" },
+
+            // Dialog buttons and actions
+            new() { Key = "dialogs.add-goal", German = "Ziel hinzufügen", English = "Add Goal", Category = "dialogs" },
+            new() { Key = "dialogs.update-goal", German = "Ziel aktualisieren", English = "Update Goal", Category = "dialogs" },
+            new() { Key = "dialogs.adding-goal", German = "Ziel wird hinzugefügt...", English = "Adding Goal...", Category = "dialogs" },
+            new() { Key = "dialogs.updating-goal", German = "Ziel wird aktualisiert...", English = "Updating Goal...", Category = "dialogs" },
+            new() { Key = "dialogs.save-changes", German = "Änderungen speichern", English = "Save Changes", Category = "dialogs" },
+            new() { Key = "dialogs.saving", German = "Speichere...", English = "Saving", Category = "dialogs" },
+            new() { Key = "dialogs.employee-sign-off", German = "Mitarbeiter Bestätigung", English = "Employee Sign-Off", Category = "dialogs" },
+            new() { Key = "dialogs.confirm-review-message", German = "Sie bestätigen, dass Sie die Fragebogen-Ergebnisse besprochen und zur Kenntnis genommen haben.", English = "You are about to confirm that you have reviewed and acknowledged the questionnaire results discussed with your manager.", Category = "dialogs" },
+            new() { Key = "dialogs.sign-off-review", German = "Besprechung bestätigen", English = "Sign Off on Review", Category = "dialogs" },
+            new() { Key = "dialogs.signing-off", German = "Bestätige...", English = "Signing Off", Category = "dialogs" },
+            new() { Key = "dialogs.close", German = "Schließen", English = "Close", Category = "dialogs" },
+            new() { Key = "dialogs.confirm", German = "Bestätigen", English = "Confirm", Category = "dialogs" },
+
+            // Status indicators
+            new() { Key = "status.overdue", German = "Überfällig", English = "Overdue", Category = "status" },
+            new() { Key = "status.due-soon", German = "Bald fällig", English = "Due Soon", Category = "status" },
+
+            // Dashboard messages
+            new() { Key = "dashboard.no-data", German = "Keine Dashboard-Daten", English = "No Dashboard Data", Category = "dashboard" },
+            new() { Key = "dashboard.unable-to-load", German = "Dashboard-Informationen können nicht geladen werden.", English = "Unable to load dashboard information.", Category = "dashboard" },
+
+            // Tab labels
+            new() { Key = "tabs.templates", German = "Vorlagen", English = "Templates", Category = "tabs" },
+            new() { Key = "tabs.settings", German = "Einstellungen", English = "Settings", Category = "tabs" },
+
+            // Filter labels
+            new() { Key = "filters.filter-by-type", German = "Nach Typ filtern", English = "Filter by Type", Category = "filters" },
+            new() { Key = "filters.search-templates", German = "Vorlagen suchen...", English = "Search templates...", Category = "filters" },
+            new() { Key = "filters.show-archived", German = "Archivierte anzeigen", English = "Show Archived", Category = "filters" },
+
+            // Settings labels
+            new() { Key = "settings.send-assignment-notifications", German = "Zuweisungsbenachrichtigungen senden", English = "Send assignment notifications", Category = "settings" },
+            new() { Key = "settings.send-reminder-emails", German = "Erinnerungs-E-Mails senden", English = "Send reminder emails", Category = "settings" },
+            new() { Key = "settings.send-completion-confirmations", German = "Abschlussbestätigungen senden", English = "Send completion confirmations", Category = "settings" },
+
+            // Page titles and descriptions
+            new() { Key = "pages.team-questionnaires", German = "Team Fragebogen", English = "Team Questionnaires", Category = "pages" },
+            new() { Key = "pages.team-questionnaires-description", German = "Fragebogen für Ihre Teammitglieder anzeigen und verwalten", English = "View and manage questionnaires for your team members", Category = "pages" },
+
+            // Data grid column headers
+            new() { Key = "columns.first-name", German = "Vorname", English = "First Name", Category = "columns" },
+            new() { Key = "columns.last-name", German = "Nachname", English = "Last Name", Category = "columns" },
+            new() { Key = "columns.job-role", German = "Berufsrolle", English = "Job Role", Category = "columns" },
+            new() { Key = "columns.organization", German = "Organisation", English = "Organization", Category = "columns" },
+            new() { Key = "columns.application-role", German = "Anwendungsrolle", English = "Application Role", Category = "columns" },
+            new() { Key = "columns.template-name", German = "Vorlagenname", English = "Template Name", Category = "columns" },
+            new() { Key = "columns.category", German = "Kategorie", English = "Category", Category = "columns" },
+            new() { Key = "columns.sections", German = "Abschnitte", English = "Sections", Category = "columns" },
+            new() { Key = "columns.questions", German = "Fragen", English = "Questions", Category = "columns" },
+            new() { Key = "columns.status", German = "Status", English = "Status", Category = "columns" },
+            new() { Key = "columns.created", German = "Erstellt", English = "Created", Category = "columns" },
+            new() { Key = "columns.published", German = "Veröffentlicht", English = "Published", Category = "columns" },
+            new() { Key = "columns.name-en", German = "Name EN", English = "Name EN", Category = "columns" },
+            new() { Key = "columns.name-de", German = "Name DE", English = "Name DE", Category = "columns" },
+            new() { Key = "columns.description-en", German = "Beschreibung EN", English = "Description EN", Category = "columns" },
+            new() { Key = "columns.description-de", German = "Beschreibung DE", English = "Description DE", Category = "columns" },
+            new() { Key = "columns.sort-order", German = "Sortierreihenfolge", English = "Sort Order", Category = "columns" },
+            new() { Key = "columns.actions", German = "Aktionen", English = "Actions", Category = "columns" },
+
+            // Additional filter options
+            new() { Key = "filters.search-employees", German = "Mitarbeiter suchen...", English = "Search employees...", Category = "filters" },
+            new() { Key = "filters.search-types", German = "Typen suchen...", English = "Search types...", Category = "filters" },
+            new() { Key = "filters.show-inactive", German = "Inaktive anzeigen", English = "Show Inactive", Category = "filters" },
+
+            // Status labels
+            new() { Key = "status.active", German = "Aktiv", English = "Active", Category = "status" },
+            new() { Key = "status.inactive", German = "Inaktiv", English = "Inactive", Category = "status" },
+
+            // Button types
+            new() { Key = "buttons.add-new-type", German = "Neuen Typ hinzufügen", English = "Add New Type", Category = "buttons" },
+
+            // Placeholder text for forms
+            new() { Key = "placeholders.enter-english-name", German = "Englischen Namen eingeben", English = "Enter English name", Category = "placeholders" },
+            new() { Key = "placeholders.enter-german-name", German = "Deutschen Namen eingeben", English = "Enter German name", Category = "placeholders" },
+            new() { Key = "placeholders.enter-english-description", German = "Englische Beschreibung eingeben (optional)", English = "Enter English description (optional)", Category = "placeholders" },
+            new() { Key = "placeholders.enter-german-description", German = "Deutsche Beschreibung eingeben (optional)", English = "Enter German description (optional)", Category = "placeholders" },
+
+            // Common labels
+            new() { Key = "labels.uncategorized", German = "Unkategorisiert", English = "Uncategorized", Category = "labels" },
+
+            // Language names
+            new() { Key = "language.german", German = "Deutsch", English = "German", Category = "language" },
+            new() { Key = "language.english", German = "Englisch", English = "English", Category = "language" }
+        };
+    }
+
     public List<EmployeeDto> GenerateEmployees(List<SyncOrganizationDto> organizations, int employeesPerOrg = 5)
     {
         var employees = new List<EmployeeDto>();
@@ -178,6 +348,10 @@ public class TestDataGenerator
         var employees = GenerateEmployees(organizations, 8);
         Console.WriteLine($"Generated {employees.Count} employees");
 
+        // Generate UI translations
+        var translations = GenerateUITranslations();
+        Console.WriteLine($"Generated {translations.Count} UI translations");
+
         // Configure JSON options for readable output
         var jsonOptions = new JsonSerializerOptions
         {
@@ -195,11 +369,16 @@ public class TestDataGenerator
         await File.WriteAllTextAsync("test-employees.json", employeesJson);
         Console.WriteLine("Saved employees to test-employees.json");
 
+        // Save translations to file
+        var translationsJson = JsonSerializer.Serialize(translations, jsonOptions);
+        await File.WriteAllTextAsync("test-translations.json", translationsJson);
+        Console.WriteLine("Saved translations to test-translations.json");
+
         // Generate curl commands for testing
-        await GenerateCurlCommands(organizationsJson, employeesJson);
+        await GenerateCurlCommands(organizationsJson, employeesJson, translationsJson);
     }
 
-    private async Task GenerateCurlCommands(string organizationsJson, string employeesJson)
+    private async Task GenerateCurlCommands(string organizationsJson, string employeesJson, string translationsJson)
     {
         var curlCommands = new StringBuilder();
 

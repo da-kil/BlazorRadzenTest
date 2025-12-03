@@ -1,0 +1,124 @@
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Models
+@inherits OptimizedTranslatableComponentBase
+
+<RadzenDropDown @bind-Value="@selectedLanguage"
+                Data="@availableLanguages"
+                TextProperty="@nameof(LanguageOption.DisplayName)"
+                ValueProperty="@nameof(LanguageOption.Value)"
+                Change="@OnLanguageChanged"
+                Style="min-width: 120px;"
+                Class="language-switcher" />
+
+<style>
+    .language-switcher {
+        border-radius: 6px;
+        font-size: 14px;
+        height: 38px;
+    }
+
+    .language-switcher .rz-dropdown {
+        background: var(--rz-surface-color);
+        border: 1px solid var(--rz-border-color);
+    }
+
+    .language-switcher .rz-dropdown:hover {
+        background: var(--rz-surface-hover-color);
+    }
+
+    .flag {
+        display: inline-block;
+        width: 16px;
+        height: 12px;
+        margin-right: 8px;
+        border-radius: 2px;
+    }
+
+    .flag.en {
+        background: linear-gradient(to bottom, #012169 0%, #012169 33%, white 33%, white 66%, #C8102E 66%);
+    }
+
+    .flag.de {
+        background: linear-gradient(to bottom, black 0%, black 33%, #DD0000 33%, #DD0000 66%, #FFCE00 66%);
+    }
+</style>
+
+@code {
+    private Language selectedLanguage = Language.English;
+    private List<LanguageOption> availableLanguages = new();
+
+    public class LanguageOption
+    {
+        public Language Value { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public string FlagClass { get; set; } = string.Empty;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        selectedLanguage = CurrentLanguage;
+
+        availableLanguages = new List<LanguageOption>
+        {
+            new LanguageOption
+            {
+                Value = Language.English,
+                DisplayName = "🇺🇸 English",
+                FlagClass = "en"
+            },
+            new LanguageOption
+            {
+                Value = Language.German,
+                DisplayName = "🇩🇪 Deutsch",
+                FlagClass = "de"
+            }
+        };
+    }
+
+    private async Task OnLanguageChanged(object value)
+    {
+        if (value is Language newLanguage && newLanguage != CurrentLanguage)
+        {
+            try
+            {
+                // Update the component's language
+                await UpdateLanguageAsync(newLanguage);
+
+                // Save the preference to the backend
+                var userRole = await authService.GetMyRoleAsync();
+                if (userRole?.EmployeeId != null)
+                {
+                    await LanguageContext.SetUserPreferredLanguageAsync(userRole.EmployeeId, newLanguage);
+                }
+
+                // Show success notification
+                var languageName = newLanguage == Language.German ? T("language.german") : T("language.english");
+                ShowSuccess(T("notifications.language-changed").Replace("{language}", languageName));
+
+                // Trigger app-wide language refresh by clearing cache
+                if (LanguageContext is ClientLanguageContext clientContext)
+                {
+                    clientContext.ClearCache();
+                }
+
+                // Reload the page to ensure all components pick up the new language
+                NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+            }
+            catch (Exception ex)
+            {
+                ShowError(T("errors.language-change-failed").Replace("{error}", ex.Message));
+
+                // Revert selection on error
+                selectedLanguage = CurrentLanguage;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    // ShowNotification method removed - using inherited ShowError/ShowSuccess methods instead
+
+    [Inject] private Services.IAuthService authService { get; set; } = default!;
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+}

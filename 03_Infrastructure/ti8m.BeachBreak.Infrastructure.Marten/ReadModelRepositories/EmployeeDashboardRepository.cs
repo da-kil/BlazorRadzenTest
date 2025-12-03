@@ -1,11 +1,14 @@
 using Marten;
+using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Domain;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.ReadModelRepositories;
 
-internal class EmployeeDashboardRepository(IDocumentStore store) : IEmployeeDashboardRepository
+internal class EmployeeDashboardRepository(IDocumentStore store, ILanguageContext languageContext) : IEmployeeDashboardRepository
 {
     public async Task<EmployeeDashboardReadModel?> GetDashboardByEmployeeIdAsync(Guid employeeId, CancellationToken cancellationToken = default)
     {
@@ -29,7 +32,11 @@ internal class EmployeeDashboardRepository(IDocumentStore store) : IEmployeeDash
         var templates = await session.Query<QuestionnaireTemplateReadModel>()
             .Where(t => templateIds.Contains(t.Id))
             .ToListAsync(cancellationToken);
-        var templateDict = templates.ToDictionary(t => t.Id, t => t.Name);
+        // Get user's preferred language
+        var currentLanguageCode = await languageContext.GetCurrentLanguageCodeAsync();
+        var currentLanguage = LanguageMapper.FromLanguageCode(currentLanguageCode);
+        var domainLanguage = LanguageMapper.MapToDomain(currentLanguage);
+        var templateDict = templates.ToDictionary(t => t.Id, t => GetLocalizedTemplateName(t, domainLanguage));
 
         // Aggregate metrics
         var pendingCount = assignments.Count(a => a.WorkflowState == WorkflowState.Assigned);
@@ -67,5 +74,10 @@ internal class EmployeeDashboardRepository(IDocumentStore store) : IEmployeeDash
             UrgentAssignments = urgentAssignments,
             LastUpdated = DateTime.UtcNow
         };
+    }
+
+    private static string GetLocalizedTemplateName(QuestionnaireTemplateReadModel template, Language language)
+    {
+        return language == Language.German ? template.NameGerman : template.NameEnglish;
     }
 }

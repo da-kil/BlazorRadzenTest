@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Repositories;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
+using ti8m.BeachBreak.Domain;
 using DomainQuestionnaireTemplate = ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.QuestionnaireTemplate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
@@ -40,15 +41,15 @@ public class QuestionnaireTemplateCommandHandler :
                 ? command.QuestionnaireTemplate.Id
                 : Guid.NewGuid();
 
-            logger.LogCreateQuestionnaireTemplate(templateId, command.QuestionnaireTemplate.Name);
+            logger.LogCreateQuestionnaireTemplate(templateId, command.QuestionnaireTemplate.NameEnglish);
 
             var sections = MapToQuestionSections(command.QuestionnaireTemplate.Sections);
 
             // Create the questionnaire template using the domain aggregate
             var questionnaireTemplate = new DomainQuestionnaireTemplate(
                 templateId,
-                command.QuestionnaireTemplate.Name,
-                command.QuestionnaireTemplate.Description,
+                new Translation(command.QuestionnaireTemplate.NameGerman, command.QuestionnaireTemplate.NameEnglish),
+                new Translation(command.QuestionnaireTemplate.DescriptionGerman, command.QuestionnaireTemplate.DescriptionEnglish),
                 command.QuestionnaireTemplate.CategoryId,
                 command.QuestionnaireTemplate.RequiresManagerReview,
                 sections);
@@ -83,8 +84,8 @@ public class QuestionnaireTemplateCommandHandler :
             }
 
             // Update the template using domain methods
-            questionnaireTemplate.ChangeName(command.QuestionnaireTemplate.Name);
-            questionnaireTemplate.ChangeDescription(command.QuestionnaireTemplate.Description);
+            questionnaireTemplate.ChangeName(new Translation(command.QuestionnaireTemplate.NameGerman, command.QuestionnaireTemplate.NameEnglish));
+            questionnaireTemplate.ChangeDescription(new Translation(command.QuestionnaireTemplate.DescriptionGerman, command.QuestionnaireTemplate.DescriptionEnglish));
             questionnaireTemplate.ChangeCategory(command.QuestionnaireTemplate.CategoryId);
 
             // Handle RequiresManagerReview change (validates no active assignments exist)
@@ -347,8 +348,8 @@ public class QuestionnaireTemplateCommandHandler :
     {
         return commandSections.Select(section => new QuestionSection(
             section.Id,
-            section.Title,
-            section.Description,
+            new Translation(section.TitleGerman, section.TitleEnglish),
+            new Translation(section.DescriptionGerman, section.DescriptionEnglish),
             section.Order,
             section.IsRequired,
             section.CompletionRole,
@@ -360,8 +361,8 @@ public class QuestionnaireTemplateCommandHandler :
     {
         return commandItems.Select(item => new QuestionItem(
             item.Id,
-            item.Title,
-            item.Description,
+            new Translation(item.TitleGerman, item.TitleEnglish),
+            new Translation(item.DescriptionGerman, item.DescriptionEnglish),
             MapQuestionType(item.Type),
             item.Order,
             item.IsRequired,

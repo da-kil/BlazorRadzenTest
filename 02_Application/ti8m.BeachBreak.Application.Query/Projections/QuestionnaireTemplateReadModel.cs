@@ -6,8 +6,10 @@ namespace ti8m.BeachBreak.Application.Query.Projections;
 public class QuestionnaireTemplateReadModel
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    public string NameGerman { get; set; } = string.Empty;
+    public string NameEnglish { get; set; } = string.Empty;
+    public string DescriptionGerman { get; set; } = string.Empty;
+    public string DescriptionEnglish { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
     public bool RequiresManagerReview { get; set; } = true;
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
@@ -25,8 +27,10 @@ public class QuestionnaireTemplateReadModel
     public void Apply(QuestionnaireTemplateCreated @event)
     {
         Id = @event.AggregateId;
-        Name = @event.Name;
-        Description = @event.Description;
+        NameGerman = @event.Name.German;
+        NameEnglish = @event.Name.English;
+        DescriptionGerman = @event.Description.German;
+        DescriptionEnglish = @event.Description.English;
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
@@ -37,12 +41,14 @@ public class QuestionnaireTemplateReadModel
 
     public void Apply(QuestionnaireTemplateNameChanged @event)
     {
-        Name = @event.Name;
+        NameGerman = @event.Name.German;
+        NameEnglish = @event.Name.English;
     }
 
     public void Apply(QuestionnaireTemplateDescriptionChanged @event)
     {
-        Description = @event.Description;
+        DescriptionGerman = @event.Description.German;
+        DescriptionEnglish = @event.Description.English;
     }
 
     public void Apply(QuestionnaireTemplateCategoryChanged @event)
@@ -94,8 +100,10 @@ public class QuestionnaireTemplateReadModel
     public void Apply(QuestionnaireTemplateCloned @event)
     {
         Id = @event.NewTemplateId;
-        Name = @event.Name;
-        Description = @event.Description;
+        NameGerman = @event.Name.German;
+        NameEnglish = @event.Name.English;
+        DescriptionGerman = @event.Description.German;
+        DescriptionEnglish = @event.Description.English;
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
@@ -112,16 +120,20 @@ public class QuestionnaireTemplateReadModel
         return data.Select(s => new QuestionSection
         {
             Id = s.Id,
-            Title = s.Title,
-            Description = s.Description,
+            TitleGerman = s.Title.German,
+            TitleEnglish = s.Title.English,
+            DescriptionGerman = s.Description.German,
+            DescriptionEnglish = s.Description.English,
             Order = s.Order,
             IsRequired = s.IsRequired,
             CompletionRole = s.CompletionRole.ToString(),
             Questions = s.Questions.Select(q => new QuestionItem
             {
                 Id = q.Id,
-                Title = q.Title,
-                Description = q.Description,
+                TitleGerman = q.Title.German,
+                TitleEnglish = q.Title.English,
+                DescriptionGerman = q.Description.German,
+                DescriptionEnglish = q.Description.English,
                 Type = (QuestionType)(int)q.Type,
                 IsRequired = q.IsRequired,
                 Order = q.Order,

@@ -4,8 +4,8 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 
 public record QuestionnaireTemplateCreated(
     Guid AggregateId,
-    string Name,
-    string Description,
+    Translation Name,
+    Translation Description,
     Guid CategoryId,
     bool RequiresManagerReview,
     List<QuestionSectionData> Sections,

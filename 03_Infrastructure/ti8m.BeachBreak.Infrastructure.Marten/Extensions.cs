@@ -5,6 +5,7 @@ using Marten.Events.Projections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Core.Infrastructure.Configuration;
 using ti8m.BeachBreak.Core.Infrastructure.Services;
@@ -63,6 +64,10 @@ public static class Extensions
             // Event-based projections for review change tracking
             options.Projections.Add<ReviewChangeLogProjection>(ProjectionLifecycle.Inline);
 
+            // Configure UITranslation document storage for multilingual support
+            options.Schema.For<UITranslation>().Index(x => x.Key);  // Index on Key for fast lookup
+            options.Schema.For<UITranslation>().Index(x => x.Category);  // Index on Category for filtering
+
         }).UseLightweightSessions().UseNpgsqlDataSource();
 
         if (builder.Environment.IsDevelopment())
@@ -72,6 +77,12 @@ public static class Extensions
 
         // Register domain services
         builder.Services.AddScoped<IQuestionnaireAssignmentService, QuestionnaireAssignmentService>();
+
+        // Register language context service for multilanguage support (Query-side implementation)
+        builder.Services.AddScoped<ILanguageContext, QueryLanguageContext>();
+
+        // Register UI translation service for multilanguage support
+        builder.Services.AddScoped<Application.Query.Services.IUITranslationService, Services.UITranslationService>();
 
         // Note: IEmployeeHierarchyService is registered only in CommandApi
         // It depends on IEmployeeAggregateRepository which is only available on the Command side
@@ -90,5 +101,15 @@ public static class Extensions
 
         // Register aggregate repositories
         builder.Services.AddScoped<Application.Command.Repositories.IProjectionReplayAggregateRepository, Repositories.ProjectionReplayAggregateRepository>();
+    }
+
+    /// <summary>
+    /// Extension method to register Command-side LanguageContext that can write language preferences.
+    /// This should only be called from CommandApi where Command repositories are available.
+    /// </summary>
+    public static void AddCommandSideLanguageContext(this IServiceCollection services)
+    {
+        // Replace the Query-side LanguageContext with Command-side implementation
+        services.AddScoped<ILanguageContext, LanguageContext>();
     }
 }

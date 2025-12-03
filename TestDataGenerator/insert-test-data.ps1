@@ -120,6 +120,25 @@ if (-not $SKIP_AUTH) {
     }
 }
 
+Write-Host "`nSeeding translations..." -ForegroundColor Cyan
+try {
+    $translationResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/translations/seed" `
+      -Method POST `
+      -Headers $headers
+
+    Write-Host "Translations seeded successfully!" -ForegroundColor Green
+} catch {
+    Write-Host "Error seeding translations: $($_.Exception.Message)" -ForegroundColor Red
+    if ($_.Exception.Response) {
+        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+        $responseBody = $reader.ReadToEnd()
+        Write-Host "Response: $responseBody" -ForegroundColor Red
+    }
+}
+
+Write-Host "`nWaiting 2 seconds..." -ForegroundColor Cyan
+Start-Sleep -Seconds 2
+
 Write-Host "`nInserting category..." -ForegroundColor Cyan
 try {
     $categoryResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/categories" `

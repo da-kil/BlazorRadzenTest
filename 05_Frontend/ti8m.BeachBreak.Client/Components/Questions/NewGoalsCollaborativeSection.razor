@@ -12,19 +12,22 @@
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject IAuthService AuthService
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 
 <div class="new-goals-section">
     <header class="section-header">
-        <p class="section-description">Set goals for upcoming period</p>
+        <p class="section-description">@T("goals.set-goals-upcoming-period")</p>
     </header>
     <div class="section-content">
         @if (!allCurrentGoals.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
                 <RadzenText TextStyle="TextStyle.Body2">
-                    No goals have been added yet for the upcoming period.
-                    @(!IsReadOnly ? "Start by adding goals that will drive performance in the next review cycle." : "")
+                    @T("goals.no-goals-added-yet")
+                    @if (!IsReadOnly)
+                    {
+                        @(" " + T("goals.start-adding-goals-message"))
+                    }
                 </RadzenText>
             </RadzenAlert>
         }
@@ -41,13 +44,13 @@
         @if (!IsReadOnly)
         {
             <div class="add-goal-section mt-3">
-                <RadzenButton Text="Add New Goal"
+                <RadzenButton Text="@T("buttons.add-new-goal")"
                             Icon="add"
                             ButtonStyle="ButtonStyle.Primary"
                             Click="@ShowAddGoalDialog" />
                 @if (HasPendingChanges)
                 {
-                    <RadzenBadge Text="@($"{GetPendingChangesCount()} Pending")"
+                    <RadzenBadge Text="@(T("status.pending-changes-count").Replace("{0}", GetPendingChangesCount().ToString()))"
                                BadgeStyle="BadgeStyle.Warning"
                                Class="ms-2" />
                 }
@@ -58,16 +61,16 @@
         @if (allCurrentGoals.Any())
         {
             <div class="goals-summary mt-4 p-3 bg-light rounded">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">Goals Summary:</RadzenText>
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">@T("goals.summary-title")</RadzenText>
                 <RadzenRow>
                     <RadzenColumn Size="6">
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Total Goals:</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("goals.total-goals")</RadzenText>
                         <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">
                             @allCurrentGoals.Count
                         </RadzenText>
                     </RadzenColumn>
                     <RadzenColumn Size="6">
-                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">By Role:</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("goals.by-role")</RadzenText>
                         @foreach (var roleGroup in GetGoalsByRole())
                         {
                             <div>
@@ -377,15 +380,15 @@
 
                             @if (goal.IsPendingDelete)
                             {
-                                <RadzenBadge Text="Pending Delete" BadgeStyle="BadgeStyle.Danger" Class="me-2 ml-2" />
+                                <RadzenBadge Text="@T("status.pending-delete")" BadgeStyle="BadgeStyle.Danger" Class="me-2 ml-2" />
                             }
                             else if (goal.IsPendingModify)
                             {
-                                <RadzenBadge Text="Pending Edit" BadgeStyle="BadgeStyle.Warning" Class="me-2 ml-2" />
+                                <RadzenBadge Text="@T("status.pending-edit")" BadgeStyle="BadgeStyle.Warning" Class="me-2 ml-2" />
                             }
                             else if (goal.IsPendingAdd)
                             {
-                                <RadzenBadge Text="Pending Add" BadgeStyle="BadgeStyle.Info" Class="me-2 ml-2" />
+                                <RadzenBadge Text="@T("status.pending-add")" BadgeStyle="BadgeStyle.Info" Class="me-2 ml-2" />
                             }
                         </div>
                     </div>
@@ -394,10 +397,10 @@
                     @if (!IsReadOnly && !goal.IsPendingDelete)
                     {
                         <div class="d-flex justify-content-end gap-2">
-                            <RadzenButton Text="Edit" Icon="edit"
+                            <RadzenButton Text="@T("buttons.edit")" Icon="edit"
                                         ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Class="me-2"
                                         Click="@(() => EditTypedGoal(goal))" />
-                            <RadzenButton Text="Delete" Icon="delete"
+                            <RadzenButton Text="@T("buttons.delete")" Icon="delete"
                                         ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
                                         Click="@(() => DeleteTypedGoal(goal))" />
                         </div>
@@ -405,7 +408,7 @@
                     else if (goal.IsPendingDelete)
                     {
                         <div class="d-flex justify-content-end gap-2">
-                            <RadzenButton Text="Undo" Icon="undo"
+                            <RadzenButton Text="@T("buttons.undo")" Icon="undo"
                                         ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
                                         Click="@(() => UndoDeleteTypedGoal(goal))" />
                         </div>
@@ -415,20 +418,20 @@
 
             <RadzenRow Class="mt-2">
                 <RadzenColumn Size="6">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Timeframe:</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("goals.timeframe")</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">
                         @goal.TimeframeFrom.ToString("d") - @goal.TimeframeTo.ToString("d")
                     </RadzenText>
                 </RadzenColumn>
                 <RadzenColumn Size="6">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Weight:</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("goals.weight")</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">@goal.WeightingPercentage.ToString("0")%</RadzenText>
                 </RadzenColumn>
             </RadzenRow>
 
             <RadzenRow Class="mt-2">
                 <RadzenColumn Size="12">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">Measurement Metric:</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("goals.measurement-metric")</RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2">@goal.MeasurementMetric</RadzenText>
                 </RadzenColumn>
             </RadzenRow>

@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Extensions
+@inherits OptimizedTranslatableComponentBase
 @inject DialogService DialogService
 
 <div class="edit-goal-dialog">
@@ -23,11 +24,11 @@
             <RadzenFieldset>
                 <HeaderTemplate>
                     <RadzenIcon Icon="percent" Class="me-2" />
-                    <span class="fw-bold">Weighting</span>
+                    <span class="fw-bold">@T("forms.weighting")</span>
                 </HeaderTemplate>
                 <ChildContent>
                     <div>
-                        <RadzenLabel Text="Weighting Percentage*" Component="weightingPercentage" Class="fw-bold mb-1" />
+                        <RadzenLabel Text="@T("forms.weighting-percentage-required")" Component="weightingPercentage" Class="fw-bold mb-1" />
                         <RadzenNumeric @bind-Value="@weightingPercentage"
                                      Name="weightingPercentage"
                                      Min="0"
@@ -36,7 +37,7 @@
                                      ShowUpDown="true"
                                      Class="w-100" />
                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
-                            Percentage of total goals (0-100%). Set weighting to allocate importance across goals.
+                            @T("forms.weighting-help-text")
                         </RadzenText>
                     </div>
                 </ChildContent>
@@ -45,28 +46,28 @@
             <RadzenFieldset>
                 <HeaderTemplate>
                     <RadzenIcon Icon="edit_note" Class="me-2" />
-                    <span class="fw-bold">Reason for Change*</span>
+                    <span class="fw-bold">@T("forms.reason-for-change-required")</span>
                 </HeaderTemplate>
                 <ChildContent>
                     <RadzenTextArea @bind-Value="@changeReason"
                                   Name="changeReason"
-                                  Placeholder="Explain why this goal is being modified..."
+                                  Placeholder="@T("forms.explain-goal-modification")"
                                   Rows="2"
                                   Class="w-100"
                                   MaxLength="500" />
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                        @changeReason.Length / 500 characters
+                        @changeReason.Length / 500 @T("forms.characters")
                     </RadzenText>
                 </ChildContent>
             </RadzenFieldset>
         }
 
         <div class="d-flex justify-content-end gap-2 mt-3">
-            <RadzenButton Text="Cancel"
+            <RadzenButton Text="@T("buttons.cancel")"
                         ButtonStyle="ButtonStyle.Light"
                         Click="@Cancel"
                         Disabled="@isSubmitting" />
-            <RadzenButton Text="@(isSubmitting ? "Updating Goal..." : "Update Goal")"
+            <RadzenButton Text="@(isSubmitting ? T("dialogs.updating-goal") : T("dialogs.update-goal"))"
                         Icon="@(isSubmitting ? "" : "save")"
                         ButtonStyle="ButtonStyle.Primary"
                         Click="@Submit"

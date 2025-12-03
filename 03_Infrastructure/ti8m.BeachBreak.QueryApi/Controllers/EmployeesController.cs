@@ -772,6 +772,70 @@ public class EmployeesController : BaseController
     }
 
     /// <summary>
+    /// Gets the preferred language for a specific employee.
+    /// Users can only access their own language preference unless they have elevated roles.
+    /// </summary>
+    [HttpGet("{id:guid}/language")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetEmployeeLanguage(Guid id)
+    {
+        logger.LogInformation("Received GetEmployeeLanguage request for EmployeeId: {EmployeeId}", id);
+
+        try
+        {
+            // Get current user ID for authorization
+            Guid userId;
+            try
+            {
+                userId = await authorizationService.GetCurrentManagerIdAsync();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning("GetEmployeeLanguage authorization failed: {Message}", ex.Message);
+                return Unauthorized(ex.Message);
+            }
+
+            // Check authorization - users can only access their own language or have elevated role
+            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+            var isSelf = userId == id;
+
+            if (!isSelf && !hasElevatedRole)
+            {
+                logger.LogWarning("User {UserId} attempted to access language for employee {EmployeeId} without authorization", userId, id);
+                return Forbid();
+            }
+
+            var result = await queryDispatcher.QueryAsync(new EmployeeQuery(id));
+
+            if (result?.Payload == null)
+            {
+                logger.LogInformation("Employee not found for EmployeeId: {EmployeeId}", id);
+                return NotFound($"Employee with ID {id} not found");
+            }
+
+            if (!result.Succeeded)
+            {
+                logger.LogWarning("GetEmployeeLanguage failed for EmployeeId: {EmployeeId}, Error: {ErrorMessage}", id, result.Message);
+                return StatusCode(500, result.Message);
+            }
+
+            logger.LogInformation("GetEmployeeLanguage completed successfully for EmployeeId: {EmployeeId}, Language: {Language}",
+                id, result.Payload.PreferredLanguage);
+
+            // Return language as JSON string
+            return Ok(result.Payload.PreferredLanguage.ToString());
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving language for employee {EmployeeId}", id);
+            return StatusCode(500, "An error occurred while retrieving the employee language");
+        }
+    }
+
+
+    /// <summary>
     /// Checks if the current user has an elevated role (HR, HRLead, or Admin).
     /// Returns true if elevated, false if user is only TeamLead/Employee.
     /// </summary>
@@ -789,4 +853,5 @@ public class EmployeesController : BaseController
                employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HRLead ||
                employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.Admin;
     }
+
 }

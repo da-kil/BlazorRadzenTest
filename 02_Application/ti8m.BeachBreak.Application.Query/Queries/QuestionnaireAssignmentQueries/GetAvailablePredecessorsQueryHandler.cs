@@ -1,4 +1,7 @@
+using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Domain;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
@@ -15,15 +18,18 @@ public class GetAvailablePredecessorsQueryHandler
     private readonly IQuestionnaireAssignmentRepository assignmentRepository;
     private readonly IQuestionnaireTemplateRepository templateRepository;
     private readonly IQuestionnaireResponseRepository responseRepository;
+    private readonly ILanguageContext languageContext;
 
     public GetAvailablePredecessorsQueryHandler(
         IQuestionnaireAssignmentRepository assignmentRepository,
         IQuestionnaireTemplateRepository templateRepository,
-        IQuestionnaireResponseRepository responseRepository)
+        IQuestionnaireResponseRepository responseRepository,
+        ILanguageContext languageContext)
     {
         this.assignmentRepository = assignmentRepository;
         this.templateRepository = templateRepository;
         this.responseRepository = responseRepository;
+        this.languageContext = languageContext;
     }
 
     public async Task<Result<IEnumerable<AvailablePredecessorDto>>> HandleAsync(
@@ -60,6 +66,10 @@ public class GetAvailablePredecessorsQueryHandler
         // Get all assignments for the requesting user (already validated as owner)
         var employeeAssignments = await assignmentRepository.GetAssignmentsByEmployeeIdAsync(
             query.RequestingUserId, cancellationToken);
+
+        // Get user's preferred language once
+        var currentLanguageCode = await languageContext.GetCurrentLanguageCodeAsync();
+        var currentLanguage = LanguageMapper.FromLanguageCode(currentLanguageCode);
 
         // Filter for available predecessors
         var availablePredecessors = new List<AvailablePredecessorDto>();
@@ -114,7 +124,7 @@ public class GetAvailablePredecessorsQueryHandler
             availablePredecessors.Add(new AvailablePredecessorDto
             {
                 AssignmentId = assignment.Id,
-                TemplateName = template.Name,
+                TemplateName = GetLocalizedTemplateName(template, currentLanguage),
                 AssignedDate = assignment.AssignedDate,
                 CompletedDate = assignment.CompletedDate,
                 GoalCount = totalGoals
@@ -127,5 +137,10 @@ public class GetAvailablePredecessorsQueryHandler
             .ToList();
 
         return Result<IEnumerable<AvailablePredecessorDto>>.Success(orderedPredecessors);
+    }
+
+    private static string GetLocalizedTemplateName(Projections.QuestionnaireTemplateReadModel template, Models.Language language)
+    {
+        return language == Models.Language.German ? template.NameGerman : template.NameEnglish;
     }
 }

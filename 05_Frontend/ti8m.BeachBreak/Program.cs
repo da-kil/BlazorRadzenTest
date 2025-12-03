@@ -337,6 +337,9 @@ public class Program
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.GoalQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory>();
 
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.ILanguageContext, ti8m.BeachBreak.Client.Services.ClientLanguageContext>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.IUITranslationService, ti8m.BeachBreak.Client.Services.ClientUITranslationService>();
+
         // Register state management
         builder.Services.AddScoped<QuestionnaireBuilderState>();
 

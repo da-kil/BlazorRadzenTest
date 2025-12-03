@@ -61,8 +61,8 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
             {
                 competencies[i] = new CompetencyDefinition(
                     competencies[i].Key,
-                    competencies[i].Title,
-                    competencies[i].Description,
+                    competencies[i].TitleEnglish,
+                    competencies[i].DescriptionEnglish,
                     competencies[i].IsRequired,
                     i
                 );
@@ -90,7 +90,7 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
         {
             for (int i = 0; i < competencies.Count; i++)
             {
-                if (string.IsNullOrWhiteSpace(competencies[i].Title))
+                if (string.IsNullOrWhiteSpace(competencies[i].TitleEnglish))
                 {
                     errors.Add($"Competency {i + 1} in {questionLabel} requires a title");
                 }

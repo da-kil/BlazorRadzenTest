@@ -7,7 +7,6 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
-@using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Reports
 @using ti8m.BeachBreak.Client.Services.Exports
 @using System.Text
@@ -22,8 +21,8 @@
 <AuthorizeView Policy="TeamLead">
     <Authorized>
         <PageLayout Type="LayoutType.Standard"
-                   Title="Team Questionnaires"
-                   Description="View and manage questionnaires for your team members">
+                   Title="@T("pages.team-questionnaires")"
+                   Description="@T("pages.team-questionnaires-description")">
 	<HeaderActions>
 		@if (configuration?.Actions != null)
 		{
@@ -86,7 +85,8 @@
 		return QuestionnairePageConfigurationFactory.CreateManagerConfiguration(
 			allAssignments,
 			teamMembers,
-			categories);
+			categories,
+			CurrentLanguage);
 	}
 
 	protected override void ConfigureActions()

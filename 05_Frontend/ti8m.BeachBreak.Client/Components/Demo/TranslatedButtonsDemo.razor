@@ -1,0 +1,29 @@
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+
+<RadzenStack Gap="8px" Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" Style="margin: 16px;">
+    <RadzenButton Text="@T("buttons.save")" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Medium" />
+    <RadzenButton Text="@T("buttons.cancel")" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Medium" />
+    <RadzenButton Text="@T("buttons.edit")" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Medium" />
+    <RadzenButton Text="@T("buttons.delete")" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Medium" />
+    <RadzenButton Text="@T("buttons.add")" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Medium" />
+</RadzenStack>
+
+<style>
+    /* Example of how to style translated components */
+    .translated-button {
+        transition: all 0.3s ease;
+    }
+
+    .translated-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+
+@code {
+    // This component demonstrates the simplest use case:
+    // Just inherit from TranslatableComponentBase and use @T("key") in the template
+
+    // No additional code needed - the base class handles all translation logic
+}

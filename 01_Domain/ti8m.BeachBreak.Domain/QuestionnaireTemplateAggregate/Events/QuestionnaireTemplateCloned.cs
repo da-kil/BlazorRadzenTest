@@ -5,8 +5,8 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 public record QuestionnaireTemplateCloned(
     Guid NewTemplateId,
     Guid SourceTemplateId,
-    string Name,
-    string Description,
+    Translation Name,
+    Translation Description,
     Guid CategoryId,
     bool RequiresManagerReview,
     List<QuestionSectionData> Sections,

@@ -50,6 +50,9 @@ public class Program
         // Add distributed cache (using in-memory for now, can be replaced with Redis)
         builder.Services.AddDistributedMemoryCache();
 
+        // Add memory cache for UITranslationService
+        builder.Services.AddMemoryCache();
+
         // Register authorization cache service
         builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
 
@@ -133,6 +136,57 @@ public class Program
                         .MapControllers();
                 });
 
+        // Seed initial translations after full application initialization
+        await SeedTranslationsAsync(app);
+
         app.Run();
+    }
+
+    /// <summary>
+    /// Seeds initial translations with proper error handling and retry logic
+    /// </summary>
+    private static async Task SeedTranslationsAsync(WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        var translationService = scope.ServiceProvider.GetRequiredService<ti8m.BeachBreak.Application.Query.Services.IUITranslationService>();
+
+        const int maxRetries = 3;
+        const int delayMs = 1000;
+
+        for (int attempt = 1; attempt <= maxRetries; attempt++)
+        {
+            try
+            {
+                logger.LogInformation("Seeding translations attempt {Attempt}/{MaxRetries}", attempt, maxRetries);
+                var seedCount = await translationService.SeedInitialTranslationsAsync();
+
+                if (seedCount > 0)
+                {
+                    logger.LogInformation("Successfully seeded {Count} translations", seedCount);
+                }
+                else
+                {
+                    logger.LogInformation("Translations already exist, skipping seed");
+                }
+
+                return; // Success, exit retry loop
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to seed translations on attempt {Attempt}/{MaxRetries}", attempt, maxRetries);
+
+                if (attempt < maxRetries)
+                {
+                    logger.LogInformation("Waiting {DelayMs}ms before retry", delayMs);
+                    await Task.Delay(delayMs);
+                }
+                else
+                {
+                    logger.LogError("Failed to seed translations after {MaxRetries} attempts. Translation system may not work properly.", maxRetries);
+                    // Don't throw - let the application start anyway
+                }
+            }
+        }
     }
 }

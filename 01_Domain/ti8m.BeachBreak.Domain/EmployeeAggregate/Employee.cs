@@ -18,6 +18,7 @@ public class Employee : AggregateRoot
     public int OrganizationNumber { get; private set; }
     public bool IsDeleted { get; private set; }
     public ApplicationRole ApplicationRole { get; private set; }
+    public Language PreferredLanguage { get; private set; }
 
     private Employee() { }
 
@@ -34,7 +35,8 @@ public class Employee : AggregateRoot
         string managerId,
         string loginName,
         int organizationNumber,
-        ApplicationRole applicationRole = ApplicationRole.Employee)
+        ApplicationRole applicationRole = ApplicationRole.Employee,
+        Language preferredLanguage = Language.English)
     {
         RaiseEvent(new EmployeeAdded(
             id,
@@ -49,7 +51,8 @@ public class Employee : AggregateRoot
             managerId,
             loginName,
             organizationNumber,
-            applicationRole));
+            applicationRole,
+            preferredLanguage));
     }
 
     public void Delete()
@@ -76,7 +79,8 @@ public class Employee : AggregateRoot
                 ManagerId,
                 LoginName,
                 OrganizationNumber,
-                ApplicationRole));
+                ApplicationRole,
+                PreferredLanguage));
         }
     }
 
@@ -171,6 +175,14 @@ public class Employee : AggregateRoot
         }
     }
 
+    public void ChangePreferredLanguage(Language preferredLanguage)
+    {
+        if (PreferredLanguage != preferredLanguage)
+        {
+            RaiseEvent(new EmployeePreferredLanguageChanged(preferredLanguage));
+        }
+    }
+
     public void Apply(EmployeeAdded @event)
     {
         Id = @event.AggregateId;
@@ -196,6 +208,19 @@ public class Employee : AggregateRoot
 
     public void Apply(EmployeeUndeleted @event)
     {
+        EmployeeId = @event.EmployeeId;
+        FirstName = @event.FirstName;
+        LastName = @event.LastName;
+        Role = @event.Role;
+        EMail = @event.EMail;
+        StartDate = @event.StartDate;
+        EndDate = @event.EndDate;
+        LastStartDate = @event.LastStartDate;
+        ManagerId = @event.ManagerId;
+        LoginName = @event.LoginName;
+        OrganizationNumber = @event.OrganizationNumber;
+        ApplicationRole = @event.ApplicationRole;
+        PreferredLanguage = @event.PreferredLanguage;
         IsDeleted = false;
     }
 
@@ -243,5 +268,10 @@ public class Employee : AggregateRoot
     public void Apply(EmployeeApplicationRoleChanged @event)
     {
         ApplicationRole = @event.NewRole;
+    }
+
+    public void Apply(EmployeePreferredLanguageChanged @event)
+    {
+        PreferredLanguage = @event.PreferredLanguage;
     }
 }

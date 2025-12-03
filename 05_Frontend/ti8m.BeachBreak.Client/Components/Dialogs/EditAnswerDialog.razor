@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Helpers
+@inherits OptimizedTranslatableComponentBase
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject IAuthService AuthService
@@ -75,7 +76,7 @@
     <div style="flex: 0 0 auto; margin-bottom: 1rem;">
         <div class="role-indicator">
             <RadzenIcon Icon="@GetRoleIcon()" />
-            Editing @CompletionRole's Answer
+            @(T("dialogs.editing-role-answer").Replace("{0}", CompletionRole.ToString()))
         </div>
     </div>
 
@@ -113,7 +114,7 @@
         {
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
                 <RadzenText TextStyle="TextStyle.Body1">
-                    This question type is not supported for editing during review.
+                    @T("dialogs.question-type-not-supported-editing")
                 </RadzenText>
             </RadzenAlert>
         }
@@ -121,12 +122,12 @@
     </div>
 
     <div style="flex: 0 0 auto; display: flex; justify-content: flex-end; gap: 1rem; padding: 1rem 0.5rem 0 0.5rem; border-top: 1px solid #e9ecef; background: white; position: sticky; bottom: 0; z-index: 10;">
-        <AsyncButton Text="Cancel"
+        <AsyncButton Text="@T("buttons.cancel")"
                     ButtonStyle="ButtonStyle.Light"
                     Click="@Cancel"
                     Size="ButtonSize.Medium" />
-        <AsyncButton Text="Save Changes"
-                    ProcessingText="Saving"
+        <AsyncButton Text="@T("dialogs.save-changes")"
+                    ProcessingText="@T("dialogs.saving")"
                     ButtonStyle="ButtonStyle.Success"
                     Icon="save"
                     Click="@SaveChanges"

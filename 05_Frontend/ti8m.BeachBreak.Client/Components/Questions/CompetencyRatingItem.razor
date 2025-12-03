@@ -1,17 +1,22 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.DTOs
-@inherits ComponentBase
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 
 @* Simplified competency rating item with reduced DOM nesting *@
 <div class="competency-item rating-context">
     <header class="question-section-header">
-        <h4 class="question-title @(string.IsNullOrWhiteSpace(Competency.Title) ? "text-danger" : "")">
-            @displayTitle
+        @{
+            var localizedTitle = Competency.GetLocalizedTitleWithFallback(CurrentLanguage);
+            var localizedDescription = Competency.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+        }
+        <h4 class="question-title @(string.IsNullOrWhiteSpace(localizedTitle) ? "text-danger" : "")">
+            @localizedTitle
         </h4>
-        @if (!string.IsNullOrWhiteSpace(Competency.Description))
+        @if (!string.IsNullOrWhiteSpace(localizedDescription))
         {
-            <p class="question-section-description">@Competency.Description</p>
+            <p class="question-section-description">@localizedDescription</p>
         }
     </header>
 
@@ -83,9 +88,10 @@
     {
         currentRating = Rating?.Rating ?? 0;
         currentComment = Rating?.Comment ?? "";
-        displayTitle = string.IsNullOrWhiteSpace(Competency.Title)
+        var localizedTitle = Competency.GetLocalizedTitleWithFallback(CurrentLanguage);
+        displayTitle = string.IsNullOrWhiteSpace(localizedTitle)
             ? $"[Unnamed Competency - {Competency.Key}]"
-            : Competency.Title;
+            : localizedTitle;
     }
 
     private async Task SetRating(int value)

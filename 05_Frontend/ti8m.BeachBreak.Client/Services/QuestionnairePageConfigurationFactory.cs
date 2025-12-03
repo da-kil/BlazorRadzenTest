@@ -10,7 +10,8 @@ public static class QuestionnairePageConfigurationFactory
         List<QuestionnaireAssignment> currentAssignments,    // inProgressQuestionnaires (working/review)
         List<QuestionnaireAssignment> completedAssignments,  // completedQuestionnaires (Finalized)
         List<QuestionnaireAssignment> overdueAssignments,
-        List<Category> categories)
+        List<Category> categories,
+        Language currentLanguage = Language.English)
     {
         return new QuestionnairePageConfiguration
         {
@@ -40,7 +41,7 @@ public static class QuestionnairePageConfigurationFactory
                     Label = "Filter by Category",
                     Type = QuestionnaireFilterType.Category,
                     IsVisible = categories.Count > 0,
-                    Options = categories.Select(c => c.NameEn).ToList(),
+                    Options = categories.Select(c => currentLanguage == Language.German ? c.NameDe : c.NameEn).ToList(),
                     CategoryOptions = categories
                 }
             },
@@ -96,7 +97,8 @@ public static class QuestionnairePageConfigurationFactory
     public static QuestionnairePageConfiguration CreateManagerConfiguration(
         List<QuestionnaireAssignment> allAssignments,
         List<EmployeeDto> teamMembers,
-        List<Category> categories)
+        List<Category> categories,
+        Language currentLanguage = Language.English)
     {
         return new QuestionnairePageConfiguration
         {
@@ -127,7 +129,7 @@ public static class QuestionnairePageConfigurationFactory
                     Label = "Filter by Category",
                     Type = QuestionnaireFilterType.Category,
                     IsVisible = categories.Count > 0,
-                    Options = categories.Select(c => c.NameEn).ToList(),
+                    Options = categories.Select(c => currentLanguage == Language.German ? c.NameDe : c.NameEn).ToList(),
                     CategoryOptions = categories
                 },
                 new()
@@ -251,7 +253,8 @@ public static class QuestionnairePageConfigurationFactory
         List<EmployeeDto> allEmployees,
         List<Organization> allOrganizations,
         List<QuestionnaireTemplate> allTemplates,
-        List<Category> categories)
+        List<Category> categories,
+        Language currentLanguage = Language.English)
     {
         return new QuestionnairePageConfiguration
         {
@@ -295,7 +298,7 @@ public static class QuestionnairePageConfigurationFactory
                     Label = "Filter by Category",
                     Type = QuestionnaireFilterType.Category,
                     IsVisible = categories.Count > 0,
-                    Options = categories.Select(c => c.NameEn).ToList(),
+                    Options = categories.Select(c => currentLanguage == Language.German ? c.NameDe : c.NameEn).ToList(),
                     CategoryOptions = categories
                 },
                 new()
@@ -307,7 +310,7 @@ public static class QuestionnairePageConfigurationFactory
                     TemplateOptions = allTemplates.Select(t => new QuestionnaireTemplateOption
                     {
                         Id = t.Id,
-                        Name = t.Name
+                        Name = t.GetLocalizedNameWithFallback(currentLanguage)
                     }).ToList()
                 },
                 new()

@@ -6,13 +6,25 @@
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Template Name *</RadzenText>
-                <RadzenTextBox @bind-Value="@Template.Name"
-                              Placeholder="Enter template name"
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">English Template Name *</RadzenText>
+                <RadzenTextBox @bind-Value="@Template.NameEnglish"
+                              Placeholder="Enter template name in English"
                               Class="w-100"
                               Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">German Template Name (Optional)</RadzenText>
+                <RadzenTextBox @bind-Value="@Template.NameGerman"
+                              Placeholder="Enter template name in German (optional)"
+                              Class="w-100"
+                              Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow Gap="1rem" Class="mb-3">
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
                 <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Questionnaire Type</RadzenText>
@@ -28,14 +40,28 @@
         </RadzenColumn>
     </RadzenRow>
 
-    <div class="mb-3">
-        <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Description</RadzenText>
-        <RadzenTextArea @bind-Value="@Template.Description"
-                      Placeholder="Describe the purpose and scope of this questionnaire..."
-                      Rows="4"
-                      Class="w-100"
-                      Disabled="@(!Template.IsAvailableForEditing)" />
-    </div>
+    <RadzenRow Gap="1rem" Class="mb-3">
+        <RadzenColumn Size="12" SizeMD="6">
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">English Description *</RadzenText>
+                <RadzenTextArea @bind-Value="@Template.DescriptionEnglish"
+                              Placeholder="Describe the purpose and scope of this questionnaire in English..."
+                              Rows="4"
+                              Class="w-100"
+                              Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">German Description (Optional)</RadzenText>
+                <RadzenTextArea @bind-Value="@Template.DescriptionGerman"
+                              Placeholder="Describe the purpose and scope of this questionnaire in German (optional)..."
+                              Rows="4"
+                              Class="w-100"
+                              Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+        </RadzenColumn>
+    </RadzenRow>
 
     <div class="settings-section mt-4 p-3 rounded">
         <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Workflow Configuration</RadzenText>

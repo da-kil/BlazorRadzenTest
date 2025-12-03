@@ -4,8 +4,8 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 public class QuestionSection : Entity<Guid>
 {
-    public string Title { get; private set; } = string.Empty;
-    public string Description { get; private set; } = string.Empty;
+    public Translation Title { get; private set; } = new("", "");
+    public Translation Description { get; private set; } = new("", "");
     public int Order { get; private set; }
     public bool IsRequired { get; private set; } = true;
     public CompletionRole CompletionRole { get; private set; } = CompletionRole.Employee;
@@ -15,8 +15,8 @@ public class QuestionSection : Entity<Guid>
 
     public QuestionSection(
         Guid id,
-        string title,
-        string description,
+        Translation title,
+        Translation description,
         int order,
         bool isRequired = true,
         CompletionRole completionRole = CompletionRole.Employee,
@@ -24,21 +24,21 @@ public class QuestionSection : Entity<Guid>
     {
         Id = id;
         Title = title ?? throw new ArgumentNullException(nameof(title));
-        Description = description ?? string.Empty;
+        Description = description ?? new Translation("", "");
         Order = order;
         IsRequired = isRequired;
         CompletionRole = completionRole;
         Questions = questions ?? new();
     }
 
-    public void UpdateTitle(string title)
+    public void UpdateTitle(Translation title)
     {
         Title = title ?? throw new ArgumentNullException(nameof(title));
     }
 
-    public void UpdateDescription(string description)
+    public void UpdateDescription(Translation description)
     {
-        Description = description ?? string.Empty;
+        Description = description ?? new Translation("", "");
     }
 
     public void UpdateOrder(int order)

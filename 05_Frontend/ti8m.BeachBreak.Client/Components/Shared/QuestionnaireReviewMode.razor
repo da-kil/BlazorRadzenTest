@@ -7,9 +7,10 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Layout
-@using ti8m.BeachBreak.Client.Models
 @using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Extensions
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject IQuestionnaireAssignmentService AssignmentService
@@ -35,8 +36,8 @@ else if (template == null || response == null)
 else
 {
     <PageLayout Type="LayoutType.Immersive"
-                          Title="@($"Review Meeting: {template.Name}")"
-                        Description="@template.Description"
+                          Title="@($"Review Meeting: {template.GetLocalizedNameWithFallback(CurrentLanguage)}")"
+                        Description="@template.GetLocalizedDescriptionWithFallback(CurrentLanguage)"
                         ShowDefaultFooter="true">
         <HeaderContent>
             <div class="questionnaire-info-banner">

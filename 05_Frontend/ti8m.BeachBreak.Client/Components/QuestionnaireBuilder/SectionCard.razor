@@ -72,24 +72,55 @@
     <!-- Section Content Area -->
     <div class="section-content-modern">
 
-        <!-- Title Input -->
-        <div class="input-group-modern">
-            <RadzenTextBox Value="@Section.Title"
-                         ValueChanged="@(value => OnSectionTitleChanged(value))"
-                         Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
-                         Class="title-input-modern"
-                         Disabled="@(!Template.IsAvailableForEditing)" />
-        </div>
+        <!-- Title Inputs -->
+        <RadzenRow Gap="1rem" Class="input-group-modern">
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="mb-2">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Title *</RadzenText>
+                    <RadzenTextBox Value="@Section.TitleEnglish"
+                                 ValueChanged="@(value => OnSectionTitleEnglishChanged(value))"
+                                 Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
+                                 Class="title-input-modern"
+                                 Disabled="@(!Template.IsAvailableForEditing)" />
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="mb-2">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Title (Optional)</RadzenText>
+                    <RadzenTextBox Value="@Section.TitleGerman"
+                                 ValueChanged="@(value => OnSectionTitleGermanChanged(value))"
+                                 Placeholder="e.g., Leistungsbeurteilung 2023, Zielsetzungsworkshop..."
+                                 Class="title-input-modern"
+                                 Disabled="@(!Template.IsAvailableForEditing)" />
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
 
-        <!-- Description Input -->
-        <div class="input-group-modern">
-            <RadzenTextArea Value="@Section.Description"
-                          ValueChanged="@(value => OnSectionDescriptionChanged(value))"
-                          Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
-                          Class="description-input-modern"
-                          Disabled="@(!Template.IsAvailableForEditing)"
-                          Rows="3" />
-        </div>
+        <!-- Description Inputs -->
+        <RadzenRow Gap="1rem" Class="input-group-modern">
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="mb-2">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Description *</RadzenText>
+                    <RadzenTextArea Value="@Section.DescriptionEnglish"
+                                  ValueChanged="@(value => OnSectionDescriptionEnglishChanged(value))"
+                                  Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
+                                  Class="description-input-modern"
+                                  Disabled="@(!Template.IsAvailableForEditing)"
+                                  Rows="3" />
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="mb-2">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Description (Optional)</RadzenText>
+                    <RadzenTextArea Value="@Section.DescriptionGerman"
+                                  ValueChanged="@(value => OnSectionDescriptionGermanChanged(value))"
+                                  Placeholder="Geben Sie Kontext über den Zweck dieses Abschnitts an. Was werden die Teilnehmer hier erreichen?"
+                                  Class="description-input-modern"
+                                  Disabled="@(!Template.IsAvailableForEditing)"
+                                  Rows="3" />
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
 
         <!-- Rating Scale Configuration - only for Assessment sections -->
         @if (Section.Questions.Any() && Section.Questions.First().Type == QuestionType.Assessment)
@@ -334,6 +365,10 @@
     [Parameter] public EventCallback<int> OnDeleteQuestion { get; set; }
     [Parameter] public EventCallback<string> OnTitleChanged { get; set; }
     [Parameter] public EventCallback<string> OnDescriptionChanged { get; set; }
+    [Parameter] public EventCallback<string> OnTitleEnglishChanged { get; set; }
+    [Parameter] public EventCallback<string> OnTitleGermanChanged { get; set; }
+    [Parameter] public EventCallback<string> OnDescriptionEnglishChanged { get; set; }
+    [Parameter] public EventCallback<string> OnDescriptionGermanChanged { get; set; }
 
     private async Task OnMoveUpClick() => await OnMoveUp.InvokeAsync();
     private async Task OnMoveDownClick() => await OnMoveDown.InvokeAsync();
@@ -365,6 +400,30 @@
     {
         Section.Description = value ?? "";
         await OnDescriptionChanged.InvokeAsync(value);
+    }
+
+    private async Task OnSectionTitleEnglishChanged(string value)
+    {
+        Section.TitleEnglish = value ?? "";
+        await OnTitleEnglishChanged.InvokeAsync(value);
+    }
+
+    private async Task OnSectionTitleGermanChanged(string value)
+    {
+        Section.TitleGerman = value ?? "";
+        await OnTitleGermanChanged.InvokeAsync(value);
+    }
+
+    private async Task OnSectionDescriptionEnglishChanged(string value)
+    {
+        Section.DescriptionEnglish = value ?? "";
+        await OnDescriptionEnglishChanged.InvokeAsync(value);
+    }
+
+    private async Task OnSectionDescriptionGermanChanged(string value)
+    {
+        Section.DescriptionGerman = value ?? "";
+        await OnDescriptionGermanChanged.InvokeAsync(value);
     }
 
     private async Task OnEditQuestionInternal(int questionIndex) => await OnEditQuestion.InvokeAsync(questionIndex);

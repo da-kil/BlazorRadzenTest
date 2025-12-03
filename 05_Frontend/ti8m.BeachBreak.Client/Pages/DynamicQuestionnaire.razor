@@ -25,10 +25,10 @@
 @inject GoalService GoalService
 @inject IJSRuntime JSRuntime
 @inject IAuthService AuthService
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 
 
-<PageTitle>@(template?.Name ?? "Questionnaire")</PageTitle>
+<PageTitle>@(template?.GetLocalizedNameWithFallback(CurrentLanguage) ?? "Questionnaire")</PageTitle>
 
 @if (template == null)
 {
@@ -44,11 +44,11 @@ else if (assignment != null && assignment.WorkflowState == WorkflowState.InRevie
 }
 else
 {
-    <PageLayout Title="@template.Name"
-                        Description="@template.Description"
+    <PageLayout Title="@template.GetLocalizedNameWithFallback(CurrentLanguage)"
+                        Description="@template.GetLocalizedDescriptionWithFallback(CurrentLanguage)"
                         ShowDefaultFooter="true">
         <DefaultFooterContent>
-            <RadzenButton Text="Previous"
+            <RadzenButton Text="@T("buttons.previous")"
                          ButtonStyle="ButtonStyle.Light"
                          Icon="arrow_back"
                          Click="@PreviousSection"
@@ -57,7 +57,7 @@ else
             <div class="navigation-actions d-flex gap-2">
                 @if (!IsQuestionnaireCompleted())
                 {
-                    <RadzenButton Text="@(isSaving ? "Saving..." : "Save Progress")"
+                    <RadzenButton Text="@(isSaving ? T("buttons.saving") : T("buttons.save-progress"))"
                                  ButtonStyle="ButtonStyle.Info"
                                  Icon="@(isSaving ? "hourglass_empty" : "save")"
                                  Click="@SaveProgress"
@@ -65,7 +65,7 @@ else
 
                     @if (currentSectionIndex == visibleSections.Count - 1)
                     {
-                        <RadzenButton Text="@(isSubmitting ? "Submitting..." : "Submit")"
+                        <RadzenButton Text="@(isSubmitting ? T("buttons.submitting") : T("buttons.submit"))"
                                      ButtonStyle="ButtonStyle.Success"
                                      Icon="send"
                                      Click="@ShowReview"
@@ -73,7 +73,7 @@ else
                     }
                     else
                     {
-                        <RadzenButton Text="Next"
+                        <RadzenButton Text="@T("buttons.next")"
                                      ButtonStyle="ButtonStyle.Primary"
                                      Icon="arrow_forward"
                                      Click="@NextSection"
@@ -86,7 +86,7 @@ else
                     @if (currentSectionIndex < visibleSections.Count - 1)
                     {
                         @* Show Next button for navigation if not on last section *@
-                        <RadzenButton Text="Next"
+                        <RadzenButton Text="@T("buttons.next")"
                                      ButtonStyle="ButtonStyle.Primary"
                                      Icon="arrow_forward"
                                      Click="@NextSection" />
@@ -216,10 +216,13 @@ else
                 {
                     <header class="section-header-questionnaire">
                         <div class="section-title-container">
-                            <h2 class="section-title">@currentSection.Title</h2>
-                            @if (!string.IsNullOrWhiteSpace(currentSection.Description))
+                            <h2 class="section-title">@currentSection.GetLocalizedTitleWithFallback(CurrentLanguage)</h2>
+                            @{
+                                var sectionDescription = currentSection.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+                            }
+                            @if (!string.IsNullOrWhiteSpace(sectionDescription))
                             {
-                                <p class="section-description">@currentSection.Description</p>
+                                <p class="section-description">@sectionDescription</p>
                             }
                         </div>
                     </header>
@@ -553,7 +556,7 @@ else
         // If no visible sections, show helpful error
         if (!visibleSections.Any() && template.Sections.Any())
         {
-            var sectionDetails = string.Join(", ", template.Sections.Select(s => $"'{s.Title}' (assigned to {s.CompletionRole})"));
+            var sectionDetails = string.Join(", ", template.Sections.Select(s => $"'{s.GetLocalizedTitleWithFallback(CurrentLanguage)}' (assigned to {s.CompletionRole})"));
             var roleDescription = isManager ? "managers" : "employees";
             NotificationService.Notify(NotificationSeverity.Warning, "No Sections Available",
                 $"This questionnaire has no sections assigned to {roleDescription}. " +
@@ -591,63 +594,6 @@ else
             return;
         }
 
-        // Fallback to sample template if API fails
-        if (template == null)
-        {
-        template = new QuestionnaireTemplate
-        {
-            Id = TemplateId.Value,
-            Name = "Employee Performance Review",
-            Description = "Annual performance evaluation questionnaire",
-            Sections = new List<QuestionSection>
-            {
-                new QuestionSection
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Self Assessment",
-                    Description = "Rate your performance in key areas",
-                    Order = 0,
-                    Questions = new List<QuestionItem>
-                    {
-                        new QuestionItem
-                        {
-                            Id = Guid.NewGuid(),
-                            Title = "How would you rate your overall performance this year?",
-                            Type = QuestionType.Assessment,
-                            Order = 0,
-                            IsRequired = true
-                        },
-                        new QuestionItem
-                        {
-                            Id = Guid.NewGuid(),
-                            Title = "What are your key accomplishments?",
-                            Type = QuestionType.TextQuestion,
-                            Order = 1,
-                            IsRequired = true
-                        }
-                    }
-                },
-                new QuestionSection
-                {
-                    Id = Guid.NewGuid(),
-                    Title = "Goals for Next Year",
-                    Description = "Define your objectives for the upcoming year",
-                    Order = 1,
-                    Questions = new List<QuestionItem>
-                    {
-                        new QuestionItem
-                        {
-                            Id = Guid.NewGuid(),
-                            Title = "Set your primary goal for next year",
-                            Type = QuestionType.Goal,
-                            Order = 0,
-                            IsRequired = true
-                        }
-                    }
-                }
-            }
-        };
-        }
     }
 
     private async Task LoadAssignmentForCurrentEmployee()
@@ -1459,7 +1405,7 @@ else
                 return !requiredQuestions.All(q =>
                     roleQuestions.TryGetValue(q.Id, out var qr) &&
                     IsQuestionAnswered(q, qr));
-            }).Select(s => s.Title).ToList();
+            }).Select(s => s.GetLocalizedTitleWithFallback(CurrentLanguage)).ToList();
 
             var message = incompleteSections.Any()
                 ? $"Please complete all required questions in: {string.Join(", ", incompleteSections)}"
@@ -1471,7 +1417,7 @@ else
 
         // Show a confirmation dialog with review summary
         var confirmed = await DialogService.Confirm(
-            $"You are about to submit your responses for '{template?.Name}'. Please review your answers before submitting. Do you want to continue?",
+            $"You are about to submit your responses for '{template?.GetLocalizedNameWithFallback(CurrentLanguage)}'. Please review your answers before submitting. Do you want to continue?",
             "Submit",
             new ConfirmOptions
             {

@@ -1,10 +1,11 @@
 @using Radzen
 @using Radzen.Blazor
+@inherits OptimizedTranslatableComponentBase
 
 @if (Errors.Any())
 {
     <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
-        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-2">Please fix the following errors:</RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-2">@T("validation.fix-errors"):</RadzenText>
         <ul class="mb-0 validation-errors-list">
             @foreach (var error in Errors)
             {

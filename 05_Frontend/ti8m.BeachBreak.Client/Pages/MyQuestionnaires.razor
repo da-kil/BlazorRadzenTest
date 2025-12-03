@@ -11,10 +11,10 @@
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 
-<PageTitle>My Questionnaires</PageTitle>
+<PageTitle>@T("nav.my-questionnaires")</PageTitle>
 
-<PageLayout Title="My Questionnaires"
-                   Description="View and complete your assigned questionnaires">
+<PageLayout Title="@T("nav.my-questionnaires")"
+                   Description="@T("pages.my-questionnaires-description")">
 	<HeaderActions>
 		@if (configuration?.Actions != null)
 		{
@@ -42,13 +42,13 @@
 		{
 			<div class="text-center p-5">
 				<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading my questionnaires...</RadzenText>
+				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("dashboard.loading-questionnaires")</RadzenText>
 			</div>
 		}
 		else
 		{
 			<div class="text-center p-5">
-				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted">No questionnaire data available.</RadzenText>
+				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@T("dashboard.no-questionnaire-data")</RadzenText>
 			</div>
 		}
 	</ChildContent>
@@ -101,7 +101,8 @@
 			inProgressQuestionnaires,
 			completedQuestionnaires,
 			overdueQuestionnaires,
-			categories);
+			categories,
+			CurrentLanguage);
 	}
 
 	protected override void ConfigureActions()

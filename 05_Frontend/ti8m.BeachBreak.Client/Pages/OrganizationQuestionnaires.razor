@@ -7,7 +7,6 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
-@using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Reports
 @using ti8m.BeachBreak.Client.Services.Exports
 @using System.Text
@@ -16,15 +15,14 @@
 @inject IOrganizationApiService OrganizationService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireReportExporter ReportExporter
-@inject IJSRuntime JSRuntime
 
-<PageTitle>Organization Questionnaires</PageTitle>
+<PageTitle>@T("pages.organization-questionnaires")</PageTitle>
 
 <AuthorizeView Policy="HR">
     <Authorized>
         <PageLayout Type="LayoutType.Standard"
-                   Title="Organization Questionnaires"
-                   Description="View and manage questionnaires across the entire organization">
+                   Title="@T("pages.organization-questionnaires")"
+                   Description="@T("pages.organization-questionnaires-description")">
 	<HeaderActions>
 		@if (configuration?.Actions != null)
 		{
@@ -49,14 +47,14 @@
 		{
 			<div class="text-center p-5">
 				<RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading organization data...</RadzenText>
+				<RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("messages.loading-organization-data")</RadzenText>
 			</div>
 		}
 	</ChildContent>
 </PageLayout>
     </Authorized>
     <NotAuthorized>
-        <AccessDeniedComponent RequiredRole="HR" PageName="Organization Questionnaires" />
+        <AccessDeniedComponent RequiredRole="HR" PageName="@T("pages.organization-questionnaires")" />
     </NotAuthorized>
 </AuthorizeView>
 
@@ -95,7 +93,8 @@
 			allEmployees,
 			allOrganizations,
 			allTemplates,
-			categories);
+			categories,
+			CurrentLanguage);
 	}
 
 	protected override void ConfigureActions()
@@ -117,7 +116,7 @@
 	{
 		try
 		{
-			ShowInfo("Generating organization report...");
+			ShowInfo(T("messages.generating-organization-report"));
 
 			// Generate export data using refactored method
 			var exportData = GenerateOrganizationReportData();
@@ -129,18 +128,18 @@
 			var fileName = $"Organization_Questionnaires_Report_{DateTime.Now:yyyy-MM-dd_HH-mm-ss}.csv";
 			ReportExporter.DownloadFile(csvContent, fileName, "text/csv");
 
-			ShowSuccess($"Report exported successfully: {fileName}");
+			ShowSuccess($"{T("messages.report-exported-successfully")}: {fileName}");
 		}
 		catch (Exception ex)
 		{
-			ShowWarning($"Failed to export report: {ex.Message}");
+			ShowWarning($"{T("messages.failed-to-export-report")}: {ex.Message}");
 		}
 	}
 
 	private Task OpenAnalyticsDashboard()
 	{
 		// Guide user to analytics tab instead of programmatic navigation
-		ShowInfo("Please click on the 'Analytics & Insights' tab above to view the dashboard");
+		ShowInfo(T("messages.analytics-tab-instruction"));
 		return Task.CompletedTask;
 	}
 
@@ -169,7 +168,7 @@
 					EmployeeId = emp.Id,
 					EmployeeName = $"{emp.FirstName} {emp.LastName}",
 					Email = emp.EMail,
-					Department = emp.Organization ?? "Unknown",
+					Department = emp.Organization ?? T("labels.unknown"),
 					Role = emp.ApplicationRole.ToString(),
 					TotalAssignments = empMetrics.Total,
 					CompletedAssignments = empMetrics.Completed,

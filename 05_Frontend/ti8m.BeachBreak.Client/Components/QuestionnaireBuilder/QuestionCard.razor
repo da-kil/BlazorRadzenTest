@@ -59,9 +59,10 @@
                             </div>
                             <div class="competency-input-row">
                                 <div class="input-field-container">
-                                    <RadzenTextBox Value="@competency.Title"
-                                                  ValueChanged="@((string value) => UpdateCompetencyTitle(competencyIndex, value))"
-                                                  Placeholder="Enter competency title..."
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title</RadzenText>
+                                    <RadzenTextBox Value="@competency.TitleEnglish"
+                                                  ValueChanged="@((string value) => UpdateCompetencyTitleEnglish(competencyIndex, value))"
+                                                  Placeholder="Enter English competency title..."
                                                   Disabled="@(!Template.IsAvailableForEditing)"
                                                   Class="@GetCompetencyTitleValidationClass(competencyIndex)"
                                                   @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
@@ -69,7 +70,7 @@
                                     {
                                         <div class="validation-message">
                                             <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
-                                            Competency title is required
+                                            English competency title is required
                                         </div>
                                     }
                                 </div>
@@ -81,11 +82,29 @@
                                     <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" />
                                 </div>
                             </div>
-                            <div class="mb-0">
-                                <RadzenTextArea Value="@competency.Description"
-                                               ValueChanged="@((string value) => UpdateCompetencyDescription(competencyIndex, value))"
+                            <div class="mb-2">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
+                                <RadzenTextBox Value="@competency.TitleGerman"
+                                              ValueChanged="@((string value) => UpdateCompetencyTitleGerman(competencyIndex, value))"
+                                              Placeholder="Enter German competency title (optional)..."
+                                              Disabled="@(!Template.IsAvailableForEditing)"
+                                              Class="w-100" />
+                            </div>
+                            <div class="mb-2">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description</RadzenText>
+                                <RadzenTextArea Value="@competency.DescriptionEnglish"
+                                               ValueChanged="@((string value) => UpdateCompetencyDescriptionEnglish(competencyIndex, value))"
                                                Disabled="@(!Template.IsAvailableForEditing)"
-                                               Placeholder="Describe what this competency evaluates..."
+                                               Placeholder="Describe what this competency evaluates in English..."
+                                               Rows="2"
+                                               Class="w-100" />
+                            </div>
+                            <div class="mb-0">
+                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
+                                <RadzenTextArea Value="@competency.DescriptionGerman"
+                                               ValueChanged="@((string value) => UpdateCompetencyDescriptionGerman(competencyIndex, value))"
+                                               Disabled="@(!Template.IsAvailableForEditing)"
+                                               Placeholder="Describe what this competency evaluates in German (optional)..."
                                                Rows="2"
                                                Class="w-100" />
                             </div>
@@ -165,23 +184,38 @@
                                                 Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
-                            <div class="text-section-input-row">
-                                <div class="input-field-container">
-                                    <RadzenTextBox Value="@textSection.Title"
-                                                  ValueChanged="@((string value) => UpdateTextSectionTitle(sectionIndex, value))"
-                                                  Placeholder="Enter section title..."
-                                                  Disabled="@(!Template.IsAvailableForEditing)"
-                                                  Class="@GetTextSectionTitleValidationClass(sectionIndex)"
-                                                  @onblur="@(() => ValidateTextSectionTitle(sectionIndex))" />
-                                    @if (!GetTextSectionTitleValid(sectionIndex) && GetTextSectionTitleValidated(sectionIndex))
-                                    {
-                                        <div class="validation-message">
-                                            <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
-                                            Text section title is required
+                            <!-- Title Fields -->
+                            <div class="text-section-title-row mb-2">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="input-field-container">
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title *</RadzenText>
+                                            <RadzenTextBox Value="@textSection.TitleEnglish"
+                                                          ValueChanged="@((string value) => UpdateTextSectionTitleEnglish(sectionIndex, value))"
+                                                          Placeholder="Enter section title in English..."
+                                                          Disabled="@(!Template.IsAvailableForEditing)"
+                                                          Class="@GetTextSectionTitleValidationClass(sectionIndex)"
+                                                          @onblur="@(() => ValidateTextSectionTitle(sectionIndex))" />
+                                            @if (!GetTextSectionTitleValid(sectionIndex) && GetTextSectionTitleValidated(sectionIndex))
+                                            {
+                                                <div class="validation-message">
+                                                    <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
+                                                    English title is required
+                                                </div>
+                                            }
                                         </div>
-                                    }
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="input-field-container">
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
+                                            <RadzenTextBox Value="@textSection.TitleGerman"
+                                                          ValueChanged="@((string value) => UpdateTextSectionTitleGerman(sectionIndex, value))"
+                                                          Placeholder="Enter section title in German (optional)..."
+                                                          Disabled="@(!Template.IsAvailableForEditing)" />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="required-checkbox-container">
+                                <div class="required-checkbox-container mt-2">
                                     <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
                                                    ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
                                                    Name="@($"text_req_{Question.Id}_{sectionIndex}")"
@@ -189,12 +223,30 @@
                                     <RadzenLabel Text="Required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" />
                                 </div>
                             </div>
-                            <div class="mb-2">
-                                <RadzenTextArea Value="@textSection.Description"
-                                               ValueChanged="@((string value) => UpdateTextSectionDescription(sectionIndex, value))"
-                                               Placeholder="Describe this text section..."
-                                               Rows="2"
-                                               Class="w-100" />
+                            <!-- Description Fields -->
+                            <div class="text-section-description-row">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-2">
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description *</RadzenText>
+                                            <RadzenTextArea Value="@textSection.DescriptionEnglish"
+                                                           ValueChanged="@((string value) => UpdateTextSectionDescriptionEnglish(sectionIndex, value))"
+                                                           Placeholder="Describe this text section in English..."
+                                                           Rows="2"
+                                                           Class="w-100" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-2">
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
+                                            <RadzenTextArea Value="@textSection.DescriptionGerman"
+                                                           ValueChanged="@((string value) => UpdateTextSectionDescriptionGerman(sectionIndex, value))"
+                                                           Placeholder="Describe this text section in German (optional)..."
+                                                           Rows="2"
+                                                           Class="w-100" />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     }
@@ -301,7 +353,7 @@
         if (index >= 0 && index < competencies.Count)
         {
             competencyTitleValidated[index] = true;
-            competencyTitleValid[index] = !string.IsNullOrWhiteSpace(competencies[index].Title);
+            competencyTitleValid[index] = !string.IsNullOrWhiteSpace(competencies[index].TitleEnglish);
             StateHasChanged();
         }
     }
@@ -333,7 +385,7 @@
         if (index >= 0 && index < categories.Count)
         {
             goalCategoryTitleValidated[index] = true;
-            goalCategoryTitleValid[index] = !string.IsNullOrWhiteSpace(categories[index].Title);
+            goalCategoryTitleValid[index] = !string.IsNullOrWhiteSpace(categories[index].TitleEnglish);
             StateHasChanged();
         }
     }
@@ -365,7 +417,7 @@
         if (index >= 0 && index < sections.Count)
         {
             textSectionTitleValidated[index] = true;
-            textSectionTitleValid[index] = !string.IsNullOrWhiteSpace(sections[index].Title);
+            textSectionTitleValid[index] = !string.IsNullOrWhiteSpace(sections[index].TitleEnglish);
             StateHasChanged();
         }
     }
@@ -431,7 +483,7 @@
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
             var competencyToRemove = orderedCompetencies[displayIndex];
-            var competencyName = string.IsNullOrWhiteSpace(competencyToRemove.Title) ? $"Competency {displayIndex + 1}" : competencyToRemove.Title;
+            var competencyName = string.IsNullOrWhiteSpace(competencyToRemove.TitleEnglish) ? $"Competency {displayIndex + 1}" : competencyToRemove.TitleEnglish;
             var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{competencyName}'?", "Delete Competency",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
 
@@ -445,26 +497,52 @@
         }
     }
 
-    private void UpdateCompetencyTitle(int displayIndex, string value)
+    private void UpdateCompetencyTitleEnglish(int displayIndex, string value)
     {
         var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
         var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
-            orderedCompetencies[displayIndex].Title = value ?? "";
+            orderedCompetencies[displayIndex].TitleEnglish = value ?? "";
             // Store the original list (modifications already applied via reference)
             Question.Configuration["Competencies"] = competencies;
             StateHasChanged();
         }
     }
 
-    private void UpdateCompetencyDescription(int displayIndex, string value)
+    private void UpdateCompetencyTitleGerman(int displayIndex, string value)
     {
         var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
         var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
-            orderedCompetencies[displayIndex].Description = value ?? "";
+            orderedCompetencies[displayIndex].TitleGerman = value ?? "";
+            // Store the original list (modifications already applied via reference)
+            Question.Configuration["Competencies"] = competencies;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateCompetencyDescriptionEnglish(int displayIndex, string value)
+    {
+        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
+        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
+        {
+            orderedCompetencies[displayIndex].DescriptionEnglish = value ?? "";
+            // Store the original list (modifications already applied via reference)
+            Question.Configuration["Competencies"] = competencies;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateCompetencyDescriptionGerman(int displayIndex, string value)
+    {
+        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
+        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
+        {
+            orderedCompetencies[displayIndex].DescriptionGerman = value ?? "";
             // Store the original list (modifications already applied via reference)
             Question.Configuration["Competencies"] = competencies;
             StateHasChanged();
@@ -561,7 +639,7 @@
         var categories = GetGoalCategoriesFromConfiguration();
         if (index >= 0 && index < categories.Count)
         {
-            var categoryName = string.IsNullOrWhiteSpace(categories[index].Title) ? $"Goal Category {index + 1}" : categories[index].Title;
+            var categoryName = string.IsNullOrWhiteSpace(categories[index].TitleEnglish) ? $"Goal Category {index + 1}" : categories[index].TitleEnglish;
             var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{categoryName}'?", "Delete Goal Category",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
 
@@ -591,6 +669,50 @@
         if (index >= 0 && index < categories.Count)
         {
             categories[index].Description = value ?? "";
+            Question.Configuration["GoalCategories"] = categories;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateGoalCategoryTitleEnglish(int index, string value)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count)
+        {
+            categories[index].TitleEnglish = value ?? "";
+            Question.Configuration["GoalCategories"] = categories;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateGoalCategoryTitleGerman(int index, string value)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count)
+        {
+            categories[index].TitleGerman = value ?? "";
+            Question.Configuration["GoalCategories"] = categories;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateGoalCategoryDescriptionEnglish(int index, string value)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count)
+        {
+            categories[index].DescriptionEnglish = value ?? "";
+            Question.Configuration["GoalCategories"] = categories;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateGoalCategoryDescriptionGerman(int index, string value)
+    {
+        var categories = GetGoalCategoriesFromConfiguration();
+        if (index >= 0 && index < categories.Count)
+        {
+            categories[index].DescriptionGerman = value ?? "";
             Question.Configuration["GoalCategories"] = categories;
             StateHasChanged();
         }
@@ -731,6 +853,50 @@
         if (index >= 0 && index < sections.Count)
         {
             sections[index].Description = value ?? "";
+            Question.Configuration["TextSections"] = sections;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateTextSectionTitleEnglish(int index, string value)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].TitleEnglish = value ?? "";
+            Question.Configuration["TextSections"] = sections;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateTextSectionTitleGerman(int index, string value)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].TitleGerman = value ?? "";
+            Question.Configuration["TextSections"] = sections;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateTextSectionDescriptionEnglish(int index, string value)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].DescriptionEnglish = value ?? "";
+            Question.Configuration["TextSections"] = sections;
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateTextSectionDescriptionGerman(int index, string value)
+    {
+        var sections = GetTextSectionsFromConfiguration();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].DescriptionGerman = value ?? "";
             Question.Configuration["TextSections"] = sections;
             StateHasChanged();
         }
@@ -922,7 +1088,16 @@
 
     public class GoalCategory
     {
+        // Bilingual content properties
+        public string TitleEnglish { get; set; } = "";
+        public string TitleGerman { get; set; } = "";
+        public string DescriptionEnglish { get; set; } = "";
+        public string DescriptionGerman { get; set; } = "";
+
+        // Legacy properties for backward compatibility
+        [Obsolete("Use TitleEnglish/TitleGerman instead")]
         public string Title { get; set; } = "";
+        [Obsolete("Use DescriptionEnglish/DescriptionGerman instead")]
         public string Description { get; set; } = "";
         public bool IsRequired { get; set; } = false;
         public int Order { get; set; } = 0;
@@ -930,7 +1105,16 @@
 
     public class TextSection
     {
+        // Bilingual content properties
+        public string TitleEnglish { get; set; } = "";
+        public string TitleGerman { get; set; } = "";
+        public string DescriptionEnglish { get; set; } = "";
+        public string DescriptionGerman { get; set; } = "";
+
+        // Legacy properties for backward compatibility
+        [Obsolete("Use TitleEnglish/TitleGerman instead")]
         public string Title { get; set; } = "";
+        [Obsolete("Use DescriptionEnglish/DescriptionGerman instead")]
         public string Description { get; set; } = "";
         public bool IsRequired { get; set; } = false;
         public int Order { get; set; } = 0;

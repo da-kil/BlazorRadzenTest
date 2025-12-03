@@ -10,20 +10,23 @@
 @inject DialogService DialogService
 @inject NotificationService NotificationService
 @inject IAuthService AuthService
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 
 @if (!HideHeader)
 {
     <div class="goal-question">
         <header class="question-header">
             <h3 class="question-title">
-                @Question.Title
+                @Question.GetLocalizedTitleWithFallback(CurrentLanguage)
                 <EditedDuringReviewBadge Response="@Response" />
             </h3>
 
-            @if (!string.IsNullOrWhiteSpace(Question.Description))
+            @{
+                var questionDescription = Question.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+            }
+            @if (!string.IsNullOrWhiteSpace(questionDescription))
             {
-                <p class="question-description">@Question.Description</p>
+                <p class="question-description">@questionDescription</p>
             }
         </header>
 

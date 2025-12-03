@@ -2,21 +2,24 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Shared
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 
 @if (!HideHeader)
 {
     <div class="text-question">
         <header class="question-header">
             <h3 class="question-title">
-                @Question.Title
+                @Question.GetLocalizedTitleWithFallback(CurrentLanguage)
                 @if (Question.IsRequired) { <span class="text-danger">*</span> }
                 <EditedDuringReviewBadge Response="@Response" />
             </h3>
 
-            @if (!string.IsNullOrWhiteSpace(Question.Description))
+            @{
+                var questionDescription = Question.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+            }
+            @if (!string.IsNullOrWhiteSpace(questionDescription))
             {
-                <p class="question-description">@Question.Description</p>
+                <p class="question-description">@questionDescription</p>
             }
         </header>
 

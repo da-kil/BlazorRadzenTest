@@ -20,6 +20,7 @@ public class EmployeeReadModel
     public int OrganizationNumber { get; set; }
     public bool IsDeleted { get; set; }
     public ApplicationRole ApplicationRole { get; set; }
+    public Language PreferredLanguage { get; set; }
 
     // Apply methods for all Employee domain events
     public void Apply(EmployeeAdded @event)
@@ -37,6 +38,7 @@ public class EmployeeReadModel
         LoginName = @event.LoginName;
         OrganizationNumber = @event.OrganizationNumber;
         ApplicationRole = ApplicationRoleMapper.MapFromDomain(@event.ApplicationRole);
+        PreferredLanguage = LanguageMapper.MapFromDomain(@event.PreferredLanguage);
         IsDeleted = false;
     }
 
@@ -59,6 +61,7 @@ public class EmployeeReadModel
         LoginName = @event.LoginName;
         OrganizationNumber = @event.OrganizationNumber;
         ApplicationRole = ApplicationRoleMapper.MapFromDomain(@event.ApplicationRole);
+        PreferredLanguage = LanguageMapper.MapFromDomain(@event.PreferredLanguage);
         IsDeleted = false;
     }
 
@@ -106,5 +109,10 @@ public class EmployeeReadModel
     public void Apply(EmployeeApplicationRoleChanged @event)
     {
         ApplicationRole = ApplicationRoleMapper.MapFromDomain(@event.NewRole);
+    }
+
+    public void Apply(EmployeePreferredLanguageChanged @event)
+    {
+        PreferredLanguage = LanguageMapper.MapFromDomain(@event.PreferredLanguage);
     }
 }

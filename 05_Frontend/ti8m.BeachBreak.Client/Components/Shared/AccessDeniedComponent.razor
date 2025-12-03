@@ -1,19 +1,20 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Layout
+@inherits OptimizedTranslatableComponentBase
 
-<PageLayout Title="Access Denied" Description="You do not have permission to access this page">
+<PageLayout Title="@T("errors.access-denied")" Description="@T("errors.access-denied-description")">
     <ChildContent>
         <RadzenStack Orientation="Orientation.Vertical"
                      AlignItems="AlignItems.Center"
                      JustifyContent="JustifyContent.Center"
                      Style="min-height: 400px;">
             <RadzenIcon Icon="block" Style="font-size: 4rem; color: var(--rz-danger);" Class="rz-mb-3" />
-            <RadzenText TextStyle="TextStyle.H4" Class="rz-mb-2">Access Denied</RadzenText>
+            <RadzenText TextStyle="TextStyle.H4" Class="rz-mb-2">@T("errors.access-denied")</RadzenText>
             <RadzenText TextStyle="TextStyle.Body1" Class="text-muted text-center">
-                You do not have permission to access the @PageName page.
+                @(T("errors.no-permission-page").Replace("{0}", PageName))
                 <br />
-                This page is restricted to @RequiredRole users only.
+                @(T("errors.restricted-to-role").Replace("{0}", RequiredRole))
             </RadzenText>
         </RadzenStack>
     </ChildContent>

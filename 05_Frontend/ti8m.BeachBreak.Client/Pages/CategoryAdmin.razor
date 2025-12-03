@@ -9,18 +9,17 @@
 @using ti8m.BeachBreak.Client.Layout
 @inject ICategoryApiService CategoryService
 @inject DialogService DialogService
-@inject NotificationService NotificationService
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 
-<PageTitle>Questionnaire Type Administration</PageTitle>
+<PageTitle>@T("pages.questionnaire-type-administration")</PageTitle>
 
 <AuthorizeView Policy="HR">
     <Authorized>
         <PageLayout
-                   Title="Questionnaire Type Administration"
-                   Description="Manage questionnaire types (e.g., Annual Reviews, Quarterly Check-ins)">
+                   Title="@T("pages.questionnaire-type-administration")"
+                   Description="@T("pages.questionnaire-type-administration-description")">
     <HeaderActions>
-        <AsyncButton Text="Add New Type"
+        <AsyncButton Text="@T("buttons.add-new-type")"
                      ButtonStyle="ButtonStyle.Primary"
                      Icon="add"
                      Click="@ShowAddCategoryDialog" />
@@ -29,10 +28,10 @@
 
                 <div class="mb-3 d-flex justify-content-between">
                     <RadzenTextBox @bind-Value="@searchText"
-                                   Placeholder="Search types..."
+                                   Placeholder="@T("filters.search-types")"
                                    @oninput="@OnSearchTextChanged" />
                     <RadzenToggleButton @bind-Value="@showInactiveCategories"
-                                        Text="Show Inactive"
+                                        Text="@T("filters.show-inactive")"
                                         Change="@LoadCategories" />
                 </div>
 
@@ -40,43 +39,43 @@
                                 AllowFiltering="true" AllowColumnResize="true" AllowSorting="true"
                                 EditMode="DataGridEditMode.Single" AllowAlternatingRows="false">
                     <Columns>
-                        <RadzenDataGridColumn TItem="Category" Property="NameEn" Title="Name EN" Width="200px">
+                        <RadzenDataGridColumn TItem="Category" Property="NameEn" Title="@T("columns.name-en")" Width="200px">
                             <Template Context="category">
                                 <RadzenText TextStyle="TextStyle.Body1">@category.NameEn</RadzenText>
                             </Template>
                             <EditTemplate Context="category">
-                                <RadzenTextBox @bind-Value="category.NameEn" Placeholder="Enter English name" Class="w-100" />
+                                <RadzenTextBox @bind-Value="category.NameEn" Placeholder="@T("placeholders.enter-english-name")" Class="w-100" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="Category" Property="NameDe" Title="Name DE" Width="200px">
+                        <RadzenDataGridColumn TItem="Category" Property="NameDe" Title="@T("columns.name-de")" Width="200px">
                             <Template Context="category">
                                 <RadzenText TextStyle="TextStyle.Body1">@category.NameDe</RadzenText>
                             </Template>
                             <EditTemplate Context="category">
-                                <RadzenTextBox @bind-Value="category.NameDe" Placeholder="Deutschen Namen eingeben" Class="w-100" />
+                                <RadzenTextBox @bind-Value="category.NameDe" Placeholder="@T("placeholders.enter-german-name")" Class="w-100" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="Category" Property="DescriptionEn" Title="Description EN" Width="250px">
+                        <RadzenDataGridColumn TItem="Category" Property="DescriptionEn" Title="@T("columns.description-en")" Width="250px">
                             <Template Context="category">
                                 <RadzenText TextStyle="TextStyle.Body2">@category.DescriptionEn</RadzenText>
                             </Template>
                             <EditTemplate Context="category">
-                                <RadzenTextArea @bind-Value="category.DescriptionEn" Placeholder="Enter English description (optional)" Rows="2" Class="w-100" />
+                                <RadzenTextArea @bind-Value="category.DescriptionEn" Placeholder="@T("placeholders.enter-english-description")" Rows="2" Class="w-100" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="Category" Property="DescriptionDe" Title="Description DE" Width="250px">
+                        <RadzenDataGridColumn TItem="Category" Property="DescriptionDe" Title="@T("columns.description-de")" Width="250px">
                             <Template Context="category">
                                 <RadzenText TextStyle="TextStyle.Body2">@category.DescriptionDe</RadzenText>
                             </Template>
                             <EditTemplate Context="category">
-                                <RadzenTextArea @bind-Value="category.DescriptionDe" Placeholder="Deutsche Beschreibung eingeben (optional)" Rows="2" Class="w-100" />
+                                <RadzenTextArea @bind-Value="category.DescriptionDe" Placeholder="@T("placeholders.enter-german-description")" Rows="2" Class="w-100" />
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="Category" Property="SortOrder" Title="Sort Order" Width="120px">
+                        <RadzenDataGridColumn TItem="Category" Property="SortOrder" Title="@T("columns.sort-order")" Width="120px">
                             <Template Context="category">
                                 <RadzenBadge Text="@category.SortOrder.ToString()" Variant="Variant.Outlined" />
                             </Template>
@@ -85,15 +84,15 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="Category" Property="IsActive" Title="Status" Width="120px">
+                        <RadzenDataGridColumn TItem="Category" Property="IsActive" Title="@T("columns.status")" Width="120px">
                             <Template Context="category">
                                 @if (category.IsActive)
                                 {
-                                    <RadzenBadge Text="Active" BadgeStyle="BadgeStyle.Success" />
+                                    <RadzenBadge Text="@T("status.active")" BadgeStyle="BadgeStyle.Success" />
                                 }
                                 else
                                 {
-                                    <RadzenBadge Text="Inactive" BadgeStyle="BadgeStyle.Secondary" />
+                                    <RadzenBadge Text="@T("status.inactive")" BadgeStyle="BadgeStyle.Secondary" />
                                 }
                             </Template>
                             <EditTemplate Context="category">
@@ -101,41 +100,41 @@
                             </EditTemplate>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="Category" Property="CreatedDate" Title="Created" Width="150px">
+                        <RadzenDataGridColumn TItem="Category" Property="CreatedDate" Title="@T("columns.created")" Width="150px">
                             <Template Context="category">
                                 <RadzenText TextStyle="TextStyle.Caption">@category.CreatedDate.ToString("MMM dd, yyyy")</RadzenText>
                             </Template>
                         </RadzenDataGridColumn>
 
-                        <RadzenDataGridColumn TItem="Category" Filterable="false" Sortable="false" Width="180px" Title="Actions">
+                        <RadzenDataGridColumn TItem="Category" Filterable="false" Sortable="false" Width="180px" Title="@T("columns.actions")">
                             <Template Context="category">
                                 <div class="d-flex gap-1">
                                     <AsyncButton ButtonStyle="ButtonStyle.Light"
                                                  Icon="edit"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => EditRow(category))"
-                                                 Tooltip="Edit Category" />
+                                                 Tooltip="@T("tooltips.edit-category")" />
                                     <AsyncButton ButtonStyle="ButtonStyle.Danger"
-                                                 ProcessingText="Deleting"
+                                                 ProcessingText="@T("buttons.deleting")"
                                                  Icon="delete"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => DeleteCategory(category))"
-                                                 Tooltip="Delete Category" />
+                                                 Tooltip="@T("tooltips.delete-category")" />
                                 </div>
                             </Template>
                             <EditTemplate Context="category">
                                 <div class="d-flex gap-1">
                                     <AsyncButton ButtonStyle="ButtonStyle.Success"
-                                                 ProcessingText="Saving"
+                                                 ProcessingText="@T("buttons.saving")"
                                                  Icon="save"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => SaveRow(category))"
-                                                 Tooltip="Save Changes" />
+                                                 Tooltip="@T("tooltips.save-changes")" />
                                     <AsyncButton ButtonStyle="ButtonStyle.Secondary"
                                                  Icon="cancel"
                                                  Size="ButtonSize.ExtraSmall"
                                                  Click="@(() => CancelEdit(category))"
-                                                 Tooltip="Cancel Edit" />
+                                                 Tooltip="@T("tooltips.cancel-edit")" />
                                 </div>
                             </EditTemplate>
                         </RadzenDataGridColumn>
@@ -145,7 +144,7 @@
 </PageLayout>
     </Authorized>
     <NotAuthorized>
-        <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Type Administration" />
+        <AccessDeniedComponent RequiredRole="HR" PageName="@T("pages.questionnaire-type-administration")" />
     </NotAuthorized>
 </AuthorizeView>
 
@@ -184,7 +183,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load categories: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed-to-load-categories")}: {ex.Message}");
         }
     }
 
@@ -267,7 +266,7 @@
             {
                 // Create new category
                 await CategoryService.CreateCategoryAsync(category);
-                NotificationService.Notify(NotificationSeverity.Success, "Success", "Category created successfully");
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.category-created-successfully"));
 
                 // Remove from new category tracking
                 newCategoryIds.Remove(category.Id);
@@ -279,7 +278,7 @@
             {
                 // Update existing category
                 await CategoryService.UpdateCategoryAsync(category);
-                NotificationService.Notify(NotificationSeverity.Success, "Success", "Category updated successfully");
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.category-updated-successfully"));
                 await categoriesGrid!.UpdateRow(category);
             }
 
@@ -287,7 +286,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save category: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed-to-save-category")}: {ex.Message}");
         }
     }
 
@@ -327,8 +326,8 @@
 
     private async Task DeleteCategory(Category category)
     {
-        var result = await DialogService.Confirm($"Are you sure you want to delete the category '{category.NameEn}'?",
-            "Delete Category", new ConfirmOptions() { OkButtonText = "Delete", CancelButtonText = "Cancel" });
+        var result = await DialogService.Confirm($"{T("dialogs.confirm-delete-category")} '{category.NameEn}'?",
+            T("dialogs.delete-category"), new ConfirmOptions() { OkButtonText = T("buttons.delete"), CancelButtonText = T("buttons.cancel") });
 
         if (result == true)
         {
@@ -337,17 +336,17 @@
                 var success = await CategoryService.DeleteCategoryAsync(category.Id);
                 if (success)
                 {
-                    NotificationService.Notify(NotificationSeverity.Success, "Success", "Category deleted successfully");
+                    NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.category-deleted-successfully"));
                     await LoadCategories();
                 }
                 else
                 {
-                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to delete category");
+                    NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("notifications.failed-to-delete-category"));
                 }
             }
             catch (Exception ex)
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to delete category: {ex.Message}");
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed-to-delete-category")}: {ex.Message}");
             }
         }
     }

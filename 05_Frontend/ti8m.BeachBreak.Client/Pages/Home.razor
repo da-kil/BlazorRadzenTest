@@ -1,8 +1,10 @@
 ﻿@page "/"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 
-<PageTitle>Home</PageTitle>
+<PageTitle>@T("pages.home")</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>@T("pages.welcome-message")</h1>
 
-Welcome to your new app.
+@T("pages.welcome-to-app")

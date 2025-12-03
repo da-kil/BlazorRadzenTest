@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.UI
 
 <RadzenComponents @rendermode="InteractiveAuto" />
 
@@ -17,6 +18,7 @@
             </div>
             <div class="header-actions">
                 <ThemeChooser />
+                <LanguageSwitcher />
                 <button class="btn-icon notification-btn" title="Notifications">
                     <span class="notification-icon">🔔</span>
                 </button>

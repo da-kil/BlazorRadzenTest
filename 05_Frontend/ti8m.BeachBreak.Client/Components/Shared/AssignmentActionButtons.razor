@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@inherits OptimizedTranslatableComponentBase
 
 <div class="d-flex gap-1">
     @if (ShowViewAction)
@@ -8,7 +9,7 @@
         <RadzenButton ButtonStyle="ButtonStyle.Light"
                      Icon="visibility"
                      Size="ButtonSize.Small"
-                     Title="View Details"
+                     Title="@T("tooltips.view-details")"
                      Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "view" }))" />
     }
 
@@ -17,7 +18,7 @@
         <RadzenButton ButtonStyle="ButtonStyle.Light"
                      Icon="edit"
                      Size="ButtonSize.Small"
-                     Title="Edit Assignment"
+                     Title="@T("tooltips.edit-assignment")"
                      Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "edit" }))" />
     }
 
@@ -26,7 +27,7 @@
         <RadzenButton ButtonStyle="ButtonStyle.Light"
                      Icon="notifications"
                      Size="ButtonSize.Small"
-                     Title="Send Reminder"
+                     Title="@T("tooltips.send-reminder")"
                      Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "remind" }))" />
     }
 
@@ -35,7 +36,7 @@
         <RadzenButton ButtonStyle="ButtonStyle.Warning"
                      Icon="cancel"
                      Size="ButtonSize.Small"
-                     Title="Cancel Assignment"
+                     Title="@T("tooltips.cancel-assignment")"
                      Click="@(() => OnActionClick.InvokeAsync(new AssignmentActionEventArgs { Assignment = Assignment, Action = "cancel" }))" />
     }
 </div>
