@@ -1,7 +1,7 @@
 {
   "Id": "960e40e9-30bd-4e4a-a16b-b0107cbe3dba",
-  "Name": "Beach Break 2026",
-  "Description": "",
+  "NameEnglish": "Beach Break 2026 - EN",
+  "NameGerman": "Beach Break 2026 - DE",
   "CategoryId": "2328167b-badc-4352-8934-ce233f2aff2b",
   "RequiresManagerReview": true,
   "Status": 0,
@@ -11,16 +11,20 @@
   "Sections": [
     {
       "Id": "ffdef1bc-1d4b-4a6b-9ac3-f9ced087d639",
-      "Title": "Rückblick 2025: Selbsteinschätzung für Mitarbeitende",
-      "Description": "In diesem Abschnitt werden die beruflichen Kompetenzen und Fähigkeiten im Jahr 2025 reflektiert.",
+      "TitleEnglish": "Rückblick 2025: Selbsteinschätzung für Mitarbeitende",
+      "TitleGerman": "Rückblick 2025: Selbsteinschätzung für Mitarbeitende",
+      "DescriptionEnglish": "In diesem Abschnitt werden die beruflichen Kompetenzen und Fähigkeiten im Jahr 2025 reflektiert.",
+      "DescriptionGerman": "In diesem Abschnitt werden die beruflichen Kompetenzen und Fähigkeiten im Jahr 2025 reflektiert.",
       "Order": 0,
       "IsRequired": true,
       "CompletionRole": 2,
       "Questions": [
         {
           "Id": "606daef7-be7b-4085-97e5-50f931f8b869",
-          "Title": "Competency Assessment",
-          "Description": "",
+          "TitleEnglish": "Competency Assessment",
+          "TitleGerman": "Competency Assessment",
+          "DescriptionEnglish": "",
+          "DescriptionGerman": "",
           "Type": 0,
           "Order": 0,
           "IsRequired": true,
@@ -28,64 +32,82 @@
             "Competencies": [
               {
                 "Key": "competency_1",
-                "Title": "Fachkenntnisse",
-                "Description": "Bewertung der eigenen Expertise und des Fachwissens in Bezug auf die beruflichen Aufgaben.",
+                "TitleEnglish": "Fachkenntnisse",
+                "TitleGerman": "Fachkenntnisse",
+                "DescriptionEnglish": "Bewertung der eigenen Expertise und des Fachwissens in Bezug auf die beruflichen Aufgaben.",
+                "DescriptionGerman": "Bewertung der eigenen Expertise und des Fachwissens in Bezug auf die beruflichen Aufgaben.",
                 "IsRequired": true,
                 "Order": 0
               },
               {
                 "Key": "competency_2",
-                "Title": "Arbeitsqualität",
-                "Description": "Einschätzung der Genauigkeit, Effizienz und Vollständigkeit der erbrachten Arbeit.",
+                "TitleEnglish": "Arbeitsqualität",
+                "TitleGerman": "Arbeitsqualität",
+                "DescriptionEnglish": "Einschätzung der Genauigkeit, Effizienz und Vollständigkeit der erbrachten Arbeit.",
+                "DescriptionGerman": "Einschätzung der Genauigkeit, Effizienz und Vollständigkeit der erbrachten Arbeit.",
                 "IsRequired": true,
                 "Order": 1
               },
               {
                 "Key": "competency_3",
-                "Title": "Zuverlässigkeit ",
-                "Description": "Reflexion über die Pünktlichkeit, Termintreue und Zuverlässigkeit bei der Erfüllung von Aufgaben und Zusagen.",
+                "TitleEnglish": "Zuverlässigkeit",
+                "TitleGerman": "Zuverlässigkeit",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "Reflexion über die Pünktlichkeit, Termintreue und Zuverlässigkeit bei der Erfüllung von Aufgaben und Zusagen.",
                 "IsRequired": true,
                 "Order": 2
               },
               {
                 "Key": "competency_4",
-                "Title": "Belastbarkeit",
-                "Description": "Beurteilung der Fähigkeit, unter Druck effektiv zu arbeiten und mit Stress umzugehen.",
+                "TitleEnglish": "Belastbarkeit",
+                "TitleGerman": "Belastbarkeit",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "Beurteilung der Fähigkeit, unter Druck effektiv zu arbeiten und mit Stress umzugehen.",
                 "IsRequired": true,
                 "Order": 3
               },
               {
                 "Key": "competency_5",
-                "Title": "Selbstständigkeit",
-                "Description": "Einschätzung der Fähigkeit, Aufgaben eigenverantwortlich und ohne ständige Anleitung zu erledigen.",
+                "TitleEnglish": "Selbstständigkeit",
+                "TitleGerman": "Selbstständigkeit",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "Einschätzung der Fähigkeit, Aufgaben eigenverantwortlich und ohne ständige Anleitung zu erledigen.",
                 "IsRequired": true,
                 "Order": 4
               },
               {
                 "Key": "competency_6",
-                "Title": "Kommunikationsfähigkeit",
-                "Description": "Einschätzung der Fähigkeit zur klaren und verständlichen Übermittlung von Informationen sowie des Verständnisses für den Bedarf an Kommunikation.",
+                "TitleEnglish": "Kommunikationsfähigkeit",
+                "TitleGerman": "Kommunikationsfähigkeit",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "Einschätzung der Fähigkeit zur klaren und verständlichen Übermittlung von Informationen sowie des Verständnisses für den Bedarf an Kommunikation.",
                 "IsRequired": true,
                 "Order": 5
               },
               {
                 "Key": "competency_7",
-                "Title": "Proaktivität und Initiative",
-                "Description": "Beurteilung der Neigung, eigenständig zu handeln und neue Ideen oder Lösungen vorzuschlagen.",
+                "TitleEnglish": "Proaktivität und Initiative",
+                "TitleGerman": "Proaktivität und Initiative",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "Beurteilung der Neigung, eigenständig zu handeln und neue Ideen oder Lösungen vorzuschlagen.",
                 "IsRequired": true,
                 "Order": 6
               },
               {
                 "Key": "competency_8",
-                "Title": "Problemlösungsfähigkeit",
-                "Description": "Bewertung der Fähigkeit, HerausfOrderungen zu erkennen und effektive Lösungen zu entwickeln.",
+                "TitleEnglish": "Problemlösungsfähigkeit",
+                "TitleGerman": "Problemlösungsfähigkeit",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "Bewertung der Fähigkeit, HerausfOrderungen zu erkennen und effektive Lösungen zu entwickeln.",
                 "IsRequired": true,
                 "Order": 7
               },
               {
                 "Key": "competency_9",
-                "Title": "Verhalten",
-                "Description": "Einschätzung des eigenen Verhaltens im Arbeitskontext, insbesondere im Umgang mit Kolleginnen und Kollegen, Vorgesetzten und gegebenenfalls Kunden.",
+                "TitleEnglish": "Verhalten",
+                "TitleGerman": "Verhalten",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "Einschätzung des eigenen Verhaltens im Arbeitskontext, insbesondere im Umgang mit Kolleginnen und Kollegen, Vorgesetzten und gegebenenfalls Kunden.",
                 "IsRequired": true,
                 "Order": 8
               }
@@ -99,30 +121,38 @@
     },
     {
       "Id": "716aadb8-82bd-4f5e-a072-aac1fbae82e5",
-      "Title": "Rückblick: Mein/e Vorgesetzte/r",
-      "Description": "Dieser Abschnitt ermöglicht eine Beurteilung der Zusammenarbeit mit dem/r Vorgesetzten. Es geht darum, spezifische Aspekte und Erfahrungen des letzten Jahres zu reflektieren, sowie Wünsche für die zukünftige Zusammenarbeit anzubringen.",
+      "TitleEnglish": "Rückblick: Mein/e Vorgesetzte/r",
+      "TitleGerman": "Rückblick: Mein/e Vorgesetzte/r",
+      "DescriptionEnglish": "Dieser Abschnitt ermöglicht eine Beurteilung der Zusammenarbeit mit dem/r Vorgesetzten. Es geht darum, spezifische Aspekte und Erfahrungen des letzten Jahres zu reflektieren, sowie Wünsche für die zukünftige Zusammenarbeit anzubringen.",
+      "DescriptionGerman": "Dieser Abschnitt ermöglicht eine Beurteilung der Zusammenarbeit mit dem/r Vorgesetzten. Es geht darum, spezifische Aspekte und Erfahrungen des letzten Jahres zu reflektieren, sowie Wünsche für die zukünftige Zusammenarbeit anzubringen.",
       "Order": 1,
       "IsRequired": true,
       "CompletionRole": 0,
       "Questions": [
         {
           "Id": "ffa36a25-c178-4b31-9c55-bf7ba72e24b7",
-          "Title": "Career Development & Planning",
-          "Description": "",
+          "TitleEnglish": "Career Development & Planning",
+          "TitleGerman": "Career Development & Planning",
+          "DescriptionEnglish": "",
+          "DescriptionGerman": "",
           "Type": 1,
           "Order": 0,
           "IsRequired": true,
           "Configuration": {
             "TextSections": [
               {
-                "Title": "Was schätzt du besonders an deinem/r Vorgesetzten? In welchen Bereichen hat er/sie deine Erwartungen erfüllt oder übertroffen?",
-                "Description": "",
+                "TitleEnglish": "Was schätzt du besonders an deinem/r Vorgesetzten? In welchen Bereichen hat er/sie deine Erwartungen erfüllt oder übertroffen?",
+                "TitleGerman": "Was schätzt du besonders an deinem/r Vorgesetzten? In welchen Bereichen hat er/sie deine Erwartungen erfüllt oder übertroffen?",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 0
               },
               {
-                "Title": "Gibt es Bereiche, in denen sich dein/e Vorgesetzte/n verbessern könnte? Wo benötigst du mehr Unterstützung von deinem/r Vorgesetzten?",
-                "Description": "",
+                "TitleEnglish": "Gibt es Bereiche, in denen sich dein/e Vorgesetzte/n verbessern könnte? Wo benötigst du mehr Unterstützung von deinem/r Vorgesetzten?",
+                "TitleGerman": "Gibt es Bereiche, in denen sich dein/e Vorgesetzte/n verbessern könnte? Wo benötigst du mehr Unterstützung von deinem/r Vorgesetzten?",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 1
               }
@@ -133,16 +163,20 @@
     },
     {
       "Id": "2f1aab8f-ba3d-4dcf-ae21-4cb7e9420211",
-      "Title": "Ausblick 2026: Zielvereinbarung",
-      "Description": "In diesem Teil des Fragebogens werden gemeinsam die Ziele für das Jahr 2026 definiert. Bitte verwendet die folgende Tabelle, um klare und erreichbare Ziele festzulegen, deren Erfolg messbar ist, und um die notwendigen Schritte zur Zielerreichung zu planen.",
+      "TitleEnglish": "Ausblick 2026: Zielvereinbarung",
+      "TitleGerman": "Ausblick 2026: Zielvereinbarung",
+      "DescriptionEnglish": "In diesem Teil des Fragebogens werden gemeinsam die Ziele für das Jahr 2026 definiert. Bitte verwendet die folgende Tabelle, um klare und erreichbare Ziele festzulegen, deren Erfolg messbar ist, und um die notwendigen Schritte zur Zielerreichung zu planen.",
+      "DescriptionGerman": "In diesem Teil des Fragebogens werden gemeinsam die Ziele für das Jahr 2026 definiert. Bitte verwendet die folgende Tabelle, um klare und erreichbare Ziele festzulegen, deren Erfolg messbar ist, und um die notwendigen Schritte zur Zielerreichung zu planen.",
       "Order": 2,
       "IsRequired": true,
       "CompletionRole": 2,
       "Questions": [
         {
           "Id": "c50ded6d-e0c2-4aac-8806-176b5930e600",
-          "Title": "Goal Management",
-          "Description": "",
+          "TitleEnglish": "Goal Management",
+          "TitleGerman": "Goal Management",
+          "DescriptionEnglish": "",
+          "DescriptionGerman": "",
           "Type": 2,
           "Order": 0,
           "IsRequired": true,

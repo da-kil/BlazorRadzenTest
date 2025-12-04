@@ -73,54 +73,46 @@
     <div class="section-content-modern">
 
         <!-- Title Inputs -->
-        <RadzenRow Gap="1rem" Class="input-group-modern">
-            <RadzenColumn Size="12" SizeMD="6">
-                <div class="mb-2">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Title *</RadzenText>
-                    <RadzenTextBox Value="@Section.TitleEnglish"
-                                 ValueChanged="@(value => OnSectionTitleEnglishChanged(value))"
-                                 Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
-                                 Class="title-input-modern"
-                                 Disabled="@(!Template.IsAvailableForEditing)" />
-                </div>
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <div class="mb-2">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Title (Optional)</RadzenText>
-                    <RadzenTextBox Value="@Section.TitleGerman"
-                                 ValueChanged="@(value => OnSectionTitleGermanChanged(value))"
-                                 Placeholder="e.g., Leistungsbeurteilung 2023, Zielsetzungsworkshop..."
-                                 Class="title-input-modern"
-                                 Disabled="@(!Template.IsAvailableForEditing)" />
-                </div>
-            </RadzenColumn>
-        </RadzenRow>
+        <div class="multilang-input-grid mb-3">
+            <div class="input-field">
+                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Title *</RadzenText>
+                <RadzenTextBox Value="@Section.TitleEnglish"
+                             ValueChanged="@(value => OnSectionTitleEnglishChanged(value))"
+                             Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
+                             Class="title-input-modern"
+                             Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+            <div class="input-field">
+                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Title (Optional)</RadzenText>
+                <RadzenTextBox Value="@Section.TitleGerman"
+                             ValueChanged="@(value => OnSectionTitleGermanChanged(value))"
+                             Placeholder="e.g., Leistungsbeurteilung 2023, Zielsetzungsworkshop..."
+                             Class="title-input-modern"
+                             Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+        </div>
 
         <!-- Description Inputs -->
-        <RadzenRow Gap="1rem" Class="input-group-modern">
-            <RadzenColumn Size="12" SizeMD="6">
-                <div class="mb-2">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Description *</RadzenText>
-                    <RadzenTextArea Value="@Section.DescriptionEnglish"
-                                  ValueChanged="@(value => OnSectionDescriptionEnglishChanged(value))"
-                                  Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
-                                  Class="description-input-modern"
-                                  Disabled="@(!Template.IsAvailableForEditing)"
-                                  Rows="3" />
-                </div>
-            </RadzenColumn>
-            <RadzenColumn Size="12" SizeMD="6">
-                <div class="mb-2">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Description (Optional)</RadzenText>
-                    <RadzenTextArea Value="@Section.DescriptionGerman"
-                                  ValueChanged="@(value => OnSectionDescriptionGermanChanged(value))"
-                                  Placeholder="Geben Sie Kontext über den Zweck dieses Abschnitts an. Was werden die Teilnehmer hier erreichen?"
-                                  Class="description-input-modern"
-                                  Disabled="@(!Template.IsAvailableForEditing)"
-                                  Rows="3" />
-                </div>
-            </RadzenColumn>
-        </RadzenRow>
+        <div class="multilang-input-grid mb-3">
+            <div class="input-field">
+                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Description *</RadzenText>
+                <RadzenTextArea Value="@Section.DescriptionEnglish"
+                              ValueChanged="@(value => OnSectionDescriptionEnglishChanged(value))"
+                              Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
+                              Class="description-input-modern"
+                              Disabled="@(!Template.IsAvailableForEditing)"
+                              Rows="3" />
+            </div>
+            <div class="input-field">
+                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Description (Optional)</RadzenText>
+                <RadzenTextArea Value="@Section.DescriptionGerman"
+                              ValueChanged="@(value => OnSectionDescriptionGermanChanged(value))"
+                              Placeholder="Geben Sie Kontext über den Zweck dieses Abschnitts an. Was werden die Teilnehmer hier erreichen?"
+                              Class="description-input-modern"
+                              Disabled="@(!Template.IsAvailableForEditing)"
+                              Rows="3" />
+            </div>
+        </div>
 
         <!-- Rating Scale Configuration - only for Assessment sections -->
         @if (Section.Questions.Any() && Section.Questions.First().Type == QuestionType.Assessment)

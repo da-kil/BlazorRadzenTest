@@ -66,6 +66,7 @@ internal class Program
         builder.Services.AddScoped<IHRApiService, HRApiService>();
         builder.Services.AddScoped<IProjectionReplayApiService, ProjectionReplayApiService>();
         builder.Services.AddScoped<IGoalApiService, GoalApiService>();
+        builder.Services.AddScoped<ITranslationApiService, TranslationApiService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();

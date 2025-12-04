@@ -514,6 +514,11 @@
     color: var(--question-text-response) !important;
 }
 
+/* Remove focus outline for text sections in builder */
+.text-section-item:focus-within {
+    outline: none;
+}
+
 
 /* =============================================
    BUILDER-SPECIFIC LAYOUTS
@@ -1358,8 +1363,18 @@
 }
 
 /* Focus states */
-.questionnaire-summary:focus-within,
-.competency-item:focus-within {
+.questionnaire-summary:focus-within {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Remove focus outline for builder context (has its own focus handling) */
+.competency-item.builder-context:focus-within {
+    outline: none;
+}
+
+/* Keep focus outline only for rating context */
+.competency-item.rating-context:focus-within {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
 }

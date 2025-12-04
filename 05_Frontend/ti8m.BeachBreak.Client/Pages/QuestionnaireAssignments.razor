@@ -478,26 +478,32 @@
     private Guid selectedCategoryId;
     private List<Category> availableCategories = new();
 
-    private readonly List<StatusOption> statusOptions = new()
-    {
-        new("All", null),
-        new("Assigned", WorkflowState.Assigned),
-        new("Employee In Progress", WorkflowState.EmployeeInProgress),
-        new("Manager In Progress", WorkflowState.ManagerInProgress),
-        new("Both In Progress", WorkflowState.BothInProgress),
-        new("Employee Submitted", WorkflowState.EmployeeSubmitted),
-        new("Manager Submitted", WorkflowState.ManagerSubmitted),
-        new("Both Submitted", WorkflowState.BothSubmitted),
-        new("In Review", WorkflowState.InReview),
-        new("Employee Review Confirmed", WorkflowState.EmployeeReviewConfirmed),
-        new("Manager Review Confirmed", WorkflowState.ManagerReviewConfirmed),
-        new("Finalized", WorkflowState.Finalized)
-    };
+    private List<StatusOption> statusOptions = new();
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        InitializeStatusOptions();
         await LoadInitialData();
+    }
+
+    private void InitializeStatusOptions()
+    {
+        statusOptions = new List<StatusOption>
+        {
+            new(T("workflow-states.all"), null),
+            new(T("workflow-states.assigned"), WorkflowState.Assigned),
+            new(T("workflow-states.employee-in-progress"), WorkflowState.EmployeeInProgress),
+            new(T("workflow-states.manager-in-progress"), WorkflowState.ManagerInProgress),
+            new(T("workflow-states.both-in-progress"), WorkflowState.BothInProgress),
+            new(T("workflow-states.employee-submitted"), WorkflowState.EmployeeSubmitted),
+            new(T("workflow-states.manager-submitted"), WorkflowState.ManagerSubmitted),
+            new(T("workflow-states.both-submitted"), WorkflowState.BothSubmitted),
+            new(T("workflow-states.in-review"), WorkflowState.InReview),
+            new(T("workflow-states.employee-review-confirmed"), WorkflowState.EmployeeReviewConfirmed),
+            new(T("workflow-states.manager-review-confirmed"), WorkflowState.ManagerReviewConfirmed),
+            new(T("workflow-states.finalized"), WorkflowState.Finalized)
+        };
     }
 
     private async Task LoadInitialData()
@@ -545,8 +551,8 @@
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error,
-                "Loading Failed",
-                "Failed to load initial data. Please refresh the page.");
+                T("notifications.loading-failed"),
+                T("notifications.failed-load-data"));
             Console.WriteLine($"Error loading initial data: {ex.Message}");
         }
         finally
@@ -689,8 +695,8 @@
                 FilterAssignments();
 
                 NotificationService.Notify(NotificationSeverity.Success,
-                    "Assignments Created",
-                    $"Successfully created {newAssignments.Count} questionnaire assignments",
+                    T("notifications.assignments-created"),
+                    $"{T("notifications.assignments-created-success")} {newAssignments.Count}",
                     duration: 6000);
 
                 // Reset form
@@ -707,15 +713,15 @@
             else
             {
                 NotificationService.Notify(NotificationSeverity.Warning,
-                    "No Assignments Created",
-                    "No assignments were created. Please check your selection and try again.");
+                    T("notifications.no-assignments-created"),
+                    T("notifications.no-assignments-message"));
             }
         }
         catch (Exception ex)
         {
             NotificationService.Notify(NotificationSeverity.Error,
-                "Assignment Creation Failed",
-                $"An error occurred while creating assignments: {ex.Message}");
+                T("notifications.assignment-creation-failed"),
+                $"{T("notifications.assignment-creation-error")}: {ex.Message}");
             Console.WriteLine($"Error creating assignments: {ex.Message}");
             Console.WriteLine($"Stack trace: {ex.StackTrace}");
         }
@@ -735,7 +741,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to load assignments");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("notifications.failed-load-assignments"));
             Console.WriteLine($"Error loading assignments: {ex.Message}");
         }
     }
@@ -749,13 +755,13 @@
 
     private string GetTemplateName(Guid templateId)
     {
-        return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.GetLocalizedNameWithFallback(CurrentLanguage) ?? "Unknown Questionnaire";
+        return allQuestionnaires.FirstOrDefault(q => q.Id == templateId)?.GetLocalizedNameWithFallback(CurrentLanguage) ?? T("labels.unknown-questionnaire");
     }
 
     private string GetCategoryName(Guid categoryId)
     {
         var category = categories.FirstOrDefault(c => c.Id == categoryId);
-        return category?.NameEn ?? "Uncategorized";
+        return category?.NameEn ?? T("labels.uncategorized");
     }
 
     private Guid GetTemplateCategory(Guid templateId)
@@ -811,8 +817,8 @@
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error",
-                $"Failed to open assignment details: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
+                $"{T("notifications.failed-open-details")}: {ex.Message}");
         }
     }
 
@@ -822,12 +828,12 @@
         {
             var questionnaire = allQuestionnaires.FirstOrDefault(q => q.Id == assignment.TemplateId);
 
-            NotificationService.Notify(NotificationSeverity.Info, "Edit", "Here we show edit assignment dialog");
+            NotificationService.Notify(NotificationSeverity.Info, T("notifications.edit"), T("notifications.edit-dialog-placeholder"));
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error",
-                $"Failed to open edit dialog: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
+                $"{T("notifications.failed-open-edit")}: {ex.Message}");
         }
     }
 
@@ -840,9 +846,9 @@
         {
             // Show confirmation for sending reminder
             var confirmed = await DialogService.Confirm(
-                $"Send a reminder notification to {assignment.EmployeeName}?",
-                "Send Reminder",
-                new ConfirmOptions { OkButtonText = "Send", CancelButtonText = "Cancel" });
+                $"{T("messages.send-reminder-confirmation")} {assignment.EmployeeName}?",
+                T("dialogs.send-reminder"),
+                new ConfirmOptions { OkButtonText = T("buttons.send"), CancelButtonText = T("buttons.cancel") });
 
             if (confirmed == true)
             {
@@ -850,15 +856,15 @@
                 await Task.Delay(1000); // Simulate API call
 
                 NotificationService.Notify(NotificationSeverity.Success,
-                    "Reminder Sent",
-                    $"Reminder notification sent successfully to {assignment.EmployeeName}",
+                    T("notifications.reminder-sent"),
+                    $"{T("notifications.reminder-sent-success")} {assignment.EmployeeName}",
                     duration: 5000);
             }
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error",
-                $"Failed to send reminder: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
+                $"{T("notifications.failed-send-reminder")}: {ex.Message}");
         }
         finally
         {
@@ -877,13 +883,13 @@
             // Show confirmation dialog for destructive action
             var options = new ConfirmOptions
             {
-                OkButtonText = "Cancel Assignment",
-                CancelButtonText = "Keep Assignment"
+                OkButtonText = T("buttons.cancel-assignment"),
+                CancelButtonText = T("buttons.keep-assignment")
             };
 
             var confirmed = await DialogService.Confirm(
-                $"Are you sure you want to cancel the assignment for {assignment.EmployeeName}? This action cannot be undone.",
-                "Cancel Assignment",
+                $"{T("messages.cancel-assignment-confirmation")} {assignment.EmployeeName}?",
+                T("dialogs.cancel-assignment"),
                 options);
 
             if (confirmed == true)
@@ -893,16 +899,16 @@
 
                 // Note: Cancelling assignments needs to be implemented with proper workflow state transitions
                 NotificationService.Notify(NotificationSeverity.Warning,
-                    "Not Implemented",
-                    "Assignment cancellation will be implemented with proper workflow state management",
+                    T("notifications.not-implemented"),
+                    T("notifications.cancellation-not-implemented"),
                     duration: 5000);
                 FilterAssignments();
             }
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error",
-                $"Failed to cancel assignment: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
+                $"{T("notifications.failed-cancel-assignment")}: {ex.Message}");
         }
         finally
         {
@@ -927,16 +933,16 @@
                 // TODO: Open a bulk assignment dialog with the questionnaire pre-selected
                 // For now, show a notification
                 NotificationService.Notify(NotificationSeverity.Info,
-                    "Assign to More Employees",
-                    $"Bulk assignment feature will open with '{questionnaire.GetLocalizedNameWithFallback(CurrentLanguage)}' pre-selected");
+                    T("notifications.assign-to-more"),
+                    $"{T("notifications.bulk-assignment-message")} '{questionnaire.GetLocalizedNameWithFallback(CurrentLanguage)}'");
 
                 // You can implement a BulkAssignmentDialog here similar to the existing ones
             }
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error",
-                $"Failed to open bulk assignment: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
+                $"{T("notifications.failed-bulk-assignment")}: {ex.Message}");
         }
     }
 

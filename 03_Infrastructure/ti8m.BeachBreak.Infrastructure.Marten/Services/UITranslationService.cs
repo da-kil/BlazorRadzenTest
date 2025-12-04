@@ -254,6 +254,75 @@ public class UITranslationService : IUITranslationService
         }
     }
 
+    public async Task<int> BulkImportTranslationsAsync(IList<UITranslation> translations, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            int importedCount = 0;
+
+            foreach (var translation in translations)
+            {
+                if (string.IsNullOrWhiteSpace(translation.Key))
+                {
+                    logger.LogWarning("Skipping translation with empty key");
+                    continue;
+                }
+
+                var existingTranslation = await session.Query<UITranslation>()
+                    .FirstOrDefaultAsync(t => t.Key == translation.Key, cancellationToken);
+
+                if (existingTranslation != null)
+                {
+                    // Update existing
+                    existingTranslation.German = translation.German;
+                    existingTranslation.English = translation.English;
+                    existingTranslation.Category = translation.Category ?? existingTranslation.Category;
+                    existingTranslation.UpdatedDate = DateTimeOffset.UtcNow;
+
+                    session.Update(existingTranslation);
+                }
+                else
+                {
+                    // Create new
+                    var newTranslation = new UITranslation
+                    {
+                        Key = translation.Key,
+                        German = translation.German,
+                        English = translation.English,
+                        Category = translation.Category ?? "general",
+                        CreatedDate = DateTimeOffset.UtcNow
+                    };
+
+                    session.Store(newTranslation);
+                }
+
+                importedCount++;
+            }
+
+            await session.SaveChangesAsync(cancellationToken);
+
+            // Clear cache to ensure fresh data
+            InvalidateCache();
+
+            logger.LogInformation("Bulk imported {Count} translations", importedCount);
+            return importedCount;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error bulk importing translations");
+            throw;
+        }
+    }
+
+    public void InvalidateCache()
+    {
+        // Get all cache keys by iterating through known patterns
+        // Note: IMemoryCache doesn't expose all keys, so we clear known patterns
+        memoryCache.Remove(AllTranslationsCacheKey);
+
+        logger.LogInformation("Translation cache invalidated - all cached entries will be reloaded from database on next access");
+    }
+
     private static List<UITranslation> GetSeedTranslations()
     {
         // NOTE: Comprehensive translations are now managed in TestDataGenerator project.

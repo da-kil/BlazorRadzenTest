@@ -9,7 +9,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 [ApiVersion(1.0)]
 [ApiController]
 [Route("c/api/v{version:apiVersion}/[controller]")]
-[Authorize(Policy = "Admin")]  // Only admins can seed translations
+[Authorize(Policy = "AdminOrApp")]  // Only admins can seed translations
 public class TranslationsController : BaseController
 {
     private readonly IUITranslationService translationService;
@@ -122,6 +122,69 @@ public class TranslationsController : BaseController
         {
             logger.LogError(ex, "Error seeding translations");
             return CreateResponse(CommandResult.Fail("Failed to seed translations", 500));
+        }
+    }
+
+    /// <summary>
+    /// Bulk import translations from JSON file - Admin only command operation
+    /// </summary>
+    /// <param name="translations">List of translations to import</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Number of translations imported</returns>
+    [HttpPost("bulk-import")]
+    public async Task<IActionResult> BulkImportTranslations([FromBody] List<UpsertTranslationRequest> translations, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (translations == null || translations.Count == 0)
+            {
+                return CreateResponse(CommandResult.Fail("No translations provided", 400));
+            }
+
+            logger.LogInformation("Bulk importing {Count} translations requested by admin", translations.Count);
+
+            // Convert requests to UITranslation objects
+            var uiTranslations = translations.Select(t => new Application.Query.Models.UITranslation
+            {
+                Key = t.Key,
+                German = t.German,
+                English = t.English,
+                Category = t.Category ?? "general",
+                CreatedDate = DateTimeOffset.UtcNow
+            }).ToList();
+
+            var importCount = await translationService.BulkImportTranslationsAsync(uiTranslations, cancellationToken);
+
+            logger.LogInformation("Successfully bulk imported {Count} translations", importCount);
+            return CreateResponse(CommandResult.Success(importCount));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error bulk importing translations");
+            return CreateResponse(CommandResult.Fail("Failed to bulk import translations", 500));
+        }
+    }
+
+    /// <summary>
+    /// Invalidate translation cache - Forces reload from database on next access
+    /// Useful for containerized environments where cache needs to be cleared
+    /// </summary>
+    /// <returns>Success status</returns>
+    [HttpPost("invalidate-cache")]
+    public IActionResult InvalidateCache()
+    {
+        try
+        {
+            logger.LogInformation("Translation cache invalidation requested by admin");
+            translationService.InvalidateCache();
+
+            logger.LogInformation("Successfully invalidated translation cache");
+            return CreateResponse(CommandResult.Success("Translation cache invalidated successfully"));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error invalidating translation cache");
+            return CreateResponse(CommandResult.Fail("Failed to invalidate translation cache", 500));
         }
     }
 

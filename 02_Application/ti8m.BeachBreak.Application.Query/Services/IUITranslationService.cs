@@ -66,4 +66,18 @@ public interface IUITranslationService
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Number of translations seeded</returns>
     Task<int> SeedInitialTranslationsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Bulk imports translations, upserting existing ones.
+    /// </summary>
+    /// <param name="translations">List of translations to import</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Number of translations imported</returns>
+    Task<int> BulkImportTranslationsAsync(IList<UITranslation> translations, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Clears all cached translations and forces reload from database on next access.
+    /// Useful for containerized environments where cache needs to be invalidated.
+    /// </summary>
+    void InvalidateCache();
 }

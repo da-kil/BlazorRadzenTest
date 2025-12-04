@@ -120,15 +120,16 @@ if (-not $SKIP_AUTH) {
     }
 }
 
-Write-Host "`nSeeding translations..." -ForegroundColor Cyan
+Write-Host "`nBulk importing translations..." -ForegroundColor Cyan
 try {
-    $translationResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/translations/seed" `
+    $translationResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/translations/bulk-import" `
       -Method POST `
-      -Headers $headers
+      -Headers $headers `
+      -InFile "test-translations.json"
 
-    Write-Host "Translations seeded successfully!" -ForegroundColor Green
+    Write-Host "Translations bulk imported successfully!" -ForegroundColor Green
 } catch {
-    Write-Host "Error seeding translations: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "Error bulk importing translations: $($_.Exception.Message)" -ForegroundColor Red
     if ($_.Exception.Response) {
         $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
         $responseBody = $reader.ReadToEnd()

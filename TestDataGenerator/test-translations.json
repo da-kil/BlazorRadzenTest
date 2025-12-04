@@ -1,807 +1,1500 @@
 [
-  {
-    "key": "nav.menu-toggle",
-    "german": "Navigationsmen\u00FC",
-    "english": "Navigation menu",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998128+00:00"
-  },
-  {
-    "key": "nav.dashboard",
-    "german": "Dashboard",
-    "english": "Dashboard",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998585+00:00"
-  },
-  {
-    "key": "nav.my-work",
-    "german": "Meine Arbeit",
-    "english": "My Work",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998586+00:00"
-  },
-  {
-    "key": "nav.questionnaires",
-    "german": "Fragebogen",
-    "english": "Questionnaires",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998587+00:00"
-  },
-  {
-    "key": "nav.my-questionnaires",
-    "german": "Meine Fragebogen",
-    "english": "My Questionnaires",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998588+00:00"
-  },
-  {
-    "key": "nav.team-overview",
-    "german": "Team \u00DCbersicht",
-    "english": "Team Overview",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998591+00:00"
-  },
-  {
-    "key": "nav.team-questionnaires",
-    "german": "Team Fragebogen",
-    "english": "Team Questionnaires",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998592+00:00"
-  },
-  {
-    "key": "nav.organization",
-    "german": "Organisation",
-    "english": "Organization",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998593+00:00"
-  },
-  {
-    "key": "nav.management",
-    "german": "Verwaltung",
-    "english": "Management",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998593+00:00"
-  },
-  {
-    "key": "nav.create-questionnaire",
-    "german": "Fragebogen erstellen",
-    "english": "Create Questionnaire",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998595+00:00"
-  },
-  {
-    "key": "nav.manage-questionnaires",
-    "german": "Fragebogen verwalten",
-    "english": "Manage Questionnaires",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998596+00:00"
-  },
-  {
-    "key": "nav.assignments",
-    "german": "Zuweisungen",
-    "english": "Assignments",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998596+00:00"
-  },
-  {
-    "key": "nav.administration",
-    "german": "Administration",
-    "english": "Administration",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998597+00:00"
-  },
-  {
-    "key": "nav.questionnaire-management",
-    "german": "Fragebogen Verwaltung",
-    "english": "Questionnaire Management",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998598+00:00"
-  },
-  {
-    "key": "nav.categories",
-    "german": "Kategorien",
-    "english": "Categories",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998598+00:00"
-  },
-  {
-    "key": "nav.role-management",
-    "german": "Rollenverwaltung",
-    "english": "Role Management",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998599+00:00"
-  },
-  {
-    "key": "nav.projection-replay",
-    "german": "Projektions-Wiederholung",
-    "english": "Projection Replay",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.89986+00:00"
-  },
-  {
-    "key": "buttons.save",
-    "german": "Speichern",
-    "english": "Save",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998601+00:00"
-  },
-  {
-    "key": "buttons.cancel",
-    "german": "Abbrechen",
-    "english": "Cancel",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998602+00:00"
-  },
-  {
-    "key": "buttons.delete",
-    "german": "L\u00F6schen",
-    "english": "Delete",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998603+00:00"
-  },
-  {
-    "key": "buttons.edit",
-    "german": "Bearbeiten",
-    "english": "Edit",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998603+00:00"
-  },
-  {
-    "key": "buttons.add",
-    "german": "Hinzuf\u00FCgen",
-    "english": "Add",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998604+00:00"
-  },
-  {
-    "key": "buttons.submit",
-    "german": "Absenden",
-    "english": "Submit",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998612+00:00"
-  },
-  {
-    "key": "buttons.close",
-    "german": "Schlie\u00DFen",
-    "english": "Close",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998612+00:00"
-  },
-  {
-    "key": "buttons.confirm",
-    "german": "Best\u00E4tigen",
-    "english": "Confirm",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998613+00:00"
-  },
-  {
-    "key": "buttons.previous",
-    "german": "Zur\u00FCck",
-    "english": "Previous",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998614+00:00"
-  },
-  {
-    "key": "buttons.next",
-    "german": "Weiter",
-    "english": "Next",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998614+00:00"
-  },
-  {
-    "key": "buttons.save-progress",
-    "german": "Fortschritt speichern",
-    "english": "Save Progress",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998615+00:00"
-  },
-  {
-    "key": "buttons.saving",
-    "german": "Speichere...",
-    "english": "Saving...",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998616+00:00"
-  },
-  {
-    "key": "buttons.submitting",
-    "german": "Sende...",
-    "english": "Submitting...",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998617+00:00"
-  },
-  {
-    "key": "buttons.retry",
-    "german": "Wiederholen",
-    "english": "Retry",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998617+00:00"
-  },
-  {
-    "key": "buttons.loading",
-    "german": "L\u00E4dt",
-    "english": "Loading",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998618+00:00"
-  },
-  {
-    "key": "buttons.create-new",
-    "german": "Neu erstellen",
-    "english": "Create New",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998619+00:00"
-  },
-  {
-    "key": "labels.name",
-    "german": "Name",
-    "english": "Name",
-    "category": "labels",
-    "createdDate": "2025-12-03T12:17:11.899862+00:00"
-  },
-  {
-    "key": "labels.description",
-    "german": "Beschreibung",
-    "english": "Description",
-    "category": "labels",
-    "createdDate": "2025-12-03T12:17:11.8998621+00:00"
-  },
-  {
-    "key": "labels.category",
-    "german": "Kategorie",
-    "english": "Category",
-    "category": "labels",
-    "createdDate": "2025-12-03T12:17:11.8998622+00:00"
-  },
-  {
-    "key": "labels.status",
-    "german": "Status",
-    "english": "Status",
-    "category": "labels",
-    "createdDate": "2025-12-03T12:17:11.8998622+00:00"
-  },
-  {
-    "key": "forms.objective-description-required",
-    "german": "Zielbeschreibung*",
-    "english": "Objective Description*",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998623+00:00"
-  },
-  {
-    "key": "forms.measurement-metric-required",
-    "german": "Messgr\u00F6\u00DFe*",
-    "english": "Measurement Metric*",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998624+00:00"
-  },
-  {
-    "key": "forms.start-date-required",
-    "german": "Startdatum*",
-    "english": "Start Date*",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998625+00:00"
-  },
-  {
-    "key": "forms.end-date-required",
-    "german": "Enddatum*",
-    "english": "End Date*",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998625+00:00"
-  },
-  {
-    "key": "forms.weighting",
-    "german": "Gewichtung",
-    "english": "Weighting",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998626+00:00"
-  },
-  {
-    "key": "forms.weighting-percentage-required",
-    "german": "Gewichtung Prozentsatz*",
-    "english": "Weighting Percentage*",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998627+00:00"
-  },
-  {
-    "key": "forms.reason-for-change-required",
-    "german": "Grund f\u00FCr \u00C4nderung*",
-    "english": "Reason for Change*",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998628+00:00"
-  },
-  {
-    "key": "forms.describe-goal-objective",
-    "german": "Beschreiben Sie das Ziel...",
-    "english": "Describe the goal objective...",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998628+00:00"
-  },
-  {
-    "key": "forms.how-measured",
-    "german": "Wie wird dieses Ziel gemessen?",
-    "english": "How will this goal be measured?",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998629+00:00"
-  },
-  {
-    "key": "forms.weighting-help-text",
-    "german": "Prozentsatz der Gesamtziele (0-100%). Setzen Sie die Gewichtung, um die Wichtigkeit zwischen den Zielen zu verteilen.",
-    "english": "Percentage of total goals (0-100%). Set weighting to allocate importance across goals.",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.899863+00:00"
-  },
-  {
-    "key": "forms.explain-goal-modification",
-    "german": "Erkl\u00E4ren Sie, warum dieses Ziel ge\u00E4ndert wird...",
-    "english": "Explain why this goal is being modified...",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.899863+00:00"
-  },
-  {
-    "key": "forms.characters",
-    "german": "Zeichen",
-    "english": "characters",
-    "category": "forms",
-    "createdDate": "2025-12-03T12:17:11.8998637+00:00"
-  },
-  {
-    "key": "validation.fix-errors",
-    "german": "Bitte beheben Sie die folgenden Fehler",
-    "english": "Please fix the following errors",
-    "category": "validation",
-    "createdDate": "2025-12-03T12:17:11.8998638+00:00"
-  },
-  {
-    "key": "validation.required",
-    "german": "Erforderlich",
-    "english": "Required",
-    "category": "validation",
-    "createdDate": "2025-12-03T12:17:11.8998638+00:00"
-  },
-  {
-    "key": "validation.email",
-    "german": "Ung\u00FCltige E-Mail-Adresse",
-    "english": "Invalid email address",
-    "category": "validation",
-    "createdDate": "2025-12-03T12:17:11.8998639+00:00"
-  },
-  {
-    "key": "validation.min-length",
-    "german": "Mindestl\u00E4nge erforderlich",
-    "english": "Minimum length required",
-    "category": "validation",
-    "createdDate": "2025-12-03T12:17:11.899864+00:00"
-  },
-  {
-    "key": "notifications.success",
-    "german": "Erfolg",
-    "english": "Success",
-    "category": "notifications",
-    "createdDate": "2025-12-03T12:17:11.899864+00:00"
-  },
-  {
-    "key": "notifications.error",
-    "german": "Fehler",
-    "english": "Error",
-    "category": "notifications",
-    "createdDate": "2025-12-03T12:17:11.8998641+00:00"
-  },
-  {
-    "key": "notifications.warning",
-    "german": "Warnung",
-    "english": "Warning",
-    "category": "notifications",
-    "createdDate": "2025-12-03T12:17:11.8998642+00:00"
-  },
-  {
-    "key": "notifications.info",
-    "german": "Information",
-    "english": "Information",
-    "category": "notifications",
-    "createdDate": "2025-12-03T12:17:11.8998643+00:00"
-  },
-  {
-    "key": "notifications.failed",
-    "german": "Fehlgeschlagen",
-    "english": "Failed",
-    "category": "notifications",
-    "createdDate": "2025-12-03T12:17:11.8998643+00:00"
-  },
-  {
-    "key": "dialogs.add-goal",
-    "german": "Ziel hinzuf\u00FCgen",
-    "english": "Add Goal",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998644+00:00"
-  },
-  {
-    "key": "dialogs.update-goal",
-    "german": "Ziel aktualisieren",
-    "english": "Update Goal",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998645+00:00"
-  },
-  {
-    "key": "dialogs.adding-goal",
-    "german": "Ziel wird hinzugef\u00FCgt...",
-    "english": "Adding Goal...",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998645+00:00"
-  },
-  {
-    "key": "dialogs.updating-goal",
-    "german": "Ziel wird aktualisiert...",
-    "english": "Updating Goal...",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998646+00:00"
-  },
-  {
-    "key": "dialogs.save-changes",
-    "german": "\u00C4nderungen speichern",
-    "english": "Save Changes",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998647+00:00"
-  },
-  {
-    "key": "dialogs.saving",
-    "german": "Speichere...",
-    "english": "Saving",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998648+00:00"
-  },
-  {
-    "key": "dialogs.employee-sign-off",
-    "german": "Mitarbeiter Best\u00E4tigung",
-    "english": "Employee Sign-Off",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998648+00:00"
-  },
-  {
-    "key": "dialogs.confirm-review-message",
-    "german": "Sie best\u00E4tigen, dass Sie die Fragebogen-Ergebnisse besprochen und zur Kenntnis genommen haben.",
-    "english": "You are about to confirm that you have reviewed and acknowledged the questionnaire results discussed with your manager.",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998681+00:00"
-  },
-  {
-    "key": "dialogs.sign-off-review",
-    "german": "Besprechung best\u00E4tigen",
-    "english": "Sign Off on Review",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998682+00:00"
-  },
-  {
-    "key": "dialogs.signing-off",
-    "german": "Best\u00E4tige...",
-    "english": "Signing Off",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998683+00:00"
-  },
-  {
-    "key": "dialogs.close",
-    "german": "Schlie\u00DFen",
-    "english": "Close",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998684+00:00"
-  },
-  {
-    "key": "dialogs.confirm",
-    "german": "Best\u00E4tigen",
-    "english": "Confirm",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998684+00:00"
-  },
-  {
-    "key": "status.overdue",
-    "german": "\u00DCberf\u00E4llig",
-    "english": "Overdue",
-    "category": "status",
-    "createdDate": "2025-12-03T12:17:11.8998685+00:00"
-  },
-  {
-    "key": "status.due-soon",
-    "german": "Bald f\u00E4llig",
-    "english": "Due Soon",
-    "category": "status",
-    "createdDate": "2025-12-03T12:17:11.8998686+00:00"
-  },
-  {
-    "key": "dashboard.no-data",
-    "german": "Keine Dashboard-Daten",
-    "english": "No Dashboard Data",
-    "category": "dashboard",
-    "createdDate": "2025-12-03T12:17:11.8998687+00:00"
-  },
-  {
-    "key": "dashboard.unable-to-load",
-    "german": "Dashboard-Informationen k\u00F6nnen nicht geladen werden.",
-    "english": "Unable to load dashboard information.",
-    "category": "dashboard",
-    "createdDate": "2025-12-03T12:17:11.8998693+00:00"
-  },
-  {
-    "key": "tabs.templates",
-    "german": "Vorlagen",
-    "english": "Templates",
-    "category": "tabs",
-    "createdDate": "2025-12-03T12:17:11.8998694+00:00"
-  },
-  {
-    "key": "tabs.settings",
-    "german": "Einstellungen",
-    "english": "Settings",
-    "category": "tabs",
-    "createdDate": "2025-12-03T12:17:11.8998695+00:00"
-  },
-  {
-    "key": "filters.filter-by-type",
-    "german": "Nach Typ filtern",
-    "english": "Filter by Type",
-    "category": "filters",
-    "createdDate": "2025-12-03T12:17:11.8998695+00:00"
-  },
-  {
-    "key": "filters.search-templates",
-    "german": "Vorlagen suchen...",
-    "english": "Search templates...",
-    "category": "filters",
-    "createdDate": "2025-12-03T12:17:11.8998696+00:00"
-  },
-  {
-    "key": "filters.show-archived",
-    "german": "Archivierte anzeigen",
-    "english": "Show Archived",
-    "category": "filters",
-    "createdDate": "2025-12-03T12:17:11.8998697+00:00"
-  },
-  {
-    "key": "settings.send-assignment-notifications",
-    "german": "Zuweisungsbenachrichtigungen senden",
-    "english": "Send assignment notifications",
-    "category": "settings",
-    "createdDate": "2025-12-03T12:17:11.8998697+00:00"
-  },
-  {
-    "key": "settings.send-reminder-emails",
-    "german": "Erinnerungs-E-Mails senden",
-    "english": "Send reminder emails",
-    "category": "settings",
-    "createdDate": "2025-12-03T12:17:11.8998698+00:00"
-  },
-  {
-    "key": "settings.send-completion-confirmations",
-    "german": "Abschlussbest\u00E4tigungen senden",
-    "english": "Send completion confirmations",
-    "category": "settings",
-    "createdDate": "2025-12-03T12:17:11.8998699+00:00"
-  },
-  {
-    "key": "pages.team-questionnaires",
-    "german": "Team Fragebogen",
-    "english": "Team Questionnaires",
-    "category": "pages",
-    "createdDate": "2025-12-03T12:17:11.8998699+00:00"
-  },
-  {
-    "key": "pages.team-questionnaires-description",
-    "german": "Fragebogen f\u00FCr Ihre Teammitglieder anzeigen und verwalten",
-    "english": "View and manage questionnaires for your team members",
-    "category": "pages",
-    "createdDate": "2025-12-03T12:17:11.89987+00:00"
-  },
-  {
-    "key": "columns.first-name",
-    "german": "Vorname",
-    "english": "First Name",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998701+00:00"
-  },
-  {
-    "key": "columns.last-name",
-    "german": "Nachname",
-    "english": "Last Name",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998702+00:00"
-  },
-  {
-    "key": "columns.job-role",
-    "german": "Berufsrolle",
-    "english": "Job Role",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998702+00:00"
-  },
-  {
-    "key": "columns.organization",
-    "german": "Organisation",
-    "english": "Organization",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998703+00:00"
-  },
-  {
-    "key": "columns.application-role",
-    "german": "Anwendungsrolle",
-    "english": "Application Role",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998704+00:00"
-  },
-  {
-    "key": "columns.template-name",
-    "german": "Vorlagenname",
-    "english": "Template Name",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998704+00:00"
-  },
-  {
-    "key": "columns.category",
-    "german": "Kategorie",
-    "english": "Category",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998705+00:00"
-  },
-  {
-    "key": "columns.sections",
-    "german": "Abschnitte",
-    "english": "Sections",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998706+00:00"
-  },
-  {
-    "key": "columns.questions",
-    "german": "Fragen",
-    "english": "Questions",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998706+00:00"
-  },
-  {
-    "key": "columns.status",
-    "german": "Status",
-    "english": "Status",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998707+00:00"
-  },
-  {
-    "key": "columns.created",
-    "german": "Erstellt",
-    "english": "Created",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998708+00:00"
-  },
-  {
-    "key": "columns.published",
-    "german": "Ver\u00F6ffentlicht",
-    "english": "Published",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998709+00:00"
-  },
-  {
-    "key": "columns.name-en",
-    "german": "Name EN",
-    "english": "Name EN",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998709+00:00"
-  },
-  {
-    "key": "columns.name-de",
-    "german": "Name DE",
-    "english": "Name DE",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.899871+00:00"
-  },
-  {
-    "key": "columns.description-en",
-    "german": "Beschreibung EN",
-    "english": "Description EN",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998711+00:00"
-  },
-  {
-    "key": "columns.description-de",
-    "german": "Beschreibung DE",
-    "english": "Description DE",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998711+00:00"
-  },
-  {
-    "key": "columns.sort-order",
-    "german": "Sortierreihenfolge",
-    "english": "Sort Order",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998712+00:00"
-  },
-  {
-    "key": "columns.actions",
-    "german": "Aktionen",
-    "english": "Actions",
-    "category": "columns",
-    "createdDate": "2025-12-03T12:17:11.8998713+00:00"
-  },
-  {
-    "key": "filters.search-employees",
-    "german": "Mitarbeiter suchen...",
-    "english": "Search employees...",
-    "category": "filters",
-    "createdDate": "2025-12-03T12:17:11.8998713+00:00"
-  },
-  {
-    "key": "filters.search-types",
-    "german": "Typen suchen...",
-    "english": "Search types...",
-    "category": "filters",
-    "createdDate": "2025-12-03T12:17:11.8998714+00:00"
-  },
-  {
-    "key": "filters.show-inactive",
-    "german": "Inaktive anzeigen",
-    "english": "Show Inactive",
-    "category": "filters",
-    "createdDate": "2025-12-03T12:17:11.8998715+00:00"
-  },
-  {
-    "key": "status.active",
-    "german": "Aktiv",
-    "english": "Active",
-    "category": "status",
-    "createdDate": "2025-12-03T12:17:11.8998716+00:00"
-  },
-  {
-    "key": "status.inactive",
-    "german": "Inaktiv",
-    "english": "Inactive",
-    "category": "status",
-    "createdDate": "2025-12-03T12:17:11.8998716+00:00"
-  },
-  {
-    "key": "buttons.add-new-type",
-    "german": "Neuen Typ hinzuf\u00FCgen",
-    "english": "Add New Type",
-    "category": "buttons",
-    "createdDate": "2025-12-03T12:17:11.8998717+00:00"
-  },
-  {
-    "key": "placeholders.enter-english-name",
-    "german": "Englischen Namen eingeben",
-    "english": "Enter English name",
-    "category": "placeholders",
-    "createdDate": "2025-12-03T12:17:11.8998718+00:00"
-  },
-  {
-    "key": "placeholders.enter-german-name",
-    "german": "Deutschen Namen eingeben",
-    "english": "Enter German name",
-    "category": "placeholders",
-    "createdDate": "2025-12-03T12:17:11.8998718+00:00"
-  },
-  {
-    "key": "placeholders.enter-english-description",
-    "german": "Englische Beschreibung eingeben (optional)",
-    "english": "Enter English description (optional)",
-    "category": "placeholders",
-    "createdDate": "2025-12-03T12:17:11.8998719+00:00"
-  },
-  {
-    "key": "placeholders.enter-german-description",
-    "german": "Deutsche Beschreibung eingeben (optional)",
-    "english": "Enter German description (optional)",
-    "category": "placeholders",
-    "createdDate": "2025-12-03T12:17:11.899872+00:00"
-  },
-  {
-    "key": "labels.uncategorized",
-    "german": "Unkategorisiert",
-    "english": "Uncategorized",
-    "category": "labels",
-    "createdDate": "2025-12-03T12:17:11.899872+00:00"
-  },
-  {
-    "key": "language.german",
-    "german": "Deutsch",
-    "english": "German",
-    "category": "language",
-    "createdDate": "2025-12-03T12:17:11.8998721+00:00"
-  },
-  {
-    "key": "language.english",
-    "german": "Englisch",
-    "english": "English",
-    "category": "language",
-    "createdDate": "2025-12-03T12:17:11.8998722+00:00"
-  }
+    {
+        "key":  "buttons.add",
+        "german":  "Hinzufügen",
+        "english":  "Add",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998604+00:00"
+    },
+    {
+        "key":  "buttons.add-new-type",
+        "german":  "Neuen Typ hinzufügen",
+        "english":  "Add New Type",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998717+00:00"
+    },
+    {
+        "key":  "buttons.cancel",
+        "german":  "Abbrechen",
+        "english":  "Cancel",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998602+00:00"
+    },
+    {
+        "key":  "buttons.cancel-assignment",
+        "german":  "Zuweisung stornieren",
+        "english":  "Cancel Assignment",
+        "category":  "buttons",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.clear-selection",
+        "german":  "Auswahl löschen",
+        "english":  "Clear Selection",
+        "category":  "buttons",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.close",
+        "german":  "Schlieöen",
+        "english":  "Close",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998612+00:00"
+    },
+    {
+        "key":  "buttons.confirm",
+        "german":  "Bestötigen",
+        "english":  "Confirm",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998613+00:00"
+    },
+    {
+        "key":  "buttons.create-assignment",
+        "german":  "Zuweisung erstellen",
+        "english":  "Create Assignment",
+        "category":  "buttons",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.create-new",
+        "german":  "Neu erstellen",
+        "english":  "Create New",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998619+00:00"
+    },
+    {
+        "key":  "buttons.creating-assignments",
+        "german":  "Zuweisungen werden erstellt",
+        "english":  "Creating Assignments",
+        "category":  "buttons",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.delete",
+        "german":  "Löschen",
+        "english":  "Delete",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998603+00:00"
+    },
+    {
+        "key":  "buttons.deleting",
+        "german":  "Löschen...",
+        "english":  "Deleting",
+        "category":  "buttons",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.edit",
+        "german":  "Bearbeiten",
+        "english":  "Edit",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998603+00:00"
+    },
+    {
+        "key":  "buttons.keep-assignment",
+        "german":  "Zuweisung behalten",
+        "english":  "Keep Assignment",
+        "category":  "buttons",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.loading",
+        "german":  "Lödt",
+        "english":  "Loading",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998618+00:00"
+    },
+    {
+        "key":  "buttons.next",
+        "german":  "Weiter",
+        "english":  "Next",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998614+00:00"
+    },
+    {
+        "key":  "buttons.previous",
+        "german":  "Zuröck",
+        "english":  "Previous",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998614+00:00"
+    },
+    {
+        "key":  "buttons.refresh",
+        "german":  "Aktualisieren",
+        "english":  "Refresh",
+        "category":  "buttons",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.retry",
+        "german":  "Wiederholen",
+        "english":  "Retry",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998617+00:00"
+    },
+    {
+        "key":  "buttons.save",
+        "german":  "Speichern",
+        "english":  "Save",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998601+00:00"
+    },
+    {
+        "key":  "buttons.save-progress",
+        "german":  "Fortschritt speichern",
+        "english":  "Save Progress",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998615+00:00"
+    },
+    {
+        "key":  "buttons.saving",
+        "german":  "Speichere...",
+        "english":  "Saving...",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998616+00:00"
+    },
+    {
+        "key":  "buttons.send",
+        "german":  "Senden",
+        "english":  "Send",
+        "category":  "buttons",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.start-new-replay",
+        "german":  "Neue Wiederholung starten",
+        "english":  "Start New Replay",
+        "category":  "buttons",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.submit",
+        "german":  "Absenden",
+        "english":  "Submit",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998612+00:00"
+    },
+    {
+        "key":  "buttons.submitting",
+        "german":  "Sende...",
+        "english":  "Submitting...",
+        "category":  "buttons",
+        "createdDate":  "2025-12-03T12:17:11.8998617+00:00"
+    },
+    {
+        "key":  "columns.actions",
+        "german":  "Aktionen",
+        "english":  "Actions",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998713+00:00"
+    },
+    {
+        "key":  "columns.application-role",
+        "german":  "Anwendungsrolle",
+        "english":  "Application Role",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998704+00:00"
+    },
+    {
+        "key":  "columns.assigned",
+        "german":  "Zugewiesen",
+        "english":  "Assigned",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.assigned-by",
+        "german":  "Zugewiesen von",
+        "english":  "Assigned By",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.category",
+        "german":  "Kategorie",
+        "english":  "Category",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998705+00:00"
+    },
+    {
+        "key":  "columns.completed",
+        "german":  "Abgeschlossen",
+        "english":  "Completed",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.completed-at",
+        "german":  "Abgeschlossen am",
+        "english":  "Completed At",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.created",
+        "german":  "Erstellt",
+        "english":  "Created",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998708+00:00"
+    },
+    {
+        "key":  "columns.description-de",
+        "german":  "Beschreibung",
+        "english":  "Description",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998711+00:00"
+    },
+    {
+        "key":  "columns.description-en",
+        "german":  "Beschreibung",
+        "english":  "Description",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998711+00:00"
+    },
+    {
+        "key":  "columns.due-date",
+        "german":  "Fölligkeitsdatum",
+        "english":  "Due Date",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.employee",
+        "german":  "Mitarbeiter",
+        "english":  "Employee",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.first-name",
+        "german":  "Vorname",
+        "english":  "First Name",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998701+00:00"
+    },
+    {
+        "key":  "columns.initiated-by",
+        "german":  "Initiiert von",
+        "english":  "Initiated By",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.job-role",
+        "german":  "Berufsrolle",
+        "english":  "Job Role",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998702+00:00"
+    },
+    {
+        "key":  "columns.last-name",
+        "german":  "Nachname",
+        "english":  "Last Name",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998702+00:00"
+    },
+    {
+        "key":  "columns.name-de",
+        "german":  "Name DE",
+        "english":  "Name DE",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.899871+00:00"
+    },
+    {
+        "key":  "columns.name-en",
+        "german":  "Name",
+        "english":  "Name",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998709+00:00"
+    },
+    {
+        "key":  "columns.organization",
+        "german":  "Organisation",
+        "english":  "Organization",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998703+00:00"
+    },
+    {
+        "key":  "columns.progress",
+        "german":  "Fortschritt",
+        "english":  "Progress",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.projection",
+        "german":  "Projektion",
+        "english":  "Projection",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.published",
+        "german":  "Veröffentlicht",
+        "english":  "Published",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998709+00:00"
+    },
+    {
+        "key":  "columns.questionnaire",
+        "german":  "Fragebogen",
+        "english":  "Questionnaire",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.questions",
+        "german":  "Fragen",
+        "english":  "Questions",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998706+00:00"
+    },
+    {
+        "key":  "columns.reason",
+        "german":  "Grund",
+        "english":  "Reason",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.sections",
+        "german":  "Abschnitte",
+        "english":  "Sections",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998706+00:00"
+    },
+    {
+        "key":  "columns.sort-order",
+        "german":  "Sortierreihenfolge",
+        "english":  "Sort Order",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998712+00:00"
+    },
+    {
+        "key":  "columns.started",
+        "german":  "Gestartet",
+        "english":  "Started",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.started-at",
+        "german":  "Gestartet am",
+        "english":  "Started At",
+        "category":  "columns",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.status",
+        "german":  "Status",
+        "english":  "Status",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998707+00:00"
+    },
+    {
+        "key":  "columns.template-name",
+        "german":  "Vorlagenname",
+        "english":  "Template Name",
+        "category":  "columns",
+        "createdDate":  "2025-12-03T12:17:11.8998704+00:00"
+    },
+    {
+        "key":  "dashboard.no-data",
+        "german":  "Keine Dashboard-Daten",
+        "english":  "No Dashboard Data",
+        "category":  "dashboard",
+        "createdDate":  "2025-12-03T12:17:11.8998687+00:00"
+    },
+    {
+        "key":  "dashboard.unable-to-load",
+        "german":  "Dashboard-Informationen können nicht geladen werden.",
+        "english":  "Unable to load dashboard information.",
+        "category":  "dashboard",
+        "createdDate":  "2025-12-03T12:17:11.8998693+00:00"
+    },
+    {
+        "key":  "dialogs.add-goal",
+        "german":  "Ziel hinzufügen",
+        "english":  "Add Goal",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998644+00:00"
+    },
+    {
+        "key":  "dialogs.adding-goal",
+        "german":  "Ziel wird hinzugefögt...",
+        "english":  "Adding Goal...",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998645+00:00"
+    },
+    {
+        "key":  "dialogs.cancel-assignment",
+        "german":  "Zuweisung stornieren",
+        "english":  "Cancel Assignment",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.close",
+        "german":  "Schlieöen",
+        "english":  "Close",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998684+00:00"
+    },
+    {
+        "key":  "dialogs.confirm",
+        "german":  "Bestötigen",
+        "english":  "Confirm",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998684+00:00"
+    },
+    {
+        "key":  "dialogs.confirm-review-message",
+        "german":  "Sie bestötigen, dass Sie die Fragebogen-Ergebnisse besprochen und zur Kenntnis genommen haben.",
+        "english":  "You are about to confirm that you have reviewed and acknowledged the questionnaire results discussed with your manager.",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998681+00:00"
+    },
+    {
+        "key":  "dialogs.employee-sign-off",
+        "german":  "Mitarbeiter Bestötigung",
+        "english":  "Employee Sign-Off",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998648+00:00"
+    },
+    {
+        "key":  "dialogs.save-changes",
+        "german":  "önderungen speichern",
+        "english":  "Save Changes",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998647+00:00"
+    },
+    {
+        "key":  "dialogs.saving",
+        "german":  "Speichere...",
+        "english":  "Saving",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998648+00:00"
+    },
+    {
+        "key":  "dialogs.send-reminder",
+        "german":  "Erinnerung senden",
+        "english":  "Send Reminder",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.signing-off",
+        "german":  "Bestötige...",
+        "english":  "Signing Off",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998683+00:00"
+    },
+    {
+        "key":  "dialogs.sign-off-review",
+        "german":  "Besprechung bestötigen",
+        "english":  "Sign Off on Review",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998682+00:00"
+    },
+    {
+        "key":  "dialogs.update-goal",
+        "german":  "Ziel aktualisieren",
+        "english":  "Update Goal",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998645+00:00"
+    },
+    {
+        "key":  "dialogs.updating-goal",
+        "german":  "Ziel wird aktualisiert...",
+        "english":  "Updating Goal...",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-03T12:17:11.8998646+00:00"
+    },
+    {
+        "key":  "filters.filter-by-category",
+        "german":  "Nach Kategorie filtern",
+        "english":  "Filter by category",
+        "category":  "filters",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "filters.filter-by-type",
+        "german":  "Nach Typ filtern",
+        "english":  "Filter by Type",
+        "category":  "filters",
+        "createdDate":  "2025-12-03T12:17:11.8998695+00:00"
+    },
+    {
+        "key":  "filters.search-employees",
+        "german":  "Mitarbeiter suchen...",
+        "english":  "Search employees...",
+        "category":  "filters",
+        "createdDate":  "2025-12-03T12:17:11.8998713+00:00"
+    },
+    {
+        "key":  "filters.search-templates",
+        "german":  "Vorlagen suchen...",
+        "english":  "Search templates...",
+        "category":  "filters",
+        "createdDate":  "2025-12-03T12:17:11.8998696+00:00"
+    },
+    {
+        "key":  "filters.search-types",
+        "german":  "Typen suchen...",
+        "english":  "Search types...",
+        "category":  "filters",
+        "createdDate":  "2025-12-03T12:17:11.8998714+00:00"
+    },
+    {
+        "key":  "filters.show-archived",
+        "german":  "Archivierte anzeigen",
+        "english":  "Show Archived",
+        "category":  "filters",
+        "createdDate":  "2025-12-03T12:17:11.8998697+00:00"
+    },
+    {
+        "key":  "filters.show-inactive",
+        "german":  "Inaktive anzeigen",
+        "english":  "Show Inactive",
+        "category":  "filters",
+        "createdDate":  "2025-12-03T12:17:11.8998715+00:00"
+    },
+    {
+        "key":  "forms.characters",
+        "german":  "Zeichen",
+        "english":  "characters",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998637+00:00"
+    },
+    {
+        "key":  "forms.describe-goal-objective",
+        "german":  "Beschreiben Sie das Ziel...",
+        "english":  "Describe the goal objective...",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998628+00:00"
+    },
+    {
+        "key":  "forms.end-date-required",
+        "german":  "Enddatum*",
+        "english":  "End Date*",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998625+00:00"
+    },
+    {
+        "key":  "forms.explain-goal-modification",
+        "german":  "Erklören Sie, warum dieses Ziel geöndert wird...",
+        "english":  "Explain why this goal is being modified...",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.899863+00:00"
+    },
+    {
+        "key":  "forms.how-measured",
+        "german":  "Wie wird dieses Ziel gemessen?",
+        "english":  "How will this goal be measured?",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998629+00:00"
+    },
+    {
+        "key":  "forms.measurement-metric-required",
+        "german":  "Messgrööe*",
+        "english":  "Measurement Metric*",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998624+00:00"
+    },
+    {
+        "key":  "forms.objective-description-required",
+        "german":  "Zielbeschreibung*",
+        "english":  "Objective Description*",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998623+00:00"
+    },
+    {
+        "key":  "forms.reason-for-change-required",
+        "german":  "Grund för önderung*",
+        "english":  "Reason for Change*",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998628+00:00"
+    },
+    {
+        "key":  "forms.start-date-required",
+        "german":  "Startdatum*",
+        "english":  "Start Date*",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998625+00:00"
+    },
+    {
+        "key":  "forms.weighting",
+        "german":  "Gewichtung",
+        "english":  "Weighting",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998626+00:00"
+    },
+    {
+        "key":  "forms.weighting-help-text",
+        "german":  "Prozentsatz der Gesamtziele (0-100%). Setzen Sie die Gewichtung, um die Wichtigkeit zwischen den Zielen zu verteilen.",
+        "english":  "Percentage of total goals (0-100%). Set weighting to allocate importance across goals.",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.899863+00:00"
+    },
+    {
+        "key":  "forms.weighting-percentage-required",
+        "german":  "Gewichtung Prozentsatz*",
+        "english":  "Weighting Percentage*",
+        "category":  "forms",
+        "createdDate":  "2025-12-03T12:17:11.8998627+00:00"
+    },
+    {
+        "key":  "labels.category",
+        "german":  "Kategorie",
+        "english":  "Category",
+        "category":  "labels",
+        "createdDate":  "2025-12-03T12:17:11.8998622+00:00"
+    },
+    {
+        "key":  "labels.description",
+        "german":  "Beschreibung",
+        "english":  "Description",
+        "category":  "labels",
+        "createdDate":  "2025-12-03T12:17:11.8998621+00:00"
+    },
+    {
+        "key":  "labels.due-date",
+        "german":  "Fölligkeitsdatum",
+        "english":  "Due Date",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.due-date-optional",
+        "german":  "Fölligkeitsdatum (Optional)",
+        "english":  "Due Date (Optional)",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.employees",
+        "german":  "Mitarbeiter",
+        "english":  "Employee(s)",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.events",
+        "german":  "Ereignisse",
+        "english":  "events",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.filter-by-status",
+        "german":  "Nach Status filtern",
+        "english":  "Filter by Status",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.loading",
+        "german":  "Lödt",
+        "english":  "Loading",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.loading-data",
+        "german":  "Daten werden geladen...",
+        "english":  "Loading data...",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.name",
+        "german":  "Name",
+        "english":  "Name",
+        "category":  "labels",
+        "createdDate":  "2025-12-03T12:17:11.899862+00:00"
+    },
+    {
+        "key":  "labels.no-due-date",
+        "german":  "Kein Fölligkeitsdatum",
+        "english":  "No Due Date",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.no-employees-found",
+        "german":  "Keine Mitarbeiter gefunden, die Ihrer Suche entsprechen.",
+        "english":  "No employees found matching your search.",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.no-questionnaires-available",
+        "german":  "Keine Fragebogen verfögbar",
+        "english":  "No questionnaires available",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.notes-optional",
+        "german":  "Notizen (Optional)",
+        "english":  "Notes (Optional)",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.questionnaire",
+        "german":  "Fragebogen",
+        "english":  "Questionnaire",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.search",
+        "german":  "Suchen",
+        "english":  "Search",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.selected-count",
+        "german":  "Ausgewählt",
+        "english":  "Selected",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.selected-questionnaire",
+        "german":  "Ausgewöhlter Fragebogen",
+        "english":  "Selected Questionnaire",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.status",
+        "german":  "Status",
+        "english":  "Status",
+        "category":  "labels",
+        "createdDate":  "2025-12-03T12:17:11.8998622+00:00"
+    },
+    {
+        "key":  "labels.uncategorized",
+        "german":  "Unkategorisiert",
+        "english":  "Uncategorized",
+        "category":  "labels",
+        "createdDate":  "2025-12-03T12:17:11.899872+00:00"
+    },
+    {
+        "key":  "labels.unknown-questionnaire",
+        "german":  "Unbekannter Fragebogen",
+        "english":  "Unknown Questionnaire",
+        "category":  "labels",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "language.english",
+        "german":  "Englisch",
+        "english":  "English",
+        "category":  "language",
+        "createdDate":  "2025-12-03T12:17:11.8998722+00:00"
+    },
+    {
+        "key":  "language.german",
+        "german":  "Deutsch",
+        "english":  "German",
+        "category":  "language",
+        "createdDate":  "2025-12-03T12:17:11.8998721+00:00"
+    },
+    {
+        "key":  "messages.cancel-assignment-confirmation",
+        "german":  "Sind Sie sicher, dass Sie die Zuweisung stornieren möchten für",
+        "english":  "Are you sure you want to cancel the assignment for",
+        "category":  "messages",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.no-active-replays",
+        "german":  "Keine aktiven Wiederholungen laufen derzeit",
+        "english":  "No active replays running",
+        "category":  "messages",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.send-reminder-confirmation",
+        "german":  "Möchten Sie eine Erinnerungsbenachrichtigung senden an",
+        "english":  "Send a reminder notification to",
+        "category":  "messages",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "nav.administration",
+        "german":  "Administration",
+        "english":  "Administration",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998597+00:00"
+    },
+    {
+        "key":  "nav.assignments",
+        "german":  "Zuweisungen",
+        "english":  "Assignments",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998596+00:00"
+    },
+    {
+        "key":  "nav.categories",
+        "german":  "Kategorien",
+        "english":  "Categories",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998598+00:00"
+    },
+    {
+        "key":  "nav.create-questionnaire",
+        "german":  "Fragebogen erstellen",
+        "english":  "Create Questionnaire",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998595+00:00"
+    },
+    {
+        "key":  "nav.dashboard",
+        "german":  "Dashboard",
+        "english":  "Dashboard",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998585+00:00"
+    },
+    {
+        "key":  "nav.management",
+        "german":  "Verwaltung",
+        "english":  "Management",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998593+00:00"
+    },
+    {
+        "key":  "nav.manage-questionnaires",
+        "german":  "Fragebogen verwalten",
+        "english":  "Manage Questionnaires",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998596+00:00"
+    },
+    {
+        "key":  "nav.menu-toggle",
+        "german":  "Navigationsmenö",
+        "english":  "Navigation menu",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998128+00:00"
+    },
+    {
+        "key":  "nav.my-questionnaires",
+        "german":  "Meine Fragebogen",
+        "english":  "My Questionnaires",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998588+00:00"
+    },
+    {
+        "key":  "nav.my-work",
+        "german":  "Meine Arbeit",
+        "english":  "My Work",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998586+00:00"
+    },
+    {
+        "key":  "nav.organization",
+        "german":  "Organisation",
+        "english":  "Organization",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998593+00:00"
+    },
+    {
+        "key":  "nav.projection-replay",
+        "german":  "Projektions-Wiederholung",
+        "english":  "Projection Replay",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.89986+00:00"
+    },
+    {
+        "key":  "nav.questionnaire-management",
+        "german":  "Fragebogen Verwaltung",
+        "english":  "Questionnaire Management",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998598+00:00"
+    },
+    {
+        "key":  "nav.questionnaires",
+        "german":  "Fragebogen",
+        "english":  "Questionnaires",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998587+00:00"
+    },
+    {
+        "key":  "nav.role-management",
+        "german":  "Rollenverwaltung",
+        "english":  "Role Management",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998599+00:00"
+    },
+    {
+        "key":  "nav.team-overview",
+        "german":  "Team öbersicht",
+        "english":  "Team Overview",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998591+00:00"
+    },
+    {
+        "key":  "nav.team-questionnaires",
+        "german":  "Team Fragebogen",
+        "english":  "Team Questionnaires",
+        "category":  "navigation",
+        "createdDate":  "2025-12-03T12:17:11.8998592+00:00"
+    },
+    {
+        "key":  "notifications.assignment-creation-error",
+        "german":  "Bei der Erstellung der Zuweisungen ist ein Fehler aufgetreten",
+        "english":  "An error occurred while creating assignments",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.assignment-creation-failed",
+        "german":  "Erstellung der Zuweisung fehlgeschlagen",
+        "english":  "Assignment Creation Failed",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.assignments-created",
+        "german":  "Zuweisungen erstellt",
+        "english":  "Assignments Created",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.assignments-created-success",
+        "german":  "Erfolgreich erstellt",
+        "english":  "Successfully created",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.assign-to-more",
+        "german":  "Weiteren Mitarbeitern zuweisen",
+        "english":  "Assign to More Employees",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.bulk-assignment-message",
+        "german":  "Massenzuweisungsfunktion wird geöffnet mit vorausgewählt",
+        "english":  "Bulk assignment feature will open with pre-selected",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.cancellation-not-implemented",
+        "german":  "Die Stornierung von Zuweisungen wird mit entsprechender Workflow-Status-Verwaltung implementiert",
+        "english":  "Assignment cancellation will be implemented with proper workflow state management",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.edit",
+        "german":  "Bearbeiten",
+        "english":  "Edit",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.edit-dialog-placeholder",
+        "german":  "Hier zeigen wir den Dialog zum Bearbeiten der Zuweisung",
+        "english":  "Here we show edit assignment dialog",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.error",
+        "german":  "Fehler",
+        "english":  "Error",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.error",
+        "german":  "Fehler",
+        "english":  "Error",
+        "category":  "notifications",
+        "createdDate":  "2025-12-03T12:17:11.8998641+00:00"
+    },
+    {
+        "key":  "notifications.failed",
+        "german":  "Fehlgeschlagen",
+        "english":  "Failed",
+        "category":  "notifications",
+        "createdDate":  "2025-12-03T12:17:11.8998643+00:00"
+    },
+    {
+        "key":  "notifications.failed-bulk-assignment",
+        "german":  "Massenzuweisung konnte nicht geöffnet werden",
+        "english":  "Failed to open bulk assignment",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.failed-cancel-assignment",
+        "german":  "Zuweisung konnte nicht storniert werden",
+        "english":  "Failed to cancel assignment",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.failed-load-assignments",
+        "german":  "Zuweisungen konnten nicht geladen werden",
+        "english":  "Failed to load assignments",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.failed-load-data",
+        "german":  "Initialdaten konnten nicht geladen werden. Bitte aktualisieren Sie die Seite.",
+        "english":  "Failed to load initial data. Please refresh the page.",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.failed-open-details",
+        "german":  "Zuweisungsdetails konnten nicht geöffnet werden",
+        "english":  "Failed to open assignment details",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.failed-open-edit",
+        "german":  "Bearbeitungsdialog konnte nicht geöffnet werden",
+        "english":  "Failed to open edit dialog",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.failed-send-reminder",
+        "german":  "Erinnerung konnte nicht gesendet werden",
+        "english":  "Failed to send reminder",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.info",
+        "german":  "Information",
+        "english":  "Information",
+        "category":  "notifications",
+        "createdDate":  "2025-12-03T12:17:11.8998643+00:00"
+    },
+    {
+        "key":  "notifications.loading-failed",
+        "german":  "Laden fehlgeschlagen",
+        "english":  "Loading Failed",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.no-assignments-created",
+        "german":  "Keine Zuweisungen erstellt",
+        "english":  "No Assignments Created",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.no-assignments-message",
+        "german":  "Es wurden keine Zuweisungen erstellt. Bitte überprüfen Sie Ihre Auswahl und versuchen Sie es erneut.",
+        "english":  "No assignments were created. Please check your selection and try again.",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.not-implemented",
+        "german":  "Nicht implementiert",
+        "english":  "Not Implemented",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.reminder-sent",
+        "german":  "Erinnerung gesendet",
+        "english":  "Reminder Sent",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.reminder-sent-success",
+        "german":  "Erinnerungsbenachrichtigung erfolgreich gesendet an",
+        "english":  "Reminder notification sent successfully to",
+        "category":  "notifications",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "notifications.success",
+        "german":  "Erfolg",
+        "english":  "Success",
+        "category":  "notifications",
+        "createdDate":  "2025-12-03T12:17:11.899864+00:00"
+    },
+    {
+        "key":  "notifications.warning",
+        "german":  "Warnung",
+        "english":  "Warning",
+        "category":  "notifications",
+        "createdDate":  "2025-12-03T12:17:11.8998642+00:00"
+    },
+    {
+        "key":  "pages.projection-replay-administration",
+        "german":  "Projektions-Wiederholungs-Verwaltung",
+        "english":  "Projection Replay Administration",
+        "category":  "pages",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.projection-replay-administration-description",
+        "german":  "Projektions-Wiederholungen verwalten und öberwachen",
+        "english":  "Manage and monitor projection rebuilds",
+        "category":  "pages",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.questionnaire-assignments",
+        "german":  "Fragebogen-Zuweisungen",
+        "english":  "Questionnaire Assignments",
+        "category":  "pages",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.questionnaire-assignments-description",
+        "german":  "Fragebogen-Zuweisungen mit Echtzeit-API-Integration erstellen und verwalten",
+        "english":  "Create and manage questionnaire assignments with real-time API integration",
+        "category":  "pages",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.questionnaire-type-administration",
+        "german":  "Fragebogen-Typ-Verwaltung",
+        "english":  "Questionnaire Type Administration",
+        "category":  "pages",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.questionnaire-type-administration-description",
+        "german":  "Fragebogen-Typen verwalten (z.B. Jahresgespräche, Quartalsreviews)",
+        "english":  "Manage questionnaire types (e.g., Annual Reviews, Quarterly Check-ins)",
+        "category":  "pages",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.team-questionnaires",
+        "german":  "Team Fragebogen",
+        "english":  "Team Questionnaires",
+        "category":  "pages",
+        "createdDate":  "2025-12-03T12:17:11.8998699+00:00"
+    },
+    {
+        "key":  "pages.team-questionnaires-description",
+        "german":  "Fragebogen för Ihre Teammitglieder anzeigen und verwalten",
+        "english":  "View and manage questionnaires for your team members",
+        "category":  "pages",
+        "createdDate":  "2025-12-03T12:17:11.89987+00:00"
+    },
+    {
+        "key":  "placeholders.assignment-instructions",
+        "german":  "Fögen Sie spezifische Anweisungen oder Kontext för diese Zuweisung hinzu...",
+        "english":  "Add any specific instructions or context for this assignment...",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.enter-english-description",
+        "german":  "Englische Beschreibung eingeben (optional)",
+        "english":  "Enter English description (optional)",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-03T12:17:11.8998719+00:00"
+    },
+    {
+        "key":  "placeholders.enter-english-name",
+        "german":  "Englischen Namen eingeben",
+        "english":  "Enter English name",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-03T12:17:11.8998718+00:00"
+    },
+    {
+        "key":  "placeholders.enter-german-description",
+        "german":  "Deutsche Beschreibung eingeben (optional)",
+        "english":  "Enter German description (optional)",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-03T12:17:11.899872+00:00"
+    },
+    {
+        "key":  "placeholders.enter-german-name",
+        "german":  "Deutschen Namen eingeben",
+        "english":  "Enter German name",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-03T12:17:11.8998718+00:00"
+    },
+    {
+        "key":  "placeholders.search-employee-name-email",
+        "german":  "Nach Mitarbeitername oder E-Mail suchen...",
+        "english":  "Search by employee name or email...",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.assignment-settings",
+        "german":  "Zuweisungseinstellungen",
+        "english":  "Assignment Settings",
+        "category":  "sections",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.assignment-summary",
+        "german":  "Zuweisungsöbersicht",
+        "english":  "Assignment Summary",
+        "category":  "sections",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.select-employees",
+        "german":  "Mitarbeiter auswöhlen",
+        "english":  "Select Employees",
+        "category":  "sections",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.select-questionnaire",
+        "german":  "Fragebogen auswöhlen",
+        "english":  "Select Questionnaire",
+        "category":  "sections",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "settings.send-assignment-notifications",
+        "german":  "Zuweisungsbenachrichtigungen senden",
+        "english":  "Send assignment notifications",
+        "category":  "settings",
+        "createdDate":  "2025-12-03T12:17:11.8998697+00:00"
+    },
+    {
+        "key":  "settings.send-completion-confirmations",
+        "german":  "Abschlussbestötigungen senden",
+        "english":  "Send completion confirmations",
+        "category":  "settings",
+        "createdDate":  "2025-12-03T12:17:11.8998699+00:00"
+    },
+    {
+        "key":  "settings.send-reminder-emails",
+        "german":  "Erinnerungs-E-Mails senden",
+        "english":  "Send reminder emails",
+        "category":  "settings",
+        "createdDate":  "2025-12-03T12:17:11.8998698+00:00"
+    },
+    {
+        "key":  "status.active",
+        "german":  "Aktiv",
+        "english":  "Active",
+        "category":  "status",
+        "createdDate":  "2025-12-03T12:17:11.8998716+00:00"
+    },
+    {
+        "key":  "status.due-soon",
+        "german":  "Bald föllig",
+        "english":  "Due Soon",
+        "category":  "status",
+        "createdDate":  "2025-12-03T12:17:11.8998686+00:00"
+    },
+    {
+        "key":  "status.inactive",
+        "german":  "Inaktiv",
+        "english":  "Inactive",
+        "category":  "status",
+        "createdDate":  "2025-12-03T12:17:11.8998716+00:00"
+    },
+    {
+        "key":  "status.overdue",
+        "german":  "öberföllig",
+        "english":  "Overdue",
+        "category":  "status",
+        "createdDate":  "2025-12-03T12:17:11.8998685+00:00"
+    },
+    {
+        "key":  "tabs.active-replays",
+        "german":  "Aktive Wiederholungen",
+        "english":  "Active Replays",
+        "category":  "tabs",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "tabs.create-assignment",
+        "german":  "Zuweisung erstellen",
+        "english":  "Create Assignment",
+        "category":  "tabs",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "tabs.history",
+        "german":  "Verlauf",
+        "english":  "History",
+        "category":  "tabs",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "tabs.manage-assignments",
+        "german":  "Zuweisungen verwalten",
+        "english":  "Manage Assignments",
+        "category":  "tabs",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "tabs.settings",
+        "german":  "Einstellungen",
+        "english":  "Settings",
+        "category":  "tabs",
+        "createdDate":  "2025-12-03T12:17:11.8998695+00:00"
+    },
+    {
+        "key":  "tabs.templates",
+        "german":  "Vorlagen",
+        "english":  "Templates",
+        "category":  "tabs",
+        "createdDate":  "2025-12-03T12:17:11.8998694+00:00"
+    },
+    {
+        "key":  "tooltips.cancel-edit",
+        "german":  "Bearbeitung abbrechen",
+        "english":  "Cancel Edit",
+        "category":  "tooltips",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "tooltips.delete-category",
+        "german":  "Kategorie löschen",
+        "english":  "Delete Category",
+        "category":  "tooltips",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "tooltips.edit-category",
+        "german":  "Kategorie bearbeiten",
+        "english":  "Edit Category",
+        "category":  "tooltips",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "tooltips.save-changes",
+        "german":  "önderungen speichern",
+        "english":  "Save Changes",
+        "category":  "tooltips",
+        "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "validation.email",
+        "german":  "Ungöltige E-Mail-Adresse",
+        "english":  "Invalid email address",
+        "category":  "validation",
+        "createdDate":  "2025-12-03T12:17:11.8998639+00:00"
+    },
+    {
+        "key":  "validation.fix-errors",
+        "german":  "Bitte beheben Sie die folgenden Fehler",
+        "english":  "Please fix the following errors",
+        "category":  "validation",
+        "createdDate":  "2025-12-03T12:17:11.8998638+00:00"
+    },
+    {
+        "key":  "validation.min-length",
+        "german":  "Mindestlönge erforderlich",
+        "english":  "Minimum length required",
+        "category":  "validation",
+        "createdDate":  "2025-12-03T12:17:11.899864+00:00"
+    },
+    {
+        "key":  "validation.required",
+        "german":  "Erforderlich",
+        "english":  "Required",
+        "category":  "validation",
+        "createdDate":  "2025-12-03T12:17:11.8998638+00:00"
+    },
+    {
+        "key":  "workflow-states.all",
+        "german":  "Alle",
+        "english":  "All",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.assigned",
+        "german":  "Zugewiesen",
+        "english":  "Assigned",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.both-in-progress",
+        "german":  "Beide in Bearbeitung",
+        "english":  "Both In Progress",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.both-submitted",
+        "german":  "Beide eingereicht",
+        "english":  "Both Submitted",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.employee-in-progress",
+        "german":  "Mitarbeiter in Bearbeitung",
+        "english":  "Employee In Progress",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.employee-review-confirmed",
+        "german":  "Mitarbeiter-Überprüfung bestätigt",
+        "english":  "Employee Review Confirmed",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.employee-submitted",
+        "german":  "Mitarbeiter eingereicht",
+        "english":  "Employee Submitted",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.finalized",
+        "german":  "Abgeschlossen",
+        "english":  "Finalized",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.in-review",
+        "german":  "In Überprüfung",
+        "english":  "In Review",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.manager-in-progress",
+        "german":  "Manager in Bearbeitung",
+        "english":  "Manager In Progress",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.manager-review-confirmed",
+        "german":  "Manager-Überprüfung bestätigt",
+        "english":  "Manager Review Confirmed",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.manager-submitted",
+        "german":  "Manager eingereicht",
+        "english":  "Manager Submitted",
+        "category":  "workflow-states",
+        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    }
 ]

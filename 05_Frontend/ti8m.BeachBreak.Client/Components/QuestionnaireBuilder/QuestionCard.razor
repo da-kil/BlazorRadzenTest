@@ -29,11 +29,18 @@
                         var competency = competencies[competencyIndex];
 
                         <div class="competency-item builder-context">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="d-flex align-items-center gap-2">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center gap-3">
                                     <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
                                         Competency @(competencyIndex + 1)
                                     </RadzenText>
+                                    <div class="required-badge-container">
+                                        <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
+                                                       ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
+                                                       Name="@($"comp_req_{Question.Id}_{competencyIndex}")"
+                                                       Disabled="@(!Template.IsAvailableForEditing)" />
+                                        <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-1" />
+                                    </div>
                                 </div>
                                 <div class="d-flex gap-1">
                                     <AsyncButton ButtonStyle="ButtonStyle.Light"
@@ -57,56 +64,55 @@
                                                 Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
-                            <div class="competency-input-row">
-                                <div class="input-field-container">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title</RadzenText>
-                                    <RadzenTextBox Value="@competency.TitleEnglish"
-                                                  ValueChanged="@((string value) => UpdateCompetencyTitleEnglish(competencyIndex, value))"
-                                                  Placeholder="Enter English competency title..."
-                                                  Disabled="@(!Template.IsAvailableForEditing)"
-                                                  Class="@GetCompetencyTitleValidationClass(competencyIndex)"
-                                                  @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
-                                    @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
-                                    {
-                                        <div class="validation-message">
-                                            <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
-                                            English competency title is required
-                                        </div>
-                                    }
+                            <!-- Title Row -->
+                            <div class="competency-title-section mb-2">
+                                <div class="multilang-input-grid">
+                                    <div class="input-field-container">
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title *</RadzenText>
+                                        <RadzenTextBox Value="@competency.TitleEnglish"
+                                                      ValueChanged="@((string value) => UpdateCompetencyTitleEnglish(competencyIndex, value))"
+                                                      Placeholder="Enter English competency title..."
+                                                      Disabled="@(!Template.IsAvailableForEditing)"
+                                                      Class="@GetCompetencyTitleValidationClass(competencyIndex)"
+                                                      @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
+                                        @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
+                                        {
+                                            <div class="validation-message">
+                                                <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
+                                                English competency title is required
+                                            </div>
+                                        }
+                                    </div>
+                                    <div class="input-field-container">
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
+                                        <RadzenTextBox Value="@competency.TitleGerman"
+                                                      ValueChanged="@((string value) => UpdateCompetencyTitleGerman(competencyIndex, value))"
+                                                      Placeholder="Enter German competency title (optional)..."
+                                                      Disabled="@(!Template.IsAvailableForEditing)"
+                                                      Class="w-100" />
+                                    </div>
                                 </div>
-                                <div class="required-checkbox-container">
-                                    <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
-                                                   ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
-                                                   Name="@($"comp_req_{Question.Id}_{competencyIndex}")"
-                                                   Disabled="@(!Template.IsAvailableForEditing)" />
-                                    <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" />
+                            </div>
+                            <!-- Description Row -->
+                            <div class="multilang-input-grid mb-2">
+                                <div class="input-field">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description</RadzenText>
+                                    <RadzenTextArea Value="@competency.DescriptionEnglish"
+                                                   ValueChanged="@((string value) => UpdateCompetencyDescriptionEnglish(competencyIndex, value))"
+                                                   Disabled="@(!Template.IsAvailableForEditing)"
+                                                   Placeholder="Describe what this competency evaluates in English..."
+                                                   Rows="2"
+                                                   Class="w-100" />
                                 </div>
-                            </div>
-                            <div class="mb-2">
-                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
-                                <RadzenTextBox Value="@competency.TitleGerman"
-                                              ValueChanged="@((string value) => UpdateCompetencyTitleGerman(competencyIndex, value))"
-                                              Placeholder="Enter German competency title (optional)..."
-                                              Disabled="@(!Template.IsAvailableForEditing)"
-                                              Class="w-100" />
-                            </div>
-                            <div class="mb-2">
-                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description</RadzenText>
-                                <RadzenTextArea Value="@competency.DescriptionEnglish"
-                                               ValueChanged="@((string value) => UpdateCompetencyDescriptionEnglish(competencyIndex, value))"
-                                               Disabled="@(!Template.IsAvailableForEditing)"
-                                               Placeholder="Describe what this competency evaluates in English..."
-                                               Rows="2"
-                                               Class="w-100" />
-                            </div>
-                            <div class="mb-0">
-                                <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
-                                <RadzenTextArea Value="@competency.DescriptionGerman"
-                                               ValueChanged="@((string value) => UpdateCompetencyDescriptionGerman(competencyIndex, value))"
-                                               Disabled="@(!Template.IsAvailableForEditing)"
-                                               Placeholder="Describe what this competency evaluates in German (optional)..."
-                                               Rows="2"
-                                               Class="w-100" />
+                                <div class="input-field">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
+                                    <RadzenTextArea Value="@competency.DescriptionGerman"
+                                                   ValueChanged="@((string value) => UpdateCompetencyDescriptionGerman(competencyIndex, value))"
+                                                   Disabled="@(!Template.IsAvailableForEditing)"
+                                                   Placeholder="Describe what this competency evaluates in German (optional)..."
+                                                   Rows="2"
+                                                   Class="w-100" />
+                                </div>
                             </div>
                         </div>
                     }
@@ -158,10 +164,19 @@
                         var textSection = textSections[sectionIndex];
 
                         <div class="text-section-item rz-p-3 rz-mb-2">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-text-response">
-                                    Text Section @(sectionIndex + 1)
-                                </RadzenText>
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-text-response">
+                                        Text Section @(sectionIndex + 1)
+                                    </RadzenText>
+                                    <div class="required-badge-container">
+                                        <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
+                                                       ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
+                                                       Name="@($"text_req_{Question.Id}_{sectionIndex}")"
+                                                       Disabled="@(!Template.IsAvailableForEditing)" />
+                                        <RadzenLabel Text="Required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-1" />
+                                    </div>
+                                </div>
                                 <div class="d-flex gap-1">
                                     <AsyncButton ButtonStyle="ButtonStyle.Light"
                                                 Icon="keyboard_arrow_up"
@@ -184,68 +199,52 @@
                                                 Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
-                            <!-- Title Fields -->
+                            <!-- Title Row -->
                             <div class="text-section-title-row mb-2">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="input-field-container">
-                                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title *</RadzenText>
-                                            <RadzenTextBox Value="@textSection.TitleEnglish"
-                                                          ValueChanged="@((string value) => UpdateTextSectionTitleEnglish(sectionIndex, value))"
-                                                          Placeholder="Enter section title in English..."
-                                                          Disabled="@(!Template.IsAvailableForEditing)"
-                                                          Class="@GetTextSectionTitleValidationClass(sectionIndex)"
-                                                          @onblur="@(() => ValidateTextSectionTitle(sectionIndex))" />
-                                            @if (!GetTextSectionTitleValid(sectionIndex) && GetTextSectionTitleValidated(sectionIndex))
-                                            {
-                                                <div class="validation-message">
-                                                    <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
-                                                    English title is required
-                                                </div>
-                                            }
-                                        </div>
+                                <div class="multilang-input-grid">
+                                    <div class="input-field-container">
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title *</RadzenText>
+                                        <RadzenTextBox Value="@textSection.TitleEnglish"
+                                                      ValueChanged="@((string value) => UpdateTextSectionTitleEnglish(sectionIndex, value))"
+                                                      Placeholder="Enter section title in English..."
+                                                      Disabled="@(!Template.IsAvailableForEditing)"
+                                                      Class="@GetTextSectionTitleValidationClass(sectionIndex)"
+                                                      @onblur="@(() => ValidateTextSectionTitle(sectionIndex))" />
+                                        @if (!GetTextSectionTitleValid(sectionIndex) && GetTextSectionTitleValidated(sectionIndex))
+                                        {
+                                            <div class="validation-message">
+                                                <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
+                                                English title is required
+                                            </div>
+                                        }
                                     </div>
-                                    <div class="col-md-6">
-                                        <div class="input-field-container">
-                                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
-                                            <RadzenTextBox Value="@textSection.TitleGerman"
-                                                          ValueChanged="@((string value) => UpdateTextSectionTitleGerman(sectionIndex, value))"
-                                                          Placeholder="Enter section title in German (optional)..."
-                                                          Disabled="@(!Template.IsAvailableForEditing)" />
-                                        </div>
+                                    <div class="input-field-container">
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
+                                        <RadzenTextBox Value="@textSection.TitleGerman"
+                                                      ValueChanged="@((string value) => UpdateTextSectionTitleGerman(sectionIndex, value))"
+                                                      Placeholder="Enter section title in German (optional)..."
+                                                      Disabled="@(!Template.IsAvailableForEditing)"
+                                                      Class="w-100" />
                                     </div>
-                                </div>
-                                <div class="required-checkbox-container mt-2">
-                                    <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
-                                                   ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
-                                                   Name="@($"text_req_{Question.Id}_{sectionIndex}")"
-                                                   Disabled="@(!Template.IsAvailableForEditing)" />
-                                    <RadzenLabel Text="Required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" />
                                 </div>
                             </div>
-                            <!-- Description Fields -->
-                            <div class="text-section-description-row">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="mb-2">
-                                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description *</RadzenText>
-                                            <RadzenTextArea Value="@textSection.DescriptionEnglish"
-                                                           ValueChanged="@((string value) => UpdateTextSectionDescriptionEnglish(sectionIndex, value))"
-                                                           Placeholder="Describe this text section in English..."
-                                                           Rows="2"
-                                                           Class="w-100" />
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="mb-2">
-                                            <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
-                                            <RadzenTextArea Value="@textSection.DescriptionGerman"
-                                                           ValueChanged="@((string value) => UpdateTextSectionDescriptionGerman(sectionIndex, value))"
-                                                           Placeholder="Describe this text section in German (optional)..."
-                                                           Rows="2"
-                                                           Class="w-100" />
-                                        </div>
-                                    </div>
+                            <!-- Description Row -->
+                            <div class="multilang-input-grid mb-2">
+                                <div class="input-field">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description *</RadzenText>
+                                    <RadzenTextArea Value="@textSection.DescriptionEnglish"
+                                                   ValueChanged="@((string value) => UpdateTextSectionDescriptionEnglish(sectionIndex, value))"
+                                                   Placeholder="Describe this text section in English..."
+                                                   Rows="2"
+                                                   Class="w-100" />
+                                </div>
+                                <div class="input-field">
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
+                                    <RadzenTextArea Value="@textSection.DescriptionGerman"
+                                                   ValueChanged="@((string value) => UpdateTextSectionDescriptionGerman(sectionIndex, value))"
+                                                   Placeholder="Describe this text section in German (optional)..."
+                                                   Rows="2"
+                                                   Class="w-100" />
                                 </div>
                             </div>
                         </div>

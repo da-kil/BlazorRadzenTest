@@ -136,6 +136,25 @@
     display: grid;
 }
 
+/* Multilingual Input Grid Layout */
+.multilang-input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+@media (max-width: 768px) {
+    .multilang-input-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.multilang-input-grid .input-field {
+    display: flex;
+    flex-direction: column;
+}
+
 .title-input-modern {
     width: 100% !important;
     border: 2px solid var(--rz-base-200) !important;
@@ -247,9 +266,9 @@
     align-items: center;
     gap: 1rem;
     padding: 0.875rem;
-    background: var(--rz-background-color-light, rgba(0, 0, 0, 0.05));
+    background: transparent;
     border-radius: 8px;
-    border: 1px solid var(--border-light);
+    border: 1px solid var(--rz-border-color);
     /* Ensure proper text contrast in both themes */
     color: var(--rz-text-color);
 }

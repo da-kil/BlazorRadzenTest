@@ -61,6 +61,7 @@
 
 					<AuthorizeView Policy="Admin">
 						<Authorized Context="adminContext">
+							<RadzenPanelMenuItem Text="@T("nav.translations")" Path="admin/translations" />
 							<RadzenPanelMenuItem Text="@T("nav.projection-replay")" Path="admin/projection-replay" />
 						</Authorized>
 					</AuthorizeView>
