@@ -219,41 +219,6 @@ public class UITranslationService : IUITranslationService
         }
     }
 
-    public async Task<int> SeedInitialTranslationsAsync(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var seedTranslations = GetSeedTranslations();
-
-            // Check if translations already exist
-            var existingCount = await session.Query<UITranslation>().CountAsync(cancellationToken);
-            if (existingCount > 0)
-            {
-                logger.LogInformation("Translations already exist ({Count}), no seeding performed", existingCount);
-                return 0;
-            }
-
-            // No existing translations, seed all
-            foreach (var translation in seedTranslations)
-            {
-                session.Store(translation);
-            }
-
-            await session.SaveChangesAsync(cancellationToken);
-
-            // Clear cache to ensure fresh data
-            memoryCache.Remove(AllTranslationsCacheKey);
-
-            logger.LogInformation("Seeded {Count} initial translations", seedTranslations.Count);
-            return seedTranslations.Count;
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error seeding translations");
-            throw;
-        }
-    }
-
     public async Task<int> BulkImportTranslationsAsync(IList<UITranslation> translations, CancellationToken cancellationToken = default)
     {
         try
@@ -321,31 +286,5 @@ public class UITranslationService : IUITranslationService
         memoryCache.Remove(AllTranslationsCacheKey);
 
         logger.LogInformation("Translation cache invalidated - all cached entries will be reloaded from database on next access");
-    }
-
-    private static List<UITranslation> GetSeedTranslations()
-    {
-        // NOTE: Comprehensive translations are now managed in TestDataGenerator project.
-        // This method now only provides essential fallback translations.
-        // To add new translations, use the TestDataGenerator project and run the seeding script.
-        return new List<UITranslation>
-        {
-            // Essential navigation fallbacks
-            new() { Key = "nav.dashboard", German = "Dashboard", English = "Dashboard", Category = "navigation" },
-            new() { Key = "nav.my-questionnaires", German = "Meine Fragebogen", English = "My Questionnaires", Category = "navigation" },
-
-            // Essential button fallbacks
-            new() { Key = "buttons.save", German = "Speichern", English = "Save", Category = "buttons" },
-            new() { Key = "buttons.cancel", German = "Abbrechen", English = "Cancel", Category = "buttons" },
-            new() { Key = "buttons.loading", German = "Lädt", English = "Loading", Category = "buttons" },
-
-            // Essential status fallbacks
-            new() { Key = "status.active", German = "Aktiv", English = "Active", Category = "status" },
-            new() { Key = "status.pending", German = "Ausstehend", English = "Pending", Category = "status" },
-
-            // Essential language fallbacks
-            new() { Key = "language.german", German = "Deutsch", English = "German", Category = "language" },
-            new() { Key = "language.english", German = "Englisch", English = "English", Category = "language" }
-        };
     }
 }

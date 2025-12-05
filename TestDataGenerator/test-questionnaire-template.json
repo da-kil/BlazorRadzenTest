@@ -11,9 +11,9 @@
   "Sections": [
     {
       "Id": "ffdef1bc-1d4b-4a6b-9ac3-f9ced087d639",
-      "TitleEnglish": "Rückblick 2025: Selbsteinschätzung für Mitarbeitende",
+      "TitleEnglish": "2025 Review: Self-Assessment for Employees",
       "TitleGerman": "Rückblick 2025: Selbsteinschätzung für Mitarbeitende",
-      "DescriptionEnglish": "In diesem Abschnitt werden die beruflichen Kompetenzen und Fähigkeiten im Jahr 2025 reflektiert.",
+      "DescriptionEnglish": "This section reflects on professional competencies and skills in 2025.",
       "DescriptionGerman": "In diesem Abschnitt werden die beruflichen Kompetenzen und Fähigkeiten im Jahr 2025 reflektiert.",
       "Order": 0,
       "IsRequired": true,
@@ -32,81 +32,81 @@
             "Competencies": [
               {
                 "Key": "competency_1",
-                "TitleEnglish": "Fachkenntnisse",
+                "TitleEnglish": "Professional Knowledge",
                 "TitleGerman": "Fachkenntnisse",
-                "DescriptionEnglish": "Bewertung der eigenen Expertise und des Fachwissens in Bezug auf die beruflichen Aufgaben.",
+                "DescriptionEnglish": "Assessment of own expertise and professional knowledge in relation to work tasks.",
                 "DescriptionGerman": "Bewertung der eigenen Expertise und des Fachwissens in Bezug auf die beruflichen Aufgaben.",
                 "IsRequired": true,
                 "Order": 0
               },
               {
                 "Key": "competency_2",
-                "TitleEnglish": "Arbeitsqualität",
+                "TitleEnglish": "Work Quality",
                 "TitleGerman": "Arbeitsqualität",
-                "DescriptionEnglish": "Einschätzung der Genauigkeit, Effizienz und Vollständigkeit der erbrachten Arbeit.",
+                "DescriptionEnglish": "Assessment of accuracy, efficiency and completeness of work performed.",
                 "DescriptionGerman": "Einschätzung der Genauigkeit, Effizienz und Vollständigkeit der erbrachten Arbeit.",
                 "IsRequired": true,
                 "Order": 1
               },
               {
                 "Key": "competency_3",
-                "TitleEnglish": "Zuverlässigkeit",
+                "TitleEnglish": "Reliability",
                 "TitleGerman": "Zuverlässigkeit",
-                "DescriptionEnglish": "",
+                "DescriptionEnglish": "Reflection on punctuality, meeting deadlines, and reliability in fulfilling tasks and commitments.",
                 "DescriptionGerman": "Reflexion über die Pünktlichkeit, Termintreue und Zuverlässigkeit bei der Erfüllung von Aufgaben und Zusagen.",
                 "IsRequired": true,
                 "Order": 2
               },
               {
                 "Key": "competency_4",
-                "TitleEnglish": "Belastbarkeit",
+                "TitleEnglish": "Resilience",
                 "TitleGerman": "Belastbarkeit",
-                "DescriptionEnglish": "",
+                "DescriptionEnglish": "Assessment of the ability to work effectively under pressure and handle stress.",
                 "DescriptionGerman": "Beurteilung der Fähigkeit, unter Druck effektiv zu arbeiten und mit Stress umzugehen.",
                 "IsRequired": true,
                 "Order": 3
               },
               {
                 "Key": "competency_5",
-                "TitleEnglish": "Selbstständigkeit",
+                "TitleEnglish": "Independence",
                 "TitleGerman": "Selbstständigkeit",
-                "DescriptionEnglish": "",
+                "DescriptionEnglish": "Assessment of the ability to complete tasks independently and without constant guidance.",
                 "DescriptionGerman": "Einschätzung der Fähigkeit, Aufgaben eigenverantwortlich und ohne ständige Anleitung zu erledigen.",
                 "IsRequired": true,
                 "Order": 4
               },
               {
                 "Key": "competency_6",
-                "TitleEnglish": "Kommunikationsfähigkeit",
+                "TitleEnglish": "Communication Skills",
                 "TitleGerman": "Kommunikationsfähigkeit",
-                "DescriptionEnglish": "",
+                "DescriptionEnglish": "Assessment of the ability to clearly and comprehensibly convey information and understanding of communication needs.",
                 "DescriptionGerman": "Einschätzung der Fähigkeit zur klaren und verständlichen Übermittlung von Informationen sowie des Verständnisses für den Bedarf an Kommunikation.",
                 "IsRequired": true,
                 "Order": 5
               },
               {
                 "Key": "competency_7",
-                "TitleEnglish": "Proaktivität und Initiative",
+                "TitleEnglish": "Proactivity and Initiative",
                 "TitleGerman": "Proaktivität und Initiative",
-                "DescriptionEnglish": "",
+                "DescriptionEnglish": "Assessment of the tendency to act independently and propose new ideas or solutions.",
                 "DescriptionGerman": "Beurteilung der Neigung, eigenständig zu handeln und neue Ideen oder Lösungen vorzuschlagen.",
                 "IsRequired": true,
                 "Order": 6
               },
               {
                 "Key": "competency_8",
-                "TitleEnglish": "Problemlösungsfähigkeit",
+                "TitleEnglish": "Problem-Solving Ability",
                 "TitleGerman": "Problemlösungsfähigkeit",
-                "DescriptionEnglish": "",
+                "DescriptionEnglish": "Assessment of the ability to identify challenges and develop effective solutions.",
                 "DescriptionGerman": "Bewertung der Fähigkeit, HerausfOrderungen zu erkennen und effektive Lösungen zu entwickeln.",
                 "IsRequired": true,
                 "Order": 7
               },
               {
                 "Key": "competency_9",
-                "TitleEnglish": "Verhalten",
+                "TitleEnglish": "Behavior",
                 "TitleGerman": "Verhalten",
-                "DescriptionEnglish": "",
+                "DescriptionEnglish": "Assessment of one's own behavior in the work context, particularly in dealing with colleagues, supervisors, and customers where applicable.",
                 "DescriptionGerman": "Einschätzung des eigenen Verhaltens im Arbeitskontext, insbesondere im Umgang mit Kolleginnen und Kollegen, Vorgesetzten und gegebenenfalls Kunden.",
                 "IsRequired": true,
                 "Order": 8
@@ -141,7 +141,7 @@
           "Configuration": {
             "TextSections": [
               {
-                "TitleEnglish": "Was schätzt du besonders an deinem/r Vorgesetzten? In welchen Bereichen hat er/sie deine Erwartungen erfüllt oder übertroffen?",
+                "TitleEnglish": "What do you particularly appreciate about your supervisor? In which areas has he/she met or exceeded your expectations?",
                 "TitleGerman": "Was schätzt du besonders an deinem/r Vorgesetzten? In welchen Bereichen hat er/sie deine Erwartungen erfüllt oder übertroffen?",
                 "DescriptionEnglish": "",
                 "DescriptionGerman": "",
@@ -149,7 +149,7 @@
                 "Order": 0
               },
               {
-                "TitleEnglish": "Gibt es Bereiche, in denen sich dein/e Vorgesetzte/n verbessern könnte? Wo benötigst du mehr Unterstützung von deinem/r Vorgesetzten?",
+                "TitleEnglish": "Are there areas in which your supervisor could improve? Where do you need more support from your supervisor?",
                 "TitleGerman": "Gibt es Bereiche, in denen sich dein/e Vorgesetzte/n verbessern könnte? Wo benötigst du mehr Unterstützung von deinem/r Vorgesetzten?",
                 "DescriptionEnglish": "",
                 "DescriptionGerman": "",

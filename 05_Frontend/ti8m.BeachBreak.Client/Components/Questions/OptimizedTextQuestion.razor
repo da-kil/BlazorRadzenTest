@@ -32,14 +32,13 @@
             var sectionKey = $"section_{sectionsToRender.IndexOf(section)}";
             <div class="text-section-card" @key="@sectionKey">
                 <header class="question-section-header">
-                    <h4 class="question-title @(string.IsNullOrWhiteSpace(section.Title) ? "text-danger" : "")">
-                        @(section.Title)
+                    @{
+                        var sectionTitle = section.GetLocalizedTitle(CurrentLanguage);
+                    }
+                    <h4 class="question-title @(string.IsNullOrWhiteSpace(sectionTitle) ? "text-danger" : "")">
+                        @sectionTitle
                         @if (section.IsRequired) { <span class="text-danger">*</span> }
                     </h4>
-                    @if (!string.IsNullOrWhiteSpace(section.Description))
-                    {
-                        <p class="question-section-description">@(section.Description)</p>
-                    }
                 </header>
 
                 @if (!IsReadOnly)
@@ -60,7 +59,7 @@
                 else
                 {
                     <div class="no-response p-3 bg-light rounded text-muted">
-                        <em>No response provided</em>
+                        <em>@T("messages.no-response-provided")</em>
                     </div>
                 }
             </div>
@@ -79,21 +78,20 @@ else
             var sectionKey = $"section_{sectionsToRenderNoHeader.IndexOf(textSection)}";
             <div class="text-section-card" @key="@sectionKey">
                 <header class="question-section-header">
-                    <h4 class="question-title @(string.IsNullOrWhiteSpace(textSection.Title) ? "text-danger" : "")">
-                        @textSection.Title
+                    @{
+                        var textSectionTitle = textSection.GetLocalizedTitle(CurrentLanguage);
+                    }
+                    <h4 class="question-title @(string.IsNullOrWhiteSpace(textSectionTitle) ? "text-danger" : "")">
+                        @textSectionTitle
                         @if (textSection.IsRequired) { <span class="text-danger">*</span> }
                     </h4>
-                    @if (!string.IsNullOrWhiteSpace(textSection.Description))
-                    {
-                        <p class="question-section-description">@textSection.Description</p>
-                    }
                 </header>
                 @if (!IsReadOnly)
                 {
                     <RadzenTextArea Value="@GetSectionValue(sectionKey)"
                                   ValueChanged="@((string value) => SetSectionValue(sectionKey, value))"
-                                  Placeholder="Enter your response..."
-                                  Rows="5"
+                                  Placeholder="@GetSectionPlaceholder(textSection)"
+                                  Rows="@GetSectionRows(textSection)"
                                   Class="w-100" />
                 }
                 else if (!string.IsNullOrEmpty(GetSectionValue(sectionKey)))
@@ -105,7 +103,7 @@ else
                 else
                 {
                     <div class="no-response p-3 bg-light rounded text-muted">
-                        <em>No response provided</em>
+                        <em>@T("messages.no-response-provided")</em>
                     </div>
                 }
             </div>
@@ -197,33 +195,21 @@ else
             }
         }
 
-        // Legacy format or default - always return at least one section
+        // Default fallback - always return at least one section
         return new List<TextSectionDefinition>
         {
             new TextSectionDefinition
             {
-                Title = GetLegacySectionTitle(),
-                Description = GetLegacySectionDescription(),
+                TitleGerman = T("sections.response"),
+                TitleEnglish = T("sections.response"),
+                PlaceholderGerman = T("placeholders.enter-your-response"),
+                PlaceholderEnglish = T("placeholders.enter-your-response"),
                 IsRequired = Question.IsRequired,
-                Placeholder = "Enter your response here...",
                 Rows = 4
             }
         };
     }
 
-    private string GetLegacySectionTitle()
-    {
-        return Question.Configuration?.TryGetValue("SectionTitle", out var value) == true
-            ? value.ToString() ?? "Response"
-            : "Response";
-    }
-
-    private string GetLegacySectionDescription()
-    {
-        return Question.Configuration?.TryGetValue("SectionDescription", out var value) == true
-            ? value.ToString() ?? ""
-            : "";
-    }
 
     private string GetSectionValue(string sectionKey)
     {
@@ -314,9 +300,14 @@ else
 
     private string GetSectionPlaceholder(TextSectionDefinition section)
     {
-        return !string.IsNullOrWhiteSpace(section.Placeholder)
-            ? section.Placeholder
-            : "Enter your thoughts, plans, and goals...";
+        var localizedPlaceholder = section.GetLocalizedPlaceholder(CurrentLanguage);
+        if (!string.IsNullOrWhiteSpace(localizedPlaceholder))
+        {
+            return localizedPlaceholder;
+        }
+
+        // Fallback to default localized placeholder
+        return T("placeholders.enter-thoughts-plans-goals");
     }
 
     private int GetSectionRows(TextSectionDefinition section)
@@ -327,17 +318,34 @@ else
     private string GetTextSectionsDescription()
     {
         var sectionCount = textSections.Count;
-        return sectionCount == 1
-            ? "Single text section"
-            : $"{sectionCount} text sections to complete";
+        if (sectionCount == 1)
+        {
+            return T("sections.single-text-section");
+        }
+        else
+        {
+            return T("sections.multiple-text-sections-to-complete").Replace("{count}", sectionCount.ToString());
+        }
     }
 
     public class TextSectionDefinition
     {
-        public string Title { get; set; } = "";
-        public string Description { get; set; } = "";
+        public string TitleGerman { get; set; } = "";
+        public string TitleEnglish { get; set; } = "";
+        public string PlaceholderGerman { get; set; } = "";
+        public string PlaceholderEnglish { get; set; } = "";
         public bool IsRequired { get; set; } = false;
-        public string Placeholder { get; set; } = "";
         public int Rows { get; set; } = 4;
+
+        public string GetLocalizedTitle(Language language)
+        {
+            return language == Language.German ? TitleGerman : TitleEnglish;
+        }
+
+        public string GetLocalizedPlaceholder(Language language)
+        {
+            var localized = language == Language.German ? PlaceholderGerman : PlaceholderEnglish;
+            return !string.IsNullOrWhiteSpace(localized) ? localized : "";
+        }
     }
 }

@@ -10,11 +10,6 @@ public class QuestionSection
     public string DescriptionEnglish { get; set; } = string.Empty;
     public string DescriptionGerman { get; set; } = string.Empty;
 
-    // Legacy properties for backward compatibility - will be removed after migration
-    [Obsolete("Use TitleEn/TitleDe instead")]
-    public string Title { get; set; } = string.Empty;
-    [Obsolete("Use DescriptionEn/DescriptionDe instead")]
-    public string Description { get; set; } = string.Empty;
 
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;

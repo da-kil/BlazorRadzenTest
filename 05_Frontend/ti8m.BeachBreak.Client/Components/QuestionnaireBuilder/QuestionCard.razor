@@ -4,6 +4,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Helpers
 @inject DialogService DialogService
+@inherits OptimizedTranslatableComponentBase
 
 
 
@@ -638,7 +639,7 @@
         var categories = GetGoalCategoriesFromConfiguration();
         if (index >= 0 && index < categories.Count)
         {
-            var categoryName = string.IsNullOrWhiteSpace(categories[index].TitleEnglish) ? $"Goal Category {index + 1}" : categories[index].TitleEnglish;
+            var categoryName = string.IsNullOrWhiteSpace(categories[index].GetLocalizedTitleWithFallback(CurrentLanguage)) ? $"Goal Category {index + 1}" : categories[index].GetLocalizedTitleWithFallback(CurrentLanguage);
             var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{categoryName}'?", "Delete Goal Category",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
 
@@ -656,7 +657,14 @@
         var categories = GetGoalCategoriesFromConfiguration();
         if (index >= 0 && index < categories.Count)
         {
-            categories[index].Title = value ?? "";
+            if (CurrentLanguage == Language.German)
+            {
+                categories[index].TitleGerman = value ?? "";
+            }
+            else
+            {
+                categories[index].TitleEnglish = value ?? "";
+            }
             Question.Configuration["GoalCategories"] = categories;
             StateHasChanged();
         }
@@ -667,7 +675,14 @@
         var categories = GetGoalCategoriesFromConfiguration();
         if (index >= 0 && index < categories.Count)
         {
-            categories[index].Description = value ?? "";
+            if (CurrentLanguage == Language.German)
+            {
+                categories[index].DescriptionGerman = value ?? "";
+            }
+            else
+            {
+                categories[index].DescriptionEnglish = value ?? "";
+            }
             Question.Configuration["GoalCategories"] = categories;
             StateHasChanged();
         }
@@ -776,20 +791,6 @@
             }
         }
 
-        // Check for legacy format and convert
-        if (Question.Configuration.ContainsKey("SectionTitle") || Question.Configuration.ContainsKey("SectionDescription"))
-        {
-            return new List<TextSection>
-            {
-                new TextSection
-                {
-                    Title = Question.Configuration.ContainsKey("SectionTitle") ? Question.Configuration["SectionTitle"].ToString() ?? "" : "",
-                    Description = Question.Configuration.ContainsKey("SectionDescription") ? Question.Configuration["SectionDescription"].ToString() ?? "" : "",
-                    IsRequired = false
-                }
-            };
-        }
-
         return new List<TextSection>();
     }
 
@@ -822,7 +823,7 @@
         var sections = GetTextSectionsFromConfiguration();
         if (index >= 0 && index < sections.Count)
         {
-            var sectionName = string.IsNullOrWhiteSpace(sections[index].Title) ? $"Text Section {index + 1}" : sections[index].Title;
+            var sectionName = string.IsNullOrWhiteSpace(sections[index].GetLocalizedTitleWithFallback(CurrentLanguage)) ? $"Text Section {index + 1}" : sections[index].GetLocalizedTitleWithFallback(CurrentLanguage);
             var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{sectionName}'?", "Delete Text Section",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
 
@@ -840,7 +841,14 @@
         var sections = GetTextSectionsFromConfiguration();
         if (index >= 0 && index < sections.Count)
         {
-            sections[index].Title = value ?? "";
+            if (CurrentLanguage == Language.German)
+            {
+                sections[index].TitleGerman = value ?? "";
+            }
+            else
+            {
+                sections[index].TitleEnglish = value ?? "";
+            }
             Question.Configuration["TextSections"] = sections;
             StateHasChanged();
         }
@@ -851,7 +859,14 @@
         var sections = GetTextSectionsFromConfiguration();
         if (index >= 0 && index < sections.Count)
         {
-            sections[index].Description = value ?? "";
+            if (CurrentLanguage == Language.German)
+            {
+                sections[index].DescriptionGerman = value ?? "";
+            }
+            else
+            {
+                sections[index].DescriptionEnglish = value ?? "";
+            }
             Question.Configuration["TextSections"] = sections;
             StateHasChanged();
         }
@@ -1093,13 +1108,32 @@
         public string DescriptionEnglish { get; set; } = "";
         public string DescriptionGerman { get; set; } = "";
 
-        // Legacy properties for backward compatibility
-        [Obsolete("Use TitleEnglish/TitleGerman instead")]
-        public string Title { get; set; } = "";
-        [Obsolete("Use DescriptionEnglish/DescriptionGerman instead")]
-        public string Description { get; set; } = "";
         public bool IsRequired { get; set; } = false;
         public int Order { get; set; } = 0;
+
+        // Helper methods for language-aware content display
+        public string GetLocalizedTitle(Language language)
+        {
+            return language == Language.German ? TitleGerman : TitleEnglish;
+        }
+
+        public string GetLocalizedDescription(Language language)
+        {
+            return language == Language.German ? DescriptionGerman : DescriptionEnglish;
+        }
+
+        // Helper method to fallback to English if German is empty
+        public string GetLocalizedTitleWithFallback(Language language)
+        {
+            var localized = GetLocalizedTitle(language);
+            return !string.IsNullOrWhiteSpace(localized) ? localized : TitleEnglish;
+        }
+
+        public string GetLocalizedDescriptionWithFallback(Language language)
+        {
+            var localized = GetLocalizedDescription(language);
+            return !string.IsNullOrWhiteSpace(localized) ? localized : DescriptionEnglish;
+        }
     }
 
     public class TextSection
@@ -1110,12 +1144,31 @@
         public string DescriptionEnglish { get; set; } = "";
         public string DescriptionGerman { get; set; } = "";
 
-        // Legacy properties for backward compatibility
-        [Obsolete("Use TitleEnglish/TitleGerman instead")]
-        public string Title { get; set; } = "";
-        [Obsolete("Use DescriptionEnglish/DescriptionGerman instead")]
-        public string Description { get; set; } = "";
         public bool IsRequired { get; set; } = false;
         public int Order { get; set; } = 0;
+
+        // Helper methods for language-aware content display
+        public string GetLocalizedTitle(Language language)
+        {
+            return language == Language.German ? TitleGerman : TitleEnglish;
+        }
+
+        public string GetLocalizedDescription(Language language)
+        {
+            return language == Language.German ? DescriptionGerman : DescriptionEnglish;
+        }
+
+        // Helper method to fallback to English if German is empty
+        public string GetLocalizedTitleWithFallback(Language language)
+        {
+            var localized = GetLocalizedTitle(language);
+            return !string.IsNullOrWhiteSpace(localized) ? localized : TitleEnglish;
+        }
+
+        public string GetLocalizedDescriptionWithFallback(Language language)
+        {
+            var localized = GetLocalizedDescription(language);
+            return !string.IsNullOrWhiteSpace(localized) ? localized : DescriptionEnglish;
+        }
     }
 }

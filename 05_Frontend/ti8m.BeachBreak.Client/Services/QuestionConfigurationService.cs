@@ -77,15 +77,6 @@ public class QuestionConfigurationService
         return GetConfigurationList<CompetencyDefinition>(question.Configuration, "Competencies");
     }
 
-    /// <summary>
-    /// Gets goal categories from question configuration (LEGACY - for old GoalAchievement type)
-    /// Note: The new Goal type does not store items in template. This is kept for backward compatibility only.
-    /// </summary>
-    [Obsolete("Goal questions no longer use template items. Goals are added dynamically during in-progress states.")]
-    public List<QuestionCardTypes.GoalCategory> GetGoalCategories(QuestionItem question)
-    {
-        return GetConfigurationList<QuestionCardTypes.GoalCategory>(question.Configuration, "GoalCategories");
-    }
 
     /// <summary>
     /// Gets text sections from question configuration
@@ -199,15 +190,6 @@ public class QuestionConfigurationService
         question.Configuration["Competencies"] = competencies;
     }
 
-    /// <summary>
-    /// Updates goal categories in question configuration (LEGACY - for old GoalAchievement type)
-    /// Note: The new Goal type does not store items in template. This is kept for backward compatibility only.
-    /// </summary>
-    [Obsolete("Goal questions no longer use template items. Goals are added dynamically during in-progress states.")]
-    public void SetGoalCategories(QuestionItem question, List<QuestionCardTypes.GoalCategory> goalCategories)
-    {
-        question.Configuration["GoalCategories"] = goalCategories;
-    }
 
     /// <summary>
     /// Updates text sections in question configuration

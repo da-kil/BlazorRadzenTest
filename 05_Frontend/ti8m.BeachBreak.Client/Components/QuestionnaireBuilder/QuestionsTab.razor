@@ -95,8 +95,10 @@
                            OnMoveQuestionUp="@((questionIndex) => OnMoveQuestionUpInternal(currentSectionIndex, questionIndex))"
                            OnMoveQuestionDown="@((questionIndex) => OnMoveQuestionDownInternal(currentSectionIndex, questionIndex))"
                            OnDeleteQuestion="@((questionIndex) => OnRemoveQuestionInternal(currentSectionIndex, questionIndex))"
-                           OnTitleChanged="@((value) => OnSectionTitleChanged(currentSectionIndex, value))"
-                           OnDescriptionChanged="@((value) => OnSectionDescriptionChanged(currentSectionIndex, value))" />
+                           OnTitleEnglishChanged="@((value) => OnSectionTitleEnglishChanged(currentSectionIndex, value))"
+                           OnTitleGermanChanged="@((value) => OnSectionTitleGermanChanged(currentSectionIndex, value))"
+                           OnDescriptionEnglishChanged="@((value) => OnSectionDescriptionEnglishChanged(currentSectionIndex, value))"
+                           OnDescriptionGermanChanged="@((value) => OnSectionDescriptionGermanChanged(currentSectionIndex, value))" />
             }
         </div>
     }
@@ -141,13 +143,25 @@
     private async Task OnRemoveQuestionInternal(int sectionIndex, int questionIndex) =>
         await OnRemoveQuestion.InvokeAsync((sectionIndex, questionIndex));
 
-    private async Task OnSectionTitleChanged(int sectionIndex, string value)
+    private async Task OnSectionTitleEnglishChanged(int sectionIndex, string value)
     {
         // Section title is already updated in SectionCard component
         StateHasChanged();
     }
 
-    private async Task OnSectionDescriptionChanged(int sectionIndex, string value)
+    private async Task OnSectionTitleGermanChanged(int sectionIndex, string value)
+    {
+        // Section title is already updated in SectionCard component
+        StateHasChanged();
+    }
+
+    private async Task OnSectionDescriptionEnglishChanged(int sectionIndex, string value)
+    {
+        // Section description is already updated in SectionCard component
+        StateHasChanged();
+    }
+
+    private async Task OnSectionDescriptionGermanChanged(int sectionIndex, string value)
     {
         // Section description is already updated in SectionCard component
         StateHasChanged();

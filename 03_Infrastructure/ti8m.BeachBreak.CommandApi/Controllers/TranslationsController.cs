@@ -95,37 +95,6 @@ public class TranslationsController : BaseController
     }
 
     /// <summary>
-    /// Seed initial translations - Admin only command operation
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Number of translations seeded</returns>
-    [HttpPost("seed")]
-    public async Task<IActionResult> SeedTranslations(CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            logger.LogInformation("Seeding translations requested by admin");
-            var seedCount = await translationService.SeedInitialTranslationsAsync(cancellationToken);
-
-            if (seedCount > 0)
-            {
-                logger.LogInformation("Successfully seeded {Count} translations", seedCount);
-                return CreateResponse(CommandResult.Success(seedCount));
-            }
-            else
-            {
-                logger.LogInformation("Translations already exist, no seeding performed");
-                return CreateResponse(CommandResult.Success(0));
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error seeding translations");
-            return CreateResponse(CommandResult.Fail("Failed to seed translations", 500));
-        }
-    }
-
-    /// <summary>
     /// Bulk import translations from JSON file - Admin only command operation
     /// </summary>
     /// <param name="translations">List of translations to import</param>

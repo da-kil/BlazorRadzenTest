@@ -8,11 +8,6 @@ public class TextSection
     public string DescriptionEnglish { get; set; } = string.Empty;
     public string DescriptionGerman { get; set; } = string.Empty;
 
-    // Legacy properties for backward compatibility - will be removed after migration
-    [Obsolete("Use TitleEnglish/TitleGerman instead")]
-    public string Title { get; set; } = string.Empty;
-    [Obsolete("Use DescriptionEnglish/DescriptionGerman instead")]
-    public string Description { get; set; } = string.Empty;
 
     public bool IsRequired { get; set; } = false;
     public int Order { get; set; }

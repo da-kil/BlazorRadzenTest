@@ -119,9 +119,10 @@ public class QuestionnaireValidationService
                     {
                         for (int i = 0; i < textSections.Count; i++)
                         {
-                            if (string.IsNullOrWhiteSpace(textSections[i].Title))
+                            if (string.IsNullOrWhiteSpace(textSections[i].TitleEnglish) &&
+                                string.IsNullOrWhiteSpace(textSections[i].TitleGerman))
                             {
-                                validationErrors.Add($"Text section {i + 1} in {questionPos} ('{sectionName}') requires a title");
+                                validationErrors.Add($"Text section {i + 1} in {questionPos} ('{sectionName}') requires a title (in English or German)");
                             }
                         }
                     }

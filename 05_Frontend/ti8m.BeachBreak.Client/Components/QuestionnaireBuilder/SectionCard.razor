@@ -355,8 +355,6 @@
     [Parameter] public EventCallback<int> OnMoveQuestionUp { get; set; }
     [Parameter] public EventCallback<int> OnMoveQuestionDown { get; set; }
     [Parameter] public EventCallback<int> OnDeleteQuestion { get; set; }
-    [Parameter] public EventCallback<string> OnTitleChanged { get; set; }
-    [Parameter] public EventCallback<string> OnDescriptionChanged { get; set; }
     [Parameter] public EventCallback<string> OnTitleEnglishChanged { get; set; }
     [Parameter] public EventCallback<string> OnTitleGermanChanged { get; set; }
     [Parameter] public EventCallback<string> OnDescriptionEnglishChanged { get; set; }
@@ -382,17 +380,6 @@
     private async Task OnCancelQuestionTypeSelection() => await OnCancelQuestionSelection.InvokeAsync();
     private async Task OnAddQuestionOfType(QuestionType type) => await OnAddQuestionType.InvokeAsync(type);
 
-    private async Task OnSectionTitleChanged(string value)
-    {
-        Section.Title = value ?? "";
-        await OnTitleChanged.InvokeAsync(value);
-    }
-
-    private async Task OnSectionDescriptionChanged(string value)
-    {
-        Section.Description = value ?? "";
-        await OnDescriptionChanged.InvokeAsync(value);
-    }
 
     private async Task OnSectionTitleEnglishChanged(string value)
     {

@@ -61,13 +61,6 @@ public interface IUITranslationService
     Task<bool> TranslationExistsAsync(string key, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Seeds the database with initial translation data if no translations exist.
-    /// </summary>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Number of translations seeded</returns>
-    Task<int> SeedInitialTranslationsAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Bulk imports translations, upserting existing ones.
     /// </summary>
     /// <param name="translations">List of translations to import</param>

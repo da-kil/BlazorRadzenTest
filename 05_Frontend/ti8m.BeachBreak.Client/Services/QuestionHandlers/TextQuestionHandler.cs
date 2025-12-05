@@ -25,8 +25,10 @@ public class TextQuestionHandler : IQuestionTypeHandler
         {
             new QuestionCardTypes.TextSection
             {
-                Title = "",
-                Description = "",
+                TitleEnglish = "",
+                TitleGerman = "",
+                DescriptionEnglish = "",
+                DescriptionGerman = "",
                 IsRequired = false,
                 Order = 0
             }
@@ -40,8 +42,10 @@ public class TextQuestionHandler : IQuestionTypeHandler
         var nextOrder = textSections.Count > 0 ? textSections.Max(t => t.Order) + 1 : 0;
         var newSection = new QuestionCardTypes.TextSection
         {
-            Title = "",
-            Description = "",
+            TitleEnglish = "",
+            TitleGerman = "",
+            DescriptionEnglish = "",
+            DescriptionGerman = "",
             IsRequired = false,
             Order = nextOrder
         };
@@ -86,9 +90,10 @@ public class TextQuestionHandler : IQuestionTypeHandler
         {
             for (int i = 0; i < textSections.Count; i++)
             {
-                if (string.IsNullOrWhiteSpace(textSections[i].Title))
+                if (string.IsNullOrWhiteSpace(textSections[i].TitleEnglish) &&
+                    string.IsNullOrWhiteSpace(textSections[i].TitleGerman))
                 {
-                    errors.Add($"Text section {i + 1} in {questionLabel} requires a title");
+                    errors.Add($"Text section {i + 1} in {questionLabel} requires a title (in English or German)");
                 }
             }
         }
