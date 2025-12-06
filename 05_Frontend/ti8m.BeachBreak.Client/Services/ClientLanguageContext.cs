@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.Extensions.DependencyInjection;
 using ti8m.BeachBreak.Client.Models;
 using ti8m.BeachBreak.Client.Services;
 
@@ -17,6 +18,8 @@ public class ClientLanguageContext : ILanguageContext
     private Language? _cachedLanguage;
     private readonly TimeSpan cacheExpiry = TimeSpan.FromMinutes(10);
     private DateTime _lastCacheUpdate = DateTime.MinValue;
+    private readonly SemaphoreSlim _languageLock = new(1, 1);
+    private readonly object _syncLock = new object();
 
     public ClientLanguageContext(IHttpClientFactory httpClientFactory, IAuthService authService)
     {
@@ -25,16 +28,25 @@ public class ClientLanguageContext : ILanguageContext
         this.authService = authService;
     }
 
+
     public async Task<Language> GetCurrentLanguageAsync()
     {
-        // Return cached language if still valid
+        // Fast path - check without lock
         if (_cachedLanguage.HasValue && DateTime.UtcNow - _lastCacheUpdate < cacheExpiry)
         {
             return _cachedLanguage.Value;
         }
 
+        // Slow path - use semaphore for thread safety
+        await _languageLock.WaitAsync();
         try
         {
+            // Double-check pattern - cache might have been updated by another thread
+            if (_cachedLanguage.HasValue && DateTime.UtcNow - _lastCacheUpdate < cacheExpiry)
+            {
+                return _cachedLanguage.Value;
+            }
+
             var userRole = await authService.GetMyRoleAsync();
             if (userRole?.EmployeeId == null)
             {
@@ -50,6 +62,10 @@ public class ClientLanguageContext : ILanguageContext
         {
             // Fallback to English if any error occurs
             return Language.English;
+        }
+        finally
+        {
+            _languageLock.Release();
         }
     }
 
@@ -124,21 +140,31 @@ public class ClientLanguageContext : ILanguageContext
     /// <summary>
     /// Sets the current language in cache immediately for performance optimization.
     /// Use this for immediate UI language switching before async persistence.
+    /// Thread-safe implementation for singleton usage.
     /// </summary>
     public void SetCurrentLanguage(Language language)
     {
-        _cachedLanguage = language;
-        _lastCacheUpdate = DateTime.UtcNow;
+        // For browser compatibility, use a simple lock approach
+        lock (_syncLock)
+        {
+            _cachedLanguage = language;
+            _lastCacheUpdate = DateTime.UtcNow;
+        }
     }
 
     /// <summary>
     /// Clears the cached language, forcing a refresh on next access.
     /// Useful when user logs in/out or when language is changed by another part of the application.
+    /// Thread-safe implementation for singleton usage.
     /// </summary>
     public void ClearCache()
     {
-        _cachedLanguage = null;
-        _lastCacheUpdate = DateTime.MinValue;
+        // For browser compatibility, use a simple lock approach
+        lock (_syncLock)
+        {
+            _cachedLanguage = null;
+            _lastCacheUpdate = DateTime.MinValue;
+        }
     }
 }
 

@@ -173,68 +173,7 @@
 
         foreach (var section in Template.Sections)
         {
-            // Check if this section uses the new simplified structure
-            if (section.Configuration.Any())
-            {
-                totalItems += section.GetItemCount();
-            }
-            // Fallback to legacy Questions structure
-            else
-            {
-                foreach (var question in section.Questions)
-                {
-                    switch (question.Type)
-                    {
-                        case QuestionType.Assessment:
-                            if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
-                            {
-                                if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                                {
-                                    try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                                }
-                                else if (competenciesObj is System.Collections.ICollection collection)
-                                {
-                                    totalItems += collection.Count;
-                                }
-                            }
-                            break;
-                        case QuestionType.Goal:
-                            if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
-                            {
-                                if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                                {
-                                    try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                                }
-                                else if (goalCategoriesObj is System.Collections.ICollection collection)
-                                {
-                                    totalItems += collection.Count;
-                                }
-                            }
-                            break;
-                        case QuestionType.TextQuestion:
-                            if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
-                            {
-                                if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                                {
-                                    try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                                }
-                                else if (textSectionsObj is System.Collections.ICollection collection)
-                                {
-                                    totalItems += collection.Count;
-                                }
-                            }
-                            // Check for legacy format
-                            else if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
-                            {
-                                totalItems += 1;
-                            }
-                            break;
-                        default:
-                            totalItems += 1; // Fallback for unknown question types
-                            break;
-                    }
-                }
-            }
+            totalItems += section.GetItemCount();
         }
 
         return totalItems;

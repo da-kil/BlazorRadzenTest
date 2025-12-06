@@ -1,5 +1,7 @@
+using System.Collections.Concurrent;
 using System.Text.Json;
 using Blazored.LocalStorage;
+using Microsoft.Extensions.DependencyInjection;
 using ti8m.BeachBreak.Client.Models;
 
 namespace ti8m.BeachBreak.Client.Services;
@@ -8,15 +10,17 @@ namespace ti8m.BeachBreak.Client.Services;
 /// Client-side implementation of UI translation service.
 /// Provides cached translation lookup with local storage backup for Blazor WebAssembly.
 /// Communicates with backend APIs for translation data.
+/// Thread-safe singleton implementation for use across navigation.
 /// </summary>
 public class ClientUITranslationService : IUITranslationService
 {
     private readonly HttpClient httpClient;
     private readonly ILocalStorageService localStorage;
-    private readonly Dictionary<string, UITranslation> _cache = new();
+    private readonly ConcurrentDictionary<string, UITranslation> _cache = new();
     private readonly TimeSpan cacheExpiry = TimeSpan.FromMinutes(30);
     private DateTime _lastCacheUpdate = DateTime.MinValue;
     private bool _cacheLoaded = false;
+    private readonly SemaphoreSlim _cacheLock = new(1, 1);
 
     private const string LocalStorageCacheKey = "uitranslations_cache";
     private const string LocalStorageCacheTimeKey = "uitranslations_cache_time";
@@ -141,7 +145,7 @@ public class ClientUITranslationService : IUITranslationService
             var response = await httpClient.DeleteAsync($"/c/api/v1/translations/{Uri.EscapeDataString(key)}", cancellationToken);
             if (response.IsSuccessStatusCode)
             {
-                _cache.Remove(key);
+                _cache.TryRemove(key, out _);
                 await SaveCacheToLocalStorageAsync();
                 return true;
             }
@@ -199,23 +203,71 @@ public class ClientUITranslationService : IUITranslationService
         return result;
     }
 
+    /// <summary>
+    /// Invalidates all frontend caches (memory cache and local storage) and forces a reload from server.
+    /// This method should be called when the translation cache is cleared on the backend.
+    /// Thread-safe implementation for singleton usage.
+    /// </summary>
+    public async Task InvalidateFrontendCacheAsync()
+    {
+        await _cacheLock.WaitAsync();
+        try
+        {
+            // Clear memory cache
+            _cache.Clear();
+
+            // Clear LocalStorage
+            await localStorage.RemoveItemAsync(LocalStorageCacheKey);
+            await localStorage.RemoveItemAsync(LocalStorageCacheTimeKey);
+
+            // Reset state to force reload from server
+            _cacheLoaded = false;
+            _lastCacheUpdate = DateTime.MinValue;
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't throw - cache clearing should be resilient
+            // The cache will be refreshed on next access anyway
+        }
+        finally
+        {
+            _cacheLock.Release();
+        }
+    }
+
     private async Task EnsureCacheLoadedAsync()
     {
+        // Fast path - check without lock
         if (_cacheLoaded && DateTime.UtcNow - _lastCacheUpdate < cacheExpiry)
         {
             return; // Cache is still valid
         }
 
-        // Try to load from local storage first
-        if (!_cacheLoaded)
+        // Slow path - use semaphore for thread safety
+        await _cacheLock.WaitAsync();
+        try
         {
-            await LoadCacheFromLocalStorageAsync();
-        }
+            // Double-check pattern - cache might have been loaded by another thread
+            if (_cacheLoaded && DateTime.UtcNow - _lastCacheUpdate < cacheExpiry)
+            {
+                return; // Cache is now valid
+            }
 
-        // If cache is expired or empty, refresh from server
-        if (!_cacheLoaded || DateTime.UtcNow - _lastCacheUpdate >= cacheExpiry)
+            // Try to load from local storage first
+            if (!_cacheLoaded)
+            {
+                await LoadCacheFromLocalStorageAsync();
+            }
+
+            // If cache is expired or empty, refresh from server
+            if (!_cacheLoaded || DateTime.UtcNow - _lastCacheUpdate >= cacheExpiry)
+            {
+                await RefreshCacheFromServerAsync();
+            }
+        }
+        finally
         {
-            await RefreshCacheFromServerAsync();
+            _cacheLock.Release();
         }
     }
 
@@ -250,6 +302,11 @@ public class ClientUITranslationService : IUITranslationService
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
+                // If server fails and we have no cache, load basic fallbacks
+                if (!_cacheLoaded)
+                {
+                    LoadBasicFallbackTranslations();
+                }
             }
         }
         catch (Exception ex)
@@ -283,7 +340,10 @@ public class ClientUITranslationService : IUITranslationService
             var cacheData = await localStorage.GetItemAsync<List<UITranslation>>(LocalStorageCacheKey);
             var cacheTime = await localStorage.GetItemAsync<DateTime>(LocalStorageCacheTimeKey);
 
-            if (cacheData != null && cacheData.Count > 0)
+            // Only load if data exists AND it's not expired
+            if (cacheData != null && cacheData.Count > 0 &&
+                cacheTime != DateTime.MinValue &&
+                DateTime.UtcNow - cacheTime < cacheExpiry)
             {
                 _cache.Clear();
                 foreach (var translation in cacheData)
@@ -293,6 +353,15 @@ public class ClientUITranslationService : IUITranslationService
 
                 _lastCacheUpdate = cacheTime;
                 _cacheLoaded = true;
+            }
+            else
+            {
+                // Clear localStorage if data is expired or invalid
+                if (cacheData != null || cacheTime != DateTime.MinValue)
+                {
+                    await localStorage.RemoveItemAsync(LocalStorageCacheKey);
+                    await localStorage.RemoveItemAsync(LocalStorageCacheTimeKey);
+                }
             }
         }
         catch

@@ -1595,24 +1595,6 @@ else
         }
     }
 
-    // Text Question helper methods
-    private string GetTextQuestionSectionTitle(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("SectionTitle"))
-        {
-            return question.Configuration["SectionTitle"].ToString() ?? "Career Ambitions";
-        }
-        return "Career Ambitions";
-    }
-
-    private string GetTextQuestionSectionDescription(QuestionItem question)
-    {
-        if (question.Configuration.ContainsKey("SectionDescription"))
-        {
-            return question.Configuration["SectionDescription"].ToString() ?? "Where do you see yourself long-term in your professional career?";
-        }
-        return "Where do you see yourself long-term in your professional career?";
-    }
 
     private bool IsManagerRole(string role)
     {

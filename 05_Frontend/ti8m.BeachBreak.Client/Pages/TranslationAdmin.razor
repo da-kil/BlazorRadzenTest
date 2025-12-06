@@ -429,19 +429,31 @@
     {
         try
         {
-            var success = await TranslationApiService.InvalidateCacheAsync();
-            if (success)
+            // Step 1: Clear backend cache
+            var backendSuccess = await TranslationApiService.InvalidateCacheAsync();
+            if (!backendSuccess)
             {
-                NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.cache-invalidated-successfully"));
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("notifications.failed-to-invalidate-backend-cache"));
+                return;
             }
-            else
+
+            // Step 2: Clear frontend cache (cast to concrete type to access InvalidateFrontendCacheAsync)
+            if (TranslationService is ti8m.BeachBreak.Client.Services.ClientUITranslationService clientService)
             {
-                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("notifications.failed-to-invalidate-cache"));
+                await clientService.InvalidateFrontendCacheAsync();
             }
+
+            // Step 3: Refresh this page's translations
+            await RefreshTranslationsAsync();
+
+            // Step 4: Reload data from server to show fresh translations
+            await LoadTranslations();
+
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.cache-cleared-completely"));
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed-to-invalidate-cache")}: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed-to-clear-cache")}: {ex.Message}");
         }
     }
 }

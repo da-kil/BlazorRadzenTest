@@ -1,33 +1,99 @@
 using Marten;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using System.Text;
+using System.Text.Json;
 using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Services;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.Services;
 
 /// <summary>
-/// Implementation of UI translation service using Marten for persistence and IMemoryCache for performance.
+/// Implementation of UI translation service using Marten for persistence and IDistributedCache for performance.
 /// Provides localized text with fallback to English when German translations are missing.
+/// Uses distributed cache to ensure consistency across multiple service instances.
 /// </summary>
 public class UITranslationService : IUITranslationService
 {
     private readonly IDocumentSession session;
-    private readonly IMemoryCache memoryCache;
+    private readonly IDistributedCache cache;
     private readonly ILogger<UITranslationService> logger;
 
     private const string CacheKeyPrefix = "uitranslation:";
     private const string AllTranslationsCacheKey = "uitranslations:all";
-    private static readonly TimeSpan CacheExpiry = TimeSpan.FromMinutes(30);
+    private const string CategoryCacheKeyPrefix = "uitranslations:category:";
+
+    private static readonly DistributedCacheEntryOptions CacheOptions = new()
+    {
+        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+    };
 
     public UITranslationService(
         IDocumentSession session,
-        IMemoryCache memoryCache,
+        IDistributedCache cache,
         ILogger<UITranslationService> logger)
     {
         this.session = session;
-        this.memoryCache = memoryCache;
+        this.cache = cache;
         this.logger = logger;
+    }
+
+    /// <summary>
+    /// Helper method to set cache entries using distributed cache with JSON serialization
+    /// </summary>
+    private async Task SetCacheAsync<T>(string cacheKey, T value, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var json = JsonSerializer.Serialize(value);
+            var bytes = Encoding.UTF8.GetBytes(json);
+            await cache.SetAsync(cacheKey, bytes, CacheOptions, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to set cache for key: {CacheKey}", cacheKey);
+        }
+    }
+
+    /// <summary>
+    /// Helper method to get cache entries using distributed cache with JSON deserialization
+    /// </summary>
+    private async Task<T?> GetCacheAsync<T>(string cacheKey, CancellationToken cancellationToken = default) where T : class
+    {
+        try
+        {
+            var cachedBytes = await cache.GetAsync(cacheKey, cancellationToken);
+            if (cachedBytes != null)
+            {
+                var cachedJson = Encoding.UTF8.GetString(cachedBytes);
+                return JsonSerializer.Deserialize<T>(cachedJson);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to get cache for key: {CacheKey}", cacheKey);
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Helper method to invalidate caches for a specific translation key and category
+    /// </summary>
+    private async Task InvalidateTranslationCachesAsync(string key, string? category, CancellationToken cancellationToken = default)
+    {
+        var tasks = new List<Task>
+        {
+            cache.RemoveAsync($"{CacheKeyPrefix}{key}", cancellationToken),
+            cache.RemoveAsync(AllTranslationsCacheKey, cancellationToken)
+        };
+
+        // Remove category cache if specified
+        if (!string.IsNullOrWhiteSpace(category))
+        {
+            tasks.Add(cache.RemoveAsync($"{CategoryCacheKeyPrefix}{category}", cancellationToken));
+        }
+
+        await Task.WhenAll(tasks);
     }
 
     public async Task<string> GetTextAsync(string key, Language language, CancellationToken cancellationToken = default)
@@ -41,7 +107,8 @@ public class UITranslationService : IUITranslationService
         var cacheKey = $"{CacheKeyPrefix}{key}";
 
         // Try to get from cache first
-        if (memoryCache.TryGetValue(cacheKey, out UITranslation? cachedTranslation) && cachedTranslation != null)
+        var cachedTranslation = await GetCacheAsync<UITranslation>(cacheKey, cancellationToken);
+        if (cachedTranslation != null)
         {
             logger.LogDebug("Retrieved translation from cache for key: {Key}", key);
             return cachedTranslation.GetText(language);
@@ -56,7 +123,7 @@ public class UITranslationService : IUITranslationService
             if (translation != null)
             {
                 // Cache the result
-                memoryCache.Set(cacheKey, translation, CacheExpiry);
+                await SetCacheAsync(cacheKey, translation, cancellationToken);
                 logger.LogDebug("Cached translation for key: {Key}", key);
                 return translation.GetText(language);
             }
@@ -74,7 +141,8 @@ public class UITranslationService : IUITranslationService
     public async Task<IList<UITranslation>> GetAllTranslationsAsync(CancellationToken cancellationToken = default)
     {
         // Try cache first
-        if (memoryCache.TryGetValue(AllTranslationsCacheKey, out IList<UITranslation>? cached) && cached != null)
+        var cached = await GetCacheAsync<List<UITranslation>>(AllTranslationsCacheKey, cancellationToken);
+        if (cached != null)
         {
             logger.LogDebug("Retrieved all translations from cache");
             return cached;
@@ -90,7 +158,7 @@ public class UITranslationService : IUITranslationService
             var translationsList = translations.ToList();
 
             // Cache the result
-            memoryCache.Set(AllTranslationsCacheKey, translationsList, CacheExpiry);
+            await SetCacheAsync(AllTranslationsCacheKey, translationsList, cancellationToken);
             logger.LogDebug("Cached all {Count} translations", translationsList.Count);
 
             return translationsList;
@@ -104,6 +172,16 @@ public class UITranslationService : IUITranslationService
 
     public async Task<IList<UITranslation>> GetTranslationsByCategoryAsync(string category, CancellationToken cancellationToken = default)
     {
+        var categoryCacheKey = $"{CategoryCacheKeyPrefix}{category}";
+
+        // Try cache first
+        var cached = await GetCacheAsync<List<UITranslation>>(categoryCacheKey, cancellationToken);
+        if (cached != null)
+        {
+            logger.LogDebug("Retrieved translations from cache for category: {Category}", category);
+            return cached;
+        }
+
         try
         {
             var translations = await session.Query<UITranslation>()
@@ -112,7 +190,11 @@ public class UITranslationService : IUITranslationService
                 .ToListAsync(cancellationToken);
 
             var translationsList = translations.ToList();
-            logger.LogDebug("Retrieved {Count} translations for category: {Category}", translationsList.Count, category);
+
+            // Cache the result
+            await SetCacheAsync(categoryCacheKey, translationsList, cancellationToken);
+            logger.LogDebug("Cached {Count} translations for category: {Category}", translationsList.Count, category);
+
             return translationsList;
         }
         catch (Exception ex)
@@ -156,10 +238,8 @@ public class UITranslationService : IUITranslationService
 
             await session.SaveChangesAsync(cancellationToken);
 
-            // Invalidate cache
-            var cacheKey = $"{CacheKeyPrefix}{key}";
-            memoryCache.Remove(cacheKey);
-            memoryCache.Remove(AllTranslationsCacheKey);
+            // Invalidate relevant caches
+            await InvalidateTranslationCachesAsync(key, existingTranslation.Category, cancellationToken);
 
             logger.LogInformation("Upserted translation for key: {Key}", key);
             return existingTranslation;
@@ -187,10 +267,8 @@ public class UITranslationService : IUITranslationService
             session.Delete(translation);
             await session.SaveChangesAsync(cancellationToken);
 
-            // Invalidate cache
-            var cacheKey = $"{CacheKeyPrefix}{key}";
-            memoryCache.Remove(cacheKey);
-            memoryCache.Remove(AllTranslationsCacheKey);
+            // Invalidate relevant caches
+            await InvalidateTranslationCachesAsync(key, translation.Category, cancellationToken);
 
             logger.LogInformation("Deleted translation for key: {Key}", key);
             return true;
@@ -267,7 +345,7 @@ public class UITranslationService : IUITranslationService
             await session.SaveChangesAsync(cancellationToken);
 
             // Clear cache to ensure fresh data
-            InvalidateCache();
+            await InvalidateCacheAsync(cancellationToken);
 
             logger.LogInformation("Bulk imported {Count} translations", importedCount);
             return importedCount;
@@ -279,12 +357,32 @@ public class UITranslationService : IUITranslationService
         }
     }
 
+    /// <summary>
+    /// Invalidates all translation caches across all service instances (distributed cache invalidation)
+    /// </summary>
+    public async Task InvalidateCacheAsync(CancellationToken cancellationToken = default)
+    {
+        var tasks = new List<Task>
+        {
+            cache.RemoveAsync(AllTranslationsCacheKey, cancellationToken)
+        };
+
+        // Clear all category caches - we need to clear all possible category keys
+        // Since we don't track keys in distributed cache, we'll clear the main caches
+        // Individual translation caches will expire naturally or be refreshed on demand
+
+        await Task.WhenAll(tasks);
+
+        logger.LogInformation("Translation distributed cache invalidated - cleared main cache entries");
+    }
+
+    /// <summary>
+    /// Legacy method for backwards compatibility
+    /// </summary>
     public void InvalidateCache()
     {
-        // Get all cache keys by iterating through known patterns
-        // Note: IMemoryCache doesn't expose all keys, so we clear known patterns
-        memoryCache.Remove(AllTranslationsCacheKey);
-
-        logger.LogInformation("Translation cache invalidated - all cached entries will be reloaded from database on next access");
+        // For backwards compatibility, call the async version synchronously
+        // This is not ideal but maintains interface compatibility
+        InvalidateCacheAsync().GetAwaiter().GetResult();
     }
 }

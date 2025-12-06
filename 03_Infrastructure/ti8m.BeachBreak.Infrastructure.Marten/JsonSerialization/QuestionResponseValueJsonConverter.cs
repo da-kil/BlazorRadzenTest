@@ -24,27 +24,19 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
         using var document = JsonDocument.ParseValue(ref reader);
         var root = document.RootElement;
 
-        // Check for type discriminator property (new format)
-        if (root.TryGetProperty(TypeDiscriminatorPropertyName, out var typeProperty))
+        // All data must have type discriminator property
+        if (!root.TryGetProperty(TypeDiscriminatorPropertyName, out var typeProperty))
         {
-            var typeValue = typeProperty.GetString();
-            return typeValue switch
-            {
-                TextResponseTypeValue => DeserializeTextResponse(root),
-                AssessmentResponseTypeValue => DeserializeAssessmentResponse(root),
-                GoalResponseTypeValue => DeserializeGoalResponse(root),
-                _ => throw new JsonException($"Unknown QuestionResponseValue type discriminator: '{typeValue}'")
-            };
+            throw new JsonException($"Missing required type discriminator property '{TypeDiscriminatorPropertyName}' in QuestionResponseValue JSON");
         }
 
-        // Legacy format - infer type from JSON structure
-        var inferredType = InferTypeFromJsonStructure(root);
-        return inferredType switch
+        var typeValue = typeProperty.GetString();
+        return typeValue switch
         {
             TextResponseTypeValue => DeserializeTextResponse(root),
             AssessmentResponseTypeValue => DeserializeAssessmentResponse(root),
             GoalResponseTypeValue => DeserializeGoalResponse(root),
-            _ => throw new JsonException($"Could not infer QuestionResponseValue type from JSON structure")
+            _ => throw new JsonException($"Unknown QuestionResponseValue type discriminator: '{typeValue}'")
         };
     }
 
@@ -137,34 +129,6 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
         public ApplicationRole OriginalAddedByRole { get; set; }
     }
 
-    /// <summary>
-    /// Infers the QuestionResponseValue type from the JSON structure for legacy data without type discriminators.
-    /// </summary>
-    private static string InferTypeFromJsonStructure(JsonElement root)
-    {
-        // Check for TextResponse structure: has "TextSections" property
-        if (root.TryGetProperty("TextSections", out _))
-        {
-            return TextResponseTypeValue;
-        }
-
-        // Check for AssessmentResponse structure: has "Competencies" property
-        if (root.TryGetProperty("Competencies", out _))
-        {
-            return AssessmentResponseTypeValue;
-        }
-
-        // Check for GoalResponse structure: has "Goals", "PredecessorRatings", or "PredecessorAssignmentId" properties
-        if (root.TryGetProperty("Goals", out _) ||
-            root.TryGetProperty("PredecessorRatings", out _) ||
-            root.TryGetProperty("PredecessorAssignmentId", out _))
-        {
-            return GoalResponseTypeValue;
-        }
-
-        // Default fallback - could indicate corrupted or unknown data format
-        return TextResponseTypeValue;
-    }
 
     public override void Write(Utf8JsonWriter writer, QuestionResponseValue value, JsonSerializerOptions options)
     {

@@ -456,23 +456,6 @@
     private List<CompetencyDefinition> GetOrderedCompetencies()
     {
         var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
-
-        // Check if we need to initialize Order values (for legacy data or duplicates)
-        var orderValues = competencies.Select(c => c.Order).ToList();
-        var distinctOrderCount = orderValues.Distinct().Count();
-        var hasUnsetOrders = orderValues.Any(o => o == 0) && competencies.Count > 1;
-        var hasDuplicateOrders = distinctOrderCount != competencies.Count;
-
-        if (hasUnsetOrders || hasDuplicateOrders)
-        {
-            // Re-assign all Order values sequentially
-            for (int i = 0; i < competencies.Count; i++)
-            {
-                competencies[i].Order = i;
-            }
-            Question.Configuration["Competencies"] = competencies;
-        }
-
         return competencies.OrderBy(c => c.Order).ToList();
     }
 
@@ -613,23 +596,6 @@
     private List<GoalCategory> GetOrderedGoalCategories()
     {
         var categories = GetGoalCategoriesFromConfiguration();
-
-        // Check if we need to initialize Order values (for legacy data or duplicates)
-        var orderValues = categories.Select(c => c.Order).ToList();
-        var distinctOrderCount = orderValues.Distinct().Count();
-        var hasUnsetOrders = orderValues.Any(o => o == 0) && categories.Count > 1;
-        var hasDuplicateOrders = distinctOrderCount != categories.Count;
-
-        if (hasUnsetOrders || hasDuplicateOrders)
-        {
-            // Re-assign all Order values sequentially
-            for (int i = 0; i < categories.Count; i++)
-            {
-                categories[i].Order = i;
-            }
-            Question.Configuration["GoalCategories"] = categories;
-        }
-
         return categories.OrderBy(c => c.Order).ToList();
     }
 
@@ -797,23 +763,6 @@
     private List<TextSection> GetOrderedTextSections()
     {
         var sections = GetTextSectionsFromConfiguration();
-
-        // Check if we need to initialize Order values (for legacy data or duplicates)
-        var orderValues = sections.Select(s => s.Order).ToList();
-        var distinctOrderCount = orderValues.Distinct().Count();
-        var hasUnsetOrders = orderValues.Any(o => o == 0) && sections.Count > 1;
-        var hasDuplicateOrders = distinctOrderCount != sections.Count;
-
-        if (hasUnsetOrders || hasDuplicateOrders)
-        {
-            // Re-assign all Order values sequentially
-            for (int i = 0; i < sections.Count; i++)
-            {
-                sections[i].Order = i;
-            }
-            Question.Configuration["TextSections"] = sections;
-        }
-
         return sections.OrderBy(s => s.Order).ToList();
     }
 

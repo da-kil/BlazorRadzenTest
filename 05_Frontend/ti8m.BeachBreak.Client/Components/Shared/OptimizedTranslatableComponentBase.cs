@@ -66,6 +66,39 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
     }
 
     /// <summary>
+    /// Refreshes the component's translation cache by clearing and reloading all translations.
+    /// Call this when the translation cache has been cleared on the backend.
+    /// </summary>
+    public async Task RefreshTranslationsAsync()
+    {
+        try
+        {
+            // Clear component cache
+            _translations.Clear();
+            _translationsLoaded = false;
+
+            // Reload translations from service (which will now fetch fresh data from server)
+            await LoadTranslationsAsync();
+
+            // Trigger re-render to show updated translations
+            await InvokeAsync(StateHasChanged);
+
+            if (EnablePerformanceMonitoring)
+            {
+                Console.WriteLine($"[{PerformanceTrackingName}] Translation cache refreshed - {_translations.Count} translations reloaded");
+            }
+        }
+        catch (Exception ex)
+        {
+            await HandleComponentErrorAsync(ex, "RefreshTranslations");
+
+            // Fallback: ensure component can still render
+            _translations = new Dictionary<string, string>();
+            _translationsLoaded = true;
+        }
+    }
+
+    /// <summary>
     /// Pre-loads all translations during component initialization.
     /// This follows the codebase's established pattern: async initialization → synchronous access.
     /// </summary>

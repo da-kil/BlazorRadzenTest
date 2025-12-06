@@ -35,6 +35,13 @@
     "createdDate": "2025-12-04T12:00:00.0000000+00:00"
   },
   {
+    "key": "buttons.clear-cache",
+    "german": "Cache löschen",
+    "english": "Clear cache",
+    "category": "buttons",
+    "createdDate": "2025-12-04T12:00:00.0000000+00:00"
+  },
+  {
     "key": "buttons.close",
     "german": "Schlieöen",
     "english": "Close",
@@ -945,6 +952,13 @@
     "createdDate": "2025-12-03T12:17:11.8998592+00:00"
   },
   {
+    "key": "nav.translations",
+    "german": "Übersetzungen",
+    "english": "Translations",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998592+00:00"
+  },
+  {
     "key": "notifications.assignment-creation-error",
     "german": "Bei der Erstellung der Zuweisungen ist ein Fehler aufgetreten",
     "english": "An error occurred while creating assignments",
@@ -1235,6 +1249,13 @@
     "key": "placeholders.search-employee-name-email",
     "german": "Nach Mitarbeitername oder E-Mail suchen...",
     "english": "Search by employee name or email...",
+    "category": "placeholders",
+    "createdDate": "2025-12-04T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "filters.search-translations",
+    "german": "Nach Übersetzungen suchen...",
+    "english": "Search by translation...",
     "category": "placeholders",
     "createdDate": "2025-12-04T12:00:00.0000000+00:00"
   },
@@ -2021,5 +2042,208 @@
     "english": "Review & Publish",
     "category": "steps",
     "createdDate": "2025-12-05T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "pages.translation-management",
+    "german": "Übersetzungsverwaltung",
+    "english": "Translation Management",
+    "category": "pages",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "pages.translation-management-description",
+    "german": "Verwalten und bearbeiten Sie Anwendungsübersetzungen für mehrsprachige Unterstützung",
+    "english": "Manage and edit application translations for multilingual support",
+    "category": "pages",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "buttons.add-new-translation",
+    "german": "Neue Übersetzung hinzufügen",
+    "english": "Add New Translation",
+    "category": "buttons",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "filters.all-categories",
+    "german": "Alle Kategorien",
+    "english": "All Categories",
+    "category": "filters",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "columns.key",
+    "german": "Schlüssel",
+    "english": "Key",
+    "category": "columns",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "columns.english",
+    "german": "Englisch",
+    "english": "English",
+    "category": "columns",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "columns.german",
+    "german": "Deutsch",
+    "english": "German",
+    "category": "columns",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "columns.updated",
+    "german": "Aktualisiert",
+    "english": "Updated",
+    "category": "columns",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "placeholders.enter-translation-key",
+    "german": "Übersetzungsschlüssel eingeben",
+    "english": "Enter translation key",
+    "category": "placeholders",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "placeholders.enter-english-translation",
+    "german": "Englische Übersetzung eingeben",
+    "english": "Enter English translation",
+    "category": "placeholders",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "placeholders.enter-german-translation",
+    "german": "Deutsche Übersetzung eingeben",
+    "english": "Enter German translation",
+    "category": "placeholders",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "placeholders.enter-category",
+    "german": "Kategorie eingeben",
+    "english": "Enter category",
+    "category": "placeholders",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "tooltips.edit-translation",
+    "german": "Übersetzung bearbeiten",
+    "english": "Edit Translation",
+    "category": "tooltips",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "tooltips.delete-translation",
+    "german": "Übersetzung löschen",
+    "english": "Delete Translation",
+    "category": "tooltips",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "tooltips.clear-translation-cache",
+    "german": "Übersetzungscache löschen",
+    "english": "Clear Translation Cache",
+    "category": "tooltips",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.failed-to-load-translations",
+    "german": "Fehler beim Laden der Übersetzungen",
+    "english": "Failed to load translations",
+    "category": "notifications",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "validation.translation-key-required",
+    "german": "Übersetzungsschlüssel ist erforderlich",
+    "english": "Translation key is required",
+    "category": "validation",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "validation.english-translation-required",
+    "german": "Englische Übersetzung ist erforderlich",
+    "english": "English translation is required",
+    "category": "validation",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "validation.german-translation-required",
+    "german": "Deutsche Übersetzung ist erforderlich",
+    "english": "German translation is required",
+    "category": "validation",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.translation-key-already-exists",
+    "german": "Übersetzungsschlüssel existiert bereits",
+    "english": "Translation key already exists",
+    "category": "notifications",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.translation-created-successfully",
+    "german": "Übersetzung erfolgreich erstellt",
+    "english": "Translation created successfully",
+    "category": "notifications",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.translation-updated-successfully",
+    "german": "Übersetzung erfolgreich aktualisiert",
+    "english": "Translation updated successfully",
+    "category": "notifications",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.failed-to-save-translation",
+    "german": "Fehler beim Speichern der Übersetzung",
+    "english": "Failed to save translation",
+    "category": "notifications",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "dialogs.confirm-delete-translation",
+    "german": "Möchten Sie diese Übersetzung wirklich löschen?",
+    "english": "Are you sure you want to delete this translation?",
+    "category": "dialogs",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "dialogs.delete-translation",
+    "german": "Übersetzung löschen",
+    "english": "Delete Translation",
+    "category": "dialogs",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.translation-deleted-successfully",
+    "german": "Übersetzung erfolgreich gelöscht",
+    "english": "Translation deleted successfully",
+    "category": "notifications",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.failed-to-delete-translation",
+    "german": "Fehler beim Löschen der Übersetzung",
+    "english": "Failed to delete translation",
+    "category": "notifications",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.cache-invalidated-successfully",
+    "german": "Cache erfolgreich geleert",
+    "english": "Cache invalidated successfully",
+    "category": "notifications",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.failed-to-invalidate-cache",
+    "german": "Fehler beim Leeren des Caches",
+    "english": "Failed to invalidate cache",
+    "category": "notifications",
+    "createdDate": "2025-12-06T12:00:00.0000000+00:00"
   }
 ]
