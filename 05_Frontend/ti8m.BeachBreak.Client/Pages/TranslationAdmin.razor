@@ -167,6 +167,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
         await ExecuteSafelyAsync(async () =>
         {
             await LoadTranslations();
@@ -278,7 +280,7 @@
             UpdatedDate = translation.UpdatedDate
         };
 
-        translationsGrid!.EditRow(translation);
+        await translationsGrid!.EditRow(translation);
         await Task.CompletedTask;
     }
 

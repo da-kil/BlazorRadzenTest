@@ -135,6 +135,9 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
             _translations = await TranslationService.GetTranslationsAsync(keysToLoad, CurrentLanguage);
             _translationsLoaded = true;
 
+            // CRITICAL: Force re-render now that translations are loaded
+            await InvokeAsync(StateHasChanged);
+
             if (EnablePerformanceMonitoring)
             {
                 Console.WriteLine($"[{PerformanceTrackingName}] Loaded {_translations.Count} translations for {CurrentLanguage}");
