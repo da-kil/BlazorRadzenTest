@@ -154,6 +154,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await LoadData();
         StartPolling();
     }

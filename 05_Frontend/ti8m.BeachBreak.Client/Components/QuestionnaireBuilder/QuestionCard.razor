@@ -296,7 +296,7 @@
     private void ValidateTitle()
     {
         hasBeenValidated = true;
-        isTitleValid = !string.IsNullOrWhiteSpace(Question.Title);
+        isTitleValid = !string.IsNullOrWhiteSpace(Question.TitleEnglish) || !string.IsNullOrWhiteSpace(Question.TitleGerman);
         StateHasChanged();
     }
 

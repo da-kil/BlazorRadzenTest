@@ -8,10 +8,9 @@
 @using ti8m.BeachBreak.Client.Layout
 @inject NavigationManager NavigationManager
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject IJSRuntime JSRuntime
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 
 <div class="page-container @(HideHeader ? "" : "mb-4")">
                 @if (!HideHeader)
@@ -139,6 +138,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
         // Load persisted filter state first
         await LoadFilterStateAsync();
 
@@ -291,12 +292,12 @@
         {
             <div class="text-center p-5">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading questionnaires...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("messages.loading-questionnaires")</RadzenText>
             </div>
         }
         else if (!assignments.Any())
         {
-            @RenderEnhancedEmptyState("No questionnaires found", GetQuestionnaireEmptyStateMessage(), "quiz", GetQuestionnaireEmptyStateActions())
+            @RenderEnhancedEmptyState(T("messages.no-questionnaires-found"), GetQuestionnaireEmptyStateMessage(), "quiz", GetQuestionnaireEmptyStateActions())
         }
         else
         {
@@ -341,7 +342,7 @@
                                 <RadzenIcon Icon="person" Class="questionnaire-card-meta-icon" />
                                 <div class="questionnaire-card-meta-container">
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0 questionnaire-card-meta-label">
-                                        Assigned By
+                                        @T("labels.assigned-by")
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body2" Class="mb-0 questionnaire-card-meta-value">
                                         @assignment.AssignedBy
@@ -357,13 +358,13 @@
                                     <RadzenIcon Icon="event" Class="@($"questionnaire-card-meta-icon{(isOverdue ? " questionnaire-card-meta-icon--danger" : "")}")" />
                                     <div class="questionnaire-card-meta-container">
                                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0 questionnaire-card-meta-label">
-                                            Due Date
+                                            @T("labels.due-date")
                                         </RadzenText>
                                         <RadzenText TextStyle="TextStyle.Body2" Class="@($"mb-0 questionnaire-card-meta-value{(isOverdue ? " questionnaire-card-meta-value--danger" : "")}")">
                                             @assignment.DueDate.Value.ToString("MMM dd, yyyy")
                                             @if (isOverdue)
                                             {
-                                                <span class="questionnaire-card-overdue-indicator"> (Overdue)</span>
+                                                <span class="questionnaire-card-overdue-indicator"> (@T("labels.overdue-indicator"))</span>
                                             }
                                         </RadzenText>
                                     </div>
@@ -429,22 +430,22 @@
         {
             <div class="text-center p-5">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading team data...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("messages.loading-team-data")</RadzenText>
             </div>
         }
         else if (!employees.Any())
         {
-            @RenderEnhancedEmptyState("No team members found", GetTeamMembersEmptyStateMessage(), "groups", GetTeamMembersEmptyStateActions())
+            @RenderEnhancedEmptyState(T("messages.no-team-members-found"), GetTeamMembersEmptyStateMessage(), "groups", GetTeamMembersEmptyStateActions())
         }
         else
         {
             <div class="team-view-container">
                 <div class="mb-3 d-flex justify-content-between align-items-center">
                     <RadzenText TextStyle="TextStyle.Subtitle1">
-                        Showing @filteredTeamMembers.Count of @employees.Count team members
+                        @string.Format(T("labels.showing-count-of-total"), filteredTeamMembers.Count, employees.Count)
                     </RadzenText>
                     <div class="d-flex align-items-center gap-2">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">Sort by:</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">@T("labels.sort-by")</RadzenText>
                         <RadzenDropDown TValue="string"
                                        Value="@teamMemberSortBy"
                                        Data="@teamSortOptions"
@@ -477,15 +478,15 @@
         {
             <div class="text-center p-5">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading questionnaire data...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("messages.loading-questionnaire-data")</RadzenText>
             </div>
         }
         else if (!allAssignments.Any())
         {
             <div class="text-center p-5">
                 <RadzenIcon Icon="quiz" Size="4rem" Class="text-muted mb-3" />
-                <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No questionnaires assigned</RadzenText>
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Questionnaires assigned to your team will appear here.</RadzenText>
+                <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">@T("messages.no-questionnaires-assigned")</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@T("messages.questionnaires-assigned-to-team")</RadzenText>
             </div>
         }
         else
@@ -496,7 +497,7 @@
                         Showing @GetGroupedQuestionnaires().Count questionnaire @(GetGroupedQuestionnaires().Count == 1 ? "template" : "templates")
                     </RadzenText>
                     <div class="d-flex align-items-center gap-2">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">Sort by:</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">@T("labels.sort-by")</RadzenText>
                         <RadzenDropDown @bind-Value="questionnaireSortBy"
                                        Data="@questionnaireSortOptions"
                                        Change="@OnQuestionnaireSortChanged"
@@ -1039,14 +1040,14 @@
         {
             <div class="text-center p-5">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">Loading questionnaire data...</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-3">@T("messages.loading-questionnaire-data")</RadzenText>
             </div>
         }
         else if (!allAssignments.Any())
         {
             <div class="text-center p-5">
                 <RadzenIcon Icon="quiz" Size="4rem" Class="text-muted mb-3" />
-                <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">No questionnaires assigned</RadzenText>
+                <RadzenText TextStyle="TextStyle.H5" Class="text-muted mb-2">@T("messages.no-questionnaires-assigned")</RadzenText>
                 <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">Questionnaire assignments will appear here once available.</RadzenText>
             </div>
         }
@@ -1058,7 +1059,7 @@
                         Showing @GetGroupedQuestionnaires().Count questionnaire @(GetGroupedQuestionnaires().Count == 1 ? "template" : "templates")
                     </RadzenText>
                     <div class="d-flex align-items-center gap-2">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">Sort by:</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-0">@T("labels.sort-by")</RadzenText>
                         <RadzenDropDown @bind-Value="questionnaireSortBy"
                                        Data="@questionnaireSortOptions"
                                        Change="@OnQuestionnaireSortChanged"

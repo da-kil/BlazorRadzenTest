@@ -15,12 +15,12 @@ namespace ti8m.BeachBreak.Client.Components.Shared;
 /// </summary>
 public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBase
 {
-    [Inject] protected ti8m.BeachBreak.Client.Services.IUITranslationService TranslationService { get; set; } = default!;
-    [Inject] protected ti8m.BeachBreak.Client.Services.ILanguageContext LanguageContext { get; set; } = default!;
+    [Inject] protected IUITranslationService TranslationService { get; set; } = default!;
+    [Inject] protected ILanguageContext LanguageContext { get; set; } = default!;
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
 
-    private Dictionary<string, string> _translations = new();
-    private bool _translationsLoaded = false;
+    private Dictionary<string, string> translations = new();
+    private bool translationsLoaded = false;
 
     /// <summary>
     /// Override this to specify additional translation keys to pre-load.
@@ -43,7 +43,7 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
     /// </summary>
     protected string T(string key)
     {
-        return _translations.TryGetValue(key, out var value) ? value : key;
+        return translations.TryGetValue(key, out var value) ? value : key;
     }
 
     /// <summary>
@@ -74,8 +74,8 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
         try
         {
             // Clear component cache
-            _translations.Clear();
-            _translationsLoaded = false;
+            translations.Clear();
+            translationsLoaded = false;
 
             // Reload translations from service (which will now fetch fresh data from server)
             await LoadTranslationsAsync();
@@ -85,7 +85,7 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
 
             if (EnablePerformanceMonitoring)
             {
-                Console.WriteLine($"[{PerformanceTrackingName}] Translation cache refreshed - {_translations.Count} translations reloaded");
+                Console.WriteLine($"[{PerformanceTrackingName}] Translation cache refreshed - {translations.Count} translations reloaded");
             }
         }
         catch (Exception ex)
@@ -93,8 +93,8 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
             await HandleComponentErrorAsync(ex, "RefreshTranslations");
 
             // Fallback: ensure component can still render
-            _translations = new Dictionary<string, string>();
-            _translationsLoaded = true;
+            translations = new Dictionary<string, string>();
+            translationsLoaded = true;
         }
     }
 
@@ -132,15 +132,12 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
             var keysToLoad = allKeys.Concat(componentKeys).Distinct().ToArray();
 
             // Batch load all translations for current language
-            _translations = await TranslationService.GetTranslationsAsync(keysToLoad, CurrentLanguage);
-            _translationsLoaded = true;
-
-            // CRITICAL: Force re-render now that translations are loaded
-            await InvokeAsync(StateHasChanged);
+            translations = await TranslationService.GetTranslationsAsync(keysToLoad, CurrentLanguage);
+            translationsLoaded = true;
 
             if (EnablePerformanceMonitoring)
             {
-                Console.WriteLine($"[{PerformanceTrackingName}] Loaded {_translations.Count} translations for {CurrentLanguage}");
+                Console.WriteLine($"[{PerformanceTrackingName}] Loaded {translations.Count} translations for {CurrentLanguage}");
             }
         }
         catch (Exception ex)
@@ -148,8 +145,8 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
             await HandleComponentErrorAsync(ex, "LoadTranslations");
 
             // Fallback: ensure component can still render with keys as fallbacks
-            _translations = new Dictionary<string, string>();
-            _translationsLoaded = true;
+            translations = new Dictionary<string, string>();
+            translationsLoaded = true;
         }
     }
 
@@ -158,7 +155,7 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
     /// </summary>
     protected override bool HasStateChanged()
     {
-        return base.HasStateChanged() || !_translationsLoaded;
+        return base.HasStateChanged() || !translationsLoaded;
     }
 
     #region Translatable Notification Methods
@@ -202,7 +199,7 @@ public abstract class OptimizedTranslatableComponentBase : OptimizedComponentBas
     /// </summary>
     public override void Dispose()
     {
-        _translations.Clear();
+        translations.Clear();
         base.Dispose();
     }
 }

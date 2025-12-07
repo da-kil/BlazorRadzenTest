@@ -8,7 +8,6 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject ICategoryApiService CategoryService
 @inject IQuestionnaireTemplateService ApiService
@@ -37,7 +36,7 @@
                         <div class="filters-group d-flex gap-3">
                             <RadzenDropDown @bind-Value="@categoryFilter"
                                            Data="@categories"
-                                           TextProperty="NameEn"
+                                           TextProperty="@GetCategoryNameProperty()"
                                            ValueProperty="Id"
                                            Placeholder="@T("filters.filter-by-type")"
                                            AllowClear="true"
@@ -114,7 +113,7 @@
                                     </Template>
                                 </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.PublishedByEmployeeName)" Title="Published By" Width="150px">
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.PublishedByEmployeeName)" Title="@T("columns.published-by")" Width="150px">
                                     <Template Context="template">
                                         @if (!string.IsNullOrEmpty(template.PublishedByEmployeeName))
                                         {
@@ -156,11 +155,11 @@
 
             <RadzenTabsItem Text="@T("tabs.settings")">
                 <section class="settings-content">
-                    <h2 class="settings-title">System Settings</h2>
+                    <h2 class="settings-title">@T("titles.system-settings")</h2>
 
                     <div class="settings-grid">
                         <div class="settings-card">
-                            <h3 class="card-title">Email Notifications</h3>
+                            <h3 class="card-title">@T("titles.email-notifications")</h3>
                             <div class="setting-item">
                                 <RadzenCheckBox @bind-Value="@settings.SendAssignmentEmails" Name="assignmentEmails" />
                                 <RadzenLabel Text="@T("settings.send-assignment-notifications")" Component="assignmentEmails" Class="ms-2" />
@@ -176,13 +175,13 @@
                         </div>
 
                         <div class="settings-card">
-                            <h3 class="card-title">Default Settings</h3>
+                            <h3 class="card-title">@T("titles.default-settings")</h3>
                             <div class="number-setting">
-                                <label class="setting-label">Default Due Days</label>
+                                <label class="setting-label">@T("labels.default-due-days")</label>
                                 <RadzenNumeric @bind-Value="@settings.DefaultDueDays" Min="1" Max="365" Class="w-100" />
                             </div>
                             <div class="number-setting">
-                                <label class="setting-label">Reminder Days Before Due</label>
+                                <label class="setting-label">@T("labels.reminder-days-before-due")</label>
                                 <RadzenNumeric @bind-Value="@settings.ReminderDaysBeforeDue" Min="1" Max="30" Class="w-100" />
                             </div>
                         </div>
@@ -573,4 +572,9 @@
         TemplateStatus.Archived => "Restore",
         _ => "Archive"
     };
+
+    private string GetCategoryNameProperty()
+    {
+        return CurrentLanguage == Language.German ? "NameDe" : "NameEn";
+    }
 }

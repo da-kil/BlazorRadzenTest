@@ -21,7 +21,7 @@
 @inherits OptimizedTranslatableComponentBase
 @implements IDisposable
 
-<PageTitle>@T("pages.questionnaire-builder")</PageTitle>
+<PageTitle>@(State.IsEditMode? T("pages.questionnaire-editor") : T("pages.questionnaire-builder"))</PageTitle>
 
 <AuthorizeView Policy="HR">
     <Authorized>
@@ -213,6 +213,11 @@
     private List<Category> categories = new();
     private Guid? lastLoadedTemplateId = null;
 
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
     protected override void OnInitialized()
     {
         State.OnStateChanged += HandleStateChanged;
@@ -341,8 +346,10 @@
             var editingQuestion = new QuestionItem
             {
                 Id = originalQuestion.Id,
-                Title = originalQuestion.Title,
-                Description = originalQuestion.Description,
+                TitleEnglish = originalQuestion.TitleEnglish,
+                TitleGerman = originalQuestion.TitleGerman,
+                DescriptionEnglish = originalQuestion.DescriptionEnglish,
+                DescriptionGerman = originalQuestion.DescriptionGerman,
                 Type = originalQuestion.Type,
                 Order = originalQuestion.Order,
                 IsRequired = originalQuestion.IsRequired,

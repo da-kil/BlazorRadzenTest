@@ -4,20 +4,21 @@ namespace ti8m.BeachBreak.Client.Services;
 
 public static class QuestionnairePageConfigurationFactory
 {
-    public static QuestionnairePageConfiguration CreateEmployeeConfiguration(
+    public static async Task<QuestionnairePageConfiguration> CreateEmployeeConfigurationAsync(
         List<QuestionnaireAssignment> allAssignments,
         List<QuestionnaireAssignment> upcomingAssignments,  // newQuestionnaires (Assigned)
         List<QuestionnaireAssignment> currentAssignments,    // inProgressQuestionnaires (working/review)
         List<QuestionnaireAssignment> completedAssignments,  // completedQuestionnaires (Finalized)
         List<QuestionnaireAssignment> overdueAssignments,
         List<Category> categories,
+        IUITranslationService translationService,
         Language currentLanguage = Language.English)
     {
         return new QuestionnairePageConfiguration
         {
             PageRoute = "/my-questionnaires",
-            PageTitle = "My Questionnaires",
-            PageDescription = "View and complete your assigned questionnaires",
+            PageTitle = await translationService.GetTextAsync("pages.my-questionnaires", currentLanguage),
+            PageDescription = await translationService.GetTextAsync("pages.my-questionnaires-description", currentLanguage),
             PageType = QuestionnairePageType.Employee,
 
             // Store pre-categorized lists (order matches what MyQuestionnaires.razor passes)
@@ -28,9 +29,9 @@ public static class QuestionnairePageConfigurationFactory
 
             Tabs = new List<QuestionnairePageTab>
             {
-                new() { Id = "current", Title = "Current", Type = QuestionnaireTabType.Current },
-                new() { Id = "completed", Title = "Completed", Type = QuestionnaireTabType.Completed },
-                new() { Id = "overdue", Title = "Overdue", Type = QuestionnaireTabType.Overdue }
+                new() { Id = "current", Title = await translationService.GetTextAsync("tabs.current", currentLanguage), Type = QuestionnaireTabType.Current },
+                new() { Id = "completed", Title = await translationService.GetTextAsync("tabs.completed", currentLanguage), Type = QuestionnaireTabType.Completed },
+                new() { Id = "overdue", Title = await translationService.GetTextAsync("tabs.overdue", currentLanguage), Type = QuestionnaireTabType.Overdue }
             },
 
             Filters = new List<QuestionnairePageFilter>
@@ -38,7 +39,7 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "category",
-                    Label = "Filter by Category",
+                    Label = await translationService.GetTextAsync("filters.filter-by-category", currentLanguage),
                     Type = QuestionnaireFilterType.Category,
                     IsVisible = categories.Count > 0,
                     Options = categories.Select(c => currentLanguage == Language.German ? c.NameDe : c.NameEn).ToList(),
@@ -51,7 +52,7 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "refresh",
-                    Text = "Refresh",
+                    Text = await translationService.GetTextAsync("buttons.refresh", currentLanguage),
                     Icon = "refresh",
                     ButtonStyle = "ButtonStyle.Light"
                 }
@@ -65,7 +66,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "current",
-                        Label = "Current",
+                        Label = await translationService.GetTextAsync("status.current", currentLanguage),
                         Icon = "pending_actions",
                         IconClass = "text-info",
                         CssClass = "stats-current",
@@ -74,7 +75,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "completed",
-                        Label = "Completed",
+                        Label = await translationService.GetTextAsync("status.completed", currentLanguage),
                         Icon = "task_alt",
                         IconClass = "text-success",
                         CssClass = "stats-completed",
@@ -83,7 +84,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "overdue",
-                        Label = "Overdue",
+                        Label = await translationService.GetTextAsync("status.overdue", currentLanguage),
                         Icon = "warning",
                         IconClass = "text-danger",
                         CssClass = "stats-overdue",
@@ -94,24 +95,25 @@ public static class QuestionnairePageConfigurationFactory
         };
     }
 
-    public static QuestionnairePageConfiguration CreateManagerConfiguration(
+    public static async Task<QuestionnairePageConfiguration> CreateManagerConfigurationAsync(
         List<QuestionnaireAssignment> allAssignments,
         List<EmployeeDto> teamMembers,
         List<Category> categories,
+        IUITranslationService translationService,
         Language currentLanguage = Language.English)
     {
         return new QuestionnairePageConfiguration
         {
             PageRoute = "/team/questionnaires",
-            PageTitle = "Team Questionnaires",
-            PageDescription = "Monitor and track your team's questionnaire progress",
+            PageTitle = await translationService.GetTextAsync("pages.team-questionnaires", currentLanguage),
+            PageDescription = await translationService.GetTextAsync("pages.team-questionnaires-description", currentLanguage),
             PageType = QuestionnairePageType.Manager,
 
             Tabs = new List<QuestionnairePageTab>
             {
-                new() { Id = "team", Title = "Team View", Type = QuestionnaireTabType.TeamView },
-                new() { Id = "questionnaires", Title = "Questionnaire View", Type = QuestionnaireTabType.QuestionnaireView },
-                new() { Id = "analytics", Title = "Analytics", Type = QuestionnaireTabType.Analytics }
+                new() { Id = "team", Title = await translationService.GetTextAsync("tabs.team-view", currentLanguage), Type = QuestionnaireTabType.TeamView },
+                new() { Id = "questionnaires", Title = await translationService.GetTextAsync("tabs.questionnaire-view", currentLanguage), Type = QuestionnaireTabType.QuestionnaireView },
+                new() { Id = "analytics", Title = await translationService.GetTextAsync("tabs.analytics", currentLanguage), Type = QuestionnaireTabType.Analytics }
             },
 
             Filters = new List<QuestionnairePageFilter>
@@ -119,14 +121,14 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "search",
-                    Label = "Search",
+                    Label = await translationService.GetTextAsync("filters.search", currentLanguage),
                     Type = QuestionnaireFilterType.Search,
                     IsVisible = true
                 },
                 new()
                 {
                     Id = "category",
-                    Label = "Filter by Category",
+                    Label = await translationService.GetTextAsync("filters.filter-by-category", currentLanguage),
                     Type = QuestionnaireFilterType.Category,
                     IsVisible = categories.Count > 0,
                     Options = categories.Select(c => currentLanguage == Language.German ? c.NameDe : c.NameEn).ToList(),
@@ -135,23 +137,23 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "status",
-                    Label = "Filter by Status",
+                    Label = await translationService.GetTextAsync("filters.filter-by-status", currentLanguage),
                     Type = QuestionnaireFilterType.Status,
                     IsVisible = true,
                     Options = new List<string>
                     {
-                        "Assigned",
-                        "In Progress",
-                        "Submitted",
-                        "In Review",
-                        "Finalized",
-                        "Overdue"
+                        await translationService.GetTextAsync("workflow-states.assigned", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.in-progress", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.submitted", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.in-review", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.finalized", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.overdue", currentLanguage)
                     }
                 },
                 new()
                 {
                     Id = "dateRange",
-                    Label = "Filter by Due Date",
+                    Label = await translationService.GetTextAsync("filters.filter-by-due-date", currentLanguage),
                     Type = QuestionnaireFilterType.DateRange,
                     IsVisible = true
                 }
@@ -162,14 +164,14 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "refresh",
-                    Text = "Refresh",
+                    Text = await translationService.GetTextAsync("buttons.refresh", currentLanguage),
                     Icon = "refresh",
                     ButtonStyle = "ButtonStyle.Light"
                 },
                 new()
                 {
                     Id = "export",
-                    Text = "Export Report",
+                    Text = await translationService.GetTextAsync("buttons.export-report", currentLanguage),
                     Icon = "download",
                     ButtonStyle = "ButtonStyle.Info"
                 }
@@ -183,7 +185,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "team-members",
-                        Label = "Team Members",
+                        Label = await translationService.GetTextAsync("labels.team-members", currentLanguage),
                         Icon = "people",
                         IconClass = "text-primary",
                         CssClass = "stats-team-members",
@@ -192,7 +194,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "total-assignments",
-                        Label = "Total Assignments",
+                        Label = await translationService.GetTextAsync("labels.total-assignments", currentLanguage),
                         Icon = "assignment",
                         IconClass = "text-secondary",
                         CssClass = "stats-total",
@@ -201,7 +203,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "overdue",
-                        Label = "⚠️ Overdue",
+                        Label = await translationService.GetTextAsync("status.overdue", currentLanguage),
                         Icon = "warning",
                         IconClass = "text-danger",
                         CssClass = "stats-overdue",
@@ -210,7 +212,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "not-started",
-                        Label = "Not Started",
+                        Label = await translationService.GetTextAsync("status.not-started", currentLanguage),
                         Icon = "schedule",
                         IconClass = "text-warning",
                         CssClass = "stats-not-started",
@@ -219,7 +221,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "in-progress",
-                        Label = "In Progress",
+                        Label = await translationService.GetTextAsync("status.in-progress", currentLanguage),
                         Icon = "pending_actions",
                         IconClass = "text-info",
                         CssClass = "stats-in-progress",
@@ -237,7 +239,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "finalized",
-                        Label = "✓ Finalized",
+                        Label = await translationService.GetTextAsync("status.finalized", currentLanguage),
                         Icon = "task_alt",
                         IconClass = "text-success",
                         CssClass = "stats-finalized",
@@ -248,27 +250,28 @@ public static class QuestionnairePageConfigurationFactory
         };
     }
 
-    public static QuestionnairePageConfiguration CreateHRConfiguration(
+    public static async Task<QuestionnairePageConfiguration> CreateHRConfigurationAsync(
         List<QuestionnaireAssignment> allAssignments,
         List<EmployeeDto> allEmployees,
         List<Organization> allOrganizations,
         List<QuestionnaireTemplate> allTemplates,
         List<Category> categories,
+        IUITranslationService translationService,
         Language currentLanguage = Language.English)
     {
         return new QuestionnairePageConfiguration
         {
             PageRoute = "/organization/questionnaires",
-            PageTitle = "Organization Questionnaires",
-            PageDescription = "Comprehensive overview of all questionnaire activities across the organization",
+            PageTitle = await translationService.GetTextAsync("pages.organization-questionnaires", currentLanguage),
+            PageDescription = await translationService.GetTextAsync("pages.organization-questionnaires-description", currentLanguage),
             PageType = QuestionnairePageType.HR,
 
             Tabs = new List<QuestionnairePageTab>
             {
-                new() { Id = "departments", Title = "Department Overview", Type = QuestionnaireTabType.DepartmentOverview },
-                new() { Id = "employees", Title = "Employee Status", Type = QuestionnaireTabType.EmployeeStatus },
-                new() { Id = "questionnaires", Title = "Questionnaire Performance", Type = QuestionnaireTabType.QuestionnairePerformance },
-                new() { Id = "analytics", Title = "Analytics & Insights", Type = QuestionnaireTabType.Analytics }
+                new() { Id = "departments", Title = await translationService.GetTextAsync("tabs.department-overview", currentLanguage), Type = QuestionnaireTabType.DepartmentOverview },
+                new() { Id = "employees", Title = await translationService.GetTextAsync("tabs.employee-status", currentLanguage), Type = QuestionnaireTabType.EmployeeStatus },
+                new() { Id = "questionnaires", Title = await translationService.GetTextAsync("tabs.questionnaire-performance", currentLanguage), Type = QuestionnaireTabType.QuestionnairePerformance },
+                new() { Id = "analytics", Title = await translationService.GetTextAsync("tabs.analytics-insights", currentLanguage), Type = QuestionnaireTabType.Analytics }
             },
 
             Filters = new List<QuestionnairePageFilter>
@@ -276,14 +279,14 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "search",
-                    Label = "Search",
+                    Label = await translationService.GetTextAsync("filters.search", currentLanguage),
                     Type = QuestionnaireFilterType.Search,
                     IsVisible = true
                 },
                 new()
                 {
                     Id = "department",
-                    Label = "Organization Filter",
+                    Label = await translationService.GetTextAsync("filters.organization-filter", currentLanguage),
                     Type = QuestionnaireFilterType.Department,
                     IsVisible = true,
                     Options = allOrganizations
@@ -295,7 +298,7 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "category",
-                    Label = "Filter by Category",
+                    Label = await translationService.GetTextAsync("filters.filter-by-category", currentLanguage),
                     Type = QuestionnaireFilterType.Category,
                     IsVisible = categories.Count > 0,
                     Options = categories.Select(c => currentLanguage == Language.German ? c.NameDe : c.NameEn).ToList(),
@@ -304,7 +307,7 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "template",
-                    Label = "Filter by Questionnaire",
+                    Label = await translationService.GetTextAsync("filters.filter-by-questionnaire", currentLanguage),
                     Type = QuestionnaireFilterType.Template,
                     IsVisible = allTemplates.Count > 0,
                     TemplateOptions = allTemplates.Select(t => new QuestionnaireTemplateOption
@@ -316,23 +319,23 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "status",
-                    Label = "Filter by Status",
+                    Label = await translationService.GetTextAsync("filters.filter-by-status", currentLanguage),
                     Type = QuestionnaireFilterType.Status,
                     IsVisible = true,
                     Options = new List<string>
                     {
-                        "Assigned",
-                        "In Progress",
-                        "Submitted",
-                        "In Review",
-                        "Finalized",
-                        "Overdue"
+                        await translationService.GetTextAsync("workflow-states.assigned", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.in-progress", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.submitted", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.in-review", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.finalized", currentLanguage),
+                        await translationService.GetTextAsync("workflow-states.overdue", currentLanguage)
                     }
                 },
                 new()
                 {
                     Id = "dateRange",
-                    Label = "Filter by Due Date",
+                    Label = await translationService.GetTextAsync("filters.filter-by-due-date", currentLanguage),
                     Type = QuestionnaireFilterType.DateRange,
                     IsVisible = true
                 }
@@ -343,21 +346,21 @@ public static class QuestionnairePageConfigurationFactory
                 new()
                 {
                     Id = "refresh",
-                    Text = "Refresh",
+                    Text = await translationService.GetTextAsync("buttons.refresh", currentLanguage),
                     Icon = "refresh",
                     ButtonStyle = "ButtonStyle.Light"
                 },
                 new()
                 {
                     Id = "export",
-                    Text = "Export Report",
+                    Text = await translationService.GetTextAsync("buttons.export-report", currentLanguage),
                     Icon = "download",
                     ButtonStyle = "ButtonStyle.Info"
                 },
                 new()
                 {
                     Id = "analytics",
-                    Text = "Analytics Dashboard",
+                    Text = await translationService.GetTextAsync("buttons.analytics-dashboard", currentLanguage),
                     Icon = "analytics",
                     ButtonStyle = "ButtonStyle.Primary"
                 }
@@ -371,7 +374,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "employees",
-                        Label = "Employees",
+                        Label = await translationService.GetTextAsync("labels.employees", currentLanguage),
                         Icon = "people",
                         IconClass = "text-primary",
                         CssClass = "stats-employees",
@@ -380,7 +383,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "questionnaires",
-                        Label = "Questionnaires",
+                        Label = await translationService.GetTextAsync("labels.questionnaires", currentLanguage),
                         Icon = "quiz",
                         IconClass = "text-info",
                         CssClass = "stats-questionnaires",
@@ -389,7 +392,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "assignments",
-                        Label = "Total Assignments",
+                        Label = await translationService.GetTextAsync("labels.total-assignments", currentLanguage),
                         Icon = "assignment",
                         IconClass = "text-secondary",
                         CssClass = "stats-assignments",
@@ -398,7 +401,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "pending",
-                        Label = "Pending",
+                        Label = await translationService.GetTextAsync("status.pending", currentLanguage),
                         Icon = "pending_actions",
                         IconClass = "text-warning",
                         CssClass = "stats-pending",
@@ -407,7 +410,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "completed",
-                        Label = "Completed",
+                        Label = await translationService.GetTextAsync("status.completed", currentLanguage),
                         Icon = "task_alt",
                         IconClass = "text-success",
                         CssClass = "stats-completed",
@@ -416,7 +419,7 @@ public static class QuestionnairePageConfigurationFactory
                     new()
                     {
                         Id = "overdue",
-                        Label = "Overdue",
+                        Label = await translationService.GetTextAsync("status.overdue", currentLanguage),
                         Icon = "warning",
                         IconClass = "text-danger",
                         CssClass = "stats-overdue",

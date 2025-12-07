@@ -369,6 +369,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await DetermineUserRole();
         await LoadAssignmentAndTemplate();
         await InitializeResponseAsync();

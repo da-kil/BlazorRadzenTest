@@ -50,9 +50,6 @@ public class Program
         // Add distributed cache (using in-memory for now, can be replaced with Redis)
         builder.Services.AddDistributedMemoryCache();
 
-        // Add memory cache for UITranslationService
-        builder.Services.AddMemoryCache();
-
         // Register authorization cache service
         builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
 

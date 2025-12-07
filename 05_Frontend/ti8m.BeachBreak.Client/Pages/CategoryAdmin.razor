@@ -160,6 +160,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await ExecuteSafelyAsync(async () =>
         {
             await LoadCategories();

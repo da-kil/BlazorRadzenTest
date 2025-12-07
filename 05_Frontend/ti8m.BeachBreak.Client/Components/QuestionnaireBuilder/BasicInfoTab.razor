@@ -1,23 +1,24 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@inherits ti8m.BeachBreak.Client.Components.Shared.OptimizedTranslatableComponentBase
 
 <div class="basic-info-content">
 
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">English Template Name *</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.english-template-name-required")</RadzenText>
                 <RadzenTextBox @bind-Value="@Template.NameEnglish"
-                              Placeholder="Enter template name in English"
+                              Placeholder="@T("placeholders.enter-template-name-english")"
                               Class="w-100"
                               Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">German Template Name (Optional)</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.german-template-name-optional")</RadzenText>
                 <RadzenTextBox @bind-Value="@Template.NameGerman"
-                              Placeholder="Enter template name in German (optional)"
+                              Placeholder="@T("placeholders.enter-template-name-german-optional")"
                               Class="w-100"
                               Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
@@ -27,12 +28,12 @@
     <RadzenRow Gap="1rem" Class="mb-3">
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Questionnaire Type</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.questionnaire-type")</RadzenText>
                 <RadzenDropDown @bind-Value="@Template.CategoryId"
                                Data="@Categories"
-                               TextProperty="NameEn"
+                               TextProperty="@GetCategoryNameProperty()"
                                ValueProperty="Id"
-                               Placeholder="Select type (e.g., Annual Review)"
+                               Placeholder="@T("placeholders.select-type-annual-review")"
                                AllowClear="true"
                                Class="w-100"
                                Disabled="@(!Template.IsAvailableForEditing)" />
@@ -43,9 +44,9 @@
     <RadzenRow Gap="1rem" Class="mb-3">
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">English Description *</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.english-description-required")</RadzenText>
                 <RadzenTextArea @bind-Value="@Template.DescriptionEnglish"
-                              Placeholder="Describe the purpose and scope of this questionnaire in English..."
+                              Placeholder="@T("placeholders.describe-purpose-scope-english")"
                               Rows="4"
                               Class="w-100"
                               Disabled="@(!Template.IsAvailableForEditing)" />
@@ -53,9 +54,9 @@
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">German Description (Optional)</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.german-description-optional")</RadzenText>
                 <RadzenTextArea @bind-Value="@Template.DescriptionGerman"
-                              Placeholder="Describe the purpose and scope of this questionnaire in German (optional)..."
+                              Placeholder="@T("placeholders.describe-purpose-scope-german-optional")"
                               Rows="4"
                               Class="w-100"
                               Disabled="@(!Template.IsAvailableForEditing)" />
@@ -64,13 +65,12 @@
     </RadzenRow>
 
     <div class="settings-section mt-4 p-3 rounded">
-        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">Workflow Configuration</RadzenText>
+        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">@T("sections.workflow-configuration")</RadzenText>
         <div class="workflow-config-box mb-4 p-3 rounded border">
             <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
-            <RadzenLabel Text="Requires Manager Review" Component="requiresManagerReview" Style="font-weight: 500;" />
+            <RadzenLabel Text="@T("labels.requires-manager-review")" Component="requiresManagerReview" Style="font-weight: 500;" />
             <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
-                When unchecked, the questionnaire will be automatically finalized after employee submission without manager review.
-                All sections must be completed by employees only.
+                @T("messages.workflow-manager-review-explanation")
             </RadzenText>
         </div>
     </div>
@@ -79,4 +79,14 @@
 @code {
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
     [Parameter, EditorRequired] public IReadOnlyList<Category> Categories { get; set; } = null!;
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
+    private string GetCategoryNameProperty()
+    {
+        return CurrentLanguage == Language.German ? "NameDe" : "NameEn";
+    }
 }

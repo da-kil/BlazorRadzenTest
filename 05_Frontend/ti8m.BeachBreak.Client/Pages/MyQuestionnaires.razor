@@ -93,15 +93,16 @@
 		await CategorizeQuestionnaires();
 	}
 
-	protected override QuestionnairePageConfiguration CreateConfiguration()
+	protected override async Task<QuestionnairePageConfiguration> CreateConfigurationAsync()
 	{
-		return QuestionnairePageConfigurationFactory.CreateEmployeeConfiguration(
+		return await QuestionnairePageConfigurationFactory.CreateEmployeeConfigurationAsync(
 			allAssignments,
 			newQuestionnaires,
 			inProgressQuestionnaires,
 			completedQuestionnaires,
 			overdueQuestionnaires,
 			categories,
+			TranslationService,
 			CurrentLanguage);
 	}
 

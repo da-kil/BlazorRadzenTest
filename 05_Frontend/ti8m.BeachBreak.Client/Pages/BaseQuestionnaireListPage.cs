@@ -15,7 +15,6 @@ namespace ti8m.BeachBreak.Client.Pages;
 /// </summary>
 public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponentBase
 {
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
 
@@ -32,7 +31,7 @@ public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponent
             await LoadInitialData();
         }, GetInitializationContext());
 
-        SetupConfiguration();
+        await SetupConfigurationAsync();
     }
 
     protected override bool HasStateChanged()
@@ -74,9 +73,9 @@ public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponent
     /// Configuration setup orchestration method.
     /// Creates configuration via factory and wires up action handlers.
     /// </summary>
-    private void SetupConfiguration()
+    private async Task SetupConfigurationAsync()
     {
-        configuration = CreateConfiguration();
+        configuration = await CreateConfigurationAsync();
         ConfigureActions();
     }
 
@@ -91,7 +90,7 @@ public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponent
     /// <summary>
     /// Create the page configuration using the appropriate factory method.
     /// </summary>
-    protected abstract QuestionnairePageConfiguration CreateConfiguration();
+    protected abstract Task<QuestionnairePageConfiguration> CreateConfigurationAsync();
 
     /// <summary>
     /// Get the context name for error logging/tracking.
@@ -127,7 +126,7 @@ public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponent
     protected virtual async Task RefreshData()
     {
         await LoadInitialData();
-        SetupConfiguration();
+        await SetupConfigurationAsync();
         NotifyStateChanged();
     }
 

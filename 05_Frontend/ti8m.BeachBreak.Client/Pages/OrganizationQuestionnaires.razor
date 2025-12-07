@@ -86,14 +86,15 @@
 		dataService = new HRQuestionnaireDataService(HRQuestionnaireService, TemplateService, allOrganizations);
 	}
 
-	protected override QuestionnairePageConfiguration CreateConfiguration()
+	protected override async Task<QuestionnairePageConfiguration> CreateConfigurationAsync()
 	{
-		return QuestionnairePageConfigurationFactory.CreateHRConfiguration(
+		return await QuestionnairePageConfigurationFactory.CreateHRConfigurationAsync(
 			allAssignments,
 			allEmployees,
 			allOrganizations,
 			allTemplates,
 			categories,
+			TranslationService,
 			CurrentLanguage);
 	}
 

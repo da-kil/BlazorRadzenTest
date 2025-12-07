@@ -16,7 +16,7 @@
 @inject IQuestionnaireReportExporter ReportExporter
 @inject IJSRuntime JSRuntime
 
-<PageTitle>Team Questionnaires</PageTitle>
+<PageTitle>@T("pages.team-questionnaires")</PageTitle>
 
 <AuthorizeView Policy="TeamLead">
     <Authorized>
@@ -80,12 +80,13 @@
 		teamMembers = teamMembersTask.Result;
 	}
 
-	protected override QuestionnairePageConfiguration CreateConfiguration()
+	protected override async Task<QuestionnairePageConfiguration> CreateConfigurationAsync()
 	{
-		return QuestionnairePageConfigurationFactory.CreateManagerConfiguration(
+		return await QuestionnairePageConfigurationFactory.CreateManagerConfigurationAsync(
 			allAssignments,
 			teamMembers,
 			categories,
+			TranslationService,
 			CurrentLanguage);
 	}
 
@@ -159,8 +160,4 @@
 
 		return reportData;
 	}
-
-
-
-
 }
