@@ -1,4 +1,6 @@
-﻿namespace ti8m.BeachBreak.CommandApi.Dto;
+﻿using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
+
+namespace ti8m.BeachBreak.CommandApi.Dto;
 
 public class QuestionItemDto
 {
@@ -10,5 +12,5 @@ public class QuestionItemDto
     public QuestionTypeDto Type { get; set; }
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
-    public Dictionary<string, object> Configuration { get; set; } = new();
+    public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
 }

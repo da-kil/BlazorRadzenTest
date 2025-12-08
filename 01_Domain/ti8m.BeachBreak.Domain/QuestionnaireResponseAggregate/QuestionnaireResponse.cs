@@ -2,6 +2,8 @@ using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using AssessmentConfiguration = ti8m.BeachBreak.Core.Domain.QuestionConfiguration.AssessmentConfiguration;
+using TextQuestionConfiguration = ti8m.BeachBreak.Core.Domain.QuestionConfiguration.TextQuestionConfiguration;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate;
 
@@ -225,55 +227,15 @@ public class QuestionnaireResponse : AggregateRoot
             evaluationResponse.Rating > 0);
     }
 
-    private int GetConfigurationCollectionCount(QuestionnaireTemplateAggregate.QuestionItem question, string key)
-    {
-        if (question.Configuration.TryGetValue(key, out var obj))
-        {
-            if (obj is System.Collections.ICollection collection)
-            {
-                return collection.Count;
-            }
-        }
-
-        return 0;
-    }
-
     private List<EvaluationItem> GetEvaluationsFromConfiguration(QuestionItem question)
     {
-        if (question.Configuration.TryGetValue("Evaluations", out var obj))
+        // Use strongly-typed configuration - much simpler!
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            if (obj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-            {
-                var evaluations = new List<EvaluationItem>();
-                foreach (var item in jsonElement.EnumerateArray())
-                {
-                    string? key = null;
-                    bool isRequired = false;
-
-                    if (item.TryGetProperty("Key", out var keyProperty) && keyProperty.ValueKind == System.Text.Json.JsonValueKind.String)
-                    {
-                        key = keyProperty.GetString();
-                    }
-
-                    if (item.TryGetProperty("IsRequired", out var isRequiredProperty))
-                    {
-                        if (isRequiredProperty.ValueKind == System.Text.Json.JsonValueKind.True)
-                        {
-                            isRequired = true;
-                        }
-                        else if (isRequiredProperty.ValueKind == System.Text.Json.JsonValueKind.False)
-                        {
-                            isRequired = false;
-                        }
-                    }
-
-                    if (!string.IsNullOrEmpty(key))
-                    {
-                        evaluations.Add(new EvaluationItem(key, isRequired));
-                    }
-                }
-                return evaluations;
-            }
+            return config.Evaluations
+                .Where(e => e.IsRequired)
+                .Select(e => new EvaluationItem(e.Key, e.IsRequired))
+                .ToList();
         }
 
         return new List<EvaluationItem>();
@@ -281,33 +243,12 @@ public class QuestionnaireResponse : AggregateRoot
 
     private List<TextSectionItem> GetTextSectionsFromConfiguration(QuestionItem question)
     {
-        if (question.Configuration.TryGetValue("TextSections", out var obj))
+        // Use strongly-typed configuration - much simpler!
+        if (question.Configuration is TextQuestionConfiguration config)
         {
-            if (obj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-            {
-                var sections = new List<TextSectionItem>();
-                int index = 0;
-                foreach (var item in jsonElement.EnumerateArray())
-                {
-                    bool isRequired = false;
-
-                    if (item.TryGetProperty("IsRequired", out var isRequiredProperty))
-                    {
-                        if (isRequiredProperty.ValueKind == System.Text.Json.JsonValueKind.True)
-                        {
-                            isRequired = true;
-                        }
-                        else if (isRequiredProperty.ValueKind == System.Text.Json.JsonValueKind.False)
-                        {
-                            isRequired = false;
-                        }
-                    }
-
-                    sections.Add(new TextSectionItem(index, isRequired));
-                    index++;
-                }
-                return sections;
-            }
+            return config.TextSections
+                .Select((section, index) => new TextSectionItem(index, section.IsRequired))
+                .ToList();
         }
 
         return new List<TextSectionItem>();

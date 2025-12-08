@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
@@ -9,9 +10,13 @@ public class QuestionItem : Entity<Guid>
     public QuestionType Type { get; private set; }
     public int Order { get; private set; }
     public bool IsRequired { get; private set; } = true;
-    public Dictionary<string, object> Configuration { get; private set; } = new();
+    public IQuestionConfiguration Configuration { get; private set; }
 
-    private QuestionItem() { }
+    private QuestionItem()
+    {
+        // For event sourcing deserialization
+        Configuration = new AssessmentConfiguration();
+    }
 
     public QuestionItem(
         Guid id,
@@ -20,7 +25,7 @@ public class QuestionItem : Entity<Guid>
         QuestionType type,
         int order,
         bool isRequired,
-        Dictionary<string, object>? configuration = null)
+        IQuestionConfiguration? configuration = null)
     {
         Id = id;
         Title = title ?? throw new ArgumentNullException(nameof(title));
@@ -28,7 +33,7 @@ public class QuestionItem : Entity<Guid>
         Type = type;
         Order = order;
         IsRequired = isRequired;
-        Configuration = configuration ?? new();
+        Configuration = configuration ?? CreateDefaultConfiguration(type);
     }
 
     public void UpdateTitle(Translation title)
@@ -51,8 +56,22 @@ public class QuestionItem : Entity<Guid>
         IsRequired = isRequired;
     }
 
-    public void UpdateConfiguration(Dictionary<string, object> configuration)
+    public void UpdateConfiguration(IQuestionConfiguration configuration)
     {
-        Configuration = configuration ?? new();
+        Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+    }
+
+    /// <summary>
+    /// Creates a default configuration based on the question type.
+    /// </summary>
+    private static IQuestionConfiguration CreateDefaultConfiguration(QuestionType type)
+    {
+        return type switch
+        {
+            QuestionType.Assessment => new AssessmentConfiguration(),
+            QuestionType.TextQuestion => new TextQuestionConfiguration(),
+            QuestionType.Goal => new GoalConfiguration(),
+            _ => throw new ArgumentException($"Unknown question type: {type}", nameof(type))
+        };
     }
 }

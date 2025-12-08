@@ -1,4 +1,6 @@
-﻿namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+﻿using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
+
+namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 
 public class QuestionItem
 {
@@ -10,5 +12,5 @@ public class QuestionItem
     public QuestionType Type { get; set; }
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
-    public Dictionary<string, object> Configuration { get; set; } = new();
+    public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
 }

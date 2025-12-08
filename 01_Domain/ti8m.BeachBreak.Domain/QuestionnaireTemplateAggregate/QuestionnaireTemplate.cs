@@ -239,7 +239,7 @@ public class QuestionnaireTemplate : AggregateRoot
                     question.Type,
                     question.Order,
                     question.IsRequired,
-                    new Dictionary<string, object>(question.Configuration)  // Deep copy
+                    question.Configuration  // Configuration objects are immutable, safe to share
                 )
             ).ToList();
 

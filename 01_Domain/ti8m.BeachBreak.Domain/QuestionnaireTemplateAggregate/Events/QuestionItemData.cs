@@ -1,8 +1,11 @@
+using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
+
 namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 
 /// <summary>
 /// Immutable data representation of QuestionItem for domain events.
 /// Decouples event schema from entity structure to enable independent evolution.
+/// Uses strongly-typed IQuestionConfiguration for type safety.
 /// </summary>
 public record QuestionItemData(
     Guid Id,
@@ -11,4 +14,4 @@ public record QuestionItemData(
     QuestionType Type,
     int Order,
     bool IsRequired,
-    Dictionary<string, object>? Configuration);
+    IQuestionConfiguration? Configuration);
