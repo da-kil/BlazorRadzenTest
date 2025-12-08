@@ -4,95 +4,88 @@ namespace ti8m.BeachBreak.Client.Services.QuestionHandlers;
 
 /// <summary>
 /// Handler for Assessment question type.
-/// Manages competencies with rating scales - can be completed by employee or manager.
+/// Manages evaluations with rating scales - can be completed by employee or manager.
 /// </summary>
 public class AssessmentQuestionHandler : IQuestionTypeHandler
 {
-    private readonly QuestionConfigurationService configService;
-
-    public AssessmentQuestionHandler(QuestionConfigurationService configService)
-    {
-        this.configService = configService;
-    }
-
     public QuestionType SupportedType => QuestionType.Assessment;
 
     public void InitializeQuestion(QuestionItem question)
     {
-        // Initialize with one default competency
-        var competencies = new List<EvaluationItem>
+        // Initialize with one default evaluation and rating scale settings
+        question.Configuration = new AssessmentConfiguration
         {
-            new EvaluationItem("competency_1", "", "", false, 0)
+            Evaluations = new List<EvaluationItem>
+            {
+                new EvaluationItem("evaluation_1", "", "", false, 0)
+            },
+            RatingScale = 4,
+            ScaleLowLabel = "Poor",
+            ScaleHighLabel = "Excellent"
         };
-        configService.SetEvaluations(question, competencies);
-
-        // Initialize default rating scale settings
-        question.Configuration["RatingScale"] = 4; // Default to 1-4 scale
-        question.Configuration["ScaleLowLabel"] = "Poor";
-        question.Configuration["ScaleHighLabel"] = "Excellent";
     }
 
     public void AddItem(QuestionItem question)
     {
-        var competencies = configService.GetEvaluations(question);
-        var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
-        var newCompetency = new EvaluationItem(
-            $"competency_{competencies.Count + 1}",
-            "",
-            "",
-            false,
-            nextOrder
-        );
+        if (question.Configuration is AssessmentConfiguration config)
+        {
+            var nextOrder = config.Evaluations.Count > 0 ? config.Evaluations.Max(e => e.Order) + 1 : 0;
+            var newEvaluation = new EvaluationItem(
+                $"evaluation_{config.Evaluations.Count + 1}",
+                "",
+                "",
+                false,
+                nextOrder
+            );
 
-        // Create a new list to ensure change detection
-        var updatedCompetencies = new List<EvaluationItem>(competencies) { newCompetency };
-        configService.SetEvaluations(question, updatedCompetencies);
+            config.Evaluations.Add(newEvaluation);
+        }
     }
 
     public void RemoveItem(QuestionItem question, int index)
     {
-        var competencies = configService.GetEvaluations(question);
-        if (index >= 0 && index < competencies.Count)
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            competencies.RemoveAt(index);
-
-            // Reorder remaining competencies
-            for (int i = 0; i < competencies.Count; i++)
+            if (index >= 0 && index < config.Evaluations.Count)
             {
-                competencies[i] = new EvaluationItem(
-                    competencies[i].Key,
-                    competencies[i].TitleEnglish,
-                    competencies[i].DescriptionEnglish,
-                    competencies[i].IsRequired,
-                    i
-                );
-            }
+                config.Evaluations.RemoveAt(index);
 
-            configService.SetEvaluations(question, competencies);
+                // Reorder remaining evaluations
+                for (int i = 0; i < config.Evaluations.Count; i++)
+                {
+                    config.Evaluations[i].Order = i;
+                }
+            }
         }
     }
 
     public int GetItemCount(QuestionItem question)
     {
-        return configService.GetEvaluations(question).Count;
+        if (question.Configuration is AssessmentConfiguration config)
+        {
+            return config.Evaluations.Count;
+        }
+        return 0;
     }
 
     public List<string> Validate(QuestionItem question, string questionLabel)
     {
         var errors = new List<string>();
-        var competencies = configService.GetEvaluations(question);
 
-        if (competencies.Count == 0)
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            errors.Add($"{questionLabel} must have at least one competency");
-        }
-        else
-        {
-            for (int i = 0; i < competencies.Count; i++)
+            if (config.Evaluations.Count == 0)
             {
-                if (string.IsNullOrWhiteSpace(competencies[i].TitleEnglish))
+                errors.Add($"{questionLabel} must have at least one evaluation");
+            }
+            else
+            {
+                for (int i = 0; i < config.Evaluations.Count; i++)
                 {
-                    errors.Add($"Competency {i + 1} in {questionLabel} requires a title");
+                    if (string.IsNullOrWhiteSpace(config.Evaluations[i].TitleEnglish))
+                    {
+                        errors.Add($"Evaluation {i + 1} in {questionLabel} requires a title");
+                    }
                 }
             }
         }

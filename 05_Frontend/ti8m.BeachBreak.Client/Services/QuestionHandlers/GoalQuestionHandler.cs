@@ -12,10 +12,12 @@ public class GoalQuestionHandler : IQuestionTypeHandler
 
     public void InitializeQuestion(QuestionItem question)
     {
-        // Goal questions don't need template items
-        // Goals are added dynamically during in-progress states by Employee/Manager
-        // Just ensure Configuration dictionary exists
-        question.Configuration ??= new Dictionary<string, object>();
+        // Goal questions use GoalConfiguration with ShowGoalSection flag
+        // Goals themselves are added dynamically during workflow execution
+        question.Configuration = new GoalConfiguration
+        {
+            ShowGoalSection = true // Default to showing the goal section
+        };
     }
 
     public void AddItem(QuestionItem question)
