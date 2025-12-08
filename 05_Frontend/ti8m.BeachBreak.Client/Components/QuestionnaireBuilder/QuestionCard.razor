@@ -123,14 +123,36 @@
         <!-- Goal Configuration -->
         @if (Question.Type == QuestionType.Goal)
         {
-            <div class="goal-config text-center p-4">
-                <RadzenIcon Icon="flag" Class="goal-config-icon mb-3" />
-                <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 fw-bold">
-                    Goal Question Type
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
-                    No template configuration is required for Goal questions.
-                </RadzenText>
+            <div class="goal-config p-4">
+                <div class="text-center mb-3">
+                    <RadzenIcon Icon="flag" Class="goal-config-icon mb-3" />
+                    <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 fw-bold">
+                        Goal Question Type
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+                        No template configuration is required for Goal questions.
+                    </RadzenText>
+                </div>
+
+                <!-- Goal Section Visibility Toggle -->
+                <div class="mb-3 p-3 border rounded bg-light">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-2 d-flex align-items-center">
+                        <RadzenIcon Icon="visibility" Class="me-2" />
+                        Goal Section Visibility
+                    </RadzenText>
+                    <div class="d-flex align-items-center">
+                        <RadzenSwitch Value="@GetShowGoalSection()"
+                                      ValueChanged="@((bool value) => SetShowGoalSection(value))"
+                                      Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2">
+                            @(GetShowGoalSection() ? "Goal section is visible to users" : "Goal section is hidden from users")
+                        </RadzenText>
+                    </div>
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-2 d-block">
+                        Controls whether users see the goal section when filling out this questionnaire
+                    </RadzenText>
+                </div>
+
                 <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Class="mb-0 goal-workflow-alert" ShowIcon="false">
                     <RadzenText TextStyle="TextStyle.Caption" Class="d-block mb-1 goal-workflow-caption">
                         Goals are added dynamically during the questionnaire workflow:
@@ -540,6 +562,33 @@
     {
         var categories = GetGoalCategoriesFromConfiguration();
         return categories.OrderBy(c => c.Order).ToList();
+    }
+
+    // Goal Configuration - ShowGoalSection visibility toggle
+    private bool GetShowGoalSection()
+    {
+        if (Question.Configuration is GoalConfiguration config)
+        {
+            return config.ShowGoalSection;
+        }
+        return true; // Default to visible
+    }
+
+    private void SetShowGoalSection(bool value)
+    {
+        if (Question.Configuration is GoalConfiguration config)
+        {
+            config.ShowGoalSection = value;
+        }
+        else
+        {
+            // Initialize configuration if it doesn't exist
+            Question.Configuration = new GoalConfiguration
+            {
+                ShowGoalSection = value
+            };
+        }
+        StateHasChanged();
     }
 
 
