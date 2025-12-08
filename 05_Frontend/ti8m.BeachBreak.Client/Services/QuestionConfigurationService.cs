@@ -74,7 +74,11 @@ public class QuestionConfigurationService
     /// </summary>
     public List<EvaluationItem> GetEvaluations(QuestionItem question)
     {
-        return GetConfigurationList<EvaluationItem>(question.Configuration, "Evaluations");
+        if (question.Configuration is AssessmentConfiguration config)
+        {
+            return config.Evaluations;
+        }
+        return new List<EvaluationItem>();
     }
 
 
@@ -83,7 +87,11 @@ public class QuestionConfigurationService
     /// </summary>
     public List<TextSection> GetTextSections(QuestionItem question)
     {
-        return GetConfigurationList<TextSection>(question.Configuration, "TextSections");
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            return config.TextSections;
+        }
+        return new List<TextSection>();
     }
 
     /// <summary>
@@ -92,49 +100,11 @@ public class QuestionConfigurationService
     /// </summary>
     public int GetRatingScale(QuestionItem question)
     {
-        if (question?.Configuration?.ContainsKey("RatingScale") != true)
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            return 4; // Default rating scale
+            return config.RatingScale;
         }
-
-        var value = question.Configuration["RatingScale"];
-
-        if (value == null)
-        {
-            return 4;
-        }
-
-        try
-        {
-            // Try Convert.ToInt32 which handles many types including JsonElement
-            return Convert.ToInt32(value);
-        }
-        catch
-        {
-            // Fallback: Handle JsonElement explicitly
-            if (value is JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == JsonValueKind.Number)
-                {
-                    return jsonElement.GetInt32();
-                }
-                if (jsonElement.ValueKind == JsonValueKind.String)
-                {
-                    if (int.TryParse(jsonElement.GetString(), out int parsed))
-                    {
-                        return parsed;
-                    }
-                }
-            }
-
-            // Fallback: Try parsing string representation
-            if (int.TryParse(value.ToString(), out int scale))
-            {
-                return scale;
-            }
-        }
-
-        return 4;
+        return 4; // Default rating scale
     }
 
     /// <summary>
@@ -143,20 +113,11 @@ public class QuestionConfigurationService
     /// </summary>
     public string GetScaleLowLabel(QuestionItem question)
     {
-        if (question?.Configuration?.TryGetValue("ScaleLowLabel", out var value) != true)
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            return "Poor";
+            return config.ScaleLowLabel ?? "Poor";
         }
-
-        // Handle JsonElement from API deserialization
-        if (value is JsonElement jsonElement)
-        {
-            return jsonElement.ValueKind == JsonValueKind.String
-                ? jsonElement.GetString() ?? "Poor"
-                : "Poor";
-        }
-
-        return value?.ToString() ?? "Poor";
+        return "Poor";
     }
 
     /// <summary>
@@ -165,20 +126,11 @@ public class QuestionConfigurationService
     /// </summary>
     public string GetScaleHighLabel(QuestionItem question)
     {
-        if (question?.Configuration?.TryGetValue("ScaleHighLabel", out var value) != true)
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            return "Excellent";
+            return config.ScaleHighLabel ?? "Excellent";
         }
-
-        // Handle JsonElement from API deserialization
-        if (value is JsonElement jsonElement)
-        {
-            return jsonElement.ValueKind == JsonValueKind.String
-                ? jsonElement.GetString() ?? "Excellent"
-                : "Excellent";
-        }
-
-        return value?.ToString() ?? "Excellent";
+        return "Excellent";
     }
 
     /// <summary>
@@ -186,7 +138,20 @@ public class QuestionConfigurationService
     /// </summary>
     public void SetEvaluations(QuestionItem question, List<EvaluationItem> evaluations)
     {
-        question.Configuration["Evaluations"] = evaluations;
+        if (question.Configuration is AssessmentConfiguration config)
+        {
+            config.Evaluations = evaluations;
+        }
+        else
+        {
+            question.Configuration = new AssessmentConfiguration
+            {
+                Evaluations = evaluations,
+                RatingScale = 4,
+                ScaleLowLabel = "Poor",
+                ScaleHighLabel = "Excellent"
+            };
+        }
     }
 
 
@@ -195,7 +160,17 @@ public class QuestionConfigurationService
     /// </summary>
     public void SetTextSections(QuestionItem question, List<TextSection> textSections)
     {
-        question.Configuration["TextSections"] = textSections;
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            config.TextSections = textSections;
+        }
+        else
+        {
+            question.Configuration = new TextQuestionConfiguration
+            {
+                TextSections = textSections
+            };
+        }
     }
 
     /// <summary>
