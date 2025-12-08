@@ -353,7 +353,7 @@
                 Type = originalQuestion.Type,
                 Order = originalQuestion.Order,
                 IsRequired = originalQuestion.IsRequired,
-                Configuration = new Dictionary<string, object>(originalQuestion.Configuration)
+                Configuration = originalQuestion.Configuration // Reference copy is fine for editing
             };
             State.OpenQuestionEditor(editingQuestion, indices.sectionIndex, indices.questionIndex);
         }

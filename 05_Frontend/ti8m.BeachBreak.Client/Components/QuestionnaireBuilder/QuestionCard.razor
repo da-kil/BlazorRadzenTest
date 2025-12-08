@@ -527,63 +527,12 @@
     }
 
     // Goal Achievement methods
+    // NOTE: Goal questions don't use template configuration - goals are added dynamically during workflow execution
+    // These methods are legacy code and always return empty lists
     private List<GoalCategory> GetGoalCategoriesFromConfiguration()
     {
-        if (Question.Configuration.ContainsKey("GoalCategories"))
-        {
-            var goalCategoriesObj = Question.Configuration["GoalCategories"];
-
-            // Handle direct cast (when set in editor)
-            if (goalCategoriesObj is List<GoalCategory> categories)
-            {
-                return categories;
-            }
-
-            // Handle JSON deserialization (when loaded from API)
-            if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement)
-            {
-                try
-                {
-                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                    {
-                        return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(jsonElement.GetRawText()) ?? new List<GoalCategory>();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing goal categories: {ex.Message}");
-                }
-            }
-
-            // Handle string representation (backup case)
-            if (goalCategoriesObj is string jsonString)
-            {
-                try
-                {
-                    return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(jsonString) ?? new List<GoalCategory>();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing goal categories from string: {ex.Message}");
-                }
-            }
-
-            // Handle List<object> from API deserialization
-            // Note: List<object> is necessary here because JSON API data sometimes comes as untyped objects
-            // that need to be converted to strongly-typed GoalCategory objects
-            if (goalCategoriesObj is List<object> objectList)
-            {
-                try
-                {
-                    var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                    return System.Text.Json.JsonSerializer.Deserialize<List<GoalCategory>>(json) ?? new List<GoalCategory>();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing goal categories from API List<object>: {ex.Message}");
-                }
-            }
-        }
+        // Goal questions use GoalConfiguration with ShowGoalSection flag only
+        // No template-level goal categories
         return new List<GoalCategory>();
     }
 
@@ -606,7 +555,7 @@
             if (confirmed == true)
             {
                 categories.RemoveAt(index);
-                Question.Configuration["GoalCategories"] = categories;
+                // No-op: Goal questions don't use template configuration
                 StateHasChanged();
             }
         }
@@ -625,7 +574,7 @@
             {
                 categories[index].TitleEnglish = value ?? "";
             }
-            Question.Configuration["GoalCategories"] = categories;
+            // No-op: Goal questions don't use template configuration
             StateHasChanged();
         }
     }
@@ -643,7 +592,7 @@
             {
                 categories[index].DescriptionEnglish = value ?? "";
             }
-            Question.Configuration["GoalCategories"] = categories;
+            // No-op: Goal questions don't use template configuration
             StateHasChanged();
         }
     }
@@ -654,7 +603,7 @@
         if (index >= 0 && index < categories.Count)
         {
             categories[index].TitleEnglish = value ?? "";
-            Question.Configuration["GoalCategories"] = categories;
+            // No-op: Goal questions don't use template configuration
             StateHasChanged();
         }
     }
@@ -665,7 +614,7 @@
         if (index >= 0 && index < categories.Count)
         {
             categories[index].TitleGerman = value ?? "";
-            Question.Configuration["GoalCategories"] = categories;
+            // No-op: Goal questions don't use template configuration
             StateHasChanged();
         }
     }
@@ -676,7 +625,7 @@
         if (index >= 0 && index < categories.Count)
         {
             categories[index].DescriptionEnglish = value ?? "";
-            Question.Configuration["GoalCategories"] = categories;
+            // No-op: Goal questions don't use template configuration
             StateHasChanged();
         }
     }
@@ -687,7 +636,7 @@
         if (index >= 0 && index < categories.Count)
         {
             categories[index].DescriptionGerman = value ?? "";
-            Question.Configuration["GoalCategories"] = categories;
+            // No-op: Goal questions don't use template configuration
             StateHasChanged();
         }
     }
@@ -933,7 +882,7 @@
         if (index >= 0 && index < categories.Count)
         {
             categories[index].IsRequired = value;
-            Question.Configuration["GoalCategories"] = categories;
+            // No-op: Goal questions don't use template configuration
             StateHasChanged();
             await OnRequiredChanged.InvokeAsync();
         }
@@ -953,7 +902,7 @@
                 categories[i].Order = i;
             }
 
-            Question.Configuration["GoalCategories"] = categories;
+            // No-op: Goal questions don't use template configuration
             StateHasChanged();
         }
     }
@@ -972,7 +921,7 @@
                 categories[i].Order = i;
             }
 
-            Question.Configuration["GoalCategories"] = categories;
+            // No-op: Goal questions don't use template configuration
             StateHasChanged();
         }
     }
