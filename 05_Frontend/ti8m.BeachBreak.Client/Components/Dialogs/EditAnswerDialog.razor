@@ -199,18 +199,23 @@
             Type = Question.Type,
             IsRequired = Question.IsRequired,
             Order = Question.Order,
-            Configuration = new Dictionary<string, object>(Question.Configuration ?? new Dictionary<string, object>())
+            Configuration = Question.Configuration // Use typed configuration directly
         };
 
-        // Filter competencies to only the target competency
-        if (filteredQuestion.Configuration.ContainsKey("Evaluations"))
+        // Filter evaluations to only the target evaluation
+        if (Question.Configuration is AssessmentConfiguration assessConfig)
         {
-            var allEvaluations = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
-            var targetCompetency = allEvaluations.FirstOrDefault(c => c.Key == CompetencyKey);
+            var targetEvaluation = assessConfig.Evaluations.FirstOrDefault(e => e.Key == CompetencyKey);
 
-            if (targetCompetency != null)
+            if (targetEvaluation != null)
             {
-                filteredQuestion.Configuration["Evaluations"] = new List<EvaluationItem> { targetCompetency };
+                filteredQuestion.Configuration = new AssessmentConfiguration
+                {
+                    Evaluations = new List<EvaluationItem> { targetEvaluation },
+                    RatingScale = assessConfig.RatingScale,
+                    ScaleLowLabel = assessConfig.ScaleLowLabel,
+                    ScaleHighLabel = assessConfig.ScaleHighLabel
+                };
             }
         }
 
