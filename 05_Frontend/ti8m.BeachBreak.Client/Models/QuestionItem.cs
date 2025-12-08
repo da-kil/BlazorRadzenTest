@@ -14,7 +14,7 @@ public class QuestionItem
     public QuestionType Type { get; set; }
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
-    public Dictionary<string, object> Configuration { get; set; } = new();
+    public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
 
     // Helper methods for language-aware content display
     public string GetLocalizedTitle(Language language)
