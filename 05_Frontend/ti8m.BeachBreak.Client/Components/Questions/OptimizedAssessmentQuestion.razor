@@ -3,7 +3,6 @@
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Questions
-@using ti8m.BeachBreak.Client.Helpers
 @inherits OptimizedTranslatableComponentBase
 
 @if (!HideHeader)
@@ -26,7 +25,7 @@
 
             <div class="rating-scale-info">
                 <RadzenIcon Icon="info" Class="me-2" />
-                <strong>Rating Scale:</strong> @AssessmentConfigurationHelper.GetRatingScaleDescription(ratingScale, scaleLowLabel, scaleHighLabel)
+                <strong>Rating Scale:</strong> @GetRatingScaleDescription()
             </div>
         </header>
 
@@ -69,7 +68,7 @@ else
 {
     <div class="rating-scale-info">
         <RadzenIcon Icon="info" Class="me-2" />
-        <strong>Rating Scale:</strong> @AssessmentConfigurationHelper.GetRatingScaleDescription(ratingScale, scaleLowLabel, scaleHighLabel)
+        <strong>Rating Scale:</strong> @GetRatingScaleDescription()
     </div>
 
     <div class="competencies-container">
@@ -140,10 +139,26 @@ else
 
     private void LoadConfigurationAsync()
     {
-        evaluations = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
-        ratingScale = AssessmentConfigurationHelper.GetRatingScaleFromConfiguration(Question);
-        scaleLowLabel = AssessmentConfigurationHelper.GetScaleLowLabelFromConfiguration(Question);
-        scaleHighLabel = AssessmentConfigurationHelper.GetScaleHighLabelFromConfiguration(Question);
+        if (Question.Configuration is AssessmentConfiguration config)
+        {
+            evaluations = config.Evaluations.OrderBy(e => e.Order).ToList();
+            ratingScale = config.RatingScale;
+            scaleLowLabel = config.ScaleLowLabel;
+            scaleHighLabel = config.ScaleHighLabel;
+        }
+        else
+        {
+            // Fallback for invalid configuration
+            evaluations = new List<EvaluationItem>();
+            ratingScale = 4;
+            scaleLowLabel = "Poor";
+            scaleHighLabel = "Excellent";
+        }
+    }
+
+    private string GetRatingScaleDescription()
+    {
+        return $"1 ({scaleLowLabel}) - {ratingScale} ({scaleHighLabel})";
     }
 
     protected override bool HasStateChanged()
