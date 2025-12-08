@@ -2,7 +2,6 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Shared
-@using ti8m.BeachBreak.Client.Helpers
 @inject DialogService DialogService
 @inherits OptimizedTranslatableComponentBase
 
@@ -455,8 +454,11 @@
 
     private List<EvaluationItem> GetOrderedEvaluations()
     {
-        var evaluations = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
-        return evaluations.OrderBy(c => c.Order).ToList();
+        if (Question.Configuration is AssessmentConfiguration config)
+        {
+            return config.Evaluations.OrderBy(e => e.Order).ToList();
+        }
+        return new List<EvaluationItem>();
     }
 
 
@@ -472,9 +474,9 @@
 
             if (confirmed == true)
             {
-                var allCompetencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
-                allCompetencies.Remove(competencyToRemove);
-                Question.Configuration["Competencies"] = allCompetencies;
+                var allEvaluations = GetOrderedEvaluations();
+                allEvaluations.Remove(competencyToRemove);
+                UpdateAssessmentConfiguration(allEvaluations);
                 StateHasChanged();
             }
         }
@@ -482,52 +484,44 @@
 
     private void UpdateCompetencyTitleEnglish(int displayIndex, string value)
     {
-        var competencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
-        var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
-        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
+        var evaluations = GetOrderedEvaluations();
+        if (displayIndex >= 0 && displayIndex < evaluations.Count)
         {
-            orderedCompetencies[displayIndex].TitleEnglish = value ?? "";
-            // Store the original list (modifications already applied via reference)
-            Question.Configuration["Competencies"] = competencies;
+            evaluations[displayIndex].TitleEnglish = value ?? "";
+            UpdateAssessmentConfiguration(evaluations);
             StateHasChanged();
         }
     }
 
     private void UpdateCompetencyTitleGerman(int displayIndex, string value)
     {
-        var competencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
-        var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
-        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
+        var evaluations = GetOrderedEvaluations();
+        if (displayIndex >= 0 && displayIndex < evaluations.Count)
         {
-            orderedCompetencies[displayIndex].TitleGerman = value ?? "";
-            // Store the original list (modifications already applied via reference)
-            Question.Configuration["Competencies"] = competencies;
+            evaluations[displayIndex].TitleGerman = value ?? "";
+            UpdateAssessmentConfiguration(evaluations);
             StateHasChanged();
         }
     }
 
     private void UpdateCompetencyDescriptionEnglish(int displayIndex, string value)
     {
-        var competencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
-        var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
-        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
+        var evaluations = GetOrderedEvaluations();
+        if (displayIndex >= 0 && displayIndex < evaluations.Count)
         {
-            orderedCompetencies[displayIndex].DescriptionEnglish = value ?? "";
-            // Store the original list (modifications already applied via reference)
-            Question.Configuration["Competencies"] = competencies;
+            evaluations[displayIndex].DescriptionEnglish = value ?? "";
+            UpdateAssessmentConfiguration(evaluations);
             StateHasChanged();
         }
     }
 
     private void UpdateCompetencyDescriptionGerman(int displayIndex, string value)
     {
-        var competencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
-        var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
-        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
+        var evaluations = GetOrderedEvaluations();
+        if (displayIndex >= 0 && displayIndex < evaluations.Count)
         {
-            orderedCompetencies[displayIndex].DescriptionGerman = value ?? "";
-            // Store the original list (modifications already applied via reference)
-            Question.Configuration["Competencies"] = competencies;
+            evaluations[displayIndex].DescriptionGerman = value ?? "";
+            UpdateAssessmentConfiguration(evaluations);
             StateHasChanged();
         }
     }
@@ -916,11 +910,11 @@
 
     private async Task UpdateCompetencyRequired(int displayIndex, bool value)
     {
-        var orderedCompetencies = GetOrderedEvaluations();
-        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
+        var evaluations = GetOrderedEvaluations();
+        if (displayIndex >= 0 && displayIndex < evaluations.Count)
         {
-            orderedCompetencies[displayIndex].IsRequired = value;
-            Question.Configuration["Competencies"] = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
+            evaluations[displayIndex].IsRequired = value;
+            UpdateAssessmentConfiguration(evaluations);
             StateHasChanged();
             await OnRequiredChanged.InvokeAsync();
         }
@@ -928,38 +922,38 @@
 
     private void MoveCompetencyUp(int displayIndex)
     {
-        var competencies = GetOrderedEvaluations();
-        if (displayIndex > 0 && displayIndex < competencies.Count)
+        var evaluations = GetOrderedEvaluations();
+        if (displayIndex > 0 && displayIndex < evaluations.Count)
         {
-            // Simple array swap - exactly like the original working code
-            (competencies[displayIndex], competencies[displayIndex - 1]) = (competencies[displayIndex - 1], competencies[displayIndex]);
+            // Simple array swap
+            (evaluations[displayIndex], evaluations[displayIndex - 1]) = (evaluations[displayIndex - 1], evaluations[displayIndex]);
 
-            // Now update Order properties to match new positions
-            for (int i = 0; i < competencies.Count; i++)
+            // Update Order properties to match new positions
+            for (int i = 0; i < evaluations.Count; i++)
             {
-                competencies[i].Order = i;
+                evaluations[i].Order = i;
             }
 
-            Question.Configuration["Competencies"] = competencies;
+            UpdateAssessmentConfiguration(evaluations);
             StateHasChanged();
         }
     }
 
     private void MoveCompetencyDown(int displayIndex)
     {
-        var competencies = GetOrderedEvaluations();
-        if (displayIndex >= 0 && displayIndex < competencies.Count - 1)
+        var evaluations = GetOrderedEvaluations();
+        if (displayIndex >= 0 && displayIndex < evaluations.Count - 1)
         {
-            // Simple array swap - exactly like the original working code
-            (competencies[displayIndex], competencies[displayIndex + 1]) = (competencies[displayIndex + 1], competencies[displayIndex]);
+            // Simple array swap
+            (evaluations[displayIndex], evaluations[displayIndex + 1]) = (evaluations[displayIndex + 1], evaluations[displayIndex]);
 
-            // Now update Order properties to match new positions
-            for (int i = 0; i < competencies.Count; i++)
+            // Update Order properties to match new positions
+            for (int i = 0; i < evaluations.Count; i++)
             {
-                competencies[i].Order = i;
+                evaluations[i].Order = i;
             }
 
-            Question.Configuration["Competencies"] = competencies;
+            UpdateAssessmentConfiguration(evaluations);
             StateHasChanged();
         }
     }
@@ -1045,6 +1039,26 @@
             Question.Configuration["TextSections"] = sections;
             StateHasChanged();
             await OnRequiredChanged.InvokeAsync();
+        }
+    }
+
+    // Helper method to update Assessment configuration
+    private void UpdateAssessmentConfiguration(List<EvaluationItem> evaluations)
+    {
+        if (Question.Configuration is AssessmentConfiguration config)
+        {
+            config.Evaluations = evaluations;
+        }
+        else
+        {
+            // Create new configuration if it doesn't exist or is wrong type
+            Question.Configuration = new AssessmentConfiguration
+            {
+                Evaluations = evaluations,
+                RatingScale = 4,
+                ScaleLowLabel = "Poor",
+                ScaleHighLabel = "Excellent"
+            };
         }
     }
 
