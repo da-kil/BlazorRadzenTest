@@ -1,5 +1,4 @@
 using ti8m.BeachBreak.Client.Models;
-using QuestionCardTypes = ti8m.BeachBreak.Client.Components.QuestionnaireBuilder.QuestionCard;
 
 namespace ti8m.BeachBreak.Client.Services.QuestionHandlers;
 
@@ -9,91 +8,92 @@ namespace ti8m.BeachBreak.Client.Services.QuestionHandlers;
 /// </summary>
 public class TextQuestionHandler : IQuestionTypeHandler
 {
-    private readonly QuestionConfigurationService configService;
-
-    public TextQuestionHandler(QuestionConfigurationService configService)
-    {
-        this.configService = configService;
-    }
-
     public QuestionType SupportedType => QuestionType.TextQuestion;
 
     public void InitializeQuestion(QuestionItem question)
     {
         // Initialize with one default text section
-        var textSections = new List<QuestionCardTypes.TextSection>
+        question.Configuration = new TextQuestionConfiguration
         {
-            new QuestionCardTypes.TextSection
+            TextSections = new List<TextSection>
+            {
+                new TextSection
+                {
+                    TitleEnglish = "",
+                    TitleGerman = "",
+                    DescriptionEnglish = "",
+                    DescriptionGerman = "",
+                    IsRequired = false,
+                    Order = 0
+                }
+            }
+        };
+    }
+
+    public void AddItem(QuestionItem question)
+    {
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            var nextOrder = config.TextSections.Count > 0 ? config.TextSections.Max(s => s.Order) + 1 : 0;
+            var newSection = new TextSection
             {
                 TitleEnglish = "",
                 TitleGerman = "",
                 DescriptionEnglish = "",
                 DescriptionGerman = "",
                 IsRequired = false,
-                Order = 0
-            }
-        };
-        configService.SetTextSections(question, textSections);
-    }
+                Order = nextOrder
+            };
 
-    public void AddItem(QuestionItem question)
-    {
-        var textSections = configService.GetTextSections(question);
-        var nextOrder = textSections.Count > 0 ? textSections.Max(t => t.Order) + 1 : 0;
-        var newSection = new QuestionCardTypes.TextSection
-        {
-            TitleEnglish = "",
-            TitleGerman = "",
-            DescriptionEnglish = "",
-            DescriptionGerman = "",
-            IsRequired = false,
-            Order = nextOrder
-        };
-
-        // Create a new list to ensure change detection
-        var updatedSections = new List<QuestionCardTypes.TextSection>(textSections) { newSection };
-        configService.SetTextSections(question, updatedSections);
+            config.TextSections.Add(newSection);
+        }
     }
 
     public void RemoveItem(QuestionItem question, int index)
     {
-        var textSections = configService.GetTextSections(question);
-        if (index >= 0 && index < textSections.Count)
+        if (question.Configuration is TextQuestionConfiguration config)
         {
-            textSections.RemoveAt(index);
-
-            // Reorder remaining sections
-            for (int i = 0; i < textSections.Count; i++)
+            if (index >= 0 && index < config.TextSections.Count)
             {
-                textSections[i].Order = i;
-            }
+                config.TextSections.RemoveAt(index);
 
-            configService.SetTextSections(question, textSections);
+                // Reorder remaining sections
+                for (int i = 0; i < config.TextSections.Count; i++)
+                {
+                    config.TextSections[i].Order = i;
+                }
+            }
         }
     }
 
     public int GetItemCount(QuestionItem question)
     {
-        return configService.GetTextSections(question).Count;
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            return config.TextSections.Count;
+        }
+        return 0;
     }
 
     public List<string> Validate(QuestionItem question, string questionLabel)
     {
         var errors = new List<string>();
-        var textSections = configService.GetTextSections(question);
 
-        if (textSections.Count == 0)
+        if (question.Configuration is TextQuestionConfiguration config)
         {
-            errors.Add($"{questionLabel} must have at least one text section");
-        }
-        else
-        {
-            for (int i = 0; i < textSections.Count; i++)
+            if (config.TextSections.Count == 0)
             {
-                if (string.IsNullOrWhiteSpace(textSections[i].TitleEnglish) &&
-                    string.IsNullOrWhiteSpace(textSections[i].TitleGerman))
+                errors.Add($"{questionLabel} must have at least one text section");
+            }
+            else
+            {
+                for (int i = 0; i < config.TextSections.Count; i++)
                 {
-                    errors.Add($"Text section {i + 1} in {questionLabel} requires a title (in English or German)");
+                    if (string.IsNullOrWhiteSpace(config.TextSections[i].TitleEnglish) &&
+                        string.IsNullOrWhiteSpace(config.TextSections[i].TitleGerman))
+                    {
+                        errors.Add($"Text section {i + 1} in {questionLabel} requires a title (in English or German)");
+                    }
                 }
             }
         }
