@@ -203,14 +203,14 @@
         };
 
         // Filter competencies to only the target competency
-        if (filteredQuestion.Configuration.ContainsKey("Competencies"))
+        if (filteredQuestion.Configuration.ContainsKey("Evaluations"))
         {
-            var allCompetencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
-            var targetCompetency = allCompetencies.FirstOrDefault(c => c.Key == CompetencyKey);
+            var allEvaluations = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
+            var targetCompetency = allEvaluations.FirstOrDefault(c => c.Key == CompetencyKey);
 
             if (targetCompetency != null)
             {
-                filteredQuestion.Configuration["Competencies"] = new List<CompetencyDefinition> { targetCompetency };
+                filteredQuestion.Configuration["Evaluations"] = new List<EvaluationItem> { targetCompetency };
             }
         }
 
@@ -308,7 +308,7 @@
             return false;
 
         // Check if any competency has been rated
-        return assessmentData.Competencies.Any(kvp => kvp.Value.Rating > 0);
+        return assessmentData.Evaluations.Any(kvp => kvp.Value.Rating > 0);
     }
 
     private bool IsGoalQuestionValid()

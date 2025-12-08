@@ -12,7 +12,7 @@
         <!-- Assessment Configuration -->
         @if (Question.Type == QuestionType.Assessment)
         {
-            var competencies = GetOrderedCompetencies();
+            var competencies = GetOrderedEvaluations();
             <div class="competencies-config">
 
                 @if (competencies.Count == 0)
@@ -319,7 +319,7 @@
 
         if (Question.Type == QuestionType.Assessment)
         {
-            var competencies = GetOrderedCompetencies();
+            var competencies = GetOrderedEvaluations();
             for (int i = 0; i < competencies.Count; i++)
             {
                 ValidateCompetencyTitle(i);
@@ -349,7 +349,7 @@
     // Competency validation methods
     private void ValidateCompetencyTitle(int index)
     {
-        var competencies = GetOrderedCompetencies();
+        var competencies = GetOrderedEvaluations();
         if (index >= 0 && index < competencies.Count)
         {
             competencyTitleValidated[index] = true;
@@ -453,16 +453,16 @@
 
     // Assessment methods
 
-    private List<CompetencyDefinition> GetOrderedCompetencies()
+    private List<EvaluationItem> GetOrderedEvaluations()
     {
-        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
-        return competencies.OrderBy(c => c.Order).ToList();
+        var evaluations = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
+        return evaluations.OrderBy(c => c.Order).ToList();
     }
 
 
     private async Task RemoveCompetency(int displayIndex)
     {
-        var orderedCompetencies = GetOrderedCompetencies();
+        var orderedCompetencies = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
             var competencyToRemove = orderedCompetencies[displayIndex];
@@ -472,7 +472,7 @@
 
             if (confirmed == true)
             {
-                var allCompetencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+                var allCompetencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
                 allCompetencies.Remove(competencyToRemove);
                 Question.Configuration["Competencies"] = allCompetencies;
                 StateHasChanged();
@@ -482,7 +482,7 @@
 
     private void UpdateCompetencyTitleEnglish(int displayIndex, string value)
     {
-        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        var competencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
         var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
@@ -495,7 +495,7 @@
 
     private void UpdateCompetencyTitleGerman(int displayIndex, string value)
     {
-        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        var competencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
         var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
@@ -508,7 +508,7 @@
 
     private void UpdateCompetencyDescriptionEnglish(int displayIndex, string value)
     {
-        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        var competencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
         var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
@@ -521,7 +521,7 @@
 
     private void UpdateCompetencyDescriptionGerman(int displayIndex, string value)
     {
-        var competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        var competencies = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
         var orderedCompetencies = competencies.OrderBy(c => c.Order).ToList();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
@@ -906,7 +906,7 @@
     // Required flag methods for competencies
     private bool GetCompetencyRequired(int displayIndex)
     {
-        var orderedCompetencies = GetOrderedCompetencies();
+        var orderedCompetencies = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
             return orderedCompetencies[displayIndex].IsRequired;
@@ -916,11 +916,11 @@
 
     private async Task UpdateCompetencyRequired(int displayIndex, bool value)
     {
-        var orderedCompetencies = GetOrderedCompetencies();
+        var orderedCompetencies = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
         {
             orderedCompetencies[displayIndex].IsRequired = value;
-            Question.Configuration["Competencies"] = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+            Question.Configuration["Competencies"] = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
             StateHasChanged();
             await OnRequiredChanged.InvokeAsync();
         }
@@ -928,7 +928,7 @@
 
     private void MoveCompetencyUp(int displayIndex)
     {
-        var competencies = GetOrderedCompetencies();
+        var competencies = GetOrderedEvaluations();
         if (displayIndex > 0 && displayIndex < competencies.Count)
         {
             // Simple array swap - exactly like the original working code
@@ -947,7 +947,7 @@
 
     private void MoveCompetencyDown(int displayIndex)
     {
-        var competencies = GetOrderedCompetencies();
+        var competencies = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < competencies.Count - 1)
         {
             // Simple array swap - exactly like the original working code

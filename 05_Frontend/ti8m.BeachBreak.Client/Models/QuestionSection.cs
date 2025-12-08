@@ -33,7 +33,7 @@ public class QuestionSection
     {
         return QuestionType switch
         {
-            QuestionType.Assessment => GetCompetencies().Count,
+            QuestionType.Assessment => GetEvaluations().Count,
             QuestionType.Goal => GetGoalCategories().Count,
             QuestionType.TextQuestion => GetTextSections().Count,
             _ => 0
@@ -44,26 +44,26 @@ public class QuestionSection
     {
         return QuestionType switch
         {
-            QuestionType.Assessment => GetCompetencies().Count(c => c.IsRequired),
+            QuestionType.Assessment => GetEvaluations().Count(c => c.IsRequired),
             QuestionType.Goal => GetGoalCategories().Count(g => g.IsRequired),
             QuestionType.TextQuestion => GetTextSections().Count(t => t.IsRequired),
             _ => 0
         };
     }
 
-    public List<CompetencyDefinition> GetCompetencies()
+    public List<EvaluationItem> GetEvaluations()
     {
-        if (Configuration.TryGetValue("Competencies", out var competenciesObj))
+        if (Configuration.TryGetValue("Evaluations", out var evaluationsObj))
         {
-            if (competenciesObj is List<CompetencyDefinition> competencies)
-                return competencies;
+            if (evaluationsObj is List<EvaluationItem> evaluations)
+                return evaluations;
         }
-        return new List<CompetencyDefinition>();
+        return new List<EvaluationItem>();
     }
 
-    public void SetCompetencies(List<CompetencyDefinition> competencies)
+    public void SetEvaluations(List<EvaluationItem> evaluations)
     {
-        Configuration["Competencies"] = competencies;
+        Configuration["Evaluations"] = evaluations;
     }
 
     public List<GoalCategory> GetGoalCategories()

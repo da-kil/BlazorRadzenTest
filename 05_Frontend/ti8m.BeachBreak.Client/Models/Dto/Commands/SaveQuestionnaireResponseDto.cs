@@ -31,13 +31,13 @@ public class SaveQuestionnaireResponseDto
     /// <summary>
     /// Adds an assessment response to the DTO.
     /// </summary>
-    public void AddAssessmentResponse(Guid questionId, Dictionary<string, CompetencyRatingCommandDto> competencies)
+    public void AddAssessmentResponse(Guid questionId, Dictionary<string, EvaluationRatingCommandDto> evaluations)
     {
         Responses[questionId] = new QuestionResponseCommandDto
         {
             QuestionId = questionId,
             QuestionType = QuestionType.Assessment,
-            AssessmentResponse = new AssessmentResponseCommandDto { Competencies = competencies }
+            AssessmentResponse = new AssessmentResponseCommandDto { Evaluations = evaluations }
         };
     }
 

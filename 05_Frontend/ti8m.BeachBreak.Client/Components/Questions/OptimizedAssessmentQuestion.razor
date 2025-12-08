@@ -31,31 +31,31 @@
         </header>
 
         <div class="competencies-container">
-        @if (!competencies.Any())
+        @if (!evaluations.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
                 <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Configuration Error:</strong> No competencies are defined for this question. Please edit the template to add competencies.
+                    <strong>Configuration Error:</strong> No evaluations are defined for this question. Please edit the template to add evaluations.
                 </RadzenText>
             </RadzenAlert>
         }
         else
         {
-            @if (competencies.Any(c => string.IsNullOrWhiteSpace(c.GetLocalizedTitleWithFallback(CurrentLanguage))))
+            @if (evaluations.Any(c => string.IsNullOrWhiteSpace(c.GetLocalizedTitleWithFallback(CurrentLanguage))))
             {
                 <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
                     <RadzenText TextStyle="TextStyle.Body2">
-                        <strong>Incomplete Configuration:</strong> One or more competencies are missing titles. Please edit the template to complete the competency configuration.
+                        <strong>Incomplete Configuration:</strong> One or more evaluations are missing titles. Please edit the template to complete the evaluation configuration.
                     </RadzenText>
                 </RadzenAlert>
             }
-            @foreach (var competency in competencies)
+            @foreach (var evaluation in evaluations)
             {
-                var competencyRating = GetCompetencyRatingDto(competency.Key);
-                <CompetencyRatingItem @key="@competency.Key"
-                                     Competency="@competency"
-                                     Rating="@competencyRating"
-                                     OnRatingChanged="@((rating) => OnCompetencyRatingChanged(competency.Key, rating))"
+                var evaluationRating = GetEvaluationRatingDto(evaluation.Key);
+                <EvaluationRatingItem @key="@evaluation.Key"
+                                     Evaluation="@evaluation"
+                                     Rating="@evaluationRating"
+                                     OnRatingChanged="@((rating) => OnEvaluationRatingChanged(evaluation.Key, rating))"
                                      IsReadOnly="@IsReadOnly"
                                      RatingScale="@ratingScale"
                                      ScaleLowLabel="@scaleLowLabel"
@@ -73,31 +73,31 @@ else
     </div>
 
     <div class="competencies-container">
-        @if (!competencies.Any())
+        @if (!evaluations.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
                 <RadzenText TextStyle="TextStyle.Body2">
-                    <strong>Configuration Error:</strong> No competencies are defined for this question. Please edit the template to add competencies.
+                    <strong>Configuration Error:</strong> No evaluations are defined for this question. Please edit the template to add evaluations.
                 </RadzenText>
             </RadzenAlert>
         }
         else
         {
-            @if (competencies.Any(c => string.IsNullOrWhiteSpace(c.GetLocalizedTitleWithFallback(CurrentLanguage))))
+            @if (evaluations.Any(c => string.IsNullOrWhiteSpace(c.GetLocalizedTitleWithFallback(CurrentLanguage))))
             {
                 <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
                     <RadzenText TextStyle="TextStyle.Body2">
-                        <strong>Incomplete Configuration:</strong> One or more competencies are missing titles. Please edit the template to complete the competency configuration.
+                        <strong>Incomplete Configuration:</strong> One or more evaluations are missing titles. Please edit the template to complete the evaluation configuration.
                     </RadzenText>
                 </RadzenAlert>
             }
-            @foreach (var competency in competencies)
+            @foreach (var evaluation in evaluations)
             {
-                var competencyRating = GetCompetencyRatingDto(competency.Key);
-                <CompetencyRatingItem @key="@competency.Key"
-                                     Competency="@competency"
-                                     Rating="@competencyRating"
-                                     OnRatingChanged="@((rating) => OnCompetencyRatingChanged(competency.Key, rating))"
+                var evaluationRating = GetEvaluationRatingDto(evaluation.Key);
+                <EvaluationRatingItem @key="@evaluation.Key"
+                                     Evaluation="@evaluation"
+                                     Rating="@evaluationRating"
+                                     OnRatingChanged="@((rating) => OnEvaluationRatingChanged(evaluation.Key, rating))"
                                      IsReadOnly="@IsReadOnly"
                                      RatingScale="@ratingScale"
                                      ScaleLowLabel="@scaleLowLabel"
@@ -114,7 +114,7 @@ else
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public bool HideHeader { get; set; } = false;
 
-    private List<CompetencyDefinition> competencies = new();
+    private List<EvaluationItem> evaluations = new();
     private int ratingScale = 4;
     private string scaleLowLabel = "Poor";
     private string scaleHighLabel = "Excellent";
@@ -140,7 +140,7 @@ else
 
     private void LoadConfigurationAsync()
     {
-        competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        evaluations = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
         ratingScale = AssessmentConfigurationHelper.GetRatingScaleFromConfiguration(Question);
         scaleLowLabel = AssessmentConfigurationHelper.GetScaleLowLabelFromConfiguration(Question);
         scaleHighLabel = AssessmentConfigurationHelper.GetScaleHighLabelFromConfiguration(Question);
@@ -151,15 +151,15 @@ else
         // Check if response data has changed - compare by reference since ResponseData is strongly typed
         var responseDataHash = Response.ResponseData?.GetHashCode() ?? 0;
         return HasParameterChanged(nameof(Response.ResponseData), responseDataHash) ||
-               HasParameterChanged(nameof(competencies), competencies.Count);
+               HasParameterChanged(nameof(evaluations), evaluations.Count);
     }
 
-    private int GetCompetencyRating(string competencyKey)
+    private int GetEvaluationRating(string evaluationKey)
     {
         if (Response.ResponseData is AssessmentResponseDataDto assessmentData &&
-            assessmentData.Competencies.TryGetValue(competencyKey, out var competencyRating))
+            assessmentData.Evaluations.TryGetValue(evaluationKey, out var evaluationRating))
         {
-            return competencyRating.Rating;
+            return evaluationRating.Rating;
         }
 
         return 0;
@@ -173,7 +173,7 @@ else
         }
     }
 
-    private CompetencyRatingDto GetCompetencyRatingDto(string competencyKey)
+    private EvaluationRatingDto GetEvaluationRatingDto(string evaluationKey)
     {
         // Ensure we have an AssessmentResponseDataDto
         if (Response.ResponseData is not AssessmentResponseDataDto assessmentData)
@@ -182,17 +182,17 @@ else
             Response.ResponseData = assessmentData;
         }
 
-        // Get existing competency or create new one
-        if (!assessmentData.Competencies.TryGetValue(competencyKey, out var existingRating))
+        // Get existing evaluation or create new one
+        if (!assessmentData.Evaluations.TryGetValue(evaluationKey, out var existingRating))
         {
-            existingRating = new CompetencyRatingDto();
-            assessmentData.Competencies[competencyKey] = existingRating;
+            existingRating = new EvaluationRatingDto();
+            assessmentData.Evaluations[evaluationKey] = existingRating;
         }
 
         return existingRating;
     }
 
-    private async Task OnCompetencyRatingChanged(string competencyKey, CompetencyRatingDto rating)
+    private async Task OnEvaluationRatingChanged(string evaluationKey, EvaluationRatingDto rating)
     {
         if (IsReadOnly) return;
 
@@ -203,8 +203,8 @@ else
             Response.ResponseData = assessmentData;
         }
 
-        // Update the competency rating in the response data
-        assessmentData.Competencies[competencyKey] = rating;
+        // Update the evaluation rating in the response data
+        assessmentData.Evaluations[evaluationKey] = rating;
         Response.LastModified = DateTime.Now;
 
         await NotifyResponseChanged();

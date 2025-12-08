@@ -56,19 +56,19 @@ public class QuestionResponseValueJsonConverter : JsonConverter<QuestionResponse
     {
         var dto = JsonSerializer.Deserialize<AssessmentResponseDto>(root.GetRawText())
             ?? throw new JsonException("Failed to deserialize AssessmentResponse");
-        var competencies = dto.Competencies.ToDictionary(
+        var evaluations = dto.Evaluations.ToDictionary(
             kvp => kvp.Key,
-            kvp => new CompetencyRating(kvp.Value.Rating, kvp.Value.Comment ?? string.Empty)
+            kvp => new EvaluationRating(kvp.Value.Rating, kvp.Value.Comment ?? string.Empty)
         );
-        return new QuestionResponseValue.AssessmentResponse(competencies);
+        return new QuestionResponseValue.AssessmentResponse(evaluations);
     }
 
     private class AssessmentResponseDto
     {
-        public Dictionary<string, CompetencyRatingDto> Competencies { get; set; } = new();
+        public Dictionary<string, EvaluationRatingDto> Evaluations { get; set; } = new();
     }
 
-    private class CompetencyRatingDto
+    private class EvaluationRatingDto
     {
         public int Rating { get; set; }
         public string? Comment { get; set; }

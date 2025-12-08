@@ -70,11 +70,11 @@ public class QuestionConfigurationService
     }
 
     /// <summary>
-    /// Gets competencies from question configuration
+    /// Gets evaluations from question configuration
     /// </summary>
-    public List<CompetencyDefinition> GetCompetencies(QuestionItem question)
+    public List<EvaluationItem> GetEvaluations(QuestionItem question)
     {
-        return GetConfigurationList<CompetencyDefinition>(question.Configuration, "Competencies");
+        return GetConfigurationList<EvaluationItem>(question.Configuration, "Evaluations");
     }
 
 
@@ -183,11 +183,11 @@ public class QuestionConfigurationService
     }
 
     /// <summary>
-    /// Updates competencies in question configuration
+    /// Updates evaluations in question configuration
     /// </summary>
-    public void SetCompetencies(QuestionItem question, List<CompetencyDefinition> competencies)
+    public void SetEvaluations(QuestionItem question, List<EvaluationItem> evaluations)
     {
-        question.Configuration["Competencies"] = competencies;
+        question.Configuration["Evaluations"] = evaluations;
     }
 
 
@@ -206,7 +206,7 @@ public class QuestionConfigurationService
     {
         return question.Type switch
         {
-            QuestionType.Assessment => GetCompetencies(question).Any(),
+            QuestionType.Assessment => GetEvaluations(question).Any(),
             QuestionType.Goal => true, // Goal questions don't require template items - items added dynamically during in-progress
             QuestionType.TextQuestion => GetTextSections(question).Any(),
             _ => false
@@ -220,7 +220,7 @@ public class QuestionConfigurationService
     {
         return question.Type switch
         {
-            QuestionType.Assessment => GetCompetencies(question).Count,
+            QuestionType.Assessment => GetEvaluations(question).Count,
             QuestionType.Goal => 0, // Goal questions don't have template items - items added dynamically during in-progress
             QuestionType.TextQuestion => GetTextSections(question).Count,
             _ => 0

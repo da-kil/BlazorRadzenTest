@@ -87,7 +87,7 @@ public class QuestionnaireValidationService
                 // Validate question content based on type
                 if (question.Type == QuestionType.Assessment)
                 {
-                    var competencies = configurationService.GetCompetencies(question);
+                    var competencies = configurationService.GetEvaluations(question);
                     if (competencies.Count == 0)
                     {
                         validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one competency");

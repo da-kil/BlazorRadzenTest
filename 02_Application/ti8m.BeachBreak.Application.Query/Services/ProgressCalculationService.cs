@@ -201,7 +201,7 @@ public class ProgressCalculationService : IProgressCalculationService
                 case QuestionType.Assessment:
                     // Assessment questions need a rating value
                     return answer is QuestionResponseValue.AssessmentResponse assessmentResponse &&
-                           assessmentResponse.Competencies.Any(c => c.Value.IsValidRating);
+                           assessmentResponse.Evaluations.Any(c => c.Value.IsValidRating);
 
                 case QuestionType.TextQuestion:
                     // Text questions must have non-empty text

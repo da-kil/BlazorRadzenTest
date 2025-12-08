@@ -539,12 +539,12 @@
                         {
                             try
                             {
-                                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText()) ?? new List<CompetencyDefinition>();
+                                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<EvaluationItem>>(jsonElement.GetRawText()) ?? new List<EvaluationItem>();
                                 requiredItems += competencies.Count(c => c.IsRequired);
                             }
                             catch { }
                         }
-                        else if (competenciesObj is List<CompetencyDefinition> competenciesList)
+                        else if (competenciesObj is List<EvaluationItem> competenciesList)
                         {
                             requiredItems += competenciesList.Count(c => c.IsRequired);
                         }

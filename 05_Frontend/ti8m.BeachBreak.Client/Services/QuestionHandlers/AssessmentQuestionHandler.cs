@@ -20,11 +20,11 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
     public void InitializeQuestion(QuestionItem question)
     {
         // Initialize with one default competency
-        var competencies = new List<CompetencyDefinition>
+        var competencies = new List<EvaluationItem>
         {
-            new CompetencyDefinition("competency_1", "", "", false, 0)
+            new EvaluationItem("competency_1", "", "", false, 0)
         };
-        configService.SetCompetencies(question, competencies);
+        configService.SetEvaluations(question, competencies);
 
         // Initialize default rating scale settings
         question.Configuration["RatingScale"] = 4; // Default to 1-4 scale
@@ -34,9 +34,9 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
 
     public void AddItem(QuestionItem question)
     {
-        var competencies = configService.GetCompetencies(question);
+        var competencies = configService.GetEvaluations(question);
         var nextOrder = competencies.Count > 0 ? competencies.Max(c => c.Order) + 1 : 0;
-        var newCompetency = new CompetencyDefinition(
+        var newCompetency = new EvaluationItem(
             $"competency_{competencies.Count + 1}",
             "",
             "",
@@ -45,13 +45,13 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
         );
 
         // Create a new list to ensure change detection
-        var updatedCompetencies = new List<CompetencyDefinition>(competencies) { newCompetency };
-        configService.SetCompetencies(question, updatedCompetencies);
+        var updatedCompetencies = new List<EvaluationItem>(competencies) { newCompetency };
+        configService.SetEvaluations(question, updatedCompetencies);
     }
 
     public void RemoveItem(QuestionItem question, int index)
     {
-        var competencies = configService.GetCompetencies(question);
+        var competencies = configService.GetEvaluations(question);
         if (index >= 0 && index < competencies.Count)
         {
             competencies.RemoveAt(index);
@@ -59,7 +59,7 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
             // Reorder remaining competencies
             for (int i = 0; i < competencies.Count; i++)
             {
-                competencies[i] = new CompetencyDefinition(
+                competencies[i] = new EvaluationItem(
                     competencies[i].Key,
                     competencies[i].TitleEnglish,
                     competencies[i].DescriptionEnglish,
@@ -68,19 +68,19 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
                 );
             }
 
-            configService.SetCompetencies(question, competencies);
+            configService.SetEvaluations(question, competencies);
         }
     }
 
     public int GetItemCount(QuestionItem question)
     {
-        return configService.GetCompetencies(question).Count;
+        return configService.GetEvaluations(question).Count;
     }
 
     public List<string> Validate(QuestionItem question, string questionLabel)
     {
         var errors = new List<string>();
-        var competencies = configService.GetCompetencies(question);
+        var competencies = configService.GetEvaluations(question);
 
         if (competencies.Count == 0)
         {

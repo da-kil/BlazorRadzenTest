@@ -92,12 +92,12 @@ public static class QuestionnaireResponseConverter
     {
         if (response.ResponseData is not AssessmentResponseDataDto assessmentData) return null;
 
-        var competencies = new Dictionary<string, CompetencyRatingCommandDto>();
+        var competencies = new Dictionary<string, EvaluationRatingCommandDto>();
 
         // Convert from AssessmentResponseDataDto to command format
-        foreach (var kvp in assessmentData.Competencies)
+        foreach (var kvp in assessmentData.Evaluations)
         {
-            competencies[kvp.Key] = new CompetencyRatingCommandDto
+            competencies[kvp.Key] = new EvaluationRatingCommandDto
             {
                 Rating = kvp.Value.Rating,
                 Comment = kvp.Value.Comment
@@ -105,7 +105,7 @@ public static class QuestionnaireResponseConverter
         }
 
         return competencies.Any()
-            ? new AssessmentResponseCommandDto { Competencies = competencies }
+            ? new AssessmentResponseCommandDto { Evaluations = competencies }
             : null;
     }
 

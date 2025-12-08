@@ -193,7 +193,7 @@ public class QuestionnaireResponse : AggregateRoot
     /// even if the optional 2 competencies are unrated (rating = 0).
     /// If all 5 competencies are optional (IsRequired=false), the question is automatically complete.
     ///
-    /// FIXED BUG (2025-11-10): Previously validated ALL competencies regardless of IsRequired flag,
+    /// FIXED BUG (2025-11-10): Previously validated ALL evaluations regardless of IsRequired flag,
     /// and required at least one to be filled even when all were optional.
     /// </remarks>
     private bool IsAssessmentComplete(QuestionnaireTemplateAggregate.QuestionItem question, QuestionResponseValue response)
@@ -203,26 +203,26 @@ public class QuestionnaireResponse : AggregateRoot
             return false;
         }
 
-        // Get competencies with IsRequired flags from configuration
-        var competencies = GetCompetenciesFromConfiguration(question);
-        if (competencies.Count == 0)
+        // Get evaluations with IsRequired flags from configuration
+        var evaluations = GetEvaluationsFromConfiguration(question);
+        if (evaluations.Count == 0)
         {
             return true; // No items configured = nothing to validate = complete
         }
 
-        // Get only required competencies
-        var requiredCompetencies = competencies.Where(c => c.IsRequired).ToList();
+        // Get only required evaluations
+        var requiredEvaluations = evaluations.Where(e => e.IsRequired).ToList();
 
-        // If no required competencies exist, question is automatically complete
-        if (!requiredCompetencies.Any())
+        // If no required evaluations exist, question is automatically complete
+        if (!requiredEvaluations.Any())
         {
             return true; // Nothing required = automatically complete
         }
 
-        // Check that ALL required competencies have been rated
-        return requiredCompetencies.All(c =>
-            assessmentResponse.Competencies.TryGetValue(c.Key, out var competencyResponse) &&
-            competencyResponse.Rating > 0);
+        // Check that ALL required evaluations have been rated
+        return requiredEvaluations.All(e =>
+            assessmentResponse.Evaluations.TryGetValue(e.Key, out var evaluationResponse) &&
+            evaluationResponse.Rating > 0);
     }
 
     private int GetConfigurationCollectionCount(QuestionnaireTemplateAggregate.QuestionItem question, string key)
@@ -238,13 +238,13 @@ public class QuestionnaireResponse : AggregateRoot
         return 0;
     }
 
-    private List<CompetencyItem> GetCompetenciesFromConfiguration(QuestionItem question)
+    private List<EvaluationItem> GetEvaluationsFromConfiguration(QuestionItem question)
     {
-        if (question.Configuration.TryGetValue("Competencies", out var obj))
+        if (question.Configuration.TryGetValue("Evaluations", out var obj))
         {
             if (obj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
             {
-                var competencies = new List<CompetencyItem>();
+                var evaluations = new List<EvaluationItem>();
                 foreach (var item in jsonElement.EnumerateArray())
                 {
                     string? key = null;
@@ -269,14 +269,14 @@ public class QuestionnaireResponse : AggregateRoot
 
                     if (!string.IsNullOrEmpty(key))
                     {
-                        competencies.Add(new CompetencyItem(key, isRequired));
+                        evaluations.Add(new EvaluationItem(key, isRequired));
                     }
                 }
-                return competencies;
+                return evaluations;
             }
         }
 
-        return new List<CompetencyItem>();
+        return new List<EvaluationItem>();
     }
 
     private List<TextSectionItem> GetTextSectionsFromConfiguration(QuestionItem question)
@@ -313,7 +313,7 @@ public class QuestionnaireResponse : AggregateRoot
         return new List<TextSectionItem>();
     }
 
-    private record CompetencyItem(string Key, bool IsRequired);
+    private record EvaluationItem(string Key, bool IsRequired);
     private record TextSectionItem(int Index, bool IsRequired);
 
     // Event application methods (Apply pattern for event sourcing)

@@ -9,23 +9,23 @@ namespace ti8m.BeachBreak.Client.Helpers;
 /// </summary>
 public static class AssessmentConfigurationHelper
 {
-    public static List<CompetencyDefinition> GetCompetenciesFromConfiguration(QuestionItem question)
+    public static List<EvaluationItem> GetEvaluationsFromConfiguration(QuestionItem question)
     {
-        if (question.Configuration?.ContainsKey("Competencies") != true)
+        if (question.Configuration?.ContainsKey("Evaluations") != true)
         {
-            return new List<CompetencyDefinition>();
+            return new List<EvaluationItem>();
         }
 
-        var competenciesValue = question.Configuration["Competencies"];
+        var evaluationsValue = question.Configuration["Evaluations"];
 
-        // Handle direct List<CompetencyDefinition>
-        if (competenciesValue is List<CompetencyDefinition> comps)
+        // Handle direct List<EvaluationItem>
+        if (evaluationsValue is List<EvaluationItem> evals)
         {
-            return comps;
+            return evals;
         }
 
         // Handle JsonElement (from API deserialization)
-        if (competenciesValue is System.Text.Json.JsonElement jsonElement)
+        if (evaluationsValue is System.Text.Json.JsonElement jsonElement)
         {
             try
             {
@@ -34,37 +34,37 @@ public static class AssessmentConfigurationHelper
                     Converters = { new System.Text.Json.Serialization.JsonStringEnumConverter() }
                 };
 
-                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(
+                var evaluations = System.Text.Json.JsonSerializer.Deserialize<List<EvaluationItem>>(
                     jsonElement.GetRawText(),
                     options
                 );
 
-                if (competencies != null && competencies.Any())
+                if (evaluations != null && evaluations.Any())
                 {
-                    return competencies;
+                    return evaluations;
                 }
             }
             catch { /* Skip deserialization errors */ }
         }
 
         // Handle IEnumerable<object> or other list types
-        if (competenciesValue is IEnumerable<object> enumerable)
+        if (evaluationsValue is IEnumerable<object> enumerable)
         {
-            var result = new List<CompetencyDefinition>();
+            var result = new List<EvaluationItem>();
             foreach (var item in enumerable)
             {
-                if (item is CompetencyDefinition compDef)
+                if (item is EvaluationItem evalItem)
                 {
-                    result.Add(compDef);
+                    result.Add(evalItem);
                 }
                 else if (item is System.Text.Json.JsonElement itemJson)
                 {
                     try
                     {
-                        var deserializedComp = System.Text.Json.JsonSerializer.Deserialize<CompetencyDefinition>(
+                        var deserializedEval = System.Text.Json.JsonSerializer.Deserialize<EvaluationItem>(
                             itemJson.GetRawText()
                         );
-                        if (deserializedComp != null) result.Add(deserializedComp);
+                        if (deserializedEval != null) result.Add(deserializedEval);
                     }
                     catch { /* Skip invalid items */ }
                 }
@@ -72,7 +72,7 @@ public static class AssessmentConfigurationHelper
             if (result.Any()) return result;
         }
 
-        return new List<CompetencyDefinition>();
+        return new List<EvaluationItem>();
     }
 
     public static int GetRatingScaleFromConfiguration(QuestionItem question)
@@ -152,14 +152,14 @@ public static class AssessmentConfigurationHelper
         return $"1 ({scaleLowLabel}) - {ratingScale} ({scaleHighLabel})";
     }
 
-    public static CompetencyRatingDto GetCompetencyRatingDto(QuestionResponse response, string competencyKey)
+    public static EvaluationRatingDto GetEvaluationRatingDto(QuestionResponse response, string evaluationKey)
     {
         if (response.ResponseData is AssessmentResponseDataDto assessmentData &&
-            assessmentData.Competencies.TryGetValue(competencyKey, out var existingRating))
+            assessmentData.Evaluations.TryGetValue(evaluationKey, out var existingRating))
         {
             return existingRating;
         }
 
-        return new CompetencyRatingDto();
+        return new EvaluationRatingDto();
     }
 }

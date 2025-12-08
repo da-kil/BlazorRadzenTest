@@ -4,12 +4,12 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits OptimizedTranslatableComponentBase
 
-@* Simplified competency rating item with reduced DOM nesting *@
-<div class="competency-item rating-context">
+@* Simplified evaluation rating item with reduced DOM nesting *@
+<div class="evaluation-item rating-context">
     <header class="question-section-header">
         @{
-            var localizedTitle = Competency.GetLocalizedTitleWithFallback(CurrentLanguage);
-            var localizedDescription = Competency.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+            var localizedTitle = Evaluation.GetLocalizedTitleWithFallback(CurrentLanguage);
+            var localizedDescription = Evaluation.GetLocalizedDescriptionWithFallback(CurrentLanguage);
         }
         <h4 class="question-title @(string.IsNullOrWhiteSpace(localizedTitle) ? "text-danger" : "")">
             @localizedTitle
@@ -28,13 +28,13 @@
                 var starIndex = i;
                 var isSelected = i <= currentRating;
                 <input type="radio"
-                       name="rating-@Competency.Key"
+                       name="rating-@Evaluation.Key"
                        value="@i"
-                       id="star-@Competency.Key-@i"
+                       id="star-@Evaluation.Key-@i"
                        checked="@isSelected"
                        @onchange="@(e => SetRating(starIndex))"
                        disabled="@IsReadOnly" />
-                <label for="star-@Competency.Key-@i" class="star-label">
+                <label for="star-@Evaluation.Key-@i" class="star-label">
                     <RadzenIcon Icon="@(isSelected ? "star" : "star_border")" Style="@GetStarStyle(isSelected)" />
                 </label>
             }
@@ -62,9 +62,9 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public CompetencyDefinition Competency { get; set; } = default!;
-    [Parameter, EditorRequired] public CompetencyRatingDto Rating { get; set; } = default!;
-    [Parameter] public EventCallback<CompetencyRatingDto> OnRatingChanged { get; set; }
+    [Parameter, EditorRequired] public EvaluationItem Evaluation { get; set; } = default!;
+    [Parameter, EditorRequired] public EvaluationRatingDto Rating { get; set; } = default!;
+    [Parameter] public EventCallback<EvaluationRatingDto> OnRatingChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public int RatingScale { get; set; } = 4;
     [Parameter] public string ScaleLowLabel { get; set; } = "Poor";
@@ -88,9 +88,9 @@
     {
         currentRating = Rating?.Rating ?? 0;
         currentComment = Rating?.Comment ?? "";
-        var localizedTitle = Competency.GetLocalizedTitleWithFallback(CurrentLanguage);
+        var localizedTitle = Evaluation.GetLocalizedTitleWithFallback(CurrentLanguage);
         displayTitle = string.IsNullOrWhiteSpace(localizedTitle)
-            ? $"[Unnamed Competency - {Competency.Key}]"
+            ? $"[Unnamed Evaluation - {Evaluation.Key}]"
             : localizedTitle;
     }
 

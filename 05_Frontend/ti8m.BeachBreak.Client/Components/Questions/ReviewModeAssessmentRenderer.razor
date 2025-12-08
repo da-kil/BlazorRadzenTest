@@ -10,20 +10,20 @@
     <strong>Rating Scale:</strong> @AssessmentConfigurationHelper.GetRatingScaleDescription(ratingScale, scaleLowLabel, scaleHighLabel)
 </div>
 
-@if (!competencies.Any())
+@if (!evaluations.Any())
 {
     <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
         <RadzenText TextStyle="TextStyle.Body2">
-            <strong>Configuration Error:</strong> No competencies are defined for this question.
+            <strong>Configuration Error:</strong> No evaluations are defined for this question.
         </RadzenText>
     </RadzenAlert>
 }
 else
 {
-    @foreach (var competency in competencies)
+    @foreach (var evaluation in evaluations)
     {
-        <!-- Each competency gets its own comparison card -->
-        <div class="competency-comparison-card">
+        <!-- Each evaluation gets its own comparison card -->
+        <div class="evaluation-comparison-card">
             <div class="side-by-side-view">
                 <!-- Employee Rating -->
                 <div class="answer-column employee">
@@ -35,10 +35,10 @@ else
                     </div>
                     <div class="answer-content">
                         @{
-                            var employeeRating = AssessmentConfigurationHelper.GetCompetencyRatingDto(EmployeeResponse, competency.Key);
+                            var employeeRating = AssessmentConfigurationHelper.GetEvaluationRatingDto(EmployeeResponse, evaluation.Key);
                         }
-                        <CompetencyRatingItem
-                            Competency="@competency"
+                        <EvaluationRatingItem
+                            Evaluation="@evaluation"
                             Rating="@employeeRating"
                             OnRatingChanged="@((rating) => Task.CompletedTask)"
                             IsReadOnly="true"
@@ -57,7 +57,7 @@ else
                                      ButtonStyle="ButtonStyle.Primary"
                                      Icon="edit"
                                      Size="ButtonSize.Small"
-                                     Click="@(() => OnEditAnswer.InvokeAsync((Question, CompletionRole.Employee, competency.Key)))" />
+                                     Click="@(() => OnEditAnswer.InvokeAsync((Question, CompletionRole.Employee, evaluation.Key)))" />
                     </div>
                 </div>
 
@@ -71,10 +71,10 @@ else
                     </div>
                     <div class="answer-content">
                         @{
-                            var managerRating = AssessmentConfigurationHelper.GetCompetencyRatingDto(ManagerResponse, competency.Key);
+                            var managerRating = AssessmentConfigurationHelper.GetEvaluationRatingDto(ManagerResponse, evaluation.Key);
                         }
-                        <CompetencyRatingItem
-                            Competency="@competency"
+                        <EvaluationRatingItem
+                            Evaluation="@evaluation"
                             Rating="@managerRating"
                             OnRatingChanged="@((rating) => Task.CompletedTask)"
                             IsReadOnly="true"
@@ -93,7 +93,7 @@ else
                                      ButtonStyle="ButtonStyle.Primary"
                                      Icon="edit"
                                      Size="ButtonSize.Small"
-                                     Click="@(() => OnEditAnswer.InvokeAsync((Question, CompletionRole.Manager, competency.Key)))" />
+                                     Click="@(() => OnEditAnswer.InvokeAsync((Question, CompletionRole.Manager, evaluation.Key)))" />
                     </div>
                 </div>
             </div>
@@ -105,10 +105,10 @@ else
     [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse EmployeeResponse { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse ManagerResponse { get; set; } = default!;
-    [Parameter] public EventCallback<(QuestionItem, CompletionRole, string?)> OnEditAnswer { get; set; } // Added competency key
+    [Parameter] public EventCallback<(QuestionItem, CompletionRole, string?)> OnEditAnswer { get; set; } // Added evaluation key
     [Parameter] public EventCallback<(QuestionItem, CompletionRole, CompletionRole)> OnCopyAnswer { get; set; }
 
-    private List<CompetencyDefinition> competencies = new();
+    private List<EvaluationItem> evaluations = new();
     private int ratingScale = 4;
     private string scaleLowLabel = "Poor";
     private string scaleHighLabel = "Excellent";
@@ -125,7 +125,7 @@ else
 
     private void LoadConfiguration()
     {
-        competencies = AssessmentConfigurationHelper.GetCompetenciesFromConfiguration(Question);
+        evaluations = AssessmentConfigurationHelper.GetEvaluationsFromConfiguration(Question);
         ratingScale = AssessmentConfigurationHelper.GetRatingScaleFromConfiguration(Question);
         scaleLowLabel = AssessmentConfigurationHelper.GetScaleLowLabelFromConfiguration(Question);
         scaleHighLabel = AssessmentConfigurationHelper.GetScaleHighLabelFromConfiguration(Question);

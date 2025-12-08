@@ -134,7 +134,7 @@
     {
         return question.Type switch
         {
-            QuestionType.Assessment => ConfigService.GetCompetencies(question).Count,
+            QuestionType.Assessment => ConfigService.GetEvaluations(question).Count,
             QuestionType.TextQuestion => ConfigService.GetTextSections(question).Count,
             QuestionType.Goal => 0, // Goals are added during response
             _ => 0
@@ -153,7 +153,7 @@
             switch (question.Type)
             {
                 case QuestionType.Assessment:
-                    assessmentCount += ConfigService.GetCompetencies(question).Count;
+                    assessmentCount += ConfigService.GetEvaluations(question).Count;
                     break;
                 case QuestionType.TextQuestion:
                     textSectionCount += ConfigService.GetTextSections(question).Count;

@@ -95,7 +95,7 @@
         var responseDataHash = Response.ResponseData switch
         {
             TextResponseDataDto textData => $"text|{string.Join(",", textData.TextSections)}",
-            AssessmentResponseDataDto assessmentData => $"assessment|{string.Join(",", assessmentData.Competencies.Select(kvp => $"{kvp.Key}:{kvp.Value.Rating}:{kvp.Value.Comment}"))}",
+            AssessmentResponseDataDto assessmentData => $"assessment|{string.Join(",", assessmentData.Evaluations.Select(kvp => $"{kvp.Key}:{kvp.Value.Rating}:{kvp.Value.Comment}"))}",
             GoalResponseDataDto goalData => $"goal|{goalData.Goals.Count}|{goalData.PredecessorRatings.Count}|{goalData.PredecessorAssignmentId}|{string.Join(",", goalData.Goals.Select(g => $"{g.GoalId}:{g.ObjectiveDescription}:{g.WeightingPercentage}"))}",
             _ => Response.ResponseData.GetType().Name
         };

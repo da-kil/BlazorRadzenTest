@@ -1227,27 +1227,27 @@ else
 
     private bool IsAssessmentCompleted(QuestionItem question, QuestionResponse questionResponse)
     {
-        var competencies = ConfigService.GetCompetencies(question);
+        var competencies = ConfigService.GetEvaluations(question);
         if (competencies.Count == 0) return true;
 
         if (questionResponse.ResponseData is not AssessmentResponseDataDto assessmentData) return false;
 
         // Get only required competencies
-        var requiredCompetencies = competencies.Where(c => c.IsRequired).ToList();
+        var requiredEvaluations = competencies.Where(c => c.IsRequired).ToList();
 
         // If no required competencies exist, check if at least one competency is rated
-        if (!requiredCompetencies.Any())
+        if (!requiredEvaluations.Any())
         {
             return competencies.Any(c => HasCompetencyRating(assessmentData, c.Key));
         }
 
         // Check that ALL required competencies have been rated
-        return requiredCompetencies.All(c => HasCompetencyRating(assessmentData, c.Key));
+        return requiredEvaluations.All(c => HasCompetencyRating(assessmentData, c.Key));
     }
 
     private bool HasCompetencyRating(AssessmentResponseDataDto assessmentData, string competencyKey)
     {
-        if (assessmentData.Competencies.TryGetValue(competencyKey, out var competencyRating))
+        if (assessmentData.Evaluations.TryGetValue(competencyKey, out var competencyRating))
         {
             return competencyRating.Rating > 0;
         }
