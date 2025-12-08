@@ -768,6 +768,12 @@ else
         // The comparison view only makes sense for predecessor goal ratings, not new goals
         if (isBothSection && question.Type == QuestionType.Goal)
         {
+            // Check if goal section should be visible based on configuration
+            if (!ShouldShowGoalSection(question))
+            {
+                return @<div></div>; // Return empty div if goal section is hidden
+            }
+
             // Use the collaborative component that groups by roles instead of comparison view
             var goalQuestionResponse = GetQuestionResponse(question.Id);
 
@@ -863,6 +869,12 @@ else
         // The comparison view only makes sense for predecessor goal ratings, not new goals
         if (isBothSection && question.Type == QuestionType.Goal)
         {
+            // Check if goal section should be visible based on configuration
+            if (!ShouldShowGoalSection(question))
+            {
+                return @<div></div>; // Return empty div if goal section is hidden
+            }
+
             // Use the collaborative component that groups by roles instead of comparison view
             var goalQuestionResponseWithRef = GetQuestionResponse(question.Id);
 
@@ -1164,6 +1176,24 @@ else
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// Checks if a Goal question's section should be visible based on configuration.
+    /// </summary>
+    private bool ShouldShowGoalSection(QuestionItem question)
+    {
+        if (question.Type != QuestionType.Goal)
+        {
+            return true; // Not a goal question, always show
+        }
+
+        if (question.Configuration is GoalConfiguration config)
+        {
+            return config.ShowGoalSection;
+        }
+
+        return true; // Default to visible for backward compatibility
     }
 
     private bool IsQuestionAnswered(QuestionItem question, QuestionResponse questionResponse)
