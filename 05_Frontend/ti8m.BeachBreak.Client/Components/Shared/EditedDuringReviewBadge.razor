@@ -1,10 +1,11 @@
 @using ti8m.BeachBreak.Client.Models
 @using Radzen.Blazor
+@inherits OptimizedTranslatableComponentBase
 
 @if (Response?.EditedDuringReview == true)
 {
     <RadzenBadge BadgeStyle="BadgeStyle.Warning"
-                 Text="Edited During Review"
+                 Text="@T("status.edited-during-review")"
                  Class="ms-2 edited-during-review-badge"
                  title="@GetTooltipText()" />
 }
@@ -25,10 +26,10 @@
         if (Response?.EditedDuringReview != true)
             return string.Empty;
 
-        var baseText = "This answer was modified during the review meeting";
+        var baseText = T("tooltips.answer-modified-during-review");
         if (Response.EditedDuringReviewAt.HasValue)
         {
-            return $"{baseText} on {Response.EditedDuringReviewAt.Value.ToLocalTime():MMM dd, yyyy HH:mm}";
+            return T("tooltips.answer-modified-on").Replace("{0}", Response.EditedDuringReviewAt.Value.ToLocalTime().ToString("MMM dd, yyyy HH:mm"));
         }
         return baseText;
     }

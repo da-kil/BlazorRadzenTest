@@ -35,32 +35,38 @@ public class QuestionnaireTemplatesController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (string.IsNullOrWhiteSpace(questionnaireTemplate.Name))
+            if (string.IsNullOrWhiteSpace(questionnaireTemplate.NameEnglish))
                 return BadRequest("Template name is required");
 
             var commandTemplate = new CommandQuestionnaireTemplate
             {
                 Id = questionnaireTemplate.Id,
                 CategoryId = questionnaireTemplate.CategoryId,
-                Description = questionnaireTemplate.Description,
-                Name = questionnaireTemplate.Name,
+                DescriptionGerman = questionnaireTemplate.DescriptionGerman,
+                DescriptionEnglish = questionnaireTemplate.DescriptionEnglish,
+                NameGerman = questionnaireTemplate.NameGerman,
+                NameEnglish = questionnaireTemplate.NameEnglish,
                 RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
-                    Description = section.Description,
+                    DescriptionGerman = section.DescriptionGerman,
+                    DescriptionEnglish = section.DescriptionEnglish,
                     Id = section.Id,
                     IsRequired = section.IsRequired,
                     Order = section.Order,
-                    Title = section.Title,
+                    TitleGerman = section.TitleGerman,
+                    TitleEnglish = section.TitleEnglish,
                     CompletionRole = section.CompletionRole,
                     Questions = section.Questions.Select(question => new CommandQuestionItem
                     {
                         Configuration = question.Configuration,
-                        Description = question.Description,
+                        DescriptionGerman = question.DescriptionGerman,
+                        DescriptionEnglish = question.DescriptionEnglish,
                         Id = question.Id,
                         IsRequired = question.IsRequired,
                         Order = question.Order,
-                        Title = question.Title,
+                        TitleGerman = question.TitleGerman,
+                        TitleEnglish = question.TitleEnglish,
                         Type = MapQuestionType(question.Type)
                     }).ToList()
                 }).ToList()
@@ -90,25 +96,31 @@ public class QuestionnaireTemplatesController : BaseController
             {
                 Id = id,
                 CategoryId = questionnaireTemplate.CategoryId,
-                Description = questionnaireTemplate.Description,
-                Name = questionnaireTemplate.Name,
+                DescriptionGerman = questionnaireTemplate.DescriptionGerman,
+                DescriptionEnglish = questionnaireTemplate.DescriptionEnglish,
+                NameGerman = questionnaireTemplate.NameGerman,
+                NameEnglish = questionnaireTemplate.NameEnglish,
                 RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
-                    Description = section.Description,
+                    DescriptionGerman = section.DescriptionGerman,
+                    DescriptionEnglish = section.DescriptionEnglish,
                     Id = section.Id,
                     IsRequired = section.IsRequired,
                     Order = section.Order,
-                    Title = section.Title,
+                    TitleGerman = section.TitleGerman,
+                    TitleEnglish = section.TitleEnglish,
                     CompletionRole = section.CompletionRole,
                     Questions = section.Questions.Select(question => new CommandQuestionItem
                     {
                         Configuration = question.Configuration,
-                        Description = question.Description,
+                        DescriptionGerman = question.DescriptionGerman,
+                        DescriptionEnglish = question.DescriptionEnglish,
                         Id = question.Id,
                         IsRequired = question.IsRequired,
                         Order = question.Order,
-                        Title = question.Title,
+                        TitleGerman = question.TitleGerman,
+                        TitleEnglish = question.TitleEnglish,
                         Type = MapQuestionType(question.Type)
                     }).ToList()
                 }).ToList()

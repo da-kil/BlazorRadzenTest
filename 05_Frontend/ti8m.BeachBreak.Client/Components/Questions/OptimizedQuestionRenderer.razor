@@ -80,7 +80,7 @@
     private string ComputeQuestionHash()
     {
         // Create hash based on question properties that affect rendering
-        return $"{Question.Id}|{Question.Title}|{Question.Type}|{Question.IsRequired}|{Question.Description}|{Question.Configuration?.Count ?? 0}";
+        return $"{Question.Id}|{Question.TitleEnglish}|{Question.TitleGerman}|{Question.Type}|{Question.IsRequired}|{Question.DescriptionEnglish}|{Question.DescriptionGerman}|{Question.Configuration?.Count ?? 0}";
     }
 
     private string ComputeResponseHash()

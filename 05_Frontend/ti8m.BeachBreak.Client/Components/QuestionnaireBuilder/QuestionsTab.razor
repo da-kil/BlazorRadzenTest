@@ -2,36 +2,37 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 @using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 
 <div class="questions-tab-content">
     <div class="mb-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
                 <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">
-                    Create sections for your assessment - each section focuses on one type of evaluation
+                    @T("messages.create-sections-instruction")
                 </RadzenText>
             </div>
             <div class="d-flex gap-2">
-                <AsyncButton Text="Assessment"
+                <AsyncButton Text="@T("buttons.assessment")"
                             ButtonStyle="ButtonStyle.Primary"
                             Icon="self_improvement"
                             Size="ButtonSize.Small"
                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Assessment))"
-                            Title="Add rating-based competency assessment"
+                            Title="@T("tooltips.add-assessment-section")"
                             Disabled="@(!Template.IsAvailableForEditing)" />
-                <AsyncButton Text="Goal Achievement"
+                <AsyncButton Text="@T("buttons.goal-achievement")"
                             ButtonStyle="ButtonStyle.Success"
                             Icon="track_changes"
                             Size="ButtonSize.Small"
                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Goal))"
-                            Title="Add goal and achievement review"
+                            Title="@T("tooltips.add-goal-section")"
                             Disabled="@(!Template.IsAvailableForEditing)" />
-                <AsyncButton Text="Text Question"
+                <AsyncButton Text="@T("buttons.text-question")"
                             ButtonStyle="ButtonStyle.Secondary"
                             Icon="psychology"
                             Size="ButtonSize.Small"
                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
-                            Title="Add open-ended text responses"
+                            Title="@T("tooltips.add-text-question-section")"
                             Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </div>
@@ -42,11 +43,11 @@
                 <div class="d-flex gap-4 align-items-center justify-content-center">
                     <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-0">
                         <RadzenIcon Icon="folder" Class="me-1 stats-icon-primary" />
-                        <strong class="stats-count-primary">@Template.Sections.Count</strong> Sections
+                        <strong class="stats-count-primary">@Template.Sections.Count</strong> @T("labels.sections")
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mb-0">
                         <RadzenIcon Icon="quiz" Class="me-1 stats-icon-success" />
-                        <strong class="stats-count-success">@GetTotalItemsCount()</strong> Total Items
+                        <strong class="stats-count-success">@GetTotalItemsCount()</strong> @T("labels.total-items")
                     </RadzenText>
                 </div>
             </div>
@@ -58,7 +59,7 @@
         <div class="empty-state text-center p-5">
             <RadzenIcon Icon="quiz" Class="empty-state-icon" />
             <RadzenText TextStyle="TextStyle.Body1" Class="text-muted mt-2">
-                No sections created yet. Click "Add Section" to get started.
+                @T("messages.no-sections-created")
             </RadzenText>
         </div>
     }
@@ -94,8 +95,10 @@
                            OnMoveQuestionUp="@((questionIndex) => OnMoveQuestionUpInternal(currentSectionIndex, questionIndex))"
                            OnMoveQuestionDown="@((questionIndex) => OnMoveQuestionDownInternal(currentSectionIndex, questionIndex))"
                            OnDeleteQuestion="@((questionIndex) => OnRemoveQuestionInternal(currentSectionIndex, questionIndex))"
-                           OnTitleChanged="@((value) => OnSectionTitleChanged(currentSectionIndex, value))"
-                           OnDescriptionChanged="@((value) => OnSectionDescriptionChanged(currentSectionIndex, value))" />
+                           OnTitleEnglishChanged="@((value) => OnSectionTitleEnglishChanged(currentSectionIndex, value))"
+                           OnTitleGermanChanged="@((value) => OnSectionTitleGermanChanged(currentSectionIndex, value))"
+                           OnDescriptionEnglishChanged="@((value) => OnSectionDescriptionEnglishChanged(currentSectionIndex, value))"
+                           OnDescriptionGermanChanged="@((value) => OnSectionDescriptionGermanChanged(currentSectionIndex, value))" />
             }
         </div>
     }
@@ -140,13 +143,25 @@
     private async Task OnRemoveQuestionInternal(int sectionIndex, int questionIndex) =>
         await OnRemoveQuestion.InvokeAsync((sectionIndex, questionIndex));
 
-    private async Task OnSectionTitleChanged(int sectionIndex, string value)
+    private async Task OnSectionTitleEnglishChanged(int sectionIndex, string value)
     {
         // Section title is already updated in SectionCard component
         StateHasChanged();
     }
 
-    private async Task OnSectionDescriptionChanged(int sectionIndex, string value)
+    private async Task OnSectionTitleGermanChanged(int sectionIndex, string value)
+    {
+        // Section title is already updated in SectionCard component
+        StateHasChanged();
+    }
+
+    private async Task OnSectionDescriptionEnglishChanged(int sectionIndex, string value)
+    {
+        // Section description is already updated in SectionCard component
+        StateHasChanged();
+    }
+
+    private async Task OnSectionDescriptionGermanChanged(int sectionIndex, string value)
     {
         // Section description is already updated in SectionCard component
         StateHasChanged();
@@ -158,68 +173,7 @@
 
         foreach (var section in Template.Sections)
         {
-            // Check if this section uses the new simplified structure
-            if (section.Configuration.Any())
-            {
-                totalItems += section.GetItemCount();
-            }
-            // Fallback to legacy Questions structure
-            else
-            {
-                foreach (var question in section.Questions)
-                {
-                    switch (question.Type)
-                    {
-                        case QuestionType.Assessment:
-                            if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
-                            {
-                                if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                                {
-                                    try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                                }
-                                else if (competenciesObj is System.Collections.ICollection collection)
-                                {
-                                    totalItems += collection.Count;
-                                }
-                            }
-                            break;
-                        case QuestionType.Goal:
-                            if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
-                            {
-                                if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                                {
-                                    try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                                }
-                                else if (goalCategoriesObj is System.Collections.ICollection collection)
-                                {
-                                    totalItems += collection.Count;
-                                }
-                            }
-                            break;
-                        case QuestionType.TextQuestion:
-                            if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
-                            {
-                                if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                                {
-                                    try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                                }
-                                else if (textSectionsObj is System.Collections.ICollection collection)
-                                {
-                                    totalItems += collection.Count;
-                                }
-                            }
-                            // Check for legacy format
-                            else if (question.Configuration.ContainsKey("SectionTitle") || question.Configuration.ContainsKey("SectionDescription"))
-                            {
-                                totalItems += 1;
-                            }
-                            break;
-                        default:
-                            totalItems += 1; // Fallback for unknown question types
-                            break;
-                    }
-                }
-            }
+            totalItems += section.GetItemCount();
         }
 
         return totalItems;

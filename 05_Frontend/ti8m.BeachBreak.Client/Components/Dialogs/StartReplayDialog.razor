@@ -2,7 +2,9 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Components.Shared
 @inject DialogService DialogService
+@inherits OptimizedTranslatableComponentBase
 
 <style>
     .replay-dialog-header {
@@ -24,20 +26,20 @@
 
 <div class="replay-dialog-header">
     <RadzenText TextStyle="TextStyle.H5" Class="mb-1" Style="color: white; font-weight: 600;">
-        <RadzenIcon Icon="replay" Class="me-2" />Start Projection Replay
+        <RadzenIcon Icon="replay" Class="me-2" />@T("dialogs.start-projection-replay")
     </RadzenText>
     <RadzenText TextStyle="TextStyle.Body2" Style="color: rgba(255,255,255,0.9);">
-        Select a projection to rebuild from events
+        @T("messages.select-projection-to-rebuild")
     </RadzenText>
 </div>
 
 <div class="mb-3">
-    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">Projection *</RadzenText>
+    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.projection") *</RadzenText>
     <RadzenDropDown @bind-Value="selectedProjectionName"
                    Data="@Projections"
                    TextProperty="Name"
                    ValueProperty="Name"
-                   Placeholder="Select a projection..."
+                   Placeholder="@T("placeholders.select-projection")"
                    Style="width: 100%;"
                    Class="w-100" />
     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">

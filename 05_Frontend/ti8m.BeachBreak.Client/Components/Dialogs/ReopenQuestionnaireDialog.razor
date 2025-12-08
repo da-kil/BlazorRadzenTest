@@ -3,16 +3,17 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Models
 @inject DialogService DialogService
+@inherits OptimizedTranslatableComponentBase
 
 <div class="dialog-container">
     <div class="dialog-review-info warning">
         <div class="text-center">
             <RadzenIcon Icon="restart_alt" Class="dialog-header-icon" />
             <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
-                Reopen Questionnaire
+                @T("dialogs.reopen-questionnaire")
             </RadzenText>
             <RadzenText TextStyle="TextStyle.Body2">
-                You are about to reopen this questionnaire for corrections. The employee will be notified and will need to make the required changes.
+                @T("messages.reopen-questionnaire-description")
             </RadzenText>
         </div>
     </div>
@@ -21,11 +22,11 @@
         <div class="icon-box">
             <RadzenIcon Icon="info" Style="color: #FFA726;" />
             <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
-                Assignment Information
+                @T("labels.assignment-information")
             </RadzenText>
         </div>
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-            <strong>Employee:</strong> @Assignment?.EmployeeName (@Assignment?.EmployeeEmail)
+            <strong>@T("labels.employee"):</strong> @Assignment?.EmployeeName (@Assignment?.EmployeeEmail)
         </RadzenText>
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
             <strong>Current State:</strong> @GetStateName(Assignment?.WorkflowState)

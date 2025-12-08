@@ -1,5 +1,42 @@
 /* QuestionCard Scoped Styles */
 
+/* Multilingual Input Grid Layout */
+.multilang-input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    align-items: start;
+}
+
+.multilang-input-grid .input-field {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Required Badge Container - positioned in header */
+.required-badge-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--rz-base-100);
+    border: 1px solid var(--rz-border-color);
+    border-radius: 20px;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.required-badge-container:hover {
+    background: var(--rz-base-200);
+}
+
+.required-badge-container label {
+    margin-bottom: 0;
+    font-size: var(--font-size-sm);
+    color: var(--rz-text-secondary-color);
+    cursor: pointer;
+}
+
 .competency-input-row,
 .goal-category-input-row,
 .text-section-input-row {
@@ -13,7 +50,7 @@
 .input-field-container {
     position: relative;
     min-height: 38px; /* Height of input field */
-    margin-bottom: var(--spacing-lg); /* Reserve space for validation message */
+    margin-bottom: 1.5rem; /* Space for validation message */
 }
 
 .input-field-container .rz-textbox {
@@ -34,22 +71,14 @@
     z-index: 10;
 }
 
-.required-checkbox-container {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-    padding-top: 0.375rem; /* Align with input field top */
-    height: 38px; /* Match input height for consistent alignment */
-}
-
-.required-checkbox-container label {
-    margin-bottom: 0;
-    font-size: var(--font-size-sm);
-    color: var(--text-muted);
-}
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+    .multilang-input-grid,
+    .multilang-input-grid-with-checkbox {
+        grid-template-columns: 1fr;
+    }
+
     .competency-input-row,
     .goal-category-input-row,
     .text-section-input-row {

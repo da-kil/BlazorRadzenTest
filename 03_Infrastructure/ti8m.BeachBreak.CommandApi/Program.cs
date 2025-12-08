@@ -130,6 +130,9 @@ namespace ti8m.BeachBreak.CommandApi
             builder.Services.AddScoped<Domain.EmployeeAggregate.Services.IEmployeeHierarchyService,
                 Infrastructure.Marten.Services.EmployeeHierarchyService>();
 
+            // Register Command-side LanguageContext (can write language preferences)
+            builder.Services.AddCommandSideLanguageContext();
+
             // Add Command application services
             Application.Command.Extensions.AddApplication(builder.Services, builder.Configuration);
 

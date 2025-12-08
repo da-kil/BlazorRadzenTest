@@ -8,20 +8,19 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject ICategoryApiService CategoryService
 @inject IQuestionnaireTemplateService ApiService
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 
-<PageTitle>Questionnaire Management</PageTitle>
+<PageTitle>@T("nav.questionnaire-management")</PageTitle>
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <PageLayout Title="Questionnaire Management"
-                   Description="Manage your questionnaire templates and view responses">
+        <PageLayout Title="@T("nav.questionnaire-management")"
+                   Description="@T("pages.questionnaire-management-description")">
     <HeaderActions>
-        <RadzenButton Text="Create New"
+        <RadzenButton Text="@T("buttons.create-new")"
                      ButtonStyle="ButtonStyle.Primary"
                      Icon="add"
                      Size="ButtonSize.Medium"
@@ -31,23 +30,23 @@
 
     <RadzenTabs>
         <Tabs>
-            <RadzenTabsItem Text="Templates">
+            <RadzenTabsItem Text="@T("tabs.templates")">
                 <section class="templates-content">
                     <div class="templates-toolbar d-flex justify-content-between align-items-center mb-3">
                         <div class="filters-group d-flex gap-3">
                             <RadzenDropDown @bind-Value="@categoryFilter"
                                            Data="@categories"
-                                           TextProperty="NameEn"
+                                           TextProperty="@GetCategoryNameProperty()"
                                            ValueProperty="Id"
-                                           Placeholder="Filter by Type"
+                                           Placeholder="@T("filters.filter-by-type")"
                                            AllowClear="true"
                                            Change="@FilterTemplates" />
                             <RadzenTextBox @bind-Value="@searchText"
-                                          Placeholder="Search templates..."
+                                          Placeholder="@T("filters.search-templates")"
                                           @oninput="@OnSearchTextChanged" />
                         </div>
                         <RadzenToggleButton @bind-Value="@showArchivedTemplates"
-                                           Text="Show Archived"
+                                           Text="@T("filters.show-archived")"
                                            Change="@FilterTemplates" />
                     </div>
 
@@ -59,49 +58,49 @@
                                        PageSize="10" 
                                        AllowPaging="true">
                         <Columns>
-                            <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.Name)" Title="Template Name" Width="300px">
+                            <RadzenDataGridColumn Title="@T("columns.template-name")" Width="300px" Sortable="false">
                                 <Template Context="template">
                                     <div class="template-name-cell">
-                                        <RadzenLink Text="@template.Name"
+                                        <RadzenLink Text="@template.GetLocalizedNameWithFallback(CurrentLanguage)"
                                                    Path="@($"/questionnaire-builder/{template.Id}")"
                                                    Style="font-weight: bold" />
                                         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted template-description">
-                                            @template.Description
+                                            @template.GetLocalizedDescriptionWithFallback(CurrentLanguage)
                                         </RadzenText>
                                     </div>
                                 </Template>
                             </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CategoryId)" Title="Category" Width="150px">
+                            <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CategoryId)" Title="@T("columns.category")" Width="150px">
                                 <Template Context="template">
                                     <RadzenText TextStyle="TextStyle.Body2">
-                                        @(categories.FirstOrDefault(c => c.Id == template.CategoryId)?.NameEn ?? "Uncategorized")
+                                        @(categories.FirstOrDefault(c => c.Id == template.CategoryId)?.NameEn ?? T("labels.uncategorized"))
                                     </RadzenText>
                                 </Template>
                             </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn Property="SectionCount" Title="Sections" Width="100px" TextAlign="TextAlign.Center">
+
+                                <RadzenDataGridColumn Property="SectionCount" Title="@T("columns.sections")" Width="100px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
                                         <RadzenBadge Text="@template.Sections.Count.ToString()" BadgeStyle="BadgeStyle.Info" />
                                     </Template>
                                 </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn Property="QuestionCount" Title="Questions" Width="100px" TextAlign="TextAlign.Center">
+
+                                <RadzenDataGridColumn Property="QuestionCount" Title="@T("columns.questions")" Width="100px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
                                         <RadzenBadge Text="@template.Sections.SelectMany(s => s.Questions).Count().ToString()" BadgeStyle="BadgeStyle.Secondary" />
                                     </Template>
                                 </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.Status)" Title="Status" Width="120px">
+
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.Status)" Title="@T("columns.status")" Width="120px">
                                     <Template Context="template">
                                         <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(template.Status)"
                                                    Text="@TemplateStatusHelper.GetStatusText(template.Status)" />
                                     </Template>
                                 </RadzenDataGridColumn>
-                                
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CreatedDate)" Title="Created" Width="120px" FormatString="{0:dd/MM/yyyy}" />
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.LastPublishedDate)" Title="Published" Width="120px" FormatString="{0:dd/MM/yyyy}">
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.CreatedDate)" Title="@T("columns.created")" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.LastPublishedDate)" Title="@T("columns.published")" Width="120px" FormatString="{0:dd/MM/yyyy}">
                                     <Template Context="template">
                                         @if (template.LastPublishedDate.HasValue)
                                         {
@@ -114,7 +113,7 @@
                                     </Template>
                                 </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.PublishedByEmployeeName)" Title="Published By" Width="150px">
+                                <RadzenDataGridColumn Property="@nameof(QuestionnaireTemplate.PublishedByEmployeeName)" Title="@T("columns.published-by")" Width="150px">
                                     <Template Context="template">
                                         @if (!string.IsNullOrEmpty(template.PublishedByEmployeeName))
                                         {
@@ -154,35 +153,35 @@
             </RadzenTabsItem>
 
 
-            <RadzenTabsItem Text="Settings">
+            <RadzenTabsItem Text="@T("tabs.settings")">
                 <section class="settings-content">
-                    <h2 class="settings-title">System Settings</h2>
+                    <h2 class="settings-title">@T("titles.system-settings")</h2>
 
                     <div class="settings-grid">
                         <div class="settings-card">
-                            <h3 class="card-title">Email Notifications</h3>
+                            <h3 class="card-title">@T("titles.email-notifications")</h3>
                             <div class="setting-item">
                                 <RadzenCheckBox @bind-Value="@settings.SendAssignmentEmails" Name="assignmentEmails" />
-                                <RadzenLabel Text="Send assignment notifications" Component="assignmentEmails" Class="ms-2" />
+                                <RadzenLabel Text="@T("settings.send-assignment-notifications")" Component="assignmentEmails" Class="ms-2" />
                             </div>
                             <div class="setting-item">
                                 <RadzenCheckBox @bind-Value="@settings.SendReminderEmails" Name="reminderEmails" />
-                                <RadzenLabel Text="Send reminder emails" Component="reminderEmails" Class="ms-2" />
+                                <RadzenLabel Text="@T("settings.send-reminder-emails")" Component="reminderEmails" Class="ms-2" />
                             </div>
                             <div class="setting-item">
                                 <RadzenCheckBox @bind-Value="@settings.SendCompletionEmails" Name="completionEmails" />
-                                <RadzenLabel Text="Send completion confirmations" Component="completionEmails" Class="ms-2" />
+                                <RadzenLabel Text="@T("settings.send-completion-confirmations")" Component="completionEmails" Class="ms-2" />
                             </div>
                         </div>
 
                         <div class="settings-card">
-                            <h3 class="card-title">Default Settings</h3>
+                            <h3 class="card-title">@T("titles.default-settings")</h3>
                             <div class="number-setting">
-                                <label class="setting-label">Default Due Days</label>
+                                <label class="setting-label">@T("labels.default-due-days")</label>
                                 <RadzenNumeric @bind-Value="@settings.DefaultDueDays" Min="1" Max="365" Class="w-100" />
                             </div>
                             <div class="number-setting">
-                                <label class="setting-label">Reminder Days Before Due</label>
+                                <label class="setting-label">@T("labels.reminder-days-before-due")</label>
                                 <RadzenNumeric @bind-Value="@settings.ReminderDaysBeforeDue" Min="1" Max="30" Class="w-100" />
                             </div>
                         </div>
@@ -225,6 +224,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
         await ExecuteSafelyAsync(async () =>
         {
             // Load templates and categories in parallel
@@ -296,8 +297,10 @@
             (showArchivedTemplates || t.Status != TemplateStatus.Archived) &&
             (categoryFilter == Guid.Empty || t.CategoryId == categoryFilter) &&
             (string.IsNullOrWhiteSpace(searchText) ||
-             t.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-             t.Description.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+             t.NameEnglish.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             t.NameGerman.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             t.DescriptionEnglish.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             t.DescriptionGerman.Contains(searchText, StringComparison.OrdinalIgnoreCase))
         ).ToList();
 
         StateHasChanged();
@@ -314,7 +317,7 @@
         {
             // Show confirmation dialog
             var confirmed = await DialogService.Confirm(
-                $"This will create a copy of '{template.Name}' in Draft status. Continue?",
+                $"This will create a copy of '{template.GetLocalizedNameWithFallback(CurrentLanguage)}' in Draft status. Continue?",
                 "Clone Template",
                 new ConfirmOptions
                 {
@@ -377,7 +380,7 @@
             {
                 // Update local template status
                 template.Status = result.Status;
-                NotificationService.Notify(NotificationSeverity.Success, "Status Updated", $"Template '{template.Name}' has been {statusAction}");
+                NotificationService.Notify(NotificationSeverity.Success, "Status Updated", $"Template '{template.GetLocalizedNameWithFallback(CurrentLanguage)}' has been {statusAction}");
                 FilterTemplates();
             }
             else
@@ -397,7 +400,7 @@
         {
             // Show confirmation dialog
             var confirmed = await DialogService.Confirm(
-                $"Publish '{template.Name}'? It will become available for assignment.",
+                $"Publish '{template.GetLocalizedNameWithFallback(CurrentLanguage)}'? It will become available for assignment.",
                 "Publish Template",
                 new ConfirmOptions
                 {
@@ -420,7 +423,7 @@
                 template.PublishedDate = publishedTemplate.PublishedDate;
                 template.LastPublishedDate = publishedTemplate.LastPublishedDate;
 
-                NotificationService.Notify(NotificationSeverity.Success, "Published", $"Template '{template.Name}' is now published and available for assignments");
+                NotificationService.Notify(NotificationSeverity.Success, "Published", $"Template '{template.GetLocalizedNameWithFallback(CurrentLanguage)}' is now published and available for assignments");
                 FilterTemplates();
             }
             else
@@ -440,7 +443,7 @@
         {
             // Show confirmation dialog
             var confirmed = await DialogService.Confirm(
-                $"Unpublish '{template.Name}'? It will no longer be available for new assignments.",
+                $"Unpublish '{template.GetLocalizedNameWithFallback(CurrentLanguage)}'? It will no longer be available for new assignments.",
                 "Unpublish Template",
                 new ConfirmOptions
                 {
@@ -464,7 +467,7 @@
                 // Update local template
                 template.Status = updatedTemplate.Status;
 
-                NotificationService.Notify(NotificationSeverity.Success, "Unpublished", $"Template '{template.Name}' has been unpublished");
+                NotificationService.Notify(NotificationSeverity.Success, "Unpublished", $"Template '{template.GetLocalizedNameWithFallback(CurrentLanguage)}' has been unpublished");
                 FilterTemplates();
             }
             else
@@ -488,7 +491,7 @@
         {
             // Show confirmation dialog with warning
             var confirmed = await DialogService.Confirm(
-                $"Are you sure you want to permanently delete '{template.Name}'? " +
+                $"Are you sure you want to permanently delete '{template.GetLocalizedNameWithFallback(CurrentLanguage)}'? " +
                 "This action cannot be undone. The template can only be deleted if it has no active assignments.",
                 "Delete Template",
                 new ConfirmOptions
@@ -510,7 +513,7 @@
                 // Remove from local list
                 templates.Remove(template);
 
-                NotificationService.Notify(NotificationSeverity.Success, "Deleted", $"Template '{template.Name}' has been permanently deleted");
+                NotificationService.Notify(NotificationSeverity.Success, "Deleted", $"Template '{template.GetLocalizedNameWithFallback(CurrentLanguage)}' has been permanently deleted");
                 FilterTemplates();
             }
             else
@@ -569,4 +572,9 @@
         TemplateStatus.Archived => "Restore",
         _ => "Archive"
     };
+
+    private string GetCategoryNameProperty()
+    {
+        return CurrentLanguage == Language.German ? "NameDe" : "NameEn";
+    }
 }

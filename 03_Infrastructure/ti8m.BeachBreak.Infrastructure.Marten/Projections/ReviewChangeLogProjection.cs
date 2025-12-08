@@ -36,12 +36,12 @@ public class ReviewChangeLogProjection : EventProjection
                 var section = template.Sections?.FirstOrDefault(s => s.Id == @event.SectionId);
                 if (section != null)
                 {
-                    sectionTitle = section.Title ?? "Unknown Section";
+                    sectionTitle = section.TitleEnglish ?? "Unknown Section";
 
                     var question = section.Questions?.FirstOrDefault(q => q.Id == @event.QuestionId);
                     if (question != null)
                     {
-                        questionTitle = question.Title ?? "Unknown Question";
+                        questionTitle = question.TitleEnglish ?? "Unknown Question";
                     }
                 }
             }

@@ -122,7 +122,8 @@ public class EmployeeQueryHandler :
                 OrganizationNumber = e.OrganizationNumber,
                 Organization = organizationLookup.TryGetValue(e.OrganizationNumber, out var orgName) ? orgName : string.Empty,
                 IsDeleted = e.IsDeleted,
-                ApplicationRole = e.ApplicationRole
+                ApplicationRole = e.ApplicationRole,
+                PreferredLanguage = e.PreferredLanguage
             }).ToList();
 
             logger.LogEmployeeListQuerySucceeded(employees.Count);
@@ -200,7 +201,8 @@ public class EmployeeQueryHandler :
                     OrganizationNumber = employeeReadModel.OrganizationNumber,
                     Organization = organizationName,
                     IsDeleted = employeeReadModel.IsDeleted,
-                    ApplicationRole = employeeReadModel.ApplicationRole
+                    ApplicationRole = employeeReadModel.ApplicationRole,
+                    PreferredLanguage = employeeReadModel.PreferredLanguage
                 };
 
                 logger.LogEmployeeQuerySucceeded(query.EmployeeId);

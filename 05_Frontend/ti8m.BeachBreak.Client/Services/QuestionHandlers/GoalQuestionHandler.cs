@@ -41,7 +41,7 @@ public class GoalQuestionHandler : IQuestionTypeHandler
 
         // Only validate that title and description are present
         // No template items to validate
-        if (string.IsNullOrWhiteSpace(question.Title))
+        if (string.IsNullOrWhiteSpace(question.TitleEnglish) && string.IsNullOrWhiteSpace(question.TitleGerman))
         {
             errors.Add($"{questionLabel} requires a title");
         }

@@ -1,5 +1,8 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Application.Query.Repositories;
+using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Domain;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
@@ -11,17 +14,20 @@ public class QuestionnaireAssignmentQueryHandler :
     private readonly IQuestionnaireAssignmentRepository repository;
     private readonly IQuestionnaireTemplateRepository templateRepository;
     private readonly IEmployeeRepository employeeRepository;
+    private readonly ILanguageContext languageContext;
     private readonly ILogger<QuestionnaireAssignmentQueryHandler> logger;
 
     public QuestionnaireAssignmentQueryHandler(
         IQuestionnaireAssignmentRepository repository,
         IQuestionnaireTemplateRepository templateRepository,
         IEmployeeRepository employeeRepository,
+        ILanguageContext languageContext,
         ILogger<QuestionnaireAssignmentQueryHandler> logger)
     {
         this.repository = repository;
         this.templateRepository = templateRepository;
         this.employeeRepository = employeeRepository;
+        this.languageContext = languageContext;
         this.logger = logger;
     }
 
@@ -107,7 +113,11 @@ public class QuestionnaireAssignmentQueryHandler :
 
         // Fetch only the templates we need
         var templates = await templateRepository.GetByIdsAsync(templateIds, cancellationToken);
-        var templateLookup = templates.ToDictionary(t => t.Id, t => (t.Name, t.CategoryId));
+        var templateLookup = templates.ToDictionary(t => t.Id, t => (template: t, t.CategoryId));
+
+        // Get user's preferred language
+        var currentLanguageCode = await languageContext.GetCurrentLanguageCodeAsync();
+        var currentLanguage = LanguageMapper.FromLanguageCode(currentLanguageCode);
 
         // Get unique employee IDs that need to be resolved
         var employeeIds = readModelsList
@@ -144,7 +154,7 @@ public class QuestionnaireAssignmentQueryHandler :
             // Denormalize template metadata
             if (templateLookup.TryGetValue(readModel.TemplateId, out var templateMetadata))
             {
-                assignment.TemplateName = templateMetadata.Name;
+                assignment.TemplateName = GetLocalizedTemplateName(templateMetadata.template, currentLanguage);
                 assignment.TemplateCategoryId = templateMetadata.CategoryId;
             }
             else
@@ -262,5 +272,10 @@ public class QuestionnaireAssignmentQueryHandler :
             LastReopenedByRole = readModel.LastReopenedByRole,
             LastReopenReason = readModel.LastReopenReason
         };
+    }
+
+    private static string GetLocalizedTemplateName(Projections.QuestionnaireTemplateReadModel template, Models.Language language)
+    {
+        return language == Models.Language.German ? template.NameGerman : template.NameEnglish;
     }
 }

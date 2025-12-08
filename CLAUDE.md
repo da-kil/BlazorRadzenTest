@@ -357,6 +357,162 @@ This pattern was standardized (2025-11-21) to replace inconsistent authorization
 - **Use AuthorizeView**: For admin pages where users need clear feedback about access restrictions
 - **Use @attribute [Authorize]**: For employee-accessible pages where generic authentication is sufficient
 
+## Translation System Guidelines
+
+### Overview
+
+The application uses a multilingual translation system with support for English and German. Translations are stored in `TestDataGenerator/test-translations.json` and loaded at runtime.
+
+### Adding New Translations
+
+**CRITICAL**: When adding new UI text that uses `@T("translation.key")`, you MUST add the translation to test-translations.json IMMEDIATELY.
+
+#### Step-by-Step Process
+
+1. **Add translation key to your Razor component:**
+   ```razor
+   <RadzenText>@T("sections.my-new-section")</RadzenText>
+   ```
+
+2. **Add entry to test-translations.json:**
+   ```json
+   {
+     "key": "sections.my-new-section",
+     "german": "Mein neuer Abschnitt",
+     "english": "My New Section",
+     "category": "sections",
+     "createdDate": "2025-12-04T12:00:00.0000000+00:00"
+   }
+   ```
+
+3. **Validate translations:**
+   ```bash
+   powershell -ExecutionPolicy Bypass -File TestDataGenerator\validate-translations.ps1
+   ```
+
+### Translation Key Naming Conventions
+
+- **Format**: Lowercase with hyphens: `my-translation-key`
+- **Semantic prefixes**: Use category-based prefixes
+  - `pages.*` - Page titles and descriptions
+  - `sections.*` - Section headings
+  - `tabs.*` - Tab labels
+  - `buttons.*` - Button text
+  - `labels.*` - Form labels and UI labels
+  - `columns.*` - Data grid column headers
+  - `placeholders.*` - Input placeholders
+  - `filters.*` - Filter labels
+  - `messages.*` - User messages
+  - `dialogs.*` - Dialog titles and content
+  - `tooltips.*` - Tooltip text
+  - `notifications.*` - Toast/notification messages
+  - `status.*` - Status labels
+  - `workflow-states.*` - Workflow state labels
+
+### German Translation Guidelines
+
+**Domain-Specific Terminology** (maintain consistency):
+- "Questionnaire" → "Fragebogen"
+- "Assignment" → "Zuweisung"
+- "Employee" → "Mitarbeiter"
+- "Template" → "Vorlage"
+- "Category" → "Kategorie"
+- "Status" → "Status"
+- "Manager" → "Manager"
+- "Review" → "Überprüfung"
+
+**Unicode Encoding for German Umlauts** (in JSON):
+- ä → `\u00E4`
+- ö → `\u00F6`
+- ü → `\u00FC`
+- Ä → `\u00C4`
+- Ö → `\u00D6`
+- Ü → `\u00DC`
+- ß → `\u00DF`
+
+**Formality**: Use professional business German (Sie-Form)
+
+### Validation Tools
+
+**Validate all translations:**
+```bash
+powershell -ExecutionPolicy Bypass -File TestDataGenerator\validate-translations.ps1
+```
+
+This script:
+- Scans all .razor files for `@T("...")` calls
+- Compares against test-translations.json
+- Reports missing translations with detailed breakdown by category
+- Returns exit code 1 if translations are missing
+
+**Verify specific pages:**
+```bash
+powershell -ExecutionPolicy Bypass -File TestDataGenerator\verify-target-pages.ps1
+```
+
+### Historical Context
+
+**2025-12-04**: Translation Recovery
+- During initial multilingual migration (commit c79f22a), 187 translation keys were used in code but missing from test-translations.json
+- Recovered 54 missing translations for QuestionnaireAssignments, ProjectionReplayAdmin, and CategoryAdmin pages
+- Original English text extracted from git commit 4a3f807 (pre-migration)
+- German translations generated using AI-assisted translation with domain terminology
+- Created validate-translations.ps1 to prevent future gaps
+
+**Lesson Learned**: Always add translations atomically with UI changes. Running the validation script before committing prevents missing translations from reaching production.
+
+### Code Review Checklist
+
+When reviewing PRs that add or modify UI text:
+
+- [ ] All new `@T("...")` calls have entries in test-translations.json
+- [ ] German translations are accurate and use professional business terminology
+- [ ] Translation keys follow naming conventions (lowercase-with-hyphens)
+- [ ] Proper category prefix used (pages.*, sections.*, etc.)
+- [ ] German umlauts properly Unicode-escaped in JSON
+- [ ] Validation script passes: `validate-translations.ps1`
+- [ ] Tested language switching (English ↔ German)
+- [ ] No hardcoded UI text visible (all text uses @T())
+
+### Common Mistakes to Avoid
+
+1. **❌ Using hardcoded text without translations:**
+   ```razor
+   <RadzenText>Select Employees</RadzenText>  <!-- BAD -->
+   ```
+   **✅ Always use translation keys:**
+   ```razor
+   <RadzenText>@T("sections.select-employees")</RadzenText>  <!-- GOOD -->
+   ```
+
+2. **❌ Adding @T() calls without adding to test-translations.json:**
+   - This causes translation keys to appear in the UI instead of actual text
+   - Always add both simultaneously
+
+3. **❌ Using wrong Unicode encoding:**
+   ```json
+   "german": "Mitarbeiter auswählen"  <!-- BAD - will break JSON -->
+   ```
+   **✅ Use proper Unicode escaping:**
+   ```json
+   "german": "Mitarbeiter ausw\u00E4hlen"  <!-- GOOD -->
+   ```
+
+4. **❌ Inconsistent domain terminology:**
+   - Using "Angestellte" instead of "Mitarbeiter" for "Employee"
+   - Check existing translations for consistency
+
+### Quick Reference: Merge Translations
+
+If you've created new translations in a separate file:
+
+```bash
+cd TestDataGenerator
+powershell -ExecutionPolicy Bypass -File merge-translations.ps1
+```
+
+This will merge, deduplicate, and sort all translations alphabetically by key.
+
 ## Typography System Guidelines
 
 ### Font Weight Architecture

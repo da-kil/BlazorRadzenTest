@@ -10,6 +10,7 @@
 @inject IEmployeeApiService EmployeeApiService
 @inject NavigationManager NavigationManager
 @inject NotificationService NotificationService
+@inherits OptimizedTranslatableComponentBase
 
 <link href="css/dashboard.css" rel="stylesheet" />
 
@@ -89,11 +90,11 @@
                                     </RadzenText>
                                     @if (urgent.IsOverdue)
                                     {
-                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="Overdue" Class="ms-2" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@T("status.overdue")" Class="ms-2" />
                                     }
                                     else
                                     {
-                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="Due Soon" Class="ms-2" />
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@T("status.due-soon")" Class="ms-2" />
                                     }
                                 </div>
                                 <div class="d-flex align-items-center text-muted">
@@ -142,9 +143,9 @@ else
     <RadzenCard>
         <div class="text-center p-4">
             <RadzenIcon Icon="dashboard" Style="font-size: 3rem; color: #adb5bd;" />
-            <RadzenText TextStyle="TextStyle.H6" Class="rz-mt-3">No Dashboard Data</RadzenText>
-            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Unable to load dashboard information.</RadzenText>
-            <AsyncButton Text="Retry" ProcessingText="Loading" Icon="refresh" ButtonStyle="ButtonStyle.Primary" Class="rz-mt-3"
+            <RadzenText TextStyle="TextStyle.H6" Class="rz-mt-3">@T("dashboard.no-data")</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("dashboard.unable-to-load")</RadzenText>
+            <AsyncButton Text="@T("buttons.retry")" ProcessingText="@T("buttons.loading")" Icon="refresh" ButtonStyle="ButtonStyle.Primary" Class="rz-mt-3"
                         Click="@LoadDashboardAsync" />
         </div>
     </RadzenCard>
@@ -156,6 +157,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await LoadDashboardAsync();
     }
 

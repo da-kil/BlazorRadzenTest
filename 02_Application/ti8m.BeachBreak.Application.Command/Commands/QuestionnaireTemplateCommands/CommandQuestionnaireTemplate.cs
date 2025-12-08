@@ -3,8 +3,10 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateComm
 public class CommandQuestionnaireTemplate
 {
     public Guid Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    public string NameGerman { get; set; } = string.Empty;
+    public string NameEnglish { get; set; } = string.Empty;
+    public string DescriptionGerman { get; set; } = string.Empty;
+    public string DescriptionEnglish { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
     public bool RequiresManagerReview { get; set; } = true;
     public List<CommandQuestionSection> Sections { get; set; } = new();

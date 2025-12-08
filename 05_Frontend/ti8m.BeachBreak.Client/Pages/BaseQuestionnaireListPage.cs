@@ -13,9 +13,8 @@ namespace ti8m.BeachBreak.Client.Pages;
 /// Eliminates code duplication across Employee, Manager, and HR views.
 /// Follows Template Method pattern with role-specific customization points.
 /// </summary>
-public abstract class BaseQuestionnaireListPage : OptimizedComponentBase
+public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponentBase
 {
-    [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
 
@@ -26,12 +25,13 @@ public abstract class BaseQuestionnaireListPage : OptimizedComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await ExecuteSafelyAsync(async () =>
         {
             await LoadInitialData();
         }, GetInitializationContext());
 
-        SetupConfiguration();
+        await SetupConfigurationAsync();
     }
 
     protected override bool HasStateChanged()
@@ -73,9 +73,9 @@ public abstract class BaseQuestionnaireListPage : OptimizedComponentBase
     /// Configuration setup orchestration method.
     /// Creates configuration via factory and wires up action handlers.
     /// </summary>
-    private void SetupConfiguration()
+    private async Task SetupConfigurationAsync()
     {
-        configuration = CreateConfiguration();
+        configuration = await CreateConfigurationAsync();
         ConfigureActions();
     }
 
@@ -90,7 +90,7 @@ public abstract class BaseQuestionnaireListPage : OptimizedComponentBase
     /// <summary>
     /// Create the page configuration using the appropriate factory method.
     /// </summary>
-    protected abstract QuestionnairePageConfiguration CreateConfiguration();
+    protected abstract Task<QuestionnairePageConfiguration> CreateConfigurationAsync();
 
     /// <summary>
     /// Get the context name for error logging/tracking.
@@ -126,7 +126,7 @@ public abstract class BaseQuestionnaireListPage : OptimizedComponentBase
     protected virtual async Task RefreshData()
     {
         await LoadInitialData();
-        SetupConfiguration();
+        await SetupConfigurationAsync();
         NotifyStateChanged();
     }
 
@@ -142,22 +142,22 @@ public abstract class BaseQuestionnaireListPage : OptimizedComponentBase
 
     protected void HandleError(Exception ex, string context)
     {
-        NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed {context}: {ex.Message}");
+        NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed")} {context}: {ex.Message}");
     }
 
     protected void ShowInfo(string message)
     {
-        NotificationService.Notify(NotificationSeverity.Info, "Information", message);
+        NotificationService.Notify(NotificationSeverity.Info, T("notifications.info"), message);
     }
 
     protected void ShowSuccess(string message)
     {
-        NotificationService.Notify(NotificationSeverity.Success, "Success", message);
+        NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), message);
     }
 
     protected void ShowWarning(string message)
     {
-        NotificationService.Notify(NotificationSeverity.Warning, "Warning", message);
+        NotificationService.Notify(NotificationSeverity.Warning, T("notifications.warning"), message);
     }
 
     /// <summary>

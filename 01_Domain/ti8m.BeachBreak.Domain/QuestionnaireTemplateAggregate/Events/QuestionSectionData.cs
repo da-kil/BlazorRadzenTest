@@ -6,8 +6,8 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 /// </summary>
 public record QuestionSectionData(
     Guid Id,
-    string Title,
-    string Description,
+    Translation Title,
+    Translation Description,
     int Order,
     bool IsRequired,
     CompletionRole CompletionRole,

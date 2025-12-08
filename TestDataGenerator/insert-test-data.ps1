@@ -120,6 +120,26 @@ if (-not $SKIP_AUTH) {
     }
 }
 
+Write-Host "`nBulk importing translations..." -ForegroundColor Cyan
+try {
+    $translationResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/translations/bulk-import" `
+      -Method POST `
+      -Headers $headers `
+      -InFile "test-translations.json"
+
+    Write-Host "Translations bulk imported successfully!" -ForegroundColor Green
+} catch {
+    Write-Host "Error bulk importing translations: $($_.Exception.Message)" -ForegroundColor Red
+    if ($_.Exception.Response) {
+        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+        $responseBody = $reader.ReadToEnd()
+        Write-Host "Response: $responseBody" -ForegroundColor Red
+    }
+}
+
+Write-Host "`nWaiting 2 seconds..." -ForegroundColor Cyan
+Start-Sleep -Seconds 2
+
 Write-Host "`nInserting category..." -ForegroundColor Cyan
 try {
     $categoryResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/categories" `

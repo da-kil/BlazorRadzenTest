@@ -3,8 +3,10 @@
 public class QuestionItem
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public string Title { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
+    public string TitleGerman { get; set; } = string.Empty;
+    public string TitleEnglish { get; set; } = string.Empty;
+    public string DescriptionGerman { get; set; } = string.Empty;
+    public string DescriptionEnglish { get; set; } = string.Empty;
     public QuestionType Type { get; set; }
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;

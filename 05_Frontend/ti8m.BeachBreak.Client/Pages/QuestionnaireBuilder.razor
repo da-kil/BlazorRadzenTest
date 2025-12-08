@@ -11,7 +11,6 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Layout
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject IQuestionnaireTemplateService ApiService
 @inject ICategoryApiService CategoryService
@@ -19,19 +18,19 @@
 @inject QuestionnaireValidationService ValidationService
 @inject ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory HandlerFactory
 @inject QuestionnaireBuilderState State
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 @implements IDisposable
 
-<PageTitle>Questionnaire Builder</PageTitle>
+<PageTitle>@(State.IsEditMode? T("pages.questionnaire-editor") : T("pages.questionnaire-builder"))</PageTitle>
 
 <AuthorizeView Policy="HR">
     <Authorized>
-        <PageLayout Title="@(State.IsEditMode ? "Questionnaire Editor" : "Questionnaire Builder")"
+        <PageLayout Title="@(State.IsEditMode ? T("pages.questionnaire-editor") : T("pages.questionnaire-builder"))"
                    Description="@GetStatusDescription()">
             <HeaderActions>
                 @{
                     var status = State.IsEditMode ? State.Template.Status : TemplateStatus.Draft;
-                    var statusText = State.IsEditMode ? TemplateStatusHelper.GetStatusText(State.Template.Status) : "NEW";
+                    var statusText = State.IsEditMode ? TemplateStatusHelper.GetStatusText(State.Template.Status) : T("labels.new-status");
                     var statusBadgeStyle = GetStatusBadgeStyle(status);
                 }
                 <RadzenBadge BadgeStyle="@statusBadgeStyle" Text="@statusText" Class="px-3 py-2" />
@@ -40,14 +39,14 @@
                 {
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-flex align-items-center">
                         <RadzenIcon Icon="cloud_done" Class="me-1" />
-                        Last saved @lastSavedTime.Value.ToString("HH:mm")
+                        @T("labels.last-saved") @lastSavedTime.Value.ToString("HH:mm")
                     </RadzenText>
                 }
                 @if (isSaving)
                 {
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-flex align-items-center">
                         <RadzenIcon Icon="sync" Class="me-1" Style="animation: rotate 2s linear infinite;" />
-                        Saving...
+                        @T("messages.saving")
                     </RadzenText>
                 }
 
@@ -57,16 +56,16 @@
                 @switch (currentStatus)
                 {
                     case TemplateStatus.Draft:
-                        <RadzenButton Text="@(isSaving ? "Saving..." : "Save Draft")" ButtonStyle="ButtonStyle.Light" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
-                        <RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Primary" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@(isSaving ? T("messages.saving") : T("buttons.save-draft"))" ButtonStyle="ButtonStyle.Light" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.publish")" ButtonStyle="ButtonStyle.Primary" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" Size="ButtonSize.Medium" />
                         break;
                     case TemplateStatus.Published:
-                        <RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
-                        <RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Light" Icon="unpublished" Click="@UnpublishQuestionnaire" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.clone")" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.unpublish")" ButtonStyle="ButtonStyle.Light" Icon="unpublished" Click="@UnpublishQuestionnaire" Size="ButtonSize.Medium" />
                         break;
                     case TemplateStatus.Archived:
-                        <RadzenButton Text="Clone" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
-                        <RadzenButton Text="Restore" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.clone")" ButtonStyle="ButtonStyle.Light" Icon="content_copy" Click="@HandleClone" Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.restore")" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" Size="ButtonSize.Medium" />
                         break;
                 }
             </HeaderActions>
@@ -83,11 +82,11 @@
                         <header class="editor-toolbar">
                             <div class="toolbar-left">
                                 <RadzenButton ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@CloseQuestionEditor" Class="me-3" />
-                                <h2 class="editor-title">Edit Question: @GetCurrentQuestionTitle()</h2>
+                                <h2 class="editor-title">@T("labels.edit-question"): @GetCurrentQuestionTitle()</h2>
                             </div>
                             <div class="toolbar-actions">
-                                <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" Click="@CloseQuestionEditor" />
-                                <RadzenButton Text="Save Question" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveCurrentQuestion" />
+                                <RadzenButton Text="@T("buttons.cancel")" ButtonStyle="ButtonStyle.Secondary" Click="@CloseQuestionEditor" />
+                                <RadzenButton Text="@T("buttons.save-question")" ButtonStyle="ButtonStyle.Primary" Icon="save" Click="@SaveCurrentQuestion" />
                             </div>
                         </header>
                         <div class="editor-content">
@@ -113,12 +112,12 @@
                     {
                         <section class="step-section" data-step="1">
                             <header class="qb-step-header">
-                                <h2 class="step-title">Template Information</h2>
+                                <h2 class="step-title">@T("steps.template-information")</h2>
                                 <p class="step-description">@GetStatusDescription()</p>
                             </header>
                             <BasicInfoTab Template="@State.Template" Categories="@categories" />
                             <nav class="step-navigation">
-                                <RadzenButton Text="Next: Build Sections" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(2))" />
+                                <RadzenButton Text="@T("buttons.next-build-sections")" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(2))" />
                             </nav>
                         </section>
                     }
@@ -126,8 +125,8 @@
                     {
                         <section class="step-section" data-step="2">
                             <header class="qb-step-header">
-                                <h2 class="step-title">Build Sections</h2>
-                                <p class="step-description">Organize your assessment into logical sections and configure questions</p>
+                                <h2 class="step-title">@T("steps.build-sections")</h2>
+                                <p class="step-description">@T("steps.build-sections-description")</p>
                             </header>
                             <QuestionsTab Template="@State.Template"
                                           ShowQuestionTypeSelection="@State.ShowQuestionTypeSelection"
@@ -146,8 +145,8 @@
                                           OnMoveQuestionDown="@MoveQuestionDown"
                                           OnRemoveQuestion="@RemoveQuestion" />
                             <nav class="step-navigation-dual">
-                                <RadzenButton Text="Previous: Basic Info" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(1))" />
-                                <RadzenButton Text="Next: Review" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(3))" />
+                                <RadzenButton Text="@T("buttons.previous-basic-info")" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(1))" />
+                                <RadzenButton Text="@T("buttons.next-review")" ButtonStyle="ButtonStyle.Primary" Icon="arrow_forward" Click="@(() => SetCurrentStep(3))" />
                             </nav>
                         </section>
                     }
@@ -155,12 +154,12 @@
                     {
                         <section class="step-section" data-step="3">
                             <header class="qb-step-header">
-                                <h2 class="step-title">Review & Publish</h2>
-                                <p class="step-description">Review your questionnaire and make it available for assignments</p>
+                                <h2 class="step-title">@T("steps.review-publish")</h2>
+                                <p class="step-description">@T("steps.review-description")</p>
                             </header>
                             <ReviewTab Template="@State.Template" QuestionTypeLabels="@questionTypeLabels" Categories="@categories" />
                             <nav class="step-navigation-dual">
-                                <RadzenButton Text="Previous: Build Sections" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
+                                <RadzenButton Text="@T("buttons.previous-build-sections")" ButtonStyle="ButtonStyle.Light" Icon="arrow_back" Click="@(() => SetCurrentStep(2))" />
                                 <div class="publish-actions">
                                     @{
                                         var stepNavStatus = State.IsEditMode ? State.Template.Status : TemplateStatus.Draft;
@@ -168,14 +167,14 @@
                                     @switch (stepNavStatus)
                                     {
                                         case TemplateStatus.Draft:
-                                            <RadzenButton Text="@(isSaving ? "Saving..." : "Save Draft")" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" />
-                                            <RadzenButton Text="Publish" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" />
+                                            <RadzenButton Text="@(isSaving ? T("messages.saving") : T("buttons.save-draft"))" ButtonStyle="ButtonStyle.Secondary" Icon="save" Click="@SaveQuestionnaire" Disabled="@isSaving" />
+                                            <RadzenButton Text="@T("buttons.publish")" ButtonStyle="ButtonStyle.Success" Icon="publish" Click="@PublishQuestionnaire" Disabled="@isSaving" />
                                             break;
                                         case TemplateStatus.Published:
-                                            <RadzenButton Text="Unpublish" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@UnpublishQuestionnaire" />
+                                            <RadzenButton Text="@T("buttons.unpublish")" ButtonStyle="ButtonStyle.Warning" Icon="unpublished" Click="@UnpublishQuestionnaire" />
                                             break;
                                         case TemplateStatus.Archived:
-                                            <RadzenButton Text="Restore" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" />
+                                            <RadzenButton Text="@T("buttons.restore")" ButtonStyle="ButtonStyle.Primary" Icon="restore" Click="@RestoreQuestionnaire" />
                                             break;
                                     }
                                 </div>
@@ -187,7 +186,7 @@
         </PageLayout>
     </Authorized>
     <NotAuthorized>
-        <AccessDeniedComponent RequiredRole="HR" PageName="Questionnaire Builder" />
+        <AccessDeniedComponent RequiredRole="HR" PageName="@T("pages.questionnaire-builder")" />
     </NotAuthorized>
 </AuthorizeView>
 
@@ -199,15 +198,25 @@
     private DateTime? lastSavedTime = null;
 
     // Editable question type labels
-    private Dictionary<QuestionType, string> questionTypeLabels = new()
+    private Dictionary<QuestionType, string> questionTypeLabels = new();
+
+    private void InitializeQuestionTypeLabels()
     {
-        { QuestionType.Assessment, "Assessment" },
-        { QuestionType.Goal, "Goal Achievement" },
-        { QuestionType.TextQuestion, "Text Question" }
-    };
+        questionTypeLabels = new Dictionary<QuestionType, string>
+        {
+            { QuestionType.Assessment, T("question-types.assessment") },
+            { QuestionType.Goal, T("question-types.goal-achievement") },
+            { QuestionType.TextQuestion, T("question-types.text-question") }
+        };
+    }
 
     private List<Category> categories = new();
     private Guid? lastLoadedTemplateId = null;
+
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
 
     protected override void OnInitialized()
     {
@@ -216,9 +225,11 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        // Only reload if the template ID has changed or this is the first load
-        // This prevents duplicate loading on initial render
-        if (lastLoadedTemplateId != TemplateId)
+        // Handle both initial load (both null) and template ID changes
+        // Use Equals to properly handle nullable Guid comparisons
+        bool shouldLoad = !Equals(lastLoadedTemplateId, TemplateId) || lastLoadedTemplateId == null;
+
+        if (shouldLoad)
         {
             lastLoadedTemplateId = TemplateId;
             await LoadQuestionnaireData();
@@ -229,6 +240,9 @@
     {
         await ExecuteSafelyAsync(async () =>
         {
+            // Initialize translations-dependent data
+            InitializeQuestionTypeLabels();
+
             // Reset to step 1 whenever loading a template
             State.CurrentStep = 1;
 
@@ -249,8 +263,10 @@
                 State.Template = new QuestionnaireTemplate
                 {
                     Id = Guid.NewGuid(), // Generate ID upfront for efficient refetch after create
-                    Name = "",
-                    Description = "",
+                    NameEnglish = "",
+                    NameGerman = "",
+                    DescriptionEnglish = "",
+                    DescriptionGerman = "",
                     CategoryId = Guid.Empty
                 };
             }
@@ -284,7 +300,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load categories: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-load-categories")}: {ex.Message}");
             // Fallback to default categories if API fails
             categories = [];
         }
@@ -301,7 +317,7 @@
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Warning, "Not Found", "Template not found. Creating new template.");
+                NotificationService.Notify(NotificationSeverity.Warning, T("notifications.not-found"), T("messages.template-not-found"));
                 State.Template = new QuestionnaireTemplate();
                 // Clear the TemplateId parameter to switch to create mode
                 TemplateId = null;
@@ -309,7 +325,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to load template: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-load-template")}: {ex.Message}");
             State.Template = new QuestionnaireTemplate();
             TemplateId = null;
         }
@@ -330,8 +346,10 @@
             var editingQuestion = new QuestionItem
             {
                 Id = originalQuestion.Id,
-                Title = originalQuestion.Title,
-                Description = originalQuestion.Description,
+                TitleEnglish = originalQuestion.TitleEnglish,
+                TitleGerman = originalQuestion.TitleGerman,
+                DescriptionEnglish = originalQuestion.DescriptionEnglish,
+                DescriptionGerman = originalQuestion.DescriptionGerman,
                 Type = originalQuestion.Type,
                 Order = originalQuestion.Order,
                 IsRequired = originalQuestion.IsRequired,
@@ -354,21 +372,25 @@
             State.Template.Sections[State.EditingSectionIndex].Questions[State.EditingQuestionIndex] = State.EditingQuestion;
             State.MarkAsDirty();
             CloseQuestionEditor();
-            NotificationService.Notify(NotificationSeverity.Success, "Saved", "Question updated successfully");
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.saved"), T("messages.question-updated-successfully"));
         }
     }
 
     private string GetCurrentQuestionTitle()
     {
-        return State.EditingQuestion?.Title ?? "Untitled Question";
+        return State.EditingQuestion?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("labels.untitled-question");
     }
 
 
     private void AddSectionWithType(QuestionType questionType)
     {
+        var defaultTitle = GetDefaultSectionTitle(questionType);
         var newSection = new QuestionSection
         {
-            Title = GetDefaultSectionTitle(questionType),
+            TitleEnglish = defaultTitle,
+            TitleGerman = "", // Leave German empty for now
+            DescriptionEnglish = "",
+            DescriptionGerman = "",
             Order = State.Template.Sections.Count,
             IsRequired = true,
             CompletionRole = CompletionRole.Employee
@@ -385,10 +407,10 @@
     {
         return type switch
         {
-            QuestionType.Assessment => "Competency Assessment",
-            QuestionType.Goal => "Goal Achievement Review",
-            QuestionType.TextQuestion => "Open-Ended Questions",
-            _ => $"Section {State.Template.Sections.Count + 1}"
+            QuestionType.Assessment => T("sections.competency-assessment"),
+            QuestionType.Goal => T("sections.goal-achievement-review"),
+            QuestionType.TextQuestion => T("sections.open-ended-questions"),
+            _ => T("labels.section-default").Replace("{0}", (State.Template.Sections.Count + 1).ToString())
         };
     }
 
@@ -430,7 +452,10 @@
             var newQuestion = new QuestionItem
             {
                 Id = Guid.NewGuid(),
-                Title = handler.GetDefaultTitle(),
+                TitleEnglish = handler.GetDefaultTitle(),
+                TitleGerman = "", // Leave German empty for now
+                DescriptionEnglish = "",
+                DescriptionGerman = "",
                 Type = questionType,
                 Order = section.Questions.Count,
                 IsRequired = true
@@ -450,9 +475,13 @@
         if (index >= 0 && index < State.Template.Sections.Count)
         {
             var section = State.Template.Sections[index];
-            var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {index + 1}" : section.Title;
-            var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{sectionName}'? This will also delete all questions in this section.", "Delete Section",
-                new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+            var sectionName = section.GetLocalizedTitleWithFallback(CurrentLanguage);
+            if (string.IsNullOrWhiteSpace(sectionName))
+            {
+                sectionName = T("labels.section-default").Replace("{0}", (index + 1).ToString());
+            }
+            var confirmed = await DialogService.Confirm(T("dialogs.delete-section-message").Replace("{0}", sectionName), T("dialogs.delete-section-title"),
+                new ConfirmOptions() { OkButtonText = T("buttons.yes"), CancelButtonText = T("buttons.no") });
 
             if (confirmed.HasValue && confirmed.Value)
             {
@@ -504,9 +533,13 @@
         if (questionIndex >= 0 && questionIndex < section.Questions.Count)
         {
             var question = section.Questions[questionIndex];
-            var questionName = string.IsNullOrWhiteSpace(question.Title) ? $"Question {questionIndex + 1}" : question.Title;
-            var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{questionName}'?", "Delete Question",
-                new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+            var questionName = question.GetLocalizedTitleWithFallback(CurrentLanguage);
+            if (string.IsNullOrWhiteSpace(questionName))
+            {
+                questionName = T("labels.question-default").Replace("{0}", (questionIndex + 1).ToString());
+            }
+            var confirmed = await DialogService.Confirm(T("dialogs.delete-question-message").Replace("{0}", questionName), T("dialogs.delete-question-title"),
+                new ConfirmOptions() { OkButtonText = T("buttons.yes"), CancelButtonText = T("buttons.no") });
 
             if (confirmed.HasValue && confirmed.Value)
             {
@@ -576,11 +609,11 @@
                     State.Template = updated;
                     State.MarkAsClean();
                     lastSavedTime = DateTime.Now;
-                    NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template updated successfully");
+                    NotificationService.Notify(NotificationSeverity.Success, T("notifications.saved"), T("messages.template-updated-successfully"));
                 }
                 else
                 {
-                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update template - no response from server");
+                    NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-update-template-no-response"));
                 }
             }
             else
@@ -589,7 +622,7 @@
                 State.Template.Id = created.Id; // Update with the server-generated ID
                 State.MarkAsClean();
                 lastSavedTime = DateTime.Now;
-                NotificationService.Notify(NotificationSeverity.Success, "Saved", "Questionnaire template created successfully");
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.saved"), T("messages.template-created-successfully"));
 
                 // Navigate to edit mode to prevent duplicate creation on subsequent saves
                 NavigationManager.NavigateTo($"/questionnaire-builder/{created.Id}", forceLoad: false);
@@ -597,7 +630,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to save template: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-save-template")}: {ex.Message}");
         }
         finally
         {
@@ -626,7 +659,7 @@
                 }
                 else
                 {
-                    NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to update template - no response from server");
+                    NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-update-template-no-response"));
                     return;
                 }
             }
@@ -654,11 +687,11 @@
             if (publishedTemplate != null)
             {
                 State.Template = publishedTemplate;
-                NotificationService.Notify(NotificationSeverity.Success, "Published", "Questionnaire template is now published and available for assignments");
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.published"), T("messages.template-published-successfully"));
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to publish template");
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-publish-template"));
                 // Revert on failure
                 State.Template.Status = TemplateStatus.Draft;
                 State.Template.LastPublishedDate = null;
@@ -666,7 +699,7 @@
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to publish template: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-publish-template")}: {ex.Message}");
             // Revert on failure
             State.Template.Status = TemplateStatus.Draft;
             State.Template.LastPublishedDate = null;
@@ -689,17 +722,17 @@
             if (updated != null)
             {
                 State.Template = updated;
-                NotificationService.Notify(NotificationSeverity.Info, "Unpublished", "Questionnaire template is now in draft mode and unavailable for new assignments");
+                NotificationService.Notify(NotificationSeverity.Info, T("notifications.unpublished"), T("messages.template-unpublished-successfully"));
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to unpublish template");
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-unpublish-template"));
                 State.Template.Status = TemplateStatus.Published; // Revert on failure
             }
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to unpublish template: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-unpublish-template")}: {ex.Message}");
             State.Template.Status = TemplateStatus.Published; // Revert on failure
         }
     }
@@ -712,16 +745,16 @@
             if (updated != null)
             {
                 State.Template = updated;
-                NotificationService.Notify(NotificationSeverity.Success, "Restored", "Questionnaire template has been restored and is now active");
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.restored"), T("messages.template-restored-successfully"));
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to restore template");
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-restore-template"));
             }
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to restore template: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-restore-template")}: {ex.Message}");
         }
     }
 
@@ -733,16 +766,16 @@
             if (updated != null)
             {
                 State.Template = updated;
-                NotificationService.Notify(NotificationSeverity.Success, "Archived", "Questionnaire template has been archived and is no longer available for assignments");
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.archived"), T("messages.template-archived-successfully"));
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to archive template");
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-archive-template"));
             }
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Failed to archive template: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-archive-template")}: {ex.Message}");
         }
     }
 
@@ -752,37 +785,37 @@
         {
             // Show confirmation dialog
             var confirmed = await DialogService.Confirm(
-                "This will create a copy of the current questionnaire template in Draft status. Continue?",
-                "Clone Template",
+                T("dialogs.clone-template-message"),
+                T("dialogs.clone-template-title"),
                 new ConfirmOptions
                 {
-                    OkButtonText = "Clone",
-                    CancelButtonText = "Cancel"
+                    OkButtonText = T("buttons.clone"),
+                    CancelButtonText = T("buttons.cancel")
                 });
 
             if (confirmed != true)
                 return;
 
-            NotificationService.Notify(NotificationSeverity.Info, "Cloning", "Cloning template...");
+            NotificationService.Notify(NotificationSeverity.Info, T("notifications.cloning"), T("messages.cloning-template"));
 
             // Call service to clone
             var newTemplateId = await ApiService.CloneTemplateAsync(State.Template.Id);
 
             if (newTemplateId.HasValue)
             {
-                NotificationService.Notify(NotificationSeverity.Success, "Cloned", "Template cloned successfully!");
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.cloned"), T("messages.template-cloned-successfully"));
 
                 // Navigate to the cloned template editor
                 NavigationManager.NavigateTo($"/questionnaire-builder/{newTemplateId.Value}");
             }
             else
             {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to clone template. Please try again.");
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-clone-template"));
             }
         }
         catch (Exception ex)
         {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error cloning template: {ex.Message}");
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.error-cloning-template")}: {ex.Message}");
         }
     }
 
@@ -797,7 +830,7 @@
                 ? validationErrors[0]
                 : $"Please fix the following issues:\n• {string.Join("\n• ", validationErrors)}";
 
-            NotificationService.Notify(NotificationSeverity.Warning, "Validation Required", errorMessage);
+            NotificationService.Notify(NotificationSeverity.Warning, T("tooltips.validation-required"), errorMessage);
             return false;
         }
 
@@ -805,17 +838,7 @@
     }
 
     // Helper methods to avoid section/question directive conflicts
-    private string GetSectionTitle(QuestionSection section) => section.Title;
-    private void SetSectionTitle(QuestionSection section, string value) => section.Title = value ?? "";
 
-    private string GetSectionDescription(QuestionSection section) => section.Description;
-    private void SetSectionDescription(QuestionSection section, string value) => section.Description = value ?? "";
-
-    private string GetQuestionTitle(QuestionItem question) => question.Title;
-    private void SetQuestionTitle(QuestionItem question, string value) => question.Title = value ?? "";
-
-    private string GetQuestionDescription(QuestionItem question) => question.Description;
-    private void SetQuestionDescription(QuestionItem question, string value) => question.Description = value ?? "";
 
     private async Task AddQuestionOfType(QuestionType questionType)
     {
@@ -827,7 +850,10 @@
             var newQuestion = new QuestionItem
             {
                 Id = Guid.NewGuid(),
-                Title = handler.GetDefaultTitle(),
+                TitleEnglish = handler.GetDefaultTitle(),
+                TitleGerman = "", // Leave German empty for now
+                DescriptionEnglish = "",
+                DescriptionGerman = "",
                 Type = questionType,
                 Order = section.Questions.Count,
                 IsRequired = true
@@ -854,7 +880,7 @@
     {
         if (!IsEditMode)
         {
-            return "Create comprehensive assessments with our visual editor";
+            return T("pages.questionnaire-description");
         }
 
         return TemplateStatusHelper.GetStatusDescription(State.Template.Status);

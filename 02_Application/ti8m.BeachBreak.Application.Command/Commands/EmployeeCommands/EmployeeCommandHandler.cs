@@ -12,7 +12,8 @@ public class EmployeeCommandHandler :
     ICommandHandler<BulkInsertEmployeesCommand, Result>,
     ICommandHandler<BulkUpdateEmployeesCommand, Result>,
     ICommandHandler<BulkDeleteEmployeesCommand, Result>,
-    ICommandHandler<ChangeEmployeeApplicationRoleCommand, Result>
+    ICommandHandler<ChangeEmployeeApplicationRoleCommand, Result>,
+    ICommandHandler<ChangeEmployeePreferredLanguageCommand, Result>
 {
     private static readonly Guid namespaceGuid = new("BF24D00E-4E5E-4B4D-AFC2-798860B2DA73");
     private readonly IEmployeeAggregateRepository repository;
@@ -216,5 +217,58 @@ public class EmployeeCommandHandler :
             logger.LogChangeEmployeeApplicationRoleFailed(command.EmployeeId, ex.Message, ex);
             throw;
         }
+    }
+
+    public async Task<Result> HandleAsync(ChangeEmployeePreferredLanguageCommand command, CancellationToken cancellationToken = default)
+    {
+        logger.LogInformation("Handling ChangeEmployeePreferredLanguageCommand for EmployeeId: {EmployeeId}, Language: {Language}, ChangedBy: {ChangedBy}",
+            command.EmployeeId, command.PreferredLanguage, command.ChangedBy);
+
+        try
+        {
+            // Retrieve employee aggregate
+            var employee = await repository.LoadAsync<Employee>(command.EmployeeId, cancellationToken: cancellationToken);
+            if (employee == null)
+            {
+                logger.LogWarning("Employee not found with Id: {EmployeeId}", command.EmployeeId);
+                return Result.Fail($"Employee with ID {command.EmployeeId} not found", 404);
+            }
+
+            // Map from Application Language to Domain Language
+            var domainLanguage = MapToDomainLanguage(command.PreferredLanguage);
+
+            // Apply domain command
+            employee.ChangePreferredLanguage(domainLanguage);
+
+            // Save aggregate with new events
+            await repository.StoreAsync(employee, cancellationToken);
+
+            logger.LogInformation("Successfully changed preferred language for EmployeeId: {EmployeeId} to {Language}",
+                command.EmployeeId, command.PreferredLanguage);
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error handling ChangeEmployeePreferredLanguageCommand for EmployeeId: {EmployeeId}",
+                command.EmployeeId);
+            return Result.Fail($"Failed to change preferred language: {ex.Message}", 500);
+        }
+    }
+
+    /// <summary>
+    /// Maps from Application.Command.Models.Language to Domain.Language.
+    /// This mapping belongs in the Application layer as it's responsible for translating
+    /// between application concerns and domain concepts.
+    /// </summary>
+    private static Domain.Language MapToDomainLanguage(Models.Language applicationLanguage)
+    {
+        return applicationLanguage switch
+        {
+            Models.Language.English => Domain.Language.English,
+            Models.Language.German => Domain.Language.German,
+            _ => throw new ArgumentOutOfRangeException(nameof(applicationLanguage), applicationLanguage,
+                $"Unknown Application Language: {applicationLanguage}")
+        };
     }
 }

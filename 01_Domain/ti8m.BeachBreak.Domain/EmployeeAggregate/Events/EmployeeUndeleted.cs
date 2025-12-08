@@ -14,4 +14,5 @@ public record EmployeeUndeleted(
     string ManagerId,
     string LoginName,
     int OrganizationNumber,
-    ApplicationRole ApplicationRole) : IDomainEvent;
+    ApplicationRole ApplicationRole,
+    Language PreferredLanguage) : IDomainEvent;

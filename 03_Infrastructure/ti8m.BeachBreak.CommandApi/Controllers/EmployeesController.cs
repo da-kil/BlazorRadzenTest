@@ -172,6 +172,7 @@ public class EmployeesController : BaseController
     /// Stores responses with CompletionRole.Employee in the domain model.
     /// </summary>
     [HttpPost("me/responses/assignment/{assignmentId:guid}")]
+    [Authorize]
     [ProducesResponseType(typeof(Guid), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -229,6 +230,7 @@ public class EmployeesController : BaseController
     /// This is the employee self-service endpoint that follows the "me" pattern for implicit authorization.
     /// </summary>
     [HttpPost("me/responses/assignment/{assignmentId:guid}/submit")]
+    [Authorize]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -264,4 +266,70 @@ public class EmployeesController : BaseController
 
         return CreateResponse(result);
     }
+
+    /// <summary>
+    /// Changes the preferred language for a specific employee.
+    /// Users can only change their own language preference unless they have elevated roles.
+    /// </summary>
+    [HttpPost("{id:guid}/language")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ChangeEmployeeLanguage(Guid id, [FromBody] ChangeEmployeeLanguageRequest request)
+    {
+        logger.LogInformation("Received ChangeEmployeeLanguage request for EmployeeId: {EmployeeId}, Language: {Language}",
+            id, request.Language);
+
+        try
+        {
+            // Get current user ID for authorization
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("ChangeEmployeeLanguage failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // For now, users can only change their own language
+            // TODO: Add elevated role authorization for HR/Admin to change other employees' languages
+            if (userId != id)
+            {
+                logger.LogWarning("User {UserId} attempted to change language for employee {EmployeeId} without authorization",
+                    userId, id);
+                return Forbid("You can only change your own language preference");
+            }
+
+            // Validate language parameter (DTO enum validation is handled by model binding)
+            if (!Enum.IsDefined(typeof(LanguageDto), request.Language))
+            {
+                return BadRequest($"Invalid language value: {request.Language}. Valid values are: {string.Join(", ", Enum.GetValues<LanguageDto>())}");
+            }
+
+            // Map from API DTO to Application layer enum
+            var applicationLanguage = LanguageMapper.MapToApplication(request.Language);
+
+            var command = new ChangeEmployeePreferredLanguageCommand(
+                id,
+                applicationLanguage,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+
+            logger.LogInformation("ChangeEmployeeLanguage command result for EmployeeId {EmployeeId}: Success={Success}",
+                id, result.Succeeded);
+
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error changing language for employee {EmployeeId}", id);
+            return StatusCode(500, "An error occurred while changing the employee language");
+        }
+    }
 }
+
+/// <summary>
+/// Request model for changing employee language preference
+/// </summary>
+public record ChangeEmployeeLanguageRequest(LanguageDto Language);

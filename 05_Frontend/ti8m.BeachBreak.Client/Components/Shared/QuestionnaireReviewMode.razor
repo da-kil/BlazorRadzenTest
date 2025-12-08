@@ -7,9 +7,10 @@
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Questions
 @using ti8m.BeachBreak.Client.Layout
-@using ti8m.BeachBreak.Client.Models
 @using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Extensions
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
 @inject IQuestionnaireAssignmentService AssignmentService
@@ -35,8 +36,8 @@ else if (template == null || response == null)
 else
 {
     <PageLayout Type="LayoutType.Immersive"
-                          Title="@($"Review Meeting: {template.Name}")"
-                        Description="@template.Description"
+                          Title="@($"Review Meeting: {template.GetLocalizedNameWithFallback(CurrentLanguage)}")"
+                        Description="@template.GetLocalizedDescriptionWithFallback(CurrentLanguage)"
                         ShowDefaultFooter="true">
         <HeaderContent>
             <div class="questionnaire-info-banner">
@@ -87,7 +88,7 @@ else
                     var sectionItem = template.Sections.OrderBy(s => s.Order).Skip(i).FirstOrDefault();
                     if (sectionItem != null)
                     {
-                        <RadzenStepsItem Text="@sectionItem.Title" />
+                        <RadzenStepsItem Text="@sectionItem.GetLocalizedTitleWithFallback(CurrentLanguage)" />
                     }
                 }
             </RadzenSteps>
@@ -98,10 +99,10 @@ else
                 {
                     <header class="section-header-questionnaire">
                         <div class="section-title-container">
-                            <h2 class="section-title">@currentSection.Title</h2>
-                            @if (!string.IsNullOrWhiteSpace(currentSection.Description))
+                            <h2 class="section-title">@currentSection.GetLocalizedTitleWithFallback(CurrentLanguage)</h2>
+                            @if (!string.IsNullOrWhiteSpace(currentSection.GetLocalizedDescriptionWithFallback(CurrentLanguage)))
                             {
-                                <p class="section-description">@currentSection.Description</p>
+                                <p class="section-description">@currentSection.GetLocalizedDescriptionWithFallback(CurrentLanguage)</p>
                             }
                         </div>
                     </header>
@@ -112,16 +113,16 @@ else
                         {
                             <div class="question-wrapper mb-4">
                                 <div class="question-title">
-                                    @question.Title
+                                    @question.GetLocalizedTitleWithFallback(CurrentLanguage)
                                     @if (question.IsRequired)
                                     {
                                         <span class="text-danger">*</span>
                                     }
                                 </div>
 
-                                @if (!string.IsNullOrWhiteSpace(question.Description))
+                                @if (!string.IsNullOrWhiteSpace(question.GetLocalizedDescriptionWithFallback(CurrentLanguage)))
                                 {
-                                    <div class="question-description">@question.Description</div>
+                                    <div class="question-description">@question.GetLocalizedDescriptionWithFallback(CurrentLanguage)</div>
                                 }
 
                                 <div class="review-question-container">
@@ -442,7 +443,7 @@ else
             { "Question", question },
             { "CurrentAnswer", currentAnswer },
             { "CompletionRole", originalRole },
-            { "SectionTitle", currentSection!.Title },
+            { "SectionTitle", currentSection!.GetLocalizedTitleWithFallback(CurrentLanguage) },
             { "AssignmentId", Assignment.Id },
             { "CurrentUserRole", GetRoleForDialog(originalRole) },
             { "AssignmentWorkflowState", Assignment.WorkflowState }
@@ -455,7 +456,7 @@ else
         }
 
         var result = await DialogService.OpenAsync<EditAnswerDialog>(
-            $"Edit Answer: {currentSection.Title}",
+            $"Edit Answer: {currentSection.GetLocalizedTitleWithFallback(CurrentLanguage)}",
             parameters,
             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
         );

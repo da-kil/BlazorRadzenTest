@@ -23,10 +23,10 @@ public class QuestionnaireValidationService
     {
         var validationErrors = new List<string>();
 
-        // Validate template name
-        if (string.IsNullOrWhiteSpace(template.Name))
+        // Validate template name - English name is required
+        if (string.IsNullOrWhiteSpace(template.NameEnglish))
         {
-            validationErrors.Add("Template name is required");
+            validationErrors.Add("English template name is required");
         }
 
         // Validate workflow configuration
@@ -41,9 +41,9 @@ public class QuestionnaireValidationService
             {
                 foreach (var section in nonEmployeeSections)
                 {
-                    var sectionName = string.IsNullOrWhiteSpace(section.Title)
+                    var sectionName = string.IsNullOrWhiteSpace(section.TitleEnglish)
                         ? $"Section {section.Order + 1}"
-                        : section.Title;
+                        : section.TitleEnglish;
                     validationErrors.Add($"'{sectionName}' must be completed by Employee only when manager review is not required");
                 }
             }
@@ -67,7 +67,7 @@ public class QuestionnaireValidationService
             // Check if section has any questions
             if (section.Questions.Count == 0)
             {
-                var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
+                var sectionName = string.IsNullOrWhiteSpace(section.TitleEnglish) ? $"Section {section.Order + 1}" : section.TitleEnglish;
                 validationErrors.Add($"'{sectionName}' must contain at least one question");
                 continue;
             }
@@ -75,13 +75,13 @@ public class QuestionnaireValidationService
             // Validate each question in the section
             foreach (var question in section.Questions)
             {
-                var sectionName = string.IsNullOrWhiteSpace(section.Title) ? $"Section {section.Order + 1}" : section.Title;
+                var sectionName = string.IsNullOrWhiteSpace(section.TitleEnglish) ? $"Section {section.Order + 1}" : section.TitleEnglish;
                 var questionPos = $"Question {question.Order + 1}";
 
-                // Validate question title
-                if (string.IsNullOrWhiteSpace(question.Title))
+                // Validate question title - English title is required
+                if (string.IsNullOrWhiteSpace(question.TitleEnglish))
                 {
-                    validationErrors.Add($"{questionPos} in '{sectionName}' requires a title");
+                    validationErrors.Add($"{questionPos} in '{sectionName}' requires an English title");
                 }
 
                 // Validate question content based on type
@@ -96,9 +96,9 @@ public class QuestionnaireValidationService
                     {
                         for (int i = 0; i < competencies.Count; i++)
                         {
-                            if (string.IsNullOrWhiteSpace(competencies[i].Title))
+                            if (string.IsNullOrWhiteSpace(competencies[i].TitleEnglish))
                             {
-                                validationErrors.Add($"Competency {i + 1} in {questionPos} ('{sectionName}') requires a title");
+                                validationErrors.Add($"Competency {i + 1} in {questionPos} ('{sectionName}') requires an English title");
                             }
                         }
                     }
@@ -119,9 +119,10 @@ public class QuestionnaireValidationService
                     {
                         for (int i = 0; i < textSections.Count; i++)
                         {
-                            if (string.IsNullOrWhiteSpace(textSections[i].Title))
+                            if (string.IsNullOrWhiteSpace(textSections[i].TitleEnglish) &&
+                                string.IsNullOrWhiteSpace(textSections[i].TitleGerman))
                             {
-                                validationErrors.Add($"Text section {i + 1} in {questionPos} ('{sectionName}') requires a title");
+                                validationErrors.Add($"Text section {i + 1} in {questionPos} ('{sectionName}') requires a title (in English or German)");
                             }
                         }
                     }

@@ -28,6 +28,15 @@ public class EmployeeDto
     public required string Manager { get; set; }
 }
 
+public class UITranslationDto
+{
+    public required string Key { get; set; }
+    public required string German { get; set; }
+    public required string English { get; set; }
+    public required string Category { get; set; }
+    public DateTimeOffset CreatedDate { get; set; } = DateTimeOffset.UtcNow;
+}
+
 public class TestDataGenerator
 {
     private readonly Random random = new Random(42); // Fixed seed for reproducible results
@@ -104,6 +113,10 @@ public class TestDataGenerator
         return organizations;
     }
 
+    // NOTE: UI translations are now managed in test-translations.json
+    // This file is the single source of truth for all UI translations.
+    // Do not regenerate translations programmatically as it will overwrite manual additions.
+
     public List<EmployeeDto> GenerateEmployees(List<SyncOrganizationDto> organizations, int employeesPerOrg = 5)
     {
         var employees = new List<EmployeeDto>();
@@ -178,6 +191,24 @@ public class TestDataGenerator
         var employees = GenerateEmployees(organizations, 8);
         Console.WriteLine($"Generated {employees.Count} employees");
 
+        // Load existing translations from file (do not regenerate)
+        string translationsJson;
+        if (File.Exists("test-translations.json"))
+        {
+            translationsJson = await File.ReadAllTextAsync("test-translations.json");
+            var deserializeOptions = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var translations = JsonSerializer.Deserialize<List<UITranslationDto>>(translationsJson, deserializeOptions);
+            Console.WriteLine($"Loaded {translations?.Count ?? 0} existing UI translations from test-translations.json");
+        }
+        else
+        {
+            Console.WriteLine("Warning: test-translations.json not found. Translation import will be skipped.");
+            translationsJson = "[]";
+        }
+
         // Configure JSON options for readable output
         var jsonOptions = new JsonSerializerOptions
         {
@@ -195,11 +226,14 @@ public class TestDataGenerator
         await File.WriteAllTextAsync("test-employees.json", employeesJson);
         Console.WriteLine("Saved employees to test-employees.json");
 
+        // NOTE: test-translations.json is NOT regenerated - it is managed manually
+        Console.WriteLine("Translations file (test-translations.json) is preserved - no changes made");
+
         // Generate curl commands for testing
-        await GenerateCurlCommands(organizationsJson, employeesJson);
+        await GenerateCurlCommands(organizationsJson, employeesJson, translationsJson);
     }
 
-    private async Task GenerateCurlCommands(string organizationsJson, string employeesJson)
+    private async Task GenerateCurlCommands(string organizationsJson, string employeesJson, string translationsJson)
     {
         var curlCommands = new StringBuilder();
 

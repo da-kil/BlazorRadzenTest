@@ -1,19 +1,18 @@
 using Marten;
+using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Application.Query.Models;
+using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Domain;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.ReadModelRepositories;
 
-public class HRDashboardRepository : IHRDashboardRepository
+public class HRDashboardRepository(IDocumentSession session, ILanguageContext languageContext) : IHRDashboardRepository
 {
-    private readonly IDocumentSession session;
-
-    public HRDashboardRepository(IDocumentSession session)
-    {
-        this.session = session;
-    }
+    private readonly IDocumentSession session = session;
+    private readonly ILanguageContext languageContext = languageContext;
 
     public async Task<HRDashboardReadModel?> GetHRDashboardAsync(CancellationToken cancellationToken = default)
     {
@@ -34,7 +33,12 @@ public class HRDashboardRepository : IHRDashboardRepository
         var templates = await session.Query<QuestionnaireTemplateReadModel>()
             .Where(t => templateIds.Contains(t.Id))
             .ToListAsync(cancellationToken);
-        var templateLookup = templates.ToDictionary(t => t.Id, t => t.Name);
+
+        // Get user's preferred language
+        var currentLanguageCode = await languageContext.GetCurrentLanguageCodeAsync();
+        var currentLanguage = LanguageMapper.FromLanguageCode(currentLanguageCode);
+        var domainLanguage = LanguageMapper.MapToDomain(currentLanguage);
+        var templateLookup = templates.ToDictionary(t => t.Id, t => GetLocalizedTemplateName(t, domainLanguage));
 
         // Calculate organization-wide metrics
         var totalEmployees = allEmployees.Count;
@@ -197,5 +201,10 @@ public class HRDashboardRepository : IHRDashboardRepository
             UrgentAssignments = urgentAssignments,
             LastUpdated = DateTime.UtcNow
         };
+    }
+
+    private static string GetLocalizedTemplateName(QuestionnaireTemplateReadModel template, ti8m.BeachBreak.Domain.Language language)
+    {
+        return language == ti8m.BeachBreak.Domain.Language.German ? template.NameGerman : template.NameEnglish;
     }
 }

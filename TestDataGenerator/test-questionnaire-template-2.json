@@ -1,7 +1,9 @@
 {
   "Id": "68f7fb75-0e17-4593-9e68-83091d4e7e71",
-  "Name": "1 Jahresgespräch",
-  "Description": "",
+  "NameEnglish": "1 Jahresgespräch - EN",
+  "NameGerman": "1 Jahresgespräch - DE",
+  "DescriptionEnglish": "",
+  "DescriptionGerman": "",
   "CategoryId": "4BA94BB8-5437-4A5B-8450-86411191D53C",
   "RequiresManagerReview": false,
   "Status": 0,
@@ -11,36 +13,46 @@
   "Sections": [
     {
       "Id": "ceb00776-1974-48cb-98ae-a73100e18ccb",
-      "Title": "Jahresgespräch",
-      "Description": "",
+      "TitleEnglish": "Jahresgespräch",
+      "TitleGerman": "Jahresgespräch",
+      "DescriptionEnglish": "",
+      "DescriptionGerman": "",
       "Order": 0,
       "IsRequired": true,
       "CompletionRole": 0,
       "Questions": [
         {
           "Id": "47e5ae6b-3176-44b6-a9e8-39810350e338",
-          "Title": "Career Development & Planning",
-          "Description": "",
+          "TitleEnglish": "Career Development & Planning",
+          "TitleGerman": "Career Development & Planning",
+          "DescriptionEnglish": "",
+          "DescriptionGerman": "",
           "Type": 1,
           "Order": 0,
           "IsRequired": true,
           "Configuration": {
             "TextSections": [
               {
-                "Title": "Wie hast du dich bei der ti&m eingelebt?",
-                "Description": "",
+                "TitleEnglish": "How have you settled in at ti&m?",
+                "TitleGerman": "Wie hast du dich bei der ti&m eingelebt?",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 0
               },
               {
-                "Title": "Was gefällt dir besonders gut?",
-                "Description": "",
+                "TitleEnglish": "What do you particularly like?",
+                "TitleGerman": "Was gefällt dir besonders gut?",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 1
               },
               {
-                "Title": "Wo gibt es Verbesserungspotenzial / Was würdest du gerne ändern?",
-                "Description": "",
+                "TitleEnglish": "Where is there potential for improvement / What would you like to change?",
+                "TitleGerman": "Wo gibt es Verbesserungspotenzial / Was würdest du gerne ändern?",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 2
               }
@@ -51,16 +63,20 @@
     },
     {
       "Id": "1e6b9233-f568-485a-a5c3-122dd7c2cdfe",
-      "Title": "Wie zufrieden bist du mit folgenden Themen?",
-      "Description": "",
+      "TitleEnglish": "Wie zufrieden bist du mit folgenden Themen?",
+      "TitleGerman": "Wie zufrieden bist du mit folgenden Themen?",
+      "DescriptionEnglish": "",
+      "DescriptionGerman": "",
       "Order": 1,
       "IsRequired": true,
       "CompletionRole": 0,
       "Questions": [
         {
           "Id": "7a4523ca-273d-49bb-a211-8a2bf7e618d1",
-          "Title": "Competency Assessment",
-          "Description": "",
+          "TitleEnglish": "Competency Assessment",
+          "TitleGerman": "Competency Assessment",
+          "DescriptionEnglish": "",
+          "DescriptionGerman": "",
           "Type": 0,
           "Order": 0,
           "IsRequired": true,
@@ -68,85 +84,109 @@
             "Competencies": [
               {
                 "Key": "competency_1",
-                "Title": "Salär",
-                "Description": "",
+                "TitleEnglish": "Salary",
+                "TitleGerman": "Salär",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 0
               },
               {
                 "Key": "competency_2",
-                "Title": "Weiterbildung",
-                "Description": "",
+                "TitleEnglish": "Continuing Education",
+                "TitleGerman": "Weiterbildung",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 1
               },
               {
                 "Key": "competency_3",
-                "Title": "Karriereentwicklung",
-                "Description": "",
+                "TitleEnglish": "Career Development",
+                "TitleGerman": "Karriereentwicklung",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 2
               },
               {
                 "Key": "competency_4",
-                "Title": "Vorgesetzte Person",
-                "Description": "",
+                "TitleEnglish": "Supervisor",
+                "TitleGerman": "Vorgesetzte Person",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 3
               },
               {
                 "Key": "competency_5",
-                "Title": "Arbeitsinhalt",
-                "Description": "",
+                "TitleEnglish": "Work Content",
+                "TitleGerman": "Arbeitsinhalt",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 4
               },
               {
                 "Key": "competency_6",
-                "Title": "Aktuelles Projekt",
-                "Description": "",
+                "TitleEnglish": "Current Project",
+                "TitleGerman": "Aktuelles Projekt",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 5
               },
               {
                 "Key": "competency_7",
-                "Title": "Fachaustausch",
-                "Description": "",
+                "TitleEnglish": "Professional Exchange",
+                "TitleGerman": "Fachaustausch",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 6
               },
               {
                 "Key": "competency_8",
-                "Title": "Unternehmenskultur",
-                "Description": "",
+                "TitleEnglish": "Company Culture",
+                "TitleGerman": "Unternehmenskultur",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 7
               },
               {
                 "Key": "competency_9",
-                "Title": "Soziales Umfeld",
-                "Description": "",
+                "TitleEnglish": "Social Environment",
+                "TitleGerman": "Soziales Umfeld",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 8
               },
               {
                 "Key": "competency_10",
-                "Title": "Kommunikation",
-                "Description": "",
+                "TitleEnglish": "Communication",
+                "TitleGerman": "Kommunikation",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 9
               },
               {
                 "Key": "competency_11",
-                "Title": "Information und Transparenz",
-                "Description": "",
+                "TitleEnglish": "Information and Transparency",
+                "TitleGerman": "Information und Transparenz",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 10
               },
               {
                 "Key": "competency_12",
-                "Title": "Gesamtzufriedenheit",
-                "Description": "",
+                "TitleEnglish": "Overall Satisfaction",
+                "TitleGerman": "Gesamtzufriedenheit",
+                "DescriptionEnglish": "",
+                "DescriptionGerman": "",
                 "IsRequired": true,
                 "Order": 11
               }

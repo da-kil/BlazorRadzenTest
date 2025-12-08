@@ -198,8 +198,10 @@ public class QuestionnaireTemplateQueryHandler :
         return new QuestionnaireTemplate
         {
             Id = readModel.Id,
-            Name = readModel.Name,
-            Description = readModel.Description,
+            NameGerman = readModel.NameGerman,
+            NameEnglish = readModel.NameEnglish,
+            DescriptionGerman = readModel.DescriptionGerman,
+            DescriptionEnglish = readModel.DescriptionEnglish,
             CategoryId = readModel.CategoryId,
             RequiresManagerReview = readModel.RequiresManagerReview,
             CreatedDate = readModel.CreatedDate,

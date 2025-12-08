@@ -10,7 +10,6 @@ echo "Inserting organizations..."
 curl -X POST "$BASE_URL/c/api/v$API_VERSION/organizations/bulk-import" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
-  -k \
   -d @test-organizations.json
 
 echo "Waiting 2 seconds..."
@@ -20,7 +19,6 @@ echo "Inserting employees..."
 curl -X POST "$BASE_URL/c/api/v$API_VERSION/employees/bulk-insert" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json" \
-  -k \
   -d @test-employees.json
 
 echo "Test data insertion completed!"

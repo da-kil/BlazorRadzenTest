@@ -6,6 +6,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Extensions
+@inherits OptimizedTranslatableComponentBase
 @inject DialogService DialogService
 
 <div class="add-goal-dialog">
@@ -21,11 +22,11 @@
         @* Weighting is hidden during in-progress states and will be set during InReview by manager *@
 
         <div class="d-flex justify-content-end gap-2 mt-3">
-            <RadzenButton Text="Cancel"
+            <RadzenButton Text="@T("buttons.cancel")"
                         ButtonStyle="ButtonStyle.Light"
                         Click="@Cancel"
                         Disabled="@isSubmitting" />
-            <RadzenButton Text="@(isSubmitting ? (IsEditMode ? "Updating Goal..." : "Adding Goal...") : (IsEditMode ? "Update Goal" : "Add Goal"))"
+            <RadzenButton Text="@GetSubmitButtonText()"
                         Icon="@(isSubmitting ? "" : (IsEditMode ? "save" : "add"))"
                         ButtonStyle="ButtonStyle.Primary"
                         Click="@Submit"
@@ -101,6 +102,15 @@
     private void Cancel()
     {
         DialogService.Close(false);
+    }
+
+    private string GetSubmitButtonText()
+    {
+        if (isSubmitting)
+        {
+            return IsEditMode ? T("dialogs.updating-goal") : T("dialogs.adding-goal");
+        }
+        return IsEditMode ? T("dialogs.update-goal") : T("dialogs.add-goal");
     }
 
 }

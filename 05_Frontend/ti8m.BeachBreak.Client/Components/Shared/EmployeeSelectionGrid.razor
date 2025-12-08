@@ -2,6 +2,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 
 <link href="css/assignment-dialogs.css" rel="stylesheet" />
 
@@ -22,7 +23,7 @@
     {
         <div class="text-center text-muted p-3">
             <RadzenIcon Icon="search_off" Style="font-size: 2rem; margin-bottom: 0.5rem;" />
-            <RadzenText TextStyle="TextStyle.Body2">@EmptyMessage</RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">@(string.IsNullOrEmpty(EmptyMessage) ? T("labels.no-employees-found") : EmptyMessage)</RadzenText>
         </div>
     }
 </div>
@@ -30,7 +31,7 @@
 @if (ShowSelectionSummary && SelectedEmployeeIds.Any())
 {
     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-2">
-        Selected: @SelectedEmployeeIds.Count employee(s)
+        @T("labels.selected-count"): @SelectedEmployeeIds.Count
     </RadzenText>
 }
 
@@ -40,7 +41,7 @@
     [Parameter] public string? CurrentAssigneeId { get; set; }
     [Parameter] public EventCallback<EmployeeDto> OnEmployeeToggle { get; set; }
     [Parameter] public bool ShowSelectionSummary { get; set; } = true;
-    [Parameter] public string EmptyMessage { get; set; } = "No employees found matching your search.";
+    [Parameter] public string EmptyMessage { get; set; } = "";
 
     private bool IsEmployeeSelected(EmployeeDto employee)
     {

@@ -148,8 +148,10 @@ public class QuestionnaireTemplatesController : BaseController
         return new QuestionnaireTemplateDto
         {
             Id = template.Id,
-            Name = template.Name,
-            Description = template.Description,
+            NameGerman = template.NameGerman,
+            NameEnglish = template.NameEnglish,
+            DescriptionGerman = template.DescriptionGerman,
+            DescriptionEnglish = template.DescriptionEnglish,
             CategoryId = template.CategoryId,
             RequiresManagerReview = template.RequiresManagerReview,
             CreatedDate = template.CreatedDate,
@@ -161,16 +163,20 @@ public class QuestionnaireTemplatesController : BaseController
             Sections = template.Sections.Select(section => new QuestionSectionDto
             {
                 Id = section.Id,
-                Title = section.Title,
-                Description = section.Description,
+                TitleGerman = section.TitleGerman,
+                TitleEnglish = section.TitleEnglish,
+                DescriptionGerman = section.DescriptionGerman,
+                DescriptionEnglish = section.DescriptionEnglish,
                 Order = section.Order,
                 IsRequired = section.IsRequired,
                 CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
                 Questions = section.Questions.Select(question => new QuestionItemDto
                 {
                     Id = question.Id,
-                    Title = question.Title,
-                    Description = question.Description,
+                    TitleGerman = question.TitleGerman,
+                    TitleEnglish = question.TitleEnglish,
+                    DescriptionGerman = question.DescriptionGerman,
+                    DescriptionEnglish = question.DescriptionEnglish,
                     Type = MapQuestionTypeToDto[question.Type],
                     Order = question.Order,
                     IsRequired = question.IsRequired,

@@ -322,6 +322,7 @@ public class Program
         builder.Services.AddScoped<IHRApiService, HRApiService>();
         builder.Services.AddScoped<IProjectionReplayApiService, ProjectionReplayApiService>();
         builder.Services.AddScoped<IGoalApiService, GoalApiService>();
+        builder.Services.AddScoped<ITranslationApiService, TranslationApiService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();
@@ -336,6 +337,9 @@ public class Program
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.TextQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.GoalQuestionHandler>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory>();
+
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.ILanguageContext, ti8m.BeachBreak.Client.Services.ClientLanguageContext>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.IUITranslationService, ti8m.BeachBreak.Client.Services.ClientUITranslationService>();
 
         // Register state management
         builder.Services.AddScoped<QuestionnaireBuilderState>();

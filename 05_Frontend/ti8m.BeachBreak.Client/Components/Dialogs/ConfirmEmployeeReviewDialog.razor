@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 @inject DialogService DialogService
 
 <div class="dialog-container">
@@ -8,10 +9,10 @@
         <div class="text-center">
             <RadzenIcon Icon="verified" Class="dialog-header-icon" />
             <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
-                Employee Sign-Off
+                @T("dialogs.employee-sign-off")
             </RadzenText>
             <RadzenText TextStyle="TextStyle.Body2">
-                You are about to confirm that you have reviewed and acknowledged the questionnaire results discussed with your manager.
+                @T("dialogs.confirm-review-message")
             </RadzenText>
         </div>
     </div>
@@ -20,25 +21,25 @@
         <div class="icon-box">
             <RadzenIcon Icon="info" Style="color: #667eea;" />
             <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
-                What does this mean?
+                @T("dialogs.what-does-this-mean")
             </RadzenText>
         </div>
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-            By confirming, you acknowledge that you have:
+            @T("dialogs.by-confirming-acknowledge")
         </RadzenText>
         <ul style="margin-top: 0.5rem; margin-bottom: 0;">
-            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Reviewed all sections with your manager</RadzenText></li>
-            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Discussed any changes made during the review meeting</RadzenText></li>
-            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Understand the final outcome of the review</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("dialogs.reviewed-sections-with-manager")</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("dialogs.discussed-changes-during-meeting")</RadzenText></li>
+            <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("dialogs.understand-final-outcome")</RadzenText></li>
         </ul>
     </div>
 
     <div class="dialog-content-section">
         <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
-            Comments (Optional)
+            @T("dialogs.comments-optional")
         </RadzenText>
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
-            You may add comments about the review process, any concerns, or additional feedback:
+            @T("dialogs.may-add-comments-about-review")
         </RadzenText>
         @if (!string.IsNullOrWhiteSpace(ExistingComments))
         {
@@ -46,31 +47,31 @@
                 <div class="icon-box">
                     <RadzenIcon Icon="edit" Style="color: #ff9800;" />
                     <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-0" Style="color: #856404;">
-                        Existing Comments Loaded
+                        @T("dialogs.existing-comments-loaded")
                     </RadzenText>
                 </div>
                 <RadzenText TextStyle="TextStyle.Caption" Style="color: #856404;">
-                    You can edit or replace your previous comments below.
+                    @T("dialogs.can-edit-replace-comments")
                 </RadzenText>
             </div>
         }
         <RadzenTextArea @bind-Value="@employeeComments"
-                       Placeholder="Enter your comments here... (optional)"
+                       Placeholder="@T("placeholders.enter-comments-optional")"
                        Rows="6"
                        Style="width: 100%;"
                        MaxLength="2000" />
         <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
-            @(employeeComments?.Length ?? 0) / 2000 characters
+            @(employeeComments?.Length ?? 0) / 2000 @T("forms.characters")
         </RadzenText>
     </div>
 
     <div class="dialog-actions">
-        <AsyncButton Text="Cancel"
+        <AsyncButton Text="@T("buttons.cancel")"
                     ButtonStyle="ButtonStyle.Light"
                     Click="@Cancel"
                     Size="ButtonSize.Medium" />
-        <AsyncButton Text="Sign Off on Review"
-                    ProcessingText="Signing Off"
+        <AsyncButton Text="@T("dialogs.sign-off-review")"
+                    ProcessingText="@T("dialogs.signing-off")"
                     ButtonStyle="ButtonStyle.Success"
                     Icon="verified"
                     Click="@ConfirmReview"

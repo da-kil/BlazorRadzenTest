@@ -1,0 +1,461 @@
+@page "/admin/translations"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
+@inject ITranslationApiService TranslationApiService
+@inject DialogService DialogService
+@inject IJSRuntime JSRuntime
+@inherits OptimizedTranslatableComponentBase
+
+<PageTitle>@T("pages.translation-management")</PageTitle>
+
+<AuthorizeView Policy="Admin">
+    <Authorized>
+        <PageLayout
+                   Title="@T("pages.translation-management")"
+                   Description="@T("pages.translation-management-description")">
+    <HeaderActions>
+        <AsyncButton Text="@T("buttons.add-new-translation")"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="add"
+                     Click="@ShowAddTranslationDialog" />
+    </HeaderActions>
+    <ChildContent>
+
+                <div class="mb-3 d-flex gap-2 align-items-end">
+                    <div class="flex-grow-1">
+                        <RadzenTextBox @bind-Value="@searchText"
+                                       Placeholder="@T("filters.search-translations")"
+                                       @oninput="@OnSearchTextChanged"
+                                       Style="width: 100%;" />
+                    </div>
+                    <div>
+                        <RadzenDropDown @bind-Value="@selectedCategory"
+                                        Data="@categories"
+                                        Change="@OnCategoryChanged"
+                                        Style="width: 200px;"
+                                        Placeholder="@T("filters.all-categories")" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <AsyncButton Text="@T("buttons.clear-cache")"
+                                 ButtonStyle="ButtonStyle.Warning"
+                                 Icon="refresh"
+                                 Size="ButtonSize.Small"
+                                 Click="@InvalidateCache"
+                                 Tooltip="@T("tooltips.clear-translation-cache")" />
+                </div>
+
+                <RadzenDataGrid @ref="translationsGrid" Data="@filteredTranslations" TItem="UITranslation"
+                                AllowFiltering="true" AllowColumnResize="true" AllowSorting="true"
+                                EditMode="DataGridEditMode.Single" AllowAlternatingRows="false">
+                    <Columns>
+                        <RadzenDataGridColumn TItem="UITranslation" Property="Key" Title="@T("columns.key")" Width="200px">
+                            <Template Context="translation">
+                                <RadzenText TextStyle="TextStyle.Body1" Style="font-family: monospace;">@translation.Key</RadzenText>
+                            </Template>
+                            <EditTemplate Context="translation">
+                                <RadzenTextBox @bind-Value="translation.Key"
+                                               @ref="keyTextBox"
+                                               Placeholder="@T("placeholders.enter-translation-key")"
+                                               Class="w-100" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="UITranslation" Property="English" Title="@T("columns.english")" Width="250px">
+                            <Template Context="translation">
+                                <RadzenText TextStyle="TextStyle.Body1">@translation.English</RadzenText>
+                            </Template>
+                            <EditTemplate Context="translation">
+                                <RadzenTextBox @bind-Value="translation.English" Placeholder="@T("placeholders.enter-english-translation")" Class="w-100" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="UITranslation" Property="German" Title="@T("columns.german")" Width="250px">
+                            <Template Context="translation">
+                                <RadzenText TextStyle="TextStyle.Body1">@translation.German</RadzenText>
+                            </Template>
+                            <EditTemplate Context="translation">
+                                <RadzenTextBox @bind-Value="translation.German" Placeholder="@T("placeholders.enter-german-translation")" Class="w-100" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="UITranslation" Property="Category" Title="@T("columns.category")" Width="150px">
+                            <Template Context="translation">
+                                @if (!string.IsNullOrEmpty(translation.Category))
+                                {
+                                    <RadzenBadge Text="@translation.Category" Variant="Variant.Outlined" />
+                                }
+                            </Template>
+                            <EditTemplate Context="translation">
+                                <RadzenTextBox @bind-Value="translation.Category" Placeholder="@T("placeholders.enter-category")" Class="w-100" />
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="UITranslation" Property="UpdatedDate" Title="@T("columns.updated")" Width="150px">
+                            <Template Context="translation">
+                                @if (translation.UpdatedDate.HasValue)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption">@translation.UpdatedDate.Value.ToString("MMM dd, yyyy")</RadzenText>
+                                }
+                                else
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption">@translation.CreatedDate.ToString("MMM dd, yyyy")</RadzenText>
+                                }
+                            </Template>
+                        </RadzenDataGridColumn>
+
+                        <RadzenDataGridColumn TItem="UITranslation" Filterable="false" Sortable="false" Width="180px" Title="@T("columns.actions")">
+                            <Template Context="translation">
+                                <div class="d-flex gap-1">
+                                    <AsyncButton ButtonStyle="ButtonStyle.Light"
+                                                 Icon="edit"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => EditRow(translation))"
+                                                 Tooltip="@T("tooltips.edit-translation")" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Danger"
+                                                 ProcessingText="@T("buttons.deleting")"
+                                                 Icon="delete"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => DeleteTranslation(translation))"
+                                                 Tooltip="@T("tooltips.delete-translation")" />
+                                </div>
+                            </Template>
+                            <EditTemplate Context="translation">
+                                <div class="d-flex gap-1">
+                                    <AsyncButton ButtonStyle="ButtonStyle.Success"
+                                                 ProcessingText="@T("buttons.saving")"
+                                                 Icon="save"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => SaveRow(translation))"
+                                                 Tooltip="@T("tooltips.save-changes")" />
+                                    <AsyncButton ButtonStyle="ButtonStyle.Secondary"
+                                                 Icon="cancel"
+                                                 Size="ButtonSize.ExtraSmall"
+                                                 Click="@(() => CancelEdit(translation))"
+                                                 Tooltip="@T("tooltips.cancel-edit")" />
+                                </div>
+                            </EditTemplate>
+                        </RadzenDataGridColumn>
+                    </Columns>
+                </RadzenDataGrid>
+    </ChildContent>
+</PageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="Admin" PageName="@T("pages.translation-management")" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+
+    private List<UITranslation> translations = new();
+    private List<UITranslation> filteredTranslations = new();
+    private RadzenDataGrid<UITranslation>? translationsGrid;
+    private RadzenTextBox? keyTextBox;
+    private string searchText = "";
+    private string selectedCategory = "All";
+    private List<string> categories = new();
+    private UITranslation? translationBeingEdited;
+    private HashSet<string> newTranslationKeys = new(); // Track keys of newly created translations
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        await ExecuteSafelyAsync(async () =>
+        {
+            await LoadTranslations();
+        }, "InitializeTranslationAdmin");
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(translations), translations.Count) ||
+               HasParameterChanged(nameof(searchText), searchText) ||
+               HasParameterChanged(nameof(selectedCategory), selectedCategory);
+    }
+
+    private async Task LoadTranslations()
+    {
+        try
+        {
+            translations = await TranslationApiService.GetAllTranslationsAsync();
+
+            // Extract distinct categories for filter dropdown
+            categories = new List<string> { "All" };
+            categories.AddRange(translations
+                .Where(t => !string.IsNullOrEmpty(t.Category))
+                .Select(t => t.Category)
+                .Distinct()
+                .OrderBy(c => c)
+                .ToList());
+
+            FilterTranslations();
+            NotifyStateChanged();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed-to-load-translations")}: {ex.Message}");
+        }
+    }
+
+    private void OnSearchTextChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        FilterTranslations();
+    }
+
+    private void OnCategoryChanged()
+    {
+        FilterTranslations();
+    }
+
+    private void FilterTranslations()
+    {
+        filteredTranslations = translations
+            .Where(t =>
+                // Search filter
+                (string.IsNullOrEmpty(searchText) ||
+                 t.Key.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                 t.English.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                 t.German.Contains(searchText, StringComparison.OrdinalIgnoreCase)) &&
+                // Category filter
+                (selectedCategory == "All" ||
+                 string.IsNullOrEmpty(selectedCategory) ||
+                 t.Category == selectedCategory))
+            .OrderBy(t => t.Key)
+            .ToList();
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ShowAddTranslationDialog()
+    {
+        var newTranslation = new UITranslation
+        {
+            Id = Guid.NewGuid(),
+            Key = "",
+            German = "",
+            English = "",
+            Category = "",
+            CreatedDate = DateTimeOffset.UtcNow
+        };
+
+        // Track this as a new translation
+        newTranslationKeys.Add(newTranslation.Key);
+
+        // Add to local collections without API call
+        translations.Add(newTranslation);
+        FilterTranslations();
+
+        // Immediately put the new translation in edit mode
+        await EditRow(newTranslation);
+
+        // Auto-focus the Key field
+        await Task.Delay(100); // Small delay to ensure the edit template is rendered
+        if (keyTextBox != null)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", $"document.querySelector('input[placeholder=\"{T("placeholders.enter-translation-key")}\"]')?.focus()");
+        }
+    }
+
+    private async Task EditRow(UITranslation translation)
+    {
+        // Store original values for cancel functionality
+        translationBeingEdited = new UITranslation
+        {
+            Id = translation.Id,
+            Key = translation.Key,
+            German = translation.German,
+            English = translation.English,
+            Category = translation.Category,
+            CreatedDate = translation.CreatedDate,
+            UpdatedDate = translation.UpdatedDate
+        };
+
+        await translationsGrid!.EditRow(translation);
+        await Task.CompletedTask;
+    }
+
+    private async Task SaveRow(UITranslation translation)
+    {
+        try
+        {
+            // Validation
+            if (string.IsNullOrWhiteSpace(translation.Key))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("validation.translation-key-required"));
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(translation.English))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("validation.english-translation-required"));
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(translation.German))
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("validation.german-translation-required"));
+                return;
+            }
+
+            // Check if this is a new translation
+            bool isNewTranslation = translationBeingEdited != null &&
+                                   (newTranslationKeys.Contains(translationBeingEdited.Key) ||
+                                    string.IsNullOrEmpty(translationBeingEdited.Key));
+
+            // Check for duplicate key (only for new translations or if key was changed)
+            if (isNewTranslation || (translationBeingEdited != null && translation.Key != translationBeingEdited.Key))
+            {
+                if (translations.Any(t => t.Key == translation.Key && t.Id != translation.Id))
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("notifications.translation-key-already-exists"));
+                    return;
+                }
+            }
+
+            // Upsert translation via API
+            var success = await TranslationApiService.UpsertTranslationAsync(
+                translation.Key,
+                translation.German,
+                translation.English,
+                string.IsNullOrWhiteSpace(translation.Category) ? null : translation.Category);
+
+            if (success)
+            {
+                if (isNewTranslation)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.translation-created-successfully"));
+
+                    // Remove from new translation tracking
+                    if (translationBeingEdited != null && !string.IsNullOrEmpty(translationBeingEdited.Key))
+                    {
+                        newTranslationKeys.Remove(translationBeingEdited.Key);
+                    }
+
+                    // Reload translations to get the actual data from API and rebuild categories
+                    await LoadTranslations();
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.translation-updated-successfully"));
+                    translation.UpdatedDate = DateTimeOffset.UtcNow;
+                    await translationsGrid!.UpdateRow(translation);
+                }
+
+                translationBeingEdited = null;
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("notifications.failed-to-save-translation"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed-to-save-translation")}: {ex.Message}");
+        }
+    }
+
+    private async Task CancelEdit(UITranslation translation)
+    {
+        if (translationBeingEdited != null)
+        {
+            // Check if this is a new translation
+            bool isNewTranslation = newTranslationKeys.Contains(translationBeingEdited.Key) ||
+                                   string.IsNullOrEmpty(translationBeingEdited.Key);
+
+            if (isNewTranslation)
+            {
+                // Remove from tracking set
+                if (!string.IsNullOrEmpty(translationBeingEdited.Key))
+                {
+                    newTranslationKeys.Remove(translationBeingEdited.Key);
+                }
+
+                // Remove the new translation from local collections
+                translations.Remove(translation);
+                FilterTranslations();
+                translationsGrid!.CancelEditRow(translation);
+            }
+            else
+            {
+                // Restore original values for existing translations
+                translation.Key = translationBeingEdited.Key;
+                translation.German = translationBeingEdited.German;
+                translation.English = translationBeingEdited.English;
+                translation.Category = translationBeingEdited.Category;
+                translationsGrid!.CancelEditRow(translation);
+            }
+        }
+
+        translationBeingEdited = null;
+        await Task.CompletedTask;
+    }
+
+    private async Task DeleteTranslation(UITranslation translation)
+    {
+        var result = await DialogService.Confirm($"{T("dialogs.confirm-delete-translation")} '{translation.Key}'?",
+            T("dialogs.delete-translation"), new ConfirmOptions() { OkButtonText = T("buttons.delete"), CancelButtonText = T("buttons.cancel") });
+
+        if (result == true)
+        {
+            try
+            {
+                var success = await TranslationApiService.DeleteTranslationAsync(translation.Key);
+                if (success)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.translation-deleted-successfully"));
+                    await LoadTranslations();
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("notifications.failed-to-delete-translation"));
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed-to-delete-translation")}: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task InvalidateCache()
+    {
+        try
+        {
+            // Step 1: Clear backend cache
+            var backendSuccess = await TranslationApiService.InvalidateCacheAsync();
+            if (!backendSuccess)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("notifications.failed-to-invalidate-backend-cache"));
+                return;
+            }
+
+            // Step 2: Clear frontend cache (cast to concrete type to access InvalidateFrontendCacheAsync)
+            if (TranslationService is ti8m.BeachBreak.Client.Services.ClientUITranslationService clientService)
+            {
+                await clientService.InvalidateFrontendCacheAsync();
+            }
+
+            // Step 3: Refresh this page's translations
+            await RefreshTranslationsAsync();
+
+            // Step 4: Reload data from server to show fresh translations
+            await LoadTranslations();
+
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("notifications.cache-cleared-completely"));
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("notifications.failed-to-clear-cache")}: {ex.Message}");
+        }
+    }
+}

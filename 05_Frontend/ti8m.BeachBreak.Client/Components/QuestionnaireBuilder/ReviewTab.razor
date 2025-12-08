@@ -2,7 +2,9 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
 @inject QuestionConfigurationService ConfigService
+@inherits OptimizedTranslatableComponentBase
 
 <div class="summary-container">
     @if (Template.Sections.Any())
@@ -10,50 +12,50 @@
         <!-- Template Information Cards -->
         <div class="info-cards-grid">
             <div class="info-card">
-                <h3 class="preview-section-title">Template Name</h3>
-                <p class="preview-content-text">@Template.Name</p>
+                <h3 class="preview-section-title">@T("labels.template-name")</h3>
+                <p class="preview-content-text">@Template.GetLocalizedNameWithFallback(CurrentLanguage)</p>
             </div>
 
             <div class="info-card">
-                <h3 class="preview-section-title">Category</h3>
+                <h3 class="preview-section-title">@T("labels.category")</h3>
                 <p class="preview-content-text">@GetCategoryName()</p>
             </div>
 
             <div class="info-card">
-                <h3 class="preview-section-title">Review Required</h3>
+                <h3 class="preview-section-title">@T("labels.review-required")</h3>
                 <div class="review-badge-container">
                     @if (Template.RequiresManagerReview)
                     {
                         <span class="review-badge required">
                             <RadzenIcon Icon="check_circle" Style="font-size: 1rem;" />
-                            Yes
+                            @T("labels.yes")
                         </span>
                     }
                     else
                     {
                         <span class="review-badge not-required">
                             <RadzenIcon Icon="cancel" Style="font-size: 1rem;" />
-                            No
+                            @T("labels.no")
                         </span>
                     }
                 </div>
             </div>
         </div>
 
-        @if (!string.IsNullOrWhiteSpace(Template.Description))
+        @if (!string.IsNullOrWhiteSpace(Template.GetLocalizedDescriptionWithFallback(CurrentLanguage)))
         {
             <div class="info-card description-card">
-                <h3 class="preview-section-title">Description</h3>
-                <p class="preview-description-text">@Template.Description</p>
+                <h3 class="preview-section-title">@T("labels.description")</h3>
+                <p class="preview-description-text">@Template.GetLocalizedDescriptionWithFallback(CurrentLanguage)</p>
             </div>
         }
 
         <!-- Integrated Summary Header -->
         <div class="questionnaire-summary">
-            <h3 class="summary-title">@Template.Name Summary</h3>
+            <h3 class="summary-title">@Template.GetLocalizedNameWithFallback(CurrentLanguage) @T("labels.summary")</h3>
             <p class="summary-stats">
-                @Template.Sections.Count section@(Template.Sections.Count != 1 ? "s" : "") •
-                @GetTotalItems() total item@(GetTotalItems() != 1 ? "s" : "")*@(Template.RequiresManagerReview ? " • Manager review required" : " • No manager review")
+                @Template.Sections.Count @(Template.Sections.Count != 1 ? T("labels.sections").ToLower() : T("labels.section").ToLower()) •
+                @GetTotalItems() @(GetTotalItems() != 1 ? T("labels.total-items").ToLower() : T("labels.total-item").ToLower())@(Template.RequiresManagerReview ? " • " + T("labels.manager-review-required") : " • " + T("labels.no-manager-review"))
             </p>
         </div>
 
@@ -62,9 +64,9 @@
             <table class="structure-table">
                 <thead>
                     <tr>
-                        <th>Section</th>
-                        <th class="table-header-center table-col-completed-by">Completed By</th>
-                        <th class="table-header-center table-col-items">Items</th>
+                        <th>@T("labels.section")</th>
+                        <th class="table-header-center table-col-completed-by">@T("labels.completed-by")</th>
+                        <th class="table-header-center table-col-items">@T("labels.items")</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -72,7 +74,7 @@
                     {
                         <tr class="section-row">
                             <td>
-                                <strong>@templateSection.Title</strong>
+                                <strong>@templateSection.GetLocalizedTitleWithFallback(CurrentLanguage)</strong>
                             </td>
                             <td class="table-cell-center">
                                 @GetCompletionRoleBadge(templateSection)
@@ -87,14 +89,14 @@
         </div>
 
         <p class="preview-footer-note">
-            * Items include competencies (Assessment questions) and text sections (Text questions). Goal questions have items added during response.
+            @T("messages.items-explanation")
         </p>
     }
     else
     {
         <div class="empty-state">
             <RadzenIcon Icon="description" class="empty-state-icon" />
-            <p>Add sections and questions to see the summary</p>
+            <p>@T("messages.add-sections-to-see-summary")</p>
         </div>
     }
 </div>
@@ -108,11 +110,11 @@
     {
         if (Template.CategoryId == Guid.Empty)
         {
-            return "No category selected";
+            return T("messages.no-category-selected");
         }
 
         var category = Categories.FirstOrDefault(c => c.Id == Template.CategoryId);
-        return category?.NameEn ?? "Unknown category";
+        return category?.NameEn ?? T("messages.unknown-category");
     }
 
     private int GetTotalItems()
@@ -164,17 +166,17 @@
 
         if (assessmentCount > 0)
         {
-            itemCounts.Add($"{assessmentCount} competenc{(assessmentCount != 1 ? "ies" : "y")}");
+            itemCounts.Add($"{assessmentCount} {(assessmentCount != 1 ? T("labels.competencies").ToLower() : T("labels.competency").ToLower())}");
         }
 
         if (textSectionCount > 0)
         {
-            itemCounts.Add($"{textSectionCount} section{(textSectionCount != 1 ? "s" : "")}");
+            itemCounts.Add($"{textSectionCount} {(textSectionCount != 1 ? T("labels.sections").ToLower() : T("labels.section").ToLower())}");
         }
 
         if (hasGoals)
         {
-            itemCounts.Add("Goals added during response");
+            itemCounts.Add(T("messages.goals-added-during-response"));
         }
 
         return itemCounts.Any() ? string.Join(", ", itemCounts) : "—";
@@ -196,10 +198,10 @@
     {
         return role switch
         {
-            CompletionRole.Employee => "Employee",
-            CompletionRole.Manager => "Manager",
-            CompletionRole.Both => "Both",
-            _ => "Unknown"
+            CompletionRole.Employee => T("labels.employee"),
+            CompletionRole.Manager => T("labels.manager"),
+            CompletionRole.Both => T("labels.both"),
+            _ => T("labels.unknown")
         };
     }
 }

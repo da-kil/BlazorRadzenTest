@@ -1,5 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 
 <!-- Progress Steps -->
 <div class="progress-steps-wrapper">
@@ -9,19 +11,19 @@
 				<div class="step-number-modern">
 					<RadzenIcon Icon="@(CurrentStep > 1 ? "check" : "info")" />
 				</div>
-				<span class="step-text-modern">Basic Info</span>
+				<span class="step-text-modern">@T("steps.basic-info")</span>
 			</div>
 			<div class="step-modern @(CurrentStep == 2 ? "active" : CurrentStep > 2 ? "completed" : "")" @onclick="() => HandleStepClick(2)">
 				<div class="step-number-modern">
 					<RadzenIcon Icon="@(CurrentStep > 2 ? "check" : "view_list")" />
 				</div>
-				<span class="step-text-modern">Build Sections</span>
+				<span class="step-text-modern">@T("steps.build-sections")</span>
 			</div>
 			<div class="step-modern @(CurrentStep == 3 ? "active" : CurrentStep > 3 ? "completed" : "")" @onclick="() => HandleStepClick(3)">
 				<div class="step-number-modern">
 					<RadzenIcon Icon="@(CurrentStep > 3 ? "check" : "preview")" />
 				</div>
-				<span class="step-text-modern">Review & Publish</span>
+				<span class="step-text-modern">@T("steps.review-publish")</span>
 			</div>
 		</div>
 	</div>

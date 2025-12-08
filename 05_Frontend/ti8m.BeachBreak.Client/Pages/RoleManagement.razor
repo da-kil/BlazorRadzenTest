@@ -10,7 +10,7 @@
 @inject IEmployeeApiService EmployeeService
 @inject DialogService DialogService
 @inject NotificationService NotificationService
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 
 <PageTitle>Role Management</PageTitle>
 
@@ -23,7 +23,7 @@
 
                             <div class="mb-3 d-flex justify-content-between align-items-center gap-2">
                                 <RadzenTextBox @bind-Value="@searchText"
-                                               Placeholder="Search employees..."
+                                               Placeholder="@T("filters.search-employees")"
                                                @oninput="@OnSearchTextChanged"
                                                Style="width: 300px;" />
                                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
@@ -47,31 +47,31 @@
                                                 RowUpdate="@OnUpdateRow"
                                                 AllowAlternatingRows="false">
                                     <Columns>
-                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="FirstName" Title="First Name" Width="150px" Sortable="true" Filterable="true">
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="FirstName" Title="@T("columns.first-name")" Width="150px" Sortable="true" Filterable="true">
                                             <Template Context="employee">
                                                 <RadzenText TextStyle="TextStyle.Body1">@employee.FirstName</RadzenText>
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="LastName" Title="Last Name" Width="150px" Sortable="true" Filterable="true">
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="LastName" Title="@T("columns.last-name")" Width="150px" Sortable="true" Filterable="true">
                                             <Template Context="employee">
                                                 <RadzenText TextStyle="TextStyle.Body1">@employee.LastName</RadzenText>
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="Role" Title="Job Role" Width="200px" Sortable="true" Filterable="true">
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="Role" Title="@T("columns.job-role")" Width="200px" Sortable="true" Filterable="true">
                                             <Template Context="employee">
                                                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@employee.Role</RadzenText>
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="Organization" Title="Organization" Width="200px" Sortable="true" Filterable="true">
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="Organization" Title="@T("columns.organization")" Width="200px" Sortable="true" Filterable="true">
                                             <Template Context="employee">
                                                 <RadzenText TextStyle="TextStyle.Body2">@employee.Organization</RadzenText>
                                             </Template>
                                         </RadzenDataGridColumn>
 
-                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="ApplicationRole" Title="Application Role" Width="180px" Sortable="true" Filterable="true">
+                                        <RadzenDataGridColumn TItem="EmployeeDto" Property="ApplicationRole" Title="@T("columns.application-role")" Width="180px" Sortable="true" Filterable="true">
                                             <Template Context="employee">
                                                 @{
                                                     var badgeStyle = employee.ApplicationRole switch
@@ -162,6 +162,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await LoadCurrentUserRole();
         await LoadEmployees();
 
