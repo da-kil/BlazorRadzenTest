@@ -889,17 +889,7 @@
 
     private string GetQuestionTypeLabel(QuestionItem question)
     {
-        // Check if question has a custom type label stored in configuration
-        if (question.Configuration.ContainsKey("QuestionTitle"))
-        {
-            var customTitle = question.Configuration["QuestionTitle"].ToString() ?? "";
-            if (!string.IsNullOrWhiteSpace(customTitle))
-            {
-                return customTitle;
-            }
-        }
-
-        // Fall back to global labels
+        // Return the standard type label based on question type
         return questionTypeLabels[question.Type];
     }
 
