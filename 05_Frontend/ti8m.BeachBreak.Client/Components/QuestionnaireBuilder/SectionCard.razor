@@ -438,42 +438,19 @@
             switch (question.Type)
             {
                 case QuestionType.Assessment:
-                    if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
+                    if (question.Configuration is AssessmentConfiguration assessConfig)
                     {
-                        if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                        }
-                        else if (competenciesObj is System.Collections.ICollection collection)
-                        {
-                            totalItems += collection.Count;
-                        }
+                        totalItems += assessConfig.Evaluations.Count;
                     }
                     break;
                 case QuestionType.Goal:
-                    if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
-                    {
-                        if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                        }
-                        else if (goalCategoriesObj is System.Collections.ICollection collection)
-                        {
-                            totalItems += collection.Count;
-                        }
-                    }
+                    // Goal questions don't have template items - goals are added dynamically during workflow
+                    totalItems += 0;
                     break;
                 case QuestionType.TextQuestion:
-                    if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
+                    if (question.Configuration is TextQuestionConfiguration textConfig)
                     {
-                        if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                        }
-                        else if (textSectionsObj is System.Collections.ICollection collection)
-                        {
-                            totalItems += collection.Count;
-                        }
+                        totalItems += textConfig.TextSections.Count;
                     }
                     break;
                 default:
@@ -533,77 +510,19 @@
             switch (question.Type)
             {
                 case QuestionType.Assessment:
-                    if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
+                    if (question.Configuration is AssessmentConfiguration assessConfig)
                     {
-                        if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try
-                            {
-                                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<EvaluationItem>>(jsonElement.GetRawText()) ?? new List<EvaluationItem>();
-                                requiredItems += competencies.Count(c => c.IsRequired);
-                            }
-                            catch { }
-                        }
-                        else if (competenciesObj is List<EvaluationItem> competenciesList)
-                        {
-                            requiredItems += competenciesList.Count(c => c.IsRequired);
-                        }
+                        requiredItems += assessConfig.Evaluations.Count(e => e.IsRequired);
                     }
                     break;
                 case QuestionType.Goal:
-                    if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
-                    {
-                        if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try
-                            {
-                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText()) ?? new List<QuestionCard.GoalCategory>();
-                                requiredItems += categories.Count(c => c.IsRequired);
-                            }
-                            catch { }
-                        }
-                        else if (goalCategoriesObj is List<QuestionCard.GoalCategory> categoriesList)
-                        {
-                            requiredItems += categoriesList.Count(c => c.IsRequired);
-                        }
-                        else if (goalCategoriesObj is List<object> objectList)
-                        {
-                            try
-                            {
-                                var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(json) ?? new List<QuestionCard.GoalCategory>();
-                                requiredItems += categories.Count(c => c.IsRequired);
-                            }
-                            catch { }
-                        }
-                    }
+                    // Goal questions don't have template items - goals are added dynamically during workflow
+                    requiredItems += 0;
                     break;
                 case QuestionType.TextQuestion:
-                    if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
+                    if (question.Configuration is TextQuestionConfiguration textConfig)
                     {
-                        if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try
-                            {
-                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText()) ?? new List<QuestionCard.TextSection>();
-                                requiredItems += sections.Count(s => s.IsRequired);
-                            }
-                            catch { }
-                        }
-                        else if (textSectionsObj is List<QuestionCard.TextSection> sectionsList)
-                        {
-                            requiredItems += sectionsList.Count(s => s.IsRequired);
-                        }
-                        else if (textSectionsObj is List<object> objectList)
-                        {
-                            try
-                            {
-                                var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(json) ?? new List<QuestionCard.TextSection>();
-                                requiredItems += sections.Count(s => s.IsRequired);
-                            }
-                            catch { }
-                        }
+                        requiredItems += textConfig.TextSections.Count(s => s.IsRequired);
                     }
                     break;
                 default:
@@ -619,62 +538,66 @@
     // Rating scale configuration methods for Assessment sections
     private int GetRatingScale(QuestionItem question)
     {
-        if (question.Configuration.TryGetValue("RatingScale", out var scale))
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            // Handle JsonElement properly
-            if (scale is System.Text.Json.JsonElement jsonElement)
-            {
-                return jsonElement.GetInt32();
-            }
+            return config.RatingScale;
         }
         return 4; // Default
     }
 
     private void SetRatingScale(QuestionItem question, int value)
     {
-        question.Configuration["RatingScale"] = value;
-        // Apply to all questions in the section
+        // Apply to all Assessment questions in the section
         foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.Assessment))
         {
-            q.Configuration["RatingScale"] = value;
+            if (q.Configuration is AssessmentConfiguration config)
+            {
+                config.RatingScale = value;
+            }
         }
         StateHasChanged();
     }
 
     private string GetScaleLowLabel(QuestionItem question)
     {
-        if (question.Configuration.TryGetValue("ScaleLowLabel", out var label))
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            return label.ToString() ?? "Poor";
+            return config.ScaleLowLabel ?? "Poor";
         }
         return "Poor";
     }
 
     private void SetScaleLowLabel(QuestionItem question, string value)
     {
-        // Apply to all questions in the section
+        // Apply to all Assessment questions in the section
         foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.Assessment))
         {
-            q.Configuration["ScaleLowLabel"] = value ?? "Poor";
+            if (q.Configuration is AssessmentConfiguration config)
+            {
+                config.ScaleLowLabel = value ?? "Poor";
+            }
         }
         StateHasChanged();
     }
 
     private string GetScaleHighLabel(QuestionItem question)
     {
-        if (question.Configuration.TryGetValue("ScaleHighLabel", out var label))
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            return label.ToString() ?? "Excellent";
+            return config.ScaleHighLabel ?? "Excellent";
         }
         return "Excellent";
     }
 
     private void SetScaleHighLabel(QuestionItem question, string value)
     {
-        // Apply to all questions in the section
+        // Apply to all Assessment questions in the section
         foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.Assessment))
         {
-            q.Configuration["ScaleHighLabel"] = value ?? "Excellent";
+            if (q.Configuration is AssessmentConfiguration config)
+            {
+                config.ScaleHighLabel = value ?? "Excellent";
+            }
         }
         StateHasChanged();
     }
