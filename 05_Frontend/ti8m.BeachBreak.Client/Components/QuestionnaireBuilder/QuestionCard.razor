@@ -693,77 +693,35 @@
     }
 
     // Text Question methods
-    private List<TextSection> GetTextSectionsFromConfiguration()
+    private List<TextSection> GetOrderedTextSections()
     {
-        if (Question.Configuration.ContainsKey("TextSections"))
+        if (Question.Configuration is TextQuestionConfiguration config)
         {
-            var textSectionsObj = Question.Configuration["TextSections"];
-
-            // Handle direct cast (when set in editor)
-            if (textSectionsObj is List<TextSection> sections)
-            {
-                return sections;
-            }
-
-            // Handle JSON deserialization (when loaded from API)
-            if (textSectionsObj is System.Text.Json.JsonElement jsonElement)
-            {
-                try
-                {
-                    if (jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                    {
-                        return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(jsonElement.GetRawText()) ?? new List<TextSection>();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing text sections: {ex.Message}");
-                }
-            }
-
-            // Handle string representation (backup case)
-            if (textSectionsObj is string jsonString)
-            {
-                try
-                {
-                    return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(jsonString) ?? new List<TextSection>();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing text sections from string: {ex.Message}");
-                }
-            }
-
-            // Handle List<object> from API deserialization
-            // Note: List<object> is necessary here because JSON API data sometimes comes as untyped objects
-            // that need to be converted to strongly-typed TextSection objects
-            if (textSectionsObj is List<object> objectList)
-            {
-                try
-                {
-                    var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                    return System.Text.Json.JsonSerializer.Deserialize<List<TextSection>>(json) ?? new List<TextSection>();
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error deserializing text sections from API List<object>: {ex.Message}");
-                }
-            }
+            return config.TextSections.OrderBy(s => s.Order).ToList();
         }
-
         return new List<TextSection>();
     }
 
-    private List<TextSection> GetOrderedTextSections()
+    private void UpdateTextQuestionConfiguration(List<TextSection> sections)
     {
-        var sections = GetTextSectionsFromConfiguration();
-        return sections.OrderBy(s => s.Order).ToList();
+        if (Question.Configuration is TextQuestionConfiguration config)
+        {
+            config.TextSections = sections;
+        }
+        else
+        {
+            // Create new configuration if it doesn't exist or is wrong type
+            Question.Configuration = new TextQuestionConfiguration
+            {
+                TextSections = sections
+            };
+        }
     }
 
 
     private async Task RemoveTextSection(int index)
     {
-        var sections = GetTextSectionsFromConfiguration();
+        var sections = GetOrderedTextSections();
         if (index >= 0 && index < sections.Count)
         {
             var sectionName = string.IsNullOrWhiteSpace(sections[index].GetLocalizedTitleWithFallback(CurrentLanguage)) ? $"Text Section {index + 1}" : sections[index].GetLocalizedTitleWithFallback(CurrentLanguage);
@@ -773,7 +731,7 @@
             if (confirmed == true)
             {
                 sections.RemoveAt(index);
-                Question.Configuration["TextSections"] = sections;
+                UpdateTextQuestionConfiguration(sections);
                 StateHasChanged();
             }
         }
@@ -781,7 +739,7 @@
 
     private void UpdateTextSectionTitle(int index, string value)
     {
-        var sections = GetTextSectionsFromConfiguration();
+        var sections = GetOrderedTextSections();
         if (index >= 0 && index < sections.Count)
         {
             if (CurrentLanguage == Language.German)
@@ -792,14 +750,14 @@
             {
                 sections[index].TitleEnglish = value ?? "";
             }
-            Question.Configuration["TextSections"] = sections;
+            UpdateTextQuestionConfiguration(sections);
             StateHasChanged();
         }
     }
 
     private void UpdateTextSectionDescription(int index, string value)
     {
-        var sections = GetTextSectionsFromConfiguration();
+        var sections = GetOrderedTextSections();
         if (index >= 0 && index < sections.Count)
         {
             if (CurrentLanguage == Language.German)
@@ -810,51 +768,51 @@
             {
                 sections[index].DescriptionEnglish = value ?? "";
             }
-            Question.Configuration["TextSections"] = sections;
+            UpdateTextQuestionConfiguration(sections);
             StateHasChanged();
         }
     }
 
     private void UpdateTextSectionTitleEnglish(int index, string value)
     {
-        var sections = GetTextSectionsFromConfiguration();
+        var sections = GetOrderedTextSections();
         if (index >= 0 && index < sections.Count)
         {
             sections[index].TitleEnglish = value ?? "";
-            Question.Configuration["TextSections"] = sections;
+            UpdateTextQuestionConfiguration(sections);
             StateHasChanged();
         }
     }
 
     private void UpdateTextSectionTitleGerman(int index, string value)
     {
-        var sections = GetTextSectionsFromConfiguration();
+        var sections = GetOrderedTextSections();
         if (index >= 0 && index < sections.Count)
         {
             sections[index].TitleGerman = value ?? "";
-            Question.Configuration["TextSections"] = sections;
+            UpdateTextQuestionConfiguration(sections);
             StateHasChanged();
         }
     }
 
     private void UpdateTextSectionDescriptionEnglish(int index, string value)
     {
-        var sections = GetTextSectionsFromConfiguration();
+        var sections = GetOrderedTextSections();
         if (index >= 0 && index < sections.Count)
         {
             sections[index].DescriptionEnglish = value ?? "";
-            Question.Configuration["TextSections"] = sections;
+            UpdateTextQuestionConfiguration(sections);
             StateHasChanged();
         }
     }
 
     private void UpdateTextSectionDescriptionGerman(int index, string value)
     {
-        var sections = GetTextSectionsFromConfiguration();
+        var sections = GetOrderedTextSections();
         if (index >= 0 && index < sections.Count)
         {
             sections[index].DescriptionGerman = value ?? "";
-            Question.Configuration["TextSections"] = sections;
+            UpdateTextQuestionConfiguration(sections);
             StateHasChanged();
         }
     }
@@ -873,7 +831,7 @@
                 sections[i].Order = i;
             }
 
-            Question.Configuration["TextSections"] = sections;
+            UpdateTextQuestionConfiguration(sections);
             StateHasChanged();
         }
     }
@@ -892,7 +850,7 @@
                 sections[i].Order = i;
             }
 
-            Question.Configuration["TextSections"] = sections;
+            UpdateTextQuestionConfiguration(sections);
             StateHasChanged();
         }
     }
@@ -1022,7 +980,7 @@
     // Required flag methods for text sections
     private bool GetTextSectionRequired(int index)
     {
-        var sections = GetTextSectionsFromConfiguration();
+        var sections = GetOrderedTextSections();
         if (index >= 0 && index < sections.Count)
         {
             return sections[index].IsRequired;
@@ -1032,11 +990,11 @@
 
     private async Task UpdateTextSectionRequired(int index, bool value)
     {
-        var sections = GetTextSectionsFromConfiguration();
+        var sections = GetOrderedTextSections();
         if (index >= 0 && index < sections.Count)
         {
             sections[index].IsRequired = value;
-            Question.Configuration["TextSections"] = sections;
+            UpdateTextQuestionConfiguration(sections);
             StateHasChanged();
             await OnRequiredChanged.InvokeAsync();
         }
