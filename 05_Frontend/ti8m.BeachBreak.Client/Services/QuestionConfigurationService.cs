@@ -80,11 +80,10 @@ public class QuestionConfigurationService
 
     /// <summary>
     /// Gets text sections from question configuration
-    /// Note: Uses nested TextSection type from QuestionCard for compatibility with existing code
     /// </summary>
-    public List<QuestionCardTypes.TextSection> GetTextSections(QuestionItem question)
+    public List<TextSection> GetTextSections(QuestionItem question)
     {
-        return GetConfigurationList<QuestionCardTypes.TextSection>(question.Configuration, "TextSections");
+        return GetConfigurationList<TextSection>(question.Configuration, "TextSections");
     }
 
     /// <summary>
@@ -194,7 +193,7 @@ public class QuestionConfigurationService
     /// <summary>
     /// Updates text sections in question configuration
     /// </summary>
-    public void SetTextSections(QuestionItem question, List<QuestionCardTypes.TextSection> textSections)
+    public void SetTextSections(QuestionItem question, List<TextSection> textSections)
     {
         question.Configuration["TextSections"] = textSections;
     }
