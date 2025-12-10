@@ -1262,24 +1262,24 @@ else
 
         if (questionResponse.ResponseData is not AssessmentResponseDataDto assessmentData) return false;
 
-        // Get only required competencies
+        // Get only required evaluations
         var requiredEvaluations = competencies.Where(c => c.IsRequired).ToList();
 
-        // If no required competencies exist, check if at least one competency is rated
+        // If no required evaluations exist, check if at least one evaluation is rated
         if (!requiredEvaluations.Any())
         {
-            return competencies.Any(c => HasCompetencyRating(assessmentData, c.Key));
+            return competencies.Any(c => HasEvaluationRating(assessmentData, c.Key));
         }
 
-        // Check that ALL required competencies have been rated
-        return requiredEvaluations.All(c => HasCompetencyRating(assessmentData, c.Key));
+        // Check that ALL required evaluations have been rated
+        return requiredEvaluations.All(c => HasEvaluationRating(assessmentData, c.Key));
     }
 
-    private bool HasCompetencyRating(AssessmentResponseDataDto assessmentData, string competencyKey)
+    private bool HasEvaluationRating(AssessmentResponseDataDto assessmentData, string evaluationKey)
     {
-        if (assessmentData.Evaluations.TryGetValue(competencyKey, out var competencyRating))
+        if (assessmentData.Evaluations.TryGetValue(evaluationKey, out var evaluationRating))
         {
-            return competencyRating.Rating > 0;
+            return evaluationRating.Rating > 0;
         }
         return false;
     }

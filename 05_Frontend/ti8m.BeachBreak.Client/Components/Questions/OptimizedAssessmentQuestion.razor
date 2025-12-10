@@ -29,7 +29,7 @@
             </div>
         </header>
 
-        <div class="competencies-container">
+        <div class="evaluations-container">
         @if (!evaluations.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">
@@ -71,7 +71,7 @@ else
         <strong>Rating Scale:</strong> @GetRatingScaleDescription()
     </div>
 
-    <div class="competencies-container">
+    <div class="evaluations-container">
         @if (!evaluations.Any())
         {
             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mb-3">

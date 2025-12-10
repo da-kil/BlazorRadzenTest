@@ -434,7 +434,7 @@ else
         return questionResponse.ResponseData;
     }
 
-    private async Task EditAnswer(QuestionItem question, CompletionRole originalRole, string? competencyKey = null)
+    private async Task EditAnswer(QuestionItem question, CompletionRole originalRole, string? evaluationKey = null)
     {
         var currentAnswer = GetAnswer(currentSection!.Id, question.Id, originalRole);
 
@@ -449,10 +449,10 @@ else
             { "AssignmentWorkflowState", Assignment.WorkflowState }
         };
 
-        // Add CompetencyKey if editing a specific competency
-        if (!string.IsNullOrEmpty(competencyKey))
+        // Add EvaluationKey if editing a specific evaluation
+        if (!string.IsNullOrEmpty(evaluationKey))
         {
-            parameters.Add("CompetencyKey", competencyKey);
+            parameters.Add("EvaluationKey", evaluationKey);
         }
 
         var result = await DialogService.OpenAsync<EditAnswerDialog>(

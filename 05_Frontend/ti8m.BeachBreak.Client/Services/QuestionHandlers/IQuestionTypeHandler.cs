@@ -19,7 +19,7 @@ public interface IQuestionTypeHandler
     void InitializeQuestion(QuestionItem question);
 
     /// <summary>
-    /// Adds a new item to the question (competency, goal category, or text section)
+    /// Adds a new item to the question (evaluation, goal category, or text section)
     /// </summary>
     void AddItem(QuestionItem question);
 
@@ -39,8 +39,4 @@ public interface IQuestionTypeHandler
     /// <returns>List of validation error messages (empty if valid)</returns>
     List<string> Validate(QuestionItem question, string questionLabel);
 
-    /// <summary>
-    /// Gets the default question title for this type
-    /// </summary>
-    string GetDefaultTitle();
 }

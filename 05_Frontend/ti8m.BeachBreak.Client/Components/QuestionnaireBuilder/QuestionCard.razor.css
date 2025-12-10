@@ -37,7 +37,7 @@
     cursor: pointer;
 }
 
-.competency-input-row,
+.evaluation-input-row,
 .goal-category-input-row,
 .text-section-input-row {
     display: grid;
@@ -79,7 +79,7 @@
         grid-template-columns: 1fr;
     }
 
-    .competency-input-row,
+    .evaluation-input-row,
     .goal-category-input-row,
     .text-section-input-row {
         grid-template-columns: 1fr;
@@ -98,13 +98,13 @@
 }
 
 /* Ensure consistent spacing for all question items */
-.competency-item,
+.evaluation-item,
 .goal-category-item,
 .text-section-item {
     position: relative;
 }
 
-.competency-item .validation-message,
+.evaluation-item .validation-message,
 .goal-category-item .validation-message,
 .text-section-item .validation-message {
     z-index: 1;

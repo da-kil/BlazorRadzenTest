@@ -7,87 +7,87 @@
 
 
 
-<div class="competencies-container">
+<div class="evaluations-container">
         <!-- Assessment Configuration -->
         @if (Question.Type == QuestionType.Assessment)
         {
-            var competencies = GetOrderedEvaluations();
-            <div class="competencies-config">
+            var evaluations = GetOrderedEvaluations();
+            <div class="evaluations-config">
 
-                @if (competencies.Count == 0)
+                @if (evaluations.Count == 0)
                 {
                     <div class="text-center p-3 text-muted">
-                        <RadzenIcon Icon="self_improvement" Class="empty-state-competencies-icon" />
-                        <div class="mt-2 small">No competencies configured</div>
+                        <RadzenIcon Icon="self_improvement" Class="empty-state-evaluations-icon" />
+                        <div class="mt-2 small">@T("messages.no-evaluations-configured")</div>
                     </div>
                 }
                 else
                 {
-                    @for (int i = 0; i < competencies.Count; i++)
+                    @for (int i = 0; i < evaluations.Count; i++)
                     {
-                        var competencyIndex = i;
-                        var competency = competencies[competencyIndex];
+                        var evaluationIndex = i;
+                        var evaluation = evaluations[evaluationIndex];
 
-                        <div class="competency-item builder-context">
+                        <div class="evaluation-item builder-context">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <div class="d-flex align-items-center gap-3">
                                     <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
-                                        Competency @(competencyIndex + 1)
+                                        @T("labels.item") @(evaluationIndex + 1)
                                     </RadzenText>
                                     <div class="required-badge-container">
-                                        <RadzenCheckBox Value="@GetCompetencyRequired(competencyIndex)"
-                                                       ValueChanged="@((bool value) => UpdateCompetencyRequired(competencyIndex, value))"
-                                                       Name="@($"comp_req_{Question.Id}_{competencyIndex}")"
+                                        <RadzenCheckBox Value="@GetEvaluationRequired(evaluationIndex)"
+                                                       ValueChanged="@((bool value) => UpdateEvaluationRequired(evaluationIndex, value))"
+                                                       Name="@($"eval_req_{Question.Id}_{evaluationIndex}")"
                                                        Disabled="@(!Template.IsAvailableForEditing)" />
-                                        <RadzenLabel Text="Required" Component="@($"comp_req_{Question.Id}_{competencyIndex}")" Class="ms-1" />
+                                        <RadzenLabel Text="@T("labels.required")" Component="@($"eval_req_{Question.Id}_{evaluationIndex}")" Class="ms-1" />
                                     </div>
                                 </div>
                                 <div class="d-flex gap-1">
                                     <AsyncButton ButtonStyle="ButtonStyle.Light"
                                                 Icon="keyboard_arrow_up"
                                                 Size="ButtonSize.ExtraSmall"
-                                                Click="@(() => MoveCompetencyUp(competencyIndex))"
-                                                Disabled="@(competencyIndex == 0 || !Template.IsAvailableForEditing)"
-                                                Title="Move up" />
+                                                Click="@(() => MoveEvaluationUp(evaluationIndex))"
+                                                Disabled="@(evaluationIndex == 0 || !Template.IsAvailableForEditing)"
+                                                Title="@T("tooltips.move-up")" />
                                     <AsyncButton ButtonStyle="ButtonStyle.Light"
                                                 Icon="keyboard_arrow_down"
                                                 Size="ButtonSize.ExtraSmall"
-                                                Click="@(() => MoveCompetencyDown(competencyIndex))"
-                                                Disabled="@(competencyIndex == competencies.Count - 1 || !Template.IsAvailableForEditing)"
-                                                Title="Move down" />
+                                                Click="@(() => MoveEvaluationDown(evaluationIndex))"
+                                                Disabled="@(evaluationIndex == evaluations.Count - 1 || !Template.IsAvailableForEditing)"
+                                                Title="@T("tooltips.move-down")" />
                                     <AsyncButton ButtonStyle="ButtonStyle.Danger"
-                                                ProcessingText="Deleting"
+                                                ProcessingText="@T("messages.deleting")"
                                                 Icon="delete_outline"
                                                 Size="ButtonSize.ExtraSmall"
-                                                Click="@(() => RemoveCompetency(competencyIndex))"
-                                                Title="Delete competency"
+                                                Click="@(() => RemoveEvaluation(evaluationIndex))"
+                                                Title="@T("tooltips.delete-item")"
                                                 Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
                             <!-- Title Row -->
-                            <div class="competency-title-section mb-2">
+                            <div class="evaluation-title-section mb-2">
                                 <div class="multilang-input-grid">
                                     <div class="input-field-container">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title *</RadzenText>
-                                        <RadzenTextBox Value="@competency.TitleEnglish"
-                                                      ValueChanged="@((string value) => UpdateCompetencyTitleEnglish(competencyIndex, value))"
-                                                      Placeholder="Enter English competency title..."
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">@T("labels.english-title-required")</RadzenText>
+                                        <RadzenTextBox Value="@evaluation.TitleEnglish"
+                                                      ValueChanged="@((string value) => UpdateEvaluationTitleEnglish(evaluationIndex, value))"
+                                                      Placeholder="@T("placeholders.enter-english-evaluation-title")"
                                                       Disabled="@(!Template.IsAvailableForEditing)"
-                                                      Class="@GetCompetencyTitleValidationClass(competencyIndex)"
-                                                      @onblur="@(() => ValidateCompetencyTitle(competencyIndex))" />
-                                        @if (!GetCompetencyTitleValid(competencyIndex) && GetCompetencyTitleValidated(competencyIndex))
+                                                      Class="@GetEvaluationTitleValidationClass(evaluationIndex)"
+                                                      @onblur="@(() => ValidateEvaluationTitle(evaluationIndex))" />
+                                        @if (!GetEvaluationTitleValid(evaluationIndex) && GetEvaluationTitleValidated(evaluationIndex))
                                         {
                                             <div class="validation-message">
                                                 <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
-                                                English competency title is required
+                                                @T("messages.english-item-title-required")
                                             </div>
                                         }
                                     </div>
                                     <div class="input-field-container">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
-                                        <RadzenTextBox Value="@competency.TitleGerman"
-                                                      ValueChanged="@((string value) => UpdateCompetencyTitleGerman(competencyIndex, value))"
-                                                      Placeholder="Enter German competency title (optional)..."
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">@T("labels.german-title-optional")</RadzenText>
+                                        <RadzenTextBox Value="@evaluation.TitleGerman"
+                                                      ValueChanged="@((string value) => UpdateEvaluationTitleGerman(evaluationIndex, value))"
+                                                      Placeholder="@T("placeholders.enter-german-evaluation-title-optional")"
                                                       Disabled="@(!Template.IsAvailableForEditing)"
                                                       Class="w-100" />
                                     </div>
@@ -96,20 +96,20 @@
                             <!-- Description Row -->
                             <div class="multilang-input-grid mb-2">
                                 <div class="input-field">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description</RadzenText>
-                                    <RadzenTextArea Value="@competency.DescriptionEnglish"
-                                                   ValueChanged="@((string value) => UpdateCompetencyDescriptionEnglish(competencyIndex, value))"
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">@T("labels.english-description")</RadzenText>
+                                    <RadzenTextArea Value="@evaluation.DescriptionEnglish"
+                                                   ValueChanged="@((string value) => UpdateEvaluationDescriptionEnglish(evaluationIndex, value))"
                                                    Disabled="@(!Template.IsAvailableForEditing)"
-                                                   Placeholder="Describe what this competency evaluates in English..."
+                                                   Placeholder="@T("placeholders.describe-evaluation-english")"
                                                    Rows="2"
                                                    Class="w-100" />
                                 </div>
                                 <div class="input-field">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
-                                    <RadzenTextArea Value="@competency.DescriptionGerman"
-                                                   ValueChanged="@((string value) => UpdateCompetencyDescriptionGerman(competencyIndex, value))"
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">@T("labels.german-description-optional")</RadzenText>
+                                    <RadzenTextArea Value="@evaluation.DescriptionGerman"
+                                                   ValueChanged="@((string value) => UpdateEvaluationDescriptionGerman(evaluationIndex, value))"
                                                    Disabled="@(!Template.IsAvailableForEditing)"
-                                                   Placeholder="Describe what this competency evaluates in German (optional)..."
+                                                   Placeholder="@T("placeholders.describe-evaluation-german-optional")"
                                                    Rows="2"
                                                    Class="w-100" />
                                 </div>
@@ -127,10 +127,10 @@
                 <div class="text-center mb-3">
                     <RadzenIcon Icon="flag" Class="goal-config-icon mb-3" />
                     <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 fw-bold">
-                        Goal Question Type
+                        @T("labels.goal-question-type")
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
-                        No template configuration is required for Goal questions.
+                        @T("messages.no-goal-template-configuration-required")
                     </RadzenText>
                 </div>
 
@@ -138,29 +138,29 @@
                 <div class="mb-3 p-3 border rounded bg-light">
                     <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-2 d-flex align-items-center">
                         <RadzenIcon Icon="visibility" Class="me-2" />
-                        Goal Section Visibility
+                        @T("labels.goal-section-visibility")
                     </RadzenText>
                     <div class="d-flex align-items-center">
                         <RadzenSwitch Value="@GetShowGoalSection()"
                                       ValueChanged="@((bool value) => SetShowGoalSection(value))"
                                       Class="me-2" />
                         <RadzenText TextStyle="TextStyle.Body2">
-                            @(GetShowGoalSection() ? "Goal section is visible to users" : "Goal section is hidden from users")
+                            @(GetShowGoalSection() ? @T("messages.goal-section-visible") : @T("messages.goal-section-hidden"))
                         </RadzenText>
                     </div>
                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-2 d-block">
-                        Controls whether users see the goal section when filling out this questionnaire
+                        @T("messages.goal-section-visibility-description")
                     </RadzenText>
                 </div>
 
                 <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Class="mb-0 goal-workflow-alert" ShowIcon="false">
                     <RadzenText TextStyle="TextStyle.Caption" Class="d-block mb-1 goal-workflow-caption">
-                        Goals are added dynamically during the questionnaire workflow:
+                        @T("messages.goals-added-dynamically-workflow")
                     </RadzenText>
                     <ul class="small mb-0 goal-workflow-list">
-                        <li>Employee and Manager add goals during their completion phases</li>
-                        <li>Goals can be linked to predecessor questionnaires for rating</li>
-                        <li>Each goal includes objective, timeframe, measurement, and weighting</li>
+                        <li>@T("messages.goal-workflow-employee-manager")</li>
+                        <li>@T("messages.goal-workflow-predecessor-linking")</li>
+                        <li>@T("messages.goal-workflow-objective-timeframe")</li>
                     </ul>
                 </RadzenAlert>
             </div>
@@ -175,7 +175,7 @@
                 {
                     <div class="text-center p-3 text-muted">
                         <RadzenIcon Icon="psychology" Class="empty-state-text-icon" />
-                        <div class="mt-2 small">No text sections configured</div>
+                        <div class="mt-2 small">@T("messages.no-text-sections-configured")</div>
                     </div>
                 }
                 else
@@ -189,14 +189,14 @@
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <div class="d-flex align-items-center gap-3">
                                     <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold question-text-response">
-                                        Text Section @(sectionIndex + 1)
+                                        @T("labels.text-section") @(sectionIndex + 1)
                                     </RadzenText>
                                     <div class="required-badge-container">
                                         <RadzenCheckBox Value="@GetTextSectionRequired(sectionIndex)"
                                                        ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
                                                        Name="@($"text_req_{Question.Id}_{sectionIndex}")"
                                                        Disabled="@(!Template.IsAvailableForEditing)" />
-                                        <RadzenLabel Text="Required" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-1" />
+                                        <RadzenLabel Text="@T("labels.required")" Component="@($"text_req_{Question.Id}_{sectionIndex}")" Class="ms-1" />
                                     </div>
                                 </div>
                                 <div class="d-flex gap-1">
@@ -205,19 +205,19 @@
                                                 Size="ButtonSize.ExtraSmall"
                                                 Click="@(() => MoveTextSectionUp(sectionIndex))"
                                                 Disabled="@(sectionIndex == 0 || !Template.IsAvailableForEditing)"
-                                                Title="Move up" />
+                                                Title="@T("tooltips.move-up")" />
                                     <AsyncButton ButtonStyle="ButtonStyle.Light"
                                                 Icon="keyboard_arrow_down"
                                                 Size="ButtonSize.ExtraSmall"
                                                 Click="@(() => MoveTextSectionDown(sectionIndex))"
                                                 Disabled="@(sectionIndex == textSections.Count - 1 || !Template.IsAvailableForEditing)"
-                                                Title="Move down" />
+                                                Title="@T("tooltips.move-down")" />
                                     <AsyncButton ButtonStyle="ButtonStyle.Danger"
-                                                ProcessingText="Deleting"
+                                                ProcessingText="@T("messages.deleting")"
                                                 Icon="delete"
                                                 Size="ButtonSize.ExtraSmall"
                                                 Click="@(() => RemoveTextSection(sectionIndex))"
-                                                Title="Delete"
+                                                Title="@T("tooltips.delete")"
                                                 Disabled="@(!Template.IsAvailableForEditing)" />
                                 </div>
                             </div>
@@ -225,10 +225,10 @@
                             <div class="text-section-title-row mb-2">
                                 <div class="multilang-input-grid">
                                     <div class="input-field-container">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title *</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">@T("labels.english-title-required")</RadzenText>
                                         <RadzenTextBox Value="@textSection.TitleEnglish"
                                                       ValueChanged="@((string value) => UpdateTextSectionTitleEnglish(sectionIndex, value))"
-                                                      Placeholder="Enter section title in English..."
+                                                      Placeholder="@T("placeholders.enter-text-section-title-english")"
                                                       Disabled="@(!Template.IsAvailableForEditing)"
                                                       Class="@GetTextSectionTitleValidationClass(sectionIndex)"
                                                       @onblur="@(() => ValidateTextSectionTitle(sectionIndex))" />
@@ -236,15 +236,15 @@
                                         {
                                             <div class="validation-message">
                                                 <RadzenIcon Icon="error_outline" Class="validation-icon me-1" />
-                                                English title is required
+                                                @T("messages.english-title-required")
                                             </div>
                                         }
                                     </div>
                                     <div class="input-field-container">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">@T("labels.german-title-optional")</RadzenText>
                                         <RadzenTextBox Value="@textSection.TitleGerman"
                                                       ValueChanged="@((string value) => UpdateTextSectionTitleGerman(sectionIndex, value))"
-                                                      Placeholder="Enter section title in German (optional)..."
+                                                      Placeholder="@T("placeholders.enter-text-section-title-german-optional")"
                                                       Disabled="@(!Template.IsAvailableForEditing)"
                                                       Class="w-100" />
                                     </div>
@@ -253,18 +253,18 @@
                             <!-- Description Row -->
                             <div class="multilang-input-grid mb-2">
                                 <div class="input-field">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description *</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">@T("labels.english-description-required")</RadzenText>
                                     <RadzenTextArea Value="@textSection.DescriptionEnglish"
                                                    ValueChanged="@((string value) => UpdateTextSectionDescriptionEnglish(sectionIndex, value))"
-                                                   Placeholder="Describe this text section in English..."
+                                                   Placeholder="@T("placeholders.describe-text-section-english")"
                                                    Rows="2"
                                                    Class="w-100" />
                                 </div>
                                 <div class="input-field">
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">@T("labels.german-description-optional")</RadzenText>
                                     <RadzenTextArea Value="@textSection.DescriptionGerman"
                                                    ValueChanged="@((string value) => UpdateTextSectionDescriptionGerman(sectionIndex, value))"
-                                                   Placeholder="Describe this text section in German (optional)..."
+                                                   Placeholder="@T("placeholders.describe-text-section-german-optional")"
                                                    Rows="2"
                                                    Class="w-100" />
                                 </div>
@@ -296,9 +296,9 @@
     private bool isTitleValid = true;
     private bool hasBeenValidated = false;
 
-    // Competency validation state
-    private Dictionary<int, bool> competencyTitleValid = new();
-    private Dictionary<int, bool> competencyTitleValidated = new();
+    // Evaluation validation state
+    private Dictionary<int, bool> evaluationTitleValid = new();
+    private Dictionary<int, bool> evaluationTitleValidated = new();
 
     // Goal category validation state
     private Dictionary<int, bool> goalCategoryTitleValid = new();
@@ -340,11 +340,11 @@
 
         if (Question.Type == QuestionType.Assessment)
         {
-            var competencies = GetOrderedEvaluations();
-            for (int i = 0; i < competencies.Count; i++)
+            var evaluations = GetOrderedEvaluations();
+            for (int i = 0; i < evaluations.Count; i++)
             {
-                ValidateCompetencyTitle(i);
-                if (!GetCompetencyTitleValid(i))
+                ValidateEvaluationTitle(i);
+                if (!GetEvaluationTitleValid(i))
                     contentValid = false;
             }
         }
@@ -367,32 +367,32 @@
         return isTitleValid && contentValid;
     }
 
-    // Competency validation methods
-    private void ValidateCompetencyTitle(int index)
+    // Evaluation validation methods
+    private void ValidateEvaluationTitle(int index)
     {
-        var competencies = GetOrderedEvaluations();
-        if (index >= 0 && index < competencies.Count)
+        var evaluations = GetOrderedEvaluations();
+        if (index >= 0 && index < evaluations.Count)
         {
-            competencyTitleValidated[index] = true;
-            competencyTitleValid[index] = !string.IsNullOrWhiteSpace(competencies[index].TitleEnglish);
+            evaluationTitleValidated[index] = true;
+            evaluationTitleValid[index] = !string.IsNullOrWhiteSpace(evaluations[index].TitleEnglish);
             StateHasChanged();
         }
     }
 
-    private bool GetCompetencyTitleValid(int index)
+    private bool GetEvaluationTitleValid(int index)
     {
-        return competencyTitleValid.GetValueOrDefault(index, true);
+        return evaluationTitleValid.GetValueOrDefault(index, true);
     }
 
-    private bool GetCompetencyTitleValidated(int index)
+    private bool GetEvaluationTitleValidated(int index)
     {
-        return competencyTitleValidated.GetValueOrDefault(index, false);
+        return evaluationTitleValidated.GetValueOrDefault(index, false);
     }
 
-    private string GetCompetencyTitleValidationClass(int index)
+    private string GetEvaluationTitleValidationClass(int index)
     {
         var baseClass = "w-100 mb-2";
-        if (GetCompetencyTitleValidated(index) && !GetCompetencyTitleValid(index))
+        if (GetEvaluationTitleValidated(index) && !GetEvaluationTitleValid(index))
         {
             return $"{baseClass} border-danger";
         }
@@ -484,27 +484,27 @@
     }
 
 
-    private async Task RemoveCompetency(int displayIndex)
+    private async Task RemoveEvaluation(int displayIndex)
     {
-        var orderedCompetencies = GetOrderedEvaluations();
-        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
+        var orderedEvaluations = GetOrderedEvaluations();
+        if (displayIndex >= 0 && displayIndex < orderedEvaluations.Count)
         {
-            var competencyToRemove = orderedCompetencies[displayIndex];
-            var competencyName = string.IsNullOrWhiteSpace(competencyToRemove.TitleEnglish) ? $"Competency {displayIndex + 1}" : competencyToRemove.TitleEnglish;
-            var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{competencyName}'?", "Delete Competency",
-                new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+            var evaluationToRemove = orderedEvaluations[displayIndex];
+            var evaluationName = string.IsNullOrWhiteSpace(evaluationToRemove.TitleEnglish) ? $"Item {displayIndex + 1}" : evaluationToRemove.TitleEnglish;
+            var confirmed = await DialogService.Confirm($"{T("dialogs.confirm-delete-evaluation").Replace("{0}", evaluationName)}", T("dialogs.delete-item-title"),
+                new ConfirmOptions() { OkButtonText = T("buttons.yes"), CancelButtonText = T("buttons.no") });
 
             if (confirmed == true)
             {
                 var allEvaluations = GetOrderedEvaluations();
-                allEvaluations.Remove(competencyToRemove);
+                allEvaluations.Remove(evaluationToRemove);
                 UpdateAssessmentConfiguration(allEvaluations);
                 StateHasChanged();
             }
         }
     }
 
-    private void UpdateCompetencyTitleEnglish(int displayIndex, string value)
+    private void UpdateEvaluationTitleEnglish(int displayIndex, string value)
     {
         var evaluations = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < evaluations.Count)
@@ -515,7 +515,7 @@
         }
     }
 
-    private void UpdateCompetencyTitleGerman(int displayIndex, string value)
+    private void UpdateEvaluationTitleGerman(int displayIndex, string value)
     {
         var evaluations = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < evaluations.Count)
@@ -526,7 +526,7 @@
         }
     }
 
-    private void UpdateCompetencyDescriptionEnglish(int displayIndex, string value)
+    private void UpdateEvaluationDescriptionEnglish(int displayIndex, string value)
     {
         var evaluations = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < evaluations.Count)
@@ -537,7 +537,7 @@
         }
     }
 
-    private void UpdateCompetencyDescriptionGerman(int displayIndex, string value)
+    private void UpdateEvaluationDescriptionGerman(int displayIndex, string value)
     {
         var evaluations = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < evaluations.Count)
@@ -598,8 +598,8 @@
         if (index >= 0 && index < categories.Count)
         {
             var categoryName = string.IsNullOrWhiteSpace(categories[index].GetLocalizedTitleWithFallback(CurrentLanguage)) ? $"Goal Category {index + 1}" : categories[index].GetLocalizedTitleWithFallback(CurrentLanguage);
-            var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{categoryName}'?", "Delete Goal Category",
-                new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+            var confirmed = await DialogService.Confirm($"{T("dialogs.confirm-delete-goal-category").Replace("{0}", categoryName)}", T("dialogs.delete-goal-category-title"),
+                new ConfirmOptions() { OkButtonText = T("buttons.yes"), CancelButtonText = T("buttons.no") });
 
             if (confirmed == true)
             {
@@ -723,8 +723,8 @@
         if (index >= 0 && index < sections.Count)
         {
             var sectionName = string.IsNullOrWhiteSpace(sections[index].GetLocalizedTitleWithFallback(CurrentLanguage)) ? $"Text Section {index + 1}" : sections[index].GetLocalizedTitleWithFallback(CurrentLanguage);
-            var confirmed = await DialogService.Confirm($"Are you sure you want to delete '{sectionName}'?", "Delete Text Section",
-                new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+            var confirmed = await DialogService.Confirm($"{T("dialogs.confirm-delete-text-section").Replace("{0}", sectionName)}", T("dialogs.delete-text-section-title"),
+                new ConfirmOptions() { OkButtonText = T("buttons.yes"), CancelButtonText = T("buttons.no") });
 
             if (confirmed == true)
             {
@@ -853,18 +853,18 @@
         }
     }
 
-    // Required flag methods for competencies
-    private bool GetCompetencyRequired(int displayIndex)
+    // Required flag methods for evaluations
+    private bool GetEvaluationRequired(int displayIndex)
     {
-        var orderedCompetencies = GetOrderedEvaluations();
-        if (displayIndex >= 0 && displayIndex < orderedCompetencies.Count)
+        var orderedEvaluations = GetOrderedEvaluations();
+        if (displayIndex >= 0 && displayIndex < orderedEvaluations.Count)
         {
-            return orderedCompetencies[displayIndex].IsRequired;
+            return orderedEvaluations[displayIndex].IsRequired;
         }
         return false;
     }
 
-    private async Task UpdateCompetencyRequired(int displayIndex, bool value)
+    private async Task UpdateEvaluationRequired(int displayIndex, bool value)
     {
         var evaluations = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < evaluations.Count)
@@ -876,7 +876,7 @@
         }
     }
 
-    private void MoveCompetencyUp(int displayIndex)
+    private void MoveEvaluationUp(int displayIndex)
     {
         var evaluations = GetOrderedEvaluations();
         if (displayIndex > 0 && displayIndex < evaluations.Count)
@@ -895,7 +895,7 @@
         }
     }
 
-    private void MoveCompetencyDown(int displayIndex)
+    private void MoveEvaluationDown(int displayIndex)
     {
         var evaluations = GetOrderedEvaluations();
         if (displayIndex >= 0 && displayIndex < evaluations.Count - 1)

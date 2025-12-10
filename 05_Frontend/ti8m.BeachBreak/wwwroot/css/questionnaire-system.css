@@ -14,8 +14,8 @@
    BASE QUESTION COMPONENTS - SHARED FOUNDATIONS
    ============================================= */
 
-/* Base competency item styling - works across all contexts */
-.competency-item {
+/* Base evaluation item styling - works across all contexts */
+.evaluation-item {
     /* Base layout and spacing */
     position: relative;
     padding: 1.25rem;
@@ -29,7 +29,7 @@
     box-sizing: border-box;
 }
 
-.competency-item * {
+.evaluation-item * {
     box-sizing: border-box;
 }
 
@@ -43,8 +43,8 @@
     gap: 0.5rem;
 }
 
-/* Context-specific modifiers for competency items */
-.competency-item.builder-context {
+/* Context-specific modifiers for evaluation items */
+.evaluation-item.builder-context {
     /* Builder-specific styling with colorful borders */
     background: var(--primary-color-alpha-subtle) !important;
     border: none !important;
@@ -52,63 +52,63 @@
     margin-bottom: 0 !important;
 }
 
-.competency-item.builder-context:hover {
+.evaluation-item.builder-context:hover {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 
-.competency-item.rating-context {
+.evaluation-item.rating-context {
     /* Rating-specific styling with bottom borders */
     padding: 28px;
     border: none;
     background: transparent;
 }
 
-.competency-item.rating-context:first-child {
+.evaluation-item.rating-context:first-child {
     padding-top: 28px;
 }
 
 /* Rating-specific component styles */
-.competency-item.rating-context .question-section-header {
+.evaluation-item.rating-context .question-section-header {
     margin-bottom: 16px;
 }
 
-/* Context-specific override for competency rating titles */
-.competency-item.rating-context .question-title {
+/* Context-specific override for evaluation rating titles */
+.evaluation-item.rating-context .question-title {
     font-size: 1.1rem;
     margin: 0 0 8px 0;
 }
 
-.competency-item.rating-context .question-section-description {
+.evaluation-item.rating-context .question-section-description {
     font-size: 0.9rem;
     color: var(--secondary-color);
     margin: 0;
     line-height: 1.4;
 }
 
-.competency-item.rating-context .rating-section {
+.evaluation-item.rating-context .rating-section {
     margin-bottom: 16px;
 }
 
-.competency-item.rating-context .rating-label {
+.evaluation-item.rating-context .rating-label {
     display: block;
     font-size: 0.9rem;
     color: var(--dark-color);
     margin-bottom: 8px;
 }
 
-.competency-item.rating-context .star-rating {
+.evaluation-item.rating-context .star-rating {
     display: flex;
     align-items: center;
     gap: 4px;
     margin-bottom: 8px;
 }
 
-.competency-item.rating-context .star-rating input[type="radio"] {
+.evaluation-item.rating-context .star-rating input[type="radio"] {
     display: none;
 }
 
-.competency-item.rating-context .star-label {
+.evaluation-item.rating-context .star-label {
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -118,26 +118,26 @@
     transition: color 0.2s ease;
 }
 
-.competency-item.rating-context .star-label:hover .rzi {
+.evaluation-item.rating-context .star-label:hover .rzi {
     color: var(--warning-color) !important;
 }
 
-.competency-item.rating-context .star-rating input[type="radio"]:disabled + .star-label {
+.evaluation-item.rating-context .star-rating input[type="radio"]:disabled + .star-label {
     cursor: not-allowed;
     opacity: 0.6;
 }
 
-.competency-item.rating-context .rating-status {
+.evaluation-item.rating-context .rating-status {
     font-size: 0.8rem;
     color: var(--primary-color);
     font-weight: 500;
 }
 
-.competency-item.rating-context .comment-section {
+.evaluation-item.rating-context .comment-section {
     margin-top: 16px;
 }
 
-.competency-item.rating-context .comment-textarea {
+.evaluation-item.rating-context .comment-textarea {
     width: 100%;
     padding: 12px;
     border: 1px solid var(--border-light);
@@ -147,32 +147,32 @@
     min-height: 60px;
 }
 
-.competency-item.rating-context .comment-textarea:focus {
+.evaluation-item.rating-context .comment-textarea:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 2px rgba(15, 105, 255, 0.1);
 }
 
-.competency-item.rating-context .comment-display {
+.evaluation-item.rating-context .comment-display {
     margin-top: 16px;
     padding: 12px;
     background-color: var(--rz-body-background-color);
     border-radius: 4px;
 }
 
-.competency-item.rating-context .comment-label {
+.evaluation-item.rating-context .comment-label {
     display: block;
     color: var(--secondary-color);
     font-size: 0.8rem;
     margin-bottom: 4px;
 }
 
-.competency-item.rating-context .comment-text {
+.evaluation-item.rating-context .comment-text {
     font-size: 0.9rem;
     color: var(--dark-color);
 }
 
-.competency-item.rating-context .star-rating:focus-within {
+.evaluation-item.rating-context .star-rating:focus-within {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
     border-radius: 4px;
@@ -209,7 +209,7 @@
     padding: 1.5rem;
 }
 
-/* Generic question section styles - used by both competency and text sections */
+/* Generic question section styles - used by both evaluation and text sections */
 .text-section-card .question-section-header {
     margin-bottom: 16px;
 }
@@ -353,19 +353,19 @@
 }
 
 /* Border utilities for question types */
-.border-competency {
+.border-evaluation {
     border-color: var(--question-assessment) !important;
 }
 
-.bg-competency {
+.bg-evaluation {
     background-color: var(--question-assessment) !important;
 }
 
-.bg-competency-opacity {
+.bg-evaluation-opacity {
     background-color: var(--question-assessment-alpha) !important;
 }
 
-.text-competency {
+.text-evaluation {
     color: var(--question-assessment) !important;
 }
 
@@ -568,8 +568,8 @@
     transform: translateY(-1px);
 }
 
-/* Competency Lists - Enhanced Organization */
-.competencies-container {
+/* Evaluation Lists - Enhanced Organization */
+.evaluations-container {
     /* Removed background, border-radius, and padding to reduce visual depth */
     /* Container kept for structural purposes only */
 }
@@ -579,7 +579,7 @@
     gap: 1.25rem;
 }
 
-.competency-input-row {
+.evaluation-input-row {
     display: grid;
     grid-template-columns: 1fr auto;
     gap: 1rem;
@@ -902,13 +902,13 @@
 }
 
 
-.competencies-container {
+.evaluations-container {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-.competency-card {
+.evaluation-card {
     background: var(--rz-body-background-color);
     border: 1px solid var(--border-light);
     border-radius: 8px;
@@ -1000,8 +1000,8 @@
     margin-bottom: 0;
 }
 
-/* Competency Comparison Card - each competency gets its own card in assessment reviews */
-.competency-comparison-card {
+/* Evaluation Comparison Card - each evaluation gets its own card in assessment reviews */
+.evaluation-comparison-card {
     background: transparent;
     border: none;
     border-radius: 0;
@@ -1011,7 +1011,7 @@
     border-bottom: 2px solid var(--border-light);
 }
 
-.competency-comparison-card:last-child {
+.evaluation-comparison-card:last-child {
     border-bottom: none;
     margin-bottom: 0;
 }
@@ -1207,7 +1207,7 @@
         transform: none;
     }
 
-    .competencies-container {
+    .evaluations-container {
         padding: 1.5rem;
         margin: 0 -0.25rem;
     }
@@ -1216,7 +1216,7 @@
         gap: 1rem;
     }
 
-    .competency-input-row {
+    .evaluation-input-row {
         grid-template-columns: 1fr;
         gap: 0.75rem;
     }
@@ -1271,7 +1271,7 @@
     }
 
     /* Question types mobile */
-    .competency-item.builder-context {
+    .evaluation-item.builder-context {
         padding: 1rem !important;
     }
 }
@@ -1298,7 +1298,7 @@
         gap: 1rem;
     }
 
-    .competencies-container {
+    .evaluations-container {
         padding: 1.5rem;
         border-radius: 6px;
     }
@@ -1315,12 +1315,12 @@
     }
 
     /* Question types small mobile */
-    .competency-item.builder-context {
+    .evaluation-item.builder-context {
         padding: 0.75rem !important;
         margin: 0 !important;
     }
 
-    .competency-item.builder-context:hover {
+    .evaluation-item.builder-context:hover {
         transform: none;
     }
 }
@@ -1333,12 +1333,12 @@
 @media (prefers-reduced-motion: reduce) {
     .sections-container .modern-section-card,
     .questionnaire-summary,
-    .competency-item {
+    .evaluation-item {
         transition: none;
     }
 
     .sections-container .modern-section-card:hover,
-    .competency-item.builder-context:hover {
+    .evaluation-item.builder-context:hover {
         transform: none;
     }
 
@@ -1353,11 +1353,11 @@
     .questionnaire-summary,
     .questionnaire-main-card,
     .section-card,
-    .competency-card,
+    .evaluation-card,
     .planning-card,
     .goal-card,
     .answer-column,
-    .competency-item {
+    .evaluation-item {
         border-width: 2px;
     }
 }
@@ -1369,12 +1369,12 @@
 }
 
 /* Remove focus outline for builder context (has its own focus handling) */
-.competency-item.builder-context:focus-within {
+.evaluation-item.builder-context:focus-within {
     outline: none;
 }
 
 /* Keep focus outline only for rating context */
-.competency-item.rating-context:focus-within {
+.evaluation-item.rating-context:focus-within {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
 }
@@ -1404,13 +1404,13 @@
     }
 
     /* Question types print */
-    .competency-item {
+    .evaluation-item {
         box-shadow: none !important;
         background: var(--background-color) !important;
         border: 1px solid #ccc !important;
     }
 
-    .competency-item.builder-context:hover {
+    .evaluation-item.builder-context:hover {
         transform: none !important;
     }
 }
@@ -1421,6 +1421,6 @@
 
 /* Optimize rendering for complex layouts */
 .new-goals-section *,
-.competency-item * {
+.evaluation-item * {
     box-sizing: border-box;
 }

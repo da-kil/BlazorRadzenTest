@@ -31,21 +31,21 @@
         overflow-x: hidden;
     }
 
-    /* Ensure competency cards fit well in dialog */
+    /* Ensure evaluation cards fit well in dialog */
     .answer-editor .rz-card {
         margin-bottom: 0 !important;
         max-width: 100%;
         overflow: visible !important;
     }
 
-    .answer-editor .competency-card {
+    .answer-editor .evaluation-card {
         margin-bottom: 1rem !important;
         max-width: 100%;
         overflow: visible !important;
     }
 
     /* Prevent nested scrolling in child components */
-    .answer-editor .competencies-container {
+    .answer-editor .evaluations-container {
         overflow: visible !important;
         max-height: none !important;
     }
@@ -143,7 +143,7 @@
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
-    [Parameter] public string? CompetencyKey { get; set; } // When set, only edit this specific competency
+    [Parameter] public string? EvaluationKey { get; set; } // When set, only edit this specific evaluation
 
     private QuestionResponse editResponse = new();
     private OptimizedGoalQuestion? goalQuestionRef;
@@ -151,7 +151,7 @@
 
     protected override void OnInitialized()
     {
-        // Create the display question (filtered if editing a specific competency)
+        // Create the display question (filtered if editing a specific evaluation)
         displayQuestion = CreateDisplayQuestion();
 
         editResponse = new QuestionResponse
@@ -182,13 +182,13 @@
 
     private QuestionItem CreateDisplayQuestion()
     {
-        // If no specific competency is targeted, return the original question
-        if (string.IsNullOrEmpty(CompetencyKey) || Question.Type != QuestionType.Assessment)
+        // If no specific evaluation is targeted, return the original question
+        if (string.IsNullOrEmpty(EvaluationKey) || Question.Type != QuestionType.Assessment)
         {
             return Question;
         }
 
-        // Create a filtered copy for single-competency editing
+        // Create a filtered copy for single-evaluation editing
         var filteredQuestion = new QuestionItem
         {
             Id = Question.Id,
@@ -205,7 +205,7 @@
         // Filter evaluations to only the target evaluation
         if (Question.Configuration is AssessmentConfiguration assessConfig)
         {
-            var targetEvaluation = assessConfig.Evaluations.FirstOrDefault(e => e.Key == CompetencyKey);
+            var targetEvaluation = assessConfig.Evaluations.FirstOrDefault(e => e.Key == EvaluationKey);
 
             if (targetEvaluation != null)
             {
@@ -312,7 +312,7 @@
         if (editResponse.ResponseData is not AssessmentResponseDataDto assessmentData)
             return false;
 
-        // Check if any competency has been rated
+        // Check if any evaluation has been rated
         return assessmentData.Evaluations.Any(kvp => kvp.Value.Rating > 0);
     }
 

@@ -27,16 +27,6 @@ public class TextSectionDefinition
     public string DescriptionGerman { get; set; } = string.Empty;
 
     /// <summary>
-    /// English placeholder text shown in the empty text area.
-    /// </summary>
-    public string PlaceholderEnglish { get; set; } = string.Empty;
-
-    /// <summary>
-    /// German placeholder text shown in the empty text area.
-    /// </summary>
-    public string PlaceholderGerman { get; set; } = string.Empty;
-
-    /// <summary>
     /// Indicates whether this text section must be filled for the question to be considered complete.
     /// </summary>
     public bool IsRequired { get; set; } = false;
@@ -45,11 +35,6 @@ public class TextSectionDefinition
     /// Display order of this text section within the question.
     /// </summary>
     public int Order { get; set; }
-
-    /// <summary>
-    /// Number of rows to display in the text area (affects UI height).
-    /// </summary>
-    public int Rows { get; set; } = 4;
 
     /// <summary>
     /// Gets the localized title based on the specified language.
@@ -65,31 +50,5 @@ public class TextSectionDefinition
     public string GetLocalizedDescription(Language language)
     {
         return language == Language.German ? DescriptionGerman : DescriptionEnglish;
-    }
-
-    /// <summary>
-    /// Gets the localized placeholder based on the specified language.
-    /// </summary>
-    public string GetLocalizedPlaceholder(Language language)
-    {
-        return language == Language.German ? PlaceholderGerman : PlaceholderEnglish;
-    }
-
-    /// <summary>
-    /// Gets the localized title with fallback to English if German is not available.
-    /// </summary>
-    public string GetLocalizedTitleWithFallback(Language language)
-    {
-        var localized = GetLocalizedTitle(language);
-        return !string.IsNullOrWhiteSpace(localized) ? localized : TitleEnglish;
-    }
-
-    /// <summary>
-    /// Gets the localized description with fallback to English if German is not available.
-    /// </summary>
-    public string GetLocalizedDescriptionWithFallback(Language language)
-    {
-        var localized = GetLocalizedDescription(language);
-        return !string.IsNullOrWhiteSpace(localized) ? localized : DescriptionEnglish;
     }
 }

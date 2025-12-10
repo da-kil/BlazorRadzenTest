@@ -3,6 +3,7 @@
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 @using ti8m.BeachBreak.Client.Components.Shared
 @using System.Collections
+@inherits OptimizedTranslatableComponentBase
 
 <div class="modern-section-card mb-4">
     <!-- Enhanced Section Header with proper action button placement -->
@@ -78,7 +79,7 @@
                 <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Title *</RadzenText>
                 <RadzenTextBox Value="@Section.TitleEnglish"
                              ValueChanged="@(value => OnSectionTitleEnglishChanged(value))"
-                             Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
+                             Placeholder="@T("placeholders.section-title-english-example")"
                              Class="title-input-modern"
                              Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
@@ -86,7 +87,7 @@
                 <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Title (Optional)</RadzenText>
                 <RadzenTextBox Value="@Section.TitleGerman"
                              ValueChanged="@(value => OnSectionTitleGermanChanged(value))"
-                             Placeholder="e.g., Leistungsbeurteilung 2023, Zielsetzungsworkshop..."
+                             Placeholder="@T("placeholders.section-title-german-example")"
                              Class="title-input-modern"
                              Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
@@ -98,7 +99,7 @@
                 <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Description *</RadzenText>
                 <RadzenTextArea Value="@Section.DescriptionEnglish"
                               ValueChanged="@(value => OnSectionDescriptionEnglishChanged(value))"
-                              Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
+                              Placeholder="@T("placeholders.section-description-english")"
                               Class="description-input-modern"
                               Disabled="@(!Template.IsAvailableForEditing)"
                               Rows="3" />
@@ -107,7 +108,7 @@
                 <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Description (Optional)</RadzenText>
                 <RadzenTextArea Value="@Section.DescriptionGerman"
                               ValueChanged="@(value => OnSectionDescriptionGermanChanged(value))"
-                              Placeholder="Geben Sie Kontext über den Zweck dieses Abschnitts an. Was werden die Teilnehmer hier erreichen?"
+                              Placeholder="@T("placeholders.section-description-german")"
                               Class="description-input-modern"
                               Disabled="@(!Template.IsAvailableForEditing)"
                               Rows="3" />
@@ -136,7 +137,7 @@
                         <RadzenText TextStyle="TextStyle.Caption" Class="input-label">Low Label</RadzenText>
                         <RadzenTextBox Value="@GetScaleLowLabel(firstQuestion)"
                                       ValueChanged="@((string value) => SetScaleLowLabel(firstQuestion, value))"
-                                      Placeholder="e.g., Poor, Beginner"
+                                      Placeholder="@T("placeholders.scale-low-label-example")"
                                       Class="modern-textbox"
                                       Disabled="@(!Template.IsAvailableForEditing)" />
                     </div>
@@ -144,7 +145,7 @@
                         <RadzenText TextStyle="TextStyle.Caption" Class="input-label">High Label</RadzenText>
                         <RadzenTextBox Value="@GetScaleHighLabel(firstQuestion)"
                                       ValueChanged="@((string value) => SetScaleHighLabel(firstQuestion, value))"
-                                      Placeholder="e.g., Excellent, Expert"
+                                      Placeholder="@T("placeholders.scale-high-label-example")"
                                       Class="modern-textbox"
                                       Disabled="@(!Template.IsAvailableForEditing)" />
                     </div>

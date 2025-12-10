@@ -23,16 +23,17 @@ public sealed class TextQuestionConfiguration : IQuestionConfiguration
     public bool IsValid()
     {
         return TextSections.Any() &&
-               TextSections.All(s => !string.IsNullOrWhiteSpace(s.TitleEnglish));
+               TextSections.All(s => !string.IsNullOrWhiteSpace(s.TitleEnglish) || !string.IsNullOrWhiteSpace(s.TitleGerman));
     }
 
     /// <summary>
     /// Gets the list of required text sections that must be filled for the question to be complete.
-    /// Used by domain validation logic.
+    /// Used by domain validation logic. Respects the Order property for proper sequence validation.
     /// </summary>
     public List<RequiredTextSection> GetRequiredTextSections()
     {
         return TextSections
+            .OrderBy(section => section.Order)
             .Select((section, index) => new RequiredTextSection(index, section.IsRequired))
             .Where(item => item.IsRequired)
             .ToList();

@@ -51,8 +51,4 @@ public class GoalQuestionHandler : IQuestionTypeHandler
         return errors;
     }
 
-    public string GetDefaultTitle()
-    {
-        return "Goal Management";
-    }
 }

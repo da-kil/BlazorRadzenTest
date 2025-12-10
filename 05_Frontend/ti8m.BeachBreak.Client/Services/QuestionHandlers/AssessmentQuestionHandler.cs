@@ -93,8 +93,4 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
         return errors;
     }
 
-    public string GetDefaultTitle()
-    {
-        return "Competency Assessment";
-    }
 }

@@ -194,8 +194,6 @@ public class QuestionnaireResponse : AggregateRoot
     /// Example: An assessment with 5 competencies where only 3 are required will be complete when those 3 are rated,
     /// even if the optional 2 competencies are unrated (rating = 0).
     /// If all 5 competencies are optional (IsRequired=false), the question is automatically complete.
-    ///
-    /// FIXED BUG (2025-11-10): Previously validated ALL evaluations regardless of IsRequired flag,
     /// and required at least one to be filled even when all were optional.
     /// </remarks>
     private bool IsAssessmentComplete(QuestionnaireTemplateAggregate.QuestionItem question, QuestionResponseValue response)
@@ -247,6 +245,7 @@ public class QuestionnaireResponse : AggregateRoot
         if (question.Configuration is TextQuestionConfiguration config)
         {
             return config.TextSections
+                .OrderBy(section => section.Order) // Respect Order property instead of insertion order
                 .Select((section, index) => new TextSectionItem(index, section.IsRequired))
                 .ToList();
         }

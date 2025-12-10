@@ -21,7 +21,6 @@
     </header>
 
     <div class="rating-section">
-        <label class="rating-label">Rate your satisfaction:</label>
         <div class="star-rating" role="radiogroup" aria-label="Rating scale 1-@RatingScale">
             @for (int i = 1; i <= RatingScale; i++)
             {
@@ -45,7 +44,7 @@
     @if (!IsReadOnly)
     {
         <div class="comment-section">
-            <textarea placeholder="Optional: Add your comments here..."
+            <textarea placeholder="@T("placeholders.add-comments")"
                       @bind="currentComment"
                       @bind:after="@(() => SetComment(currentComment))"
                       rows="2"
@@ -55,7 +54,7 @@
     else if (!string.IsNullOrEmpty(currentComment))
     {
         <div class="comment-display">
-            <small class="comment-label">Comment:</small>
+            <small class="comment-label">@T("labels.comment")</small>
             <span class="comment-text">@currentComment</span>
         </div>
     }
@@ -67,8 +66,8 @@
     [Parameter] public EventCallback<EvaluationRatingDto> OnRatingChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public int RatingScale { get; set; } = 4;
-    [Parameter] public string ScaleLowLabel { get; set; } = "Poor";
-    [Parameter] public string ScaleHighLabel { get; set; } = "Excellent";
+    [Parameter] public string ScaleLowLabel { get; set; } = "";
+    [Parameter] public string ScaleHighLabel { get; set; } = "";
 
     private int currentRating = 0;
     private string currentComment = "";
@@ -124,15 +123,15 @@
 
     private string GetRatingText()
     {
-        if (currentRating == 0) return "Not rated";
+        if (currentRating == 0) return T("status.not-rated");
 
         var percentage = (double)currentRating / RatingScale;
         return percentage switch
         {
-            >= 0.75 => ScaleHighLabel,
-            >= 0.5 => "Good",
-            >= 0.25 => "Fair",
-            _ => ScaleLowLabel
+            >= 0.75 => !string.IsNullOrEmpty(ScaleHighLabel) ? ScaleHighLabel : T("rating.excellent"),
+            >= 0.5 => T("rating.good"),
+            >= 0.25 => T("rating.fair"),
+            _ => !string.IsNullOrEmpty(ScaleLowLabel) ? ScaleLowLabel : T("rating.poor")
         };
     }
 

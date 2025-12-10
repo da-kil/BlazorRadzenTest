@@ -3,7 +3,6 @@ namespace ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 /// <summary>
 /// Represents an evaluation item within an assessment question.
 /// Each item defines a criterion that will be rated by the user.
-/// Renamed from CompetencyDefinition to better reflect domain terminology.
 /// </summary>
 public class EvaluationItem
 {

@@ -90,7 +90,7 @@ public class QuestionnaireValidationService
                     var competencies = configurationService.GetEvaluations(question);
                     if (competencies.Count == 0)
                     {
-                        validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one competency");
+                        validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one evaluation");
                     }
                     else
                     {
@@ -98,7 +98,7 @@ public class QuestionnaireValidationService
                         {
                             if (string.IsNullOrWhiteSpace(competencies[i].TitleEnglish))
                             {
-                                validationErrors.Add($"Competency {i + 1} in {questionPos} ('{sectionName}') requires an English title");
+                                validationErrors.Add($"Evaluation {i + 1} in {questionPos} ('{sectionName}') requires an English title");
                             }
                         }
                     }

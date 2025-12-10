@@ -101,8 +101,4 @@ public class TextQuestionHandler : IQuestionTypeHandler
         return errors;
     }
 
-    public string GetDefaultTitle()
-    {
-        return "Career Development & Planning";
-    }
 }
