@@ -173,20 +173,24 @@
 
     <!-- Items Area - Reduced padding for flatter design -->
     <div class="items-area py-2">
-        <div class="items-header mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0 d-flex align-items-center">
-                    <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"color: {GetSectionTypeColor()};")" Class="me-2" />
-                    @GetSectionTypeName() Items
-                </RadzenText>
-                <AsyncButton Text="Add Item"
-                            ButtonStyle="ButtonStyle.Primary"
-                            Icon="add_circle_outline"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnAddItemClick())"
-                            Disabled="@(!Template.IsAvailableForEditing)" />
+        @* Only show Items header and Add Item button for Assessment and TextQuestion sections *@
+        @if (Section.Type != QuestionType.Goal)
+        {
+            <div class="items-header mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0 d-flex align-items-center">
+                        <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"color: {GetSectionTypeColor()};")" Class="me-2" />
+                        @GetSectionTypeName() Items
+                    </RadzenText>
+                    <AsyncButton Text="Add Item"
+                                ButtonStyle="ButtonStyle.Primary"
+                                Icon="add_circle_outline"
+                                Size="ButtonSize.Small"
+                                Click="@(() => OnAddItemClick())"
+                                Disabled="@(!Template.IsAvailableForEditing)" />
+                </div>
             </div>
-        </div>
+        }
 
         @* Render items based on section type *@
         @if (IsSectionInitialized())
