@@ -353,28 +353,8 @@ public class QuestionnaireTemplateCommandHandler :
             section.Order,
             section.IsRequired,
             section.CompletionRole,
-            MapToQuestionItems(section.Questions)
+            section.Type,
+            section.Configuration
         )).ToList();
     }
-
-    private static List<QuestionItem> MapToQuestionItems(List<CommandQuestionItem> commandItems)
-    {
-        return commandItems.Select(item => new QuestionItem(
-            item.Id,
-            new Translation(item.TitleGerman, item.TitleEnglish),
-            new Translation(item.DescriptionGerman, item.DescriptionEnglish),
-            MapQuestionType(item.Type),
-            item.Order,
-            item.IsRequired,
-            item.Configuration
-        )).ToList();
-    }
-
-    private static Domain.QuestionnaireTemplateAggregate.QuestionType MapQuestionType(QuestionType dtoType) => dtoType switch
-    {
-        QuestionType.TextQuestion => Domain.QuestionnaireTemplateAggregate.QuestionType.TextQuestion,
-        QuestionType.Assessment => Domain.QuestionnaireTemplateAggregate.QuestionType.Assessment,
-        QuestionType.Goal => Domain.QuestionnaireTemplateAggregate.QuestionType.Goal,
-        _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
-    };
 }

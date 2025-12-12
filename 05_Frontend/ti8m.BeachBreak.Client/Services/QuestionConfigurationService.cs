@@ -1,6 +1,5 @@
 using System.Text.Json;
 using ti8m.BeachBreak.Client.Models;
-using QuestionCardTypes = ti8m.BeachBreak.Client.Components.QuestionnaireBuilder.QuestionCard;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -72,7 +71,7 @@ public class QuestionConfigurationService
     /// <summary>
     /// Gets evaluations from question configuration
     /// </summary>
-    public List<EvaluationItem> GetEvaluations(QuestionItem question)
+    public List<EvaluationItem> GetEvaluations(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -85,7 +84,7 @@ public class QuestionConfigurationService
     /// <summary>
     /// Gets text sections from question configuration
     /// </summary>
-    public List<TextSection> GetTextSections(QuestionItem question)
+    public List<TextSection> GetTextSections(QuestionSection question)
     {
         if (question.Configuration is TextQuestionConfiguration config)
         {
@@ -98,7 +97,7 @@ public class QuestionConfigurationService
     /// Gets the rating scale value from a question's configuration.
     /// Returns 4 (default) if not configured.
     /// </summary>
-    public int GetRatingScale(QuestionItem question)
+    public int GetRatingScale(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -111,7 +110,7 @@ public class QuestionConfigurationService
     /// Gets the scale low label from a question's configuration.
     /// Returns "Poor" (default) if not configured.
     /// </summary>
-    public string GetScaleLowLabel(QuestionItem question)
+    public string GetScaleLowLabel(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -124,7 +123,7 @@ public class QuestionConfigurationService
     /// Gets the scale high label from a question's configuration.
     /// Returns "Excellent" (default) if not configured.
     /// </summary>
-    public string GetScaleHighLabel(QuestionItem question)
+    public string GetScaleHighLabel(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -136,7 +135,7 @@ public class QuestionConfigurationService
     /// <summary>
     /// Updates evaluations in question configuration
     /// </summary>
-    public void SetEvaluations(QuestionItem question, List<EvaluationItem> evaluations)
+    public void SetEvaluations(QuestionSection question, List<EvaluationItem> evaluations)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -158,7 +157,7 @@ public class QuestionConfigurationService
     /// <summary>
     /// Updates text sections in question configuration
     /// </summary>
-    public void SetTextSections(QuestionItem question, List<TextSection> textSections)
+    public void SetTextSections(QuestionSection question, List<TextSection> textSections)
     {
         if (question.Configuration is TextQuestionConfiguration config)
         {
@@ -176,7 +175,7 @@ public class QuestionConfigurationService
     /// <summary>
     /// Validates if a question has valid configuration based on its type
     /// </summary>
-    public bool HasValidConfiguration(QuestionItem question)
+    public bool HasValidConfiguration(QuestionSection question)
     {
         return question.Type switch
         {
@@ -190,7 +189,7 @@ public class QuestionConfigurationService
     /// <summary>
     /// Gets configuration item count for a question
     /// </summary>
-    public int GetConfigurationItemCount(QuestionItem question)
+    public int GetConfigurationItemCount(QuestionSection question)
     {
         return question.Type switch
         {

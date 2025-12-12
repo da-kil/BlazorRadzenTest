@@ -14,29 +14,43 @@ public interface IQuestionTypeHandler
     QuestionType SupportedType { get; }
 
     /// <summary>
-    /// Initializes a new question with default configuration
+    /// Initializes a new section with default configuration (Section IS the question)
     /// </summary>
-    void InitializeQuestion(QuestionItem question);
+    void InitializeQuestion(QuestionSection section);
 
     /// <summary>
-    /// Adds a new item to the question (evaluation, goal category, or text section)
+    /// Adds a new item to the section (evaluation, goal category, or text section)
     /// </summary>
-    void AddItem(QuestionItem question);
+    void AddItem(QuestionSection section);
 
     /// <summary>
-    /// Removes an item from the question at the specified index
+    /// Removes an item from the section at the specified index
     /// </summary>
-    void RemoveItem(QuestionItem question, int index);
+    void RemoveItem(QuestionSection section, int index);
 
     /// <summary>
-    /// Gets the count of items in this question
+    /// Gets the count of items in this section
     /// </summary>
-    int GetItemCount(QuestionItem question);
+    int GetItemCount(QuestionSection section);
 
     /// <summary>
-    /// Validates the question configuration
+    /// Moves an item up in the list (decreases order)
+    /// </summary>
+    /// <param name="section">The section containing the item</param>
+    /// <param name="index">Index of the item to move up</param>
+    void MoveItemUp(QuestionSection section, int index);
+
+    /// <summary>
+    /// Moves an item down in the list (increases order)
+    /// </summary>
+    /// <param name="section">The section containing the item</param>
+    /// <param name="index">Index of the item to move down</param>
+    void MoveItemDown(QuestionSection section, int index);
+
+    /// <summary>
+    /// Validates the section configuration
     /// </summary>
     /// <returns>List of validation error messages (empty if valid)</returns>
-    List<string> Validate(QuestionItem question, string questionLabel);
+    List<string> Validate(QuestionSection section, string questionLabel);
 
 }

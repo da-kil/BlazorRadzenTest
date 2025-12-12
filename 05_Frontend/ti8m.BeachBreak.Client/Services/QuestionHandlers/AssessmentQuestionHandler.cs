@@ -10,7 +10,7 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
 {
     public QuestionType SupportedType => QuestionType.Assessment;
 
-    public void InitializeQuestion(QuestionItem question)
+    public void InitializeQuestion(QuestionSection question)
     {
         // Initialize with one default evaluation and rating scale settings
         question.Configuration = new AssessmentConfiguration
@@ -25,7 +25,7 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
         };
     }
 
-    public void AddItem(QuestionItem question)
+    public void AddItem(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -42,7 +42,7 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
         }
     }
 
-    public void RemoveItem(QuestionItem question, int index)
+    public void RemoveItem(QuestionSection question, int index)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -59,7 +59,7 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
         }
     }
 
-    public int GetItemCount(QuestionItem question)
+    public int GetItemCount(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -68,7 +68,41 @@ public class AssessmentQuestionHandler : IQuestionTypeHandler
         return 0;
     }
 
-    public List<string> Validate(QuestionItem question, string questionLabel)
+    public void MoveItemUp(QuestionSection question, int index)
+    {
+        if (question.Configuration is AssessmentConfiguration config)
+        {
+            if (index > 0 && index < config.Evaluations.Count)
+            {
+                // Swap with previous item
+                (config.Evaluations[index], config.Evaluations[index - 1]) =
+                    (config.Evaluations[index - 1], config.Evaluations[index]);
+
+                // Update orders
+                config.Evaluations[index].Order = index;
+                config.Evaluations[index - 1].Order = index - 1;
+            }
+        }
+    }
+
+    public void MoveItemDown(QuestionSection question, int index)
+    {
+        if (question.Configuration is AssessmentConfiguration config)
+        {
+            if (index >= 0 && index < config.Evaluations.Count - 1)
+            {
+                // Swap with next item
+                (config.Evaluations[index], config.Evaluations[index + 1]) =
+                    (config.Evaluations[index + 1], config.Evaluations[index]);
+
+                // Update orders
+                config.Evaluations[index].Order = index;
+                config.Evaluations[index + 1].Order = index + 1;
+            }
+        }
+    }
+
+    public List<string> Validate(QuestionSection question, string questionLabel)
     {
         var errors = new List<string>();
 

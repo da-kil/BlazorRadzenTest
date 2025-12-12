@@ -11,13 +11,16 @@ public class SaveManagerResponseCommand : ICommand<Result<Guid>>
     public Guid ManagerId { get; set; }
     public Guid AssignmentId { get; set; }
 
-    // Type-safe section responses: SectionId -> Role -> QuestionId -> QuestionResponseValue
-    public Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> SectionResponses { get; set; }
+    /// <summary>
+    /// Section responses: SectionId -> CompletionRole -> QuestionResponseValue
+    /// Section IS the question (2-level dictionary, no nested questionId).
+    /// </summary>
+    public Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> SectionResponses { get; set; }
 
     public SaveManagerResponseCommand(
         Guid managerId,
         Guid assignmentId,
-        Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> sectionResponses)
+        Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> sectionResponses)
     {
         ManagerId = managerId;
         AssignmentId = assignmentId;

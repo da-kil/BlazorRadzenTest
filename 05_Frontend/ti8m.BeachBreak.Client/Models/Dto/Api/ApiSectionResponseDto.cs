@@ -9,7 +9,7 @@ public class ApiSectionResponseDto
     public Guid SectionId { get; set; }
 
     /// <summary>
-    /// Role-based response structure: ResponseRole (Employee/Manager) -> QuestionId -> QuestionResponse
+    /// Role-based response structure: ResponseRole (Employee/Manager) -> QuestionResponse
     /// </summary>
-    public Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>> RoleResponses { get; set; } = new();
+    public Dictionary<ResponseRole, QuestionResponseDto> RoleResponses { get; set; } = new();
 }

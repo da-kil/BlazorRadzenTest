@@ -82,16 +82,10 @@
                            Template="@Template"
                            CanMoveUp="@(currentSectionIndex > 0)"
                            CanMoveDown="@(currentSectionIndex < Template.Sections.Count - 1)"
-                           ShowQuestionTypeSelection="@(ShowQuestionTypeSelection && SelectedSectionIndex == currentSectionIndex)"
-                           QuestionTypeLabels="@QuestionTypeLabels"
                            OnMoveUp="@(() => OnMoveSectionUpInternal(currentSectionIndex))"
                            OnMoveDown="@(() => OnMoveSectionDownInternal(currentSectionIndex))"
                            OnDelete="@(() => OnRemoveSectionInternal(currentSectionIndex))"
-                           OnAddQuestion="@(() => OnShowAddQuestionDialogInternal(currentSectionIndex))"
                            OnAddItemDirectly="@(() => OnAddItemDirectlyInternal(currentSectionIndex))"
-                           OnCancelQuestionSelection="@OnCancelQuestionTypeSelection"
-                           OnAddQuestionType="@((type) => OnAddQuestionOfTypeInternal(type))"
-                           OnEditQuestion="@((questionIndex) => OnEditQuestionInternal(currentSectionIndex, questionIndex))"
                            OnMoveQuestionUp="@((questionIndex) => OnMoveQuestionUpInternal(currentSectionIndex, questionIndex))"
                            OnMoveQuestionDown="@((questionIndex) => OnMoveQuestionDownInternal(currentSectionIndex, questionIndex))"
                            OnDeleteQuestion="@((questionIndex) => OnRemoveQuestionInternal(currentSectionIndex, questionIndex))"
@@ -106,19 +100,12 @@
 
 @code {
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
-    [Parameter, EditorRequired] public bool ShowQuestionTypeSelection { get; set; }
-    [Parameter, EditorRequired] public int SelectedSectionIndex { get; set; }
-    [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
 
     [Parameter] public EventCallback<QuestionType> OnAddSectionWithType { get; set; }
     [Parameter] public EventCallback<int> OnMoveSectionUp { get; set; }
     [Parameter] public EventCallback<int> OnMoveSectionDown { get; set; }
     [Parameter] public EventCallback<int> OnRemoveSection { get; set; }
-    [Parameter] public EventCallback<int> OnShowAddQuestionDialog { get; set; }
     [Parameter] public EventCallback<int> OnAddItemDirectly { get; set; }
-    [Parameter] public EventCallback OnCancelQuestionTypeSelection { get; set; }
-    [Parameter] public EventCallback<QuestionType> OnAddQuestionOfType { get; set; }
-    [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnEditQuestion { get; set; }
     [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnMoveQuestionUp { get; set; }
     [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnMoveQuestionDown { get; set; }
     [Parameter] public EventCallback<(int sectionIndex, int questionIndex)> OnRemoveQuestion { get; set; }
@@ -127,12 +114,7 @@
     private async Task OnMoveSectionUpInternal(int sectionIndex) => await OnMoveSectionUp.InvokeAsync(sectionIndex);
     private async Task OnMoveSectionDownInternal(int sectionIndex) => await OnMoveSectionDown.InvokeAsync(sectionIndex);
     private async Task OnRemoveSectionInternal(int sectionIndex) => await OnRemoveSection.InvokeAsync(sectionIndex);
-    private async Task OnShowAddQuestionDialogInternal(int sectionIndex) => await OnShowAddQuestionDialog.InvokeAsync(sectionIndex);
     private async Task OnAddItemDirectlyInternal(int sectionIndex) => await OnAddItemDirectly.InvokeAsync(sectionIndex);
-    private async Task OnAddQuestionOfTypeInternal(QuestionType type) => await OnAddQuestionOfType.InvokeAsync(type);
-
-    private async Task OnEditQuestionInternal(int sectionIndex, int questionIndex) =>
-        await OnEditQuestion.InvokeAsync((sectionIndex, questionIndex));
 
     private async Task OnMoveQuestionUpInternal(int sectionIndex, int questionIndex) =>
         await OnMoveQuestionUp.InvokeAsync((sectionIndex, questionIndex));

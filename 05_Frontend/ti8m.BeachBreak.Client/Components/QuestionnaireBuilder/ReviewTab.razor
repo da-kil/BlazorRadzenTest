@@ -122,20 +122,17 @@
         int total = 0;
         foreach (var section in Template.Sections)
         {
-            foreach (var question in section.Questions)
-            {
-                total += GetItemCount(question);
-            }
+            total += GetItemCount(section);
         }
         return total;
     }
 
-    private int GetItemCount(QuestionItem question)
+    private int GetItemCount(QuestionSection section)
     {
-        return question.Type switch
+        return section.Type switch
         {
-            QuestionType.Assessment => ConfigService.GetEvaluations(question).Count,
-            QuestionType.TextQuestion => ConfigService.GetTextSections(question).Count,
+            QuestionType.Assessment => ConfigService.GetEvaluations(section).Count,
+            QuestionType.TextQuestion => ConfigService.GetTextSections(section).Count,
             QuestionType.Goal => 0, // Goals are added during response
             _ => 0
         };
@@ -144,37 +141,29 @@
     private string GetSectionItemsText(QuestionSection section)
     {
         var itemCounts = new List<string>();
-        int assessmentCount = 0;
-        int textSectionCount = 0;
-        bool hasGoals = false;
 
-        foreach (var question in section.Questions)
+        switch (section.Type)
         {
-            switch (question.Type)
-            {
-                case QuestionType.Assessment:
-                    assessmentCount += ConfigService.GetEvaluations(question).Count;
-                    break;
-                case QuestionType.TextQuestion:
-                    textSectionCount += ConfigService.GetTextSections(question).Count;
-                    break;
-                case QuestionType.Goal:
-                    hasGoals = true;
-                    break;
-            }
+            case QuestionType.Assessment:
+                var assessmentCount = ConfigService.GetEvaluations(section).Count;
+                if (assessmentCount > 0)
+                {
+                    itemCounts.Add($"{assessmentCount} {(assessmentCount != 1 ? T("labels.evaluations").ToLower() : T("labels.evaluation").ToLower())}");
+                }
+                break;
+            case QuestionType.TextQuestion:
+                var textSectionCount = ConfigService.GetTextSections(section).Count;
+                if (textSectionCount > 0)
+                {
+                    itemCounts.Add($"{textSectionCount} {(textSectionCount != 1 ? T("labels.sections").ToLower() : T("labels.section").ToLower())}");
+                }
+                break;
+            case QuestionType.Goal:
+                itemCounts.Add(T("labels.goals").ToLower());
+                break;
         }
 
-        if (assessmentCount > 0)
-        {
-            itemCounts.Add($"{assessmentCount} {(assessmentCount != 1 ? T("labels.evaluations").ToLower() : T("labels.evaluation").ToLower())}");
-        }
-
-        if (textSectionCount > 0)
-        {
-            itemCounts.Add($"{textSectionCount} {(textSectionCount != 1 ? T("labels.sections").ToLower() : T("labels.section").ToLower())}");
-        }
-
-        if (hasGoals)
+        if (false) // Removed unused code
         {
             itemCounts.Add(T("messages.goals-added-during-response"));
         }

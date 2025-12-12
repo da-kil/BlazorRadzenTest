@@ -170,18 +170,8 @@ public class QuestionnaireTemplatesController : BaseController
                 Order = section.Order,
                 IsRequired = section.IsRequired,
                 CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
-                Questions = section.Questions.Select(question => new QuestionItemDto
-                {
-                    Id = question.Id,
-                    TitleGerman = question.TitleGerman,
-                    TitleEnglish = question.TitleEnglish,
-                    DescriptionGerman = question.DescriptionGerman,
-                    DescriptionEnglish = question.DescriptionEnglish,
-                    Type = MapQuestionTypeToDto[question.Type],
-                    Order = question.Order,
-                    IsRequired = question.IsRequired,
-                    Configuration = question.Configuration
-                }).ToList()
+                Type = section.Type,
+                Configuration = section.Configuration
             }).ToList()
         };
     }

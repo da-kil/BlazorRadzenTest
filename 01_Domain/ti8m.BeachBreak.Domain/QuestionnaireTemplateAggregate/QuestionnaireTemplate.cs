@@ -34,6 +34,9 @@ public class QuestionnaireTemplate : AggregateRoot
         if (name == null || (string.IsNullOrWhiteSpace(name.English) && string.IsNullOrWhiteSpace(name.German)))
             throw new ArgumentException("Name is required in at least one language", nameof(name));
 
+        if (categoryId == Guid.Empty)
+            throw new ArgumentException("Category is required", nameof(categoryId));
+
         RaiseEvent(new QuestionnaireTemplateCreated(
             id,
             name,
@@ -76,6 +79,9 @@ public class QuestionnaireTemplate : AggregateRoot
 
     public void ChangeCategory(Guid categoryId)
     {
+        if (categoryId == Guid.Empty)
+            throw new ArgumentException("Category is required", nameof(categoryId));
+
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
@@ -113,6 +119,12 @@ public class QuestionnaireTemplate : AggregateRoot
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");
 
+        // Validate configurations match types before updating
+        foreach (var section in sections ?? new())
+        {
+            section.ValidateConfigurationMatchesType();
+        }
+
         RaiseEvent(new QuestionnaireTemplateSectionsChanged(QuestionnaireTemplateEventDataMapper.MapSectionsToData(sections ?? new())));
     }
 
@@ -127,6 +139,9 @@ public class QuestionnaireTemplate : AggregateRoot
 
         if (Status == TemplateStatus.Published)
             throw new InvalidOperationException("Template is already published");
+
+        // Validate configurations match types before publishing
+        ValidateSectionConfigurations();
 
         var now = DateTime.UtcNow;
         var publishedDate = PublishedDate ?? now;
@@ -209,6 +224,18 @@ public class QuestionnaireTemplate : AggregateRoot
     }
 
     /// <summary>
+    /// Validates that each section's configuration matches its type.
+    /// Ensures data integrity between section type and configuration object.
+    /// </summary>
+    public void ValidateSectionConfigurations()
+    {
+        foreach (var section in Sections)
+        {
+            section.ValidateConfigurationMatchesType();
+        }
+    }
+
+    /// <summary>
     /// Creates a clone of an existing questionnaire template with new IDs.
     /// The cloned template is always in Draft status with reset timestamps.
     /// </summary>
@@ -230,29 +257,17 @@ public class QuestionnaireTemplate : AggregateRoot
 
         // Deep copy sections with new IDs
         var clonedSections = source.Sections.Select(section =>
-        {
-            var clonedQuestions = section.Questions.Select(question =>
-                new QuestionItem(
-                    Guid.NewGuid(),  // New question ID
-                    question.Title,
-                    question.Description,
-                    question.Type,
-                    question.Order,
-                    question.IsRequired,
-                    question.Configuration  // Configuration objects are immutable, safe to share
-                )
-            ).ToList();
-
-            return new QuestionSection(
+            new QuestionSection(
                 Guid.NewGuid(),  // New section ID
                 section.Title,
                 section.Description,
                 section.Order,
                 section.IsRequired,
                 section.CompletionRole,
-                clonedQuestions
-            );
-        }).ToList();
+                section.Type,
+                section.Configuration  // Configuration objects are immutable, safe to share
+            )
+        ).ToList();
 
         // Create new aggregate instance
         var clonedTemplate = new QuestionnaireTemplate();

@@ -1,4 +1,5 @@
-﻿using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+﻿using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
@@ -12,5 +13,6 @@ public class QuestionSectionDto
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
     public CompletionRole CompletionRole { get; set; } = CompletionRole.Employee;
-    public List<QuestionItemDto> Questions { get; set; } = new();
+    public string Type { get; set; } = string.Empty;
+    public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
 }

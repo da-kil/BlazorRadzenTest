@@ -107,192 +107,189 @@ else
                         </div>
                     </header>
 
-                    <!-- Questions Container - Matches DynamicQuestionnaire -->
+                    <!-- Questions Container -->
                     <div class="questions-container">
-                        @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
-                        {
-                            <div class="question-wrapper mb-4">
-                                <div class="question-title">
-                                    @question.GetLocalizedTitleWithFallback(CurrentLanguage)
-                                    @if (question.IsRequired)
-                                    {
-                                        <span class="text-danger">*</span>
-                                    }
-                                </div>
-
-                                @if (!string.IsNullOrWhiteSpace(question.GetLocalizedDescriptionWithFallback(CurrentLanguage)))
+                        <div class="question-wrapper mb-4">
+                            <div class="question-title">
+                                @currentSection.GetLocalizedTitleWithFallback(CurrentLanguage)
+                                @if (currentSection.IsRequired)
                                 {
-                                    <div class="question-description">@question.GetLocalizedDescriptionWithFallback(CurrentLanguage)</div>
+                                    <span class="text-danger">*</span>
                                 }
-
-                                <div class="review-question-container">
-                                    @if (currentSection.CompletionRole == CompletionRole.Both && question.Type == QuestionType.Assessment)
-                                    {
-                                        <!-- Special renderer for assessment questions showing competencies side-by-side -->
-                                        var employeeResponse = GetQuestionResponse(currentSection.Id, question.Id, CompletionRole.Employee);
-                                        var managerResponse = GetQuestionResponse(currentSection.Id, question.Id, CompletionRole.Manager);
-
-                                        <ReviewModeAssessmentRenderer Question="@question"
-                                                                      EmployeeResponse="@employeeResponse"
-                                                                      ManagerResponse="@managerResponse"
-                                                                      OnEditAnswer="@((args) => EditAnswer(args.Item1, args.Item2, args.Item3))"
-                                                                      OnCopyAnswer="@((args) => CopyAnswer(args.Item1, args.Item2, args.Item3))" />
-                                    }
-                                    else if (currentSection.CompletionRole == CompletionRole.Both && question.Type != QuestionType.Goal)
-                                    {
-                                        <!-- Question-by-question comparison card for Both sections (excluding goals and assessments) -->
-                                        <div class="question-comparison-card">
-                                            <!-- Side-by-side view within the question card -->
-                                            <div class="side-by-side-view">
-                                                <!-- Employee Answer -->
-                                                <div class="answer-column employee">
-                                                    <div class="answer-header">
-                                                        <span class="answer-label">
-                                                            <RadzenIcon Icon="person" Style="font-size: 1rem;" />
-                                                            Employee's Answer
-                                                        </span>
-                                                    </div>
-                                                    <div class="answer-content">
-                                                        <div class="answer-value">
-                                                            @{
-                                                                var employeeResponse = GetQuestionResponse(currentSection.Id, question.Id, CompletionRole.Employee);
-                                                            }
-                                                            <OptimizedQuestionRenderer Question="@question"
-                                                                                       Response="@employeeResponse"
-                                                                                       IsReadOnly="true"
-                                                                                       HideHeader="true"
-                                                                                       AssignmentId="@Assignment.Id"
-                                                                                       CurrentUserRole="ApplicationRole.Employee"
-                                                                                       AssignmentWorkflowState="@Assignment.WorkflowState"
-                                                                                       GoalRefreshToken="@goalRefreshToken" />
-                                                        </div>
-                                                    </div>
-                                                    <div class="answer-actions">
-                                                        <RadzenButton Text="Copy to Manager →"
-                                                                      ButtonStyle="ButtonStyle.Light"
-                                                                      Icon="content_copy"
-                                                                      Size="ButtonSize.Small"
-                                                                      Click="@(() => CopyAnswer(question, CompletionRole.Employee, CompletionRole.Manager))"
-                                                                      Class="copy-button" />
-                                                        <RadzenButton Text="Edit"
-                                                                      ButtonStyle="ButtonStyle.Primary"
-                                                                      Icon="edit"
-                                                                      Size="ButtonSize.Small"
-                                                                      Click="@(() => EditAnswer(question, CompletionRole.Employee))" />
-                                                    </div>
-                                                </div>
-
-                                                <!-- Manager Answer -->
-                                                <div class="answer-column manager">
-                                                    <div class="answer-header">
-                                                        <span class="answer-label">
-                                                            <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
-                                                            Manager's Answer
-                                                        </span>
-                                                    </div>
-                                                    <div class="answer-content">
-                                                        <div class="answer-value">
-                                                            @{
-                                                                var managerResponse = GetQuestionResponse(currentSection.Id, question.Id, CompletionRole.Manager);
-                                                            }
-                                                            <OptimizedQuestionRenderer Question="@question"
-                                                                                       Response="@managerResponse"
-                                                                                       IsReadOnly="true"
-                                                                                       HideHeader="true"
-                                                                                       AssignmentId="@Assignment.Id"
-                                                                                       CurrentUserRole="@currentUserRole"
-                                                                                       AssignmentWorkflowState="@Assignment.WorkflowState"
-                                                                                       GoalRefreshToken="@goalRefreshToken" />
-                                                        </div>
-                                                    </div>
-                                                    <div class="answer-actions">
-                                                        <RadzenButton Text="← Copy to Employee"
-                                                                      ButtonStyle="ButtonStyle.Light"
-                                                                      Icon="content_copy"
-                                                                      Size="ButtonSize.Small"
-                                                                      Click="@(() => CopyAnswer(question, CompletionRole.Manager, CompletionRole.Employee))"
-                                                                      Class="copy-button" />
-                                                        <RadzenButton Text="Edit"
-                                                                      ButtonStyle="ButtonStyle.Primary"
-                                                                      Icon="edit"
-                                                                      Size="ButtonSize.Small"
-                                                                      Click="@(() => EditAnswer(question, CompletionRole.Manager))" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    }
-                                    else if (currentSection.CompletionRole == CompletionRole.Both && question.Type == QuestionType.Goal)
-                                    {
-                                        <!-- Collaborative grouped view for goal questions in Both sections -->
-                                        <div class="goal-collaborative-view">
-                                            @{
-                                                // Use the same approach as DynamicQuestionnaire.razor - let OptimizedQuestionRenderer handle role logic
-                                                var goalResponse = GetGenericQuestionResponse(question.Id);
-                                            }
-
-
-                                            @{
-                                                // Get the section response containing all role responses for review mode
-                                                SectionResponse? sectionData = null;
-                                                if (currentSection != null && response?.SectionResponses != null &&
-                                                response.SectionResponses.TryGetValue(currentSection.Id, out var sectionResponse))
-                                                {
-                                                    sectionData = sectionResponse;
-                                                }
-                                            }
-
-                                            <OptimizedQuestionRenderer Question="@question"
-                                                                       Response="@goalResponse"
-                                                                       IsReadOnly="false"
-                                                                       HideHeader="true"
-                                                                       AssignmentId="@Assignment.Id"
-                                                                       CurrentUserRole="@currentUserRole"
-                                                                       AssignmentWorkflowState="@Assignment.WorkflowState"
-                                                                       GoalRefreshToken="@goalRefreshToken"
-                                                                       SectionData="@sectionData" />
-
-                                            <!-- Inline goal management now available directly -->
-                                            <!-- EDIT, DELETE, and ADD NEW GOAL buttons are shown inline in the component above -->
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <!-- Single column view for Employee or Manager only sections -->
-                                        <div class="single-answer-view">
-                                            <div class="answer-header">
-                                                <span class="answer-label">
-                                                    <RadzenIcon Icon="@GetRoleIcon(currentSection.CompletionRole)" Style="font-size: 1rem;" />
-                                                    @currentSection.CompletionRole's Answer
-                                                </span>
-                                            </div>
-                                            <div class="answer-content">
-                                                <div class="answer-value">
-                                                    @{
-                                                        var singleResponse = GetQuestionResponse(currentSection.Id, question.Id, currentSection.CompletionRole);
-                                                    }
-                                                    <OptimizedQuestionRenderer Question="@question"
-                                                                               Response="@singleResponse"
-                                                                               IsReadOnly="true"
-                                                                               HideHeader="true"
-                                                                               AssignmentId="@Assignment.Id"
-                                                                               CurrentUserRole="@ConvertCompletionRoleToApplicationRole(currentSection.CompletionRole)"
-                                                                               AssignmentWorkflowState="@Assignment.WorkflowState"
-                                                                               GoalRefreshToken="@goalRefreshToken" />
-                                                </div>
-                                            </div>
-                                            <div class="answer-actions">
-                                                <RadzenButton Text="Edit Answer"
-                                                              ButtonStyle="ButtonStyle.Primary"
-                                                              Icon="edit"
-                                                              Size="ButtonSize.Medium"
-                                                              Click="@(() => EditAnswer(question, currentSection.CompletionRole))" />
-                                            </div>
-                                        </div>
-                                    }
-                                </div>
                             </div>
-                        }
+
+                            @if (!string.IsNullOrWhiteSpace(currentSection.GetLocalizedDescriptionWithFallback(CurrentLanguage)))
+                            {
+                                <div class="question-description">@currentSection.GetLocalizedDescriptionWithFallback(CurrentLanguage)</div>
+                            }
+
+                            <div class="review-question-container">
+                                @if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type == QuestionType.Assessment)
+                                {
+                                    <!-- Special renderer for assessment questions showing competencies side-by-side -->
+                                    var employeeResponse = GetSectionResponse(currentSection.Id, CompletionRole.Employee);
+                                    var managerResponse = GetSectionResponse(currentSection.Id, CompletionRole.Manager);
+
+                                    <ReviewModeAssessmentRenderer Section="@currentSection"
+                                                                  EmployeeResponse="@employeeResponse"
+                                                                  ManagerResponse="@managerResponse"
+                                                                  OnEditAnswer="@((args) => EditAnswer(args.Item1, args.Item2, args.Item3))"
+                                                                  OnCopyAnswer="@((args) => CopyAnswer(args.Item1, args.Item2, args.Item3))" />
+                                }
+                                else if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type != QuestionType.Goal)
+                                {
+                                    <!-- Section-by-section comparison card for Both sections (excluding goals and assessments) -->
+                                    <div class="question-comparison-card">
+                                        <!-- Side-by-side view within the section card -->
+                                        <div class="side-by-side-view">
+                                            <!-- Employee Answer -->
+                                            <div class="answer-column employee">
+                                                <div class="answer-header">
+                                                    <span class="answer-label">
+                                                        <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                                                        Employee's Answer
+                                                    </span>
+                                                </div>
+                                                <div class="answer-content">
+                                                    <div class="answer-value">
+                                                        @{
+                                                            var employeeResponse = GetSectionResponse(currentSection.Id, CompletionRole.Employee);
+                                                        }
+                                                        <OptimizedQuestionRenderer Section="@currentSection"
+                                                                                   Response="@employeeResponse"
+                                                                                   IsReadOnly="true"
+                                                                                   HideHeader="true"
+                                                                                   AssignmentId="@Assignment.Id"
+                                                                                   CurrentUserRole="ApplicationRole.Employee"
+                                                                                   AssignmentWorkflowState="@Assignment.WorkflowState"
+                                                                                   GoalRefreshToken="@goalRefreshToken" />
+                                                    </div>
+                                                </div>
+                                                <div class="answer-actions">
+                                                    <RadzenButton Text="Copy to Manager →"
+                                                                  ButtonStyle="ButtonStyle.Light"
+                                                                  Icon="content_copy"
+                                                                  Size="ButtonSize.Small"
+                                                                  Click="@(() => CopyAnswer(currentSection, CompletionRole.Employee, CompletionRole.Manager))"
+                                                                  Class="copy-button" />
+                                                    <RadzenButton Text="Edit"
+                                                                  ButtonStyle="ButtonStyle.Primary"
+                                                                  Icon="edit"
+                                                                  Size="ButtonSize.Small"
+                                                                  Click="@(() => EditAnswer(currentSection, CompletionRole.Employee))" />
+                                                </div>
+                                            </div>
+
+                                            <!-- Manager Answer -->
+                                            <div class="answer-column manager">
+                                                <div class="answer-header">
+                                                    <span class="answer-label">
+                                                        <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
+                                                        Manager's Answer
+                                                    </span>
+                                                </div>
+                                                <div class="answer-content">
+                                                    <div class="answer-value">
+                                                        @{
+                                                            var managerResponse = GetSectionResponse(currentSection.Id, CompletionRole.Manager);
+                                                        }
+                                                        <OptimizedQuestionRenderer Section="@currentSection"
+                                                                                   Response="@managerResponse"
+                                                                                   IsReadOnly="true"
+                                                                                   HideHeader="true"
+                                                                                   AssignmentId="@Assignment.Id"
+                                                                                   CurrentUserRole="@currentUserRole"
+                                                                                   AssignmentWorkflowState="@Assignment.WorkflowState"
+                                                                                   GoalRefreshToken="@goalRefreshToken" />
+                                                    </div>
+                                                </div>
+                                                <div class="answer-actions">
+                                                    <RadzenButton Text="← Copy to Employee"
+                                                                  ButtonStyle="ButtonStyle.Light"
+                                                                  Icon="content_copy"
+                                                                  Size="ButtonSize.Small"
+                                                                  Click="@(() => CopyAnswer(currentSection, CompletionRole.Manager, CompletionRole.Employee))"
+                                                                  Class="copy-button" />
+                                                    <RadzenButton Text="Edit"
+                                                                  ButtonStyle="ButtonStyle.Primary"
+                                                                  Icon="edit"
+                                                                  Size="ButtonSize.Small"
+                                                                  Click="@(() => EditAnswer(currentSection, CompletionRole.Manager))" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                else if (currentSection.CompletionRole == CompletionRole.Both && currentSection.Type == QuestionType.Goal)
+                                {
+                                    <!-- Collaborative grouped view for goal sections in Both sections -->
+                                    <div class="goal-collaborative-view">
+                                        @{
+                                            // Use the same approach as DynamicQuestionnaire.razor - let OptimizedQuestionRenderer handle role logic
+                                            var goalResponse = GetGenericSectionResponse(currentSection.Id);
+                                        }
+
+
+                                        @{
+                                            // Get the section response containing all role responses for review mode
+                                            SectionResponse? sectionData = null;
+                                            if (currentSection != null && response?.SectionResponses != null &&
+                                            response.SectionResponses.TryGetValue(currentSection.Id, out var sectionResponse))
+                                            {
+                                                sectionData = sectionResponse;
+                                            }
+                                        }
+
+                                        <OptimizedQuestionRenderer Section="@currentSection"
+                                                                   Response="@goalResponse"
+                                                                   IsReadOnly="false"
+                                                                   HideHeader="true"
+                                                                   AssignmentId="@Assignment.Id"
+                                                                   CurrentUserRole="@currentUserRole"
+                                                                   AssignmentWorkflowState="@Assignment.WorkflowState"
+                                                                   GoalRefreshToken="@goalRefreshToken"
+                                                                   SectionData="@sectionData" />
+
+                                        <!-- Inline goal management now available directly -->
+                                        <!-- EDIT, DELETE, and ADD NEW GOAL buttons are shown inline in the component above -->
+                                    </div>
+                                }
+                                else
+                                {
+                                    <!-- Single column view for Employee or Manager only sections -->
+                                    <div class="single-answer-view">
+                                        <div class="answer-header">
+                                            <span class="answer-label">
+                                                <RadzenIcon Icon="@GetRoleIcon(currentSection.CompletionRole)" Style="font-size: 1rem;" />
+                                                @currentSection.CompletionRole's Answer
+                                            </span>
+                                        </div>
+                                        <div class="answer-content">
+                                            <div class="answer-value">
+                                                @{
+                                                    var singleResponse = GetSectionResponse(currentSection.Id, currentSection.CompletionRole);
+                                                }
+                                                <OptimizedQuestionRenderer Section="@currentSection"
+                                                                           Response="@singleResponse"
+                                                                           IsReadOnly="true"
+                                                                           HideHeader="true"
+                                                                           AssignmentId="@Assignment.Id"
+                                                                           CurrentUserRole="@ConvertCompletionRoleToApplicationRole(currentSection.CompletionRole)"
+                                                                           AssignmentWorkflowState="@Assignment.WorkflowState"
+                                                                           GoalRefreshToken="@goalRefreshToken" />
+                                            </div>
+                                        </div>
+                                        <div class="answer-actions">
+                                            <RadzenButton Text="Edit Answer"
+                                                          ButtonStyle="ButtonStyle.Primary"
+                                                          Icon="edit"
+                                                          Size="ButtonSize.Medium"
+                                                          Click="@(() => EditAnswer(currentSection, currentSection.CompletionRole))" />
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
                     </div>
                 }
             </div>
@@ -362,39 +359,35 @@ else
         }
     }
 
-    private QuestionResponse GetQuestionResponse(Guid sectionId, Guid questionId, CompletionRole role)
+    private QuestionResponse GetSectionResponse(Guid sectionId, CompletionRole role)
     {
         if (response?.SectionResponses == null)
-            return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+            return new QuestionResponse { QuestionId = sectionId, QuestionType = QuestionType.TextQuestion };
 
         if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
-            return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+            return new QuestionResponse { QuestionId = sectionId, QuestionType = QuestionType.TextQuestion };
 
         // Convert CompletionRole to ResponseRole for type-safe dictionary access
         var responseRole = role.ToResponseRole();
 
-        if (sectionResponse.RoleResponses != null &&
-            sectionResponse.RoleResponses.TryGetValue(responseRole, out var roleQuestions))
+        // Direct 2-level access (Section IS the question)
+        if (sectionResponse.RoleResponses?.TryGetValue(responseRole, out var sectionQuestionResponse) == true)
         {
-            if (roleQuestions.TryGetValue(questionId, out var questionResponse))
-            {
-                return questionResponse;
-            }
+            return sectionQuestionResponse;
         }
 
-        return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+        return new QuestionResponse { QuestionId = sectionId, QuestionType = QuestionType.TextQuestion };
     }
 
-    private QuestionResponse GetGenericQuestionResponse(Guid questionId)
+    private QuestionResponse GetGenericSectionResponse(Guid sectionId)
     {
         if (currentSection == null || response?.SectionResponses == null)
-            return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+            return new QuestionResponse { QuestionId = sectionId, QuestionType = QuestionType.TextQuestion };
 
-        if (!response.SectionResponses.TryGetValue(currentSection.Id, out var sectionResponse))
-            return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+        if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
+            return new QuestionResponse { QuestionId = sectionId, QuestionType = QuestionType.TextQuestion };
 
         // Determine which role's responses to fetch based on section's CompletionRole
-        // Copy exact logic from DynamicQuestionnaire.razor lines 1092-1112
         var isPostReviewState = Assignment != null &&
             (Assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                         WorkflowState.EmployeeReviewConfirmed or
@@ -418,32 +411,31 @@ else
             };
         }
 
-        // Access responses for the determined role
-        if (sectionResponse.RoleResponses?.TryGetValue(roleToFetch, out var roleQuestions) == true &&
-            roleQuestions.TryGetValue(questionId, out var questionResponse))
+        // Direct 2-level access (Section IS the question)
+        if (sectionResponse.RoleResponses?.TryGetValue(roleToFetch, out var sectionQuestionResponse) == true)
         {
-            return questionResponse;
+            return sectionQuestionResponse;
         }
 
-        return new QuestionResponse { QuestionId = questionId, QuestionType = QuestionType.TextQuestion };
+        return new QuestionResponse { QuestionId = sectionId, QuestionType = QuestionType.TextQuestion };
     }
 
-    private object? GetAnswer(Guid sectionId, Guid questionId, CompletionRole role)
+    private object? GetAnswer(Guid sectionId, CompletionRole role)
     {
-        var questionResponse = GetQuestionResponse(sectionId, questionId, role);
-        return questionResponse.ResponseData;
+        var sectionResponse = GetSectionResponse(sectionId, role);
+        return sectionResponse.ResponseData;
     }
 
-    private async Task EditAnswer(QuestionItem question, CompletionRole originalRole, string? evaluationKey = null)
+    private async Task EditAnswer(QuestionSection section, CompletionRole originalRole, string? evaluationKey = null)
     {
-        var currentAnswer = GetAnswer(currentSection!.Id, question.Id, originalRole);
+        var currentAnswer = GetAnswer(section.Id, originalRole);
 
         var parameters = new Dictionary<string, object>
         {
-            { "Question", question },
+            { "Section", section },
             { "CurrentAnswer", currentAnswer },
             { "CompletionRole", originalRole },
-            { "SectionTitle", currentSection!.GetLocalizedTitleWithFallback(CurrentLanguage) },
+            { "SectionTitle", section.GetLocalizedTitleWithFallback(CurrentLanguage) },
             { "AssignmentId", Assignment.Id },
             { "CurrentUserRole", GetRoleForDialog(originalRole) },
             { "AssignmentWorkflowState", Assignment.WorkflowState }
@@ -456,14 +448,14 @@ else
         }
 
         var result = await DialogService.OpenAsync<EditAnswerDialog>(
-            $"Edit Answer: {currentSection.GetLocalizedTitleWithFallback(CurrentLanguage)}",
+            $"Edit Answer: {section.GetLocalizedTitleWithFallback(CurrentLanguage)}",
             parameters,
             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
         );
 
         if (result is QuestionResponse questionResponse)
         {
-            await SaveEditedAnswer(currentSection.Id, originalRole, questionResponse);
+            await SaveEditedAnswer(section.Id, originalRole, questionResponse);
         }
     }
 
@@ -471,13 +463,14 @@ else
     {
         try
         {
+            // NOTE: questionResponse.QuestionId IS the sectionId (Section IS the question)
             // Serialize the complete QuestionResponse to JSON
             string answerJson = System.Text.Json.JsonSerializer.Serialize(questionResponse);
 
             var success = await AssignmentService.EditAnswerDuringReviewAsync(
                 Assignment.Id,
                 sectionId,
-                questionResponse.QuestionId,
+                questionResponse.QuestionId,  // This is the section ID
                 originalRole,
                 answerJson,
                 currentManagerName
@@ -506,9 +499,9 @@ else
         }
     }
 
-    private async Task CopyAnswer(QuestionItem question, CompletionRole fromRole, CompletionRole toRole)
+    private async Task CopyAnswer(QuestionSection section, CompletionRole fromRole, CompletionRole toRole)
     {
-        var sourceAnswer = GetAnswer(currentSection!.Id, question.Id, fromRole);
+        var sourceAnswer = GetAnswer(section.Id, fromRole);
         if (sourceAnswer == null)
         {
             NotificationService.Notify(NotificationSeverity.Warning, "Nothing to Copy", "Source answer is empty");
@@ -526,13 +519,13 @@ else
             // Build QuestionResponse from source answer
             var questionResponse = new QuestionResponse
             {
-                QuestionId = question.Id,
-                QuestionType = question.Type,
+                QuestionId = section.Id,  // Section ID is the question ID
+                QuestionType = section.Type,
                 LastModified = DateTime.Now,
                 ResponseData = sourceAnswer as QuestionResponseDataDto
             };
 
-            await SaveEditedAnswer(currentSection.Id, toRole, questionResponse);
+            await SaveEditedAnswer(section.Id, toRole, questionResponse);
         }
     }
 
@@ -755,8 +748,8 @@ else
             };
         }
 
-        var hasData = sectionResponse.RoleResponses?.TryGetValue(roleToFetch, out var roleQuestions) == true &&
-                     roleQuestions.ContainsKey(questionId);
+        var hasData = sectionResponse.RoleResponses?.TryGetValue(roleToFetch, out var roleQuestion) == true &&
+                     roleQuestion != null;
 
         return $"{roleToFetch} (has_data: {hasData})";
     }

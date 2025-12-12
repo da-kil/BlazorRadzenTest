@@ -17,10 +17,10 @@ public class QuestionnaireResponse
     public DateTime LastModified { get; set; }
 
     /// <summary>
-    /// Strongly-typed section responses: SectionId -> CompletionRole -> QuestionId -> QuestionResponseValue
+    /// Strongly-typed section responses: SectionId -> CompletionRole -> QuestionResponseValue
     /// This matches the ReadModel structure and eliminates the need for object-based conversions.
     /// </summary>
-    public Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> SectionResponses { get; set; } = new();
+    public Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> SectionResponses { get; set; } = new();
 
     public int ProgressPercentage { get; set; }
 }

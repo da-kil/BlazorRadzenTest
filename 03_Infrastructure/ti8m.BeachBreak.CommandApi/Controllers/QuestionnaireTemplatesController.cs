@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
@@ -57,18 +58,8 @@ public class QuestionnaireTemplatesController : BaseController
                     TitleGerman = section.TitleGerman,
                     TitleEnglish = section.TitleEnglish,
                     CompletionRole = section.CompletionRole,
-                    Questions = section.Questions.Select(question => new CommandQuestionItem
-                    {
-                        Configuration = question.Configuration,
-                        DescriptionGerman = question.DescriptionGerman,
-                        DescriptionEnglish = question.DescriptionEnglish,
-                        Id = question.Id,
-                        IsRequired = question.IsRequired,
-                        Order = question.Order,
-                        TitleGerman = question.TitleGerman,
-                        TitleEnglish = question.TitleEnglish,
-                        Type = MapQuestionType(question.Type)
-                    }).ToList()
+                    Type = section.Type,
+                    Configuration = section.Configuration
                 }).ToList()
             };
 
@@ -111,18 +102,8 @@ public class QuestionnaireTemplatesController : BaseController
                     TitleGerman = section.TitleGerman,
                     TitleEnglish = section.TitleEnglish,
                     CompletionRole = section.CompletionRole,
-                    Questions = section.Questions.Select(question => new CommandQuestionItem
-                    {
-                        Configuration = question.Configuration,
-                        DescriptionGerman = question.DescriptionGerman,
-                        DescriptionEnglish = question.DescriptionEnglish,
-                        Id = question.Id,
-                        IsRequired = question.IsRequired,
-                        Order = question.Order,
-                        TitleGerman = question.TitleGerman,
-                        TitleEnglish = question.TitleEnglish,
-                        Type = MapQuestionType(question.Type)
-                    }).ToList()
+                    Type = section.Type,
+                    Configuration = section.Configuration
                 }).ToList()
             };
 
@@ -275,5 +256,13 @@ public class QuestionnaireTemplatesController : BaseController
         QuestionTypeDto.Assessment => QuestionType.Assessment,
         QuestionTypeDto.Goal => QuestionType.Goal,
         _ => throw new ArgumentOutOfRangeException(nameof(dtoType), dtoType, "Unknown question type")
+    };
+
+    private static QuestionTypeDto MapQuestionTypeToDto(QuestionType questionType) => questionType switch
+    {
+        QuestionType.TextQuestion => QuestionTypeDto.TextQuestion,
+        QuestionType.Assessment => QuestionTypeDto.Assessment,
+        QuestionType.Goal => QuestionTypeDto.Goal,
+        _ => throw new ArgumentOutOfRangeException(nameof(questionType), questionType, "Unknown question type")
     };
 }

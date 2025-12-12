@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
@@ -18,8 +19,8 @@ public class QuestionnaireResponse : AggregateRoot
     public Guid TemplateId { get; private set; }
     public Guid EmployeeId { get; private set; }
 
-    // Role-based section responses: SectionId -> CompletionRole -> QuestionId -> TypedAnswer
-    public Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> SectionResponses { get; private set; } = new();
+    // Role-based section responses: SectionId -> CompletionRole -> TypedAnswer
+    public Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> SectionResponses { get; private set; } = new();
 
     public DateTime InitiatedDate { get; private set; }
     public DateTime LastModified { get; private set; }
@@ -49,16 +50,16 @@ public class QuestionnaireResponse : AggregateRoot
     /// Records or updates responses for a specific section of the questionnaire.
     /// Note: Workflow state validation should be done by the calling command handler.
     /// </summary>
-    public void RecordSectionResponse(Guid sectionId, CompletionRole role, Dictionary<Guid, QuestionResponseValue> questionResponses)
+    public void RecordSectionResponse(Guid sectionId, CompletionRole role, QuestionResponseValue sectionResponse)
     {
-        if (questionResponses == null)
-            throw new ArgumentNullException(nameof(questionResponses));
+        if (sectionResponse == null)
+            throw new ArgumentNullException(nameof(sectionResponse));
 
         // Allow empty responses for work-in-progress saves
         RaiseEvent(new SectionResponseRecorded(
             sectionId,
             role,
-            questionResponses,
+            sectionResponse,
             DateTime.UtcNow));
     }
 
@@ -67,7 +68,7 @@ public class QuestionnaireResponse : AggregateRoot
     /// Follows the Information Expert principle - Response owns the data, so it validates itself.
     /// Template is passed in as the specification/rule book.
     /// </summary>
-    /// <param name="template">The template defining sections and required questions</param>
+    /// <param name="template">The template defining sections (which ARE the questions)</param>
     /// <param name="completionRole">The role whose responses should be validated (Employee or Manager)</param>
     /// <returns>List of completed section IDs</returns>
     public List<Guid> GetCompletedSections(
@@ -81,11 +82,8 @@ public class QuestionnaireResponse : AggregateRoot
 
         foreach (var section in template.Sections)
         {
-            // Get required questions for this section
-            var requiredQuestions = section.Questions.Where(q => q.IsRequired).ToList();
-
-            // If no required questions, section is automatically complete
-            if (!requiredQuestions.Any())
+            // If section is not required, it's automatically complete
+            if (!section.IsRequired)
             {
                 completedSectionIds.Add(section.Id);
                 continue;
@@ -97,23 +95,13 @@ public class QuestionnaireResponse : AggregateRoot
                 continue; // No responses for this section, not complete
             }
 
-            if (!roleResponses.TryGetValue(completionRole, out var questionResponses))
+            if (!roleResponses.TryGetValue(completionRole, out var sectionResponse))
             {
-                continue; // No responses for this role, not complete
+                continue; // No response for this role, not complete
             }
 
-            // Check if ALL required questions have been answered
-            var allRequiredQuestionsAnswered = requiredQuestions.All(question =>
-            {
-                if (!questionResponses.TryGetValue(question.Id, out var response))
-                {
-                    return false; // Question not answered
-                }
-
-                return IsQuestionAnswered(question, response);
-            });
-
-            if (allRequiredQuestionsAnswered)
+            // Check if the section has been answered
+            if (IsSectionAnswered(section, sectionResponse))
             {
                 completedSectionIds.Add(section.Id);
             }
@@ -123,34 +111,34 @@ public class QuestionnaireResponse : AggregateRoot
     }
 
     /// <summary>
-    /// Determines if a question has been answered based on its type and configuration.
-    /// Business rules for question completion.
+    /// Determines if a section (which IS the question) has been answered based on its type and configuration.
+    /// Business rules for section completion.
     /// </summary>
-    private bool IsQuestionAnswered(QuestionnaireTemplateAggregate.QuestionItem question, QuestionResponseValue response)
+    private bool IsSectionAnswered(QuestionnaireTemplateAggregate.QuestionSection section, QuestionResponseValue response)
     {
-        return question.Type switch
+        return section.Type switch
         {
-            QuestionType.Assessment => IsAssessmentComplete(question, response),
-            QuestionType.TextQuestion => IsTextQuestionComplete(question, response),
-            QuestionType.Goal => true, // Goal questions never block completion (can be added during review)
+            QuestionType.Assessment => IsAssessmentComplete(section, response),
+            QuestionType.TextQuestion => IsTextQuestionComplete(section, response),
+            QuestionType.Goal => true, // Goal sections never block completion (can be added during review)
             _ => true
         };
     }
 
     /// <summary>
-    /// Determines if a text question has been completed based on required text sections.
+    /// Determines if a text section has been completed based on required text sections.
     /// Validation rules:
     /// 1. If NO text sections configured: Automatically complete (nothing to validate)
     /// 2. If text sections configured but NONE are required: Automatically complete (nothing required)
     /// 3. If required text sections exist: Checks that ALL required sections have content
     /// </summary>
     /// <remarks>
-    /// This validation respects item-level IsRequired flags on text sections, not just question-level flags.
-    /// Example: A question with 3 text sections where only 2 are required will be complete when those 2 are filled,
+    /// This validation respects item-level IsRequired flags on text sections, not just section-level flags.
+    /// Example: A section with 3 text sections where only 2 are required will be complete when those 2 are filled,
     /// even if the optional 3rd section is empty.
-    /// If all 3 sections are optional (IsRequired=false), the question is automatically complete.
+    /// If all 3 sections are optional (IsRequired=false), the section is automatically complete.
     /// </remarks>
-    private bool IsTextQuestionComplete(QuestionnaireTemplateAggregate.QuestionItem question, QuestionResponseValue response)
+    private bool IsTextQuestionComplete(QuestionnaireTemplateAggregate.QuestionSection section, QuestionResponseValue response)
     {
         if (response is not QuestionResponseValue.TextResponse textResponse)
         {
@@ -158,7 +146,7 @@ public class QuestionnaireResponse : AggregateRoot
         }
 
         // Get text sections with IsRequired flags from configuration
-        var textSectionItems = GetTextSectionsFromConfiguration(question);
+        var textSectionItems = GetTextSectionsFromConfiguration(section);
         if (textSectionItems.Count == 0)
         {
             return true; // No items configured = nothing to validate = complete
@@ -167,7 +155,7 @@ public class QuestionnaireResponse : AggregateRoot
         // Get only required text sections
         var requiredTextSections = textSectionItems.Where(ts => ts.IsRequired).ToList();
 
-        // If no required text sections exist, question is automatically complete
+        // If no required text sections exist, section is automatically complete
         if (!requiredTextSections.Any())
         {
             return true; // Nothing required = automatically complete
@@ -183,20 +171,19 @@ public class QuestionnaireResponse : AggregateRoot
     }
 
     /// <summary>
-    /// Determines if an assessment question has been completed based on required competencies.
+    /// Determines if an assessment section has been completed based on required competencies.
     /// Validation rules:
     /// 1. If NO competencies configured: Automatically complete (nothing to validate)
     /// 2. If competencies configured but NONE are required: Automatically complete (nothing required)
     /// 3. If required competencies exist: Checks that ALL required competencies are rated (rating > 0)
     /// </summary>
     /// <remarks>
-    /// This validation respects item-level IsRequired flags on competencies, not just question-level flags.
+    /// This validation respects item-level IsRequired flags on competencies, not just section-level flags.
     /// Example: An assessment with 5 competencies where only 3 are required will be complete when those 3 are rated,
     /// even if the optional 2 competencies are unrated (rating = 0).
-    /// If all 5 competencies are optional (IsRequired=false), the question is automatically complete.
-    /// and required at least one to be filled even when all were optional.
+    /// If all 5 competencies are optional (IsRequired=false), the section is automatically complete.
     /// </remarks>
-    private bool IsAssessmentComplete(QuestionnaireTemplateAggregate.QuestionItem question, QuestionResponseValue response)
+    private bool IsAssessmentComplete(QuestionnaireTemplateAggregate.QuestionSection section, QuestionResponseValue response)
     {
         if (response is not QuestionResponseValue.AssessmentResponse assessmentResponse)
         {
@@ -204,7 +191,7 @@ public class QuestionnaireResponse : AggregateRoot
         }
 
         // Get evaluations with IsRequired flags from configuration
-        var evaluations = GetEvaluationsFromConfiguration(question);
+        var evaluations = GetEvaluationsFromConfiguration(section);
         if (evaluations.Count == 0)
         {
             return true; // No items configured = nothing to validate = complete
@@ -213,7 +200,7 @@ public class QuestionnaireResponse : AggregateRoot
         // Get only required evaluations
         var requiredEvaluations = evaluations.Where(e => e.IsRequired).ToList();
 
-        // If no required evaluations exist, question is automatically complete
+        // If no required evaluations exist, section is automatically complete
         if (!requiredEvaluations.Any())
         {
             return true; // Nothing required = automatically complete
@@ -225,10 +212,10 @@ public class QuestionnaireResponse : AggregateRoot
             evaluationResponse.Rating > 0);
     }
 
-    private List<EvaluationItem> GetEvaluationsFromConfiguration(QuestionItem question)
+    private List<EvaluationItem> GetEvaluationsFromConfiguration(QuestionSection section)
     {
         // Use strongly-typed configuration - much simpler!
-        if (question.Configuration is AssessmentConfiguration config)
+        if (section.Configuration is AssessmentConfiguration config)
         {
             return config.Evaluations
                 .Where(e => e.IsRequired)
@@ -239,10 +226,10 @@ public class QuestionnaireResponse : AggregateRoot
         return new List<EvaluationItem>();
     }
 
-    private List<TextSectionItem> GetTextSectionsFromConfiguration(QuestionItem question)
+    private List<TextSectionItem> GetTextSectionsFromConfiguration(QuestionSection section)
     {
         // Use strongly-typed configuration - much simpler!
-        if (question.Configuration is TextQuestionConfiguration config)
+        if (section.Configuration is TextQuestionConfiguration config)
         {
             return config.TextSections
                 .OrderBy(section => section.Order) // Respect Order property instead of insertion order
@@ -273,11 +260,11 @@ public class QuestionnaireResponse : AggregateRoot
         // Ensure the section exists in the dictionary
         if (!SectionResponses.ContainsKey(@event.SectionId))
         {
-            SectionResponses[@event.SectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>();
+            SectionResponses[@event.SectionId] = new Dictionary<CompletionRole, QuestionResponseValue>();
         }
 
-        // Store responses under the specific role
-        SectionResponses[@event.SectionId][@event.CompletionRole] = @event.QuestionResponses;
+        // Store response under the specific
+        SectionResponses[@event.SectionId][@event.CompletionRole] = @event.SectionResponse;
         LastModified = @event.RecordedDate;
     }
 }

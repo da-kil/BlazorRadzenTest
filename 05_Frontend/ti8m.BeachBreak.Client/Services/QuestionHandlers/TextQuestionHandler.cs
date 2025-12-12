@@ -10,7 +10,7 @@ public class TextQuestionHandler : IQuestionTypeHandler
 {
     public QuestionType SupportedType => QuestionType.TextQuestion;
 
-    public void InitializeQuestion(QuestionItem question)
+    public void InitializeQuestion(QuestionSection question)
     {
         // Initialize with one default text section
         question.Configuration = new TextQuestionConfiguration
@@ -30,7 +30,7 @@ public class TextQuestionHandler : IQuestionTypeHandler
         };
     }
 
-    public void AddItem(QuestionItem question)
+    public void AddItem(QuestionSection question)
     {
         if (question.Configuration is TextQuestionConfiguration config)
         {
@@ -49,7 +49,7 @@ public class TextQuestionHandler : IQuestionTypeHandler
         }
     }
 
-    public void RemoveItem(QuestionItem question, int index)
+    public void RemoveItem(QuestionSection question, int index)
     {
         if (question.Configuration is TextQuestionConfiguration config)
         {
@@ -66,7 +66,7 @@ public class TextQuestionHandler : IQuestionTypeHandler
         }
     }
 
-    public int GetItemCount(QuestionItem question)
+    public int GetItemCount(QuestionSection question)
     {
         if (question.Configuration is TextQuestionConfiguration config)
         {
@@ -75,7 +75,41 @@ public class TextQuestionHandler : IQuestionTypeHandler
         return 0;
     }
 
-    public List<string> Validate(QuestionItem question, string questionLabel)
+    public void MoveItemUp(QuestionSection question, int index)
+    {
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            if (index > 0 && index < config.TextSections.Count)
+            {
+                // Swap with previous item
+                (config.TextSections[index], config.TextSections[index - 1]) =
+                    (config.TextSections[index - 1], config.TextSections[index]);
+
+                // Update orders
+                config.TextSections[index].Order = index;
+                config.TextSections[index - 1].Order = index - 1;
+            }
+        }
+    }
+
+    public void MoveItemDown(QuestionSection question, int index)
+    {
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            if (index >= 0 && index < config.TextSections.Count - 1)
+            {
+                // Swap with next item
+                (config.TextSections[index], config.TextSections[index + 1]) =
+                    (config.TextSections[index + 1], config.TextSections[index]);
+
+                // Update orders
+                config.TextSections[index].Order = index;
+                config.TextSections[index + 1].Order = index + 1;
+            }
+        }
+    }
+
+    public List<string> Validate(QuestionSection question, string questionLabel)
     {
         var errors = new List<string>();
 

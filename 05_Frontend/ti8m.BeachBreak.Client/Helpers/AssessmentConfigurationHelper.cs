@@ -9,7 +9,7 @@ namespace ti8m.BeachBreak.Client.Helpers;
 /// </summary>
 public static class AssessmentConfigurationHelper
 {
-    public static List<EvaluationItem> GetEvaluationsFromConfiguration(QuestionItem question)
+    public static List<EvaluationItem> GetEvaluationsFromConfiguration(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -18,7 +18,7 @@ public static class AssessmentConfigurationHelper
         return new List<EvaluationItem>();
     }
 
-    public static int GetRatingScaleFromConfiguration(QuestionItem question)
+    public static int GetRatingScaleFromConfiguration(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -27,7 +27,7 @@ public static class AssessmentConfigurationHelper
         return 4;
     }
 
-    public static string GetScaleLowLabelFromConfiguration(QuestionItem question)
+    public static string GetScaleLowLabelFromConfiguration(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {
@@ -36,7 +36,7 @@ public static class AssessmentConfigurationHelper
         return "Poor";
     }
 
-    public static string GetScaleHighLabelFromConfiguration(QuestionItem question)
+    public static string GetScaleHighLabelFromConfiguration(QuestionSection question)
     {
         if (question.Configuration is AssessmentConfiguration config)
         {

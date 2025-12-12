@@ -45,7 +45,7 @@ public class ProgressQueryHandler :
             var templates = await templateRepository.GetAllAsync(cancellationToken);
             var templateLookup = templates
                 .Where(t => templateIds.Contains(t.Id))
-                .ToDictionary(t => t.Id, t => t.Sections.Sum(s => s.Questions.Count));
+                .ToDictionary(t => t.Id, t => t.Sections.Count);
 
             // Get all responses for these assignments
             var assignmentIds = assignmentsList.Select(a => a.Id).ToList();
@@ -68,7 +68,7 @@ public class ProgressQueryHandler :
                     {
                         foreach (var roleKvp in sectionKvp.Value)
                         {
-                            answeredQuestions += roleKvp.Value.Count;
+                            answeredQuestions += 1;
                         }
                     }
 

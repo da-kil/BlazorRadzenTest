@@ -17,12 +17,12 @@
     <div class="goal-question">
         <header class="question-header">
             <h3 class="question-title">
-                @Question.GetLocalizedTitleWithFallback(CurrentLanguage)
+                @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
                 <EditedDuringReviewBadge Response="@Response" />
             </h3>
 
             @{
-                var questionDescription = Question.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+                var questionDescription = Section.GetLocalizedDescriptionWithFallback(CurrentLanguage);
             }
             @if (!string.IsNullOrWhiteSpace(questionDescription))
             {
@@ -46,7 +46,7 @@ else
             @if (hasPredecessor)
             {
                 <PredecessorGoalsComparisonSection
-                    Question="@Question"
+                    Section="@Section"
                     Response="@Response"
                     OnResponseChanged="@NotifyResponseChanged"
                     IsReadOnly="@IsReadOnly"
@@ -70,7 +70,7 @@ else
 
             @* SECTION 2: New Goals (Always Second, Collaborative Editing) *@
             <NewGoalsCollaborativeSection
-                Question="@Question"
+                Section="@Section"
                 Response="@Response"
                 OnResponseChanged="@NotifyResponseChanged"
                 IsReadOnly="@IsReadOnly"
@@ -84,7 +84,7 @@ else
 
     // === Old render fragment methods removed - now handled by child components ===
 
-    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
@@ -121,7 +121,7 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        if (HasParameterChanged(nameof(Question), Question) ||
+        if (HasParameterChanged(nameof(Section), Section) ||
             HasParameterChanged(nameof(Response), Response) ||
             GoalRefreshToken != lastGoalRefreshToken)
         {
@@ -152,7 +152,7 @@ else
             new Dictionary<string, object>
             {
                 { "AssignmentId", AssignmentId },
-                { "QuestionId", Question.Id }
+                { "QuestionId", Section.Id }
             },
             new DialogOptions
             {

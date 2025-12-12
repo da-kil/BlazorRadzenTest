@@ -554,7 +554,7 @@ public class EmployeesController : BaseController
                 employeeId, assignmentId);
 
             // Map section responses
-            // Note: Response structure is Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>
+            // Note: Response structure is Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>>
             // For employee "me" endpoint, we only return EMPLOYEE responses
             var sectionResponsesDto = new Dictionary<Guid, SectionResponseDto>();
             foreach (var sectionKvp in response.SectionResponses)
@@ -565,23 +565,16 @@ public class EmployeesController : BaseController
                 var questionResponsesDict = new Dictionary<Guid, QuestionResponseDto>();
 
                 // Only extract Employee role responses for this endpoint
-                if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponses))
+                if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponse))
                 {
-                    // employeeResponses is Dictionary<Guid, QuestionResponseValue>
-                    foreach (var questionKvp in employeeResponses)
+                    var questionResponseDto = new QuestionResponseDto
                     {
-                        var responseValue = questionKvp.Value;
-                        var questionId = questionKvp.Key;
+                        QuestionId = sectionId,
+                        ResponseData = QuestionResponseMapper.MapToDto(employeeResponse),
+                        QuestionType = QuestionResponseMapper.InferQuestionType(employeeResponse)
+                    };
 
-                        var questionResponseDto = new QuestionResponseDto
-                        {
-                            QuestionId = questionId,
-                            ResponseData = QuestionResponseMapper.MapToDto(responseValue),
-                            QuestionType = QuestionResponseMapper.InferQuestionType(responseValue)
-                        };
-
-                        questionResponsesDict[questionId] = questionResponseDto;
-                    }
+                    questionResponsesDict[sectionId] = questionResponseDto;
                 }
 
                 // Only include sections that have employee responses

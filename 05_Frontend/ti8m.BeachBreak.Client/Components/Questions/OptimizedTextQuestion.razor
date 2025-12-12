@@ -9,13 +9,13 @@
     <div class="text-question">
         <header class="question-header">
             <h3 class="question-title">
-                @Question.GetLocalizedTitleWithFallback(CurrentLanguage)
-                @if (Question.IsRequired) { <span class="text-danger">*</span> }
+                @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
+                @if (Section.IsRequired) { <span class="text-danger">*</span> }
                 <EditedDuringReviewBadge Response="@Response" />
             </h3>
 
             @{
-                var questionDescription = Question.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+                var questionDescription = Section.GetLocalizedDescriptionWithFallback(CurrentLanguage);
             }
             @if (!string.IsNullOrWhiteSpace(questionDescription))
             {
@@ -112,7 +112,7 @@ else
 }
 
 @code {
-    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
@@ -129,7 +129,7 @@ else
 
     protected override void OnParametersSet()
     {
-        if (HasParameterChanged(nameof(Question), Question))
+        if (HasParameterChanged(nameof(Section), Section))
         {
             textSections = GetTextSectionsFromConfiguration();
         }
@@ -164,7 +164,7 @@ else
 
     private List<TextSection> GetTextSectionsFromConfiguration()
     {
-        if (Question.Configuration is TextQuestionConfiguration config && config.TextSections.Any())
+        if (Section.Configuration is TextQuestionConfiguration config && config.TextSections.Any())
         {
             return config.TextSections.OrderBy(s => s.Order).ToList();
         }
@@ -176,7 +176,7 @@ else
             {
                 TitleGerman = T("sections.response"),
                 TitleEnglish = T("sections.response"),
-                IsRequired = Question.IsRequired,
+                IsRequired = Section.IsRequired,
                 Order = 0
             }
         };

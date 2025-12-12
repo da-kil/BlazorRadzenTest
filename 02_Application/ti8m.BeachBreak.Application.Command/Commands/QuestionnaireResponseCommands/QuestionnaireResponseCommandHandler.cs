@@ -81,21 +81,21 @@ public class QuestionnaireResponseCommandHandler :
                 var sectionId = section.Key;
                 var roleBasedResponses = section.Value;
 
-                // Extract Employee role responses
-                if (!roleBasedResponses.TryGetValue(CompletionRole.Employee, out var questionResponses))
+                // Extract Employee role response
+                if (!roleBasedResponses.TryGetValue(CompletionRole.Employee, out var sectionResponse))
                 {
                     logger.LogDebug("Section {SectionId} has no Employee responses", sectionId);
                     continue;
                 }
 
-                // Skip empty sections
-                if (questionResponses.Count == 0)
+                // Skip null/empty responses
+                if (sectionResponse == null)
                 {
-                    logger.LogDebug("Skipping empty section {SectionId}", sectionId);
+                    logger.LogDebug("Skipping null section response {SectionId}", sectionId);
                     continue;
                 }
 
-                response.RecordSectionResponse(sectionId, CompletionRole.Employee, questionResponses);
+                response.RecordSectionResponse(sectionId, CompletionRole.Employee, sectionResponse);
             }
 
             await repository.StoreAsync(response, cancellationToken);
@@ -191,25 +191,24 @@ public class QuestionnaireResponseCommandHandler :
             foreach (var section in command.SectionResponses)
             {
                 var sectionId = section.Key;
-
                 var roleBasedResponses = section.Value;
 
-                // Extract Manager role responses
-                if (!roleBasedResponses.TryGetValue(CompletionRole.Manager, out var questionResponses))
+                // Extract Manager role response
+                if (!roleBasedResponses.TryGetValue(CompletionRole.Manager, out var sectionResponse))
                 {
                     logger.LogDebug("Section {SectionId} has no Manager responses", sectionId);
                     continue;
                 }
 
-                // Skip empty sections
-                if (questionResponses.Count == 0)
+                // Skip null/empty responses
+                if (sectionResponse == null)
                 {
-                    logger.LogDebug("Skipping empty section {SectionId}", sectionId);
+                    logger.LogDebug("Skipping null section response {SectionId}", sectionId);
                     continue;
                 }
 
                 // Already type-safe - no conversion needed!
-                response.RecordSectionResponse(sectionId, CompletionRole.Manager, questionResponses);
+                response.RecordSectionResponse(sectionId, CompletionRole.Manager, sectionResponse);
             }
 
             await repository.StoreAsync(response, cancellationToken);

@@ -84,7 +84,7 @@
         <div class="answer-editor">
         @if (Question.Type == QuestionType.TextQuestion)
         {
-            <OptimizedTextQuestion Question="@Question"
+            <OptimizedTextQuestion Section="@Question"
                                   Response="@editResponse"
                                   OnResponseChanged="@HandleResponseChanged"
                                   IsReadOnly="false"
@@ -92,7 +92,7 @@
         }
         else if (Question.Type == QuestionType.Assessment)
         {
-            <OptimizedAssessmentQuestion Question="@displayQuestion"
+            <OptimizedAssessmentQuestion Section="@displayQuestion"
                                         Response="@editResponse"
                                         OnResponseChanged="@HandleResponseChanged"
                                         IsReadOnly="false"
@@ -101,7 +101,7 @@
         else if (Question.Type == QuestionType.Goal)
         {
             <OptimizedGoalQuestion @ref="goalQuestionRef"
-                                  Question="@Question"
+                                  Section="@Question"
                                   Response="@editResponse"
                                   OnResponseChanged="@HandleResponseChanged"
                                   IsReadOnly="false"
@@ -136,7 +136,7 @@
 </div>
 
 @code {
-    [Parameter] public QuestionItem Question { get; set; } = null!;
+    [Parameter] public QuestionSection Question { get; set; } = null!;
     [Parameter] public object? CurrentAnswer { get; set; }
     [Parameter] public CompletionRole CompletionRole { get; set; }
     [Parameter] public string SectionTitle { get; set; } = string.Empty;
@@ -147,7 +147,7 @@
 
     private QuestionResponse editResponse = new();
     private OptimizedGoalQuestion? goalQuestionRef;
-    private QuestionItem displayQuestion = null!; // Filtered question for display
+    private QuestionSection displayQuestion = null!; // Filtered question for display
 
     protected override void OnInitialized()
     {
@@ -180,7 +180,7 @@
         }
     }
 
-    private QuestionItem CreateDisplayQuestion()
+    private QuestionSection CreateDisplayQuestion()
     {
         // If no specific evaluation is targeted, return the original question
         if (string.IsNullOrEmpty(EvaluationKey) || Question.Type != QuestionType.Assessment)
@@ -189,7 +189,7 @@
         }
 
         // Create a filtered copy for single-evaluation editing
-        var filteredQuestion = new QuestionItem
+        var filteredQuestion = new QuestionSection
         {
             Id = Question.Id,
             TitleEnglish = Question.TitleEnglish,

@@ -5,8 +5,34 @@ namespace ti8m.BeachBreak.Client.Models;
 
 /// <summary>
 /// Custom JSON converter for IQuestionConfiguration interface to support polymorphic serialization.
-/// Uses the "$type" property to determine which concrete type to deserialize.
+/// Uses a "$type" discriminator (integer enum value) to determine which concrete type to deserialize.
 /// </summary>
+/// <remarks>
+/// <para><strong>Why the $type Discriminator Exists:</strong></para>
+/// <para>
+/// The $type discriminator may appear redundant with QuestionSection.Type, but it serves a different purpose:
+/// </para>
+/// <list type="bullet">
+///   <item><description><strong>QuestionSection.Type</strong>: Semantic field for domain logic and business rules</description></item>
+///   <item><description><strong>Configuration.$type</strong>: JSON discriminator for polymorphic deserialization</description></item>
+/// </list>
+/// <para>
+/// The redundancy is <strong>intentional defensive design</strong> that enables:
+/// </para>
+/// <list type="number">
+///   <item><description>Configuration to be used independently in events, DTOs, and other contexts without requiring parent section access</description></item>
+///   <item><description>Validation that frontend and backend agree on types (via ValidateConfigurationMatchesType())</description></item>
+///   <item><description>Standard .NET polymorphic JSON pattern with fast, unambiguous deserialization</description></item>
+///   <item><description>Backward compatibility via property inference fallback when $type is missing</description></item>
+/// </list>
+/// <para>
+/// <strong>Do not remove the $type discriminator</strong> - it's not redundant, it's defensive validation similar to
+/// foreign key constraints or email confirmation fields.
+/// </para>
+/// <para>
+/// See CLAUDE.md Section 12 "Configuration Serialization Pattern" for detailed explanation.
+/// </para>
+/// </remarks>
 public class QuestionConfigurationJsonConverter : JsonConverter<IQuestionConfiguration>
 {
     public override bool CanConvert(Type typeToConvert)

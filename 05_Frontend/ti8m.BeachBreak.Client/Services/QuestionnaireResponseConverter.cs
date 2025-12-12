@@ -26,47 +26,45 @@ public static class QuestionnaireResponseConverter
             TemplateId = templateId
         };
 
-        // Flatten section responses into question responses
+        // Convert section responses to question responses (Section IS the question)
         foreach (var sectionResponse in sectionResponses.Values)
         {
             foreach (var roleResponse in sectionResponse.RoleResponses)
             {
-                foreach (var questionResponse in roleResponse.Value)
+                // In new architecture, roleResponse.Value IS the QuestionResponse (no nested dictionary)
+                var response = roleResponse.Value;
+                var questionId = response.QuestionId;
+
+                // Detect actual question type based on response data (more reliable than QuestionType field)
+                var actualQuestionType = DetectQuestionType(response);
+
+                // Convert QuestionResponse to QuestionResponseCommandDto based on actual question type
+                var commandDto = new QuestionResponseCommandDto
                 {
-                    var questionId = questionResponse.Key;
-                    var response = questionResponse.Value;
+                    QuestionId = questionId,
+                    QuestionType = actualQuestionType
+                };
 
-                    // Detect actual question type based on response data (more reliable than QuestionType field)
-                    var actualQuestionType = DetectQuestionType(response);
+                // Map response data based on actual question type
+                switch (actualQuestionType)
+                {
+                    case QuestionType.TextQuestion:
+                        commandDto.TextResponse = ConvertTextResponse(response);
+                        break;
 
-                    // Convert QuestionResponse to QuestionResponseCommandDto based on actual question type
-                    var commandDto = new QuestionResponseCommandDto
-                    {
-                        QuestionId = questionId,
-                        QuestionType = actualQuestionType
-                    };
+                    case QuestionType.Assessment:
+                        commandDto.AssessmentResponse = ConvertAssessmentResponse(response);
+                        break;
 
-                    // Map response data based on actual question type
-                    switch (actualQuestionType)
-                    {
-                        case QuestionType.TextQuestion:
-                            commandDto.TextResponse = ConvertTextResponse(response);
-                            break;
+                    case QuestionType.Goal:
+                        commandDto.GoalResponse = ConvertGoalResponse(response);
+                        break;
 
-                        case QuestionType.Assessment:
-                            commandDto.AssessmentResponse = ConvertAssessmentResponse(response);
-                            break;
-
-                        case QuestionType.Goal:
-                            commandDto.GoalResponse = ConvertGoalResponse(response);
-                            break;
-
-                        default:
-                            throw new ArgumentException($"Unsupported question type: {response.QuestionType}");
-                    }
-
-                    dto.Responses[questionId] = commandDto;
+                    default:
+                        throw new ArgumentException($"Unsupported question type: {response.QuestionType}");
                 }
+
+                dto.Responses[questionId] = commandDto;
             }
         }
 

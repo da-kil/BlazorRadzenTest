@@ -10,6 +10,7 @@ public static class QuestionnaireTemplateEventDataMapper
 {
     /// <summary>
     /// Maps domain entities to event data for persistence in event stream.
+    /// Section IS the question - no nested question items.
     /// </summary>
     public static List<QuestionSectionData> MapSectionsToData(List<QuestionSection> sections)
     {
@@ -20,15 +21,8 @@ public static class QuestionnaireTemplateEventDataMapper
             s.Order,
             s.IsRequired,
             s.CompletionRole,
-            s.Questions.Select(q => new QuestionItemData(
-                q.Id,
-                q.Title,
-                q.Description,
-                q.Type,
-                q.Order,
-                q.IsRequired,
-                q.Configuration
-            )).ToList()
+            s.Type,
+            s.Configuration
         )).ToList();
     }
 
@@ -44,15 +38,8 @@ public static class QuestionnaireTemplateEventDataMapper
             s.Order,
             s.IsRequired,
             s.CompletionRole,
-            s.Questions.Select(q => new QuestionItem(
-                q.Id,
-                q.Title,
-                q.Description,
-                q.Type,
-                q.Order,
-                q.IsRequired,
-                q.Configuration
-            )).ToList()
+            s.Type,
+            s.Configuration
         )).ToList();
     }
 }

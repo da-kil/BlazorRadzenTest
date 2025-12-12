@@ -1,7 +1,6 @@
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
-using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -18,8 +17,10 @@ public class QuestionnaireResponseReadModel
     public Guid AssignmentId { get; set; }
     public Guid EmployeeId { get; set; }
 
-    // Role-based section responses: SectionId -> CompletionRole -> QuestionId -> Answer
-    public Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> SectionResponses { get; set; } = new();
+    /// <summary>
+    /// Role-based section responses: SectionId -> CompletionRole -> QuestionResponseValue
+    /// </summary>
+    public Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> SectionResponses { get; set; } = new();
 
     public DateTime CreatedAt { get; set; }
     public DateTime LastModified { get; set; }
@@ -37,14 +38,14 @@ public class QuestionnaireResponseReadModel
 
     public void Apply(SectionResponseRecorded @event)
     {
-        // Ensure the section exists in the dictionary
+        // Ensure the section exists in the dictionary)
         if (!SectionResponses.ContainsKey(@event.SectionId))
         {
-            SectionResponses[@event.SectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>();
+            SectionResponses[@event.SectionId] = new Dictionary<CompletionRole, QuestionResponseValue>();
         }
 
-        // Store responses under the specific role
-        SectionResponses[@event.SectionId][@event.CompletionRole] = @event.QuestionResponses;
+        // Store response under the specific role (2-level structure)
+        SectionResponses[@event.SectionId][@event.CompletionRole] = @event.SectionResponse;
         LastModified = @event.RecordedDate;
     }
 

@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.CommandApi.DTOs;
+using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using DomainApplicationRole = ti8m.BeachBreak.Domain.EmployeeAggregate.ApplicationRole;

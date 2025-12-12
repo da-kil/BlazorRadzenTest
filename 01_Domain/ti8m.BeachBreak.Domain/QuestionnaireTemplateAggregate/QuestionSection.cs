@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
@@ -9,7 +10,8 @@ public class QuestionSection : Entity<Guid>
     public int Order { get; private set; }
     public bool IsRequired { get; private set; } = true;
     public CompletionRole CompletionRole { get; private set; } = CompletionRole.Employee;
-    public List<QuestionItem> Questions { get; private set; } = new();
+    public QuestionType Type { get; private set; }
+    public IQuestionConfiguration Configuration { get; private set; } = new AssessmentConfiguration();
 
     private QuestionSection() { }
 
@@ -20,7 +22,8 @@ public class QuestionSection : Entity<Guid>
         int order,
         bool isRequired = true,
         CompletionRole completionRole = CompletionRole.Employee,
-        List<QuestionItem>? questions = null)
+        QuestionType type = QuestionType.Assessment,
+        IQuestionConfiguration? configuration = null)
     {
         Id = id;
         Title = title ?? throw new ArgumentNullException(nameof(title));
@@ -28,7 +31,10 @@ public class QuestionSection : Entity<Guid>
         Order = order;
         IsRequired = isRequired;
         CompletionRole = completionRole;
-        Questions = questions ?? new();
+        Type = type;
+        Configuration = configuration ?? new AssessmentConfiguration();
+
+        ValidateConfigurationMatchesType();
     }
 
     public void UpdateTitle(Translation title)
@@ -51,20 +57,25 @@ public class QuestionSection : Entity<Guid>
         IsRequired = isRequired;
     }
 
-    public void AddQuestion(QuestionItem question)
+    public void UpdateType(QuestionType type)
     {
-        if (question == null) throw new ArgumentNullException(nameof(question));
-        Questions.Add(question);
+        Type = type;
+        ValidateConfigurationMatchesType();
     }
 
-    public void RemoveQuestion(Guid questionId)
+    public void UpdateConfiguration(IQuestionConfiguration configuration)
     {
-        Questions.RemoveAll(q => q.Id == questionId);
+        Configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        ValidateConfigurationMatchesType();
     }
 
-    public void UpdateQuestions(List<QuestionItem> questions)
+    public void ValidateConfigurationMatchesType()
     {
-        Questions = questions ?? new();
+        if (Type != Configuration.QuestionType)
+        {
+            throw new InvalidOperationException(
+                $"Configuration type mismatch: Section Type is {Type} but Configuration is for {Configuration.QuestionType}");
+        }
     }
 
     public void UpdateCompletionRole(CompletionRole completionRole)

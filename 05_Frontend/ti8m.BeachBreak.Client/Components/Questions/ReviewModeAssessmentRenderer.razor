@@ -102,11 +102,11 @@ else
 }
 
 @code {
-    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionSection Question { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse EmployeeResponse { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse ManagerResponse { get; set; } = default!;
-    [Parameter] public EventCallback<(QuestionItem, CompletionRole, string?)> OnEditAnswer { get; set; } // Added evaluation key
-    [Parameter] public EventCallback<(QuestionItem, CompletionRole, CompletionRole)> OnCopyAnswer { get; set; }
+    [Parameter] public EventCallback<(QuestionSection, CompletionRole, string?)> OnEditAnswer { get; set; } // Added evaluation key
+    [Parameter] public EventCallback<(QuestionSection, CompletionRole, CompletionRole)> OnCopyAnswer { get; set; }
 
     private List<EvaluationItem> evaluations = new();
     private int ratingScale = 4;

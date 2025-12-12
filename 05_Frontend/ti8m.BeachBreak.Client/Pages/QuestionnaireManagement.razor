@@ -87,7 +87,8 @@
 
                                 <RadzenDataGridColumn Property="QuestionCount" Title="@T("columns.questions")" Width="100px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
-                                        <RadzenBadge Text="@template.Sections.SelectMany(s => s.Questions).Count().ToString()" BadgeStyle="BadgeStyle.Secondary" />
+                                        <!-- Section IS the question in new architecture -->
+                                        <RadzenBadge Text="@template.Sections.Count.ToString()" BadgeStyle="BadgeStyle.Secondary" />
                                     </Template>
                                 </RadzenDataGridColumn>
 

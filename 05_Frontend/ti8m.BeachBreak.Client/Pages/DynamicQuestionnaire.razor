@@ -85,7 +85,7 @@ else
                     @* In read-only mode *@
                     @if (currentSectionIndex < visibleSections.Count - 1)
                     {
-                        @* Show Next button for navigation if not on last section *@
+                        @* Show Next button for navigation if not on last sectionData *@
                         <RadzenButton Text="@T("buttons.next")"
                                      ButtonStyle="ButtonStyle.Primary"
                                      Icon="arrow_forward"
@@ -228,10 +228,7 @@ else
                     </header>
 
                     <div class="questions-container">
-                        @foreach (var question in currentSection.Questions.OrderBy(q => q.Order))
-                        {
-                            @RenderQuestionWithRef(question)
-                        }
+                        @RenderSectionWithRef(currentSection)
                     </div>
                 }
             </section>
@@ -305,7 +302,7 @@ else
     /// <summary>
     /// The response role for accessing RoleResponses dictionary.
     /// Determines which response set (Employee or Manager) the user is currently viewing/editing.
-    /// This is separate from organizational role (ApplicationRole) and section assignment (CompletionRole).
+    /// This is separate from organizational role (ApplicationRole) and sectionData assignment (CompletionRole).
     /// </summary>
     private ResponseRole CurrentResponseRole => userRole.ToResponseRole();
 
@@ -668,42 +665,27 @@ else
 
                     if ((isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire || isManagerDuringReview) && sectionKvp.Value.RoleResponses != null)
                     {
-                        // Load ALL role responses (Employee, Manager)
+                        // Load ALL role responses (Employee, Manager) - 2-level structure
                         foreach (var roleKvp in sectionKvp.Value.RoleResponses)
                         {
                             var role = roleKvp.Key;
-                            var roleQuestions = roleKvp.Value;
+                            var roleResponse = roleKvp.Value; // Direct QuestionResponse, not dictionary
 
-                            // Ensure role exists in response structure
-                            if (!sectionResponse.RoleResponses.ContainsKey(role))
-                            {
-                                sectionResponse.RoleResponses[role] = new Dictionary<Guid, QuestionResponse>();
-                            }
-
-                            // Merge question responses for this role
-                            foreach (var questionKvp in roleQuestions)
-                            {
-                                sectionResponse.RoleResponses[role][questionKvp.Key] = questionKvp.Value;
-                            }
+                            // Assign role response directly (sectionData IS the question)
+                            sectionResponse.RoleResponses[role] = roleResponse;
                         }
                     }
-                    else if (sectionKvp.Value.RoleResponses != null && sectionKvp.Value.RoleResponses.TryGetValue(CurrentResponseRole, out var roleQuestions))
+                    else if (sectionKvp.Value.RoleResponses != null && sectionKvp.Value.RoleResponses.TryGetValue(CurrentResponseRole, out var roleResponse))
                     {
-                        // Normal mode: only load current user's role responses
-                        foreach (var questionKvp in roleQuestions)
-                        {
-                            if (sectionResponse.RoleResponses.ContainsKey(CurrentResponseRole) &&
-                                sectionResponse.RoleResponses[CurrentResponseRole].ContainsKey(questionKvp.Key))
-                            {
-                                sectionResponse.RoleResponses[CurrentResponseRole][questionKvp.Key] = questionKvp.Value;
-                            }
-                        }
+                        // Normal mode: only load current user's role response
+                        // Direct assignment
+                        sectionResponse.RoleResponses[CurrentResponseRole] = roleResponse;
                     }
                     sectionResponse.IsCompleted = sectionKvp.Value.IsCompleted;
                 }
             }
 
-            // Find current section based on progress
+            // Find current sectionData based on progress
             var completedSections = response.SectionResponses.Count(sr => sr.Value.IsCompleted);
             currentSectionIndex = Math.Min(completedSections, Math.Max(0, visibleSections.Count - 1));
         }
@@ -728,160 +710,54 @@ else
             EmployeeId = employeeGuid
         };
 
-        // Initialize section responses with role-based structure
-        foreach (var section in template.Sections)
+        // Initialize sectionData responses with role-based structure
+        foreach (var sectionData in template.Sections)
         {
             var sectionResponse = new SectionResponse
             {
-                SectionId = section.Id,
-                RoleResponses = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponse>>()
+                SectionId = sectionData.Id,
+                RoleResponses = new Dictionary<ResponseRole, QuestionResponse>()
             };
 
-            // Initialize question responses for current user's role
-            sectionResponse.RoleResponses[CurrentResponseRole] = new Dictionary<Guid, QuestionResponse>();
-
-            foreach (var question in section.Questions)
+            // Initialize sectionData response for current user's role
+            sectionResponse.RoleResponses[CurrentResponseRole] = new QuestionResponse
             {
-                sectionResponse.RoleResponses[CurrentResponseRole][question.Id] = new QuestionResponse
-                {
-                    QuestionId = question.Id,
-                    QuestionType = question.Type
-                };
-            }
+                QuestionId = sectionData.Id,  // sectionData ID is the question ID
+                QuestionType = sectionData.Type
+            };
 
-            response.SectionResponses[section.Id] = sectionResponse;
+            response.SectionResponses[sectionData.Id] = sectionResponse;
         }
     }
 
-    private RenderFragment RenderQuestion(QuestionItem question)
+    private RenderFragment RenderSectionWithRef(QuestionSection sectionData)
     {
-        // Check if we're in post-review state and section is "Both"
+        // Check if we're in post-review state and sectionData is "Both"
         var isPostReviewState = assignment != null &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
 
         var isInReview = assignment != null && assignment.WorkflowState == WorkflowState.InReview;
-        var isBothSection = currentSection?.CompletionRole == CompletionRole.Both;
+        var isBothSection = sectionData?.CompletionRole == CompletionRole.Both;
 
-        // For goal questions in "Both" sections, ALWAYS use collaborative grouped view (never comparison)
+        // For goal sections in "Both" sections, ALWAYS use collaborative grouped view (never comparison)
         // The comparison view only makes sense for predecessor goal ratings, not new goals
-        if (isBothSection && question.Type == QuestionType.Goal)
+        if (isBothSection && sectionData?.Type == QuestionType.Goal)
         {
             // Check if goal section should be visible based on configuration
-            if (!ShouldShowGoalSection(question))
+            if (!ShouldShowGoalSection(sectionData))
             {
                 return @<div></div>; // Return empty div if goal section is hidden
             }
 
             // Use the collaborative component that groups by roles instead of comparison view
-            var goalQuestionResponse = GetQuestionResponse(question.Id);
-
-            return @<div>
-                <OptimizedQuestionRenderer
-                    Question="@question"
-                    Response="@goalQuestionResponse"
-                    OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-                    IsReadOnly="@IsQuestionnaireCompleted()"
-                    AssignmentId="@(assignmentId ?? Guid.Empty)"
-                    CurrentUserRole="@userRole"
-                    AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.InReview)"
-                    SectionData="@currentSectionData" />
-            </div>;
-        }
-
-        // In post-review state for "Both" sections, show BOTH employee and manager responses (comparison view)
-        // Exclude goal questions as they use collaborative view instead
-        if (isPostReviewState && isBothSection && question.Type != QuestionType.Goal)
-        {
-            var employeeResponse = GetQuestionResponseForRole(question.Id, "Employee");
-            var managerResponse = GetQuestionResponseForRole(question.Id, "Manager");
-
-            return @<div>
-                @* Employee's Answer *@
-                <div class="role-response-section mb-4">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-success mb-2">
-                        <RadzenIcon Icon="person" Class="me-1" />
-                        EMPLOYEE'S ANSWER
-                    </RadzenText>
-                    <div class="ps-3 border-start border-success border-3">
-                        <OptimizedQuestionRenderer
-                            Question="@question"
-                            Response="@employeeResponse"
-                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-                            IsReadOnly="true"
-                            HideHeader="true"
-                            AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="ApplicationRole.Employee"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
-                            SectionData="@currentSectionData" />
-                    </div>
-                </div>
-
-                @* Manager's Answer *@
-                <div class="role-response-section">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info mb-2">
-                        <RadzenIcon Icon="manage_accounts" Class="me-1" />
-                        MANAGER'S ANSWER
-                    </RadzenText>
-                    <div class="ps-3 border-start border-info border-3">
-                        <OptimizedQuestionRenderer
-                            Question="@question"
-                            Response="@managerResponse"
-                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-                            IsReadOnly="true"
-                            HideHeader="true"
-                            AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="@ParseApplicationRole(managerContextRole)"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)"
-                            SectionData="@currentSectionData" />
-                    </div>
-                </div>
-            </div>;
-        }
-
-        // Normal rendering for non-Both sections or during active questionnaire
-        var questionResponse = GetQuestionResponse(question.Id);
-
-        return @<OptimizedQuestionRenderer
-            Question="@question"
-            Response="@questionResponse"
-            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-            IsReadOnly="@IsQuestionnaireCompleted()"
-            AssignmentId="@(assignmentId ?? Guid.Empty)"
-            CurrentUserRole="@userRole"
-            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
-            SectionData="@currentSectionData" />;
-    }
-
-    private RenderFragment RenderQuestionWithRef(QuestionItem question)
-    {
-        // Check if we're in post-review state and section is "Both"
-        var isPostReviewState = assignment != null &&
-            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
-                                         WorkflowState.EmployeeReviewConfirmed or
-                                         WorkflowState.Finalized);
-
-        var isInReview = assignment != null && assignment.WorkflowState == WorkflowState.InReview;
-        var isBothSection = currentSection?.CompletionRole == CompletionRole.Both;
-
-        // For goal questions in "Both" sections, ALWAYS use collaborative grouped view (never comparison)
-        // The comparison view only makes sense for predecessor goal ratings, not new goals
-        if (isBothSection && question.Type == QuestionType.Goal)
-        {
-            // Check if goal section should be visible based on configuration
-            if (!ShouldShowGoalSection(question))
-            {
-                return @<div></div>; // Return empty div if goal section is hidden
-            }
-
-            // Use the collaborative component that groups by roles instead of comparison view
-            var goalQuestionResponseWithRef = GetQuestionResponse(question.Id);
+            var goalSectionResponse = GetQuestionResponse(sectionData.Id);
 
             return @<OptimizedQuestionRenderer
-                @ref="questionRenderers[question.Id]"
-                Question="@question"
-                Response="@goalQuestionResponseWithRef"
+                @ref="questionRenderers[sectionData.Id]"
+                Section="@sectionData"
+                Response="@goalSectionResponse"
                 OnResponseChanged="@HandleQuestionResponseChangedDynamic"
                 IsReadOnly="@IsQuestionnaireCompleted()"
                 AssignmentId="@(assignmentId ?? Guid.Empty)"
@@ -891,11 +767,11 @@ else
         }
 
         // In post-review state for "Both" sections, show BOTH employee and manager responses (comparison view)
-        // Exclude goal questions as they use collaborative view instead
-        if (isPostReviewState && isBothSection && question.Type != QuestionType.Goal)
+        // Exclude goal sections as they use collaborative view instead
+        if (isPostReviewState && isBothSection && sectionData?.Type != QuestionType.Goal)
         {
-            var employeeResponse = GetQuestionResponseForRole(question.Id, "Employee");
-            var managerResponse = GetQuestionResponseForRole(question.Id, "Manager");
+            var employeeResponse = GetQuestionResponseForRole(sectionData.Id, "Employee");
+            var managerResponse = GetQuestionResponseForRole(sectionData.Id, "Manager");
 
             return @<div>
                 @* Employee's Answer *@
@@ -906,7 +782,7 @@ else
                     </RadzenText>
                     <div class="ps-3 border-start border-success border-3">
                         <OptimizedQuestionRenderer
-                            Question="@question"
+                            Section="@sectionData"
                             Response="@employeeResponse"
                             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
                             IsReadOnly="true"
@@ -926,7 +802,7 @@ else
                     </RadzenText>
                     <div class="ps-3 border-start border-info border-3">
                         <OptimizedQuestionRenderer
-                            Question="@question"
+                            Section="@sectionData"
                             Response="@managerResponse"
                             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
                             IsReadOnly="true"
@@ -941,13 +817,13 @@ else
         }
 
         // Normal rendering for non-Both sections or during active questionnaire
-        var questionResponse = GetQuestionResponse(question.Id);
+        var sectionResponse = GetQuestionResponse(sectionData.Id);
 
-        // Store reference for goal questions so we can call SavePendingGoalChanges later
+        // Store reference for goal sections so we can call SavePendingGoalChanges later
         return @<OptimizedQuestionRenderer
-            @ref="questionRenderers[question.Id]"
-            Question="@question"
-            Response="@questionResponse"
+            @ref="questionRenderers[sectionData.Id]"
+            Section="@sectionData"
+            Response="@sectionResponse"
             OnResponseChanged="@HandleQuestionResponseChangedDynamic"
             IsReadOnly="@IsQuestionnaireCompleted()"
             AssignmentId="@(assignmentId ?? Guid.Empty)"
@@ -989,33 +865,31 @@ else
         await InvokeAsync(StateHasChanged);
     }
 
-    // Helper methods for question responses
-    private QuestionResponse GetQuestionResponseForRole(Guid questionId, string roleName)
+    // Helper methods for sectionData responses
+    private QuestionResponse GetQuestionResponseForRole(Guid sectionId, string roleName)
     {
-        if (currentSection == null) return new QuestionResponse { QuestionId = questionId };
+        if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
+            return new QuestionResponse { QuestionId = sectionId };
 
-        var sectionResponse = response.SectionResponses[currentSection.Id];
         var role = ResponseRoleExtensions.ParseRoleKey(roleName);
 
-        // Access responses for the specified role
-        if (sectionResponse.RoleResponses.TryGetValue(role, out var roleQuestions) &&
-            roleQuestions.TryGetValue(questionId, out var questionResponse))
+        // Direct 2-level access
+        if (sectionResponse.RoleResponses.TryGetValue(role, out var sectionQuestionResponse))
         {
-            return questionResponse;
+            return sectionQuestionResponse;
         }
 
-        return new QuestionResponse { QuestionId = questionId };
+        return new QuestionResponse { QuestionId = sectionId };
     }
 
-    private QuestionResponse GetQuestionResponse(Guid questionId)
+    private QuestionResponse GetQuestionResponse(Guid sectionId)
     {
-        if (currentSection == null) return new QuestionResponse { QuestionId = questionId };
+        if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
+            return new QuestionResponse { QuestionId = sectionId };
 
-        var sectionResponse = response.SectionResponses[currentSection.Id];
-
-        // Determine which role's responses to fetch based on section's CompletionRole
-        // In read-only mode after review, managers view responses based on who originally completed the section
-        // Employees in post-review states also need to view responses based on section's CompletionRole
+        // Determine which role's responses to fetch based on sectionData's CompletionRole
+        // In read-only mode after review, managers view responses based on who originally completed the sectionData
+        // Employees in post-review states also need to view responses based on sectionData's CompletionRole
         // After review meeting or when viewing employee-only questionnaires
         var isPostReviewState = assignment != null &&
             (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
@@ -1029,24 +903,27 @@ else
         if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // In post-review states or when manager views employee-only questionnaire,
-            // fetch responses based on section's CompletionRole
-            roleToFetch = currentSection.CompletionRole switch
+            // fetch responses based on sectionData's CompletionRole
+            var sectionData = template?.Sections.FirstOrDefault(s => s.Id == sectionId);
+            if (sectionData != null)
             {
-                CompletionRole.Employee => ResponseRole.Employee,
-                CompletionRole.Manager => ResponseRole.Manager,
-                CompletionRole.Both => CurrentResponseRole,
-                _ => CurrentResponseRole
-            };
+                roleToFetch = sectionData.CompletionRole switch
+                {
+                    CompletionRole.Employee => ResponseRole.Employee,
+                    CompletionRole.Manager => ResponseRole.Manager,
+                    CompletionRole.Both => CurrentResponseRole,
+                    _ => CurrentResponseRole
+                };
+            }
         }
 
-        // Access responses for the determined role
-        if (sectionResponse.RoleResponses.TryGetValue(roleToFetch, out var roleQuestions) &&
-            roleQuestions.TryGetValue(questionId, out var questionResponse))
+        // Direct 2-level access
+        if (sectionResponse.RoleResponses.TryGetValue(roleToFetch, out var sectionQuestionResponse))
         {
-            return questionResponse;
+            return sectionQuestionResponse;
         }
 
-        return new QuestionResponse { QuestionId = questionId };
+        return new QuestionResponse { QuestionId = sectionId };
     }
 
     private ProgressBarStyle GetProgressStyle(int percentage)
@@ -1120,8 +997,8 @@ else
         else
         {
             NotificationService.Notify(NotificationSeverity.Warning,
-                "Complete Section",
-                "Please complete all required questions in the current section.");
+                "Complete sectionData",
+                "Please complete all required questions in the current sectionData.");
         }
     }
 
@@ -1158,37 +1035,30 @@ else
 
     private bool CanProceedFromCurrentSection()
     {
-        if (currentSection == null || !currentSection.IsRequired) return true;
+        if (currentSection == null) return true;
+        if (!currentSection.IsRequired) return true;
 
-        var sectionResponse = response.SectionResponses[currentSection.Id];
-
-        // Check if role responses exist for current user
-        if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var roleQuestions))
+        if (!response.SectionResponses.TryGetValue(currentSection.Id, out var sectionResponse))
             return false;
 
-        foreach (var question in currentSection.Questions.Where(q => q.IsRequired))
-        {
-            if (!roleQuestions.TryGetValue(question.Id, out var questionResponse))
-                return false;
+        if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
+            return false;
 
-            if (!IsQuestionAnswered(question, questionResponse))
-                return false;
-        }
-
-        return true;
+        // Direct sectionData validation
+        return IsSectionAnswered(currentSection, sectionQuestionResponse);
     }
 
     /// <summary>
-    /// Checks if a Goal question's section should be visible based on configuration.
+    /// Checks if a Goal sectionData should be visible based on configuration.
     /// </summary>
-    private bool ShouldShowGoalSection(QuestionItem question)
+    private bool ShouldShowGoalSection(QuestionSection sectionData)
     {
-        if (question.Type != QuestionType.Goal)
+        if (sectionData.Type != QuestionType.Goal)
         {
-            return true; // Not a goal question, always show
+            return true; // Not a goal sectionData, always show
         }
 
-        if (question.Configuration is GoalConfiguration config)
+        if (sectionData.Configuration is GoalConfiguration config)
         {
             return config.ShowGoalSection;
         }
@@ -1196,12 +1066,12 @@ else
         return true; // Default to visible for backward compatibility
     }
 
-    private bool IsQuestionAnswered(QuestionItem question, QuestionResponse questionResponse)
+    private bool IsSectionAnswered(QuestionSection sectionData, QuestionResponse sectionResponse)
     {
-        return question.Type switch
+        return sectionData.Type switch
         {
-            QuestionType.Assessment => IsAssessmentCompleted(question, questionResponse),
-            QuestionType.TextQuestion => IsTextQuestionCompleted(question, questionResponse),
+            QuestionType.Assessment => IsAssessmentCompleted(sectionData, sectionResponse),
+            QuestionType.TextQuestion => IsTextQuestionCompleted(sectionData, sectionResponse),
             QuestionType.Goal => true, // Goal questions never block submission (see comment below)
             _ => true
         };
@@ -1214,17 +1084,20 @@ else
     // 3. Goals can be added/modified during review phases after submission
     // 4. Users should not be prevented from progressing due to goal workflow states
 
-    private bool IsTextQuestionCompleted(QuestionItem question, QuestionResponse questionResponse)
+    private bool IsTextQuestionCompleted(QuestionSection sectionData, QuestionResponse sectionResponse)
     {
-        var textSections = ConfigService.GetTextSections(question);
+        if (sectionData.Configuration is not TextQuestionConfiguration config)
+            return false;
+
+        var textSections = config.TextSections;
         if (textSections.Count == 0) return true;
 
-        if (questionResponse.ResponseData is not TextResponseDataDto textData) return false;
+        if (sectionResponse.ResponseData is not TextResponseDataDto textData) return false;
 
         // Match the format used by OptimizedTextQuestion
         if (textSections.Count == 1)
         {
-            // Single section - check first TextSection
+            // Single sectionData - check first TextSection
             var hasValue = textData.TextSections.Count > 0 &&
                           !string.IsNullOrWhiteSpace(textData.TextSections[0]);
             return hasValue;
@@ -1234,7 +1107,7 @@ else
         // Get only required text sections
         var requiredTextSections = textSections.Where(ts => ts.IsRequired).ToList();
 
-        // If no required text sections exist, check if at least one section has content
+        // If no required text sections exist, check if at least one sectionData has content
         if (!requiredTextSections.Any())
         {
             return textSections.Select((ts, index) => index).Any(index =>
@@ -1255,20 +1128,23 @@ else
         });
     }
 
-    private bool IsAssessmentCompleted(QuestionItem question, QuestionResponse questionResponse)
+    private bool IsAssessmentCompleted(QuestionSection sectionData, QuestionResponse sectionResponse)
     {
-        var competencies = ConfigService.GetEvaluations(question);
-        if (competencies.Count == 0) return true;
+        if (sectionData.Configuration is not AssessmentConfiguration config)
+            return false;
 
-        if (questionResponse.ResponseData is not AssessmentResponseDataDto assessmentData) return false;
+        var evaluations = config.Evaluations;
+        if (evaluations.Count == 0) return true;
+
+        if (sectionResponse.ResponseData is not AssessmentResponseDataDto assessmentData) return false;
 
         // Get only required evaluations
-        var requiredEvaluations = competencies.Where(c => c.IsRequired).ToList();
+        var requiredEvaluations = evaluations.Where(c => c.IsRequired).ToList();
 
         // If no required evaluations exist, check if at least one evaluation is rated
         if (!requiredEvaluations.Any())
         {
-            return competencies.Any(c => HasEvaluationRating(assessmentData, c.Key));
+            return evaluations.Any(c => HasEvaluationRating(assessmentData, c.Key));
         }
 
         // Check that ALL required evaluations have been rated
@@ -1289,35 +1165,39 @@ else
         if (!response.SectionResponses.TryGetValue(sectionId, out var sectionResponse))
             return false;
 
-        if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var roleQuestions))
+        if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
             return false;
 
-        var section = template!.Sections.First(s => s.Id == sectionId);
+        var sectionData = template!.Sections.First(s => s.Id == sectionId);
 
-        return section.Questions.Where(q => q.IsRequired).All(q =>
-            roleQuestions.TryGetValue(q.Id, out var qr) &&
-            IsQuestionAnswered(q, qr));
+        // Direct sectionData validation (no question iteration needed)
+        if (!sectionData.IsRequired)
+            return true;
+
+        return IsSectionAnswered(sectionData, sectionQuestionResponse);
     }
 
     private void UpdateProgress()
     {
         if (template == null) return;
 
-        var totalQuestions = template.Sections.SelectMany(s => s.Questions.Where(q => q.IsRequired)).Count();
-        var answeredQuestions = 0;
+        // Each sectionData IS one question - count required sections only
+        var totalSections = template.Sections.Count(s => s.IsRequired);
+        var answeredSections = 0;
 
-        foreach (var section in template.Sections)
+        foreach (var sectionData in template.Sections.Where(s => s.IsRequired))
         {
-            if (response.SectionResponses.TryGetValue(section.Id, out var sectionResponse) &&
-                sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var roleQuestions))
+            if (response.SectionResponses.TryGetValue(sectionData.Id, out var sectionResponse) &&
+                sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
             {
-                answeredQuestions += section.Questions.Where(q => q.IsRequired).Count(q =>
-                    roleQuestions.TryGetValue(q.Id, out var qr) &&
-                    IsQuestionAnswered(q, qr));
+                if (IsSectionAnswered(sectionData, sectionQuestionResponse))
+                {
+                    answeredSections++;
+                }
             }
         }
 
-        response.ProgressPercentage = totalQuestions > 0 ? (int)(answeredQuestions * 100.0 / totalQuestions) : 0;
+        response.ProgressPercentage = totalSections > 0 ? (int)(answeredSections * 100.0 / totalSections) : 0;
     }
 
     private bool CanSubmit()
@@ -1326,27 +1206,24 @@ else
         if (!visibleSections.Any()) return true;
 
         // Check only visible sections for current user role
-        // A section is considered complete if it has no required questions OR all required questions are answered
+        // A sectionData is considered complete if it's not required OR it's answered
         return visibleSections.All(s =>
         {
-            var section = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
-            if (section == null) return true;
+            var sectionData = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+            if (sectionData == null) return true;
 
-            var requiredQuestions = section.Questions.Where(q => q.IsRequired).ToList();
+            // If sectionData is not required, it's complete
+            if (!sectionData.IsRequired) return true;
 
-            // If no required questions, section is complete
-            if (!requiredQuestions.Any()) return true;
-
-            // Check if all required questions are answered
+            // Check if required sectionData is answered
             if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
                 return false;
 
-            if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var roleQuestions))
+            if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
                 return false;
 
-            return requiredQuestions.All(q =>
-                roleQuestions.TryGetValue(q.Id, out var qr) &&
-                IsQuestionAnswered(q, qr));
+            // Direct sectionData validation
+            return IsSectionAnswered(sectionData, sectionQuestionResponse);
         });
     }
 
@@ -1391,7 +1268,7 @@ else
                 await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
             }
 
-            // Reload assignment to get updated workflow state and section progress
+            // Reload assignment to get updated workflow state and sectionData progress
             if (isManager)
             {
                 assignment = await AssignmentService.GetAssignmentByIdAsync(assignmentId.Value);
@@ -1421,21 +1298,19 @@ else
         {
             var incompleteSections = visibleSections.Where(s =>
             {
-                var section = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
-                if (section == null) return false;
+                var sectionData = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+                if (sectionData == null) return false;
 
-                var requiredQuestions = section.Questions.Where(q => q.IsRequired).ToList();
-                if (!requiredQuestions.Any()) return false;
+                if (!sectionData.IsRequired) return false;
 
                 if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
                     return true;
 
-                if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var roleQuestions))
+                if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
                     return true;
 
-                return !requiredQuestions.All(q =>
-                    roleQuestions.TryGetValue(q.Id, out var qr) &&
-                    IsQuestionAnswered(q, qr));
+                // Check if the sectionData is answered
+                return !IsSectionAnswered(sectionData, sectionQuestionResponse);
             }).Select(s => s.GetLocalizedTitleWithFallback(CurrentLanguage)).ToList();
 
             var message = incompleteSections.Any()
@@ -1497,7 +1372,7 @@ else
 
             if (isManager)
             {
-                // Manager flow - backend automatically tracks section completion during save
+                // Manager flow - backend automatically tracks sectionData completion during save
                 await ResponseService.SaveManagerResponseAsync(assignmentId.Value, response.SectionResponses, assignment?.TemplateId);
                 var submitSuccess = await AssignmentService.SubmitManagerQuestionnaireAsync(assignmentId.Value, currentUserName);
 
