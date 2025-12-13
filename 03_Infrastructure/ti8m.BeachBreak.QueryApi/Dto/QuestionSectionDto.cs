@@ -13,6 +13,6 @@ public class QuestionSectionDto
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
     public CompletionRole CompletionRole { get; set; } = CompletionRole.Employee;
-    public string Type { get; set; } = string.Empty;
+    public QuestionType Type { get; set; } = QuestionType.Assessment;
     public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
 }

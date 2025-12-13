@@ -28,7 +28,7 @@
     <RadzenRow Gap="1rem" Class="mb-3">
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.questionnaire-type") <span class="text-danger">*</span></RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.questionnaire-type-required")</RadzenText>
                 <RadzenDropDown @bind-Value="@Template.CategoryId"
                                Data="@Categories"
                                TextProperty="@GetCategoryNameProperty()"
