@@ -54,16 +54,8 @@ public class EditAnswerDuringReviewCommandHandler
                 return Result.Fail("Response not found", 404);
             }
 
-            // Get current section responses for this role
-            var currentSectionResponses = new Dictionary<Guid, QuestionResponseValue>();
             // Map ApplicationRole to CompletionRole for compatibility with Response aggregate
             var completionRole = command.OriginalCompletionRole == ApplicationRole.Employee ? CompletionRole.Employee : CompletionRole.Manager;
-            if (response.SectionResponses.TryGetValue(command.SectionId, out var roleResponses) &&
-                roleResponses.TryGetValue(completionRole, out var existingQuestions))
-            {
-                // Copy existing responses
-                currentSectionResponses = new Dictionary<Guid, QuestionResponseValue>(existingQuestions);
-            }
 
             // Parse the answer - frontend sends QuestionResponseValue as JSON
             QuestionResponseValue? convertedResponse = null;
@@ -101,20 +93,16 @@ public class EditAnswerDuringReviewCommandHandler
                 return Result.Fail("Unsupported answer format", 400);
             }
 
-            // Update or add the question answer if conversion was successful
-            if (convertedResponse != null)
+            // Update or add the section answer if conversion was successful
+            if (convertedResponse == null)
             {
-                currentSectionResponses[command.QuestionId] = convertedResponse;
-            }
-            else
-            {
-                logger.LogWarning("Failed to convert answer for assignment {AssignmentId}, question {QuestionId}. Answer will be skipped.",
-                    command.AssignmentId, command.QuestionId);
+                logger.LogWarning("Failed to convert answer for assignment {AssignmentId}, section {SectionId}. Answer will be skipped.",
+                    command.AssignmentId, command.SectionId);
                 return Result.Fail("Unable to convert answer to the required format", 400);
             }
 
             // Record the updated section response
-            response.RecordSectionResponse(command.SectionId, completionRole, currentSectionResponses);
+            response.RecordSectionResponse(command.SectionId, completionRole, convertedResponse);
             await responseRepository.StoreAsync(response, cancellationToken);
 
             logger.LogInformation("Successfully edited answer during review for assignment {AssignmentId}", command.AssignmentId);

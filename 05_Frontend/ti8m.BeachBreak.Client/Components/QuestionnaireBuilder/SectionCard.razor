@@ -3,8 +3,9 @@
 @using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
 @using ti8m.BeachBreak.Client.Components.Shared
 @using System.Collections
+@inherits OptimizedTranslatableComponentBase
 
-<div class="modern-section-card mb-4">
+<div class="modern-section-card">
     <!-- Enhanced Section Header with proper action button placement -->
     <div class="section-header-modern">
         <!-- Header Top Row: Type indicators and Action Buttons -->
@@ -21,30 +22,20 @@
             </div>
 
             <!-- Action Buttons - moved to dedicated area -->
-            <div class="section-actions">
-                <AsyncButton ButtonStyle="ButtonStyle.Light"
-                            Icon="keyboard_arrow_up"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnMoveUpClick())"
-                            Disabled="@(!CanMoveUp || !Template.IsAvailableForEditing)"
-                            Title="Move section up"
-                            Class="action-btn" />
-                <AsyncButton ButtonStyle="ButtonStyle.Light"
-                            Icon="keyboard_arrow_down"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnMoveDownClick())"
-                            Disabled="@(!CanMoveDown || !Template.IsAvailableForEditing)"
-                            Title="Move section down"
-                            Class="action-btn" />
-                <AsyncButton ButtonStyle="ButtonStyle.Danger"
-                            ProcessingText="Deleting"
-                            Icon="delete_outline"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnDeleteClick())"
-                            Title="Delete section"
-                            Class="action-btn action-btn-danger"
-                            Disabled="@(!Template.IsAvailableForEditing)" />
-            </div>
+            <ItemActionsComponent
+                OnMoveUp="@(() => OnMoveUpClick())"
+                OnMoveDown="@(() => OnMoveDownClick())"
+                OnDelete="@(() => OnDeleteClick())"
+                MoveUpDisabled="@(!CanMoveUp)"
+                MoveDownDisabled="@(!CanMoveDown)"
+                MoveUpTitle="Move section up"
+                MoveDownTitle="Move section down"
+                DeleteTitle="Delete section"
+                DeleteProcessingText="Deleting"
+                ButtonSize="ButtonSize.Small"
+                CustomButtonClass="action-btn"
+                GlobalDisabled="@(!Template.IsAvailableForEditing)"
+                AdditionalClasses="section-actions" />
         </div>
 
         <!-- Header Content Row: Role selector -->
@@ -73,51 +64,41 @@
     <div class="section-content-modern">
 
         <!-- Title Inputs -->
-        <div class="multilang-input-grid mb-3">
-            <div class="input-field">
-                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Title *</RadzenText>
-                <RadzenTextBox Value="@Section.TitleEnglish"
-                             ValueChanged="@(value => OnSectionTitleEnglishChanged(value))"
-                             Placeholder="e.g., Performance Review 2023, Goal Setting Workshop..."
-                             Class="title-input-modern"
-                             Disabled="@(!Template.IsAvailableForEditing)" />
-            </div>
-            <div class="input-field">
-                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Title (Optional)</RadzenText>
-                <RadzenTextBox Value="@Section.TitleGerman"
-                             ValueChanged="@(value => OnSectionTitleGermanChanged(value))"
-                             Placeholder="e.g., Leistungsbeurteilung 2023, Zielsetzungsworkshop..."
-                             Class="title-input-modern"
-                             Disabled="@(!Template.IsAvailableForEditing)" />
-            </div>
-        </div>
+        <MultilingualInputComponent
+            EnglishLabel="English Title"
+            GermanLabel="German Title"
+            EnglishValue="@Section.TitleEnglish"
+            GermanValue="@Section.TitleGerman"
+            EnglishValueChanged="@OnSectionTitleEnglishChanged"
+            GermanValueChanged="@OnSectionTitleGermanChanged"
+            EnglishPlaceholder="@T("placeholders.section-title-english-example")"
+            GermanPlaceholder="@T("placeholders.section-title-german-example")"
+            InputType="InputType.TextBox"
+            InputCssClass="title-input-modern"
+            AdditionalClasses="mb-3"
+            Required="true"
+            Disabled="@(!Template.IsAvailableForEditing)" />
 
         <!-- Description Inputs -->
-        <div class="multilang-input-grid mb-3">
-            <div class="input-field">
-                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Description *</RadzenText>
-                <RadzenTextArea Value="@Section.DescriptionEnglish"
-                              ValueChanged="@(value => OnSectionDescriptionEnglishChanged(value))"
-                              Placeholder="Provide context about this section's purpose. What will participants accomplish here?"
-                              Class="description-input-modern"
-                              Disabled="@(!Template.IsAvailableForEditing)"
-                              Rows="3" />
-            </div>
-            <div class="input-field">
-                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Description (Optional)</RadzenText>
-                <RadzenTextArea Value="@Section.DescriptionGerman"
-                              ValueChanged="@(value => OnSectionDescriptionGermanChanged(value))"
-                              Placeholder="Geben Sie Kontext über den Zweck dieses Abschnitts an. Was werden die Teilnehmer hier erreichen?"
-                              Class="description-input-modern"
-                              Disabled="@(!Template.IsAvailableForEditing)"
-                              Rows="3" />
-            </div>
-        </div>
+        <MultilingualInputComponent
+            EnglishLabel="English Description"
+            GermanLabel="German Description"
+            EnglishValue="@Section.DescriptionEnglish"
+            GermanValue="@Section.DescriptionGerman"
+            EnglishValueChanged="@OnSectionDescriptionEnglishChanged"
+            GermanValueChanged="@OnSectionDescriptionGermanChanged"
+            EnglishPlaceholder="@T("placeholders.section-description-english")"
+            GermanPlaceholder="@T("placeholders.section-description-german")"
+            InputType="InputType.TextArea"
+            InputCssClass="description-input-modern"
+            AdditionalClasses="mb-3"
+            TextAreaRows="3"
+            Required="true"
+            Disabled="@(!Template.IsAvailableForEditing)" />
 
         <!-- Rating Scale Configuration - only for Assessment sections -->
-        @if (Section.Questions.Any() && Section.Questions.First().Type == QuestionType.Assessment)
+        @if (Section.Type == QuestionType.Assessment)
         {
-            var firstQuestion = Section.Questions.First();
             <div class="rating-scale-config-modern">
                 <div class="config-header">
                     <RadzenIcon Icon="tune" Class="config-icon" />
@@ -126,25 +107,25 @@
                 <div class="rating-scale-grid">
                     <div class="scale-input">
                         <RadzenText TextStyle="TextStyle.Caption" Class="input-label">Scale</RadzenText>
-                        <RadzenDropDown Value="@GetRatingScale(firstQuestion)"
-                                       ValueChanged="@((int value) => SetRatingScale(firstQuestion, value))"
+                        <RadzenDropDown Value="@GetRatingScale()"
+                                       ValueChanged="@((int value) => SetRatingScale(value))"
                                        Data="@(new List<int> { 3, 4, 5, 7, 10 })"
                                        Class="modern-dropdown"
                                        Disabled="@(!Template.IsAvailableForEditing)" />
                     </div>
                     <div class="scale-input">
                         <RadzenText TextStyle="TextStyle.Caption" Class="input-label">Low Label</RadzenText>
-                        <RadzenTextBox Value="@GetScaleLowLabel(firstQuestion)"
-                                      ValueChanged="@((string value) => SetScaleLowLabel(firstQuestion, value))"
-                                      Placeholder="e.g., Poor, Beginner"
+                        <RadzenTextBox Value="@GetScaleLowLabel()"
+                                      ValueChanged="@((string value) => SetScaleLowLabel(value))"
+                                      Placeholder="@T("placeholders.scale-low-label-example")"
                                       Class="modern-textbox"
                                       Disabled="@(!Template.IsAvailableForEditing)" />
                     </div>
                     <div class="scale-input">
                         <RadzenText TextStyle="TextStyle.Caption" Class="input-label">High Label</RadzenText>
-                        <RadzenTextBox Value="@GetScaleHighLabel(firstQuestion)"
-                                      ValueChanged="@((string value) => SetScaleHighLabel(firstQuestion, value))"
-                                      Placeholder="e.g., Excellent, Expert"
+                        <RadzenTextBox Value="@GetScaleHighLabel()"
+                                      ValueChanged="@((string value) => SetScaleHighLabel(value))"
+                                      Placeholder="@T("placeholders.scale-high-label-example")"
                                       Class="modern-textbox"
                                       Disabled="@(!Template.IsAvailableForEditing)" />
                     </div>
@@ -171,166 +152,60 @@
         }
     </div>
 
-    <!-- Items Area - Reduced padding for flatter design -->
-    <div class="items-area py-2">
-        <div class="items-header mb-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0 d-flex align-items-center">
-                    <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"color: {GetSectionTypeColor()};")" Class="me-2" />
-                    @GetSectionTypeName() Items
-                </RadzenText>
-                <AsyncButton Text="Add Item"
-                            ButtonStyle="ButtonStyle.Primary"
-                            Icon="add_circle_outline"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnAddItemClick())"
-                            Disabled="@(!Template.IsAvailableForEditing)" />
-            </div>
-        </div>
-
-
-        @* Question Type Selection - Only show if section has no questions yet *@
-        @if (ShowQuestionTypeSelection && !Section.Questions.Any())
+    <!-- Items Area - No padding for consistent flat design -->
+    <div class="items-area">
+        @* Only show Items header and Add Item button for Assessment and TextQuestion sections *@
+        @if (Section.Type != QuestionType.Goal)
         {
-            <div class="question-type-selection mb-4">
-                <div class="border-2 rounded p-0 question-type-selection-border">
-                    <div class="p-3 rounded-top question-type-selection-header">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-1 question-type-selection-title">
-                                    <RadzenIcon Icon="add_circle" Class="me-2" />
-                                    Choose Question Type
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                    Select the type of question you want to add to this section
-                                </RadzenText>
-                            </div>
-                            <AsyncButton Icon="close"
-                                        ButtonStyle="ButtonStyle.Light"
-                                        Size="ButtonSize.Small"
-                                        Click="@(() => OnCancelQuestionTypeSelection())"
-                                        Title="Cancel" />
-                        </div>
-                    </div>
-                    <div class="p-3">
-                        <RadzenRow Gap="0.5rem">
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <div class="question-type-card assessment h-100 p-3 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
-                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.Assessment)"
-                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(15, 105, 255, 0.15)'; this.style.borderColor='var(--primary-color)'"
-                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='var(--primary-color)'"
-                                     onmousedown="this.style.transform='scale(0.98)'"
-                                     onmouseup="this.style.transform='scale(1.02)'"
-                                     tabindex="0"
-                                     role="button"
-                                     aria-label="Add Assessment Question">
-                                    <div class="position-absolute top-0 start-50 translate-middle">
-                                        <div class="bg-assessment text-white rounded-circle d-flex align-items-center justify-content-center question-type-icon-badge">
-                                            <RadzenIcon Icon="add" />
-                                        </div>
-                                    </div>
-                                    <RadzenIcon Icon="self_improvement" Class="question-assessment fs-1 mb-3 mt-2" />
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-assessment mb-2">
-                                        Assessment
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
-                                        Rate competencies and skills on a scale
-                                    </RadzenText>
-                                    <div class="mt-3">
-                                        <span class="badge badge-assessment px-2 py-1 question-type-click-badge">Click to Add</span>
-                                    </div>
-                                </div>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <div class="question-type-card goal-achievement h-100 p-3 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
-                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.Goal)"
-                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(230, 191, 127, 0.15)'; this.style.borderColor='var(--golden-milk)'"
-                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='var(--warning-color)'"
-                                     onmousedown="this.style.transform='scale(0.98)'"
-                                     onmouseup="this.style.transform='scale(1.02)'"
-                                     tabindex="0"
-                                     role="button"
-                                     aria-label="Add Goal Review Question">
-                                    <div class="position-absolute top-0 start-50 translate-middle">
-                                        <div class="bg-goal-achievement text-dark rounded-circle d-flex align-items-center justify-content-center question-type-icon-badge">
-                                            <RadzenIcon Icon="add" />
-                                        </div>
-                                    </div>
-                                    <RadzenIcon Icon="track_changes" Class="question-goal-achievement fs-1 mb-3 mt-2" />
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-goal-achievement mb-2">
-                                        Goal Review
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
-                                        Track progress and achievement status
-                                    </RadzenText>
-                                    <div class="mt-3">
-                                        <span class="badge badge-goal-achievement px-2 py-1 question-type-click-badge">Click to Add</span>
-                                    </div>
-                                </div>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <div class="question-type-card text-response h-100 p-3 rounded-3 border-2 text-center position-relative cursor-pointer shadow-sm user-select-none"
-                                     @onclick="async () => await OnAddQuestionOfType(QuestionType.TextQuestion)"
-                                     onmouseover="this.style.transform='scale(1.02)'; this.style.boxShadow='0 8px 25px rgba(147, 91, 169, 0.15)'; this.style.borderColor='var(--purple-rain)'"
-                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 0.125rem 0.25rem rgba(0, 0, 0, 0.075)'; this.style.borderColor='var(--info-color)'"
-                                     onmousedown="this.style.transform='scale(0.98)'"
-                                     onmouseup="this.style.transform='scale(1.02)'"
-                                     tabindex="0"
-                                     role="button"
-                                     aria-label="Add Text Response Question">
-                                    <div class="position-absolute top-0 start-50 translate-middle">
-                                        <div class="bg-text-response text-white rounded-circle d-flex align-items-center justify-content-center question-type-icon-badge">
-                                            <RadzenIcon Icon="add" />
-                                        </div>
-                                    </div>
-                                    <RadzenIcon Icon="psychology" Class="question-text-response fs-1 mb-3 mt-2" />
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold question-text-response mb-2">
-                                        Text Response
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
-                                        Collect written feedback and insights
-                                    </RadzenText>
-                                    <div class="mt-3">
-                                        <span class="badge badge-text-response px-2 py-1 question-type-click-badge">Click to Add</span>
-                                    </div>
-                                </div>
-                            </RadzenColumn>
-                        </RadzenRow>
-                    </div>
+            <div class="items-header mb-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0 d-flex align-items-center">
+                        <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"color: {GetSectionTypeColor()};")" Class="me-2" />
+                        @GetSectionTypeName() Items
+                    </RadzenText>
+                    <AsyncButton Text="Add Item"
+                                ButtonStyle="ButtonStyle.Primary"
+                                Icon="add_circle_outline"
+                                Size="ButtonSize.Small"
+                                Click="@(() => OnAddItemClick())"
+                                Disabled="@(!Template.IsAvailableForEditing)" />
                 </div>
             </div>
         }
 
-        @if (Section.Questions.Count == 0)
+        @* Simplified question rendering using dedicated renderers *@
+        @if (IsSectionInitialized())
         {
-            <div class="empty-questions text-center py-4">
-                <RadzenIcon Icon="@GetSectionTypeIcon()" Style="@($"font-size: 1.5rem; color: {GetSectionTypeColor()}; opacity: 0.5;")" />
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">
-                    No @GetSectionTypeName().ToLower() items yet
-                </RadzenText>
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                    Click "Add Item" to get started
-                </RadzenText>
+            <div class="items-list">
+                <QuestionRendererFactory
+                    Section="@Section"
+                    Template="@Template"
+                    OnMoveEvaluationUp="@OnMoveEvaluationUp"
+                    OnMoveEvaluationDown="@OnMoveEvaluationDown"
+                    OnRemoveEvaluation="@OnRemoveEvaluation"
+                    OnUpdateEvaluationRequired="@OnUpdateEvaluationRequired"
+                    OnUpdateEvaluationTitleEnglish="@OnUpdateEvaluationTitleEnglish"
+                    OnUpdateEvaluationTitleGerman="@OnUpdateEvaluationTitleGerman"
+                    OnUpdateEvaluationDescriptionEnglish="@OnUpdateEvaluationDescriptionEnglish"
+                    OnUpdateEvaluationDescriptionGerman="@OnUpdateEvaluationDescriptionGerman"
+                    OnMoveTextSectionUp="@OnMoveTextSectionUp"
+                    OnMoveTextSectionDown="@OnMoveTextSectionDown"
+                    OnRemoveTextSection="@OnRemoveTextSection"
+                    OnUpdateTextSectionRequired="@OnUpdateTextSectionRequired"
+                    OnUpdateTextSectionTitleEnglish="@OnUpdateTextSectionTitleEnglish"
+                    OnUpdateTextSectionTitleGerman="@OnUpdateTextSectionTitleGerman"
+                    OnUpdateTextSectionDescriptionEnglish="@OnUpdateTextSectionDescriptionEnglish"
+                    OnUpdateTextSectionDescriptionGerman="@OnUpdateTextSectionDescriptionGerman" />
             </div>
         }
         else
         {
-            @for (int questionIndex = 0; questionIndex < Section.Questions.Count; questionIndex++)
-            {
-                var question = Section.Questions[questionIndex];
-                var currentQuestionIndex = questionIndex;
-
-                <QuestionCard Question="@question"
-                            Template="@Template"
-                            CanMoveUp="@(currentQuestionIndex > 0)"
-                            CanMoveDown="@(currentQuestionIndex < Section.Questions.Count - 1)"
-                            QuestionTypeLabels="@QuestionTypeLabels"
-                            OnEdit="@(() => OnEditQuestionInternal(currentQuestionIndex))"
-                            OnMoveUp="@(() => OnMoveQuestionUpInternal(currentQuestionIndex))"
-                            OnMoveDown="@(() => OnMoveQuestionDownInternal(currentQuestionIndex))"
-                            OnDelete="@(() => OnDeleteQuestionInternal(currentQuestionIndex))"
-                            OnRequiredChanged="@OnRequiredItemsChanged" />
-            }
+            <div class="section-info text-center py-3">
+                <RadzenIcon Icon="add_circle" Style="font-size: 2rem;" Class="mb-2 text-muted" />
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    Click "Add Item" to choose a question type for this section
+                </RadzenText>
+            </div>
         }
     </div>
 </div>
@@ -341,17 +216,11 @@
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
     [Parameter, EditorRequired] public bool CanMoveUp { get; set; }
     [Parameter, EditorRequired] public bool CanMoveDown { get; set; }
-    [Parameter, EditorRequired] public bool ShowQuestionTypeSelection { get; set; }
-    [Parameter, EditorRequired] public Dictionary<QuestionType, string> QuestionTypeLabels { get; set; } = null!;
 
     [Parameter] public EventCallback OnMoveUp { get; set; }
     [Parameter] public EventCallback OnMoveDown { get; set; }
     [Parameter] public EventCallback OnDelete { get; set; }
-    [Parameter] public EventCallback OnAddQuestion { get; set; }
     [Parameter] public EventCallback OnAddItemDirectly { get; set; }
-    [Parameter] public EventCallback OnCancelQuestionSelection { get; set; }
-    [Parameter] public EventCallback<QuestionType> OnAddQuestionType { get; set; }
-    [Parameter] public EventCallback<int> OnEditQuestion { get; set; }
     [Parameter] public EventCallback<int> OnMoveQuestionUp { get; set; }
     [Parameter] public EventCallback<int> OnMoveQuestionDown { get; set; }
     [Parameter] public EventCallback<int> OnDeleteQuestion { get; set; }
@@ -363,22 +232,7 @@
     private async Task OnMoveUpClick() => await OnMoveUp.InvokeAsync();
     private async Task OnMoveDownClick() => await OnMoveDown.InvokeAsync();
     private async Task OnDeleteClick() => await OnDelete.InvokeAsync();
-    private async Task OnAddQuestionClick() => await OnAddQuestion.InvokeAsync();
-    private async Task OnAddItemClick()
-    {
-        // If section already has questions, add another of the same type
-        if (Section.Questions.Any())
-        {
-            await OnAddItemDirectly.InvokeAsync();
-        }
-        else
-        {
-            // No questions yet, show question type selection
-            await OnAddQuestion.InvokeAsync();
-        }
-    }
-    private async Task OnCancelQuestionTypeSelection() => await OnCancelQuestionSelection.InvokeAsync();
-    private async Task OnAddQuestionOfType(QuestionType type) => await OnAddQuestionType.InvokeAsync(type);
+    private async Task OnAddItemClick() => await OnAddItemDirectly.InvokeAsync();
 
 
     private async Task OnSectionTitleEnglishChanged(string value)
@@ -405,15 +259,226 @@
         await OnDescriptionGermanChanged.InvokeAsync(value);
     }
 
-    private async Task OnEditQuestionInternal(int questionIndex) => await OnEditQuestion.InvokeAsync(questionIndex);
-    private async Task OnMoveQuestionUpInternal(int questionIndex) => await OnMoveQuestionUp.InvokeAsync(questionIndex);
-    private async Task OnMoveQuestionDownInternal(int questionIndex) => await OnMoveQuestionDown.InvokeAsync(questionIndex);
-    private async Task OnDeleteQuestionInternal(int questionIndex) => await OnDeleteQuestion.InvokeAsync(questionIndex);
-
-    private async Task OnRequiredItemsChanged()
+    // Assessment item methods
+    private List<EvaluationItem> GetOrderedEvaluations()
     {
-        // Force a refresh of the component to update the required count display
+        if (Section.Configuration is AssessmentConfiguration config)
+        {
+            return config.Evaluations.OrderBy(e => e.Order).ToList();
+        }
+        return new List<EvaluationItem>();
+    }
+
+    private void UpdateAssessmentConfiguration(List<EvaluationItem> evaluations)
+    {
+        if (Section.Configuration is AssessmentConfiguration config)
+        {
+            config.Evaluations = evaluations;
+        }
         StateHasChanged();
+    }
+
+    private void UpdateEvaluationRequired(int index, bool value)
+    {
+        var evaluations = GetOrderedEvaluations();
+        if (index >= 0 && index < evaluations.Count)
+        {
+            evaluations[index].IsRequired = value;
+            UpdateAssessmentConfiguration(evaluations);
+        }
+    }
+
+    private void MoveEvaluationUp(int index)
+    {
+        var evaluations = GetOrderedEvaluations();
+        if (index > 0 && index < evaluations.Count)
+        {
+            (evaluations[index], evaluations[index - 1]) = (evaluations[index - 1], evaluations[index]);
+            for (int i = 0; i < evaluations.Count; i++)
+            {
+                evaluations[i].Order = i;
+            }
+            UpdateAssessmentConfiguration(evaluations);
+        }
+    }
+
+    private void MoveEvaluationDown(int index)
+    {
+        var evaluations = GetOrderedEvaluations();
+        if (index >= 0 && index < evaluations.Count - 1)
+        {
+            (evaluations[index], evaluations[index + 1]) = (evaluations[index + 1], evaluations[index]);
+            for (int i = 0; i < evaluations.Count; i++)
+            {
+                evaluations[i].Order = i;
+            }
+            UpdateAssessmentConfiguration(evaluations);
+        }
+    }
+
+    private void RemoveEvaluation(int index)
+    {
+        var evaluations = GetOrderedEvaluations();
+        if (index >= 0 && index < evaluations.Count)
+        {
+            evaluations.RemoveAt(index);
+            for (int i = 0; i < evaluations.Count; i++)
+            {
+                evaluations[i].Order = i;
+            }
+            UpdateAssessmentConfiguration(evaluations);
+        }
+    }
+
+    private void UpdateEvaluationTitleEnglish(int index, string value)
+    {
+        var evaluations = GetOrderedEvaluations();
+        if (index >= 0 && index < evaluations.Count)
+        {
+            evaluations[index].TitleEnglish = value ?? "";
+            UpdateAssessmentConfiguration(evaluations);
+        }
+    }
+
+    private void UpdateEvaluationTitleGerman(int index, string value)
+    {
+        var evaluations = GetOrderedEvaluations();
+        if (index >= 0 && index < evaluations.Count)
+        {
+            evaluations[index].TitleGerman = value ?? "";
+            UpdateAssessmentConfiguration(evaluations);
+        }
+    }
+
+    private void UpdateEvaluationDescriptionEnglish(int index, string value)
+    {
+        var evaluations = GetOrderedEvaluations();
+        if (index >= 0 && index < evaluations.Count)
+        {
+            evaluations[index].DescriptionEnglish = value ?? "";
+            UpdateAssessmentConfiguration(evaluations);
+        }
+    }
+
+    private void UpdateEvaluationDescriptionGerman(int index, string value)
+    {
+        var evaluations = GetOrderedEvaluations();
+        if (index >= 0 && index < evaluations.Count)
+        {
+            evaluations[index].DescriptionGerman = value ?? "";
+            UpdateAssessmentConfiguration(evaluations);
+        }
+    }
+
+    // Text question item methods
+    private List<TextSection> GetOrderedTextSections()
+    {
+        if (Section.Configuration is TextQuestionConfiguration config)
+        {
+            return config.TextSections.OrderBy(s => s.Order).ToList();
+        }
+        return new List<TextSection>();
+    }
+
+    private void UpdateTextQuestionConfiguration(List<TextSection> sections)
+    {
+        if (Section.Configuration is TextQuestionConfiguration config)
+        {
+            config.TextSections = sections;
+        }
+        StateHasChanged();
+    }
+
+    private void UpdateTextSectionRequired(int index, bool value)
+    {
+        var sections = GetOrderedTextSections();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].IsRequired = value;
+            UpdateTextQuestionConfiguration(sections);
+        }
+    }
+
+    private void MoveTextSectionUp(int index)
+    {
+        var sections = GetOrderedTextSections();
+        if (index > 0 && index < sections.Count)
+        {
+            (sections[index], sections[index - 1]) = (sections[index - 1], sections[index]);
+            for (int i = 0; i < sections.Count; i++)
+            {
+                sections[i].Order = i;
+            }
+            UpdateTextQuestionConfiguration(sections);
+        }
+    }
+
+    private void MoveTextSectionDown(int index)
+    {
+        var sections = GetOrderedTextSections();
+        if (index >= 0 && index < sections.Count - 1)
+        {
+            (sections[index], sections[index + 1]) = (sections[index + 1], sections[index]);
+            for (int i = 0; i < sections.Count; i++)
+            {
+                sections[i].Order = i;
+            }
+            UpdateTextQuestionConfiguration(sections);
+        }
+    }
+
+    private void RemoveTextSection(int index)
+    {
+        var sections = GetOrderedTextSections();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections.RemoveAt(index);
+            for (int i = 0; i < sections.Count; i++)
+            {
+                sections[i].Order = i;
+            }
+            UpdateTextQuestionConfiguration(sections);
+        }
+    }
+
+    private void UpdateTextSectionTitleEnglish(int index, string value)
+    {
+        var sections = GetOrderedTextSections();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].TitleEnglish = value ?? "";
+            UpdateTextQuestionConfiguration(sections);
+        }
+    }
+
+    private void UpdateTextSectionTitleGerman(int index, string value)
+    {
+        var sections = GetOrderedTextSections();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].TitleGerman = value ?? "";
+            UpdateTextQuestionConfiguration(sections);
+        }
+    }
+
+    private void UpdateTextSectionDescriptionEnglish(int index, string value)
+    {
+        var sections = GetOrderedTextSections();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].DescriptionEnglish = value ?? "";
+            UpdateTextQuestionConfiguration(sections);
+        }
+    }
+
+    private void UpdateTextSectionDescriptionGerman(int index, string value)
+    {
+        var sections = GetOrderedTextSections();
+        if (index >= 0 && index < sections.Count)
+        {
+            sections[index].DescriptionGerman = value ?? "";
+            UpdateTextQuestionConfiguration(sections);
+        }
     }
 
 
@@ -423,258 +488,97 @@
         return (Section.Order + 1).ToString();
     }
 
-    private int GetQuestionTypesCount()
-    {
-        // Count unique question types in this section
-        return Section.Questions.Select(q => q.Type).Distinct().Count();
-    }
-
-    private int GetTotalItemsCount()
-    {
-        int totalItems = 0;
-
-        foreach (var question in Section.Questions)
-        {
-            switch (question.Type)
-            {
-                case QuestionType.Assessment:
-                    if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
-                    {
-                        if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                        }
-                        else if (competenciesObj is System.Collections.ICollection collection)
-                        {
-                            totalItems += collection.Count;
-                        }
-                    }
-                    break;
-                case QuestionType.Goal:
-                    if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
-                    {
-                        if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                        }
-                        else if (goalCategoriesObj is System.Collections.ICollection collection)
-                        {
-                            totalItems += collection.Count;
-                        }
-                    }
-                    break;
-                case QuestionType.TextQuestion:
-                    if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
-                    {
-                        if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try { totalItems += jsonElement.GetArrayLength(); } catch { }
-                        }
-                        else if (textSectionsObj is System.Collections.ICollection collection)
-                        {
-                            totalItems += collection.Count;
-                        }
-                    }
-                    break;
-                default:
-                    totalItems += 1; // Fallback for unknown question types
-                    break;
-            }
-        }
-
-        return totalItems;
-    }
-
-    // New methods for simplified structure
     private string GetSectionTypeIcon()
     {
-        return Section.Questions.FirstOrDefault()?.Type switch
-        {
-            QuestionType.Assessment => "self_improvement",
-            QuestionType.Goal => "track_changes",
-            QuestionType.TextQuestion => "psychology",
-            _ => "help"
-        };
+        return Section.GetTypeIcon();
     }
 
     private string GetSectionTypeName()
     {
-        return Section.Questions.FirstOrDefault()?.Type switch
-        {
-            QuestionType.Assessment => "Assessment",
-            QuestionType.Goal => "Goal Achievement",
-            QuestionType.TextQuestion => "Text Question",
-            _ => "Unknown"
-        };
+        return Section.GetTypeName();
     }
 
     private string GetSectionTypeColor()
     {
-        return Section.Questions.FirstOrDefault()?.Type switch
-        {
-            QuestionType.Assessment => "var(--rz-primary)",
-            QuestionType.Goal => "var(--rz-success)",
-            QuestionType.TextQuestion => "var(--rz-secondary)",
-            _ => "var(--rz-base-500)"
-        };
+        return Section.GetTypeColor();
     }
 
     private int GetItemCount()
     {
-        return GetTotalItemsCount();
+        return Section.GetItemCount();
     }
 
     private int GetRequiredItemCount()
     {
-        int requiredItems = 0;
+        return Section.GetRequiredItemCount();
+    }
 
-        foreach (var question in Section.Questions)
+    private bool IsSectionInitialized()
+    {
+        // Check if the section has been properly initialized with a configuration
+        return Section.Type switch
         {
-            switch (question.Type)
-            {
-                case QuestionType.Assessment:
-                    if (question.Configuration.TryGetValue("Competencies", out var competenciesObj))
-                    {
-                        if (competenciesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try
-                            {
-                                var competencies = System.Text.Json.JsonSerializer.Deserialize<List<CompetencyDefinition>>(jsonElement.GetRawText()) ?? new List<CompetencyDefinition>();
-                                requiredItems += competencies.Count(c => c.IsRequired);
-                            }
-                            catch { }
-                        }
-                        else if (competenciesObj is List<CompetencyDefinition> competenciesList)
-                        {
-                            requiredItems += competenciesList.Count(c => c.IsRequired);
-                        }
-                    }
-                    break;
-                case QuestionType.Goal:
-                    if (question.Configuration.TryGetValue("GoalCategories", out var goalCategoriesObj))
-                    {
-                        if (goalCategoriesObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try
-                            {
-                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(jsonElement.GetRawText()) ?? new List<QuestionCard.GoalCategory>();
-                                requiredItems += categories.Count(c => c.IsRequired);
-                            }
-                            catch { }
-                        }
-                        else if (goalCategoriesObj is List<QuestionCard.GoalCategory> categoriesList)
-                        {
-                            requiredItems += categoriesList.Count(c => c.IsRequired);
-                        }
-                        else if (goalCategoriesObj is List<object> objectList)
-                        {
-                            try
-                            {
-                                var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                                var categories = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.GoalCategory>>(json) ?? new List<QuestionCard.GoalCategory>();
-                                requiredItems += categories.Count(c => c.IsRequired);
-                            }
-                            catch { }
-                        }
-                    }
-                    break;
-                case QuestionType.TextQuestion:
-                    if (question.Configuration.TryGetValue("TextSections", out var textSectionsObj))
-                    {
-                        if (textSectionsObj is System.Text.Json.JsonElement jsonElement && jsonElement.ValueKind == System.Text.Json.JsonValueKind.Array)
-                        {
-                            try
-                            {
-                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(jsonElement.GetRawText()) ?? new List<QuestionCard.TextSection>();
-                                requiredItems += sections.Count(s => s.IsRequired);
-                            }
-                            catch { }
-                        }
-                        else if (textSectionsObj is List<QuestionCard.TextSection> sectionsList)
-                        {
-                            requiredItems += sectionsList.Count(s => s.IsRequired);
-                        }
-                        else if (textSectionsObj is List<object> objectList)
-                        {
-                            try
-                            {
-                                var json = System.Text.Json.JsonSerializer.Serialize(objectList);
-                                var sections = System.Text.Json.JsonSerializer.Deserialize<List<QuestionCard.TextSection>>(json) ?? new List<QuestionCard.TextSection>();
-                                requiredItems += sections.Count(s => s.IsRequired);
-                            }
-                            catch { }
-                        }
-                    }
-                    break;
-                default:
-                    // For unknown question types, fall back to the question-level required flag
-                    if (question.IsRequired) requiredItems += 1;
-                    break;
-            }
-        }
-
-        return requiredItems;
+            QuestionType.Assessment => Section.Configuration is AssessmentConfiguration config && config.Evaluations.Count > 0,
+            QuestionType.TextQuestion => Section.Configuration is TextQuestionConfiguration config && config.TextSections.Count > 0,
+            QuestionType.Goal => Section.Configuration is GoalConfiguration,
+            _ => false
+        };
     }
 
     // Rating scale configuration methods for Assessment sections
-    private int GetRatingScale(QuestionItem question)
+    private int GetRatingScale()
     {
-        if (question.Configuration.TryGetValue("RatingScale", out var scale))
+        if (Section.Configuration is AssessmentConfiguration config)
         {
-            // Handle JsonElement properly
-            if (scale is System.Text.Json.JsonElement jsonElement)
-            {
-                return jsonElement.GetInt32();
-            }
+            return config.RatingScale;
         }
         return 4; // Default
     }
 
-    private void SetRatingScale(QuestionItem question, int value)
+    private void SetRatingScale(int value)
     {
-        question.Configuration["RatingScale"] = value;
-        // Apply to all questions in the section
-        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.Assessment))
+        // Apply to Section's configuration
+        if (Section.Configuration is AssessmentConfiguration config)
         {
-            q.Configuration["RatingScale"] = value;
+            config.RatingScale = value;
         }
         StateHasChanged();
     }
 
-    private string GetScaleLowLabel(QuestionItem question)
+    private string GetScaleLowLabel()
     {
-        if (question.Configuration.TryGetValue("ScaleLowLabel", out var label))
+        if (Section.Configuration is AssessmentConfiguration config)
         {
-            return label.ToString() ?? "Poor";
+            return config.ScaleLowLabel ?? "Poor";
         }
         return "Poor";
     }
 
-    private void SetScaleLowLabel(QuestionItem question, string value)
+    private void SetScaleLowLabel(string value)
     {
-        // Apply to all questions in the section
-        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.Assessment))
+        // Apply to Section's configuration
+        if (Section.Configuration is AssessmentConfiguration config)
         {
-            q.Configuration["ScaleLowLabel"] = value ?? "Poor";
+            config.ScaleLowLabel = value ?? "Poor";
         }
         StateHasChanged();
     }
 
-    private string GetScaleHighLabel(QuestionItem question)
+    private string GetScaleHighLabel()
     {
-        if (question.Configuration.TryGetValue("ScaleHighLabel", out var label))
+        if (Section.Configuration is AssessmentConfiguration config)
         {
-            return label.ToString() ?? "Excellent";
+            return config.ScaleHighLabel ?? "Excellent";
         }
         return "Excellent";
     }
 
-    private void SetScaleHighLabel(QuestionItem question, string value)
+    private void SetScaleHighLabel(string value)
     {
-        // Apply to all questions in the section
-        foreach (var q in Section.Questions.Where(q => q.Type == QuestionType.Assessment))
+        // Apply to Section's configuration
+        if (Section.Configuration is AssessmentConfiguration config)
         {
-            q.Configuration["ScaleHighLabel"] = value ?? "Excellent";
+            config.ScaleHighLabel = value ?? "Excellent";
         }
         StateHasChanged();
     }
@@ -712,6 +616,25 @@
             _ => "Unknown"
         };
     }
+
+    // Wrapper methods for QuestionRendererFactory callbacks (convert from tuple parameters)
+    private EventCallback<int> OnMoveEvaluationUp => EventCallback.Factory.Create<int>(this, index => MoveEvaluationUp(index));
+    private EventCallback<int> OnMoveEvaluationDown => EventCallback.Factory.Create<int>(this, index => MoveEvaluationDown(index));
+    private EventCallback<int> OnRemoveEvaluation => EventCallback.Factory.Create<int>(this, index => RemoveEvaluation(index));
+    private EventCallback<(int, bool)> OnUpdateEvaluationRequired => EventCallback.Factory.Create<(int, bool)>(this, args => UpdateEvaluationRequired(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateEvaluationTitleEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateEvaluationTitleEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateEvaluationTitleGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateEvaluationTitleGerman(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateEvaluationDescriptionEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateEvaluationDescriptionEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateEvaluationDescriptionGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateEvaluationDescriptionGerman(args.Item1, args.Item2));
+
+    private EventCallback<int> OnMoveTextSectionUp => EventCallback.Factory.Create<int>(this, index => MoveTextSectionUp(index));
+    private EventCallback<int> OnMoveTextSectionDown => EventCallback.Factory.Create<int>(this, index => MoveTextSectionDown(index));
+    private EventCallback<int> OnRemoveTextSection => EventCallback.Factory.Create<int>(this, index => RemoveTextSection(index));
+    private EventCallback<(int, bool)> OnUpdateTextSectionRequired => EventCallback.Factory.Create<(int, bool)>(this, args => UpdateTextSectionRequired(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateTextSectionTitleEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionTitleEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateTextSectionTitleGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionTitleGerman(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateTextSectionDescriptionEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionDescriptionEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateTextSectionDescriptionGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionDescriptionGerman(args.Item1, args.Item2));
 
     public class RoleOption
     {

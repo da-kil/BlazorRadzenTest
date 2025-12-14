@@ -10,8 +10,8 @@ public class SectionResponse
     public bool IsCompleted { get; set; }
 
     /// <summary>
-    /// Role-based response structure: ResponseRole (Employee/Manager) -> QuestionId -> QuestionResponse
+    /// Role-based response structure: ResponseRole (Employee/Manager) -> QuestionResponse
     /// Provides compile-time type safety and prevents invalid role keys.
     /// </summary>
-    public Dictionary<ResponseRole, Dictionary<Guid, QuestionResponse>> RoleResponses { get; set; } = new();
+    public Dictionary<ResponseRole, QuestionResponse> RoleResponses { get; set; } = new();
 }

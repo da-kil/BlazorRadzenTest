@@ -1,0 +1,162 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
+
+<div class="item-card">
+    <header class="item-header">
+        <div class="item-info">
+            <span class="item-title">@ItemTitle</span>
+            @if (ShowRequiredCheckbox)
+            {
+                <div class="required-control">
+                    <RadzenCheckBox Value="@IsRequired"
+                                  ValueChanged="@OnRequiredChanged"
+                                  Name="@CheckboxId"
+                                  Disabled="@Disabled" />
+                    <RadzenLabel Text="Required" Component="@CheckboxId" Class="required-label" />
+                </div>
+            }
+        </div>
+
+        @if (ShowActions)
+        {
+            <ItemActionsComponent
+                OnMoveUp="@OnMoveUp"
+                OnMoveDown="@OnMoveDown"
+                OnDelete="@OnDelete"
+                MoveUpDisabled="@MoveUpDisabled"
+                MoveDownDisabled="@MoveDownDisabled"
+                GlobalDisabled="@Disabled"
+                ButtonSize="ButtonSize.ExtraSmall" />
+        }
+    </header>
+
+    <main class="item-content">
+        <MultilingualInputComponent
+            EnglishLabel="@TitleEnglishLabel"
+            GermanLabel="@TitleGermanLabel"
+            EnglishValue="@TitleEnglish"
+            GermanValue="@TitleGerman"
+            EnglishValueChanged="@OnTitleEnglishChanged"
+            GermanValueChanged="@OnTitleGermanChanged"
+            EnglishPlaceholder="@TitleEnglishPlaceholder"
+            GermanPlaceholder="@TitleGermanPlaceholder"
+            InputType="InputType.TextBox"
+            AdditionalClasses="mb-2"
+            Required="true"
+            Disabled="@Disabled" />
+
+        <MultilingualInputComponent
+            EnglishLabel="@DescriptionEnglishLabel"
+            GermanLabel="@DescriptionGermanLabel"
+            EnglishValue="@DescriptionEnglish"
+            GermanValue="@DescriptionGerman"
+            EnglishValueChanged="@OnDescriptionEnglishChanged"
+            GermanValueChanged="@OnDescriptionGermanChanged"
+            EnglishPlaceholder="@DescriptionEnglishPlaceholder"
+            GermanPlaceholder="@DescriptionGermanPlaceholder"
+            InputType="InputType.TextArea"
+            TextAreaRows="2"
+            Required="false"
+            Disabled="@Disabled" />
+    </main>
+</div>
+
+@code {
+    [Parameter] public string ItemTitle { get; set; } = "";
+    [Parameter] public bool ShowRequiredCheckbox { get; set; } = true;
+    [Parameter] public bool ShowActions { get; set; } = true;
+    [Parameter] public bool IsRequired { get; set; } = false;
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public string CheckboxId { get; set; } = "";
+
+    // Action parameters
+    [Parameter] public EventCallback OnMoveUp { get; set; }
+    [Parameter] public EventCallback OnMoveDown { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+    [Parameter] public bool MoveUpDisabled { get; set; } = false;
+    [Parameter] public bool MoveDownDisabled { get; set; } = false;
+
+    // Title parameters
+    [Parameter] public string TitleEnglishLabel { get; set; } = "English Title";
+    [Parameter] public string TitleGermanLabel { get; set; } = "German Title";
+    [Parameter] public string TitleEnglish { get; set; } = "";
+    [Parameter] public string TitleGerman { get; set; } = "";
+    [Parameter] public string TitleEnglishPlaceholder { get; set; } = "";
+    [Parameter] public string TitleGermanPlaceholder { get; set; } = "";
+
+    // Description parameters
+    [Parameter] public string DescriptionEnglishLabel { get; set; } = "English Description";
+    [Parameter] public string DescriptionGermanLabel { get; set; } = "German Description";
+    [Parameter] public string DescriptionEnglish { get; set; } = "";
+    [Parameter] public string DescriptionGerman { get; set; } = "";
+    [Parameter] public string DescriptionEnglishPlaceholder { get; set; } = "";
+    [Parameter] public string DescriptionGermanPlaceholder { get; set; } = "";
+
+    // Event callbacks
+    [Parameter] public EventCallback<bool> OnRequiredChanged { get; set; }
+    [Parameter] public EventCallback<string> OnTitleEnglishChanged { get; set; }
+    [Parameter] public EventCallback<string> OnTitleGermanChanged { get; set; }
+    [Parameter] public EventCallback<string> OnDescriptionEnglishChanged { get; set; }
+    [Parameter] public EventCallback<string> OnDescriptionGermanChanged { get; set; }
+}
+
+<style>
+    .item-card {
+        margin-bottom: 1rem;
+    }
+
+    .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .item-info {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .item-title {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--rz-text-color);
+        margin: 0;
+    }
+
+    .required-control {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .required-label {
+        font-size: 0.8125rem;
+        margin: 0;
+    }
+
+    .item-content {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    /* Responsive adjustments */
+    @@media (max-width: 768px) {
+        .item-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .item-info {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+            width: 100%;
+        }
+    }
+</style>

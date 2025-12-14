@@ -257,22 +257,22 @@
         else if (responseData.TryGetProperty("Competencies", out var competencies))
         {
             // AssessmentResponseDataDto
-            foreach (var competency in competencies.EnumerateObject())
+            foreach (var evaluation in competencies.EnumerateObject())
             {
-                var competencyKey = competency.Name;
-                var competencyValue = competency.Value;
+                var evaluationKey = evaluation.Name;
+                var evaluationValue = evaluation.Value;
 
-                if (competencyValue.TryGetProperty("Rating", out var rating))
+                if (evaluationValue.TryGetProperty("Rating", out var rating))
                 {
-                    formatted.AppendLine($"Rating ({competencyKey}): {rating.GetInt32()}");
+                    formatted.AppendLine($"Rating ({evaluationKey}): {rating.GetInt32()}");
                 }
 
-                if (competencyValue.TryGetProperty("Comment", out var comment))
+                if (evaluationValue.TryGetProperty("Comment", out var comment))
                 {
                     var commentText = comment.GetString();
                     if (!string.IsNullOrWhiteSpace(commentText))
                     {
-                        formatted.AppendLine($"Comment ({competencyKey}): {commentText}");
+                        formatted.AppendLine($"Comment ({evaluationKey}): {commentText}");
                     }
                 }
             }

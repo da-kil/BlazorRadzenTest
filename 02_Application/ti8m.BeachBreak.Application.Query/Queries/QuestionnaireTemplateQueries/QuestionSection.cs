@@ -1,4 +1,6 @@
-﻿namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+﻿using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
+
+namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 
 public class QuestionSection
 {
@@ -10,5 +12,6 @@ public class QuestionSection
     public int Order { get; set; }
     public bool IsRequired { get; set; } = true;
     public string CompletionRole { get; set; } = "Employee";
-    public List<QuestionItem> Questions { get; set; } = new();
+    public string Type { get; set; } = string.Empty;
+    public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
 }

@@ -500,7 +500,7 @@
 
     private int GetTotalQuestions()
     {
-        return Questionnaire?.Sections.Sum(s => s.Questions.Count) ?? 0;
+        return Questionnaire?.Sections.Count ?? 0;
     }
 
     private int GetEstimatedDuration()

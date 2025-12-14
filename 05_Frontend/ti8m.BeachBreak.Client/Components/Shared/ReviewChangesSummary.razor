@@ -46,7 +46,6 @@
 
         return Response.SectionResponses.Values
             .SelectMany(sr => sr.RoleResponses.Values)
-            .SelectMany(rq => rq.Values)
             .Any(qr => qr.EditedDuringReview);
     }
 
@@ -56,7 +55,6 @@
 
         return Response.SectionResponses.Values
             .SelectMany(sr => sr.RoleResponses.Values)
-            .SelectMany(rq => rq.Values)
             .Count(qr => qr.EditedDuringReview);
     }
 

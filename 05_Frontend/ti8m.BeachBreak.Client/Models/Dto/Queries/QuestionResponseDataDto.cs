@@ -23,11 +23,11 @@ public class TextResponseDataDto : QuestionResponseDataDto
 }
 
 /// <summary>
-/// Response data for assessment questions with competency ratings.
+/// Response data for assessment questions with evaluation ratings.
 /// </summary>
 public class AssessmentResponseDataDto : QuestionResponseDataDto
 {
-    public Dictionary<string, CompetencyRatingDto> Competencies { get; set; } = new();
+    public Dictionary<string, EvaluationRatingDto> Evaluations { get; set; } = new();
 }
 
 /// <summary>

@@ -18,10 +18,10 @@ public abstract record QuestionResponseValue
     }
 
     /// <summary>
-    /// Response for assessment questions with competency ratings and comments.
+    /// Response for assessment questions with evaluation ratings and comments.
     /// </summary>
     public sealed record AssessmentResponse(
-        IReadOnlyDictionary<string, CompetencyRating> Competencies
+        IReadOnlyDictionary<string, EvaluationRating> Evaluations
     ) : QuestionResponseValue;
 
     /// <summary>

@@ -39,7 +39,7 @@ public class QuestionHandlerFactory
     /// <summary>
     /// Gets the handler for a question (convenience method)
     /// </summary>
-    public IQuestionTypeHandler GetHandler(QuestionItem question)
+    public IQuestionTypeHandler GetHandler(QuestionSection question)
     {
         return GetHandler(question.Type);
     }

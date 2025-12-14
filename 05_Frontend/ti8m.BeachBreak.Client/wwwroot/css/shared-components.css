@@ -11,11 +11,6 @@
     background-color: var(--rz-body-background-color);
 }
 
-/* Stat Item Styles (used when UseCards=false) */
-.stat-item {
-    background-color: var(--rz-body-background-color);
-}
-
 .stats-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);

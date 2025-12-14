@@ -1,20 +1,36 @@
 namespace ti8m.BeachBreak.Client.Models;
 
-public class QuestionItem
+public class EvaluationItem
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    // Parameterless constructor for JSON deserialization
+    public EvaluationItem()
+    {
+        Key = string.Empty;
+        TitleEnglish = string.Empty;
+        TitleGerman = string.Empty;
+        DescriptionEnglish = string.Empty;
+        DescriptionGerman = string.Empty;
+    }
+
+    public EvaluationItem(string key, string titleEnglish, string descriptionEnglish, bool isRequired, int order = 0)
+    {
+        Key = key;
+        TitleEnglish = titleEnglish;
+        DescriptionEnglish = descriptionEnglish;
+        IsRequired = isRequired;
+        Order = order;
+    }
+
+    public string Key { get; set; }
 
     // Bilingual content properties - matching QueryApi DTO naming
-    public string TitleEnglish { get; set; } = string.Empty;
-    public string TitleGerman { get; set; } = string.Empty;
-    public string DescriptionEnglish { get; set; } = string.Empty;
-    public string DescriptionGerman { get; set; } = string.Empty;
+    public string TitleEnglish { get; set; }
+    public string TitleGerman { get; set; }
+    public string DescriptionEnglish { get; set; }
+    public string DescriptionGerman { get; set; }
 
-
-    public QuestionType Type { get; set; }
+    public bool IsRequired { get; set; }
     public int Order { get; set; }
-    public bool IsRequired { get; set; } = true;
-    public Dictionary<string, object> Configuration { get; set; } = new();
 
     // Helper methods for language-aware content display
     public string GetLocalizedTitle(Language language)

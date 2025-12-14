@@ -1,0 +1,104 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@inherits OptimizedComponentBase
+
+<div class="multilang-input @AdditionalClasses">
+    <div class="field">
+        <label class="field-label">@EnglishLabel @(Required ? "*" : "")</label>
+        @if (InputType == InputType.TextBox)
+        {
+            <RadzenTextBox Value="@EnglishValue"
+                          ValueChanged="@OnEnglishValueChanged"
+                          Placeholder="@EnglishPlaceholder"
+                          Class="@InputCssClass"
+                          Disabled="@Disabled" />
+        }
+        else if (InputType == InputType.TextArea)
+        {
+            <RadzenTextArea Value="@EnglishValue"
+                           ValueChanged="@OnEnglishValueChanged"
+                           Placeholder="@EnglishPlaceholder"
+                           Class="@InputCssClass"
+                           Disabled="@Disabled"
+                           Rows="@TextAreaRows" />
+        }
+    </div>
+
+    <div class="field">
+        <label class="field-label">@GermanLabel (Optional)</label>
+        @if (InputType == InputType.TextBox)
+        {
+            <RadzenTextBox Value="@GermanValue"
+                          ValueChanged="@OnGermanValueChanged"
+                          Placeholder="@GermanPlaceholder"
+                          Class="@InputCssClass"
+                          Disabled="@Disabled" />
+        }
+        else if (InputType == InputType.TextArea)
+        {
+            <RadzenTextArea Value="@GermanValue"
+                           ValueChanged="@OnGermanValueChanged"
+                           Placeholder="@GermanPlaceholder"
+                           Class="@InputCssClass"
+                           Disabled="@Disabled"
+                           Rows="@TextAreaRows" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string EnglishLabel { get; set; } = "English";
+    [Parameter] public string GermanLabel { get; set; } = "German";
+    [Parameter] public string EnglishValue { get; set; } = "";
+    [Parameter] public string GermanValue { get; set; } = "";
+    [Parameter] public EventCallback<string> EnglishValueChanged { get; set; }
+    [Parameter] public EventCallback<string> GermanValueChanged { get; set; }
+    [Parameter] public string? EnglishPlaceholder { get; set; }
+    [Parameter] public string? GermanPlaceholder { get; set; }
+    [Parameter] public InputType InputType { get; set; } = InputType.TextBox;
+    [Parameter] public bool Required { get; set; } = false;
+    [Parameter] public bool Disabled { get; set; } = false;
+    [Parameter] public string InputCssClass { get; set; } = "";
+    [Parameter] public string AdditionalClasses { get; set; } = "";
+    [Parameter] public int TextAreaRows { get; set; } = 3;
+
+    private async Task OnEnglishValueChanged(string value)
+    {
+        EnglishValue = value;
+        await EnglishValueChanged.InvokeAsync(value);
+    }
+
+    private async Task OnGermanValueChanged(string value)
+    {
+        GermanValue = value;
+        await GermanValueChanged.InvokeAsync(value);
+    }
+}
+
+<style>
+    .multilang-input {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+
+    .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .field-label {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--rz-text-color);
+        margin: 0;
+    }
+
+    /* Responsive: Stack on smaller screens */
+    @@media (max-width: 768px) {
+        .multilang-input {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>

@@ -22,10 +22,10 @@ public static class QuestionResponseMapper
             },
             QuestionResponseValue.AssessmentResponse assessmentResponse => new AssessmentResponseDataDto
             {
-                Competencies = (assessmentResponse.Competencies ?? new Dictionary<string, CompetencyRating>())
+                Evaluations = (assessmentResponse.Evaluations ?? new Dictionary<string, EvaluationRating>())
                     .ToDictionary(
                         kvp => kvp.Key,
-                        kvp => new CompetencyRatingDto
+                        kvp => new EvaluationRatingDto
                         {
                             Rating = kvp.Value.Rating,
                             Comment = kvp.Value.Comment

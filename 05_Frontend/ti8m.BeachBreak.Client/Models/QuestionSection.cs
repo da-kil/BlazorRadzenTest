@@ -21,84 +21,41 @@ public class QuestionSection
     public DateTime? EmployeeCompletedDate { get; set; }
     public DateTime? ManagerCompletedDate { get; set; }
 
-    // New simplified structure - each section has one question type
-    public QuestionType QuestionType { get; set; }
-    public Dictionary<string, object> Configuration { get; set; } = new();
+    public QuestionType Type { get; set; }
+    public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
 
-    // Questions are the core content of each section
-    public List<QuestionItem> Questions { get; set; } = new();
-
-    // Helper methods for the new simplified structure
+    // Helper methods using strongly-typed configuration
     public int GetItemCount()
     {
-        return QuestionType switch
+        return Type switch
         {
-            QuestionType.Assessment => GetCompetencies().Count,
-            QuestionType.Goal => GetGoalCategories().Count,
-            QuestionType.TextQuestion => GetTextSections().Count,
+            QuestionType.Assessment when Configuration is AssessmentConfiguration assessmentConfig
+                => assessmentConfig.Evaluations.Count,
+            QuestionType.Goal
+                => 0, // Goals are added dynamically during workflow, not in template
+            QuestionType.TextQuestion when Configuration is TextQuestionConfiguration textConfig
+                => textConfig.TextSections.Count,
             _ => 0
         };
     }
 
     public int GetRequiredItemCount()
     {
-        return QuestionType switch
+        return Type switch
         {
-            QuestionType.Assessment => GetCompetencies().Count(c => c.IsRequired),
-            QuestionType.Goal => GetGoalCategories().Count(g => g.IsRequired),
-            QuestionType.TextQuestion => GetTextSections().Count(t => t.IsRequired),
+            QuestionType.Assessment when Configuration is AssessmentConfiguration assessmentConfig
+                => assessmentConfig.Evaluations.Count(c => c.IsRequired),
+            QuestionType.Goal
+                => 0, // Goals are added dynamically during workflow, not in template
+            QuestionType.TextQuestion when Configuration is TextQuestionConfiguration textConfig
+                => textConfig.TextSections.Count(t => t.IsRequired),
             _ => 0
         };
     }
 
-    public List<CompetencyDefinition> GetCompetencies()
-    {
-        if (Configuration.TryGetValue("Competencies", out var competenciesObj))
-        {
-            if (competenciesObj is List<CompetencyDefinition> competencies)
-                return competencies;
-        }
-        return new List<CompetencyDefinition>();
-    }
-
-    public void SetCompetencies(List<CompetencyDefinition> competencies)
-    {
-        Configuration["Competencies"] = competencies;
-    }
-
-    public List<GoalCategory> GetGoalCategories()
-    {
-        if (Configuration.TryGetValue("GoalCategories", out var categoriesObj))
-        {
-            if (categoriesObj is List<GoalCategory> categories)
-                return categories;
-        }
-        return new List<GoalCategory>();
-    }
-
-    public void SetGoalCategories(List<GoalCategory> categories)
-    {
-        Configuration["GoalCategories"] = categories;
-    }
-
-    public List<TextSection> GetTextSections()
-    {
-        if (Configuration.TryGetValue("TextSections", out var sectionsObj))
-        {
-            if (sectionsObj is List<TextSection> sections)
-                return sections;
-        }
-        return new List<TextSection>();
-    }
-
-    public void SetTextSections(List<TextSection> sections)
-    {
-        Configuration["TextSections"] = sections;
-    }
-
     public string GetTypeIcon()
     {
-        return QuestionType switch
+        return Type switch
         {
             QuestionType.Assessment => "self_improvement",
             QuestionType.Goal => "track_changes",
@@ -109,7 +66,7 @@ public class QuestionSection
 
     public string GetTypeName()
     {
-        return QuestionType switch
+        return Type switch
         {
             QuestionType.Assessment => "Assessment",
             QuestionType.Goal => "Goal Achievement",
@@ -120,7 +77,7 @@ public class QuestionSection
 
     public string GetTypeColor()
     {
-        return QuestionType switch
+        return Type switch
         {
             QuestionType.Assessment => "var(--rz-primary)", // primary-color
             QuestionType.Goal => "var(--rz-success)", // success-color

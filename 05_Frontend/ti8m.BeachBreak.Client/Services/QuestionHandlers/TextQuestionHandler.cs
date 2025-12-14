@@ -1,5 +1,4 @@
 using ti8m.BeachBreak.Client.Models;
-using QuestionCardTypes = ti8m.BeachBreak.Client.Components.QuestionnaireBuilder.QuestionCard;
 
 namespace ti8m.BeachBreak.Client.Services.QuestionHandlers;
 
@@ -9,91 +8,126 @@ namespace ti8m.BeachBreak.Client.Services.QuestionHandlers;
 /// </summary>
 public class TextQuestionHandler : IQuestionTypeHandler
 {
-    private readonly QuestionConfigurationService configService;
-
-    public TextQuestionHandler(QuestionConfigurationService configService)
-    {
-        this.configService = configService;
-    }
-
     public QuestionType SupportedType => QuestionType.TextQuestion;
 
-    public void InitializeQuestion(QuestionItem question)
+    public void InitializeQuestion(QuestionSection question)
     {
         // Initialize with one default text section
-        var textSections = new List<QuestionCardTypes.TextSection>
+        question.Configuration = new TextQuestionConfiguration
         {
-            new QuestionCardTypes.TextSection
+            TextSections = new List<TextSection>
+            {
+                new TextSection
+                {
+                    TitleEnglish = "",
+                    TitleGerman = "",
+                    DescriptionEnglish = "",
+                    DescriptionGerman = "",
+                    IsRequired = false,
+                    Order = 0
+                }
+            }
+        };
+    }
+
+    public void AddItem(QuestionSection question)
+    {
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            var nextOrder = config.TextSections.Count > 0 ? config.TextSections.Max(s => s.Order) + 1 : 0;
+            var newSection = new TextSection
             {
                 TitleEnglish = "",
                 TitleGerman = "",
                 DescriptionEnglish = "",
                 DescriptionGerman = "",
                 IsRequired = false,
-                Order = 0
-            }
-        };
-        configService.SetTextSections(question, textSections);
-    }
+                Order = nextOrder
+            };
 
-    public void AddItem(QuestionItem question)
-    {
-        var textSections = configService.GetTextSections(question);
-        var nextOrder = textSections.Count > 0 ? textSections.Max(t => t.Order) + 1 : 0;
-        var newSection = new QuestionCardTypes.TextSection
-        {
-            TitleEnglish = "",
-            TitleGerman = "",
-            DescriptionEnglish = "",
-            DescriptionGerman = "",
-            IsRequired = false,
-            Order = nextOrder
-        };
-
-        // Create a new list to ensure change detection
-        var updatedSections = new List<QuestionCardTypes.TextSection>(textSections) { newSection };
-        configService.SetTextSections(question, updatedSections);
-    }
-
-    public void RemoveItem(QuestionItem question, int index)
-    {
-        var textSections = configService.GetTextSections(question);
-        if (index >= 0 && index < textSections.Count)
-        {
-            textSections.RemoveAt(index);
-
-            // Reorder remaining sections
-            for (int i = 0; i < textSections.Count; i++)
-            {
-                textSections[i].Order = i;
-            }
-
-            configService.SetTextSections(question, textSections);
+            config.TextSections.Add(newSection);
         }
     }
 
-    public int GetItemCount(QuestionItem question)
+    public void RemoveItem(QuestionSection question, int index)
     {
-        return configService.GetTextSections(question).Count;
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            if (index >= 0 && index < config.TextSections.Count)
+            {
+                config.TextSections.RemoveAt(index);
+
+                // Reorder remaining sections
+                for (int i = 0; i < config.TextSections.Count; i++)
+                {
+                    config.TextSections[i].Order = i;
+                }
+            }
+        }
     }
 
-    public List<string> Validate(QuestionItem question, string questionLabel)
+    public int GetItemCount(QuestionSection question)
+    {
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            return config.TextSections.Count;
+        }
+        return 0;
+    }
+
+    public void MoveItemUp(QuestionSection question, int index)
+    {
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            if (index > 0 && index < config.TextSections.Count)
+            {
+                // Swap with previous item
+                (config.TextSections[index], config.TextSections[index - 1]) =
+                    (config.TextSections[index - 1], config.TextSections[index]);
+
+                // Update orders
+                config.TextSections[index].Order = index;
+                config.TextSections[index - 1].Order = index - 1;
+            }
+        }
+    }
+
+    public void MoveItemDown(QuestionSection question, int index)
+    {
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            if (index >= 0 && index < config.TextSections.Count - 1)
+            {
+                // Swap with next item
+                (config.TextSections[index], config.TextSections[index + 1]) =
+                    (config.TextSections[index + 1], config.TextSections[index]);
+
+                // Update orders
+                config.TextSections[index].Order = index;
+                config.TextSections[index + 1].Order = index + 1;
+            }
+        }
+    }
+
+    public List<string> Validate(QuestionSection question, string questionLabel)
     {
         var errors = new List<string>();
-        var textSections = configService.GetTextSections(question);
 
-        if (textSections.Count == 0)
+        if (question.Configuration is TextQuestionConfiguration config)
         {
-            errors.Add($"{questionLabel} must have at least one text section");
-        }
-        else
-        {
-            for (int i = 0; i < textSections.Count; i++)
+            if (config.TextSections.Count == 0)
             {
-                if (string.IsNullOrWhiteSpace(textSections[i].TitleEnglish) &&
-                    string.IsNullOrWhiteSpace(textSections[i].TitleGerman))
+                errors.Add($"{questionLabel} must have at least one text section");
+            }
+            else
+            {
+                for (int i = 0; i < config.TextSections.Count; i++)
                 {
-                    errors.Add($"Text section {i + 1} in {questionLabel} requires a title (in English or German)");
+                    if (string.IsNullOrWhiteSpace(config.TextSections[i].TitleEnglish) &&
+                        string.IsNullOrWhiteSpace(config.TextSections[i].TitleGerman))
+                    {
+                        errors.Add($"Text section {i + 1} in {questionLabel} requires a title (in English or German)");
+                    }
                 }
             }
         }
@@ -101,8 +135,4 @@ public class TextQuestionHandler : IQuestionTypeHandler
         return errors;
     }
 
-    public string GetDefaultTitle()
-    {
-        return "Career Development & Planning";
-    }
 }

@@ -29,6 +29,12 @@ public class QuestionnaireValidationService
             validationErrors.Add("English template name is required");
         }
 
+        // Validate category - CategoryId is required
+        if (template.CategoryId == Guid.Empty)
+        {
+            validationErrors.Add("Category is required");
+        }
+
         // Validate workflow configuration
         if (!template.RequiresManagerReview)
         {
@@ -61,69 +67,71 @@ public class QuestionnaireValidationService
             }
         }
 
-        // Validate sections and questions
+        // Validate sections
         foreach (var section in template.Sections)
         {
-            // Check if section has any questions
-            if (section.Questions.Count == 0)
+            var sectionName = string.IsNullOrWhiteSpace(section.TitleEnglish)
+                ? $"Section {section.Order + 1}"
+                : section.TitleEnglish;
+
+            // Validate section title - English title is required
+            if (string.IsNullOrWhiteSpace(section.TitleEnglish))
             {
-                var sectionName = string.IsNullOrWhiteSpace(section.TitleEnglish) ? $"Section {section.Order + 1}" : section.TitleEnglish;
-                validationErrors.Add($"'{sectionName}' must contain at least one question");
-                continue;
+                validationErrors.Add($"'{sectionName}' requires an English title");
             }
 
-            // Validate each question in the section
-            foreach (var question in section.Questions)
+            // Validate section content based on type
+            if (section.Type == QuestionType.Assessment)
             {
-                var sectionName = string.IsNullOrWhiteSpace(section.TitleEnglish) ? $"Section {section.Order + 1}" : section.TitleEnglish;
-                var questionPos = $"Question {question.Order + 1}";
-
-                // Validate question title - English title is required
-                if (string.IsNullOrWhiteSpace(question.TitleEnglish))
+                if (section.Configuration is not AssessmentConfiguration assessmentConfig)
                 {
-                    validationErrors.Add($"{questionPos} in '{sectionName}' requires an English title");
+                    validationErrors.Add($"'{sectionName}' has Assessment type but invalid configuration");
+                    continue;
                 }
 
-                // Validate question content based on type
-                if (question.Type == QuestionType.Assessment)
+                if (assessmentConfig.Evaluations.Count == 0)
                 {
-                    var competencies = configurationService.GetCompetencies(question);
-                    if (competencies.Count == 0)
+                    validationErrors.Add($"'{sectionName}' must have at least one evaluation");
+                }
+                else
+                {
+                    for (int i = 0; i < assessmentConfig.Evaluations.Count; i++)
                     {
-                        validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one competency");
-                    }
-                    else
-                    {
-                        for (int i = 0; i < competencies.Count; i++)
+                        if (string.IsNullOrWhiteSpace(assessmentConfig.Evaluations[i].TitleEnglish))
                         {
-                            if (string.IsNullOrWhiteSpace(competencies[i].TitleEnglish))
-                            {
-                                validationErrors.Add($"Competency {i + 1} in {questionPos} ('{sectionName}') requires an English title");
-                            }
+                            validationErrors.Add($"Evaluation {i + 1} in '{sectionName}' requires an English title");
                         }
                     }
                 }
-                else if (question.Type == QuestionType.Goal)
+            }
+            else if (section.Type == QuestionType.Goal)
+            {
+                if (section.Configuration is not GoalConfiguration)
                 {
-                    // Goal questions don't require template items - items are added dynamically during in-progress states
-                    // Only Title and Description are required, which are already validated as QuestionItem properties
+                    validationErrors.Add($"'{sectionName}' has Goal type but invalid configuration");
                 }
-                else if (question.Type == QuestionType.TextQuestion)
+                // Goal questions don't require template items - validated by configuration type only
+            }
+            else if (section.Type == QuestionType.TextQuestion)
+            {
+                if (section.Configuration is not TextQuestionConfiguration textConfig)
                 {
-                    var textSections = configurationService.GetTextSections(question);
-                    if (textSections.Count == 0)
+                    validationErrors.Add($"'{sectionName}' has TextQuestion type but invalid configuration");
+                    continue;
+                }
+
+                if (textConfig.TextSections.Count == 0)
+                {
+                    validationErrors.Add($"'{sectionName}' must have at least one text section");
+                }
+                else
+                {
+                    for (int i = 0; i < textConfig.TextSections.Count; i++)
                     {
-                        validationErrors.Add($"{questionPos} in '{sectionName}' must have at least one text section");
-                    }
-                    else
-                    {
-                        for (int i = 0; i < textSections.Count; i++)
+                        if (string.IsNullOrWhiteSpace(textConfig.TextSections[i].TitleEnglish) &&
+                            string.IsNullOrWhiteSpace(textConfig.TextSections[i].TitleGerman))
                         {
-                            if (string.IsNullOrWhiteSpace(textSections[i].TitleEnglish) &&
-                                string.IsNullOrWhiteSpace(textSections[i].TitleGerman))
-                            {
-                                validationErrors.Add($"Text section {i + 1} in {questionPos} ('{sectionName}') requires a title (in English or German)");
-                            }
+                            validationErrors.Add($"Text section {i + 1} in '{sectionName}' requires a title (in English or German)");
                         }
                     }
                 }

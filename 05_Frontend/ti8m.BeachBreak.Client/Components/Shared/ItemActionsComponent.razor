@@ -1,0 +1,105 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
+
+<div class="item-actions @AdditionalClasses">
+    @if (ShowMoveUp)
+    {
+        <AsyncButton ButtonStyle="ButtonStyle.Light"
+                    Icon="keyboard_arrow_up"
+                    Size="@ButtonSize"
+                    Click="@OnMoveUp"
+                    Disabled="@(MoveUpDisabled || GlobalDisabled)"
+                    Title="@MoveUpTitle"
+                    Class="@GetMoveButtonClass()" />
+    }
+
+    @if (ShowMoveDown)
+    {
+        <AsyncButton ButtonStyle="ButtonStyle.Light"
+                    Icon="keyboard_arrow_down"
+                    Size="@ButtonSize"
+                    Click="@OnMoveDown"
+                    Disabled="@(MoveDownDisabled || GlobalDisabled)"
+                    Title="@MoveDownTitle"
+                    Class="@GetMoveButtonClass()" />
+    }
+
+    @if (ShowDelete)
+    {
+        <AsyncButton ButtonStyle="ButtonStyle.Danger"
+                    Icon="@DeleteIcon"
+                    Size="@ButtonSize"
+                    Click="@OnDelete"
+                    Disabled="@(DeleteDisabled || GlobalDisabled)"
+                    Title="@DeleteTitle"
+                    ProcessingText="@DeleteProcessingText"
+                    Class="@GetDeleteButtonClass()" />
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback OnMoveUp { get; set; }
+    [Parameter] public EventCallback OnMoveDown { get; set; }
+    [Parameter] public EventCallback OnDelete { get; set; }
+
+    [Parameter] public bool ShowMoveUp { get; set; } = true;
+    [Parameter] public bool ShowMoveDown { get; set; } = true;
+    [Parameter] public bool ShowDelete { get; set; } = true;
+
+    [Parameter] public bool MoveUpDisabled { get; set; } = false;
+    [Parameter] public bool MoveDownDisabled { get; set; } = false;
+    [Parameter] public bool DeleteDisabled { get; set; } = false;
+    [Parameter] public bool GlobalDisabled { get; set; } = false;
+
+    [Parameter] public string MoveUpTitle { get; set; } = "Move up";
+    [Parameter] public string MoveDownTitle { get; set; } = "Move down";
+    [Parameter] public string DeleteTitle { get; set; } = "Delete";
+    [Parameter] public string DeleteProcessingText { get; set; } = "Deleting";
+    [Parameter] public string DeleteIcon { get; set; } = "delete_outline";
+
+    [Parameter] public ButtonSize ButtonSize { get; set; } = ButtonSize.ExtraSmall;
+    [Parameter] public string AdditionalClasses { get; set; } = "";
+    [Parameter] public string CustomButtonClass { get; set; } = "";
+
+    private string GetMoveButtonClass()
+    {
+        return string.IsNullOrEmpty(CustomButtonClass) ? "action-btn" : CustomButtonClass;
+    }
+
+    private string GetDeleteButtonClass()
+    {
+        var baseClass = string.IsNullOrEmpty(CustomButtonClass) ? "action-btn action-btn-danger" : $"{CustomButtonClass} action-btn-danger";
+        return baseClass;
+    }
+}
+
+<style>
+    .item-actions {
+        display: flex;
+        gap: 0.25rem;
+        align-items: center;
+    }
+
+    /* Size variations */
+    .item-actions.compact {
+        gap: 0.125rem;
+    }
+
+    .item-actions.spacious {
+        gap: 0.5rem;
+    }
+
+    /* Semantic alignment options */
+    .item-actions.align-end {
+        justify-content: flex-end;
+    }
+
+    .item-actions.align-center {
+        justify-content: center;
+    }
+
+    .item-actions.align-start {
+        justify-content: flex-start;
+    }
+</style>

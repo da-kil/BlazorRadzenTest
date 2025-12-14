@@ -1,19 +1,21 @@
-/* Modern Section Card Design - Minimal design without borders */
+/* Modern Section Card Design - Minimal design with subtle horizontal separation */
 .modern-section-card {
-    background: var(--rz-body-background-color);
-    border-radius: 12px;
+    background: transparent;
+    border-radius: 8px;
     overflow: hidden;
-    transition: all 0.2s ease-in-out;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--rz-base-200);
 }
 
-.modern-section-card:hover {
-    /* Minimal hover effect without shadows */
+.modern-section-card:last-child {
+    border-bottom: none;
 }
 
 /* Enhanced Header Layout - Clean without border separator */
 .section-header-modern {
-    /*background: var(--background-light);*/
-    padding: 1rem;
+    background: transparent;
+    padding: 1rem 0;
 }
 
 .header-top-row {

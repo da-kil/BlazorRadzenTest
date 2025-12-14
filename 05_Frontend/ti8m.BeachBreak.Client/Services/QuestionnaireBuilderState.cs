@@ -12,7 +12,7 @@ public class QuestionnaireBuilderState
     private QuestionnaireTemplate _template = new();
     private int _currentStep = 1;
     private bool _showQuestionEditor = false;
-    private QuestionItem? _editingQuestion = null;
+    private QuestionSection? _editingQuestion = null;
     private int _editingSectionIndex = -1;
     private int _editingQuestionIndex = -1;
     private bool _showQuestionTypeSelection = false;
@@ -73,7 +73,7 @@ public class QuestionnaireBuilderState
     /// <summary>
     /// The question being edited (null if creating new)
     /// </summary>
-    public QuestionItem? EditingQuestion
+    public QuestionSection? EditingQuestion
     {
         get => _editingQuestion;
         set
@@ -205,7 +205,7 @@ public class QuestionnaireBuilderState
     /// <summary>
     /// Opens the question editor for editing an existing question
     /// </summary>
-    public void OpenQuestionEditor(QuestionItem question, int sectionIndex, int questionIndex)
+    public void OpenQuestionEditor(QuestionSection question, int sectionIndex, int questionIndex)
     {
         EditingQuestion = question;
         EditingSectionIndex = sectionIndex;

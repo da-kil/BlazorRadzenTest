@@ -86,7 +86,7 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
@@ -150,11 +150,12 @@
         {
             var allGoals = new List<GoalWithState>();
 
-            // Iterate through all role responses in the section
+            // Iterate through all role responses in the section (Section IS the question)
             foreach (var roleResponse in SectionData.RoleResponses)
             {
-                if (roleResponse.Value.TryGetValue(Question.Id, out var questionResponse) &&
-                    questionResponse.ResponseData is GoalResponseDataDto roleGoalData)
+                // In new architecture, roleResponse.Value IS the QuestionResponse (no nested dictionary)
+                var questionResponse = roleResponse.Value;
+                if (questionResponse?.ResponseData is GoalResponseDataDto roleGoalData)
                 {
                     // Convert goals from this role and add to the collection
                     var roleGoals = roleGoalData.Goals.Select(ConvertGoalDataDtoToGoalWithState).ToList();
@@ -183,7 +184,7 @@
         return new GoalWithState
         {
             Id = goalData.GoalId,
-            QuestionId = Question?.Id ?? Guid.Empty,
+            QuestionId = Section?.Id ?? Guid.Empty,
             AddedByRole = goalData.AddedByRole,
             TimeframeFrom = goalData.TimeframeFrom,
             TimeframeTo = goalData.TimeframeTo,
@@ -447,7 +448,7 @@
             new Dictionary<string, object>
             {
                 { "AssignmentId", AssignmentId },
-                { "QuestionId", Question.Id },
+                { "QuestionId", Section.Id },
                 { "GoalId", goal.Id },
                 { "InitialObjective", goal.ObjectiveDescription },
                 { "InitialMeasurement", goal.MeasurementMetric },
@@ -588,7 +589,7 @@
             new Dictionary<string, object>
             {
                 { "AssignmentId", AssignmentId },
-                { "QuestionId", Question.Id }
+                { "QuestionId", Section.Id }
             },
             new DialogOptions
             {
@@ -603,7 +604,7 @@
             var newGoal = new GoalWithState
             {
                 Id = Guid.NewGuid(), // Temporary ID for pending goal
-                QuestionId = Question.Id,
+                QuestionId = Section.Id,
                 ObjectiveDescription = dto.ObjectiveDescription ?? "",
                 MeasurementMetric = dto.MeasurementMetric ?? "",
                 TimeframeFrom = dto.TimeframeFrom,
@@ -744,7 +745,7 @@
 
         try
         {
-            var result = await GoalApiService.GetGoalQuestionDataAsync(AssignmentId, Question.Id);
+            var result = await GoalApiService.GetGoalQuestionDataAsync(AssignmentId, Section.Id);
 
             if (result.Succeeded && result.Payload != null)
             {

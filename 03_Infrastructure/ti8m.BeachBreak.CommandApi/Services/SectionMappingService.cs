@@ -24,18 +24,17 @@ public class SectionMappingService
     }
 
     /// <summary>
-    /// Organizes question responses by their proper sections based on the questionnaire template.
-    /// Maps questions to sections and filters by completion role.
+    /// Organizes section responses by their proper structure based on the questionnaire template.
     /// </summary>
     /// <param name="assignmentId">The assignment ID (used for logging and fallback validation)</param>
     /// <param name="templateId">Optional template ID for optimization. When provided, skips assignment lookup.</param>
-    /// <param name="questionResponses">The question responses to organize</param>
+    /// <param name="sectionResponses">The section responses to organize (sectionId -> response)</param>
     /// <param name="role">The completion role (Employee/Manager)</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    public async Task<Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>> OrganizeResponsesBySectionsAsync(
+    public async Task<Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>>> OrganizeResponsesBySectionsAsync(
         Guid assignmentId,
         Guid? templateId,
-        Dictionary<Guid, QuestionResponseValue> questionResponses,
+        Dictionary<Guid, QuestionResponseValue> sectionResponses,
         CompletionRole role,
         CancellationToken cancellationToken = default)
     {
@@ -62,7 +61,7 @@ public class SectionMappingService
                 if (assignmentResult?.Payload == null)
                 {
                     logger.LogWarning("Assignment {AssignmentId} not found, using single section fallback", assignmentId);
-                    return CreateFallbackSectionStructure(questionResponses, role);
+                    return CreateFallbackSectionStructure(sectionResponses, role);
                 }
 
                 actualTemplateId = assignmentResult.Payload.TemplateId;
@@ -77,11 +76,11 @@ public class SectionMappingService
             if (templateResult?.Payload?.Sections == null || !templateResult.Payload.Sections.Any())
             {
                 logger.LogWarning("Template {TemplateId} has no sections, using single section fallback", actualTemplateId);
-                return CreateFallbackSectionStructure(questionResponses, role);
+                return CreateFallbackSectionStructure(sectionResponses, role);
             }
 
-            // Step 3: Create section-to-question mapping
-            var sectionResponses = new Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>();
+            // Step 3: Create section response structure (Section IS the question - no nested mapping)
+            var organizedResponses = new Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>>();
             var template = templateResult.Payload;
 
             foreach (var section in template.Sections.OrderBy(s => s.Order))
@@ -93,63 +92,55 @@ public class SectionMappingService
                     continue; // Skip sections not meant for this role
                 }
 
-                // Find questions in this section that have responses
-                var sectionQuestions = new Dictionary<Guid, QuestionResponseValue>();
-
-                foreach (var question in section.Questions.OrderBy(q => q.Order))
+                // Check if this section has a response
+                if (sectionResponses.TryGetValue(section.Id, out var response))
                 {
-                    if (questionResponses.TryGetValue(question.Id, out var response))
+                    if (!organizedResponses.ContainsKey(section.Id))
                     {
-                        sectionQuestions[question.Id] = response;
-                    }
-                }
-
-                // Only add the section if it has responses
-                if (sectionQuestions.Any())
-                {
-                    if (!sectionResponses.ContainsKey(section.Id))
-                    {
-                        sectionResponses[section.Id] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>();
+                        organizedResponses[section.Id] = new Dictionary<CompletionRole, QuestionResponseValue>();
                     }
 
-                    sectionResponses[section.Id][role] = sectionQuestions;
+                    organizedResponses[section.Id][role] = response;
                 }
             }
 
             // If no sections matched, use fallback
-            if (!sectionResponses.Any())
+            if (!organizedResponses.Any())
             {
                 logger.LogWarning("No matching sections found for role {Role}, using fallback", role);
-                return CreateFallbackSectionStructure(questionResponses, role);
+                return CreateFallbackSectionStructure(sectionResponses, role);
             }
 
-            logger.LogInformation("Successfully organized {QuestionCount} questions into {SectionCount} sections for role {Role}",
-                questionResponses.Count, sectionResponses.Count, role);
+            logger.LogInformation("Successfully organized {SectionCount} sections for role {Role}",
+                organizedResponses.Count, role);
 
-            return sectionResponses;
+            return organizedResponses;
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error organizing responses by sections for assignment {AssignmentId}, using fallback", assignmentId);
-            return CreateFallbackSectionStructure(questionResponses, role);
+            return CreateFallbackSectionStructure(sectionResponses, role);
         }
     }
 
     /// <summary>
     /// Creates a fallback section structure when template lookup fails.
-    /// Puts all questions in a single section for backwards compatibility.
+    /// Returns section responses as-is
     /// </summary>
-    private Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> CreateFallbackSectionStructure(
-        Dictionary<Guid, QuestionResponseValue> questionResponses,
+    private Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> CreateFallbackSectionStructure(
+        Dictionary<Guid, QuestionResponseValue> sectionResponses,
         CompletionRole role)
     {
-        var fallbackSectionId = Guid.NewGuid();
-        return new Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>>
+        var result = new Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>>();
+
+        foreach (var kvp in sectionResponses)
         {
-            [fallbackSectionId] = new Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>
+            result[kvp.Key] = new Dictionary<CompletionRole, QuestionResponseValue>
             {
-                [role] = questionResponses
-            }
-        };
+                [role] = kvp.Value
+            };
+        }
+
+        return result;
     }
 }

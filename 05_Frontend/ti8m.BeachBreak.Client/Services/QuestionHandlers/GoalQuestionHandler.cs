@@ -10,32 +10,46 @@ public class GoalQuestionHandler : IQuestionTypeHandler
 {
     public QuestionType SupportedType => QuestionType.Goal;
 
-    public void InitializeQuestion(QuestionItem question)
+    public void InitializeQuestion(QuestionSection question)
     {
-        // Goal questions don't need template items
-        // Goals are added dynamically during in-progress states by Employee/Manager
-        // Just ensure Configuration dictionary exists
-        question.Configuration ??= new Dictionary<string, object>();
+        // Goal questions use GoalConfiguration with ShowGoalSection flag
+        // Goals themselves are added dynamically during workflow execution
+        question.Configuration = new GoalConfiguration
+        {
+            ShowGoalSection = true // Default to showing the goal section
+        };
     }
 
-    public void AddItem(QuestionItem question)
+    public void AddItem(QuestionSection question)
     {
         // No-op: Goal questions don't use template items
         // Goals are added during questionnaire execution, not in the template
     }
 
-    public void RemoveItem(QuestionItem question, int index)
+    public void RemoveItem(QuestionSection question, int index)
     {
         // No-op: Goal questions don't use template items
     }
 
-    public int GetItemCount(QuestionItem question)
+    public int GetItemCount(QuestionSection question)
     {
         // Always return 0 - Goal questions don't have template items
         return 0;
     }
 
-    public List<string> Validate(QuestionItem question, string questionLabel)
+    public void MoveItemUp(QuestionSection question, int index)
+    {
+        // No-op: Goal questions don't use template items
+        // Goals are added during questionnaire execution, not in the template
+    }
+
+    public void MoveItemDown(QuestionSection question, int index)
+    {
+        // No-op: Goal questions don't use template items
+        // Goals are added during questionnaire execution, not in the template
+    }
+
+    public List<string> Validate(QuestionSection question, string questionLabel)
     {
         var errors = new List<string>();
 
@@ -49,8 +63,4 @@ public class GoalQuestionHandler : IQuestionTypeHandler
         return errors;
     }
 
-    public string GetDefaultTitle()
-    {
-        return "Goal Management";
-    }
 }

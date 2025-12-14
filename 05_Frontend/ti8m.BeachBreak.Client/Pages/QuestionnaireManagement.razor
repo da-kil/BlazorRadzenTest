@@ -87,7 +87,8 @@
 
                                 <RadzenDataGridColumn Property="QuestionCount" Title="@T("columns.questions")" Width="100px" TextAlign="TextAlign.Center">
                                     <Template Context="template">
-                                        <RadzenBadge Text="@template.Sections.SelectMany(s => s.Questions).Count().ToString()" BadgeStyle="BadgeStyle.Secondary" />
+                                        <!-- Section IS the question in new architecture -->
+                                        <RadzenBadge Text="@template.Sections.Count.ToString()" BadgeStyle="BadgeStyle.Secondary" />
                                     </Template>
                                 </RadzenDataGridColumn>
 
@@ -129,20 +130,20 @@
                             <RadzenDataGridColumn Filterable="false" Sortable="false" Width="240px" TextAlign="TextAlign.Center">
                                 <Template Context="template">
                                     <div class="template-actions">
-                                        <AsyncButton ButtonStyle="ButtonStyle.Light" Icon="edit" Size="ButtonSize.Small" Title="Edit" Click="@(() => EditTemplate(template))" />
-                                        <AsyncButton ButtonStyle="ButtonStyle.Light" ProcessingText="Cloning" Icon="content_copy" Size="ButtonSize.Small" Title="Clone" Click="@(() => CloneTemplate(template))" />
+                                        <AsyncButton ButtonStyle="ButtonStyle.Light" Icon="edit" Size="ButtonSize.Small" Title="@T("buttons.edit")" Click="@(() => EditTemplate(template))" />
+                                        <AsyncButton ButtonStyle="ButtonStyle.Light" ProcessingText="@T("notifications.cloning")" Icon="content_copy" Size="ButtonSize.Small" Title="@T("buttons.clone")" Click="@(() => CloneTemplate(template))" />
                                         @if (template.Status == TemplateStatus.Draft)
                                         {
-                                            <AsyncButton ButtonStyle="ButtonStyle.Success" ProcessingText="Publishing" Icon="publish" Size="ButtonSize.Small" Title="Publish" Click="@(() => PublishTemplate(template))" />
+                                            <AsyncButton ButtonStyle="ButtonStyle.Success" ProcessingText="@T("buttons.publishing")" Icon="publish" Size="ButtonSize.Small" Title="@T("buttons.publish")" Click="@(() => PublishTemplate(template))" />
                                         }
                                         else if (template.Status == TemplateStatus.Published)
                                         {
-                                            <AsyncButton ButtonStyle="ButtonStyle.Warning" ProcessingText="Unpublishing" Icon="unpublished" Size="ButtonSize.Small" Title="Unpublish" Click="@(() => UnpublishTemplate(template))" />
+                                            <AsyncButton ButtonStyle="ButtonStyle.Warning" ProcessingText="@T("buttons.unpublishing")" Icon="unpublished" Size="ButtonSize.Small" Title="@T("buttons.unpublish")" Click="@(() => UnpublishTemplate(template))" />
                                         }
                                         <AsyncButton ButtonStyle="@GetToggleButtonStyle(template.Status)" Icon="@GetToggleButtonIcon(template.Status)" Size="ButtonSize.Small" Title="@GetToggleButtonTitle(template.Status)" Click="@(() => ToggleTemplateStatus(template))" />
                                         @if (template.Status != TemplateStatus.Archived)
                                         {
-                                            <AsyncButton ButtonStyle="ButtonStyle.Danger" ProcessingText="Deleting" Icon="delete" Size="ButtonSize.Small" Title="Delete" Click="@(() => DeleteTemplate(template))" />
+                                            <AsyncButton ButtonStyle="ButtonStyle.Danger" ProcessingText="@T("buttons.deleting")" Icon="delete" Size="ButtonSize.Small" Title="@T("buttons.delete")" Click="@(() => DeleteTemplate(template))" />
                                         }
                                     </div>
                                 </Template>
@@ -188,8 +189,8 @@
                     </div>
 
                     <div class="settings-actions">
-                        <AsyncButton Text="Save Settings"
-                                    ProcessingText="Saving"
+                        <AsyncButton Text="@T("buttons.save-settings")"
+                                    ProcessingText="@T("buttons.saving")"
                                     ButtonStyle="ButtonStyle.Primary"
                                     Icon="save"
                                     Click="@SaveSettings" />
@@ -569,8 +570,8 @@
 
     private string GetToggleButtonTitle(TemplateStatus status) => status switch
     {
-        TemplateStatus.Archived => "Restore",
-        _ => "Archive"
+        TemplateStatus.Archived => T("buttons.restore"),
+        _ => T("buttons.archive")
     };
 
     private string GetCategoryNameProperty()

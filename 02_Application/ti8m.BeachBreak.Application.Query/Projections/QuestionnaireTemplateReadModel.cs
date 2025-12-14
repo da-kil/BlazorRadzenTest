@@ -127,18 +127,8 @@ public class QuestionnaireTemplateReadModel
             Order = s.Order,
             IsRequired = s.IsRequired,
             CompletionRole = s.CompletionRole.ToString(),
-            Questions = s.Questions.Select(q => new QuestionItem
-            {
-                Id = q.Id,
-                TitleGerman = q.Title.German,
-                TitleEnglish = q.Title.English,
-                DescriptionGerman = q.Description.German,
-                DescriptionEnglish = q.Description.English,
-                Type = (QuestionType)(int)q.Type,
-                IsRequired = q.IsRequired,
-                Order = q.Order,
-                Configuration = q.Configuration
-            }).ToList()
+            Type = s.Type.ToString(),
+            Configuration = s.Configuration
         }).ToList();
     }
 }

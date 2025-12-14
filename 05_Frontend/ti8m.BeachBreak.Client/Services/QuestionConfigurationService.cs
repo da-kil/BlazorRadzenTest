@@ -1,6 +1,5 @@
 using System.Text.Json;
 using ti8m.BeachBreak.Client.Models;
-using QuestionCardTypes = ti8m.BeachBreak.Client.Components.QuestionnaireBuilder.QuestionCard;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -70,143 +69,117 @@ public class QuestionConfigurationService
     }
 
     /// <summary>
-    /// Gets competencies from question configuration
+    /// Gets evaluations from question configuration
     /// </summary>
-    public List<CompetencyDefinition> GetCompetencies(QuestionItem question)
+    public List<EvaluationItem> GetEvaluations(QuestionSection question)
     {
-        return GetConfigurationList<CompetencyDefinition>(question.Configuration, "Competencies");
+        if (question.Configuration is AssessmentConfiguration config)
+        {
+            return config.Evaluations;
+        }
+        return new List<EvaluationItem>();
     }
 
 
     /// <summary>
     /// Gets text sections from question configuration
-    /// Note: Uses nested TextSection type from QuestionCard for compatibility with existing code
     /// </summary>
-    public List<QuestionCardTypes.TextSection> GetTextSections(QuestionItem question)
+    public List<TextSection> GetTextSections(QuestionSection question)
     {
-        return GetConfigurationList<QuestionCardTypes.TextSection>(question.Configuration, "TextSections");
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            return config.TextSections;
+        }
+        return new List<TextSection>();
     }
 
     /// <summary>
     /// Gets the rating scale value from a question's configuration.
     /// Returns 4 (default) if not configured.
     /// </summary>
-    public int GetRatingScale(QuestionItem question)
+    public int GetRatingScale(QuestionSection question)
     {
-        if (question?.Configuration?.ContainsKey("RatingScale") != true)
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            return 4; // Default rating scale
+            return config.RatingScale;
         }
-
-        var value = question.Configuration["RatingScale"];
-
-        if (value == null)
-        {
-            return 4;
-        }
-
-        try
-        {
-            // Try Convert.ToInt32 which handles many types including JsonElement
-            return Convert.ToInt32(value);
-        }
-        catch
-        {
-            // Fallback: Handle JsonElement explicitly
-            if (value is JsonElement jsonElement)
-            {
-                if (jsonElement.ValueKind == JsonValueKind.Number)
-                {
-                    return jsonElement.GetInt32();
-                }
-                if (jsonElement.ValueKind == JsonValueKind.String)
-                {
-                    if (int.TryParse(jsonElement.GetString(), out int parsed))
-                    {
-                        return parsed;
-                    }
-                }
-            }
-
-            // Fallback: Try parsing string representation
-            if (int.TryParse(value.ToString(), out int scale))
-            {
-                return scale;
-            }
-        }
-
-        return 4;
+        return 4; // Default rating scale
     }
 
     /// <summary>
     /// Gets the scale low label from a question's configuration.
     /// Returns "Poor" (default) if not configured.
     /// </summary>
-    public string GetScaleLowLabel(QuestionItem question)
+    public string GetScaleLowLabel(QuestionSection question)
     {
-        if (question?.Configuration?.TryGetValue("ScaleLowLabel", out var value) != true)
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            return "Poor";
+            return config.ScaleLowLabel ?? "Poor";
         }
-
-        // Handle JsonElement from API deserialization
-        if (value is JsonElement jsonElement)
-        {
-            return jsonElement.ValueKind == JsonValueKind.String
-                ? jsonElement.GetString() ?? "Poor"
-                : "Poor";
-        }
-
-        return value?.ToString() ?? "Poor";
+        return "Poor";
     }
 
     /// <summary>
     /// Gets the scale high label from a question's configuration.
     /// Returns "Excellent" (default) if not configured.
     /// </summary>
-    public string GetScaleHighLabel(QuestionItem question)
+    public string GetScaleHighLabel(QuestionSection question)
     {
-        if (question?.Configuration?.TryGetValue("ScaleHighLabel", out var value) != true)
+        if (question.Configuration is AssessmentConfiguration config)
         {
-            return "Excellent";
+            return config.ScaleHighLabel ?? "Excellent";
         }
-
-        // Handle JsonElement from API deserialization
-        if (value is JsonElement jsonElement)
-        {
-            return jsonElement.ValueKind == JsonValueKind.String
-                ? jsonElement.GetString() ?? "Excellent"
-                : "Excellent";
-        }
-
-        return value?.ToString() ?? "Excellent";
+        return "Excellent";
     }
 
     /// <summary>
-    /// Updates competencies in question configuration
+    /// Updates evaluations in question configuration
     /// </summary>
-    public void SetCompetencies(QuestionItem question, List<CompetencyDefinition> competencies)
+    public void SetEvaluations(QuestionSection question, List<EvaluationItem> evaluations)
     {
-        question.Configuration["Competencies"] = competencies;
+        if (question.Configuration is AssessmentConfiguration config)
+        {
+            config.Evaluations = evaluations;
+        }
+        else
+        {
+            question.Configuration = new AssessmentConfiguration
+            {
+                Evaluations = evaluations,
+                RatingScale = 4,
+                ScaleLowLabel = "Poor",
+                ScaleHighLabel = "Excellent"
+            };
+        }
     }
 
 
     /// <summary>
     /// Updates text sections in question configuration
     /// </summary>
-    public void SetTextSections(QuestionItem question, List<QuestionCardTypes.TextSection> textSections)
+    public void SetTextSections(QuestionSection question, List<TextSection> textSections)
     {
-        question.Configuration["TextSections"] = textSections;
+        if (question.Configuration is TextQuestionConfiguration config)
+        {
+            config.TextSections = textSections;
+        }
+        else
+        {
+            question.Configuration = new TextQuestionConfiguration
+            {
+                TextSections = textSections
+            };
+        }
     }
 
     /// <summary>
     /// Validates if a question has valid configuration based on its type
     /// </summary>
-    public bool HasValidConfiguration(QuestionItem question)
+    public bool HasValidConfiguration(QuestionSection question)
     {
         return question.Type switch
         {
-            QuestionType.Assessment => GetCompetencies(question).Any(),
+            QuestionType.Assessment => GetEvaluations(question).Any(),
             QuestionType.Goal => true, // Goal questions don't require template items - items added dynamically during in-progress
             QuestionType.TextQuestion => GetTextSections(question).Any(),
             _ => false
@@ -216,11 +189,11 @@ public class QuestionConfigurationService
     /// <summary>
     /// Gets configuration item count for a question
     /// </summary>
-    public int GetConfigurationItemCount(QuestionItem question)
+    public int GetConfigurationItemCount(QuestionSection question)
     {
         return question.Type switch
         {
-            QuestionType.Assessment => GetCompetencies(question).Count,
+            QuestionType.Assessment => GetEvaluations(question).Count,
             QuestionType.Goal => 0, // Goal questions don't have template items - items added dynamically during in-progress
             QuestionType.TextQuestion => GetTextSections(question).Count,
             _ => 0

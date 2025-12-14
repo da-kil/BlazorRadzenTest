@@ -107,7 +107,6 @@ public class GetAvailablePredecessorsQueryHandler
             // Extract all goal responses from all sections and roles
             var goalResponses = response.SectionResponses.Values
                 .SelectMany(roleDict => roleDict.Values)
-                .SelectMany(questionDict => questionDict.Values)
                 .OfType<QuestionResponseValue.GoalResponse>()
                 .Where(gr => gr.Goals != null && gr.Goals.Any())
                 .ToList();

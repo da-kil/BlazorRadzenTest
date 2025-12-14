@@ -601,3 +601,391 @@ Use these for inline emphasis in HTML:
 /* To make all sections bolder, change one variable: */
 --font-weight-section-title: var(--font-weight-semibold); /* Updates everywhere */
 ```
+
+## 11. Strongly-Typed Question Configuration Pattern
+
+### Overview
+
+**CRITICAL**: This codebase uses strongly-typed configuration classes instead of `Dictionary<string, object>` for question configurations. This provides compile-time type safety and eliminates ~700 lines of JSON parsing logic that was previously duplicated across the codebase.
+
+### IQuestionConfiguration Hierarchy
+
+All question configurations implement the `IQuestionConfiguration` interface:
+
+```csharp
+public interface IQuestionConfiguration
+{
+    QuestionType QuestionType { get; }
+}
+```
+
+**Available Configuration Types:**
+
+1. **AssessmentConfiguration** - For competency/skill assessments
+2. **TextQuestionConfiguration** - For text-based questions
+3. **GoalConfiguration** - For goal management questions
+
+### Pattern: Accessing Typed Configuration
+
+**ALWAYS** use pattern matching with the `is` operator to access configuration properties:
+
+```csharp
+// ✅ CORRECT: Pattern matching for type-safe access
+if (question.Configuration is AssessmentConfiguration config)
+{
+    var evaluations = config.Evaluations;
+    var ratingScale = config.RatingScale;
+    var lowLabel = config.ScaleLowLabel;
+    var highLabel = config.ScaleHighLabel;
+}
+
+// ❌ WRONG: Don't use Dictionary access
+var evaluations = question.Configuration["Evaluations"]; // Compiler error!
+```
+
+### AssessmentConfiguration
+
+Used for questions that assess competencies/skills with ratings:
+
+```csharp
+public sealed class AssessmentConfiguration : IQuestionConfiguration
+{
+    public QuestionType QuestionType => QuestionType.Assessment;
+    public List<EvaluationItem> Evaluations { get; set; } = new();
+    public int RatingScale { get; set; } = 4;
+    public string ScaleLowLabel { get; set; } = "Poor";
+    public string ScaleHighLabel { get; set; } = "Excellent";
+}
+```
+
+**Example Usage:**
+```csharp
+private void UpdateRatingScale(QuestionItem question, int newScale)
+{
+    if (question.Configuration is AssessmentConfiguration config)
+    {
+        config.RatingScale = newScale;
+        // Direct property access - compile-time safe!
+    }
+}
+```
+
+### TextQuestionConfiguration
+
+Used for questions with text input sections:
+
+```csharp
+public sealed class TextQuestionConfiguration : IQuestionConfiguration
+{
+    public QuestionType QuestionType => QuestionType.TextQuestion;
+    public List<TextSection> TextSections { get; set; } = new();
+}
+```
+
+**Example Usage:**
+```csharp
+private List<TextSection> GetTextSections(QuestionItem question)
+{
+    if (question.Configuration is TextQuestionConfiguration config)
+    {
+        return config.TextSections; // Direct access, no parsing!
+    }
+    return new List<TextSection>();
+}
+```
+
+### GoalConfiguration
+
+Used for goal management questions (goals added dynamically during workflow):
+
+```csharp
+public sealed class GoalConfiguration : IQuestionConfiguration
+{
+    public QuestionType QuestionType => QuestionType.Goal;
+    public bool ShowGoalSection { get; set; } = true;
+}
+```
+
+**Key Point:** Goals don't have template-level items. The `ShowGoalSection` flag controls visibility in the UI.
+
+**Example Usage:**
+```csharp
+private bool ShouldShowGoalSection(QuestionItem question)
+{
+    if (question.Configuration is GoalConfiguration config)
+    {
+        return config.ShowGoalSection;
+    }
+    return true; // Default to visible
+}
+```
+
+### Pattern: Initializing Configuration
+
+When creating new questions, initialize with typed configuration:
+
+```csharp
+// ✅ CORRECT: Create typed configuration
+var question = new QuestionItem
+{
+    Type = QuestionType.Assessment,
+    Configuration = new AssessmentConfiguration
+    {
+        Evaluations = new List<EvaluationItem>
+        {
+            new EvaluationItem("evaluation_1", "Leadership", "", false, 0)
+        },
+        RatingScale = 4,
+        ScaleLowLabel = "Poor",
+        ScaleHighLabel = "Excellent"
+    }
+};
+
+// ❌ WRONG: Don't create Dictionary
+var question = new QuestionItem
+{
+    Configuration = new Dictionary<string, object>() // Don't do this!
+};
+```
+
+### Pattern: Updating Configuration
+
+Always check type before updating:
+
+```csharp
+// ✅ CORRECT: Type-safe updates
+public void AddEvaluation(QuestionItem question, EvaluationItem evaluation)
+{
+    if (question.Configuration is AssessmentConfiguration config)
+    {
+        config.Evaluations.Add(evaluation);
+    }
+    else
+    {
+        // Initialize if needed
+        question.Configuration = new AssessmentConfiguration
+        {
+            Evaluations = new List<EvaluationItem> { evaluation }
+        };
+    }
+}
+```
+
+### Common Mistakes to Avoid
+
+1. **❌ Don't use Dictionary methods:**
+   ```csharp
+   // WRONG - Will not compile
+   question.Configuration.ContainsKey("Evaluations")
+   question.Configuration["RatingScale"] = 5
+   question.Configuration.TryGetValue("TextSections", out var value)
+   ```
+
+2. **❌ Don't parse JSON manually:**
+   ```csharp
+   // WRONG - No longer needed
+   var jsonElement = configuration["Evaluations"] as JsonElement;
+   var evaluations = JsonSerializer.Deserialize<List<EvaluationItem>>(jsonElement.GetRawText());
+   ```
+
+3. **❌ Don't create helper methods for Dictionary parsing:**
+   ```csharp
+   // WRONG - This pattern is obsolete
+   private List<EvaluationItem> GetEvaluationsFromConfiguration(Dictionary<string, object> config)
+   {
+       // 50 lines of JSON parsing logic - NO LONGER NEEDED!
+   }
+   ```
+
+### Services Using Typed Configuration
+
+The following services have been updated to use typed configuration:
+
+1. **QuestionConfigurationService** - Helper methods for configuration access
+2. **AssessmentConfigurationHelper** - Static helpers for assessment questions
+3. **QuestionHandlers** - Initialize and manage question configurations
+   - AssessmentQuestionHandler
+   - TextQuestionHandler
+   - GoalQuestionHandler
+
+### Benefits of Typed Configuration
+
+1. **Compile-Time Safety**: Typos and type errors caught by compiler
+2. **IntelliSense Support**: IDE autocomplete for all properties
+3. **Simplified Code**: ~700 lines of parsing logic eliminated
+4. **Maintainability**: Single source of truth for configuration structure
+5. **Refactoring Support**: Rename refactoring works across entire codebase
+
+### Historical Context
+
+**Why This Pattern Exists:**
+
+Prior to 2025-12, this codebase used `Dictionary<string, object>` for question configurations, which resulted in:
+- ~550+ lines of duplicate JSON parsing logic across 15+ files
+- No compile-time type safety (runtime errors only)
+- Historical validation bug (2025-11-10) due to parsing complexity
+- Difficult maintenance when adding new question types
+
+The refactoring to typed configuration (completed 2025-12-08) eliminated these issues and provides a robust, type-safe foundation for future development.
+
+### Adding New Question Types
+
+If you need to add a new question type:
+
+1. Create a new configuration class implementing `IQuestionConfiguration`
+2. Add the new `QuestionType` enum value
+3. Create a handler class implementing `IQuestionTypeHandler`
+4. Update rendering components to handle the new type
+5. Update validation logic if needed
+
+**Example:**
+```csharp
+public sealed class MultipleChoiceConfiguration : IQuestionConfiguration
+{
+    public QuestionType QuestionType => QuestionType.MultipleChoice;
+    public List<ChoiceOption> Options { get; set; } = new();
+    public bool AllowMultipleSelections { get; set; } = false;
+}
+```
+
+### References
+
+- Configuration classes: `05_Frontend/ti8m.BeachBreak.Client/Models/`
+- Handler classes: `05_Frontend/ti8m.BeachBreak.Client/Services/QuestionHandlers/`
+- Usage examples: See QuestionCard.razor, SectionCard.razor, DynamicQuestionnaire.razor
+
+## 12. Configuration Serialization Pattern
+
+### Overview
+
+The questionnaire configuration uses polymorphic JSON serialization with a `$type` discriminator. This section explains why the JSON contains both a section-level `Type` field and a configuration-level `$type` discriminator, and why this apparent redundancy is intentional defensive design.
+
+### JSON Structure
+
+```json
+{
+  "Type": 0,  // Section-level question type (QuestionType enum)
+  "Configuration": {
+    "$type": 0,  // Configuration-level discriminator (same value)
+    "Evaluations": [...],
+    "RatingScale": 4,
+    "ScaleLowLabel": "Poor",
+    "ScaleHighLabel": "Excellent"
+  }
+}
+```
+
+### Why Both Type and $type Exist
+
+**1. Section.Type**: Semantic field indicating what type of question this section represents
+   - Used by domain logic for validation and business rules
+   - Part of the `QuestionSection` domain model
+   - Accessed directly in code: `section.Type`
+
+**2. Configuration.$type**: JSON discriminator enabling polymorphic deserialization of `IQuestionConfiguration`
+   - Required by the JSON deserializer to determine concrete type
+   - Maps to the appropriate configuration class:
+     - `$type: 0` → `AssessmentConfiguration`
+     - `$type: 1` → `TextQuestionConfiguration`
+     - `$type: 2` → `GoalConfiguration`
+   - Handled by `QuestionConfigurationJsonConverter`
+
+### The Pattern is Intentional Defensive Design
+
+The apparent redundancy is **intentional and necessary**:
+
+1. **Validation Safety**: The two values must always match, validated by `ValidateConfigurationMatchesType()`:
+   ```csharp
+   if (Type != Configuration.QuestionType)
+   {
+       throw new InvalidOperationException(
+           $"Configuration type mismatch: Section Type is {Type} but Configuration is for {Configuration.QuestionType}");
+   }
+   ```
+   This catches bugs where frontend and backend disagree on types.
+
+2. **Separation of Concerns**: `IQuestionConfiguration` is used independently in many contexts without access to the parent section:
+   - Domain events (`QuestionSectionData`)
+   - Command DTOs (`CommandQuestionSection`)
+   - Query DTOs (`QuestionSectionDto`)
+   - Frontend models (`QuestionSection`)
+
+   In these contexts, the Configuration object needs its own type information.
+
+3. **Standard .NET Pattern**: Using a discriminator for polymorphic JSON follows .NET best practices:
+   - Supported by System.Text.Json
+   - Well-understood industry pattern
+   - Tool support (Swagger, API testing)
+   - Fast and unambiguous deserialization
+
+4. **Similar to Other Safety Mechanisms**:
+   - Database foreign key constraints
+   - Email confirmation fields in forms
+   - Checksums in data transmission
+
+   The redundancy **prevents bugs** rather than creating them.
+
+### QuestionConfigurationJsonConverter
+
+**Location**:
+- `04_Core/ti8m.BeachBreak.Core.Domain/QuestionConfiguration/QuestionConfigurationJsonConverter.cs`
+- `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionConfigurationJsonConverter.cs`
+
+**Read Method** (Deserialization):
+- Looks for `"$type"` property in JSON
+- If found: uses it to determine the concrete type
+- If NOT found: falls back to property inference (backward compatibility)
+
+**Write Method** (Serialization):
+- Always writes `"$type": (int)value.QuestionType` at the beginning
+- Then writes type-specific properties
+
+### Common Misconceptions
+
+**❌ WRONG**: "The $type discriminator is redundant because we have Section.Type"
+
+**✅ CORRECT**: The $type discriminator serves a different purpose than Section.Type:
+- Section.Type is a domain field for business logic
+- Configuration.$type is a JSON serialization mechanism
+- Both are necessary and must match
+
+**❌ WRONG**: "We can remove $type and just use Section.Type for deserialization"
+
+**✅ CORRECT**: This would require:
+- Custom converter logic coupling Section and Configuration
+- Breaking isolated Configuration usage (events, DTOs)
+- Loss of backward compatibility
+- More complex deserialization code
+- Going against .NET best practices
+
+### Design Decision (2025-12-12)
+
+This pattern was explicitly reviewed and the decision was made to **keep the current design**:
+
+**Rationale**:
+- Follows .NET best practices for polymorphic JSON
+- Provides defensive validation safety
+- Enables Configuration to be used independently
+- Low cost (~10 bytes per section) vs high complexity of alternatives
+- Backward compatible with property inference fallback
+
+**Do not remove the $type discriminator** - it's not redundant, it's defensive validation.
+
+### Historical Context
+
+**Investigation Date**: 2025-12-12
+
+During a review of the questionnaire template JSON structure, the apparent redundancy between `Type` and `$type` was questioned. A comprehensive investigation revealed:
+
+1. The $type discriminator is necessary for polymorphic deserialization
+2. The apparent redundancy is intentional defensive design
+3. This pattern follows .NET best practices
+4. Works correctly in CQRS/Event Sourcing architecture
+
+The investigation confirmed the current implementation is correct and should be preserved.
+
+### References
+
+- JSON Converter: `QuestionConfigurationJsonConverter.cs` (Core.Domain and Client projects)
+- Domain Validation: `QuestionSection.ValidateConfigurationMatchesType()`
+- Pattern documentation: See Section 11 "Strongly-Typed Question Configuration Pattern"

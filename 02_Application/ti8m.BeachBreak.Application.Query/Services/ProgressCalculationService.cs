@@ -1,15 +1,14 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using QuestionnaireTemplate = ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries.QuestionnaireTemplate;
-using QuestionItem = ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries.QuestionItem;
-using QuestionType = ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.QuestionType;
 
 namespace ti8m.BeachBreak.Application.Query.Services;
 
 /// <summary>
 /// Calculates role-based progress for questionnaire responses.
-/// Only counts required questions and validates answers appropriately per question type.
+/// Only counts required sections and validates answers appropriately per section type.
 /// </summary>
 public class ProgressCalculationService : IProgressCalculationService
 {
@@ -22,7 +21,7 @@ public class ProgressCalculationService : IProgressCalculationService
 
     public ProgressCalculation Calculate(
         QuestionnaireTemplate template,
-        Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> sectionResponses)
+        Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> sectionResponses)
     {
         var result = new ProgressCalculation();
 
@@ -71,7 +70,7 @@ public class ProgressCalculationService : IProgressCalculationService
     }
 
     /// <summary>
-    /// Counts total required questions per role from the template.
+    /// Counts total required sections per role from the template.
     /// Sections with CompletionRole.Both count for BOTH roles.
     /// </summary>
     private (int employeeTotal, int managerTotal) CountTotalRequiredQuestions(QuestionnaireTemplate template)
@@ -81,25 +80,26 @@ public class ProgressCalculationService : IProgressCalculationService
 
         foreach (var section in template.Sections)
         {
-            // Only count required questions
-            var requiredQuestionCount = section.Questions.Count(q => q.IsRequired);
+            // Only count if section itself is required
+            if (!section.IsRequired)
+                continue;
 
             // Query model uses string for CompletionRole
             var roleStr = section.CompletionRole;
 
             if (roleStr == "Employee")
             {
-                employeeTotal += requiredQuestionCount;
+                employeeTotal++;
             }
             else if (roleStr == "Manager")
             {
-                managerTotal += requiredQuestionCount;
+                managerTotal++;
             }
             else if (roleStr == "Both")
             {
                 // Both roles must answer - count for each
-                employeeTotal += requiredQuestionCount;
-                managerTotal += requiredQuestionCount;
+                employeeTotal++;
+                managerTotal++;
             }
         }
 
@@ -107,76 +107,63 @@ public class ProgressCalculationService : IProgressCalculationService
     }
 
     /// <summary>
-    /// Counts answered required questions per role from the response data.
+    /// Counts answered required sections per role from the response data.
     /// </summary>
     private (int employeeAnswered, int managerAnswered) CountAnsweredRequiredQuestions(
         QuestionnaireTemplate template,
-        Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> sectionResponses)
+        Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> sectionResponses)
     {
         var employeeAnswered = 0;
         var managerAnswered = 0;
 
         foreach (var section in template.Sections)
         {
+            // Only count required sections (Section IS the question)
+            if (!section.IsRequired)
+                continue;
+
             // Skip if no responses for this section
             if (!sectionResponses.TryGetValue(section.Id, out var roleResponses))
             {
                 continue;
             }
 
-            // Get only required questions
-            var requiredQuestions = section.Questions.Where(q => q.IsRequired).ToList();
-
             // Parse completion role (query model uses string, domain uses enum)
             var completionRoleStr = section.CompletionRole;
 
-            // Count employee answers for this section
+            // Count employee answer for this section
             if (completionRoleStr == "Employee" || completionRoleStr == "Both")
             {
-                if (roleResponses.TryGetValue(CompletionRole.Employee, out var employeeAnswers))
+                if (roleResponses.TryGetValue(CompletionRole.Employee, out var employeeAnswer))
                 {
-                    employeeAnswered += CountValidAnswers(employeeAnswers, requiredQuestions);
+                    // Parse section type (query model string to domain enum)
+                    if (Enum.TryParse<QuestionType>(section.Type, out var sectionType))
+                    {
+                        if (IsValidAnswer(employeeAnswer, sectionType))
+                        {
+                            employeeAnswered++;
+                        }
+                    }
                 }
             }
 
-            // Count manager answers for this section
+            // Count manager answer for this section
             if (completionRoleStr == "Manager" || completionRoleStr == "Both")
             {
-                if (roleResponses.TryGetValue(CompletionRole.Manager, out var managerAnswers))
+                if (roleResponses.TryGetValue(CompletionRole.Manager, out var managerAnswer))
                 {
-                    managerAnswered += CountValidAnswers(managerAnswers, requiredQuestions);
+                    if (Enum.TryParse<QuestionType>(section.Type, out var sectionType))
+                    {
+                        if (IsValidAnswer(managerAnswer, sectionType))
+                        {
+                            managerAnswered++;
+                        }
+                    }
                 }
             }
         }
 
         return (employeeAnswered, managerAnswered);
-    }
-
-    /// <summary>
-    /// Counts valid answers for a list of required questions.
-    /// Validates answers based on question type requirements.
-    /// </summary>
-    private int CountValidAnswers(
-        Dictionary<Guid, QuestionResponseValue> answers,
-        List<QuestionItem> requiredQuestions)
-    {
-        var count = 0;
-
-        foreach (var question in requiredQuestions)
-        {
-            if (answers.TryGetValue(question.Id, out var answer))
-            {
-                // Convert Query QuestionType (enum) to Domain QuestionType (enum)
-                // Both enums have the same values, we just need to parse the string representation
-                var domainType = Enum.Parse<QuestionType>(question.Type.ToString());
-                if (IsValidAnswer(answer, domainType))
-                {
-                    count++;
-                }
-            }
-        }
-
-        return count;
     }
 
     /// <summary>
@@ -201,7 +188,7 @@ public class ProgressCalculationService : IProgressCalculationService
                 case QuestionType.Assessment:
                     // Assessment questions need a rating value
                     return answer is QuestionResponseValue.AssessmentResponse assessmentResponse &&
-                           assessmentResponse.Competencies.Any(c => c.Value.IsValidRating);
+                           assessmentResponse.Evaluations.Any(c => c.Value.IsValidRating);
 
                 case QuestionType.TextQuestion:
                     // Text questions must have non-empty text

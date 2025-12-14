@@ -5,9 +5,9 @@
 @using ti8m.BeachBreak.Client.Services.Enhanced
 @inherits OptimizedComponentBase
 
-@* Optimized question renderer that only re-renders when question data actually changes *@
-<div class="question-container" data-question-id="@Question.Id">
-    @switch (Question.Type)
+@* Optimized section renderer *@
+<div class="section-container" data-section-id="@Section.Id">
+    @switch (Section.Type)
     {
         case QuestionType.Assessment:
             @RenderAssessmentOptimized()
@@ -25,7 +25,7 @@
 </div>
 
 @code {
-    [Parameter, EditorRequired] public QuestionItem Question { get; set; } = default!;
+    [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
     [Parameter, EditorRequired] public QuestionResponse Response { get; set; } = default!;
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
@@ -44,30 +44,30 @@
     private OptimizedGoalQuestion? goalQuestionRef;
 
     /// <summary>
-    /// Saves pending goal changes if this is a Goal question.
-    /// Returns true if all operations succeed or if not a goal question.
+    /// Saves pending goal changes if this is a Goal section.
+    /// Returns true if all operations succeed or if not a goal section.
     /// </summary>
     public async Task<bool> SavePendingGoalChanges()
     {
-        if (Question.Type == QuestionType.Goal && goalQuestionRef != null)
+        if (Section.Type == QuestionType.Goal && goalQuestionRef != null)
         {
             return await goalQuestionRef.SavePendingGoalChanges();
         }
-        return true; // Not a goal question, nothing to save
+        return true; // Not a goal section, nothing to save
     }
 
     protected override void OnParametersSet()
     {
-        // Only re-render if question or response data actually changed
-        var currentQuestionHash = ComputeQuestionHash();
+        // Only re-render if section or response data actually changed
+        var currentSectionHash = ComputeSectionHash();
         var currentResponseHash = ComputeResponseHash();
 
-        shouldRender = currentQuestionHash != lastQuestionHash ||
+        shouldRender = currentSectionHash != lastQuestionHash ||
                       currentResponseHash != lastResponseHash;
 
         if (shouldRender)
         {
-            lastQuestionHash = currentQuestionHash;
+            lastQuestionHash = currentSectionHash;
             lastResponseHash = currentResponseHash;
         }
     }
@@ -77,10 +77,11 @@
         return shouldRender;
     }
 
-    private string ComputeQuestionHash()
+    private string ComputeSectionHash()
     {
-        // Create hash based on question properties that affect rendering
-        return $"{Question.Id}|{Question.TitleEnglish}|{Question.TitleGerman}|{Question.Type}|{Question.IsRequired}|{Question.DescriptionEnglish}|{Question.DescriptionGerman}|{Question.Configuration?.Count ?? 0}";
+        // Create hash based on section properties that affect rendering
+        var configHash = Section.Configuration?.GetHashCode() ?? 0;
+        return $"{Section.Id}|{Section.TitleEnglish}|{Section.TitleGerman}|{Section.Type}|{Section.IsRequired}|{Section.DescriptionEnglish}|{Section.DescriptionGerman}|{configHash}";
     }
 
     private string ComputeResponseHash()
@@ -95,7 +96,7 @@
         var responseDataHash = Response.ResponseData switch
         {
             TextResponseDataDto textData => $"text|{string.Join(",", textData.TextSections)}",
-            AssessmentResponseDataDto assessmentData => $"assessment|{string.Join(",", assessmentData.Competencies.Select(kvp => $"{kvp.Key}:{kvp.Value.Rating}:{kvp.Value.Comment}"))}",
+            AssessmentResponseDataDto assessmentData => $"assessment|{string.Join(",", assessmentData.Evaluations.Select(kvp => $"{kvp.Key}:{kvp.Value.Rating}:{kvp.Value.Comment}"))}",
             GoalResponseDataDto goalData => $"goal|{goalData.Goals.Count}|{goalData.PredecessorRatings.Count}|{goalData.PredecessorAssignmentId}|{string.Join(",", goalData.Goals.Select(g => $"{g.GoalId}:{g.ObjectiveDescription}:{g.WeightingPercentage}"))}",
             _ => Response.ResponseData.GetType().Name
         };
@@ -107,7 +108,7 @@
 
     private RenderFragment RenderAssessmentOptimized() => __builder =>
     {
-        <OptimizedAssessmentQuestion Question="@Question"
+        <OptimizedAssessmentQuestion Section="@Section"
                                     Response="@Response"
                                     OnResponseChanged="@OnResponseChanged"
                                     IsReadOnly="@IsReadOnly"
@@ -116,7 +117,7 @@
 
     private RenderFragment RenderTextQuestionOptimized() => __builder =>
     {
-        <OptimizedTextQuestion Question="@Question"
+        <OptimizedTextQuestion Section="@Section"
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
                               IsReadOnly="@IsReadOnly"
@@ -126,7 +127,7 @@
     private RenderFragment RenderGoalQuestionOptimized() => __builder =>
     {
         <OptimizedGoalQuestion @ref="goalQuestionRef"
-                              Question="@Question"
+                              Section="@Section"
                               Response="@Response"
                               OnResponseChanged="@OnResponseChanged"
                               IsReadOnly="@IsReadOnly"
@@ -142,7 +143,7 @@
     {
         <div class="alert alert-warning d-flex align-items-center">
             <RadzenIcon Icon="warning" Class="me-2" />
-            <span>Question type '@Question.Type' is not supported.</span>
+            <span>Section type '@Section.Type' is not supported.</span>
         </div>
     };
 

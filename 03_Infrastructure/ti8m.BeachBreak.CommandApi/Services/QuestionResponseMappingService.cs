@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.CommandApi.DTOs;
+using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using DomainApplicationRole = ti8m.BeachBreak.Domain.EmployeeAggregate.ApplicationRole;
@@ -32,10 +33,10 @@ public class QuestionResponseMappingService
 
                 QuestionType.Assessment => questionResponse.AssessmentResponse != null
                     ? new QuestionResponseValue.AssessmentResponse(
-                        questionResponse.AssessmentResponse.Competencies.ToDictionary(
+                        questionResponse.AssessmentResponse.Evaluations.ToDictionary(
                             kvp => kvp.Key,
-                            kvp => new CompetencyRating(kvp.Value.Rating, kvp.Value.Comment)))
-                    : new QuestionResponseValue.AssessmentResponse(new Dictionary<string, CompetencyRating>()), // Empty assessment response
+                            kvp => new EvaluationRating(kvp.Value.Rating, kvp.Value.Comment)))
+                    : new QuestionResponseValue.AssessmentResponse(new Dictionary<string, EvaluationRating>()), // Empty assessment response
 
                 QuestionType.Goal => questionResponse.GoalResponse != null
                     ? new QuestionResponseValue.GoalResponse(

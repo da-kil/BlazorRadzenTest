@@ -45,37 +45,31 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
                 SectionResponses = new Dictionary<Guid, SectionResponse>()
             };
 
-            // Map nested API structure to frontend structure
+            // Map API structure to frontend structure (2-level: Section IS the question)
             foreach (var sectionKvp in apiResponse.SectionResponses)
             {
                 var apiSection = sectionKvp.Value;
                 var sectionResponse = new SectionResponse
                 {
                     SectionId = apiSection.SectionId,
-                    RoleResponses = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponse>>()
+                    RoleResponses = new Dictionary<ResponseRole, QuestionResponse>()
                 };
 
-                // Map each role's responses
+                // Map each role's response
                 foreach (var roleKvp in apiSection.RoleResponses)
                 {
                     var role = roleKvp.Key;
-                    var roleQuestions = roleKvp.Value;
+                    var apiQuestion = roleKvp.Value;
 
-                    sectionResponse.RoleResponses[role] = new Dictionary<Guid, QuestionResponse>();
-
-                    foreach (var questionKvp in roleQuestions)
+                    var questionResponse = new QuestionResponse
                     {
-                        var apiQuestion = questionKvp.Value;
-                        var questionResponse = new QuestionResponse
-                        {
-                            QuestionId = apiQuestion.QuestionId,
-                            QuestionType = apiQuestion.QuestionType,
-                            LastModified = apiQuestion.LastModified,
-                            ResponseData = apiQuestion.ResponseData
-                        };
+                        QuestionId = apiQuestion.QuestionId,
+                        QuestionType = apiQuestion.QuestionType,
+                        LastModified = apiQuestion.LastModified,
+                        ResponseData = apiQuestion.ResponseData
+                    };
 
-                        sectionResponse.RoleResponses[role][apiQuestion.QuestionId] = questionResponse;
-                    }
+                    sectionResponse.RoleResponses[role] = questionResponse;
                 }
 
                 questionnaireResponse.SectionResponses[sectionKvp.Key] = sectionResponse;

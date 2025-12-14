@@ -323,7 +323,7 @@ public class ResponsesController : BaseController
     /// Much cleaner than the object-based approach since we have compile-time type safety.
     /// </summary>
     private Dictionary<Guid, SectionResponseDto> MapStronglyTypedSectionResponsesToDto(
-        Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> sectionResponses)
+        Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> sectionResponses)
     {
         var result = new Dictionary<Guid, SectionResponseDto>();
         var jsonOptions = new JsonSerializerOptions
@@ -351,27 +351,18 @@ public class ResponsesController : BaseController
                     _ => ResponseRole.Employee // Default fallback
                 };
 
-                var roleQuestions = roleKvp.Value;
+                var roleResponse = roleKvp.Value;
                 var questionResponsesForRole = new Dictionary<Guid, QuestionResponseDto>();
 
-                foreach (var questionKvp in roleQuestions)
+                // Direct assignment - Section IS the question (one response per section)
+                questionResponsesForRole[sectionId] = new QuestionResponseDto
                 {
-                    var questionId = questionKvp.Key;
-                    var questionResponseValue = questionKvp.Value;
+                    QuestionId = sectionId,
+                    QuestionType = QuestionResponseMapper.InferQuestionType(roleResponse),
+                    ResponseData = QuestionResponseMapper.MapToDto(roleResponse)
+                };
 
-                    // Direct assignment - no conversion needed with strongly-typed DTO!
-                    questionResponsesForRole[questionId] = new QuestionResponseDto
-                    {
-                        QuestionId = questionId,
-                        QuestionType = QuestionResponseMapper.InferQuestionType(questionResponseValue),
-                        ResponseData = QuestionResponseMapper.MapToDto(questionResponseValue)
-                    };
-                }
-
-                if (questionResponsesForRole.Any())
-                {
-                    roleResponsesDto[responseRole] = questionResponsesForRole;
-                }
+                roleResponsesDto[responseRole] = questionResponsesForRole;
             }
 
             // Include section if it has any role responses
@@ -393,7 +384,7 @@ public class ResponsesController : BaseController
     /// Used for employee-specific endpoints that should only show their own responses.
     /// </summary>
     private Dictionary<Guid, SectionResponseDto> MapStronglyTypedEmployeeSectionResponsesToDto(
-        Dictionary<Guid, Dictionary<CompletionRole, Dictionary<Guid, QuestionResponseValue>>> sectionResponses)
+        Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> sectionResponses)
     {
         var result = new Dictionary<Guid, SectionResponseDto>();
         var jsonOptions = new JsonSerializerOptions
@@ -410,28 +401,18 @@ public class ResponsesController : BaseController
             var roleResponsesDto = new Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>>();
 
             // For employee endpoints, return EMPLOYEE responses only
-            if (roleBasedResponses.TryGetValue(CompletionRole.Employee, out var employeeResponses))
+            if (roleBasedResponses.TryGetValue(CompletionRole.Employee, out var employeeResponse))
             {
-                var questionResponsesForEmployee = new Dictionary<Guid, QuestionResponseDto>();
+                var questionResponsesForSection = new Dictionary<Guid, QuestionResponseDto>();
 
-                foreach (var questionKvp in employeeResponses)
+                questionResponsesForSection[sectionId] = new QuestionResponseDto
                 {
-                    var questionId = questionKvp.Key;
-                    var questionResponseValue = questionKvp.Value;
+                    QuestionId = sectionId,
+                    QuestionType = QuestionResponseMapper.InferQuestionType(employeeResponse),
+                    ResponseData = QuestionResponseMapper.MapToDto(employeeResponse)
+                };
 
-                    // Direct assignment - no conversion needed with strongly-typed DTO!
-                    questionResponsesForEmployee[questionId] = new QuestionResponseDto
-                    {
-                        QuestionId = questionId,
-                        QuestionType = QuestionResponseMapper.InferQuestionType(questionResponseValue),
-                        ResponseData = QuestionResponseMapper.MapToDto(questionResponseValue)
-                    };
-                }
-
-                if (questionResponsesForEmployee.Any())
-                {
-                    roleResponsesDto[ResponseRole.Employee] = questionResponsesForEmployee;
-                }
+                roleResponsesDto[ResponseRole.Employee] = questionResponsesForSection;
             }
 
             // Only include sections that have employee responses

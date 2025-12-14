@@ -1,0 +1,129 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@inherits OptimizedComponentBase
+
+@if (textSections.Count == 0)
+{
+    <div class="empty-state">
+        <RadzenIcon Icon="psychology" Class="empty-state-icon" />
+        <div class="empty-state-text">No text sections configured</div>
+    </div>
+}
+else
+{
+    <div class="text-question-items">
+        @for (int i = 0; i < textSections.Count; i++)
+        {
+            var sectionIndex = i;
+            var textSection = textSections[sectionIndex];
+
+            <UnifiedItemCard
+                ItemTitle="@($"Text Section {sectionIndex + 1}")"
+                IsRequired="@textSection.IsRequired"
+                CheckboxId="@($"text_req_{Section.Id}_{sectionIndex}")"
+                OnRequiredChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
+
+                OnMoveUp="@(() => OnMoveTextSectionUp.InvokeAsync(sectionIndex))"
+                OnMoveDown="@(() => OnMoveTextSectionDown.InvokeAsync(sectionIndex))"
+                OnDelete="@(() => OnRemoveTextSection.InvokeAsync(sectionIndex))"
+                MoveUpDisabled="@(sectionIndex == 0)"
+                MoveDownDisabled="@(sectionIndex == textSections.Count - 1)"
+
+                TitleEnglish="@textSection.TitleEnglish"
+                TitleGerman="@textSection.TitleGerman"
+                TitleEnglishPlaceholder="Enter section title..."
+                TitleGermanPlaceholder="Enter German title..."
+                OnTitleEnglishChanged="@((string value) => UpdateTextSectionTitleEnglish(sectionIndex, value))"
+                OnTitleGermanChanged="@((string value) => UpdateTextSectionTitleGerman(sectionIndex, value))"
+
+                DescriptionEnglish="@textSection.DescriptionEnglish"
+                DescriptionGerman="@textSection.DescriptionGerman"
+                DescriptionEnglishPlaceholder="Describe this text section..."
+                DescriptionGermanPlaceholder="Describe this text section in German..."
+                OnDescriptionEnglishChanged="@((string value) => UpdateTextSectionDescriptionEnglish(sectionIndex, value))"
+                OnDescriptionGermanChanged="@((string value) => UpdateTextSectionDescriptionGerman(sectionIndex, value))"
+
+                Disabled="@(!Template.IsAvailableForEditing)" />
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public QuestionSection Section { get; set; } = new();
+    [Parameter] public QuestionnaireTemplate Template { get; set; } = new();
+
+    // Event callbacks for parent component
+    [Parameter] public EventCallback<int> OnMoveTextSectionUp { get; set; }
+    [Parameter] public EventCallback<int> OnMoveTextSectionDown { get; set; }
+    [Parameter] public EventCallback<int> OnRemoveTextSection { get; set; }
+    [Parameter] public EventCallback<(int, bool)> OnUpdateTextSectionRequired { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionTitleEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionTitleGerman { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionDescriptionEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionDescriptionGerman { get; set; }
+
+    private List<TextSection> textSections = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Section.Configuration is TextQuestionConfiguration config)
+        {
+            textSections = config.TextSections.OrderBy(t => t.Order).ToList();
+        }
+        else
+        {
+            textSections = new List<TextSection>();
+        }
+    }
+
+    private async Task UpdateTextSectionRequired(int index, bool isRequired)
+    {
+        await OnUpdateTextSectionRequired.InvokeAsync((index, isRequired));
+    }
+
+    private async Task UpdateTextSectionTitleEnglish(int index, string value)
+    {
+        await OnUpdateTextSectionTitleEnglish.InvokeAsync((index, value));
+    }
+
+    private async Task UpdateTextSectionTitleGerman(int index, string value)
+    {
+        await OnUpdateTextSectionTitleGerman.InvokeAsync((index, value));
+    }
+
+    private async Task UpdateTextSectionDescriptionEnglish(int index, string value)
+    {
+        await OnUpdateTextSectionDescriptionEnglish.InvokeAsync((index, value));
+    }
+
+    private async Task UpdateTextSectionDescriptionGerman(int index, string value)
+    {
+        await OnUpdateTextSectionDescriptionGerman.InvokeAsync((index, value));
+    }
+}
+
+<style>
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--rz-text-muted);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        opacity: 0.5;
+        margin-bottom: 0.75rem;
+    }
+
+    .empty-state-text {
+        font-size: 0.875rem;
+    }
+
+    .text-question-items {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+</style>

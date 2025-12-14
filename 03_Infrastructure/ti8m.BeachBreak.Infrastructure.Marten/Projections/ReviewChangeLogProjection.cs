@@ -29,7 +29,7 @@ public class ReviewChangeLogProjection : EventProjection
 
         if (assignment != null)
         {
-            // Fetch the template to get section and question titles
+            // Fetch the template to get section title
             var template = await operations.LoadAsync<QuestionnaireTemplateReadModel>(assignment.TemplateId);
             if (template != null)
             {
@@ -37,12 +37,7 @@ public class ReviewChangeLogProjection : EventProjection
                 if (section != null)
                 {
                     sectionTitle = section.TitleEnglish ?? "Unknown Section";
-
-                    var question = section.Questions?.FirstOrDefault(q => q.Id == @event.QuestionId);
-                    if (question != null)
-                    {
-                        questionTitle = question.TitleEnglish ?? "Unknown Question";
-                    }
+                    questionTitle = section.TitleEnglish ?? "Unknown Question"; // Section IS the question
                 }
             }
 
@@ -52,17 +47,14 @@ public class ReviewChangeLogProjection : EventProjection
 
             if (response != null)
             {
-                // Navigate the nested dictionary structure: SectionId -> CompletionRole -> QuestionId -> Answer
+                // Navigate the 2-level dictionary structure: SectionId -> CompletionRole -> QuestionResponseValue
                 // Map ApplicationRole to CompletionRole for compatibility with Response aggregate
                 var completionRole = @event.OriginalCompletionRole == ApplicationRole.Employee ? CompletionRole.Employee : CompletionRole.Manager;
                 if (response.SectionResponses.TryGetValue(@event.SectionId, out var roleResponses))
                 {
-                    if (roleResponses.TryGetValue(completionRole, out var questionResponses))
+                    if (roleResponses.TryGetValue(completionRole, out var answerObj))
                     {
-                        if (questionResponses.TryGetValue(@event.QuestionId, out var answerObj))
-                        {
-                            oldValue = answerObj?.ToString();
-                        }
+                        oldValue = answerObj?.ToString();
                     }
                 }
             }

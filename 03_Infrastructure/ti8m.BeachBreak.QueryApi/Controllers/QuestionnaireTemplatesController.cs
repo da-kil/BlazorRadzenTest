@@ -170,18 +170,8 @@ public class QuestionnaireTemplatesController : BaseController
                 Order = section.Order,
                 IsRequired = section.IsRequired,
                 CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
-                Questions = section.Questions.Select(question => new QuestionItemDto
-                {
-                    Id = question.Id,
-                    TitleGerman = question.TitleGerman,
-                    TitleEnglish = question.TitleEnglish,
-                    DescriptionGerman = question.DescriptionGerman,
-                    DescriptionEnglish = question.DescriptionEnglish,
-                    Type = MapQuestionTypeToDto[question.Type],
-                    Order = question.Order,
-                    IsRequired = question.IsRequired,
-                    Configuration = question.Configuration
-                }).ToList()
+                Type = MapQuestionTypeFromString(section.Type),
+                Configuration = section.Configuration
             }).ToList()
         };
     }
@@ -214,4 +204,15 @@ public class QuestionnaireTemplatesController : BaseController
             { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.Goal, QueryApi.Dto.QuestionType.Goal },
             { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.Assessment, QueryApi.Dto.QuestionType.Assessment }
         };
+
+    private static QueryApi.Dto.QuestionType MapQuestionTypeFromString(string type)
+    {
+        return type switch
+        {
+            "Assessment" => QueryApi.Dto.QuestionType.Assessment,
+            "TextQuestion" => QueryApi.Dto.QuestionType.TextQuestion,
+            "Goal" => QueryApi.Dto.QuestionType.Goal,
+            _ => QueryApi.Dto.QuestionType.Assessment // Default fallback
+        };
+    }
 }
