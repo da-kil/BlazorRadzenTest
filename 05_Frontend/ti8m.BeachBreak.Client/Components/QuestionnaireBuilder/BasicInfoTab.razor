@@ -64,15 +64,13 @@
         </RadzenColumn>
     </RadzenRow>
 
-    <div class="settings-section mt-4 p-3 rounded">
+    <div class="settings-section mt-4 p-3 rounded border">
         <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">@T("sections.workflow-configuration")</RadzenText>
-        <div class="workflow-config-box mb-4 p-3 rounded border">
-            <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
-            <RadzenLabel Text="@T("labels.requires-manager-review")" Component="requiresManagerReview" Style="font-weight: 500;" />
-            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
-                @T("messages.workflow-manager-review-explanation")
-            </RadzenText>
-        </div>
+        <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
+        <RadzenLabel Text="@T("labels.requires-manager-review")" Component="requiresManagerReview" Class="font-medium" />
+        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
+            @T("messages.workflow-manager-review-explanation")
+        </RadzenText>
     </div>
 </div>
 

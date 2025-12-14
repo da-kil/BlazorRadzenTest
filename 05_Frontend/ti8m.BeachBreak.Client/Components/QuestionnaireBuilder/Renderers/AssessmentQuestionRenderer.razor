@@ -1,0 +1,129 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@inherits OptimizedComponentBase
+
+@if (evaluations.Count == 0)
+{
+    <div class="empty-state">
+        <RadzenIcon Icon="self_improvement" Class="empty-state-icon" />
+        <div class="empty-state-text">No evaluations configured</div>
+    </div>
+}
+else
+{
+    <div class="assessment-items">
+        @for (int i = 0; i < evaluations.Count; i++)
+        {
+            var evalIndex = i;
+            var evaluation = evaluations[evalIndex];
+
+            <UnifiedItemCard
+                ItemTitle="@($"Evaluation {evalIndex + 1}")"
+                IsRequired="@evaluation.IsRequired"
+                CheckboxId="@($"eval_req_{Section.Id}_{evalIndex}")"
+                OnRequiredChanged="@((bool value) => UpdateEvaluationRequired(evalIndex, value))"
+
+                OnMoveUp="@(() => OnMoveEvaluationUp.InvokeAsync(evalIndex))"
+                OnMoveDown="@(() => OnMoveEvaluationDown.InvokeAsync(evalIndex))"
+                OnDelete="@(() => OnRemoveEvaluation.InvokeAsync(evalIndex))"
+                MoveUpDisabled="@(evalIndex == 0)"
+                MoveDownDisabled="@(evalIndex == evaluations.Count - 1)"
+
+                TitleEnglish="@evaluation.TitleEnglish"
+                TitleGerman="@evaluation.TitleGerman"
+                TitleEnglishPlaceholder="Enter evaluation title..."
+                TitleGermanPlaceholder="Enter German title..."
+                OnTitleEnglishChanged="@((string value) => UpdateEvaluationTitleEnglish(evalIndex, value))"
+                OnTitleGermanChanged="@((string value) => UpdateEvaluationTitleGerman(evalIndex, value))"
+
+                DescriptionEnglish="@evaluation.DescriptionEnglish"
+                DescriptionGerman="@evaluation.DescriptionGerman"
+                DescriptionEnglishPlaceholder="Describe this evaluation..."
+                DescriptionGermanPlaceholder="Describe this evaluation in German..."
+                OnDescriptionEnglishChanged="@((string value) => UpdateEvaluationDescriptionEnglish(evalIndex, value))"
+                OnDescriptionGermanChanged="@((string value) => UpdateEvaluationDescriptionGerman(evalIndex, value))"
+
+                Disabled="@(!Template.IsAvailableForEditing)" />
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public QuestionSection Section { get; set; } = new();
+    [Parameter] public QuestionnaireTemplate Template { get; set; } = new();
+
+    // Event callbacks for parent component
+    [Parameter] public EventCallback<int> OnMoveEvaluationUp { get; set; }
+    [Parameter] public EventCallback<int> OnMoveEvaluationDown { get; set; }
+    [Parameter] public EventCallback<int> OnRemoveEvaluation { get; set; }
+    [Parameter] public EventCallback<(int, bool)> OnUpdateEvaluationRequired { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateEvaluationTitleEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateEvaluationTitleGerman { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateEvaluationDescriptionEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateEvaluationDescriptionGerman { get; set; }
+
+    private List<EvaluationItem> evaluations = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Section.Configuration is AssessmentConfiguration config)
+        {
+            evaluations = config.Evaluations.OrderBy(e => e.Order).ToList();
+        }
+        else
+        {
+            evaluations = new List<EvaluationItem>();
+        }
+    }
+
+    private async Task UpdateEvaluationRequired(int index, bool isRequired)
+    {
+        await OnUpdateEvaluationRequired.InvokeAsync((index, isRequired));
+    }
+
+    private async Task UpdateEvaluationTitleEnglish(int index, string value)
+    {
+        await OnUpdateEvaluationTitleEnglish.InvokeAsync((index, value));
+    }
+
+    private async Task UpdateEvaluationTitleGerman(int index, string value)
+    {
+        await OnUpdateEvaluationTitleGerman.InvokeAsync((index, value));
+    }
+
+    private async Task UpdateEvaluationDescriptionEnglish(int index, string value)
+    {
+        await OnUpdateEvaluationDescriptionEnglish.InvokeAsync((index, value));
+    }
+
+    private async Task UpdateEvaluationDescriptionGerman(int index, string value)
+    {
+        await OnUpdateEvaluationDescriptionGerman.InvokeAsync((index, value));
+    }
+}
+
+<style>
+    .empty-state {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: var(--rz-text-muted);
+    }
+
+    .empty-state-icon {
+        font-size: 3rem;
+        opacity: 0.5;
+        margin-bottom: 0.75rem;
+    }
+
+    .empty-state-text {
+        font-size: 0.875rem;
+    }
+
+    .assessment-items {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+</style>

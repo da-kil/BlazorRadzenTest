@@ -560,12 +560,11 @@
 
 .sections-container .modern-section-card {
     /* Removed border and shadow for cleaner design */
-    transition: all 0.2s ease-in-out;
+    transition: none;
 }
 
 .sections-container .modern-section-card:hover {
-    /* Subtle hover effect without borders or shadows */
-    transform: translateY(-1px);
+    /* No hover effects - clean static appearance */
 }
 
 /* Evaluation Lists - Enhanced Organization */

@@ -5,7 +5,7 @@
 @using System.Collections
 @inherits OptimizedTranslatableComponentBase
 
-<div class="modern-section-card mb-4">
+<div class="modern-section-card">
     <!-- Enhanced Section Header with proper action button placement -->
     <div class="section-header-modern">
         <!-- Header Top Row: Type indicators and Action Buttons -->
@@ -22,30 +22,20 @@
             </div>
 
             <!-- Action Buttons - moved to dedicated area -->
-            <div class="section-actions">
-                <AsyncButton ButtonStyle="ButtonStyle.Light"
-                            Icon="keyboard_arrow_up"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnMoveUpClick())"
-                            Disabled="@(!CanMoveUp || !Template.IsAvailableForEditing)"
-                            Title="Move section up"
-                            Class="action-btn" />
-                <AsyncButton ButtonStyle="ButtonStyle.Light"
-                            Icon="keyboard_arrow_down"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnMoveDownClick())"
-                            Disabled="@(!CanMoveDown || !Template.IsAvailableForEditing)"
-                            Title="Move section down"
-                            Class="action-btn" />
-                <AsyncButton ButtonStyle="ButtonStyle.Danger"
-                            ProcessingText="Deleting"
-                            Icon="delete_outline"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnDeleteClick())"
-                            Title="Delete section"
-                            Class="action-btn action-btn-danger"
-                            Disabled="@(!Template.IsAvailableForEditing)" />
-            </div>
+            <ItemActionsComponent
+                OnMoveUp="@(() => OnMoveUpClick())"
+                OnMoveDown="@(() => OnMoveDownClick())"
+                OnDelete="@(() => OnDeleteClick())"
+                MoveUpDisabled="@(!CanMoveUp)"
+                MoveDownDisabled="@(!CanMoveDown)"
+                MoveUpTitle="Move section up"
+                MoveDownTitle="Move section down"
+                DeleteTitle="Delete section"
+                DeleteProcessingText="Deleting"
+                ButtonSize="ButtonSize.Small"
+                CustomButtonClass="action-btn"
+                GlobalDisabled="@(!Template.IsAvailableForEditing)"
+                AdditionalClasses="section-actions" />
         </div>
 
         <!-- Header Content Row: Role selector -->
@@ -74,46 +64,37 @@
     <div class="section-content-modern">
 
         <!-- Title Inputs -->
-        <div class="multilang-input-grid mb-3">
-            <div class="input-field">
-                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Title *</RadzenText>
-                <RadzenTextBox Value="@Section.TitleEnglish"
-                             ValueChanged="@(value => OnSectionTitleEnglishChanged(value))"
-                             Placeholder="@T("placeholders.section-title-english-example")"
-                             Class="title-input-modern"
-                             Disabled="@(!Template.IsAvailableForEditing)" />
-            </div>
-            <div class="input-field">
-                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Title (Optional)</RadzenText>
-                <RadzenTextBox Value="@Section.TitleGerman"
-                             ValueChanged="@(value => OnSectionTitleGermanChanged(value))"
-                             Placeholder="@T("placeholders.section-title-german-example")"
-                             Class="title-input-modern"
-                             Disabled="@(!Template.IsAvailableForEditing)" />
-            </div>
-        </div>
+        <MultilingualInputComponent
+            EnglishLabel="English Title"
+            GermanLabel="German Title"
+            EnglishValue="@Section.TitleEnglish"
+            GermanValue="@Section.TitleGerman"
+            EnglishValueChanged="@OnSectionTitleEnglishChanged"
+            GermanValueChanged="@OnSectionTitleGermanChanged"
+            EnglishPlaceholder="@T("placeholders.section-title-english-example")"
+            GermanPlaceholder="@T("placeholders.section-title-german-example")"
+            InputType="InputType.TextBox"
+            InputCssClass="title-input-modern"
+            AdditionalClasses="mb-3"
+            Required="true"
+            Disabled="@(!Template.IsAvailableForEditing)" />
 
         <!-- Description Inputs -->
-        <div class="multilang-input-grid mb-3">
-            <div class="input-field">
-                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">English Description *</RadzenText>
-                <RadzenTextArea Value="@Section.DescriptionEnglish"
-                              ValueChanged="@(value => OnSectionDescriptionEnglishChanged(value))"
-                              Placeholder="@T("placeholders.section-description-english")"
-                              Class="description-input-modern"
-                              Disabled="@(!Template.IsAvailableForEditing)"
-                              Rows="3" />
-            </div>
-            <div class="input-field">
-                <RadzenText TextStyle="TextStyle.Caption" Class="fw-bold mb-1">German Description (Optional)</RadzenText>
-                <RadzenTextArea Value="@Section.DescriptionGerman"
-                              ValueChanged="@(value => OnSectionDescriptionGermanChanged(value))"
-                              Placeholder="@T("placeholders.section-description-german")"
-                              Class="description-input-modern"
-                              Disabled="@(!Template.IsAvailableForEditing)"
-                              Rows="3" />
-            </div>
-        </div>
+        <MultilingualInputComponent
+            EnglishLabel="English Description"
+            GermanLabel="German Description"
+            EnglishValue="@Section.DescriptionEnglish"
+            GermanValue="@Section.DescriptionGerman"
+            EnglishValueChanged="@OnSectionDescriptionEnglishChanged"
+            GermanValueChanged="@OnSectionDescriptionGermanChanged"
+            EnglishPlaceholder="@T("placeholders.section-description-english")"
+            GermanPlaceholder="@T("placeholders.section-description-german")"
+            InputType="InputType.TextArea"
+            InputCssClass="description-input-modern"
+            AdditionalClasses="mb-3"
+            TextAreaRows="3"
+            Required="true"
+            Disabled="@(!Template.IsAvailableForEditing)" />
 
         <!-- Rating Scale Configuration - only for Assessment sections -->
         @if (Section.Type == QuestionType.Assessment)
@@ -171,8 +152,8 @@
         }
     </div>
 
-    <!-- Items Area - Reduced padding for flatter design -->
-    <div class="items-area py-2">
+    <!-- Items Area - No padding for consistent flat design -->
+    <div class="items-area">
         @* Only show Items header and Add Item button for Assessment and TextQuestion sections *@
         @if (Section.Type != QuestionType.Goal)
         {
@@ -192,212 +173,29 @@
             </div>
         }
 
-        @* Render items based on section type *@
+        @* Simplified question rendering using dedicated renderers *@
         @if (IsSectionInitialized())
         {
-            <div class="items-list mt-3">
-                @if (Section.Type == QuestionType.Assessment)
-                {
-                    var evaluations = GetOrderedEvaluations();
-                    @if (evaluations.Count == 0)
-                    {
-                        <div class="text-center p-3 text-muted">
-                            <RadzenIcon Icon="self_improvement" Class="empty-state-icon" />
-                            <div class="mt-2 small">No evaluations configured</div>
-                        </div>
-                    }
-                    else
-                    {
-                        @for (int i = 0; i < evaluations.Count; i++)
-                        {
-                            var evalIndex = i;
-                            var evaluation = evaluations[evalIndex];
-
-                            <div class="item-card mb-3 p-3 border rounded">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
-                                            Evaluation @(evalIndex + 1)
-                                        </RadzenText>
-                                        <div class="d-flex align-items-center">
-                                            <RadzenCheckBox Value="@evaluation.IsRequired"
-                                                          ValueChanged="@((bool value) => UpdateEvaluationRequired(evalIndex, value))"
-                                                          Name="@($"eval_req_{Section.Id}_{evalIndex}")"
-                                                          Disabled="@(!Template.IsAvailableForEditing)" />
-                                            <RadzenLabel Text="Required" Component="@($"eval_req_{Section.Id}_{evalIndex}")" Class="ms-1" />
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1">
-                                        <AsyncButton ButtonStyle="ButtonStyle.Light"
-                                                    Icon="keyboard_arrow_up"
-                                                    Size="ButtonSize.ExtraSmall"
-                                                    Click="@(() => MoveEvaluationUp(evalIndex))"
-                                                    Disabled="@(evalIndex == 0 || !Template.IsAvailableForEditing)"
-                                                    Title="Move up" />
-                                        <AsyncButton ButtonStyle="ButtonStyle.Light"
-                                                    Icon="keyboard_arrow_down"
-                                                    Size="ButtonSize.ExtraSmall"
-                                                    Click="@(() => MoveEvaluationDown(evalIndex))"
-                                                    Disabled="@(evalIndex == evaluations.Count - 1 || !Template.IsAvailableForEditing)"
-                                                    Title="Move down" />
-                                        <AsyncButton ButtonStyle="ButtonStyle.Danger"
-                                                    Icon="delete_outline"
-                                                    Size="ButtonSize.ExtraSmall"
-                                                    Click="@(() => RemoveEvaluation(evalIndex))"
-                                                    Title="Delete"
-                                                    Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                </div>
-                                <div class="multilang-input-grid mb-2">
-                                    <div class="input-field">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title *</RadzenText>
-                                        <RadzenTextBox Value="@evaluation.TitleEnglish"
-                                                      ValueChanged="@((string value) => UpdateEvaluationTitleEnglish(evalIndex, value))"
-                                                      Placeholder="Enter evaluation title..."
-                                                      Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                    <div class="input-field">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
-                                        <RadzenTextBox Value="@evaluation.TitleGerman"
-                                                      ValueChanged="@((string value) => UpdateEvaluationTitleGerman(evalIndex, value))"
-                                                      Placeholder="Enter German title..."
-                                                      Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                </div>
-                                <div class="multilang-input-grid">
-                                    <div class="input-field">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description</RadzenText>
-                                        <RadzenTextArea Value="@evaluation.DescriptionEnglish"
-                                                       ValueChanged="@((string value) => UpdateEvaluationDescriptionEnglish(evalIndex, value))"
-                                                       Placeholder="Describe this evaluation..."
-                                                       Rows="2"
-                                                       Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                    <div class="input-field">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
-                                        <RadzenTextArea Value="@evaluation.DescriptionGerman"
-                                                       ValueChanged="@((string value) => UpdateEvaluationDescriptionGerman(evalIndex, value))"
-                                                       Placeholder="Describe this evaluation in German..."
-                                                       Rows="2"
-                                                       Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    }
-                }
-                else if (Section.Type == QuestionType.Goal)
-                {
-                    <div class="goal-info text-center p-4">
-                        <RadzenIcon Icon="flag" Style="font-size: 2rem;" Class="mb-3 text-success" />
-                        <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 fw-bold">
-                            Goal Question Type
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
-                            No template configuration is required for Goal questions.
-                        </RadzenText>
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Shade="Shade.Lighter" Class="mb-0" ShowIcon="false">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="d-block mb-1">
-                                Goals are added dynamically during the questionnaire workflow:
-                            </RadzenText>
-                            <ul class="small mb-0 text-start">
-                                <li>Employee and Manager add goals during their completion phases</li>
-                                <li>Goals can be linked to predecessor questionnaires for rating</li>
-                                <li>Each goal includes objective, timeframe, measurement, and weighting</li>
-                            </ul>
-                        </RadzenAlert>
-                    </div>
-                }
-                else if (Section.Type == QuestionType.TextQuestion)
-                {
-                    var textSections = GetOrderedTextSections();
-                    @if (textSections.Count == 0)
-                    {
-                        <div class="text-center p-3 text-muted">
-                            <RadzenIcon Icon="psychology" Class="empty-state-icon" />
-                            <div class="mt-2 small">No text sections configured</div>
-                        </div>
-                    }
-                    else
-                    {
-                        @for (int i = 0; i < textSections.Count; i++)
-                        {
-                            var sectionIndex = i;
-                            var textSection = textSections[sectionIndex];
-
-                            <div class="item-card mb-3 p-3 border rounded">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="d-flex align-items-center gap-3">
-                                        <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
-                                            Text Section @(sectionIndex + 1)
-                                        </RadzenText>
-                                        <div class="d-flex align-items-center">
-                                            <RadzenCheckBox Value="@textSection.IsRequired"
-                                                          ValueChanged="@((bool value) => UpdateTextSectionRequired(sectionIndex, value))"
-                                                          Name="@($"text_req_{Section.Id}_{sectionIndex}")"
-                                                          Disabled="@(!Template.IsAvailableForEditing)" />
-                                            <RadzenLabel Text="Required" Component="@($"text_req_{Section.Id}_{sectionIndex}")" Class="ms-1" />
-                                        </div>
-                                    </div>
-                                    <div class="d-flex gap-1">
-                                        <AsyncButton ButtonStyle="ButtonStyle.Light"
-                                                    Icon="keyboard_arrow_up"
-                                                    Size="ButtonSize.ExtraSmall"
-                                                    Click="@(() => MoveTextSectionUp(sectionIndex))"
-                                                    Disabled="@(sectionIndex == 0 || !Template.IsAvailableForEditing)"
-                                                    Title="Move up" />
-                                        <AsyncButton ButtonStyle="ButtonStyle.Light"
-                                                    Icon="keyboard_arrow_down"
-                                                    Size="ButtonSize.ExtraSmall"
-                                                    Click="@(() => MoveTextSectionDown(sectionIndex))"
-                                                    Disabled="@(sectionIndex == textSections.Count - 1 || !Template.IsAvailableForEditing)"
-                                                    Title="Move down" />
-                                        <AsyncButton ButtonStyle="ButtonStyle.Danger"
-                                                    Icon="delete_outline"
-                                                    Size="ButtonSize.ExtraSmall"
-                                                    Click="@(() => RemoveTextSection(sectionIndex))"
-                                                    Title="Delete"
-                                                    Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                </div>
-                                <div class="multilang-input-grid mb-2">
-                                    <div class="input-field">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Title *</RadzenText>
-                                        <RadzenTextBox Value="@textSection.TitleEnglish"
-                                                      ValueChanged="@((string value) => UpdateTextSectionTitleEnglish(sectionIndex, value))"
-                                                      Placeholder="Enter section title..."
-                                                      Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                    <div class="input-field">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Title (Optional)</RadzenText>
-                                        <RadzenTextBox Value="@textSection.TitleGerman"
-                                                      ValueChanged="@((string value) => UpdateTextSectionTitleGerman(sectionIndex, value))"
-                                                      Placeholder="Enter German title..."
-                                                      Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                </div>
-                                <div class="multilang-input-grid">
-                                    <div class="input-field">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">English Description</RadzenText>
-                                        <RadzenTextArea Value="@textSection.DescriptionEnglish"
-                                                       ValueChanged="@((string value) => UpdateTextSectionDescriptionEnglish(sectionIndex, value))"
-                                                       Placeholder="Describe this text section..."
-                                                       Rows="2"
-                                                       Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                    <div class="input-field">
-                                        <RadzenText TextStyle="TextStyle.Caption" Class="mb-1">German Description (Optional)</RadzenText>
-                                        <RadzenTextArea Value="@textSection.DescriptionGerman"
-                                                       ValueChanged="@((string value) => UpdateTextSectionDescriptionGerman(sectionIndex, value))"
-                                                       Placeholder="Describe this text section in German..."
-                                                       Rows="2"
-                                                       Disabled="@(!Template.IsAvailableForEditing)" />
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    }
-                }
+            <div class="items-list">
+                <QuestionRendererFactory
+                    Section="@Section"
+                    Template="@Template"
+                    OnMoveEvaluationUp="@OnMoveEvaluationUp"
+                    OnMoveEvaluationDown="@OnMoveEvaluationDown"
+                    OnRemoveEvaluation="@OnRemoveEvaluation"
+                    OnUpdateEvaluationRequired="@OnUpdateEvaluationRequired"
+                    OnUpdateEvaluationTitleEnglish="@OnUpdateEvaluationTitleEnglish"
+                    OnUpdateEvaluationTitleGerman="@OnUpdateEvaluationTitleGerman"
+                    OnUpdateEvaluationDescriptionEnglish="@OnUpdateEvaluationDescriptionEnglish"
+                    OnUpdateEvaluationDescriptionGerman="@OnUpdateEvaluationDescriptionGerman"
+                    OnMoveTextSectionUp="@OnMoveTextSectionUp"
+                    OnMoveTextSectionDown="@OnMoveTextSectionDown"
+                    OnRemoveTextSection="@OnRemoveTextSection"
+                    OnUpdateTextSectionRequired="@OnUpdateTextSectionRequired"
+                    OnUpdateTextSectionTitleEnglish="@OnUpdateTextSectionTitleEnglish"
+                    OnUpdateTextSectionTitleGerman="@OnUpdateTextSectionTitleGerman"
+                    OnUpdateTextSectionDescriptionEnglish="@OnUpdateTextSectionDescriptionEnglish"
+                    OnUpdateTextSectionDescriptionGerman="@OnUpdateTextSectionDescriptionGerman" />
             </div>
         }
         else
@@ -818,6 +616,25 @@
             _ => "Unknown"
         };
     }
+
+    // Wrapper methods for QuestionRendererFactory callbacks (convert from tuple parameters)
+    private EventCallback<int> OnMoveEvaluationUp => EventCallback.Factory.Create<int>(this, index => MoveEvaluationUp(index));
+    private EventCallback<int> OnMoveEvaluationDown => EventCallback.Factory.Create<int>(this, index => MoveEvaluationDown(index));
+    private EventCallback<int> OnRemoveEvaluation => EventCallback.Factory.Create<int>(this, index => RemoveEvaluation(index));
+    private EventCallback<(int, bool)> OnUpdateEvaluationRequired => EventCallback.Factory.Create<(int, bool)>(this, args => UpdateEvaluationRequired(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateEvaluationTitleEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateEvaluationTitleEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateEvaluationTitleGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateEvaluationTitleGerman(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateEvaluationDescriptionEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateEvaluationDescriptionEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateEvaluationDescriptionGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateEvaluationDescriptionGerman(args.Item1, args.Item2));
+
+    private EventCallback<int> OnMoveTextSectionUp => EventCallback.Factory.Create<int>(this, index => MoveTextSectionUp(index));
+    private EventCallback<int> OnMoveTextSectionDown => EventCallback.Factory.Create<int>(this, index => MoveTextSectionDown(index));
+    private EventCallback<int> OnRemoveTextSection => EventCallback.Factory.Create<int>(this, index => RemoveTextSection(index));
+    private EventCallback<(int, bool)> OnUpdateTextSectionRequired => EventCallback.Factory.Create<(int, bool)>(this, args => UpdateTextSectionRequired(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateTextSectionTitleEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionTitleEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateTextSectionTitleGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionTitleGerman(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateTextSectionDescriptionEnglish => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionDescriptionEnglish(args.Item1, args.Item2));
+    private EventCallback<(int, string)> OnUpdateTextSectionDescriptionGerman => EventCallback.Factory.Create<(int, string)>(this, args => UpdateTextSectionDescriptionGerman(args.Item1, args.Item2));
 
     public class RoleOption
     {

@@ -1,0 +1,96 @@
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder.Renderers
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedComponentBase
+
+@switch (Section.Type)
+{
+    case QuestionType.Assessment:
+        <AssessmentQuestionRenderer
+            Section="@Section"
+            Template="@Template"
+            OnMoveEvaluationUp="@OnMoveEvaluationUp"
+            OnMoveEvaluationDown="@OnMoveEvaluationDown"
+            OnRemoveEvaluation="@OnRemoveEvaluation"
+            OnUpdateEvaluationRequired="@OnUpdateEvaluationRequired"
+            OnUpdateEvaluationTitleEnglish="@OnUpdateEvaluationTitleEnglish"
+            OnUpdateEvaluationTitleGerman="@OnUpdateEvaluationTitleGerman"
+            OnUpdateEvaluationDescriptionEnglish="@OnUpdateEvaluationDescriptionEnglish"
+            OnUpdateEvaluationDescriptionGerman="@OnUpdateEvaluationDescriptionGerman" />
+        break;
+
+    case QuestionType.TextQuestion:
+        <TextQuestionRenderer
+            Section="@Section"
+            Template="@Template"
+            OnMoveTextSectionUp="@OnMoveTextSectionUp"
+            OnMoveTextSectionDown="@OnMoveTextSectionDown"
+            OnRemoveTextSection="@OnRemoveTextSection"
+            OnUpdateTextSectionRequired="@OnUpdateTextSectionRequired"
+            OnUpdateTextSectionTitleEnglish="@OnUpdateTextSectionTitleEnglish"
+            OnUpdateTextSectionTitleGerman="@OnUpdateTextSectionTitleGerman"
+            OnUpdateTextSectionDescriptionEnglish="@OnUpdateTextSectionDescriptionEnglish"
+            OnUpdateTextSectionDescriptionGerman="@OnUpdateTextSectionDescriptionGerman" />
+        break;
+
+    case QuestionType.Goal:
+        <GoalQuestionRenderer
+            Section="@Section"
+            Template="@Template" />
+        break;
+
+    default:
+        <div class="unknown-question-type">
+            <RadzenIcon Icon="error_outline" Class="error-icon" />
+            <span class="error-text">Unknown question type: @Section.Type</span>
+        </div>
+        break;
+}
+
+@code {
+    [Parameter] public QuestionSection Section { get; set; } = new();
+    [Parameter] public QuestionnaireTemplate Template { get; set; } = new();
+
+    // Assessment event callbacks
+    [Parameter] public EventCallback<int> OnMoveEvaluationUp { get; set; }
+    [Parameter] public EventCallback<int> OnMoveEvaluationDown { get; set; }
+    [Parameter] public EventCallback<int> OnRemoveEvaluation { get; set; }
+    [Parameter] public EventCallback<(int, bool)> OnUpdateEvaluationRequired { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateEvaluationTitleEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateEvaluationTitleGerman { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateEvaluationDescriptionEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateEvaluationDescriptionGerman { get; set; }
+
+    // Text question event callbacks
+    [Parameter] public EventCallback<int> OnMoveTextSectionUp { get; set; }
+    [Parameter] public EventCallback<int> OnMoveTextSectionDown { get; set; }
+    [Parameter] public EventCallback<int> OnRemoveTextSection { get; set; }
+    [Parameter] public EventCallback<(int, bool)> OnUpdateTextSectionRequired { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionTitleEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionTitleGerman { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionDescriptionEnglish { get; set; }
+    [Parameter] public EventCallback<(int, string)> OnUpdateTextSectionDescriptionGerman { get; set; }
+
+    // Note: Goal questions don't require item management callbacks as they use dynamic workflow
+}
+
+<style>
+    .unknown-question-type {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: var(--rz-danger-lighter);
+        border: 1px solid var(--rz-danger-light);
+        border-radius: 0.375rem;
+        color: var(--rz-danger-dark);
+    }
+
+    .error-icon {
+        font-size: 1.25rem;
+    }
+
+    .error-text {
+        font-weight: var(--font-weight-emphasis);
+    }
+</style>

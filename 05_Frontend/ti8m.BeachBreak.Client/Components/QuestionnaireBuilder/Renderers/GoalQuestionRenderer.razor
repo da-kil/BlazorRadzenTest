@@ -1,0 +1,112 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@inherits OptimizedComponentBase
+
+<div class="goal-info">
+    <header class="goal-header">
+        <RadzenIcon Icon="flag" Class="goal-icon" />
+        <h3 class="goal-title">Goal Question Type</h3>
+    </header>
+
+    <main class="goal-content">
+        <p class="goal-description">
+            No template configuration is required for Goal questions.
+        </p>
+
+        <div class="goal-workflow-info">
+            <h4 class="workflow-title">Dynamic Goal Management</h4>
+            <p class="workflow-description">
+                Goals are added dynamically during the questionnaire workflow:
+            </p>
+            <ul class="workflow-steps">
+                <li>Employee and Manager add goals during their completion phases</li>
+                <li>Goals are specific to individual questionnaire instances</li>
+                <li>Template configuration is not required at design time</li>
+            </ul>
+        </div>
+    </main>
+</div>
+
+@code {
+    [Parameter] public QuestionSection Section { get; set; } = new();
+    [Parameter] public QuestionnaireTemplate Template { get; set; } = new();
+}
+
+<style>
+    .goal-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem;
+        text-align: center;
+    }
+
+    .goal-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .goal-icon {
+        font-size: 3rem;
+        color: var(--rz-success);
+        margin-bottom: 0.75rem;
+    }
+
+    .goal-title {
+        margin: 0;
+        font-weight: var(--font-weight-heading);
+        color: var(--rz-text-color);
+        font-size: 1.125rem;
+    }
+
+    .goal-content {
+        max-width: 400px;
+    }
+
+    .goal-description {
+        color: var(--rz-text-muted);
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+    }
+
+    .goal-workflow-info {
+        padding: 1rem;
+        background: var(--rz-info-lighter);
+        border: 1px solid var(--rz-info-light);
+        border-radius: 0.375rem;
+        text-align: left;
+    }
+
+    .workflow-title {
+        margin: 0 0 0.5rem 0;
+        font-size: 0.8125rem;
+        font-weight: var(--font-weight-emphasis);
+        color: var(--rz-text-color);
+    }
+
+    .workflow-description {
+        margin: 0 0 0.75rem 0;
+        font-size: 0.8125rem;
+        color: var(--rz-text-color);
+    }
+
+    .workflow-steps {
+        margin: 0;
+        padding-left: 1.25rem;
+        font-size: 0.75rem;
+        color: var(--rz-text-color);
+        line-height: 1.4;
+    }
+
+    .workflow-steps li {
+        margin-bottom: 0.25rem;
+    }
+
+    .workflow-steps li:last-child {
+        margin-bottom: 0;
+    }
+</style>

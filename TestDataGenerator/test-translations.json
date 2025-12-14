@@ -1015,6 +1015,13 @@
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
+        "key":  "labels.both",
+        "german":  "Beide",
+        "english":  "Both",
+        "category":  "labels",
+        "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "labels.category",
         "german":  "Kategorie",
         "english":  "Category",
@@ -1099,6 +1106,13 @@
         "createdDate":  "2025-12-09T12:25:00.0000000+00:00"
     },
     {
+        "key":  "labels.employee",
+        "german":  "Mitarbeiter",
+        "english":  "Employee",
+        "category":  "labels",
+        "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "labels.evaluation",
         "german":  "Bewertung",
         "english":  "Evaluation",
@@ -1111,6 +1125,13 @@
         "english":  "Evaluations",
         "category":  "labels",
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.goals",
+        "german":  "Ziele",
+        "english":  "Goals",
+        "category":  "labels",
+        "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.events",
@@ -1393,6 +1414,13 @@
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
     },
     {
+        "key":  "labels.yes",
+        "german":  "Ja",
+        "english":  "Yes",
+        "category":  "labels",
+        "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "language.english",
         "german":  "Englisch",
         "english":  "English",
@@ -1461,6 +1489,13 @@
         "english":  "Error cloning template",
         "category":  "messages",
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.items-explanation",
+        "german":  "Elemente sind die spezifischen Fragen oder Abschnitte, die innerhalb jeder Sektion ausgefüllt werden müssen. Bewertungen enthalten Kompetenzfragen, Textfragen haben Eingabefelder und Ziele werden während des Fragebogenprozesses hinzugefügt.",
+        "english":  "Items are the specific questions or sections to be completed within each section. Assessments contain competency questions, text questions have input fields, and goals are added during the questionnaire process.",
+        "category":  "messages",
+        "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.failed-archive-template",
@@ -3232,5 +3267,47 @@
         "english":  "Submitted",
         "category":  "workflow-states",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.summary",
+        "german": "Zusammenfassung",
+        "english": "Summary",
+        "category": "labels",
+        "createdDate": "2025-12-14T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.template-name",
+        "german": "Vorlagenname",
+        "english": "Template Name",
+        "category": "labels",
+        "createdDate": "2025-12-14T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.review-required",
+        "german": "\u00DCberpr\u00FCfung erforderlich",
+        "english": "Review Required",
+        "category": "labels",
+        "createdDate": "2025-12-14T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.section",
+        "german": "Abschnitt",
+        "english": "Section",
+        "category": "labels",
+        "createdDate": "2025-12-14T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.completed-by",
+        "german": "Abgeschlossen von",
+        "english": "Completed By",
+        "category": "labels",
+        "createdDate": "2025-12-14T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.items",
+        "german": "Elemente",
+        "english": "Items",
+        "category": "labels",
+        "createdDate": "2025-12-14T12:00:00.0000000+00:00"
     }
 ]
