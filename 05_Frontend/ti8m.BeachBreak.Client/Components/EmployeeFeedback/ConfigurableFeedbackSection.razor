@@ -1,0 +1,295 @@
+@using Microsoft.AspNetCore.Components
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+
+<div class="configurable-feedback-section">
+    <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+        @T("sections.feedback-content")
+    </RadzenText>
+
+    <!-- Structured Feedback (Ratings) -->
+    @if (AvailableCriteria.Any())
+    {
+        <RadzenCard Class="mb-4">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-3">
+                @T("sections.structured-feedback")
+            </RadzenText>
+
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+                @($"{T("help.rating-scale-description")} (1-{RatingScale})")
+            </RadzenText>
+
+            <div class="criteria-grid">
+                @foreach (var criterion in GetSelectedCriteria())
+                {
+                    <div class="criterion-item">
+                        <RadzenCard Style="margin-bottom: 1rem;">
+                            <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 font-medium">
+                                @GetCriterionTitle(criterion)
+                            </RadzenText>
+
+                            <!-- Rating Stars -->
+                            <div class="rating-section mb-3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                    @T("labels.rating"):
+                                </RadzenText>
+                                <div class="star-rating-container">
+                                    <RadzenButton Text="@T("buttons.not-rated")"
+                                                Size="ButtonSize.ExtraSmall"
+                                                ButtonStyle="@(GetCurrentRating(criterion) == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                                Click="@(() => SetRating(criterion, 0))"
+                                                Class="not-rated-btn" />
+
+                                    <div class="star-rating">
+                                        @for (int i = 1; i <= RatingScale; i++)
+                                        {
+                                            var starIndex = i;
+                                            var isSelected = GetCurrentRating(criterion) >= starIndex;
+
+                                            <RadzenButton Icon="@(isSelected ? "star" : "star_border")"
+                                                        Size="ButtonSize.Small"
+                                                        ButtonStyle="ButtonStyle.Base"
+                                                        Variant="Variant.Text"
+                                                        Click="@(() => SetRating(criterion, starIndex))"
+                                                        Class="@($"star-btn {(isSelected ? "selected" : "")}")"
+                                                        title="@($"{starIndex}/{RatingScale}")" />
+                                        }
+                                    </div>
+
+                                    @if (GetCurrentRating(criterion) > 0)
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="rating-display">
+                                            @GetCurrentRating(criterion)/@RatingScale (@GetRatingLabel(GetCurrentRating(criterion)))
+                                        </RadzenText>
+                                    }
+                                </div>
+                            </div>
+
+                            <!-- Optional Comment -->
+                            <div class="comment-section">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                    @T("labels.comment-optional"):
+                                </RadzenText>
+                                <RadzenTextArea Value="@GetCurrentComment(criterion)"
+                                              ValueChanged="@(async (string value) => await SetCriterionComment(criterion, value))"
+                                              Placeholder="@T("placeholders.add-specific-comment")"
+                                              Rows="2"
+                                              MaxLength="500"
+                                              Style="width: 100%;" />
+                            </div>
+                        </RadzenCard>
+                    </div>
+                }
+            </div>
+        </RadzenCard>
+    }
+
+    <!-- Unstructured Feedback (Comments) -->
+    @if (TextSections.Any())
+    {
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-3">
+                @T("sections.unstructured-feedback")
+            </RadzenText>
+
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+                @T("help.unstructured-feedback-description")
+            </RadzenText>
+
+            @foreach (var section in TextSections)
+            {
+                <div class="text-section mb-3">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 font-medium">
+                        @GetTextSectionTitle(section)
+                    </RadzenText>
+
+                    <RadzenTextArea Value="@GetTextSectionComment(section)"
+                                  ValueChanged="@(async (string value) => await SetTextSectionComment(section, value))"
+                                  Placeholder="@GetTextSectionPlaceholder(section)"
+                                  Rows="4"
+                                  MaxLength="1000"
+                                  Style="width: 100%;" />
+                </div>
+            }
+        </RadzenCard>
+    }
+
+    <!-- Summary -->
+    @if (HasAnyContent())
+    {
+        <RadzenCard Class="mt-3" Style="background-color: var(--rz-success-lighter);">
+            <RadzenText TextStyle="TextStyle.Body2">
+                <RadzenIcon Icon="check_circle" Class="me-2" />
+                <strong>@T("labels.feedback-summary"):</strong>
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="mt-1">
+                @GetFeedbackSummary()
+            </RadzenText>
+        </RadzenCard>
+    }
+    else
+    {
+        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mt-3">
+            @T("messages.no-feedback-content-yet")
+        </RadzenAlert>
+    }
+</div>
+
+@code {
+    [Parameter] public ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto FeedbackData { get; set; } = new();
+    [Parameter] public EventCallback<ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto> FeedbackDataChanged { get; set; }
+    [Parameter] public List<EvaluationItem> AvailableCriteria { get; set; } = new();
+    [Parameter] public List<TextSection> TextSections { get; set; } = new();
+    [Parameter] public int RatingScale { get; set; } = 10;
+
+    private ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto feedbackData = new();
+
+    protected override void OnInitialized()
+    {
+        feedbackData = FeedbackData ?? new ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (FeedbackData != null && FeedbackData != feedbackData)
+        {
+            feedbackData = FeedbackData;
+        }
+    }
+
+    private List<EvaluationItem> GetSelectedCriteria()
+    {
+        // For now, return all available criteria
+        // In a full implementation, this would be filtered based on user selection
+        return AvailableCriteria.Take(7).ToList(); // Limit to 7 for manageable UI
+    }
+
+    private string GetCriterionTitle(EvaluationItem criterion)
+    {
+        return criterion.GetLocalizedTitleWithFallback(CurrentLanguage);
+    }
+
+    private int GetCurrentRating(EvaluationItem criterion)
+    {
+        var key = GetCriterionKey(criterion);
+        return feedbackData.Ratings.TryGetValue(key, out var rating) ? rating.Rating : 0;
+    }
+
+    private string GetCurrentComment(EvaluationItem criterion)
+    {
+        var key = GetCriterionKey(criterion);
+        return feedbackData.Ratings.TryGetValue(key, out var rating) ? rating.Comment : string.Empty;
+    }
+
+    private string GetCriterionKey(EvaluationItem criterion)
+    {
+        return criterion.Key;
+    }
+
+    private async Task SetRating(EvaluationItem criterion, int rating)
+    {
+        var key = GetCriterionKey(criterion);
+
+        if (!feedbackData.Ratings.ContainsKey(key))
+        {
+            feedbackData.Ratings[key] = new ti8m.BeachBreak.Client.Models.Dto.FeedbackRatingDto();
+        }
+
+        feedbackData.Ratings[key].Rating = rating;
+        await OnFeedbackDataChanged();
+    }
+
+    private async Task SetCriterionComment(EvaluationItem criterion, string comment)
+    {
+        var key = GetCriterionKey(criterion);
+
+        if (!feedbackData.Ratings.ContainsKey(key))
+        {
+            feedbackData.Ratings[key] = new ti8m.BeachBreak.Client.Models.Dto.FeedbackRatingDto();
+        }
+
+        feedbackData.Ratings[key].Comment = comment;
+        await OnFeedbackDataChanged();
+    }
+
+    private string GetRatingLabel(int rating)
+    {
+        var percentage = (double)rating / RatingScale;
+        return percentage switch
+        {
+            >= 0.8 => T("rating.excellent"),
+            >= 0.6 => T("rating.good"),
+            >= 0.4 => T("rating.fair"),
+            _ => T("rating.poor")
+        };
+    }
+
+    private string GetTextSectionTitle(TextSection section)
+    {
+        return section.GetLocalizedTitleWithFallback(CurrentLanguage);
+    }
+
+    private string GetTextSectionPlaceholder(TextSection section)
+    {
+        // For now, use generic placeholder. Could be extended to use section-specific placeholders
+        return T("placeholders.enter-comments");
+    }
+
+    private string GetTextSectionComment(TextSection section)
+    {
+        var key = GetTextSectionKey(section);
+        return feedbackData.Comments.TryGetValue(key, out var comment) ? comment : string.Empty;
+    }
+
+    private string GetTextSectionKey(TextSection section)
+    {
+        return $"section_{TextSections.IndexOf(section)}";
+    }
+
+    private async Task SetTextSectionComment(TextSection section, string comment)
+    {
+        var key = GetTextSectionKey(section);
+        feedbackData.Comments[key] = comment;
+        await OnFeedbackDataChanged();
+    }
+
+    private bool HasAnyContent()
+    {
+        var hasRating = feedbackData.Ratings.Values.Any(r => r.Rating > 0);
+        var hasComment = feedbackData.Comments.Values.Any(c => !string.IsNullOrWhiteSpace(c)) ||
+                        feedbackData.Ratings.Values.Any(r => !string.IsNullOrWhiteSpace(r.Comment));
+        return hasRating || hasComment;
+    }
+
+    private string GetFeedbackSummary()
+    {
+        var parts = new List<string>();
+
+        var ratedCount = feedbackData.Ratings.Values.Count(r => r.Rating > 0);
+        if (ratedCount > 0)
+        {
+            parts.Add($"{ratedCount} {T("labels.ratings")}");
+        }
+
+        var commentCount = feedbackData.Comments.Values.Count(c => !string.IsNullOrWhiteSpace(c)) +
+                          feedbackData.Ratings.Values.Count(r => !string.IsNullOrWhiteSpace(r.Comment));
+        if (commentCount > 0)
+        {
+            parts.Add($"{commentCount} {T("labels.comments")}");
+        }
+
+        return parts.Any() ? string.Join(", ", parts) : T("messages.no-content");
+    }
+
+    private async Task OnFeedbackDataChanged()
+    {
+        if (FeedbackDataChanged.HasDelegate)
+        {
+            await FeedbackDataChanged.InvokeAsync(feedbackData);
+        }
+    }
+}

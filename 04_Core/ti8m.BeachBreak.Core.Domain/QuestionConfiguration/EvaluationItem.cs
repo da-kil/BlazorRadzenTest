@@ -41,6 +41,28 @@ public class EvaluationItem
     /// </summary>
     public int Order { get; set; }
 
+
+    /// <summary>
+    /// Constructor for creating evaluation items with all properties.
+    /// </summary>
+    public EvaluationItem(
+        string key,
+        string titleEnglish,
+        string titleGerman,
+        string descriptionEnglish,
+        string descriptionGerman,
+        bool isRequired,
+        int order)
+    {
+        Key = key;
+        TitleEnglish = titleEnglish;
+        TitleGerman = titleGerman;
+        DescriptionEnglish = descriptionEnglish;
+        DescriptionGerman = descriptionGerman;
+        IsRequired = isRequired;
+        Order = order;
+    }
+
     /// <summary>
     /// Gets the localized title based on the specified language.
     /// </summary>

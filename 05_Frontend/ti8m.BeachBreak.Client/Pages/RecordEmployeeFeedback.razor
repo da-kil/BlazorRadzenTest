@@ -1,0 +1,324 @@
+@using Microsoft.AspNetCore.Components
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.EmployeeFeedback
+@inject IEmployeeFeedbackApiService FeedbackService
+@inject IEmployeeApiService EmployeeService
+@inject DialogService DialogService
+@inherits OptimizedTranslatableComponentBase
+
+<div class="record-feedback-dialog">
+    <RadzenStack Gap="1rem">
+
+        <!-- Employee Selection -->
+        <RadzenCard>
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                @T("sections.employee-selection")
+            </RadzenText>
+
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="8">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                        @T("labels.employee") <span class="text-danger">*</span>
+                    </RadzenText>
+                    <RadzenDropDown @bind-Value="@selectedEmployeeId"
+                                  Data="@employees"
+                                  TextProperty="FullName"
+                                  ValueProperty="Id"
+                                  Placeholder="@T("placeholders.select-employee")"
+                                  AllowClear="false"
+                                  Style="width: 100%;" />
+                </RadzenColumn>
+
+                <RadzenColumn Size="12" SizeMD="4">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                        @T("labels.feedback-date") <span class="text-danger">*</span>
+                    </RadzenText>
+                    <RadzenDatePicker @bind-Value="@feedbackDate"
+                                    DateFormat="yyyy-MM-dd"
+                                    Max="@DateTime.Today"
+                                    Style="width: 100%;" />
+                </RadzenColumn>
+            </RadzenRow>
+        </RadzenCard>
+
+        <!-- Source Type Selection -->
+        <RadzenCard>
+            <FeedbackSourceSelector @bind-SelectedSourceType="@selectedSourceType"
+                                   OnSourceTypeChanged="@OnSourceTypeChanged" />
+        </RadzenCard>
+
+        <!-- Provider Information -->
+        <RadzenCard>
+            <FeedbackProviderInfoSection @bind-ProviderInfo="@providerInfo"
+                                       SourceType="@selectedSourceType"
+                                       RequiresProjectContext="@RequiresProjectContext"
+                                       RequiresProviderRole="@RequiresProviderRole" />
+        </RadzenCard>
+
+        <!-- Configurable Feedback Section -->
+        @if (selectedSourceType.HasValue && availableCriteria.Any())
+        {
+            <RadzenCard>
+                <ConfigurableFeedbackSection @bind-FeedbackData="@feedbackData"
+                                           AvailableCriteria="@availableCriteria"
+                                           TextSections="@textSections"
+                                           RatingScale="@ratingScale" />
+            </RadzenCard>
+        }
+
+        <!-- Validation Errors -->
+        @if (validationErrors.Any())
+        {
+            <ValidationErrorAlert Errors="@validationErrors" />
+        }
+
+        <!-- Action Buttons -->
+        <RadzenCard>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="1rem">
+                <RadzenButton Text="@T("buttons.cancel")"
+                            ButtonStyle="ButtonStyle.Light"
+                            Click="@Cancel" />
+
+                <RadzenButton Text="@T("buttons.save-feedback")"
+                            ButtonStyle="ButtonStyle.Success"
+                            Icon="save"
+                            Click="@SaveFeedback"
+                            IsBusy="@isSaving"
+                            Disabled="@(!IsFormValid)" />
+            </RadzenStack>
+        </RadzenCard>
+
+    </RadzenStack>
+</div>
+
+@code {
+    // Data binding
+    private Guid? selectedEmployeeId;
+    private int? selectedSourceType;
+    private DateTime feedbackDate = DateTime.Today;
+    private ti8m.BeachBreak.Client.Models.Dto.FeedbackProviderInfoDto providerInfo = new();
+    private ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto feedbackData = new();
+
+    // Reference data
+    private List<EmployeeDto> employees = new();
+    private List<EvaluationItem> availableCriteria = new();
+    private List<TextSection> textSections = new();
+    private int ratingScale = 10;
+
+    // UI state
+    private bool isSaving;
+    private List<string> validationErrors = new();
+
+    // Computed properties
+    private bool RequiresProjectContext => selectedSourceType == 2; // Project Colleague
+    private bool RequiresProviderRole => selectedSourceType != 0; // Not Customer
+
+    private bool IsFormValid =>
+        selectedEmployeeId.HasValue &&
+        selectedSourceType.HasValue &&
+        !string.IsNullOrWhiteSpace(providerInfo.ProviderName) &&
+        (!RequiresProviderRole || !string.IsNullOrWhiteSpace(providerInfo.ProviderRole)) &&
+        (!RequiresProjectContext || !string.IsNullOrWhiteSpace(providerInfo.ProjectName)) &&
+        HasFeedbackContent();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEmployees();
+        await LoadDefaultTemplates();
+    }
+
+    private async Task LoadEmployees()
+    {
+        employees = await EmployeeService.GetAllEmployeesAsync();
+    }
+
+    private async Task LoadDefaultTemplates()
+    {
+        var result = await FeedbackService.GetFeedbackTemplatesAsync();
+        if (result.Succeeded && result.Payload != null)
+        {
+            // For now, create default criteria since the API response contains List<object>
+            // In a full implementation, this would be properly typed
+            availableCriteria = CreateDefaultCriteria();
+            textSections = CreateDefaultTextSections();
+        }
+    }
+
+    private async Task OnSourceTypeChanged(int? sourceType)
+    {
+        selectedSourceType = sourceType;
+
+        // Reset provider info when source type changes
+        providerInfo = new ti8m.BeachBreak.Client.Models.Dto.FeedbackProviderInfoDto();
+
+        // Load specific template for source type if available
+        if (sourceType.HasValue)
+        {
+            var result = await FeedbackService.GetFeedbackTemplatesAsync(sourceType.Value);
+            if (result.Succeeded && result.Payload != null)
+            {
+                // Use source-specific criteria if available
+                if (result.Payload.AvailableCriteria.Any())
+                {
+                    // For now, create default criteria since the API response contains List<object>
+                    availableCriteria = CreateDefaultCriteria();
+                }
+
+                // Update rating scale from template
+                if (result.Payload.DefaultTemplates.TryGetValue(sourceType.Value, out var template))
+                {
+                    // Extract rating scale from template (would need proper deserialization in real implementation)
+                    ratingScale = 10; // Default for now
+                }
+            }
+        }
+
+        StateHasChanged();
+    }
+
+    private bool HasFeedbackContent()
+    {
+        // Check if there's at least one rating or one comment
+        var hasRating = feedbackData.Ratings.Values.Any(r => r.Rating > 0);
+        var hasComment = feedbackData.Comments.Values.Any(c => !string.IsNullOrWhiteSpace(c));
+        return hasRating || hasComment;
+    }
+
+    private async Task SaveFeedback()
+    {
+        if (!ValidateForm())
+            return;
+
+        isSaving = true;
+        StateHasChanged();
+
+        try
+        {
+            var dto = new RecordEmployeeFeedbackDto
+            {
+                EmployeeId = selectedEmployeeId!.Value,
+                SourceType = selectedSourceType!.Value,
+                ProviderInfo = providerInfo,
+                FeedbackDate = feedbackDate,
+                FeedbackData = feedbackData
+            };
+
+            var result = await FeedbackService.RecordFeedbackAsync(dto);
+
+            if (result.Succeeded)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = T("messages.success"),
+                    Detail = T("messages.feedback-recorded-successfully")
+                });
+
+                DialogService.Close(true); // Return true to indicate success
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = T("messages.error"),
+                    Detail = result.ErrorMessage ?? T("messages.failed-to-record-feedback")
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = T("messages.error"),
+                Detail = $"Unexpected error: {ex.Message}"
+            });
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool ValidateForm()
+    {
+        validationErrors.Clear();
+
+        if (!selectedEmployeeId.HasValue)
+            validationErrors.Add(T("validation.employee-required"));
+
+        if (!selectedSourceType.HasValue)
+            validationErrors.Add(T("validation.source-type-required"));
+
+        if (string.IsNullOrWhiteSpace(providerInfo.ProviderName))
+            validationErrors.Add(T("validation.provider-name-required"));
+
+        if (RequiresProviderRole && string.IsNullOrWhiteSpace(providerInfo.ProviderRole))
+            validationErrors.Add(T("validation.provider-role-required"));
+
+        if (RequiresProjectContext && string.IsNullOrWhiteSpace(providerInfo.ProjectName))
+            validationErrors.Add(T("validation.project-name-required"));
+
+        if (feedbackDate > DateTime.Today)
+            validationErrors.Add(T("validation.feedback-date-future"));
+
+        if (!HasFeedbackContent())
+            validationErrors.Add(T("validation.feedback-content-required"));
+
+        return !validationErrors.Any();
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+
+    private List<EvaluationItem> CreateDefaultCriteria()
+    {
+        return new List<EvaluationItem>
+        {
+            new("communication", T("criteria.communication"), "", false, 1),
+            new("teamwork", T("criteria.teamwork"), "", false, 2),
+            new("problem_solving", T("criteria.problem-solving"), "", false, 3),
+            new("quality", T("criteria.quality"), "", false, 4),
+            new("reliability", T("criteria.reliability"), "", false, 5),
+            new("initiative", T("criteria.initiative"), "", false, 6),
+            new("overall", T("criteria.overall"), "", false, 7)
+        };
+    }
+
+    private List<TextSection> CreateDefaultTextSections()
+    {
+        return new List<TextSection>
+        {
+            new() {
+                TitleEnglish = T("feedback-sections.positive-feedback.title"),
+                TitleGerman = T("feedback-sections.positive-feedback.title"),
+                DescriptionEnglish = T("feedback-sections.positive-feedback.placeholder"),
+                DescriptionGerman = T("feedback-sections.positive-feedback.placeholder"),
+                Order = 1
+            },
+            new() {
+                TitleEnglish = T("feedback-sections.areas-for-improvement.title"),
+                TitleGerman = T("feedback-sections.areas-for-improvement.title"),
+                DescriptionEnglish = T("feedback-sections.areas-for-improvement.placeholder"),
+                DescriptionGerman = T("feedback-sections.areas-for-improvement.placeholder"),
+                Order = 2
+            },
+            new() {
+                TitleEnglish = T("feedback-sections.additional-comments.title"),
+                TitleGerman = T("feedback-sections.additional-comments.title"),
+                DescriptionEnglish = T("feedback-sections.additional-comments.placeholder"),
+                DescriptionGerman = T("feedback-sections.additional-comments.placeholder"),
+                Order = 3
+            }
+        };
+    }
+}

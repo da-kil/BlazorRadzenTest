@@ -323,6 +323,7 @@ public class Program
         builder.Services.AddScoped<IProjectionReplayApiService, ProjectionReplayApiService>();
         builder.Services.AddScoped<IGoalApiService, GoalApiService>();
         builder.Services.AddScoped<ITranslationApiService, TranslationApiService>();
+        builder.Services.AddScoped<IEmployeeFeedbackApiService, EmployeeFeedbackApiService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();

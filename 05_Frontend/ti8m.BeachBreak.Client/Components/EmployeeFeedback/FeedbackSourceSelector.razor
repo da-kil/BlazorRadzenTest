@@ -1,0 +1,140 @@
+@using Microsoft.AspNetCore.Components
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Components.Shared
+@inject IEmployeeFeedbackApiService FeedbackService
+@inherits OptimizedTranslatableComponentBase
+
+<div class="feedback-source-selector">
+    <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+        @T("sections.feedback-source")
+    </RadzenText>
+
+    @if (sourceTypeOptions.Any())
+    {
+        <RadzenRadioButtonList @bind-Value="@selectedSourceType"
+                             TValue="int?"
+                             Orientation="Orientation.Vertical"
+                             Change="@HandleSourceTypeChanged">
+            @foreach (var option in sourceTypeOptions)
+            {
+                <RadzenRadioButtonListItem Text="@GetOptionDisplay(option)" Value="@option.Value" />
+            }
+        </RadzenRadioButtonList>
+
+        <!-- Source Type Details -->
+        @if (selectedSourceType.HasValue)
+        {
+            var selectedOption = sourceTypeOptions.FirstOrDefault(o => o.Value == selectedSourceType.Value);
+            if (selectedOption != null)
+            {
+                <RadzenCard Class="mt-3" Style="background-color: var(--rz-base-50);">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                        <strong>@T("labels.selected-source"):</strong> @selectedOption.DisplayName
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                        @selectedOption.Description
+                    </RadzenText>
+
+                    @if (selectedOption.RequiresProjectContext || selectedOption.RequiresProviderRole)
+                    {
+                        <div class="mt-2">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-info">
+                                <RadzenIcon Icon="info" Class="me-1" />
+                                @T("labels.additional-requirements"):
+                            </RadzenText>
+                            <ul class="requirements-list">
+                                @if (selectedOption.RequiresProviderRole)
+                                {
+                                    <li>@T("requirements.provider-role-required")</li>
+                                }
+                                @if (selectedOption.RequiresProjectContext)
+                                {
+                                    <li>@T("requirements.project-context-required")</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </RadzenCard>
+            }
+        }
+    }
+    else
+    {
+        <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
+    }
+</div>
+
+@code {
+    [Parameter] public int? SelectedSourceType { get; set; }
+    [Parameter] public EventCallback<int?> SelectedSourceTypeChanged { get; set; }
+    [Parameter] public EventCallback<int?> OnSourceTypeSelection { get; set; }
+    [Parameter] public EventCallback<int?> OnSourceTypeChanged { get; set; }
+
+    private int? selectedSourceType;
+    private List<SourceTypeOption> sourceTypeOptions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        selectedSourceType = SelectedSourceType;
+        await LoadSourceTypeOptions();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (selectedSourceType != SelectedSourceType)
+        {
+            selectedSourceType = SelectedSourceType;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadSourceTypeOptions()
+    {
+        var result = await FeedbackService.GetFeedbackTemplatesAsync();
+        if (result.Succeeded && result.Payload != null)
+        {
+            sourceTypeOptions = result.Payload.SourceTypeOptions;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleSourceTypeChanged(int? value)
+    {
+        selectedSourceType = value;
+
+        // Notify parent components
+        if (SelectedSourceTypeChanged.HasDelegate)
+        {
+            await SelectedSourceTypeChanged.InvokeAsync(value);
+        }
+
+        if (OnSourceTypeSelection.HasDelegate)
+        {
+            await OnSourceTypeSelection.InvokeAsync(value);
+        }
+
+        if (OnSourceTypeChanged.HasDelegate)
+        {
+            await OnSourceTypeChanged.InvokeAsync(value);
+        }
+    }
+
+    private string GetOptionDisplay(SourceTypeOption option)
+    {
+        var display = $"{option.DisplayName} - {option.Description}";
+
+        if (option.RequiresProjectContext || option.RequiresProviderRole)
+        {
+            var requirements = new List<string>();
+            if (option.RequiresProviderRole) requirements.Add(T("labels.role-required"));
+            if (option.RequiresProjectContext) requirements.Add(T("labels.project-required"));
+
+            display += $" ({string.Join(", ", requirements)})";
+        }
+
+        return display;
+    }
+}

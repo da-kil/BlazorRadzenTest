@@ -1,0 +1,209 @@
+@using Microsoft.AspNetCore.Components
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+
+<RadzenCard Class="feedback-display-card mb-3" Style="border-left: 4px solid var(--feedback-accent-color);">
+    <div class="feedback-header">
+        <RadzenRow AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenColumn Size="12" SizeMD="8">
+                <div class="provider-info">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="font-medium">
+                        @Feedback.ProviderName
+                    </RadzenText>
+                    @if (!string.IsNullOrWhiteSpace(Feedback.ProviderRole))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                            @Feedback.ProviderRole
+                        </RadzenText>
+                    }
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4" Style="text-align: right;">
+                @if (ShowSourceType)
+                {
+                    <RadzenBadge Text="@Feedback.SourceTypeDisplayName"
+                               Variant="Variant.Flat"
+                               IsPill="true"
+                               Class="@($"{Feedback.SourceTypeBadgeClass} mb-1")" />
+                }
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    @Feedback.FeedbackDate.ToString("MMM dd, yyyy")
+                </RadzenText>
+                @if (Feedback.IsRecent)
+                {
+                    <RadzenBadge Text="@T("labels.recent")"
+                               Variant="Variant.Flat"
+                               BadgeStyle="BadgeStyle.Success"
+                               IsPill="true"
+                               Class="ms-2" />
+                }
+            </RadzenColumn>
+        </RadzenRow>
+    </div>
+
+    <!-- Project Information (if applicable) -->
+    @if (Feedback.IsProjectFeedback && !string.IsNullOrWhiteSpace(Feedback.ProjectName))
+    {
+        <div class="project-info mt-2 mb-3">
+            <RadzenText TextStyle="TextStyle.Body2">
+                <RadzenIcon Icon="work" Class="me-1" />
+                <strong>@T("labels.project"):</strong> @Feedback.ProjectName
+            </RadzenText>
+        </div>
+    }
+
+    <!-- Rating Summary -->
+    @if (Feedback.RatedCriteriaCount > 0)
+    {
+        <div class="rating-summary mb-3">
+            <RadzenRow AlignItems="AlignItems.Center" Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-1">
+                        @T("labels.overall-rating")
+                    </RadzenText>
+                    <div class="rating-display">
+                        <RadzenText TextStyle="TextStyle.H6" Class="rating-value">
+                            @Feedback.RatingDisplay
+                        </RadzenText>
+                        <div class="rating-stars">
+                            @for (int i = 1; i <= 10; i++)
+                            {
+                                var isFilled = Feedback.AverageRating.HasValue && i <= Math.Round((double)Feedback.AverageRating.Value);
+                                <RadzenIcon Icon="@(isFilled ? "star" : "star_border")"
+                                          Class="@(isFilled ? "star-filled" : "star-empty")" />
+                            }
+                        </div>
+                    </div>
+                </RadzenColumn>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-1">
+                        @T("labels.criteria-rated")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        @Feedback.RatedCriteriaCount @T("labels.criteria")
+                    </RadzenText>
+                    @if (Feedback.CompletionPercentage > 0)
+                    {
+                        <RadzenProgressBar Value="@((double)Feedback.CompletionPercentage)"
+                                         ShowValue="false"
+                                         Style="height: 4px; margin-top: 4px;" />
+                    }
+                </RadzenColumn>
+            </RadzenRow>
+        </div>
+    }
+
+    <!-- Feedback Summary -->
+    <div class="feedback-summary">
+        @if (Feedback.HasUnstructuredFeedback)
+        {
+            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                <RadzenIcon Icon="chat" Class="me-1" />
+                @T("labels.includes-written-feedback")
+            </RadzenText>
+        }
+
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            @Feedback.FeedbackSummary
+        </RadzenText>
+    </div>
+
+    @if (!IsReadOnly)
+    {
+        <!-- Action Buttons -->
+        <div class="feedback-actions mt-3 pt-3" style="border-top: 1px solid var(--rz-base-200);">
+            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                <RadzenButton Text="@T("buttons.view-details")"
+                            Icon="visibility"
+                            ButtonStyle="ButtonStyle.Light"
+                            Size="ButtonSize.Small"
+                            Click="@ViewDetails" />
+
+                <RadzenButton Text="@T("buttons.edit")"
+                            Icon="edit"
+                            ButtonStyle="ButtonStyle.Light"
+                            Size="ButtonSize.Small"
+                            Click="@EditFeedback" />
+            </RadzenStack>
+        </div>
+    }
+</RadzenCard>
+
+<style>
+    .feedback-display-card {
+        --feedback-accent-color: var(--rz-primary);
+        transition: box-shadow 0.2s ease;
+    }
+
+    .feedback-display-card:hover {
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+    }
+
+    .rating-display {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .rating-value {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .rating-stars {
+        display: flex;
+        gap: 2px;
+    }
+
+    .star-filled {
+        color: var(--rz-warning);
+        font-size: 14px;
+    }
+
+    .star-empty {
+        color: var(--rz-base-300);
+        font-size: 14px;
+    }
+
+    .badge-customer {
+        background-color: var(--rz-primary-lighter);
+        color: var(--rz-primary-darker);
+    }
+
+    .badge-peer {
+        background-color: var(--rz-success-lighter);
+        color: var(--rz-success-darker);
+    }
+
+    .badge-project {
+        background-color: var(--rz-warning-lighter);
+        color: var(--rz-warning-darker);
+    }
+</style>
+
+@code {
+    [Parameter] public EmployeeFeedbackSummaryDto Feedback { get; set; } = null!;
+    [Parameter] public bool IsReadOnly { get; set; } = false;
+    [Parameter] public bool ShowSourceType { get; set; } = true;
+    [Parameter] public EventCallback<EmployeeFeedbackSummaryDto> OnViewDetails { get; set; }
+    [Parameter] public EventCallback<EmployeeFeedbackSummaryDto> OnEdit { get; set; }
+
+    private async Task ViewDetails()
+    {
+        if (OnViewDetails.HasDelegate)
+        {
+            await OnViewDetails.InvokeAsync(Feedback);
+        }
+    }
+
+    private async Task EditFeedback()
+    {
+        if (OnEdit.HasDelegate)
+        {
+            await OnEdit.InvokeAsync(Feedback);
+        }
+    }
+}

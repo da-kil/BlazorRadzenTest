@@ -22,5 +22,11 @@ public enum QuestionType
     /// Goal question for defining and tracking objectives.
     /// Goals are added dynamically during questionnaire workflow.
     /// </summary>
-    Goal = 2
+    Goal = 2,
+
+    /// <summary>
+    /// Employee feedback from external sources (Customer, Peer, Project Colleague).
+    /// Supports configurable evaluation criteria and multiple feedback source types.
+    /// </summary>
+    EmployeeFeedback = 3
 }
