@@ -1,0 +1,490 @@
+@page "/feedback-template-management"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+@inject IFeedbackTemplateService TemplateService
+@inject IAuthService AuthService
+@inherits OptimizedTranslatableComponentBase
+
+<PageTitle>@T("nav.feedback-template-management")</PageTitle>
+
+<AuthorizeView Policy="TeamLead">
+    <Authorized>
+        <PageLayout Title="@T("nav.feedback-template-management")"
+                   Description="@T("pages.feedback-template-management-description")">
+            <HeaderActions>
+                <RadzenButton Text="@T("buttons.create-new")"
+                             ButtonStyle="ButtonStyle.Primary"
+                             Icon="add"
+                             Size="ButtonSize.Medium"
+                             Click="@(() => NavigationManager.NavigateTo("/feedback-template-builder"))" />
+            </HeaderActions>
+            <ChildContent>
+                <section class="templates-content">
+                    <div class="templates-toolbar d-flex justify-content-between align-items-center mb-3">
+                        <div class="filters-group d-flex gap-3">
+                            <RadzenDropDown @bind-Value="@sourceTypeFilter"
+                                           Data="@GetSourceTypeOptions()"
+                                           TextProperty="Text"
+                                           ValueProperty="Value"
+                                           Placeholder="@T("filters.filter-by-source-type")"
+                                           AllowClear="true"
+                                           Change="@FilterTemplates" />
+                            <RadzenDropDown @bind-Value="@statusFilter"
+                                           Data="@GetStatusOptions()"
+                                           TextProperty="Text"
+                                           ValueProperty="Value"
+                                           Placeholder="@T("filters.filter-by-status")"
+                                           AllowClear="true"
+                                           Change="@FilterTemplates" />
+                            <RadzenTextBox @bind-Value="@searchText"
+                                          Placeholder="@T("filters.search-templates")"
+                                          @oninput="@OnSearchTextChanged" />
+                        </div>
+                        <RadzenToggleButton @bind-Value="@showArchivedTemplates"
+                                           Text="@T("filters.show-archived")"
+                                           Change="@FilterTemplates" />
+                    </div>
+
+                    <RadzenDataGrid Data="@filteredTemplates"
+                                   AllowFiltering="true"
+                                   AllowColumnResize="true"
+                                   AllowAlternatingRows="true"
+                                   AllowSorting="true"
+                                   PageSize="10"
+                                   AllowPaging="true">
+                        <Columns>
+                            <RadzenDataGridColumn Title="@T("columns.template-name")" Width="300px" Sortable="false">
+                                <Template Context="template">
+                                    <div class="template-name-cell">
+                                        <RadzenLink Text="@GetLocalizedName(template)"
+                                                   Path="@($"/feedback-template-builder/{template.Id}")"
+                                                   Style="font-weight: bold" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted template-description">
+                                            @GetLocalizedDescription(template)
+                                        </RadzenText>
+                                    </div>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="@nameof(FeedbackTemplate.CreatedByEmployeeName)" Title="@T("columns.created-by")" Width="150px">
+                                <Template Context="template">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        @(string.IsNullOrEmpty(template.CreatedByEmployeeName) ? T("labels.unknown") : template.CreatedByEmployeeName)
+                                    </RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Title="@T("columns.source-types")" Width="150px">
+                                <Template Context="template">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        @GetSourceTypesDisplay(template.AllowedSourceTypes)
+                                    </RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Title="@T("columns.criteria")" Width="100px" TextAlign="TextAlign.Center">
+                                <Template Context="template">
+                                    <RadzenBadge Text="@template.Criteria.Count.ToString()" BadgeStyle="BadgeStyle.Info" />
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Title="@T("columns.text-sections")" Width="100px" TextAlign="TextAlign.Center">
+                                <Template Context="template">
+                                    <RadzenBadge Text="@template.TextSections.Count.ToString()" BadgeStyle="BadgeStyle.Secondary" />
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Title="@T("columns.rating-scale")" Width="100px" TextAlign="TextAlign.Center">
+                                <Template Context="template">
+                                    <RadzenText TextStyle="TextStyle.Body2">1-@template.RatingScale</RadzenText>
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="@nameof(FeedbackTemplate.Status)" Title="@T("columns.status")" Width="120px">
+                                <Template Context="template">
+                                    <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(template.Status)"
+                                               Text="@GetStatusText(template.Status)" />
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Property="@nameof(FeedbackTemplate.CreatedDate)" Title="@T("columns.created")" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+
+                            <RadzenDataGridColumn Property="@nameof(FeedbackTemplate.PublishedDate)" Title="@T("columns.published")" Width="120px" FormatString="{0:dd/MM/yyyy}">
+                                <Template Context="template">
+                                    @if (template.PublishedDate.HasValue)
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2">@template.PublishedDate.Value.ToString("dd/MM/yyyy")</RadzenText>
+                                    }
+                                    else
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">-</RadzenText>
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+
+                            <RadzenDataGridColumn Filterable="false" Sortable="false" Width="240px" TextAlign="TextAlign.Center">
+                                <Template Context="template">
+                                    <div class="template-actions">
+                                        @if (CanEditTemplate(template))
+                                        {
+                                            <AsyncButton ButtonStyle="ButtonStyle.Light" Icon="edit" Size="ButtonSize.Small" Title="@T("buttons.edit")" Click="@(() => EditTemplate(template))" />
+                                        }
+                                        <AsyncButton ButtonStyle="ButtonStyle.Light" ProcessingText="@T("notifications.cloning")" Icon="content_copy" Size="ButtonSize.Small" Title="@T("buttons.clone")" Click="@(() => CloneTemplate(template))" />
+                                        @if (template.Status == TemplateStatus.Draft && CanEditTemplate(template))
+                                        {
+                                            <AsyncButton ButtonStyle="ButtonStyle.Success" ProcessingText="@T("buttons.publishing")" Icon="publish" Size="ButtonSize.Small" Title="@T("buttons.publish")" Click="@(() => PublishTemplate(template))" />
+                                        }
+                                        @if (CanEditTemplate(template))
+                                        {
+                                            <AsyncButton ButtonStyle="@GetToggleButtonStyle(template.Status)" Icon="@GetToggleButtonIcon(template.Status)" Size="ButtonSize.Small" Title="@GetToggleButtonTitle(template.Status)" Click="@(() => ToggleTemplateStatus(template))" />
+                                        }
+                                        @if (template.Status != TemplateStatus.Archived && CanEditTemplate(template))
+                                        {
+                                            <AsyncButton ButtonStyle="ButtonStyle.Danger" ProcessingText="@T("buttons.deleting")" Icon="delete" Size="ButtonSize.Small" Title="@T("buttons.delete")" Click="@(() => DeleteTemplate(template))" />
+                                        }
+                                    </div>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </section>
+            </ChildContent>
+        </PageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="TeamLead" PageName="Feedback Template Management" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private List<FeedbackTemplate> templates = new();
+    private List<FeedbackTemplate> filteredTemplates = new();
+
+    private string searchText = "";
+    private int? sourceTypeFilter = null;
+    private int? statusFilter = null;
+    private bool showArchivedTemplates = false;
+
+    private Guid currentUserId = Guid.Empty;
+    private ApplicationRole currentUserRole = ApplicationRole.Employee;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        await ExecuteSafelyAsync(async () =>
+        {
+            // Get current user context
+            var userRole = await AuthService.GetMyRoleAsync();
+            if (userRole != null)
+            {
+                currentUserId = userRole.EmployeeId;
+                currentUserRole = userRole.ApplicationRole;
+            }
+
+            // Load templates
+            await LoadTemplates();
+            FilterTemplates();
+        }, "InitializeFeedbackTemplateManagement");
+    }
+
+    protected override bool HasStateChanged()
+    {
+        return HasParameterChanged(nameof(templates), templates.Count) ||
+               HasParameterChanged(nameof(searchText), searchText) ||
+               HasParameterChanged(nameof(sourceTypeFilter), sourceTypeFilter) ||
+               HasParameterChanged(nameof(statusFilter), statusFilter);
+    }
+
+    private async Task LoadTemplates()
+    {
+        try
+        {
+            templates = await TemplateService.GetMyTemplatesAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("messages.error"), $"{T("messages.failed-to-load-templates")}: {ex.Message}");
+            templates = new List<FeedbackTemplate>();
+        }
+    }
+
+    private void OnSearchTextChanged(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        FilterTemplates();
+    }
+
+    private void FilterTemplates()
+    {
+        filteredTemplates = templates.Where(t =>
+            (showArchivedTemplates || t.Status != TemplateStatus.Archived) &&
+            (!sourceTypeFilter.HasValue || t.AllowedSourceTypes.Contains(sourceTypeFilter.Value)) &&
+            (!statusFilter.HasValue || (int)t.Status == statusFilter.Value) &&
+            (string.IsNullOrWhiteSpace(searchText) ||
+             t.NameEnglish.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             t.NameGerman.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             t.DescriptionEnglish.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+             t.DescriptionGerman.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+        ).ToList();
+
+        StateHasChanged();
+    }
+
+    private bool CanEditTemplate(FeedbackTemplate template)
+    {
+        return template.CanBeEdited(currentUserId, currentUserRole);
+    }
+
+    private void EditTemplate(FeedbackTemplate template)
+    {
+        NavigationManager.NavigateTo($"/feedback-template-builder/{template.Id}");
+    }
+
+    private async Task CloneTemplate(FeedbackTemplate template)
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                string.Format(T("dialogs.clone-template-confirm"), GetLocalizedName(template)),
+                T("dialogs.clone-template-title"),
+                new ConfirmOptions
+                {
+                    OkButtonText = T("buttons.clone"),
+                    CancelButtonText = T("buttons.cancel")
+                });
+
+            if (confirmed != true)
+                return;
+
+            NotificationService.Notify(NotificationSeverity.Info, T("messages.cloning"), T("messages.cloning"));
+
+            var newTemplateId = await TemplateService.CloneTemplateAsync(template.Id, null);
+
+            if (newTemplateId.HasValue)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, T("messages.template-cloned-successfully"), T("messages.template-cloned-successfully"));
+
+                await LoadTemplates();
+                FilterTemplates();
+
+                NavigationManager.NavigateTo($"/feedback-template-builder/{newTemplateId.Value}");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("messages.error"), T("messages.failed-to-clone-template"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("messages.error"), $"{T("messages.error-cloning-template")}: {ex.Message}");
+        }
+    }
+
+    private async Task ToggleTemplateStatus(FeedbackTemplate template)
+    {
+        try
+        {
+            if (template.Status == TemplateStatus.Archived)
+            {
+                // Note: There's no RestoreTemplateAsync in IFeedbackTemplateService
+                // We would need to add it, or use UpdateTemplateAsync to change status back to Draft
+                NotificationService.Notify(NotificationSeverity.Warning, T("messages.not-implemented"), T("messages.restore-not-implemented"));
+                return;
+            }
+            else
+            {
+                var success = await TemplateService.ArchiveTemplateAsync(template.Id);
+
+                if (success)
+                {
+                    template.Status = TemplateStatus.Archived;
+                    NotificationService.Notify(NotificationSeverity.Success, T("messages.status-updated"),
+                        string.Format(T("messages.template-archived-successfully"), GetLocalizedName(template)));
+                    FilterTemplates();
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, T("messages.error"), T("messages.failed-to-update-status"));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("messages.error"), $"{T("messages.failed-to-update-template")}: {ex.Message}");
+        }
+    }
+
+    private async Task PublishTemplate(FeedbackTemplate template)
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                string.Format(T("dialogs.publish-template-confirm"), GetLocalizedName(template)),
+                T("dialogs.publish-template-title"),
+                new ConfirmOptions
+                {
+                    OkButtonText = T("buttons.publish"),
+                    CancelButtonText = T("buttons.cancel")
+                });
+
+            if (confirmed != true)
+                return;
+
+            NotificationService.Notify(NotificationSeverity.Info, T("messages.publishing"), T("messages.publishing"));
+
+            var publishedTemplate = await TemplateService.PublishTemplateAsync(template.Id);
+
+            if (publishedTemplate != null)
+            {
+                template.Status = publishedTemplate.Status;
+                template.PublishedDate = publishedTemplate.PublishedDate;
+
+                NotificationService.Notify(NotificationSeverity.Success, T("messages.status-updated"),
+                    string.Format(T("messages.template-published-successfully"), GetLocalizedName(template)));
+                FilterTemplates();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("messages.error"), T("messages.failed-to-publish-template"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("messages.error"), $"{T("messages.failed-to-publish-template")}: {ex.Message}");
+        }
+    }
+
+    private async Task DeleteTemplate(FeedbackTemplate template)
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                string.Format(T("dialogs.delete-template-confirm"), GetLocalizedName(template)),
+                T("dialogs.delete-template-title"),
+                new ConfirmOptions
+                {
+                    OkButtonText = T("buttons.delete"),
+                    CancelButtonText = T("buttons.cancel")
+                });
+
+            if (confirmed != true)
+                return;
+
+            NotificationService.Notify(NotificationSeverity.Info, T("messages.deleting"), T("messages.deleting"));
+
+            var success = await TemplateService.DeleteTemplateAsync(template.Id);
+
+            if (success)
+            {
+                templates.Remove(template);
+
+                NotificationService.Notify(NotificationSeverity.Success, T("messages.status-updated"),
+                    string.Format(T("messages.template-deleted-successfully"), GetLocalizedName(template)));
+                FilterTemplates();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("messages.error"), T("messages.failed-to-delete-template"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("messages.error"), $"{T("messages.failed-to-delete-template")}: {ex.Message}");
+        }
+    }
+
+    // Helper methods
+    private string GetLocalizedName(FeedbackTemplate template)
+    {
+        return template.GetLocalizedName(CurrentLanguage);
+    }
+
+    private string GetLocalizedDescription(FeedbackTemplate template)
+    {
+        return template.GetLocalizedDescription(CurrentLanguage);
+    }
+
+    private string GetSourceTypesDisplay(List<int> sourceTypes)
+    {
+        if (sourceTypes == null || sourceTypes.Count == 0)
+            return T("labels.none");
+
+        var names = sourceTypes.Select(st => st switch
+        {
+            0 => T("source-types.customer"),
+            1 => T("source-types.peer"),
+            2 => T("source-types.project-colleague"),
+            _ => T("labels.unknown")
+        });
+
+        return string.Join(", ", names);
+    }
+
+    private string GetStatusText(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Draft => T("status.draft"),
+        TemplateStatus.Published => T("status.published"),
+        TemplateStatus.Archived => T("status.archived"),
+        _ => T("status.unknown")
+    };
+
+    private BadgeStyle GetStatusBadgeStyle(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Published => BadgeStyle.Success,
+        TemplateStatus.Draft => BadgeStyle.Warning,
+        TemplateStatus.Archived => BadgeStyle.Danger,
+        _ => BadgeStyle.Secondary
+    };
+
+    private ButtonStyle GetToggleButtonStyle(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Archived => ButtonStyle.Success,
+        _ => ButtonStyle.Warning
+    };
+
+    private string GetToggleButtonIcon(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Archived => "restore",
+        _ => "archive"
+    };
+
+    private string GetToggleButtonTitle(TemplateStatus status) => status switch
+    {
+        TemplateStatus.Archived => T("buttons.restore"),
+        _ => T("buttons.archive")
+    };
+
+    private List<DropdownOption> GetSourceTypeOptions()
+    {
+        return new List<DropdownOption>
+        {
+            new DropdownOption { Value = 0, Text = T("source-types.customer") },
+            new DropdownOption { Value = 1, Text = T("source-types.peer") },
+            new DropdownOption { Value = 2, Text = T("source-types.project-colleague") }
+        };
+    }
+
+    private List<DropdownOption> GetStatusOptions()
+    {
+        return new List<DropdownOption>
+        {
+            new DropdownOption { Value = (int)TemplateStatus.Draft, Text = T("status.draft") },
+            new DropdownOption { Value = (int)TemplateStatus.Published, Text = T("status.published") },
+            new DropdownOption { Value = (int)TemplateStatus.Archived, Text = T("status.archived") }
+        };
+    }
+
+    private class DropdownOption
+    {
+        public int Value { get; set; }
+        public string Text { get; set; } = string.Empty;
+    }
+}

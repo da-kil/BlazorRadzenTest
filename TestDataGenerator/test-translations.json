@@ -4016,5 +4016,166 @@
         "english":  "Submitted",
         "category":  "workflow-states",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.cloning",
+        "german":  "Wird geklont...",
+        "english":  "Cloning...",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-cloned-successfully",
+        "german":  "Vorlage erfolgreich geklont",
+        "english":  "Template cloned successfully",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-clone-template",
+        "german":  "Fehler beim Klonen der Vorlage. Bitte versuchen Sie es erneut.",
+        "english":  "Failed to clone template. Please try again.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.error-cloning-template",
+        "german":  "Fehler beim Klonen der Vorlage",
+        "english":  "Error cloning template",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.not-implemented",
+        "german":  "Nicht implementiert",
+        "english":  "Not Implemented",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.restore-not-implemented",
+        "german":  "Wiederherstellungsfunktion ist noch nicht implementiert",
+        "english":  "Restore functionality is not yet implemented",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.status-updated",
+        "german":  "Status aktualisiert",
+        "english":  "Status Updated",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-archived-successfully",
+        "german":  "Vorlage '{0}' wurde archiviert",
+        "english":  "Template '{0}' has been archived",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-update-status",
+        "german":  "Fehler beim Aktualisieren des Status",
+        "english":  "Failed to update template status",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-update-template",
+        "german":  "Fehler beim Aktualisieren der Vorlage",
+        "english":  "Failed to update template",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.publishing",
+        "german":  "Wird ver\u00F6ffentlicht...",
+        "english":  "Publishing...",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-published-successfully",
+        "german":  "Vorlage '{0}' ist jetzt ver\u00F6ffentlicht und verf\u00FCgbar f\u00FCr Feedback-Erfassung",
+        "english":  "Template '{0}' is now published and available for feedback recording",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-publish-template",
+        "german":  "Fehler beim Ver\u00F6ffentlichen der Vorlage",
+        "english":  "Failed to publish template",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.deleting",
+        "german":  "Wird gel\u00F6scht...",
+        "english":  "Deleting...",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-deleted-successfully",
+        "german":  "Vorlage '{0}' wurde dauerhaft gel\u00F6scht",
+        "english":  "Template '{0}' has been permanently deleted",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-delete-template",
+        "german":  "Fehler beim L\u00F6schen der Vorlage. Sie hat m\u00F6glicherweise verkn\u00FCpfte Feedback-Datens\u00E4tze oder kann nicht im archivierten Status gel\u00F6scht werden.",
+        "english":  "Failed to delete template. It may have associated feedback records or cannot be deleted while archived.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-load-templates",
+        "german":  "Fehler beim Laden der Vorlagen",
+        "english":  "Failed to load templates",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.clone-template-confirm",
+        "german":  "Dies erstellt eine Kopie von '{0}' im Entwurfsstatus. Fortfahren?",
+        "english":  "This will create a copy of '{0}' in Draft status. Continue?",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.clone-template-title",
+        "german":  "Vorlage klonen",
+        "english":  "Clone Template",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.publish-template-confirm",
+        "german":  "'{0}' ver\u00F6ffentlichen? Sie wird f\u00FCr Feedback-Erfassung verf\u00FCgbar.",
+        "english":  "Publish '{0}'? It will become available for use in feedback recording.",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.publish-template-title",
+        "german":  "Vorlage ver\u00F6ffentlichen",
+        "english":  "Publish Template",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.delete-template-confirm",
+        "german":  "Sind Sie sicher, dass Sie '{0}' dauerhaft l\u00F6schen m\u00F6chten? Diese Aktion kann nicht r\u00FCckg\u00E4ngig gemacht werden. Die Vorlage kann nur gel\u00F6scht werden, wenn keine verkn\u00FCpften Feedback-Datens\u00E4tze vorhanden sind.",
+        "english":  "Are you sure you want to permanently delete '{0}'? This action cannot be undone. The template can only be deleted if it has no associated feedback records.",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.delete-template-title",
+        "german":  "Vorlage l\u00F6schen",
+        "english":  "Delete Template",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     }
 ]
