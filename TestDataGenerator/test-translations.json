@@ -4212,5 +4212,285 @@
         "english":  "Delete Template",
         "category":  "dialogs",
         "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "steps.template-information-description",
+        "german":  "Geben Sie den Namen, die Beschreibung und grundlegende Konfiguration der Feedback-Vorlage ein",
+        "english":  "Enter the template name, description, and basic configuration for the feedback template",
+        "category":  "steps",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "steps.configure-criteria",
+        "german":  "Bewertungskriterien konfigurieren",
+        "english":  "Configure Evaluation Criteria",
+        "category":  "steps",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "steps.configure-criteria-description",
+        "german":  "Wählen Sie Bewertungskriterien und Textabschnitte für die Vorlage aus",
+        "english":  "Select evaluation criteria and text sections for the template",
+        "category":  "steps",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "steps.review-template",
+        "german":  "Vorlage Überprüfen",
+        "english":  "Review Template",
+        "category":  "steps",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+  {
+    "key": "steps.review-template-description",
+    "german": "Überprüfen Sie die Vorlagenkonfiguration vor der Veröffentlichung",
+    "english": "Review the template configuration before publishing",
+    "category": "steps",
+    "createdDate": "2025-12-16T14:00:00.0000000+00:00"
+  },
+    {
+        "key":  "buttons.add-criterion",
+        "german":  "Kriterium hinzufügen",
+        "english":  "Add Criterion",
+        "category":  "buttons",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.add-text-section",
+        "german":  "Textabschnitt hinzufügen",
+        "english":  "Add Text Section",
+        "category":  "buttons",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.next-configure-criteria",
+        "german":  "Weiter: Kriterien konfigurieren",
+        "english":  "Next: Configure Criteria",
+        "category":  "buttons",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.back",
+        "german":  "Zurück",
+        "english":  "Back",
+        "category":  "buttons",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.allowed-source-types",
+        "german":  "Erlaubte Quellentypen",
+        "english":  "Allowed Source Types",
+        "category":  "labels",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.scale-low-label",
+        "german":  "Niedriges Skalen-Label",
+        "english":  "Scale Low Label",
+        "category":  "labels",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.scale-high-label",
+        "german":  "Hohes Skalen-Label",
+        "english":  "Scale High Label",
+        "category":  "labels",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.placeholder",
+        "german":  "Platzhalter",
+        "english":  "Placeholder",
+        "category":  "labels",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.rating-scale",
+        "german":  "Bewertungsskala",
+        "english":  "Rating Scale",
+        "category":  "labels",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.describe-template-purpose-english",
+        "german":  "Beschreiben Sie den Zweck dieser Feedback-Vorlage (Englisch)",
+        "english":  "Describe the purpose of this feedback template (English)",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.describe-template-purpose-german-optional",
+        "german":  "Beschreiben Sie den Zweck dieser Feedback-Vorlage (Deutsch, optional)",
+        "english":  "Describe the purpose of this feedback template (German, optional)",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.poor",
+        "german":  "Schlecht",
+        "english":  "Poor",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.excellent",
+        "german":  "Ausgezeichnet",
+        "english":  "Excellent",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.feedback-configuration",
+        "german":  "Feedback-Konfiguration",
+        "english":  "Feedback Configuration",
+        "category":  "sections",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.evaluation-criteria",
+        "german":  "Bewertungskriterien",
+        "english":  "Evaluation Criteria",
+        "category":  "sections",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.text-sections",
+        "german":  "Textabschnitte",
+        "english":  "Text Sections",
+        "category":  "sections",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.template-summary",
+        "german":  "Vorlagenzusammenfassung",
+        "english":  "Template Summary",
+        "category":  "sections",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.criteria-description",
+        "german":  "Bewertungskriterien zur Beurteilung der Leistung",
+        "english":  "Evaluation criteria for assessing performance",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.no-criteria-added",
+        "german":  "Keine Kriterien hinzugefügt. Klicken Sie auf 'Kriterium hinzufügen', um zu beginnen.",
+        "english":  "No criteria added. Click 'Add Criterion' to get started.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.no-criteria-configured",
+        "german":  "Keine Bewertungskriterien konfiguriert",
+        "english":  "No evaluation criteria configured",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.text-sections-description",
+        "german":  "Freitextabschnitte für zusätzliches Feedback",
+        "english":  "Free-text sections for additional feedback",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.no-text-sections-added",
+        "german":  "Keine Textabschnitte hinzugefügt. Klicken Sie auf 'Textabschnitt hinzufügen', um zu beginnen.",
+        "english":  "No text sections added. Click 'Add Text Section' to get started.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.no-text-sections-configured",
+        "german":  "Keine Textabschnitte konfiguriert",
+        "english":  "No text sections configured",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.select-feedback-source-types",
+        "german":  "Wählen Sie mindestens einen Feedback-Quellentyp aus",
+        "english":  "Select at least one feedback source type",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.rating-scale-explanation",
+        "german":  "Wählen Sie eine Bewertungsskala zwischen 2 und 10",
+        "english":  "Choose a rating scale between 2 and 10",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.customer",
+        "german":  "Kunde",
+        "english":  "Customer",
+        "category":  "source-types",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.peer",
+        "german":  "Kollege",
+        "english":  "Peer",
+        "category":  "source-types",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.project-colleague",
+        "german":  "Projektkollege",
+        "english":  "Project Colleague",
+        "category":  "source-types",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.criteria",
+        "german":  "Kriterien",
+        "english":  "Criteria",
+        "category":  "columns",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.text-sections",
+        "german":  "Textabschnitte",
+        "english":  "Text Sections",
+        "category":  "columns",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "columns.rating-scale",
+        "german":  "Bewertungsskala",
+        "english":  "Rating Scale",
+        "category":  "columns",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "filters.filter-by-source-type",
+        "german":  "Nach Quellentyp filtern",
+        "english":  "Filter by Source Type",
+        "category":  "filters",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "nav.feedback-template-management",
+        "german":  "Feedback-Vorlagenverwaltung",
+        "english":  "Feedback Template Management",
+        "category":  "nav",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.feedback-template-builder",
+        "german":  "Feedback-Vorlagen-Builder",
+        "english":  "Feedback Template Builder",
+        "category":  "pages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.feedback-template-management-description",
+        "german":  "Feedback-Vorlagen verwalten und konfigurieren",
+        "english":  "Manage and configure feedback templates",
+        "category":  "pages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     }
 ]
