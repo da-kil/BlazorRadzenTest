@@ -8,6 +8,7 @@
 @using ti8m.BeachBreak.Client.Components.EmployeeFeedback
 @inject IEmployeeFeedbackApiService FeedbackService
 @inject IEmployeeApiService EmployeeService
+@inject IFeedbackTemplateService TemplateService
 @inject DialogService DialogService
 @inherits OptimizedTranslatableComponentBase
 
@@ -51,6 +52,37 @@
             <FeedbackSourceSelector @bind-SelectedSourceType="@selectedSourceType"
                                    OnSourceTypeChanged="@OnSourceTypeChanged" />
         </RadzenCard>
+
+        <!-- Template Selection (Optional) -->
+        @if (selectedSourceType.HasValue && availableTemplates.Any())
+        {
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                    @T("sections.use-template")
+                </RadzenText>
+
+                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2 text-muted">
+                    @T("labels.template-optional-description")
+                </RadzenText>
+
+                <RadzenDropDown TValue="Guid?"
+                              Data="@availableTemplates"
+                              @bind-Value="@selectedTemplateId"
+                              Placeholder="@T("placeholders.select-template-optional")"
+                              TextProperty="@GetTemplateNameProperty()"
+                              ValueProperty="Id"
+                              Change="@OnTemplateSelected"
+                              AllowClear="true"
+                              Style="width: 100%;" />
+
+                @if (selectedTemplateId.HasValue)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mt-3">
+                        @T("messages.template-applied-successfully")
+                    </RadzenAlert>
+                }
+            </RadzenCard>
+        }
 
         <!-- Provider Information -->
         <RadzenCard>
@@ -110,6 +142,10 @@
     private List<TextSection> textSections = new();
     private int ratingScale = 10;
 
+    // Template support
+    private List<FeedbackTemplate> availableTemplates = new();
+    private Guid? selectedTemplateId;
+
     // UI state
     private bool isSaving;
     private List<string> validationErrors = new();
@@ -156,29 +192,71 @@
         // Reset provider info when source type changes
         providerInfo = new ti8m.BeachBreak.Client.Models.Dto.FeedbackProviderInfoDto();
 
-        // Load specific template for source type if available
+        // Reset template selection
+        selectedTemplateId = null;
+
+        // Load templates for selected source type
         if (sourceType.HasValue)
         {
-            var result = await FeedbackService.GetFeedbackTemplatesAsync(sourceType.Value);
-            if (result.Succeeded && result.Payload != null)
-            {
-                // Use source-specific criteria if available
-                if (result.Payload.AvailableCriteria.Any())
-                {
-                    // For now, create default criteria since the API response contains List<object>
-                    availableCriteria = CreateDefaultCriteria();
-                }
+            availableTemplates = await TemplateService.GetTemplatesBySourceTypeAsync((FeedbackSourceType)sourceType.Value);
 
-                // Update rating scale from template
-                if (result.Payload.DefaultTemplates.TryGetValue(sourceType.Value, out var template))
-                {
-                    // Extract rating scale from template (would need proper deserialization in real implementation)
-                    ratingScale = 10; // Default for now
-                }
-            }
+            // Load default criteria if no template selected
+            availableCriteria = CreateDefaultCriteria();
+            textSections = CreateDefaultTextSections();
+            ratingScale = 10;
+        }
+        else
+        {
+            availableTemplates.Clear();
         }
 
         StateHasChanged();
+    }
+
+    private void OnTemplateSelected(object value)
+    {
+        if (selectedTemplateId.HasValue)
+        {
+            var template = availableTemplates.FirstOrDefault(t => t.Id == selectedTemplateId.Value);
+            if (template != null)
+            {
+                // Pre-populate from template
+                availableCriteria = template.Criteria.Select(c => new EvaluationItem(
+                    c.Key,
+                    CurrentLanguage == Language.German ? c.TitleGerman : c.TitleEnglish,
+                    CurrentLanguage == Language.German ? c.DescriptionGerman : c.DescriptionEnglish,
+                    c.IsRequired,
+                    c.Order
+                )).ToList();
+
+                textSections = template.TextSections.Select(ts => new TextSection
+                {
+                    TitleEnglish = ts.TitleEnglish,
+                    TitleGerman = ts.TitleGerman,
+                    DescriptionEnglish = ts.DescriptionEnglish,
+                    DescriptionGerman = ts.DescriptionGerman,
+                    IsRequired = ts.IsRequired,
+                    Order = ts.Order
+                }).ToList();
+
+                ratingScale = template.RatingScale;
+
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            // Template cleared - reset to defaults
+            availableCriteria = CreateDefaultCriteria();
+            textSections = CreateDefaultTextSections();
+            ratingScale = 10;
+            StateHasChanged();
+        }
+    }
+
+    private string GetTemplateNameProperty()
+    {
+        return CurrentLanguage == Language.German ? "NameGerman" : "NameEnglish";
     }
 
     private bool HasFeedbackContent()
