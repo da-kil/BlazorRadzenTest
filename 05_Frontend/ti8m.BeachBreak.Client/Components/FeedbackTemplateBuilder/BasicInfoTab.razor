@@ -1,0 +1,158 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@inherits ti8m.BeachBreak.Client.Components.Shared.OptimizedTranslatableComponentBase
+
+<div class="basic-info-content">
+
+    <!-- Template Name -->
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.english-template-name-required")</RadzenText>
+                <RadzenTextBox @bind-Value="@Template.NameEnglish"
+                              Placeholder="@T("placeholders.enter-template-name-english")"
+                              Class="w-100"
+                              Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.german-template-name-optional")</RadzenText>
+                <RadzenTextBox @bind-Value="@Template.NameGerman"
+                              Placeholder="@T("placeholders.enter-template-name-german-optional")"
+                              Class="w-100"
+                              Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Template Description -->
+    <RadzenRow Gap="1rem" Class="mb-3">
+        <RadzenColumn Size="12" SizeMD="6">
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.english-description-required")</RadzenText>
+                <RadzenTextArea @bind-Value="@Template.DescriptionEnglish"
+                              Placeholder="@T("placeholders.describe-template-purpose-english")"
+                              Rows="4"
+                              Class="w-100"
+                              Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="6">
+            <div class="mb-3">
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.german-description-optional")</RadzenText>
+                <RadzenTextArea @bind-Value="@Template.DescriptionGerman"
+                              Placeholder="@T("placeholders.describe-template-purpose-german-optional")"
+                              Rows="4"
+                              Class="w-100"
+                              Disabled="@(!Template.IsAvailableForEditing)" />
+            </div>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Feedback Configuration Section -->
+    <div class="settings-section mt-4 p-3 rounded border">
+        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">@T("sections.feedback-configuration")</RadzenText>
+
+        <!-- Allowed Source Types -->
+        <div class="mb-3">
+            <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.allowed-source-types")</RadzenText>
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mb-2">
+                @T("messages.select-feedback-source-types")
+            </RadzenText>
+
+            <RadzenCheckBox @bind-Value="@CustomerSelected"
+                           Name="sourceCustomer"
+                           Disabled="@(!Template.IsAvailableForEditing)"
+                           Change="@((bool value) => UpdateSourceTypes())" />
+            <RadzenLabel Text="@T("source-types.customer")" Component="sourceCustomer" Class="ms-2 me-4" />
+
+            <RadzenCheckBox @bind-Value="@PeerSelected"
+                           Name="sourcePeer"
+                           Disabled="@(!Template.IsAvailableForEditing)"
+                           Change="@((bool value) => UpdateSourceTypes())" />
+            <RadzenLabel Text="@T("source-types.peer")" Component="sourcePeer" Class="ms-2 me-4" />
+
+            <RadzenCheckBox @bind-Value="@ProjectColleagueSelected"
+                           Name="sourceProjectColleague"
+                           Disabled="@(!Template.IsAvailableForEditing)"
+                           Change="@((bool value) => UpdateSourceTypes())" />
+            <RadzenLabel Text="@T("source-types.project-colleague")" Component="sourceProjectColleague" Class="ms-2" />
+        </div>
+
+        <!-- Rating Scale -->
+        <RadzenRow Gap="1rem" Class="mt-3">
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.rating-scale")</RadzenText>
+                    <RadzenDropDown @bind-Value="@Template.RatingScale"
+                                   Data="@GetRatingScaleOptions()"
+                                   Class="w-100"
+                                   Disabled="@(!Template.IsAvailableForEditing)" />
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1">
+                        @T("messages.rating-scale-explanation")
+                    </RadzenText>
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.scale-low-label")</RadzenText>
+                    <RadzenTextBox @bind-Value="@Template.ScaleLowLabel"
+                                  Placeholder="@T("placeholders.poor")"
+                                  Class="w-100"
+                                  Disabled="@(!Template.IsAvailableForEditing)" />
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="4">
+                <div class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.scale-high-label")</RadzenText>
+                    <RadzenTextBox @bind-Value="@Template.ScaleHighLabel"
+                                  Placeholder="@T("placeholders.excellent")"
+                                  Class="w-100"
+                                  Disabled="@(!Template.IsAvailableForEditing)" />
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public FeedbackTemplate Template { get; set; } = null!;
+
+    // Checkbox binding properties
+    private bool CustomerSelected { get; set; }
+    private bool PeerSelected { get; set; }
+    private bool ProjectColleagueSelected { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        // Initialize checkboxes based on template's AllowedSourceTypes
+        CustomerSelected = Template.AllowedSourceTypes.Contains((int)FeedbackSourceType.Customer);
+        PeerSelected = Template.AllowedSourceTypes.Contains((int)FeedbackSourceType.Peer);
+        ProjectColleagueSelected = Template.AllowedSourceTypes.Contains((int)FeedbackSourceType.ProjectColleague);
+    }
+
+    private void UpdateSourceTypes()
+    {
+        Template.AllowedSourceTypes.Clear();
+
+        if (CustomerSelected)
+            Template.AllowedSourceTypes.Add((int)FeedbackSourceType.Customer);
+        if (PeerSelected)
+            Template.AllowedSourceTypes.Add((int)FeedbackSourceType.Peer);
+        if (ProjectColleagueSelected)
+            Template.AllowedSourceTypes.Add((int)FeedbackSourceType.ProjectColleague);
+
+        StateHasChanged();
+    }
+
+    private List<int> GetRatingScaleOptions()
+    {
+        return Enumerable.Range(2, 9).ToList(); // 2-10
+    }
+
+    private string GetCategoryNameProperty()
+    {
+        return CurrentLanguage == Language.German ? "NameGerman" : "NameEnglish";
+    }
+}

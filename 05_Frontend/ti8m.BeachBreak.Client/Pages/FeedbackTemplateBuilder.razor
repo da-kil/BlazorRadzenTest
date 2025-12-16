@@ -1,0 +1,433 @@
+@page "/feedback-template-builder"
+@page "/feedback-template-builder/{TemplateId:guid?}"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.FeedbackTemplateBuilder
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@using ti8m.BeachBreak.Client.Layout
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+@inject IFeedbackTemplateService TemplateService
+@inject FeedbackTemplateBuilderState State
+@inject IAuthService AuthService
+@inherits OptimizedTranslatableComponentBase
+@implements IDisposable
+
+<PageTitle>@(State.IsEditMode ? T("pages.feedback-template-editor") : T("pages.feedback-template-builder"))</PageTitle>
+
+<AuthorizeView Policy="TeamLead">
+    <Authorized>
+        <PageLayout Title="@(State.IsEditMode ? T("pages.feedback-template-editor") : T("pages.feedback-template-builder"))"
+                   Description="@GetStatusDescription()">
+            <HeaderActions>
+                @{
+                    var status = State.IsEditMode ? State.Template.Status : TemplateStatus.Draft;
+                    var statusText = State.IsEditMode ? TemplateStatusHelper.GetStatusText(State.Template.Status) : T("labels.new-status");
+                    var statusBadgeStyle = GetStatusBadgeStyle(status);
+                }
+                <RadzenBadge BadgeStyle="@statusBadgeStyle" Text="@statusText" Class="px-3 py-2" />
+
+                @if (lastSavedTime.HasValue && !isSaving)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-flex align-items-center">
+                        <RadzenIcon Icon="cloud_done" Class="me-1" />
+                        @T("labels.last-saved") @lastSavedTime.Value.ToString("HH:mm")
+                    </RadzenText>
+                }
+                @if (isSaving)
+                {
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-flex align-items-center">
+                        <RadzenIcon Icon="sync" Class="me-1" Style="animation: rotate 2s linear infinite;" />
+                        @T("messages.saving")
+                    </RadzenText>
+                }
+
+                @{
+                    var currentStatus = State.IsEditMode ? State.Template.Status : TemplateStatus.Draft;
+                }
+                @switch (currentStatus)
+                {
+                    case TemplateStatus.Draft:
+                        <RadzenButton Text="@(isSaving ? T("messages.saving") : T("buttons.save-draft"))"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Icon="save"
+                                     Click="@SaveTemplate"
+                                     Disabled="@isSaving"
+                                     Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.publish")"
+                                     ButtonStyle="ButtonStyle.Primary"
+                                     Icon="publish"
+                                     Click="@PublishTemplate"
+                                     Disabled="@isSaving"
+                                     Size="ButtonSize.Medium" />
+                        break;
+                    case TemplateStatus.Published:
+                        <RadzenButton Text="@T("buttons.clone")"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Icon="content_copy"
+                                     Click="@HandleClone"
+                                     Size="ButtonSize.Medium" />
+                        <RadzenButton Text="@T("buttons.archive")"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Icon="archive"
+                                     Click="@ArchiveTemplate"
+                                     Size="ButtonSize.Medium" />
+                        break;
+                    case TemplateStatus.Archived:
+                        <RadzenButton Text="@T("buttons.clone")"
+                                     ButtonStyle="ButtonStyle.Light"
+                                     Icon="content_copy"
+                                     Click="@HandleClone"
+                                     Size="ButtonSize.Medium" />
+                        break;
+                }
+            </HeaderActions>
+            <ChildContent>
+
+                <ProgressSteps CurrentStep="@State.CurrentStep"
+                               OnStepClick="@SetCurrentStep" />
+
+                <!-- Step 1: Basic Information -->
+                @if (State.CurrentStep == 1)
+                {
+                    <section class="step-section" data-step="1">
+                        <header class="qb-step-header">
+                            <h2 class="step-title">@T("steps.template-information")</h2>
+                            <p class="step-description">@T("steps.template-information-description")</p>
+                        </header>
+                        <ti8m.BeachBreak.Client.Components.FeedbackTemplateBuilder.BasicInfoTab Template="@State.Template" />
+                        <nav class="step-navigation">
+                            <RadzenButton Text="@T("buttons.next-configure-criteria")"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Icon="arrow_forward"
+                                         Click="@(() => SetCurrentStep(2))" />
+                        </nav>
+                    </section>
+                }
+                <!-- Step 2: Criteria Selection -->
+                else if (State.CurrentStep == 2)
+                {
+                    <section class="step-section" data-step="2">
+                        <header class="qb-step-header">
+                            <h2 class="step-title">@T("steps.configure-criteria")</h2>
+                            <p class="step-description">@T("steps.configure-criteria-description")</p>
+                        </header>
+                        <CriteriaSelectionTab Template="@State.Template"
+                                             State="@State" />
+                        <nav class="step-navigation">
+                            <RadzenButton Text="@T("buttons.back")"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Icon="arrow_back"
+                                         Click="@(() => SetCurrentStep(1))" />
+                            <RadzenButton Text="@T("buttons.next-review")"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Icon="arrow_forward"
+                                         Click="@(() => SetCurrentStep(3))" />
+                        </nav>
+                    </section>
+                }
+                <!-- Step 3: Review -->
+                else if (State.CurrentStep == 3)
+                {
+                    <section class="step-section" data-step="3">
+                        <header class="qb-step-header">
+                            <h2 class="step-title">@T("steps.review-template")</h2>
+                            <p class="step-description">@T("steps.review-template-description")</p>
+                        </header>
+                        <ti8m.BeachBreak.Client.Components.FeedbackTemplateBuilder.ReviewTab Template="@State.Template" />
+                        <nav class="step-navigation">
+                            <RadzenButton Text="@T("buttons.back")"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Icon="arrow_back"
+                                         Click="@(() => SetCurrentStep(2))" />
+                        </nav>
+                    </section>
+                }
+
+            </ChildContent>
+        </PageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="TeamLead" PageName="@T("pages.feedback-template-builder")" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter] public Guid? TemplateId { get; set; }
+
+    private bool isSaving = false;
+    private DateTime? lastSavedTime = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to state changes
+        State.OnStateChanged += StateHasChanged;
+
+        // Load user context
+        var userRole = await AuthService.GetMyRoleAsync();
+        if (userRole != null)
+        {
+            State.CurrentUserId = userRole.EmployeeId;
+            State.CurrentUserRole = userRole.ApplicationRole;
+        }
+
+        // Load template if editing
+        if (TemplateId.HasValue && TemplateId.Value != Guid.Empty)
+        {
+            var template = await TemplateService.GetTemplateByIdAsync(TemplateId.Value);
+            if (template != null)
+            {
+                // Check if user can edit this template
+                if (!template.CanBeEdited(State.CurrentUserId, State.CurrentUserRole))
+                {
+                    ShowError(T("messages.template-not-editable"));
+                    NavigationManager.NavigateTo("/feedback-template-management");
+                    return;
+                }
+
+                State.Template = template;
+                State.SelectedCriteriaKeys = template.Criteria.Select(c => c.Key).ToList();
+                State.SelectedTextSectionKeys = template.TextSections.Select(s => s.Key).ToList();
+            }
+        }
+        else
+        {
+            // New template
+            State.Reset();
+        }
+
+        // TODO: Load available criteria and text sections from a service or predefined set
+        // For now, we'll initialize with empty lists - this will be populated in Phase 9
+        State.AvailableCriteria = new List<EvaluationItem>();
+        State.AvailableTextSections = new List<TextSectionDefinition>();
+    }
+
+    private void SetCurrentStep(int step)
+    {
+        if (step < 1 || step > 3) return;
+
+        // Validation before moving forward
+        if (step > State.CurrentStep)
+        {
+            if (State.CurrentStep == 1 && !ValidateBasicInfo())
+            {
+                return;
+            }
+            if (State.CurrentStep == 2 && !ValidateCriteria())
+            {
+                return;
+            }
+        }
+
+        State.CurrentStep = step;
+    }
+
+    private bool ValidateBasicInfo()
+    {
+        if (string.IsNullOrWhiteSpace(State.Template.NameEnglish))
+        {
+            ShowWarning(T("messages.template-name-required"));
+            return false;
+        }
+        return true;
+    }
+
+    private bool ValidateCriteria()
+    {
+        if (State.Template.Criteria.Count == 0 && State.Template.TextSections.Count == 0)
+        {
+            ShowWarning(T("messages.at-least-one-criterion-required"));
+            return false;
+        }
+        return true;
+    }
+
+    private async Task SaveTemplate()
+    {
+        if (!ValidateBasicInfo() || !ValidateCriteria())
+        {
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            if (State.IsEditMode)
+            {
+                var updated = await TemplateService.UpdateTemplateAsync(State.Template);
+                if (updated != null)
+                {
+                    State.Template = updated;
+                    State.MarkAsClean();
+                    lastSavedTime = DateTime.Now;
+                    ShowSuccess(T("messages.template-saved-successfully"));
+                }
+                else
+                {
+                    ShowError(T("messages.error-saving-template"));
+                }
+            }
+            else
+            {
+                var created = await TemplateService.CreateTemplateAsync(State.Template);
+                State.Template = created;
+                State.MarkAsClean();
+                lastSavedTime = DateTime.Now;
+                ShowSuccess(T("messages.template-created-successfully"));
+
+                // Navigate to edit mode
+                NavigationManager.NavigateTo($"/feedback-template-builder/{created.Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError($"{T("messages.error-saving-template")}: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task PublishTemplate()
+    {
+        if (!ValidateBasicInfo() || !ValidateCriteria())
+        {
+            return;
+        }
+
+        // Save first if there are changes
+        if (State.IsDirty)
+        {
+            await SaveTemplate();
+        }
+
+        if (!State.IsEditMode)
+        {
+            ShowError(T("messages.save-before-publish"));
+            return;
+        }
+
+        isSaving = true;
+        try
+        {
+            var published = await TemplateService.PublishTemplateAsync(State.Template.Id);
+            if (published != null)
+            {
+                State.Template = published;
+                ShowSuccess(T("messages.template-published-successfully"));
+
+                // Navigate to management page
+                NavigationManager.NavigateTo("/feedback-template-management");
+            }
+            else
+            {
+                ShowError(T("messages.error-publishing-template"));
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError($"{T("messages.error-publishing-template")}: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private async Task ArchiveTemplate()
+    {
+        var confirmed = await DialogService.Confirm(
+            T("messages.confirm-archive-template"),
+            T("dialogs.archive-template"),
+            new ConfirmOptions { OkButtonText = T("buttons.yes"), CancelButtonText = T("buttons.no") });
+
+        if (confirmed == true)
+        {
+            isSaving = true;
+            try
+            {
+                var success = await TemplateService.ArchiveTemplateAsync(State.Template.Id);
+                if (success)
+                {
+                    ShowSuccess(T("messages.template-archived-successfully"));
+                    NavigationManager.NavigateTo("/feedback-template-management");
+                }
+                else
+                {
+                    ShowError(T("messages.error-archiving-template"));
+                }
+            }
+            catch (Exception ex)
+            {
+                ShowError($"{T("messages.error-archiving-template")}: {ex.Message}");
+            }
+            finally
+            {
+                isSaving = false;
+            }
+        }
+    }
+
+    private async Task HandleClone()
+    {
+        isSaving = true;
+        try
+        {
+            var newTemplateId = await TemplateService.CloneTemplateAsync(State.Template.Id, "Copy of ");
+            if (newTemplateId.HasValue)
+            {
+                ShowSuccess(T("messages.template-cloned-successfully"));
+                NavigationManager.NavigateTo($"/feedback-template-builder/{newTemplateId.Value}");
+            }
+            else
+            {
+                ShowError(T("messages.error-cloning-template"));
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowError($"{T("messages.error-cloning-template")}: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private string GetStatusDescription()
+    {
+        if (!State.IsEditMode)
+        {
+            return T("steps.create-new-template");
+        }
+
+        return State.Template.Status switch
+        {
+            TemplateStatus.Draft => T("messages.template-draft-status"),
+            TemplateStatus.Published => T("messages.template-published-status"),
+            TemplateStatus.Archived => T("messages.template-archived-status"),
+            _ => ""
+        };
+    }
+
+    private BadgeStyle GetStatusBadgeStyle(TemplateStatus status)
+    {
+        return status switch
+        {
+            TemplateStatus.Draft => BadgeStyle.Light,
+            TemplateStatus.Published => BadgeStyle.Success,
+            TemplateStatus.Archived => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    public void Dispose()
+    {
+        State.OnStateChanged -= StateHasChanged;
+    }
+}
