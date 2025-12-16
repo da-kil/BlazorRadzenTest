@@ -1862,6 +1862,13 @@
         "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
     },
     {
+        "key":  "labels.template-optional-description",
+        "german":  "W\u00E4hlen Sie optional eine Vorlage aus, um Kriterien und Textabschnitte vorab auszuf\u00FCllen",
+        "english":  "Optionally select a template to pre-populate criteria and text sections",
+        "category":  "labels",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "labels.text-section",
         "german":  "Textabschnitt",
         "english":  "Text Section",
@@ -2350,6 +2357,20 @@
         "english":  "Questionnaire template updated successfully",
         "category":  "messages",
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-applied-successfully",
+        "german":  "Vorlage wurde erfolgreich angewendet. Kriterien und Textabschnitte wurden vorausgef\u00FCllt.",
+        "english":  "Template applied successfully. Criteria and text sections have been pre-populated.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-has-issues-count",
+        "german":  "Vorlage hat {0} Validierungsproblem(e)",
+        "english":  "Template has {0} validation issue(s)",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.workflow-manager-review-explanation",
@@ -3255,6 +3276,13 @@
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
+        "key":  "placeholders.select-template-optional",
+        "german":  "Vorlage ausw\u00E4hlen (optional)",
+        "english":  "Select template (optional)",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "questions.default-assessment-title",
         "german":  "Bewertungsbeurteilung",
         "english":  "Evaluation Assessment",
@@ -3484,6 +3512,13 @@
         "english":  "Workflow Configuration",
         "category":  "sections",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.use-template",
+        "german":  "Vorlage verwenden (optional)",
+        "english":  "Use Template (Optional)",
+        "category":  "sections",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "settings.send-assignment-notifications",

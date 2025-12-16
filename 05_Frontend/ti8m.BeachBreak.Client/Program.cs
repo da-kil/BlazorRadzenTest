@@ -73,6 +73,7 @@ internal class Program
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();
         builder.Services.AddScoped<QuestionnaireValidationService>();
+        builder.Services.AddScoped<FeedbackTemplateValidationService>();
         builder.Services.AddScoped<GoalService>();
 
         // Register export services

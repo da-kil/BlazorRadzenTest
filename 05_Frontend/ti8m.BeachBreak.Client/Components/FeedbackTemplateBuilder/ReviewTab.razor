@@ -1,5 +1,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@inject FeedbackTemplateValidationService ValidationService
 @inherits ti8m.BeachBreak.Client.Components.Shared.OptimizedTranslatableComponentBase
 
 <div class="review-tab-content">
@@ -161,6 +163,18 @@
             <div class="flex-grow-1">
                 <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">@GetValidationTitle()</RadzenText>
                 <RadzenText TextStyle="TextStyle.Body2">@GetValidationMessage()</RadzenText>
+
+                @if (!IsTemplateValid())
+                {
+                    <div class="mt-3">
+                        <ul class="mb-0">
+                            @foreach (var error in GetValidationErrors())
+                            {
+                                <li><RadzenText TextStyle="TextStyle.Body2" Class="text-danger">@error</RadzenText></li>
+                            }
+                        </ul>
+                    </div>
+                }
             </div>
         </div>
     </div>
@@ -183,9 +197,12 @@
 
     private bool IsTemplateValid()
     {
-        return !string.IsNullOrWhiteSpace(Template.NameEnglish) &&
-               (Template.Criteria.Count > 0 || Template.TextSections.Count > 0) &&
-               Template.AllowedSourceTypes.Count > 0;
+        return ValidationService.IsTemplateValid(Template);
+    }
+
+    private List<string> GetValidationErrors()
+    {
+        return ValidationService.ValidateTemplate(Template);
     }
 
     private string GetValidationCardStyle()
@@ -214,17 +231,7 @@
             return T("messages.template-validation-success");
         }
 
-        var issues = new List<string>();
-
-        if (string.IsNullOrWhiteSpace(Template.NameEnglish))
-            issues.Add(T("messages.validation-name-required"));
-
-        if (Template.Criteria.Count == 0 && Template.TextSections.Count == 0)
-            issues.Add(T("messages.validation-criteria-or-sections-required"));
-
-        if (Template.AllowedSourceTypes.Count == 0)
-            issues.Add(T("messages.validation-source-types-required"));
-
-        return string.Join(". ", issues);
+        var errorCount = GetValidationErrors().Count;
+        return T("messages.template-has-issues-count").Replace("{0}", errorCount.ToString());
     }
 }
