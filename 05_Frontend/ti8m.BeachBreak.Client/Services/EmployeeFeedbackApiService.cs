@@ -223,43 +223,4 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
             return Result<FeedbackTemplatesResponse>.Fail($"Error getting templates: {ex.Message}");
         }
     }
-
-    /// <summary>
-    /// Gets feedback statistics for an employee.
-    /// </summary>
-    public async Task<Result<object>> GetFeedbackStatisticsAsync(Guid employeeId, DateTime? fromDate = null, DateTime? toDate = null)
-    {
-        try
-        {
-            var url = $"q/api/v1/employee-feedbacks/employee/{employeeId}/statistics";
-            var queryParams = new List<string>();
-
-            if (fromDate.HasValue)
-                queryParams.Add($"fromDate={fromDate.Value:yyyy-MM-dd}");
-
-            if (toDate.HasValue)
-                queryParams.Add($"toDate={toDate.Value:yyyy-MM-dd}");
-
-            if (queryParams.Any())
-                url += "?" + string.Join("&", queryParams);
-
-            var response = await HttpQueryClient.GetAsync(url);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                // API returns statistics object directly, not wrapped in Result
-                var statistics = JsonSerializer.Deserialize<object>(content, JsonOptions);
-                return Result<object>.Success(statistics ?? new object());
-            }
-
-            // For error responses, API may return problem details
-            var errorContent = await response.Content.ReadAsStringAsync();
-            return Result<object>.Fail($"HTTP {response.StatusCode}: {response.ReasonPhrase}. {errorContent}");
-        }
-        catch (Exception ex)
-        {
-            return Result<object>.Fail($"Error getting statistics: {ex.Message}");
-        }
-    }
 }

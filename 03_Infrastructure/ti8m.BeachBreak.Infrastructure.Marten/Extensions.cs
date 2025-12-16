@@ -60,6 +60,7 @@ public static class Extensions
             options.Projections.Snapshot<QuestionnaireAssignmentReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<QuestionnaireResponseReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<ProjectionReplayReadModel>(SnapshotLifecycle.Inline);
+            options.Projections.Snapshot<FeedbackTemplateReadModel>(SnapshotLifecycle.Inline);
 
             // Event-based projections for review change tracking
             options.Projections.Add<ReviewChangeLogProjection>(ProjectionLifecycle.Inline);
@@ -101,6 +102,7 @@ public static class Extensions
 
         // Register aggregate repositories
         builder.Services.AddScoped<Application.Command.Repositories.IProjectionReplayAggregateRepository, Repositories.ProjectionReplayAggregateRepository>();
+        builder.Services.AddScoped<Application.Command.Repositories.IFeedbackTemplateAggregateRepository, Repositories.FeedbackTemplateAggregateRepository>();
     }
 
     /// <summary>

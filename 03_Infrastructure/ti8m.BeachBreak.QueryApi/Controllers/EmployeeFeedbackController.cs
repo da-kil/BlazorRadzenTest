@@ -107,64 +107,53 @@ public class EmployeeFeedbackController : BaseController
                 g => g.OrderByDescending(f => f.FeedbackDate).ToList()
             );
 
-        return Ok(groupedFeedback);
+        return CreateResponse(Result<Dictionary<int, List<EmployeeFeedbackSummaryDto>>>.Success(groupedFeedback));
     }
 
     /// <summary>
-    /// Gets available feedback templates and criteria.
-    /// Used by frontend to populate criteria selection UI.
+    /// Gets all feedback templates (non-deleted).
     /// </summary>
-    /// <param name="sourceType">Filter by specific source type</param>
-    /// <returns>Available templates and criteria</returns>
+    /// <returns>List of all feedback templates</returns>
     [HttpGet("templates")]
-    public async Task<IActionResult> GetFeedbackTemplates([FromQuery] int? sourceType = null)
+    public async Task<IActionResult> GetAllFeedbackTemplates()
     {
-        var query = new GetFeedbackTemplatesQuery(sourceType);
-
-        var result = await queryDispatcher.QueryAsync(query);
-
-        return CreateResponse(result);
+        var query = new Application.Query.Queries.FeedbackTemplateQueries.GetAllFeedbackTemplatesQuery();
+        var templates = await queryDispatcher.QueryAsync(query);
+        var dtos = templates.Select(FeedbackTemplateDto.FromReadModel).ToList();
+        return CreateResponse(Result<List<FeedbackTemplateDto>>.Success(dtos));
     }
 
     /// <summary>
-    /// Gets feedback statistics for an employee.
-    /// Provides summary metrics for dashboard display.
+    /// Gets a specific feedback template by ID.
     /// </summary>
-    /// <param name="employeeId">Employee ID</param>
-    /// <param name="fromDate">Statistics from date</param>
-    /// <param name="toDate">Statistics to date</param>
-    /// <returns>Aggregated feedback statistics</returns>
-    [HttpGet("employee/{employeeId}/statistics")]
-    public async Task<IActionResult> GetFeedbackStatistics(
-        Guid employeeId,
-        [FromQuery] DateTime? fromDate = null,
-        [FromQuery] DateTime? toDate = null)
+    /// <param name="id">Template ID</param>
+    /// <returns>Feedback template details</returns>
+    [HttpGet("templates/{id}")]
+    public async Task<IActionResult> GetFeedbackTemplateById(Guid id)
     {
-        var query = new GetEmployeeFeedbackQuery
-        {
-            EmployeeId = employeeId,
-            FromDate = fromDate,
-            ToDate = toDate,
-            IncludeDeleted = false,
-            PageSize = 1000 // Get all records for statistics
-        };
+        var query = new Application.Query.Queries.FeedbackTemplateQueries.GetFeedbackTemplateByIdQuery(id);
+        var template = await queryDispatcher.QueryAsync(query);
 
-        var result = await queryDispatcher.QueryAsync(query);
+        if (template == null)
+            return CreateResponse(Result.Fail($"Feedback template with ID {id} not found", Microsoft.AspNetCore.Http.StatusCodes.Status404NotFound));
 
-        if (!result.Succeeded)
-            return CreateResponse(result);
-
-        var feedback = result.Payload;
-        var statistics = new
-        {
-            TotalFeedbackCount = feedback.Count,
-            BySourceType = feedback.GroupBy(f => f.SourceType.ToString()).ToDictionary(g => g.Key, g => g.Count()),
-            AverageRating = feedback.Where(f => f.AverageRating.HasValue).Select(f => f.AverageRating!.Value).Cast<decimal?>().Average(),
-            MostRecentFeedback = feedback.Max(f => (DateTime?)f.FeedbackDate),
-            FeedbackWithComments = feedback.Count(f => f.HasUnstructuredFeedback),
-            ProjectFeedbackCount = feedback.Count(f => f.SourceType == Domain.EmployeeFeedbackAggregate.FeedbackSourceType.ProjectColleague)
-        };
-
-        return Ok(statistics);
+        var dto = FeedbackTemplateDto.FromReadModel(template);
+        return CreateResponse(Result<FeedbackTemplateDto>.Success(dto));
     }
+
+    /// <summary>
+    /// Gets feedback templates filtered by source type.
+    /// </summary>
+    /// <param name="sourceType">Feedback source type (0=Customer, 1=Peer, 2=ProjectColleague)</param>
+    /// <returns>List of templates for the specified source type</returns>
+    [HttpGet("templates/by-source/{sourceType}")]
+    public async Task<IActionResult> GetFeedbackTemplatesBySourceType(int sourceType)
+    {
+        var query = new Application.Query.Queries.FeedbackTemplateQueries.GetFeedbackTemplatesBySourceTypeQuery(
+            (Domain.EmployeeFeedbackAggregate.FeedbackSourceType)sourceType);
+        var templates = await queryDispatcher.QueryAsync(query);
+        var dtos = templates.Select(FeedbackTemplateDto.FromReadModel).ToList();
+        return CreateResponse(Result<List<FeedbackTemplateDto>>.Success(dtos));
+    }
+
 }

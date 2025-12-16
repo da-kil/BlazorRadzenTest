@@ -7,16 +7,16 @@ using ti8m.BeachBreak.Domain.FeedbackTemplateAggregate;
 namespace ti8m.BeachBreak.Application.Command.Commands.EmployeeFeedbackCommands;
 
 /// <summary>
-/// Handler for CreateFeedbackTemplateCommand.
-/// Creates a new feedback template using event sourcing.
+/// Handler for CloneFeedbackTemplateCommand.
+/// Creates a copy of an existing template with new ownership.
 /// </summary>
-public class CreateFeedbackTemplateCommandHandler : ICommandHandler<CreateFeedbackTemplateCommand, Result>
+public class CloneFeedbackTemplateCommandHandler : ICommandHandler<CloneFeedbackTemplateCommand, Result>
 {
     private readonly IFeedbackTemplateAggregateRepository feedbackTemplateRepository;
     private readonly UserContext userContext;
     private readonly IEmployeeAggregateRepository employeeRepository;
 
-    public CreateFeedbackTemplateCommandHandler(
+    public CloneFeedbackTemplateCommandHandler(
         IFeedbackTemplateAggregateRepository feedbackTemplateRepository,
         UserContext userContext,
         IEmployeeAggregateRepository employeeRepository)
@@ -26,7 +26,7 @@ public class CreateFeedbackTemplateCommandHandler : ICommandHandler<CreateFeedba
         this.employeeRepository = employeeRepository;
     }
 
-    public async Task<Result> HandleAsync(CreateFeedbackTemplateCommand request, CancellationToken cancellationToken)
+    public async Task<Result> HandleAsync(CloneFeedbackTemplateCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -41,39 +41,38 @@ public class CreateFeedbackTemplateCommandHandler : ICommandHandler<CreateFeedba
 
             var userRole = employee.ApplicationRole;
 
-            // Validate user has permission (TeamLead or higher)
-            if (userRole < ApplicationRole.TeamLead)
+            // Load source template
+            var sourceTemplate = await feedbackTemplateRepository.LoadAsync<FeedbackTemplate>(request.SourceTemplateId, cancellationToken: cancellationToken);
+
+            if (sourceTemplate == null)
             {
-                return Result.Fail("Only HR and TeamLead users can create feedback templates", StatusCodes.Status403Forbidden);
+                return Result.Fail($"Source feedback template with ID {request.SourceTemplateId} not found", StatusCodes.Status404NotFound);
             }
 
-            // Create aggregate using domain logic (all validation happens in aggregate constructor)
-            var template = new FeedbackTemplate(
-                request.Id,
-                request.Name,
-                request.Description,
-                request.Criteria,
-                request.TextSections,
-                request.RatingScale,
-                request.ScaleLowLabel,
-                request.ScaleHighLabel,
-                request.AllowedSourceTypes,
+            // Clone using domain method (cloned template owned by current user)
+            var clonedTemplate = FeedbackTemplate.CloneFrom(
+                request.NewTemplateId,
+                sourceTemplate,
                 employeeId,
-                userRole);
+                userRole,
+                request.NamePrefix);
 
-            // Save via repository (persists events)
-            await feedbackTemplateRepository.StoreAsync(template, cancellationToken);
+            // Save cloned template via repository
+            await feedbackTemplateRepository.StoreAsync(clonedTemplate, cancellationToken);
 
             return Result.Success();
         }
         catch (ArgumentException ex)
         {
-            // Domain validation errors
+            return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
+        }
+        catch (InvalidOperationException ex)
+        {
             return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
         }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to create feedback template: {ex.Message}", StatusCodes.Status500InternalServerError);
+            return Result.Fail($"Failed to clone feedback template: {ex.Message}", StatusCodes.Status500InternalServerError);
         }
     }
 }

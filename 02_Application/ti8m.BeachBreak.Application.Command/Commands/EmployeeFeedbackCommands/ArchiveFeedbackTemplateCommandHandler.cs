@@ -7,16 +7,16 @@ using ti8m.BeachBreak.Domain.FeedbackTemplateAggregate;
 namespace ti8m.BeachBreak.Application.Command.Commands.EmployeeFeedbackCommands;
 
 /// <summary>
-/// Handler for CreateFeedbackTemplateCommand.
-/// Creates a new feedback template using event sourcing.
+/// Handler for ArchiveFeedbackTemplateCommand.
+/// Archives a feedback template with ownership validation.
 /// </summary>
-public class CreateFeedbackTemplateCommandHandler : ICommandHandler<CreateFeedbackTemplateCommand, Result>
+public class ArchiveFeedbackTemplateCommandHandler : ICommandHandler<ArchiveFeedbackTemplateCommand, Result>
 {
     private readonly IFeedbackTemplateAggregateRepository feedbackTemplateRepository;
     private readonly UserContext userContext;
     private readonly IEmployeeAggregateRepository employeeRepository;
 
-    public CreateFeedbackTemplateCommandHandler(
+    public ArchiveFeedbackTemplateCommandHandler(
         IFeedbackTemplateAggregateRepository feedbackTemplateRepository,
         UserContext userContext,
         IEmployeeAggregateRepository employeeRepository)
@@ -26,7 +26,7 @@ public class CreateFeedbackTemplateCommandHandler : ICommandHandler<CreateFeedba
         this.employeeRepository = employeeRepository;
     }
 
-    public async Task<Result> HandleAsync(CreateFeedbackTemplateCommand request, CancellationToken cancellationToken)
+    public async Task<Result> HandleAsync(ArchiveFeedbackTemplateCommand request, CancellationToken cancellationToken)
     {
         try
         {
@@ -41,39 +41,33 @@ public class CreateFeedbackTemplateCommandHandler : ICommandHandler<CreateFeedba
 
             var userRole = employee.ApplicationRole;
 
-            // Validate user has permission (TeamLead or higher)
-            if (userRole < ApplicationRole.TeamLead)
+            // Load aggregate
+            var template = await feedbackTemplateRepository.LoadAsync<FeedbackTemplate>(request.TemplateId, cancellationToken: cancellationToken);
+
+            if (template == null)
             {
-                return Result.Fail("Only HR and TeamLead users can create feedback templates", StatusCodes.Status403Forbidden);
+                return Result.Fail($"Feedback template with ID {request.TemplateId} not found", StatusCodes.Status404NotFound);
             }
 
-            // Create aggregate using domain logic (all validation happens in aggregate constructor)
-            var template = new FeedbackTemplate(
-                request.Id,
-                request.Name,
-                request.Description,
-                request.Criteria,
-                request.TextSections,
-                request.RatingScale,
-                request.ScaleLowLabel,
-                request.ScaleHighLabel,
-                request.AllowedSourceTypes,
-                employeeId,
-                userRole);
+            // Call domain method (includes ownership validation)
+            template.Archive(employeeId, userRole);
 
-            // Save via repository (persists events)
+            // Save via repository
             await feedbackTemplateRepository.StoreAsync(template, cancellationToken);
 
             return Result.Success();
         }
-        catch (ArgumentException ex)
+        catch (UnauthorizedAccessException ex)
         {
-            // Domain validation errors
+            return Result.Fail(ex.Message, StatusCodes.Status403Forbidden);
+        }
+        catch (InvalidOperationException ex)
+        {
             return Result.Fail(ex.Message, StatusCodes.Status400BadRequest);
         }
         catch (Exception ex)
         {
-            return Result.Fail($"Failed to create feedback template: {ex.Message}", StatusCodes.Status500InternalServerError);
+            return Result.Fail($"Failed to archive feedback template: {ex.Message}", StatusCodes.Status500InternalServerError);
         }
     }
 }

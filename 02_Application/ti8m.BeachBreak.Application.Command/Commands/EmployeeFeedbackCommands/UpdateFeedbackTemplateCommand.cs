@@ -1,3 +1,4 @@
+using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain;
 using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate;
@@ -5,10 +6,10 @@ using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate;
 namespace ti8m.BeachBreak.Application.Command.Commands.EmployeeFeedbackCommands;
 
 /// <summary>
-/// Command to create a new feedback template.
-/// Allows HR and TeamLead users to create reusable feedback templates with specific criteria and text sections.
+/// Command to update an existing feedback template.
+/// Updates name, description, criteria, text sections, rating scale, and source types.
 /// </summary>
-public record CreateFeedbackTemplateCommand(
+public record UpdateFeedbackTemplateCommand(
     Guid Id,
     Translation Name,
     Translation Description,

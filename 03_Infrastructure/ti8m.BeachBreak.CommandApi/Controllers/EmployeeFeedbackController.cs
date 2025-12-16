@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.EmployeeFeedbackCommands;
-using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
+using ti8m.BeachBreak.CommandApi.Dto;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -65,27 +64,81 @@ public class EmployeeFeedbackController : BaseController
     }
 
     /// <summary>
-    /// Creates a new custom feedback template.
+    /// Creates a new feedback template.
     /// </summary>
     /// <param name="dto">Template creation data</param>
-    /// <returns>Created template ID</returns>
+    /// <returns>Success/failure result</returns>
     [HttpPost("templates")]
     public async Task<IActionResult> CreateFeedbackTemplate([FromBody] CreateFeedbackTemplateDto dto)
     {
-        var command = new CreateFeedbackTemplateCommand
-        {
-            TemplateName = dto.TemplateName,
-            Description = dto.Description ?? string.Empty,
-            SourceType = dto.SourceType,
-            EvaluationCriteria = dto.EvaluationCriteria ?? new List<EvaluationItem>(),
-            TextSections = dto.TextSections ?? new List<TextSectionDefinition>(),
-            RatingScale = dto.RatingScale,
-            ScaleLowLabel = dto.ScaleLowLabel ?? "Poor",
-            ScaleHighLabel = dto.ScaleHighLabel ?? "Excellent",
-            IsActive = dto.IsActive,
-            IsDefault = dto.IsDefault
-        };
+        var command = dto.ToCommand();
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
+    }
 
+    /// <summary>
+    /// Updates an existing feedback template (draft only).
+    /// </summary>
+    /// <param name="id">Template ID</param>
+    /// <param name="dto">Updated template data</param>
+    /// <returns>Success/failure result</returns>
+    [HttpPut("templates/{id}")]
+    public async Task<IActionResult> UpdateFeedbackTemplate(Guid id, [FromBody] UpdateFeedbackTemplateDto dto)
+    {
+        var command = dto.ToCommand(id);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
+    }
+
+    /// <summary>
+    /// Publishes a feedback template (makes it available for use).
+    /// </summary>
+    /// <param name="id">Template ID</param>
+    /// <returns>Success/failure result</returns>
+    [HttpPost("templates/{id}/publish")]
+    public async Task<IActionResult> PublishFeedbackTemplate(Guid id)
+    {
+        var command = new PublishFeedbackTemplateCommand(id);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
+    }
+
+    /// <summary>
+    /// Archives a feedback template (hides from active list).
+    /// </summary>
+    /// <param name="id">Template ID</param>
+    /// <returns>Success/failure result</returns>
+    [HttpPost("templates/{id}/archive")]
+    public async Task<IActionResult> ArchiveFeedbackTemplate(Guid id)
+    {
+        var command = new ArchiveFeedbackTemplateCommand(id);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
+    }
+
+    /// <summary>
+    /// Soft deletes a feedback template.
+    /// </summary>
+    /// <param name="id">Template ID</param>
+    /// <returns>Success/failure result</returns>
+    [HttpDelete("templates/{id}")]
+    public async Task<IActionResult> DeleteFeedbackTemplate(Guid id)
+    {
+        var command = new DeleteFeedbackTemplateCommand(id);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
+    }
+
+    /// <summary>
+    /// Clones an existing feedback template with new ownership.
+    /// </summary>
+    /// <param name="id">Source template ID</param>
+    /// <param name="dto">Clone configuration</param>
+    /// <returns>Success/failure result</returns>
+    [HttpPost("templates/{id}/clone")]
+    public async Task<IActionResult> CloneFeedbackTemplate(Guid id, [FromBody] CloneFeedbackTemplateDto dto)
+    {
+        var command = dto.ToCommand(id);
         var result = await commandDispatcher.SendAsync(command);
         return CreateResponse(result);
     }

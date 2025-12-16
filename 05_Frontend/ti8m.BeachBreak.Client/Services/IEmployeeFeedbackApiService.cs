@@ -61,15 +61,6 @@ public interface IEmployeeFeedbackApiService
     /// <param name="sourceType">Filter by specific source type</param>
     /// <returns>Available templates and criteria</returns>
     Task<Result<FeedbackTemplatesResponse>> GetFeedbackTemplatesAsync(int? sourceType = null);
-
-    /// <summary>
-    /// Gets feedback statistics for an employee.
-    /// </summary>
-    /// <param name="employeeId">Employee ID</param>
-    /// <param name="fromDate">Statistics from date</param>
-    /// <param name="toDate">Statistics to date</param>
-    /// <returns>Aggregated feedback statistics</returns>
-    Task<Result<object>> GetFeedbackStatisticsAsync(Guid employeeId, DateTime? fromDate = null, DateTime? toDate = null);
 }
 
 /// <summary>
