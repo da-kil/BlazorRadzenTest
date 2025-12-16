@@ -68,6 +68,7 @@ internal class Program
         builder.Services.AddScoped<IGoalApiService, GoalApiService>();
         builder.Services.AddScoped<ITranslationApiService, TranslationApiService>();
         builder.Services.AddScoped<IEmployeeFeedbackApiService, EmployeeFeedbackApiService>();
+        builder.Services.AddScoped<IFeedbackTemplateService, FeedbackTemplateService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();
@@ -89,6 +90,7 @@ internal class Program
 
         // Register state management
         builder.Services.AddScoped<QuestionnaireBuilderState>();
+        builder.Services.AddScoped<FeedbackTemplateBuilderState>();
 
         await builder.Build().RunAsync();
     }
