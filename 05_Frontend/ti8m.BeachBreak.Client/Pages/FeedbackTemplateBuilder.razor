@@ -91,9 +91,9 @@
                 <ProgressSteps CurrentStep="@State.CurrentStep"
                                OnStepClick="@SetCurrentStep" />
 
-                <!-- Step 1: Basic Information -->
                 @if (State.CurrentStep == 1)
                 {
+                    @* Step 1: Basic Information *@
                     <section class="step-section" data-step="1">
                         <header class="qb-step-header">
                             <h2 class="step-title">@T("steps.template-information")</h2>
@@ -108,9 +108,9 @@
                         </nav>
                     </section>
                 }
-                <!-- Step 2: Criteria Selection -->
                 else if (State.CurrentStep == 2)
                 {
+                    @* Step 2: Criteria Selection *@
                     <section class="step-section" data-step="2">
                         <header class="qb-step-header">
                             <h2 class="step-title">@T("steps.configure-criteria")</h2>
@@ -130,9 +130,9 @@
                         </nav>
                     </section>
                 }
-                <!-- Step 3: Review -->
                 else if (State.CurrentStep == 3)
                 {
+                    @* Step 3: Review *@
                     <section class="step-section" data-step="3">
                         <header class="qb-step-header">
                             <h2 class="step-title">@T("steps.review-template")</h2>

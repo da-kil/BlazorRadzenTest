@@ -324,10 +324,12 @@ public class Program
         builder.Services.AddScoped<IGoalApiService, GoalApiService>();
         builder.Services.AddScoped<ITranslationApiService, TranslationApiService>();
         builder.Services.AddScoped<IEmployeeFeedbackApiService, EmployeeFeedbackApiService>();
+        builder.Services.AddScoped<IFeedbackTemplateService, FeedbackTemplateService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();
         builder.Services.AddScoped<QuestionnaireValidationService>();
+        builder.Services.AddScoped<FeedbackTemplateValidationService>();
         builder.Services.AddScoped<GoalService>();
 
         // Register export services
@@ -344,6 +346,7 @@ public class Program
 
         // Register state management
         builder.Services.AddScoped<QuestionnaireBuilderState>();
+        builder.Services.AddScoped<FeedbackTemplateBuilderState>();
 
         var app = builder.Build();
 
