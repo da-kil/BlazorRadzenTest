@@ -1,7 +1,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Shared
-@inherits OptimizedComponentBase
+@inherits OptimizedTranslatableComponentBase
 
 <div class="item-card">
     <header class="item-header">
@@ -14,7 +14,7 @@
                                   ValueChanged="@OnRequiredChanged"
                                   Name="@CheckboxId"
                                   Disabled="@Disabled" />
-                    <RadzenLabel Text="Required" Component="@CheckboxId" Class="required-label" />
+                    <RadzenLabel Text="@T("labels.required")" Component="@CheckboxId" Class="required-label" />
                 </div>
             }
         </div>

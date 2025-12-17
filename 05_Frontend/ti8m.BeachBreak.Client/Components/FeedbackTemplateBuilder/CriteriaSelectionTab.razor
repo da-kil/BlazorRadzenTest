@@ -41,6 +41,14 @@
                                     DescriptionEnglish="@criterion.DescriptionEnglish"
                                     DescriptionGerman="@criterion.DescriptionGerman"
                                     IsRequired="@criterion.IsRequired"
+                                    TitleEnglishLabel="@T("labels.criterion-title-english")"
+                                    TitleGermanLabel="@T("labels.criterion-title-german")"
+                                    TitleEnglishPlaceholder="@T("placeholders.criterion-title-english")"
+                                    TitleGermanPlaceholder="@T("placeholders.criterion-title-german")"
+                                    DescriptionEnglishLabel="@T("labels.criterion-description-english")"
+                                    DescriptionGermanLabel="@T("labels.criterion-description-german")"
+                                    DescriptionEnglishPlaceholder="@T("placeholders.criterion-description-english")"
+                                    DescriptionGermanPlaceholder="@T("placeholders.criterion-description-german")"
                                     OnTitleEnglishChanged="@(v => { criterion.TitleEnglish = v; StateHasChanged(); })"
                                     OnTitleGermanChanged="@(v => { criterion.TitleGerman = v; StateHasChanged(); })"
                                     OnDescriptionEnglishChanged="@(v => { criterion.DescriptionEnglish = v; StateHasChanged(); })"
@@ -87,43 +95,31 @@
             <div class="text-sections-list">
                 @foreach (var textSection in Template.TextSections.OrderBy(s => s.Order))
                 {
-                    <div class="card mb-2 p-3">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">
-                                    @(string.IsNullOrWhiteSpace(textSection.TitleEnglish) ? T("labels.untitled-section") : textSection.TitleEnglish)
-                                </RadzenText>
-                                @if (!string.IsNullOrWhiteSpace(textSection.DescriptionEnglish))
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                        @textSection.DescriptionEnglish
-                                    </RadzenText>
-                                }
-                            </div>
-                            <div class="d-flex gap-2">
-                                <RadzenButton Icon="edit"
-                                             ButtonStyle="ButtonStyle.Light"
-                                             Size="ButtonSize.Small"
-                                             Click="@(() => EditTextSection(textSection))"
-                                             Disabled="@(!Template.IsAvailableForEditing)" />
-                                <RadzenButton Icon="arrow_upward"
-                                             ButtonStyle="ButtonStyle.Light"
-                                             Size="ButtonSize.Small"
-                                             Click="@(() => MoveTextSectionUp(textSection))"
-                                             Disabled="@(!Template.IsAvailableForEditing || textSection.Order == 0)" />
-                                <RadzenButton Icon="arrow_downward"
-                                             ButtonStyle="ButtonStyle.Light"
-                                             Size="ButtonSize.Small"
-                                             Click="@(() => MoveTextSectionDown(textSection))"
-                                             Disabled="@(!Template.IsAvailableForEditing || textSection.Order == Template.TextSections.Count - 1)" />
-                                <RadzenButton Icon="delete"
-                                             ButtonStyle="ButtonStyle.Danger"
-                                             Size="ButtonSize.Small"
-                                             Click="@(() => RemoveTextSection(textSection))"
-                                             Disabled="@(!Template.IsAvailableForEditing)" />
-                            </div>
-                        </div>
-                    </div>
+                    <UnifiedItemCard TitleEnglish="@textSection.TitleEnglish"
+                                    TitleGerman="@textSection.TitleGerman"
+                                    DescriptionEnglish="@textSection.DescriptionEnglish"
+                                    DescriptionGerman="@textSection.DescriptionGerman"
+                                    IsRequired="@textSection.IsRequired"
+                                    TitleEnglishLabel="@T("labels.section-title-english")"
+                                    TitleGermanLabel="@T("labels.section-title-german")"
+                                    TitleEnglishPlaceholder="@T("placeholders.section-title-english")"
+                                    TitleGermanPlaceholder="@T("placeholders.section-title-german")"
+                                    DescriptionEnglishLabel="@T("labels.section-description-english")"
+                                    DescriptionGermanLabel="@T("labels.section-description-german")"
+                                    DescriptionEnglishPlaceholder="@T("placeholders.section-description-english")"
+                                    DescriptionGermanPlaceholder="@T("placeholders.section-description-german")"
+                                    OnTitleEnglishChanged="@(v => { textSection.TitleEnglish = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnTitleGermanChanged="@(v => { textSection.TitleGerman = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnDescriptionEnglishChanged="@(v => { textSection.DescriptionEnglish = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnDescriptionGermanChanged="@(v => { textSection.DescriptionGerman = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnRequiredChanged="@((bool v) => { textSection.IsRequired = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnMoveUp="@(() => MoveTextSectionUp(textSection))"
+                                    OnMoveDown="@(() => MoveTextSectionDown(textSection))"
+                                    OnDelete="@(() => RemoveTextSection(textSection))"
+                                    MoveUpDisabled="@(textSection.Order == 0)"
+                                    MoveDownDisabled="@(textSection.Order == Template.TextSections.Count - 1)"
+                                    ShowActions="true"
+                                    Disabled="@(!Template.IsAvailableForEditing)" />
                 }
             </div>
         }
@@ -139,8 +135,8 @@
     {
         var newCriterion = new EvaluationItem(
             $"criterion_{Guid.NewGuid().ToString()[..8]}",
-            "New Criterion",
-            "Description",
+            "",
+            "",
             false,
             Template.Criteria.Count);
 
@@ -196,7 +192,7 @@
         var newSection = new TextSectionDefinition
         {
             Key = $"section_{Guid.NewGuid().ToString()[..8]}",
-            TitleEnglish = "New Text Section",
+            TitleEnglish = "",
             TitleGerman = "",
             DescriptionEnglish = "",
             DescriptionGerman = "",
@@ -211,12 +207,6 @@
         StateHasChanged();
     }
 
-    private async Task EditTextSection(TextSectionDefinition section)
-    {
-        // TODO: Open dialog to edit text section details
-        // For now, we'll use inline editing via the card display
-        ShowInfo(T("messages.text-section-edit-coming-soon"));
-    }
 
     private void RemoveTextSection(TextSectionDefinition section)
     {

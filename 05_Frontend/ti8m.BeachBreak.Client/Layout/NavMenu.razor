@@ -32,7 +32,13 @@
 				<Authorized>
 					<RadzenPanelMenuItem Text="@T("nav.team-overview")" Path="team/questionnaires" />
 					<RadzenPanelMenuItem Text="@T("nav.employee-feedback")" Path="employee-feedback-management" />
-					<RadzenPanelMenuItem Text="@T("nav.feedback-templates")" Path="feedback-template-management" />
+
+					<!-- Show Feedback Templates only for TeamLead users who are NOT HR -->
+					<AuthorizeView Policy="HR">
+						<NotAuthorized Context="nonHRContext">
+							<RadzenPanelMenuItem Text="@T("nav.feedback-templates")" Path="feedback-template-management" />
+						</NotAuthorized>
+					</AuthorizeView>
 				</Authorized>
 			</AuthorizeView>
 

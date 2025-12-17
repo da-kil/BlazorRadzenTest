@@ -7,6 +7,13 @@
         "createdDate":  "2025-12-03T12:17:11.8998604+00:00"
     },
     {
+        "key":  "buttons.add-criterion",
+        "german":  "Kriterium hinzufügen",
+        "english":  "Add Criterion",
+        "category":  "buttons",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
         "key":  "buttons.add-new-goal",
         "german":  "Neues Ziel hinzufügen",
         "english":  "Add new goal",
@@ -28,6 +35,13 @@
         "createdDate":  "2025-12-03T12:17:11.8998717+00:00"
     },
     {
+        "key":  "buttons.add-text-section",
+        "german":  "Textabschnitt hinzufügen",
+        "english":  "Add Text Section",
+        "category":  "buttons",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
         "key":  "buttons.analytics-dashboard",
         "german":  "Analytik-Dashboard",
         "english":  "Analytics Dashboard",
@@ -47,6 +61,20 @@
         "english":  "Assessment",
         "category":  "buttons",
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.back",
+        "german":  "Zurück",
+        "english":  "Back",
+        "category":  "buttons",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.cancel",
+        "german":  "Abbrechen",
+        "english":  "Cancel",
+        "category":  "buttons",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "buttons.cancel",
@@ -71,24 +99,10 @@
     },
     {
         "key":  "buttons.clear-filters",
-        "german":  "Filter lÃ¶schen",
+        "german":  "Filter zurücksetzen",
         "english":  "Clear Filters",
         "category":  "buttons",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "buttons.clear-filters",
-        "german":  "Filter lÃ¶schen",
-        "english":  "Clear Filters",
-        "category":  "buttons",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "buttons.clear-filters",
-        "german":  "Filter lÃ¶schen",
-        "english":  "Clear Filters",
-        "category":  "buttons",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "buttons.clear-filters",
@@ -148,10 +162,10 @@
     },
     {
         "key":  "buttons.delete",
-        "german":  "löschen",
+        "german":  "Löschen",
         "english":  "Delete",
         "category":  "buttons",
-        "createdDate":  "2025-12-03T12:17:11.8998603+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "buttons.deleting",
@@ -159,6 +173,13 @@
         "english":  "Deleting",
         "category":  "buttons",
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.edit",
+        "german":  "Bearbeiten",
+        "english":  "Edit",
+        "category":  "buttons",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "buttons.edit",
@@ -208,6 +229,13 @@
         "english":  "Next: Build Sections",
         "category":  "buttons",
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.next-configure-criteria",
+        "german":  "Weiter: Kriterien konfigurieren",
+        "english":  "Next: Configure Criteria",
+        "category":  "buttons",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "buttons.next-review",
@@ -263,21 +291,7 @@
         "german":  "Feedback erfassen",
         "english":  "Record Feedback",
         "category":  "buttons",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "buttons.record-feedback",
-        "german":  "Feedback erfassen",
-        "english":  "Record Feedback",
-        "category":  "buttons",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "buttons.record-feedback",
-        "german":  "Feedback erfassen",
-        "english":  "Record Feedback",
-        "category":  "buttons",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "buttons.record-feedback",
@@ -413,6 +427,13 @@
         "createdDate":  "2025-12-03T12:17:11.8998713+00:00"
     },
     {
+        "key":  "columns.actions",
+        "german":  "Aktionen",
+        "english":  "Actions",
+        "category":  "columns",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "columns.application-role",
         "german":  "Anwendungsrolle",
         "english":  "Application Role",
@@ -462,6 +483,13 @@
         "createdDate":  "2025-12-03T12:17:11.8998708+00:00"
     },
     {
+        "key":  "columns.criteria",
+        "german":  "Kriterien",
+        "english":  "Criteria",
+        "category":  "columns",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
         "key":  "columns.description-de",
         "german":  "Beschreibung",
         "english":  "Description",
@@ -490,6 +518,13 @@
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
     },
     {
+        "key":  "columns.employee",
+        "german":  "Mitarbeiter",
+        "english":  "Employee",
+        "category":  "columns",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "columns.english",
         "german":  "Englisch",
         "english":  "English",
@@ -501,21 +536,7 @@
         "german":  "Feedback-Datum",
         "english":  "Feedback Date",
         "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.feedback-date",
-        "german":  "Feedback-Datum",
-        "english":  "Feedback Date",
-        "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.feedback-date",
-        "german":  "Feedback-Datum",
-        "english":  "Feedback Date",
-        "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "columns.feedback-date",
@@ -595,6 +616,13 @@
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
     },
     {
+        "key":  "columns.project",
+        "german":  "Projekt",
+        "english":  "Project",
+        "category":  "columns",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "columns.projection",
         "german":  "Projektion",
         "english":  "Projection",
@@ -606,21 +634,7 @@
         "german":  "Anbieter",
         "english":  "Provider",
         "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.provider",
-        "german":  "Anbieter",
-        "english":  "Provider",
-        "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.provider",
-        "german":  "Anbieter",
-        "english":  "Provider",
-        "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "columns.provider",
@@ -669,21 +683,14 @@
         "german":  "Bewertung",
         "english":  "Rating",
         "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
-        "key":  "columns.rating",
-        "german":  "Bewertung",
-        "english":  "Rating",
+        "key":  "columns.rating-scale",
+        "german":  "Bewertungsskala",
+        "english":  "Rating Scale",
         "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.rating",
-        "german":  "Bewertung",
-        "english":  "Rating",
-        "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "columns.reason",
@@ -708,24 +715,10 @@
     },
     {
         "key":  "columns.source-type",
-        "german":  "Quellenart",
+        "german":  "Quelltyp",
         "english":  "Source Type",
         "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.source-type",
-        "german":  "Quellenart",
-        "english":  "Source Type",
-        "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.source-type",
-        "german":  "Quellenart",
-        "english":  "Source Type",
-        "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "columns.source-type",
@@ -767,21 +760,7 @@
         "german":  "Zusammenfassung",
         "english":  "Summary",
         "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.summary",
-        "german":  "Zusammenfassung",
-        "english":  "Summary",
-        "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.summary",
-        "german":  "Zusammenfassung",
-        "english":  "Summary",
-        "category":  "columns",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "columns.template-name",
@@ -789,6 +768,13 @@
         "english":  "Template Name",
         "category":  "columns",
         "createdDate":  "2025-12-03T12:17:11.8998704+00:00"
+    },
+    {
+        "key":  "columns.text-sections",
+        "german":  "Textabschnitte",
+        "english":  "Text Sections",
+        "category":  "columns",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "columns.updated",
@@ -833,6 +819,13 @@
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
     },
     {
+        "key":  "dialogs.clone-template-confirm",
+        "german":  "Dies erstellt eine Kopie von \u0027{0}\u0027 im Entwurfsstatus. Fortfahren?",
+        "english":  "This will create a copy of \u0027{0}\u0027 in Draft status. Continue?",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "dialogs.clone-template-message",
         "german":  "Dies erstellt eine Kopie der aktuellen Fragebogen-Vorlage im Entwurfsstatus. Fortfahren?",
         "english":  "This will create a copy of the current questionnaire template in Draft status. Continue?",
@@ -844,7 +837,7 @@
         "german":  "Vorlage klonen",
         "english":  "Clone Template",
         "category":  "dialogs",
-        "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "dialogs.close",
@@ -859,6 +852,13 @@
         "english":  "Confirm",
         "category":  "dialogs",
         "createdDate":  "2025-12-03T12:17:11.8998684+00:00"
+    },
+    {
+        "key":  "dialogs.confirm-delete",
+        "german":  "Löschung bestätigen",
+        "english":  "Confirm Delete",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "dialogs.confirm-delete-evaluation",
@@ -938,6 +938,20 @@
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
     },
     {
+        "key":  "dialogs.delete-template-confirm",
+        "german":  "Sind Sie sicher, dass Sie \u0027{0}\u0027 dauerhaft löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden. Die Vorlage kann nur gelöscht werden, wenn keine verknüpften Feedback-Datensätze vorhanden sind.",
+        "english":  "Are you sure you want to permanently delete \u0027{0}\u0027? This action cannot be undone. The template can only be deleted if it has no associated feedback records.",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.delete-template-title",
+        "german":  "Vorlage löschen",
+        "english":  "Delete Template",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "dialogs.delete-text-section-title",
         "german":  "Textabschnitt löschen",
         "english":  "Delete Text Section",
@@ -952,11 +966,39 @@
         "createdDate":  "2025-12-06T12:00:00.0000000+00:00"
     },
     {
+        "key":  "dialogs.edit-feedback-title",
+        "german":  "Feedback bearbeiten",
+        "english":  "Edit Feedback",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "dialogs.employee-sign-off",
         "german":  "Mitarbeiter Bestätigung",
         "english":  "Employee Sign-Off",
         "category":  "dialogs",
         "createdDate":  "2025-12-03T12:17:11.8998648+00:00"
+    },
+    {
+        "key":  "dialogs.publish-template-confirm",
+        "german":  "\u0027{0}\u0027 veröffentlichen? Sie wird für Feedback-Erfassung verfügbar.",
+        "english":  "Publish \u0027{0}\u0027? It will become available for use in feedback recording.",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.publish-template-title",
+        "german":  "Vorlage veröffentlichen",
+        "english":  "Publish Template",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "dialogs.record-feedback-title",
+        "german":  "Feedback erfassen",
+        "english":  "Record Feedback",
+        "category":  "dialogs",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "dialogs.save-changes",
@@ -1034,6 +1076,13 @@
         "english":  "Filter by Questionnaire",
         "category":  "filters",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "filters.filter-by-source-type",
+        "german":  "Nach Quellentyp filtern",
+        "english":  "Filter by Source Type",
+        "category":  "filters",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "filters.filter-by-status",
@@ -1205,31 +1254,17 @@
     },
     {
         "key":  "labels.additional-requirements",
-        "german":  "ZusÃ¤tzliche Anforderungen",
-        "english":  "Additional Requirements",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.additional-requirements",
-        "german":  "ZusÃ¤tzliche Anforderungen",
-        "english":  "Additional Requirements",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.additional-requirements",
-        "german":  "ZusÃ¤tzliche Anforderungen",
-        "english":  "Additional Requirements",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.additional-requirements",
         "german":  "Zusätzliche Anforderungen",
         "english":  "Additional Requirements",
         "category":  "labels",
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.allowed-source-types",
+        "german":  "Erlaubte Quellentypen",
+        "english":  "Allowed Source Types",
+        "category":  "labels",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "labels.assigned-by",
@@ -1237,27 +1272,6 @@
         "english":  "Assigned By",
         "category":  "labels",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.average-rating",
-        "german":  "Durchschnittsbewertung",
-        "english":  "Average Rating",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.average-rating",
-        "german":  "Durchschnittsbewertung",
-        "english":  "Average Rating",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.average-rating",
-        "german":  "Durchschnittsbewertung",
-        "english":  "Average Rating",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.average-rating",
@@ -1302,25 +1316,39 @@
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
-        "key":  "labels.criteria",
-        "german":  "Kriterien",
-        "english":  "Criteria",
+        "key":  "labels.criterion-description-english",
+        "german":  "Kriterium-Beschreibung (Englisch)",
+        "english":  "Criterion Description (English)",
         "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T16:48:00.0000000+00:00"
     },
     {
-        "key":  "labels.criteria",
-        "german":  "Kriterien",
-        "english":  "Criteria",
+        "key":  "labels.criterion-description-german",
+        "german":  "Kriterium-Beschreibung (Deutsch)",
+        "english":  "Criterion Description (German)",
         "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T16:48:00.0000000+00:00"
     },
     {
-        "key":  "labels.criteria",
-        "german":  "Kriterien",
-        "english":  "Criteria",
+        "key":  "labels.criterion-title-english",
+        "german":  "Kriterium-Titel (Englisch)",
+        "english":  "Criterion Title (English)",
         "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T16:48:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.criterion-title-german",
+        "german":  "Kriterium-Titel (Deutsch)",
+        "english":  "Criterion Title (German)",
+        "category":  "labels",
+        "createdDate":  "2025-12-17T16:48:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.date-range",
+        "german":  "Datumsbereich",
+        "english":  "Date Range",
+        "category":  "labels",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.default-due-days",
@@ -1428,32 +1456,18 @@
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
-        "key":  "labels.feedback-source",
-        "german":  "Feedback-Quelle",
-        "english":  "Feedback Source",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.feedback-source",
-        "german":  "Feedback-Quelle",
-        "english":  "Feedback Source",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.feedback-source",
-        "german":  "Feedback-Quelle",
-        "english":  "Feedback Source",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "labels.filter-by-status",
         "german":  "Nach Status filtern",
         "english":  "Filter by Status",
         "category":  "labels",
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.from-date",
+        "german":  "Von Datum",
+        "english":  "From Date",
+        "category":  "labels",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.german-description-optional",
@@ -1582,11 +1596,11 @@
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
-        "key":  "labels.project-feedback",
-        "german":  "Projekt-Feedback",
-        "english":  "Project Feedback",
+        "key":  "labels.placeholder",
+        "german":  "Platzhalter",
+        "english":  "Placeholder",
         "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "labels.project-feedback",
@@ -1600,35 +1614,7 @@
         "german":  "Projekt-Feedback",
         "english":  "Project Feedback",
         "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.project-feedback",
-        "german":  "Projekt-Feedback",
-        "english":  "Project Feedback",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.project-required",
-        "german":  "Projekt erforderlich",
-        "english":  "Project Required",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.project-required",
-        "german":  "Projekt erforderlich",
-        "english":  "Project Required",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.project-required",
-        "german":  "Projekt erforderlich",
-        "english":  "Project Required",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.project-required",
@@ -1666,25 +1652,11 @@
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
-        "key":  "labels.recent",
-        "german":  "Neueste",
-        "english":  "Recent",
+        "key":  "labels.rating-scale",
+        "german":  "Bewertungsskala",
+        "english":  "Rating Scale",
         "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.recent",
-        "german":  "Neueste",
-        "english":  "Recent",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.recent",
-        "german":  "Neueste",
-        "english":  "Recent",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "labels.recent",
@@ -1729,25 +1701,18 @@
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
-        "key":  "labels.role-required",
-        "german":  "Rolle erforderlich",
-        "english":  "Role Required",
+        "key":  "labels.scale-high-label",
+        "german":  "Hohes Skalen-Label",
+        "english":  "Scale High Label",
         "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
-        "key":  "labels.role-required",
-        "german":  "Rolle erforderlich",
-        "english":  "Role Required",
+        "key":  "labels.scale-low-label",
+        "german":  "Niedriges Skalen-Label",
+        "english":  "Scale Low Label",
         "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.role-required",
-        "german":  "Rolle erforderlich",
-        "english":  "Role Required",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "labels.search",
@@ -1771,11 +1736,39 @@
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
     },
     {
+        "key":  "labels.section-description-english",
+        "german":  "Beschreibung (Englisch)",
+        "english":  "Description (English)",
+        "category":  "labels",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.section-description-german",
+        "german":  "Beschreibung (Deutsch)",
+        "english":  "Description (German)",
+        "category":  "labels",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "labels.sections",
         "german":  "Abschnitte",
         "english":  "Sections",
         "category":  "labels",
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.section-title-english",
+        "german":  "Titel (Englisch)",
+        "english":  "Title (English)",
+        "category":  "labels",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.section-title-german",
+        "german":  "Titel (Deutsch)",
+        "english":  "Title (German)",
+        "category":  "labels",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.selected-count",
@@ -1790,27 +1783,6 @@
         "english":  "Selected Questionnaire",
         "category":  "labels",
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.selected-source",
-        "german":  "AusgewÃ¤hlte Quelle",
-        "english":  "Selected Source",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.selected-source",
-        "german":  "AusgewÃ¤hlte Quelle",
-        "english":  "Selected Source",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.selected-source",
-        "german":  "AusgewÃ¤hlte Quelle",
-        "english":  "Selected Source",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.selected-source",
@@ -1863,7 +1835,7 @@
     },
     {
         "key":  "labels.template-optional-description",
-        "german":  "W\u00E4hlen Sie optional eine Vorlage aus, um Kriterien und Textabschnitte vorab auszuf\u00FCllen",
+        "german":  "Wählen Sie optional eine Vorlage aus, um Kriterien und Textabschnitte vorab auszufüllen",
         "english":  "Optionally select a template to pre-populate criteria and text sections",
         "category":  "labels",
         "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
@@ -1876,32 +1848,18 @@
         "createdDate":  "2025-12-09T12:30:00.0000000+00:00"
     },
     {
+        "key":  "labels.to-date",
+        "german":  "Bis Datum",
+        "english":  "To Date",
+        "category":  "labels",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "labels.total-assignments",
         "german":  "Gesamtzuweisungen",
         "english":  "Total Assignments",
         "category":  "labels",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.total-feedback",
-        "german":  "Gesamt-Feedback",
-        "english":  "Total Feedback",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.total-feedback",
-        "german":  "Gesamt-Feedback",
-        "english":  "Total Feedback",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.total-feedback",
-        "german":  "Gesamt-Feedback",
-        "english":  "Total Feedback",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.total-feedback",
@@ -1946,27 +1904,6 @@
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
-        "key":  "labels.with-comments",
-        "german":  "Mit Kommentaren",
-        "english":  "With Comments",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.with-comments",
-        "german":  "Mit Kommentaren",
-        "english":  "With Comments",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.with-comments",
-        "german":  "Mit Kommentaren",
-        "english":  "With Comments",
-        "category":  "labels",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "labels.yes",
         "german":  "Ja",
         "english":  "Yes",
@@ -2002,11 +1939,25 @@
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.cloning",
+        "german":  "Wird geklont...",
+        "english":  "Cloning...",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.cloning-template",
         "german":  "Vorlage wird geklont...",
         "english":  "Cloning template...",
         "category":  "messages",
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.confirm-delete-feedback",
+        "german":  "Möchten Sie das folgende Feedback wirklich löschen?",
+        "english":  "Are you sure you want to delete the following feedback?",
+        "category":  "messages",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.create-sections-instruction",
@@ -2016,11 +1967,18 @@
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
-        "key":  "messages.deleting",
-        "german":  "Löschen...",
-        "english":  "Deleting",
+        "key":  "messages.criteria-description",
+        "german":  "Bewertungskriterien zur Beurteilung der Leistung",
+        "english":  "Evaluation criteria for assessing performance",
         "category":  "messages",
-        "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.deleting",
+        "german":  "Wird gelöscht...",
+        "english":  "Deleting...",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.english-item-title-required",
@@ -2037,11 +1995,18 @@
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.error",
+        "german":  "Fehler",
+        "english":  "Error",
+        "category":  "messages",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.error-cloning-template",
         "german":  "Fehler beim Klonen der Vorlage",
         "english":  "Error cloning template",
         "category":  "messages",
-        "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.failed-archive-template",
@@ -2093,6 +2058,62 @@
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.failed-to-clone-template",
+        "german":  "Fehler beim Klonen der Vorlage. Bitte versuchen Sie es erneut.",
+        "english":  "Failed to clone template. Please try again.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-delete-feedback",
+        "german":  "Fehler beim Löschen des Feedbacks",
+        "english":  "Failed to delete feedback",
+        "category":  "messages",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-delete-template",
+        "german":  "Fehler beim Löschen der Vorlage. Sie hat möglicherweise verknüpfte Feedback-Datensätze oder kann nicht im archivierten Status gelöscht werden.",
+        "english":  "Failed to delete template. It may have associated feedback records or cannot be deleted while archived.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-load-feedback",
+        "german":  "Fehler beim Laden des Feedbacks",
+        "english":  "Failed to load feedback",
+        "category":  "messages",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-load-templates",
+        "german":  "Fehler beim Laden der Vorlagen",
+        "english":  "Failed to load templates",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-publish-template",
+        "german":  "Fehler beim Veröffentlichen der Vorlage",
+        "english":  "Failed to publish template",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-update-status",
+        "german":  "Fehler beim Aktualisieren des Status",
+        "english":  "Failed to update template status",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-update-template",
+        "german":  "Fehler beim Aktualisieren der Vorlage",
+        "english":  "Failed to update template",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.failed-unpublish-template",
         "german":  "Fehler beim Rückgängigmachen der Veröffentlichung",
         "english":  "Failed to unpublish template",
@@ -2105,6 +2126,13 @@
         "english":  "Failed to update template - no response from server",
         "category":  "messages",
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.feedback-deleted-successfully",
+        "german":  "Feedback erfolgreich gelöscht",
+        "english":  "Feedback deleted successfully",
+        "category":  "messages",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.goals-added-dynamically-workflow",
@@ -2191,32 +2219,25 @@
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.no-criteria-added",
+        "german":  "Keine Kriterien hinzugefügt. Klicken Sie auf \u0027Kriterium hinzufügen\u0027, um zu beginnen.",
+        "english":  "No criteria added. Click \u0027Add Criterion\u0027 to get started.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.no-criteria-configured",
+        "german":  "Keine Bewertungskriterien konfiguriert",
+        "english":  "No evaluation criteria configured",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.no-evaluations-configured",
         "german":  "Keine Bewertungen konfiguriert",
         "english":  "No evaluations configured",
         "category":  "messages",
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.no-feedback-found",
-        "german":  "Kein Feedback gefunden",
-        "english":  "No feedback found",
-        "category":  "messages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.no-feedback-found",
-        "german":  "Kein Feedback gefunden",
-        "english":  "No feedback found",
-        "category":  "messages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.no-feedback-found",
-        "german":  "Kein Feedback gefunden",
-        "english":  "No feedback found",
-        "category":  "messages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.no-feedback-found",
@@ -2268,11 +2289,32 @@
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.no-text-sections-added",
+        "german":  "Keine Textabschnitte hinzugefügt. Klicken Sie auf \u0027Textabschnitt hinzufügen\u0027, um zu beginnen.",
+        "english":  "No text sections added. Click \u0027Add Text Section\u0027 to get started.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.no-text-sections-configured",
         "german":  "Keine Textabschnitte konfiguriert",
         "english":  "No text sections configured",
         "category":  "messages",
-        "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.not-implemented",
+        "german":  "Nicht implementiert",
+        "english":  "Not Implemented",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.publishing",
+        "german":  "Wird veröffentlicht...",
+        "english":  "Publishing...",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.questionnaires-assigned-to-team",
@@ -2289,11 +2331,32 @@
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.rating-scale-explanation",
+        "german":  "Wählen Sie eine Bewertungsskala zwischen 2 und 10",
+        "english":  "Choose a rating scale between 2 and 10",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.restore-not-implemented",
+        "german":  "Wiederherstellungsfunktion ist noch nicht implementiert",
+        "english":  "Restore functionality is not yet implemented",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.saving",
         "german":  "Speichert...",
         "english":  "Saving...",
         "category":  "messages",
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.select-feedback-source-types",
+        "german":  "Wählen Sie mindestens einen Feedback-Quellentyp aus",
+        "english":  "Select at least one feedback source type",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "messages.send-reminder-confirmation",
@@ -2303,18 +2366,39 @@
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
     },
     {
-        "key":  "messages.template-archived-successfully",
-        "german":  "Fragebogen-Vorlage wurde archiviert und ist nicht länger verfügbar für Zuweisungen",
-        "english":  "Questionnaire template has been archived and is no longer available for assignments",
+        "key":  "messages.status-updated",
+        "german":  "Status aktualisiert",
+        "english":  "Status Updated",
         "category":  "messages",
-        "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.success",
+        "german":  "Erfolgreich",
+        "english":  "Success",
+        "category":  "messages",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-applied-successfully",
+        "german":  "Vorlage wurde erfolgreich angewendet. Kriterien und Textabschnitte wurden vorausgefüllt.",
+        "english":  "Template applied successfully. Criteria and text sections have been pre-populated.",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-archived-successfully",
+        "german":  "Vorlage \u0027{0}\u0027 wurde archiviert",
+        "english":  "Template \u0027{0}\u0027 has been archived",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.template-cloned-successfully",
-        "german":  "Vorlage erfolgreich geklont!",
-        "english":  "Template cloned successfully!",
+        "german":  "Vorlage erfolgreich geklont",
+        "english":  "Template cloned successfully",
         "category":  "messages",
-        "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.template-created-successfully",
@@ -2322,6 +2406,20 @@
         "english":  "Questionnaire template created successfully",
         "category":  "messages",
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-deleted-successfully",
+        "german":  "Vorlage \u0027{0}\u0027 wurde dauerhaft gelöscht",
+        "english":  "Template \u0027{0}\u0027 has been permanently deleted",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-has-issues-count",
+        "german":  "Vorlage hat {0} Validierungsproblem(e)",
+        "english":  "Template has {0} validation issue(s)",
+        "category":  "messages",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.template-not-found",
@@ -2332,10 +2430,10 @@
     },
     {
         "key":  "messages.template-published-successfully",
-        "german":  "Fragebogen-Vorlage ist jetzt veröffentlicht und für Zuweisungen verfügbar",
-        "english":  "Questionnaire template is now published and available for assignments",
+        "german":  "Vorlage \u0027{0}\u0027 ist jetzt veröffentlicht und verfügbar für Feedback-Erfassung",
+        "english":  "Template \u0027{0}\u0027 is now published and available for feedback recording",
         "category":  "messages",
-        "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.template-restored-successfully",
@@ -2359,18 +2457,11 @@
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
     },
     {
-        "key":  "messages.template-applied-successfully",
-        "german":  "Vorlage wurde erfolgreich angewendet. Kriterien und Textabschnitte wurden vorausgef\u00FCllt.",
-        "english":  "Template applied successfully. Criteria and text sections have been pre-populated.",
+        "key":  "messages.text-sections-description",
+        "german":  "Freitextabschnitte für zusätzliches Feedback",
+        "english":  "Free-text sections for additional feedback",
         "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.template-has-issues-count",
-        "german":  "Vorlage hat {0} Validierungsproblem(e)",
-        "english":  "Template has {0} validation issue(s)",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "messages.workflow-manager-review-explanation",
@@ -2420,6 +2511,27 @@
         "english":  "Employee Feedback",
         "category":  "navigation",
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "nav.feedback-template-management",
+        "german":  "Feedback-Vorlagen-Verwaltung",
+        "english":  "Feedback Template Management",
+        "category":  "nav",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "nav.feedback-templates",
+        "german":  "Feedback-Vorlagen",
+        "english":  "Feedback Templates",
+        "category":  "nav",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "nav.manage-feedback-templates",
+        "german":  "Feedback-Vorlagen verwalten",
+        "english":  "Manage Feedback Templates",
+        "category":  "nav",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "nav.management",
@@ -2843,24 +2955,10 @@
     },
     {
         "key":  "pages.employee-feedback-description",
-        "german":  "Verwalten und Ã¼berprÃ¼fen Sie externes Feedback fÃ¼r Mitarbeiter aus verschiedenen Quellen",
-        "english":  "Manage and review external feedback for employees from various sources",
+        "german":  "Verwalten Sie Mitarbeiter-Feedback und Bewertungen",
+        "english":  "Manage employee feedback and evaluations",
         "category":  "pages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "pages.employee-feedback-description",
-        "german":  "Verwalten und Ã¼berprÃ¼fen Sie externes Feedback fÃ¼r Mitarbeiter aus verschiedenen Quellen",
-        "english":  "Manage and review external feedback for employees from various sources",
-        "category":  "pages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "pages.employee-feedback-description",
-        "german":  "Verwalten und Ã¼berprÃ¼fen Sie externes Feedback fÃ¼r Mitarbeiter aus verschiedenen Quellen",
-        "english":  "Manage and review external feedback for employees from various sources",
-        "category":  "pages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "pages.employee-feedback-description",
@@ -2871,31 +2969,31 @@
     },
     {
         "key":  "pages.employee-feedback-management",
-        "german":  "Mitarbeiterfeedback-Verwaltung",
+        "german":  "Mitarbeiter-Feedback-Management",
         "english":  "Employee Feedback Management",
         "category":  "pages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
-        "key":  "pages.employee-feedback-management",
-        "german":  "Mitarbeiterfeedback-Verwaltung",
-        "english":  "Employee Feedback Management",
+        "key":  "pages.feedback-template-builder",
+        "german":  "Feedback-Vorlagen-Builder",
+        "english":  "Feedback Template Builder",
         "category":  "pages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
-        "key":  "pages.employee-feedback-management",
-        "german":  "Mitarbeiterfeedback-Verwaltung",
-        "english":  "Employee Feedback Management",
+        "key":  "pages.feedback-template-editor",
+        "german":  "Feedback-Vorlage bearbeiten",
+        "english":  "Edit Feedback Template",
         "category":  "pages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
-        "key":  "pages.employee-feedback-management",
-        "german":  "Mitarbeiterfeedback-Verwaltung",
-        "english":  "Employee Feedback Management",
+        "key":  "pages.feedback-template-management-description",
+        "german":  "Verwalten Sie Feedback-Vorlagen für Mitarbeiterbeurteilungen und Leistungsbewertungen",
+        "english":  "Manage feedback templates for employee reviews and performance evaluations",
         "category":  "pages",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "pages.my-questionnaires",
@@ -3038,32 +3136,39 @@
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
-        "key":  "placeholders.all-sources",
-        "german":  "Alle Quellen",
-        "english":  "All Sources",
-        "category":  "placeholders",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "placeholders.all-sources",
-        "german":  "Alle Quellen",
-        "english":  "All Sources",
-        "category":  "placeholders",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "placeholders.all-sources",
-        "german":  "Alle Quellen",
-        "english":  "All Sources",
-        "category":  "placeholders",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "placeholders.assignment-instructions",
         "german":  "Fügen Sie spezifische Anweisungen oder Kontext fÜr diese Zuweisung hinzu...",
         "english":  "Add any specific instructions or context for this assignment...",
         "category":  "placeholders",
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.criterion-description-english",
+        "german":  "Beschreiben Sie das Kriterium auf Englisch...",
+        "english":  "Describe the criterion in English...",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-17T16:48:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.criterion-description-german",
+        "german":  "Beschreiben Sie das Kriterium auf Deutsch...",
+        "english":  "Describe the criterion in German...",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-17T16:48:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.criterion-title-english",
+        "german":  "Geben Sie den Kriteriumstitel auf Englisch ein...",
+        "english":  "Enter criterion title in English...",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-17T16:48:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.criterion-title-german",
+        "german":  "Geben Sie den Kriteriumstitel auf Deutsch ein...",
+        "english":  "Enter criterion title in German...",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-17T16:48:00.0000000+00:00"
     },
     {
         "key":  "placeholders.describe-evaluation-english",
@@ -3092,6 +3197,20 @@
         "english":  "Describe the purpose and scope of this questionnaire in German (optional)...",
         "category":  "placeholders",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.describe-template-purpose-english",
+        "german":  "Beschreiben Sie den Zweck dieser Feedback-Vorlage (Englisch)",
+        "english":  "Describe the purpose of this feedback template (English)",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.describe-template-purpose-german-optional",
+        "german":  "Beschreiben Sie den Zweck dieser Feedback-Vorlage (Deutsch, optional)",
+        "english":  "Describe the purpose of this feedback template (German, optional)",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "placeholders.describe-text-section-english",
@@ -3220,6 +3339,20 @@
         "createdDate":  "2025-12-05T21:00:00.0000000+00:00"
     },
     {
+        "key":  "placeholders.excellent",
+        "german":  "Ausgezeichnet",
+        "english":  "Excellent",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.poor",
+        "german":  "Schlecht",
+        "english":  "Poor",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
         "key":  "placeholders.scale-high-label-example",
         "german":  "z.B. Ausgezeichnet, Experte",
         "english":  "e.g., Excellent, Expert",
@@ -3255,11 +3388,25 @@
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
     },
     {
+        "key":  "placeholders.section-title-english",
+        "german":  "Geben Sie den Abschnittstitel auf Englisch ein...",
+        "english":  "Enter section title in English...",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "placeholders.section-title-english-example",
         "german":  "z.B. Leistungsbeurteilung, Zielsetzungsworkshop...",
         "english":  "e.g., Performance Review, Goal Setting Workshop...",
         "category":  "placeholders",
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.section-title-german",
+        "german":  "Geben Sie den Abschnittstitel auf Deutsch ein...",
+        "english":  "Enter section title in German...",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "placeholders.section-title-german-example",
@@ -3269,18 +3416,25 @@
         "createdDate":  "2025-12-09T12:00:00.0000000+00:00"
     },
     {
+        "key":  "placeholders.select-employee",
+        "german":  "Mitarbeiter auswählen",
+        "english":  "Select employee",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.select-template-optional",
+        "german":  "Vorlage auswählen (optional)",
+        "english":  "Select template (optional)",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "placeholders.select-type-annual-review",
         "german":  "Typ auswählen",
         "english":  "Select type",
         "category":  "placeholders",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "placeholders.select-template-optional",
-        "german":  "Vorlage ausw\u00E4hlen (optional)",
-        "english":  "Select template (optional)",
-        "category":  "placeholders",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
         "key":  "questions.default-assessment-title",
@@ -3360,48 +3514,6 @@
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
-        "key":  "requirements.project-context-required",
-        "german":  "Projektkontext erforderlich",
-        "english":  "Project context required",
-        "category":  "requirements",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "requirements.project-context-required",
-        "german":  "Projektkontext erforderlich",
-        "english":  "Project context required",
-        "category":  "requirements",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "requirements.project-context-required",
-        "german":  "Projektkontext erforderlich",
-        "english":  "Project context required",
-        "category":  "requirements",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "requirements.provider-role-required",
-        "german":  "Rolle des Feedback-Gebers erforderlich",
-        "english":  "Provider role information required",
-        "category":  "requirements",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "requirements.provider-role-required",
-        "german":  "Rolle des Feedback-Gebers erforderlich",
-        "english":  "Provider role information required",
-        "category":  "requirements",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "requirements.provider-role-required",
-        "german":  "Rolle des Feedback-Gebers erforderlich",
-        "english":  "Provider role information required",
-        "category":  "requirements",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "requirements.provider-role-required",
         "german":  "Rolle des Feedback-Gebers erforderlich",
         "english":  "Provider role information required",
@@ -3430,11 +3542,18 @@
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
     },
     {
-        "key":  "sections.feedback-source",
-        "german":  "Feedback-Quelle",
-        "english":  "Feedback Source",
+        "key":  "sections.evaluation-criteria",
+        "german":  "Bewertungskriterien",
+        "english":  "Evaluation Criteria",
         "category":  "sections",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.feedback-configuration",
+        "german":  "Feedback-Konfiguration",
+        "english":  "Feedback Configuration",
+        "category":  "sections",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "sections.feedback-source",
@@ -3444,18 +3563,11 @@
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
     },
     {
-        "key":  "sections.feedback-source",
-        "german":  "Feedback-Quelle",
-        "english":  "Feedback Source",
+        "key":  "sections.filters",
+        "german":  "Filter",
+        "english":  "Filters",
         "category":  "sections",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "sections.feedback-source",
-        "german":  "Feedback-Quelle",
-        "english":  "Feedback Source",
-        "category":  "sections",
-        "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
         "key":  "sections.goal-achievement-review",
@@ -3507,11 +3619,18 @@
         "createdDate":  "2025-12-05T21:00:00.0000000+00:00"
     },
     {
-        "key":  "sections.workflow-configuration",
-        "german":  "Workflow-Konfiguration",
-        "english":  "Workflow Configuration",
+        "key":  "sections.template-summary",
+        "german":  "Vorlagenzusammenfassung",
+        "english":  "Template Summary",
         "category":  "sections",
-        "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.text-sections",
+        "german":  "Textabschnitte",
+        "english":  "Text Sections",
+        "category":  "sections",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "sections.use-template",
@@ -3519,6 +3638,13 @@
         "english":  "Use Template (Optional)",
         "category":  "sections",
         "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.workflow-configuration",
+        "german":  "Workflow-Konfiguration",
+        "english":  "Workflow Configuration",
+        "category":  "sections",
+        "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
         "key":  "settings.send-assignment-notifications",
@@ -3540,6 +3666,27 @@
         "english":  "Send reminder emails",
         "category":  "settings",
         "createdDate":  "2025-12-03T12:17:11.8998698+00:00"
+    },
+    {
+        "key":  "source-types.customer",
+        "german":  "Kunde",
+        "english":  "Customer",
+        "category":  "source-types",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.peer",
+        "german":  "Kollege",
+        "english":  "Peer",
+        "category":  "source-types",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.project-colleague",
+        "german":  "Projektkollege",
+        "english":  "Project Colleague",
+        "category":  "source-types",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "status.active",
@@ -3640,6 +3787,20 @@
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
     },
     {
+        "key":  "steps.configure-criteria",
+        "german":  "Bewertungskriterien konfigurieren",
+        "english":  "Configure Evaluation Criteria",
+        "category":  "steps",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "steps.configure-criteria-description",
+        "german":  "Wählen Sie Bewertungskriterien und Textabschnitte für die Vorlage aus",
+        "english":  "Select evaluation criteria and text sections for the template",
+        "category":  "steps",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
         "key":  "steps.review-description",
         "german":  "Überprüfen Sie Ihren Fragebogen und stellen Sie ihn für Zuweisungen zur Verfügung",
         "english":  "Review your questionnaire and make it available for assignments",
@@ -3654,11 +3815,32 @@
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
+        "key":  "steps.review-template",
+        "german":  "Vorlage Überprüfen",
+        "english":  "Review Template",
+        "category":  "steps",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "steps.review-template-description",
+        "german":  "Überprüfen Sie die Vorlagenkonfiguration vor der Veröffentlichung",
+        "english":  "Review the template configuration before publishing",
+        "category":  "steps",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
         "key":  "steps.template-information",
         "german":  "Vorlageninformationen",
         "english":  "Template Information",
         "category":  "steps",
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "steps.template-information-description",
+        "german":  "Geben Sie den Namen, die Beschreibung und grundlegende Konfiguration der Feedback-Vorlage ein",
+        "english":  "Enter the template name, description, and basic configuration for the feedback template",
+        "category":  "steps",
+        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
         "key":  "tabs.active-replays",
@@ -4051,446 +4233,5 @@
         "english":  "Submitted",
         "category":  "workflow-states",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.cloning",
-        "german":  "Wird geklont...",
-        "english":  "Cloning...",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.template-cloned-successfully",
-        "german":  "Vorlage erfolgreich geklont",
-        "english":  "Template cloned successfully",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.failed-to-clone-template",
-        "german":  "Fehler beim Klonen der Vorlage. Bitte versuchen Sie es erneut.",
-        "english":  "Failed to clone template. Please try again.",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.error-cloning-template",
-        "german":  "Fehler beim Klonen der Vorlage",
-        "english":  "Error cloning template",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.not-implemented",
-        "german":  "Nicht implementiert",
-        "english":  "Not Implemented",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.restore-not-implemented",
-        "german":  "Wiederherstellungsfunktion ist noch nicht implementiert",
-        "english":  "Restore functionality is not yet implemented",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.status-updated",
-        "german":  "Status aktualisiert",
-        "english":  "Status Updated",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.template-archived-successfully",
-        "german":  "Vorlage '{0}' wurde archiviert",
-        "english":  "Template '{0}' has been archived",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.failed-to-update-status",
-        "german":  "Fehler beim Aktualisieren des Status",
-        "english":  "Failed to update template status",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.failed-to-update-template",
-        "german":  "Fehler beim Aktualisieren der Vorlage",
-        "english":  "Failed to update template",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.publishing",
-        "german":  "Wird ver\u00F6ffentlicht...",
-        "english":  "Publishing...",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.template-published-successfully",
-        "german":  "Vorlage '{0}' ist jetzt ver\u00F6ffentlicht und verf\u00FCgbar f\u00FCr Feedback-Erfassung",
-        "english":  "Template '{0}' is now published and available for feedback recording",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.failed-to-publish-template",
-        "german":  "Fehler beim Ver\u00F6ffentlichen der Vorlage",
-        "english":  "Failed to publish template",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.deleting",
-        "german":  "Wird gel\u00F6scht...",
-        "english":  "Deleting...",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.template-deleted-successfully",
-        "german":  "Vorlage '{0}' wurde dauerhaft gel\u00F6scht",
-        "english":  "Template '{0}' has been permanently deleted",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.failed-to-delete-template",
-        "german":  "Fehler beim L\u00F6schen der Vorlage. Sie hat m\u00F6glicherweise verkn\u00FCpfte Feedback-Datens\u00E4tze oder kann nicht im archivierten Status gel\u00F6scht werden.",
-        "english":  "Failed to delete template. It may have associated feedback records or cannot be deleted while archived.",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.failed-to-load-templates",
-        "german":  "Fehler beim Laden der Vorlagen",
-        "english":  "Failed to load templates",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "dialogs.clone-template-confirm",
-        "german":  "Dies erstellt eine Kopie von '{0}' im Entwurfsstatus. Fortfahren?",
-        "english":  "This will create a copy of '{0}' in Draft status. Continue?",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "dialogs.clone-template-title",
-        "german":  "Vorlage klonen",
-        "english":  "Clone Template",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "dialogs.publish-template-confirm",
-        "german":  "'{0}' ver\u00F6ffentlichen? Sie wird f\u00FCr Feedback-Erfassung verf\u00FCgbar.",
-        "english":  "Publish '{0}'? It will become available for use in feedback recording.",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "dialogs.publish-template-title",
-        "german":  "Vorlage ver\u00F6ffentlichen",
-        "english":  "Publish Template",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "dialogs.delete-template-confirm",
-        "german":  "Sind Sie sicher, dass Sie '{0}' dauerhaft l\u00F6schen m\u00F6chten? Diese Aktion kann nicht r\u00FCckg\u00E4ngig gemacht werden. Die Vorlage kann nur gel\u00F6scht werden, wenn keine verkn\u00FCpften Feedback-Datens\u00E4tze vorhanden sind.",
-        "english":  "Are you sure you want to permanently delete '{0}'? This action cannot be undone. The template can only be deleted if it has no associated feedback records.",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "dialogs.delete-template-title",
-        "german":  "Vorlage l\u00F6schen",
-        "english":  "Delete Template",
-        "category":  "dialogs",
-        "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "steps.template-information-description",
-        "german":  "Geben Sie den Namen, die Beschreibung und grundlegende Konfiguration der Feedback-Vorlage ein",
-        "english":  "Enter the template name, description, and basic configuration for the feedback template",
-        "category":  "steps",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "steps.configure-criteria",
-        "german":  "Bewertungskriterien konfigurieren",
-        "english":  "Configure Evaluation Criteria",
-        "category":  "steps",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "steps.configure-criteria-description",
-        "german":  "Wählen Sie Bewertungskriterien und Textabschnitte für die Vorlage aus",
-        "english":  "Select evaluation criteria and text sections for the template",
-        "category":  "steps",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "steps.review-template",
-        "german":  "Vorlage Überprüfen",
-        "english":  "Review Template",
-        "category":  "steps",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-  {
-    "key": "steps.review-template-description",
-    "german": "Überprüfen Sie die Vorlagenkonfiguration vor der Veröffentlichung",
-    "english": "Review the template configuration before publishing",
-    "category": "steps",
-    "createdDate": "2025-12-16T14:00:00.0000000+00:00"
-  },
-    {
-        "key":  "buttons.add-criterion",
-        "german":  "Kriterium hinzufügen",
-        "english":  "Add Criterion",
-        "category":  "buttons",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "buttons.add-text-section",
-        "german":  "Textabschnitt hinzufügen",
-        "english":  "Add Text Section",
-        "category":  "buttons",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "buttons.next-configure-criteria",
-        "german":  "Weiter: Kriterien konfigurieren",
-        "english":  "Next: Configure Criteria",
-        "category":  "buttons",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "buttons.back",
-        "german":  "Zurück",
-        "english":  "Back",
-        "category":  "buttons",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.allowed-source-types",
-        "german":  "Erlaubte Quellentypen",
-        "english":  "Allowed Source Types",
-        "category":  "labels",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.scale-low-label",
-        "german":  "Niedriges Skalen-Label",
-        "english":  "Scale Low Label",
-        "category":  "labels",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.scale-high-label",
-        "german":  "Hohes Skalen-Label",
-        "english":  "Scale High Label",
-        "category":  "labels",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.placeholder",
-        "german":  "Platzhalter",
-        "english":  "Placeholder",
-        "category":  "labels",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "labels.rating-scale",
-        "german":  "Bewertungsskala",
-        "english":  "Rating Scale",
-        "category":  "labels",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "placeholders.describe-template-purpose-english",
-        "german":  "Beschreiben Sie den Zweck dieser Feedback-Vorlage (Englisch)",
-        "english":  "Describe the purpose of this feedback template (English)",
-        "category":  "placeholders",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "placeholders.describe-template-purpose-german-optional",
-        "german":  "Beschreiben Sie den Zweck dieser Feedback-Vorlage (Deutsch, optional)",
-        "english":  "Describe the purpose of this feedback template (German, optional)",
-        "category":  "placeholders",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "placeholders.poor",
-        "german":  "Schlecht",
-        "english":  "Poor",
-        "category":  "placeholders",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "placeholders.excellent",
-        "german":  "Ausgezeichnet",
-        "english":  "Excellent",
-        "category":  "placeholders",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "sections.feedback-configuration",
-        "german":  "Feedback-Konfiguration",
-        "english":  "Feedback Configuration",
-        "category":  "sections",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "sections.evaluation-criteria",
-        "german":  "Bewertungskriterien",
-        "english":  "Evaluation Criteria",
-        "category":  "sections",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "sections.text-sections",
-        "german":  "Textabschnitte",
-        "english":  "Text Sections",
-        "category":  "sections",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "sections.template-summary",
-        "german":  "Vorlagenzusammenfassung",
-        "english":  "Template Summary",
-        "category":  "sections",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.criteria-description",
-        "german":  "Bewertungskriterien zur Beurteilung der Leistung",
-        "english":  "Evaluation criteria for assessing performance",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.no-criteria-added",
-        "german":  "Keine Kriterien hinzugefügt. Klicken Sie auf 'Kriterium hinzufügen', um zu beginnen.",
-        "english":  "No criteria added. Click 'Add Criterion' to get started.",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.no-criteria-configured",
-        "german":  "Keine Bewertungskriterien konfiguriert",
-        "english":  "No evaluation criteria configured",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.text-sections-description",
-        "german":  "Freitextabschnitte für zusätzliches Feedback",
-        "english":  "Free-text sections for additional feedback",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.no-text-sections-added",
-        "german":  "Keine Textabschnitte hinzugefügt. Klicken Sie auf 'Textabschnitt hinzufügen', um zu beginnen.",
-        "english":  "No text sections added. Click 'Add Text Section' to get started.",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.no-text-sections-configured",
-        "german":  "Keine Textabschnitte konfiguriert",
-        "english":  "No text sections configured",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.select-feedback-source-types",
-        "german":  "Wählen Sie mindestens einen Feedback-Quellentyp aus",
-        "english":  "Select at least one feedback source type",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.rating-scale-explanation",
-        "german":  "Wählen Sie eine Bewertungsskala zwischen 2 und 10",
-        "english":  "Choose a rating scale between 2 and 10",
-        "category":  "messages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "source-types.customer",
-        "german":  "Kunde",
-        "english":  "Customer",
-        "category":  "source-types",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "source-types.peer",
-        "german":  "Kollege",
-        "english":  "Peer",
-        "category":  "source-types",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "source-types.project-colleague",
-        "german":  "Projektkollege",
-        "english":  "Project Colleague",
-        "category":  "source-types",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.criteria",
-        "german":  "Kriterien",
-        "english":  "Criteria",
-        "category":  "columns",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.text-sections",
-        "german":  "Textabschnitte",
-        "english":  "Text Sections",
-        "category":  "columns",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "columns.rating-scale",
-        "german":  "Bewertungsskala",
-        "english":  "Rating Scale",
-        "category":  "columns",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "filters.filter-by-source-type",
-        "german":  "Nach Quellentyp filtern",
-        "english":  "Filter by Source Type",
-        "category":  "filters",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "nav.feedback-template-management",
-        "german":  "Feedback-Vorlagenverwaltung",
-        "english":  "Feedback Template Management",
-        "category":  "nav",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "pages.feedback-template-builder",
-        "german":  "Feedback-Vorlagen-Builder",
-        "english":  "Feedback Template Builder",
-        "category":  "pages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
-    },
-    {
-        "key":  "pages.feedback-template-management-description",
-        "german":  "Feedback-Vorlagen verwalten und konfigurieren",
-        "english":  "Manage and configure feedback templates",
-        "category":  "pages",
-        "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     }
 ]

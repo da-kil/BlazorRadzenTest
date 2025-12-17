@@ -164,6 +164,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
         // Subscribe to state changes
         State.OnStateChanged += StateHasChanged;
 
