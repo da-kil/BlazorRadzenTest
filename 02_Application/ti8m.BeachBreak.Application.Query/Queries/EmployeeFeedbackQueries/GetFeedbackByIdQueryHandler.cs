@@ -1,6 +1,5 @@
-using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Projections;
-using ti8m.BeachBreak.Core;
+using ti8m.BeachBreak.Application.Query.Repositories;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.EmployeeFeedbackQueries;
 
@@ -10,19 +9,36 @@ namespace ti8m.BeachBreak.Application.Query.Queries.EmployeeFeedbackQueries;
 /// </summary>
 public class GetFeedbackByIdQueryHandler : IQueryHandler<GetFeedbackByIdQuery, Result<EmployeeFeedbackReadModel>>
 {
+    private readonly IEmployeeFeedbackRepository repository;
+
+    public GetFeedbackByIdQueryHandler(IEmployeeFeedbackRepository repository)
+    {
+        this.repository = repository;
+    }
+
     public async Task<Result<EmployeeFeedbackReadModel>> HandleAsync(GetFeedbackByIdQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            // TODO: Implement actual database query logic
-            // For now, return NotFound since we don't have actual data yet
-            // In real implementation, this would:
-            // 1. Query the read model database by ID
-            // 2. Check if feedback exists and is not deleted (unless IncludeDeleted is true)
-            // 3. Return the feedback record with full details
-            // 4. Include provider information, ratings, and comments
+            if (request.FeedbackId == Guid.Empty)
+            {
+                return Result<EmployeeFeedbackReadModel>.Fail("FeedbackId is required", 400);
+            }
 
-            return Result<EmployeeFeedbackReadModel>.Fail($"Feedback with ID {request.FeedbackId} not found", 404);
+            // Query the read model database by ID
+            // Check if feedback exists and is not deleted (unless IncludeDeleted is true)
+            var feedback = await repository.GetFeedbackByIdAsync(
+                request.FeedbackId,
+                request.IncludeDeleted,
+                cancellationToken);
+
+            if (feedback == null)
+            {
+                return Result<EmployeeFeedbackReadModel>.Fail($"Feedback with ID {request.FeedbackId} not found", 404);
+            }
+
+            // Return the feedback record with full details including provider information, ratings, and comments
+            return Result<EmployeeFeedbackReadModel>.Success(feedback);
         }
         catch (Exception ex)
         {

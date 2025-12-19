@@ -191,9 +191,7 @@
                     return;
                 }
 
-                State.Template = template;
-                State.SelectedCriteriaKeys = template.Criteria.Select(c => c.Key).ToList();
-                State.SelectedTextSectionKeys = template.TextSections.Select(s => s.Key).ToList();
+                State.LoadExistingTemplate(template);
             }
         }
         else
@@ -201,11 +199,6 @@
             // New template
             State.Reset();
         }
-
-        // TODO: Load available criteria and text sections from a service or predefined set
-        // For now, we'll initialize with empty lists - this will be populated in Phase 9
-        State.AvailableCriteria = new List<EvaluationItem>();
-        State.AvailableTextSections = new List<TextSectionDefinition>();
     }
 
     private void SetCurrentStep(int step)
@@ -233,6 +226,11 @@
         if (string.IsNullOrWhiteSpace(State.Template.NameEnglish))
         {
             ShowWarning(T("messages.template-name-required"));
+            return false;
+        }
+        if (string.IsNullOrWhiteSpace(State.Template.NameGerman))
+        {
+            ShowWarning(T("messages.german-template-name-required"));
             return false;
         }
         return true;
@@ -263,8 +261,7 @@
                 var updated = await TemplateService.UpdateTemplateAsync(State.Template);
                 if (updated != null)
                 {
-                    State.Template = updated;
-                    State.MarkAsClean();
+                    State.LoadExistingTemplate(updated);
                     lastSavedTime = DateTime.Now;
                     ShowSuccess(T("messages.template-saved-successfully"));
                 }
@@ -276,8 +273,7 @@
             else
             {
                 var created = await TemplateService.CreateTemplateAsync(State.Template);
-                State.Template = created;
-                State.MarkAsClean();
+                State.LoadExistingTemplate(created);
                 lastSavedTime = DateTime.Now;
                 ShowSuccess(T("messages.template-created-successfully"));
 
@@ -320,7 +316,7 @@
             var published = await TemplateService.PublishTemplateAsync(State.Template.Id);
             if (published != null)
             {
-                State.Template = published;
+                State.LoadExistingTemplate(published);
                 ShowSuccess(T("messages.template-published-successfully"));
 
                 // Navigate to management page

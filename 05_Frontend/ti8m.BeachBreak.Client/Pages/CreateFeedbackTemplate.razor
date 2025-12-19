@@ -6,8 +6,9 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using Radzen
 @using Radzen.Blazor
-@inject IEmployeeFeedbackApiService FeedbackService
+@inject IFeedbackTemplateService TemplateService
 @inject DialogService DialogService
+@inject NavigationManager NavigationManager
 @inherits OptimizedTranslatableComponentBase
 
 <AuthorizeView Policy="HR">
@@ -197,27 +198,28 @@
 
         try
         {
-            var dto = new CreateFeedbackTemplateDto
+            // Convert form data to FeedbackTemplate model
+            var template = new FeedbackTemplate
             {
-                TemplateName = templateName,
-                Description = description,
-                SourceType = selectedSourceType!.Value,
+                Id = Guid.NewGuid(),
+                NameEnglish = templateName,
+                NameGerman = templateName, // Use same name for both languages initially
+                DescriptionEnglish = description ?? string.Empty,
+                DescriptionGerman = description ?? string.Empty,
+                AllowedSourceTypes = new List<int> { selectedSourceType!.Value },
                 RatingScale = ratingScale,
                 ScaleLowLabel = scaleLowLabel,
                 ScaleHighLabel = scaleHighLabel,
-                IsActive = isActive,
-                IsDefault = isDefault,
+                Status = TemplateStatus.Draft,
                 // For now, we'll create templates with default criteria
                 // In a full implementation, this page would allow configuring criteria
-                EvaluationCriteria = CreateDefaultCriteria(),
-                TextSections = CreateDefaultTextSections()
+                Criteria = CreateDefaultCriteria(),
+                TextSections = ConvertToTextSectionDefinitions(CreateDefaultTextSections()),
+                CreatedDate = DateTime.UtcNow
             };
 
-            // TODO: Implement the CreateFeedbackTemplateAsync method in the service
-            // var result = await FeedbackService.CreateFeedbackTemplateAsync(dto);
-
-            // For now, simulate success
-            await Task.Delay(1000); // Simulate API call
+            // Create the template via the service
+            var createdTemplate = await TemplateService.CreateTemplateAsync(template);
 
             NotificationService.Notify(new NotificationMessage
             {
@@ -228,6 +230,9 @@
 
             // Reset form
             ResetForm();
+
+            // Navigate to the template builder for further editing
+            NavigationManager.NavigateTo($"/feedback-template-builder/{createdTemplate.Id}");
         }
         catch (Exception ex)
         {
@@ -318,5 +323,21 @@
                 Order = 2
             }
         };
+    }
+
+    private List<TextSectionDefinition> ConvertToTextSectionDefinitions(List<TextSection> textSections)
+    {
+        return textSections.Select((section, index) => new TextSectionDefinition
+        {
+            Key = $"section_{index + 1}",
+            TitleEnglish = section.TitleEnglish,
+            TitleGerman = section.TitleGerman,
+            DescriptionEnglish = section.DescriptionEnglish,
+            DescriptionGerman = section.DescriptionGerman,
+            PlaceholderEnglish = section.DescriptionEnglish,
+            PlaceholderGerman = section.DescriptionGerman,
+            IsRequired = section.IsRequired,
+            Order = section.Order
+        }).ToList();
     }
 }

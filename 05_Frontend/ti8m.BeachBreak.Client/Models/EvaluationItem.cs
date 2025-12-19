@@ -12,11 +12,11 @@ public class EvaluationItem
         DescriptionGerman = string.Empty;
     }
 
-    public EvaluationItem(string key, string titleEnglish, string descriptionEnglish, bool isRequired, int order = 0)
+    public EvaluationItem(string key, string titleEnglish, string? descriptionEnglish, bool isRequired, int order = 0)
     {
         Key = key;
         TitleEnglish = titleEnglish;
-        DescriptionEnglish = descriptionEnglish;
+        DescriptionEnglish = descriptionEnglish ?? string.Empty;
         IsRequired = isRequired;
         Order = order;
     }
@@ -26,8 +26,8 @@ public class EvaluationItem
     // Bilingual content properties - matching QueryApi DTO naming
     public string TitleEnglish { get; set; }
     public string TitleGerman { get; set; }
-    public string DescriptionEnglish { get; set; }
-    public string DescriptionGerman { get; set; }
+    public string? DescriptionEnglish { get; set; }
+    public string? DescriptionGerman { get; set; }
 
     public bool IsRequired { get; set; }
     public int Order { get; set; }
@@ -38,7 +38,7 @@ public class EvaluationItem
         return language == Language.German ? TitleGerman : TitleEnglish;
     }
 
-    public string GetLocalizedDescription(Language language)
+    public string? GetLocalizedDescription(Language language)
     {
         return language == Language.German ? DescriptionGerman : DescriptionEnglish;
     }
@@ -53,6 +53,6 @@ public class EvaluationItem
     public string GetLocalizedDescriptionWithFallback(Language language)
     {
         var localized = GetLocalizedDescription(language);
-        return !string.IsNullOrWhiteSpace(localized) ? localized : DescriptionEnglish;
+        return !string.IsNullOrWhiteSpace(localized) ? localized : (DescriptionEnglish ?? string.Empty);
     }
 }

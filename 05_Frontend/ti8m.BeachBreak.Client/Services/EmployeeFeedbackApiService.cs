@@ -11,7 +11,8 @@ namespace ti8m.BeachBreak.Client.Services;
 /// </summary>
 public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiService
 {
-    private const string BaseEndpoint = "c/api/v1/employee-feedbacks";
+    private const string CommandEndpoint = "c/api/v1/employee-feedbacks";
+    private const string QueryEndpoint = "q/api/v1/employee-feedbacks";
 
     public EmployeeFeedbackApiService(IHttpClientFactory httpClientFactory) : base(httpClientFactory)
     {
@@ -24,7 +25,7 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
     {
         try
         {
-            var response = await HttpCommandClient.PostAsJsonAsync(BaseEndpoint, dto, JsonOptions);
+            var response = await HttpCommandClient.PostAsJsonAsync(CommandEndpoint, dto, JsonOptions);
 
             if (response.IsSuccessStatusCode)
             {
@@ -50,7 +51,7 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
     {
         try
         {
-            var response = await HttpCommandClient.PutAsJsonAsync($"{BaseEndpoint}/{id}", dto, JsonOptions);
+            var response = await HttpCommandClient.PutAsJsonAsync($"{CommandEndpoint}/{id}", dto, JsonOptions);
 
             if (response.IsSuccessStatusCode)
             {
@@ -76,7 +77,7 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
     {
         try
         {
-            var url = $"{BaseEndpoint}/{id}";
+            var url = $"{CommandEndpoint}/{id}";
             if (!string.IsNullOrWhiteSpace(deleteReason))
             {
                 url += $"?deleteReason={Uri.EscapeDataString(deleteReason)}";
@@ -108,7 +109,7 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
     {
         try
         {
-            var url = $"q/api/v1/employee-feedbacks{parameters.ToQueryString()}";
+            var url = $"{QueryEndpoint}{parameters.ToQueryString()}";
             var response = await HttpQueryClient.GetAsync(url);
 
             if (response.IsSuccessStatusCode)
@@ -137,7 +138,7 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
     {
         try
         {
-            var url = $"q/api/v1/employee-feedbacks/{id}";
+            var url = $"{QueryEndpoint}/{id}";
             if (includeDeleted)
             {
                 url += "?includeDeleted=true";
@@ -171,7 +172,7 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
     {
         try
         {
-            var response = await HttpQueryClient.GetAsync($"q/api/v1/employee-feedbacks/employee/{employeeId}/current-year");
+            var response = await HttpQueryClient.GetAsync($"{QueryEndpoint}/employee/{employeeId}/current-year");
 
             if (response.IsSuccessStatusCode)
             {
@@ -199,7 +200,7 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
     {
         try
         {
-            var url = "q/api/v1/employee-feedbacks/templates";
+            var url = $"{QueryEndpoint}/templates";
             if (sourceType.HasValue)
             {
                 url += $"?sourceType={sourceType.Value}";
@@ -221,6 +222,33 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
         catch (Exception ex)
         {
             return Result<FeedbackTemplatesResponse>.Fail($"Error getting templates: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Gets source type options for feedback recording.
+    /// </summary>
+    public async Task<Result<FeedbackTemplatesResponse>> GetSourceTypeOptionsAsync()
+    {
+        try
+        {
+            var url = $"{QueryEndpoint}/source-types";
+            var response = await HttpQueryClient.GetAsync(url);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var result = JsonSerializer.Deserialize<Result<FeedbackTemplatesResponse>>(content, JsonOptions);
+                return result ?? Result<FeedbackTemplatesResponse>.Fail("Failed to deserialize response");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            var errorResult = JsonSerializer.Deserialize<Result<FeedbackTemplatesResponse>>(errorContent, JsonOptions);
+            return errorResult ?? Result<FeedbackTemplatesResponse>.Fail($"HTTP {response.StatusCode}: {response.ReasonPhrase}");
+        }
+        catch (Exception ex)
+        {
+            return Result<FeedbackTemplatesResponse>.Fail($"Error getting source type options: {ex.Message}");
         }
     }
 }

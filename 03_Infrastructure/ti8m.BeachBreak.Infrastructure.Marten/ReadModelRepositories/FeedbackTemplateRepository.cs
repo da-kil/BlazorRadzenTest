@@ -32,7 +32,9 @@ internal class FeedbackTemplateRepository(IDocumentStore store) : IFeedbackTempl
         using var session = await store.LightweightSerializableSessionAsync();
         int sourceTypeInt = (int)sourceType;
         return await session.Query<FeedbackTemplateReadModel>()
-            .Where(x => !x.IsDeleted && x.AllowedSourceTypes.Contains(sourceTypeInt))
+            .Where(x => !x.IsDeleted
+                && x.AllowedSourceTypes.Contains(sourceTypeInt)
+                && x.Status == Domain.QuestionnaireTemplateAggregate.TemplateStatus.Published)
             .OrderByDescending(x => x.CreatedDate)
             .ToListAsync(cancellationToken);
     }

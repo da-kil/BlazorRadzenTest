@@ -12,6 +12,7 @@ public class FeedbackTemplateBuilderState
     private FeedbackTemplate _template = new();
     private int _currentStep = 1;
     private bool _isDirty = false;
+    private bool _isEditMode = false;
 
     /// <summary>
     /// Event raised when state changes
@@ -67,26 +68,6 @@ public class FeedbackTemplateBuilderState
     }
 
     /// <summary>
-    /// Available evaluation criteria (loaded from a predefined set or custom)
-    /// </summary>
-    public List<EvaluationItem> AvailableCriteria { get; set; } = new();
-
-    /// <summary>
-    /// Keys of selected criteria (for tracking selection state)
-    /// </summary>
-    public List<string> SelectedCriteriaKeys { get; set; } = new();
-
-    /// <summary>
-    /// Available text sections (loaded from a predefined set or custom)
-    /// </summary>
-    public List<TextSectionDefinition> AvailableTextSections { get; set; } = new();
-
-    /// <summary>
-    /// Keys of selected text sections (for tracking selection state)
-    /// </summary>
-    public List<string> SelectedTextSectionKeys { get; set; } = new();
-
-    /// <summary>
     /// Current user ID (for authorization checks)
     /// </summary>
     public Guid CurrentUserId { get; set; }
@@ -99,7 +80,7 @@ public class FeedbackTemplateBuilderState
     /// <summary>
     /// Whether in edit mode (existing template) vs create mode (new template)
     /// </summary>
-    public bool IsEditMode => Template?.Id != Guid.Empty;
+    public bool IsEditMode => _isEditMode;
 
     /// <summary>
     /// Resets all state to defaults for creating a new template
@@ -108,7 +89,7 @@ public class FeedbackTemplateBuilderState
     {
         _template = new FeedbackTemplate
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.NewGuid(), // Client-side ID assignment
             RatingScale = 10,
             ScaleLowLabel = "Poor",
             ScaleHighLabel = "Excellent",
@@ -116,8 +97,19 @@ public class FeedbackTemplateBuilderState
         };
         _currentStep = 1;
         _isDirty = false;
-        SelectedCriteriaKeys.Clear();
-        SelectedTextSectionKeys.Clear();
+        _isEditMode = false; // New template, not editing existing
+        NotifyStateChanged();
+    }
+
+    /// <summary>
+    /// Loads an existing template for editing
+    /// </summary>
+    public void LoadExistingTemplate(FeedbackTemplate template)
+    {
+        _template = template;
+        _currentStep = 1;
+        _isDirty = false;
+        _isEditMode = true; // Editing existing template
         NotifyStateChanged();
     }
 

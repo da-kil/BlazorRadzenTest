@@ -61,6 +61,7 @@ public static class Extensions
             options.Projections.Snapshot<QuestionnaireResponseReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<ProjectionReplayReadModel>(SnapshotLifecycle.Inline);
             options.Projections.Snapshot<FeedbackTemplateReadModel>(SnapshotLifecycle.Inline);
+            options.Projections.Snapshot<EmployeeFeedbackReadModel>(SnapshotLifecycle.Inline);
 
             // Event-based projections for review change tracking
             options.Projections.Add<ReviewChangeLogProjection>(ProjectionLifecycle.Inline);
@@ -84,9 +85,6 @@ public static class Extensions
 
         // Register UI translation service for multilanguage support
         builder.Services.AddScoped<Application.Query.Services.IUITranslationService, Services.UITranslationService>();
-
-        // Note: IEmployeeHierarchyService is registered only in CommandApi
-        // It depends on IEmployeeAggregateRepository which is only available on the Command side
 
         // Register notification service (includes email notifications)
         builder.Services.AddScoped<INotificationService, ConsoleNotificationService>();

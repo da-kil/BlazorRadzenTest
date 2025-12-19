@@ -9,6 +9,7 @@
 @inject IEmployeeFeedbackApiService FeedbackService
 @inject IEmployeeApiService EmployeeService
 @inject DialogService DialogService
+@inject NavigationManager NavigationManager
 @inherits OptimizedTranslatableComponentBase
 
 <PageTitle>@T("pages.employee-feedback-management")</PageTitle>
@@ -335,7 +336,7 @@
             SourceType = selectedSourceType,
             FromDate = fromDate,
             ToDate = toDate,
-            PageSize = 1000, // Get all for client-side pagination/filtering
+            PageSize = 200, // Maximum allowed by backend validation
             SortField = "FeedbackDate",
             SortAscending = false
         };
@@ -374,23 +375,9 @@
         await LoadFeedback();
     }
 
-    private async Task ShowRecordFeedbackDialog()
+    private void ShowRecordFeedbackDialog()
     {
-        var result = await DialogService.OpenAsync<RecordEmployeeFeedback>(
-            T("dialogs.record-feedback-title"),
-            new Dictionary<string, object>(),
-            new DialogOptions
-            {
-                Width = "800px",
-                Height = "600px",
-                Resizable = true,
-                Draggable = true
-            });
-
-        if (result == true)
-        {
-            await LoadFeedback();
-        }
+        NavigationManager.NavigateTo("/record-employee-feedback");
     }
 
     private async Task EditFeedback(EmployeeFeedbackSummaryDto feedback)

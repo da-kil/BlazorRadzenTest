@@ -1,6 +1,5 @@
-using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Projections;
-using ti8m.BeachBreak.Core;
+using ti8m.BeachBreak.Application.Query.Repositories;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.EmployeeFeedbackQueries;
 
@@ -10,22 +9,32 @@ namespace ti8m.BeachBreak.Application.Query.Queries.EmployeeFeedbackQueries;
 /// </summary>
 public class GetCurrentYearFeedbackQueryHandler : IQueryHandler<GetCurrentYearFeedbackQuery, Result<List<EmployeeFeedbackReadModel>>>
 {
+    private readonly IEmployeeFeedbackRepository repository;
+
+    public GetCurrentYearFeedbackQueryHandler(IEmployeeFeedbackRepository repository)
+    {
+        this.repository = repository;
+    }
+
     public async Task<Result<List<EmployeeFeedbackReadModel>>> HandleAsync(GetCurrentYearFeedbackQuery request, CancellationToken cancellationToken)
     {
         try
         {
-            // TODO: Implement actual database query logic
-            // For now, return empty list since we don't have actual data yet
-            // In real implementation, this would:
-            // 1. Query feedback for the specified employee
-            // 2. Filter to current fiscal year only
-            // 3. Include all source types (Customer, Peer, Project Colleague)
-            // 4. Order by source type and feedback date for better organization
-            // 5. Exclude deleted feedback
+            if (request.EmployeeId == Guid.Empty)
+            {
+                return Result<List<EmployeeFeedbackReadModel>>.Fail("EmployeeId is required", 400);
+            }
 
-            var readModels = new List<EmployeeFeedbackReadModel>();
+            // Query feedback for the specified employee
+            // Filtered to current fiscal year only
+            // Includes all source types (Customer, Peer, Project Colleague)
+            // Ordered by source type and feedback date for better organization
+            // Excludes deleted feedback
+            var feedbackList = await repository.GetCurrentYearFeedbackAsync(
+                request.EmployeeId,
+                cancellationToken);
 
-            return Result<List<EmployeeFeedbackReadModel>>.Success(readModels);
+            return Result<List<EmployeeFeedbackReadModel>>.Success(feedbackList);
         }
         catch (Exception ex)
         {

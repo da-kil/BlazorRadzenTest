@@ -1,4 +1,6 @@
+@page "/record-employee-feedback"
 @using Microsoft.AspNetCore.Components
+@using Microsoft.AspNetCore.Components.Authorization
 @using Radzen
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
@@ -6,14 +8,21 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.EmployeeFeedback
+@using ti8m.BeachBreak.Client.Layout
 @inject IEmployeeFeedbackApiService FeedbackService
 @inject IEmployeeApiService EmployeeService
 @inject IFeedbackTemplateService TemplateService
-@inject DialogService DialogService
+@inject NavigationManager NavigationManager
 @inherits OptimizedTranslatableComponentBase
 
-<div class="record-feedback-dialog">
-    <RadzenStack Gap="1rem">
+<PageTitle>@T("pages.record-employee-feedback")</PageTitle>
+
+<AuthorizeView Policy="TeamLead">
+    <Authorized>
+        <PageLayout Title="@T("pages.record-employee-feedback")"
+                   Description="@T("pages.record-employee-feedback-description")">
+            <ChildContent>
+                <RadzenStack Gap="1rem">
 
         <!-- Employee Selection -->
         <RadzenCard>
@@ -54,7 +63,7 @@
         </RadzenCard>
 
         <!-- Template Selection (Optional) -->
-        @if (selectedSourceType.HasValue && availableTemplates.Any())
+        @if (selectedSourceType.HasValue)
         {
             <RadzenCard>
                 <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
@@ -65,20 +74,32 @@
                     @T("labels.template-optional-description")
                 </RadzenText>
 
-                <RadzenDropDown TValue="Guid?"
-                              Data="@availableTemplates"
-                              @bind-Value="@selectedTemplateId"
-                              Placeholder="@T("placeholders.select-template-optional")"
-                              TextProperty="@GetTemplateNameProperty()"
-                              ValueProperty="Id"
-                              Change="@OnTemplateSelected"
-                              AllowClear="true"
-                              Style="width: 100%;" />
-
-                @if (selectedTemplateId.HasValue)
+                @if (availableTemplates.Any())
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mt-3">
-                        @T("messages.template-applied-successfully")
+                    <RadzenDropDown TValue="Guid?"
+                                  Data="@availableTemplates"
+                                  @bind-Value="@selectedTemplateId"
+                                  Placeholder="@T("placeholders.select-template-optional")"
+                                  TextProperty="@GetTemplateNameProperty()"
+                                  ValueProperty="Id"
+                                  Change="@OnTemplateSelected"
+                                  AllowClear="true"
+                                  Style="width: 100%;" />
+
+                    @if (selectedTemplateId.HasValue)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mt-3">
+                            @T("messages.template-applied-successfully")
+                        </RadzenAlert>
+                    }
+                }
+                else
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                            <RadzenIcon Icon="info" />
+                            <RadzenText>@T("messages.no-templates-available")</RadzenText>
+                        </RadzenStack>
                     </RadzenAlert>
                 }
             </RadzenCard>
@@ -125,8 +146,14 @@
             </RadzenStack>
         </RadzenCard>
 
-    </RadzenStack>
-</div>
+                </RadzenStack>
+            </ChildContent>
+        </PageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="TeamLead" PageName="Record Employee Feedback" />
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     // Data binding
@@ -165,24 +192,11 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadEmployees();
-        await LoadDefaultTemplates();
     }
 
     private async Task LoadEmployees()
     {
         employees = await EmployeeService.GetAllEmployeesAsync();
-    }
-
-    private async Task LoadDefaultTemplates()
-    {
-        var result = await FeedbackService.GetFeedbackTemplatesAsync();
-        if (result.Succeeded && result.Payload != null)
-        {
-            // For now, create default criteria since the API response contains List<object>
-            // In a full implementation, this would be properly typed
-            availableCriteria = CreateDefaultCriteria();
-            textSections = CreateDefaultTextSections();
-        }
     }
 
     private async Task OnSourceTypeChanged(int? sourceType)
@@ -297,7 +311,8 @@
                     Detail = T("messages.feedback-recorded-successfully")
                 });
 
-                DialogService.Close(true); // Return true to indicate success
+                // Navigate back to management page
+                NavigationManager.NavigateTo("/employee-feedback-management");
             }
             else
             {
@@ -355,7 +370,7 @@
 
     private void Cancel()
     {
-        DialogService.Close(false);
+        NavigationManager.NavigateTo("/employee-feedback-management");
     }
 
     private List<EvaluationItem> CreateDefaultCriteria()

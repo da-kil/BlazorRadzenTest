@@ -17,7 +17,7 @@
         </RadzenColumn>
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.german-template-name-optional")</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.german-template-name-required")</RadzenText>
                 <RadzenTextBox @bind-Value="@Template.NameGerman"
                               Placeholder="@T("placeholders.enter-template-name-german-optional")"
                               Class="w-100"
@@ -30,7 +30,7 @@
     <RadzenRow Gap="1rem" Class="mb-3">
         <RadzenColumn Size="12" SizeMD="6">
             <div class="mb-3">
-                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.english-description-required")</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold mb-2">@T("labels.english-description-optional")</RadzenText>
                 <RadzenTextArea @bind-Value="@Template.DescriptionEnglish"
                               Placeholder="@T("placeholders.describe-template-purpose-english")"
                               Rows="4"

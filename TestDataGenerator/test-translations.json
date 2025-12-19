@@ -784,6 +784,55 @@
         "createdDate":  "2025-12-06T12:00:00.0000000+00:00"
     },
     {
+        "key":  "criteria.communication",
+        "german":  "Kommunikation",
+        "english":  "Communication",
+        "category":  "criteria",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "criteria.teamwork",
+        "german":  "Teamarbeit",
+        "english":  "Teamwork",
+        "category":  "criteria",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "criteria.problem-solving",
+        "german":  "Problemlösung",
+        "english":  "Problem Solving",
+        "category":  "criteria",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "criteria.quality",
+        "german":  "Qualität",
+        "english":  "Quality",
+        "category":  "criteria",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "criteria.reliability",
+        "german":  "Zuverlässigkeit",
+        "english":  "Reliability",
+        "category":  "criteria",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "criteria.initiative",
+        "german":  "Initiative",
+        "english":  "Initiative",
+        "category":  "criteria",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "criteria.overall",
+        "german":  "Gesamt",
+        "english":  "Overall",
+        "category":  "criteria",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "dashboard.no-data",
         "german":  "Keine Dashboard-Daten",
         "english":  "No Dashboard Data",
@@ -796,6 +845,48 @@
         "english":  "Unable to load dashboard information.",
         "category":  "dashboard",
         "createdDate":  "2025-12-03T12:17:11.8998693+00:00"
+    },
+    {
+        "key":  "feedback-sections.positive-feedback.title",
+        "german":  "Positives Feedback",
+        "english":  "Positive Feedback",
+        "category":  "feedback-sections",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "feedback-sections.positive-feedback.placeholder",
+        "german":  "Was hat der Mitarbeiter gut gemacht?",
+        "english":  "What did the employee do well?",
+        "category":  "feedback-sections",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "feedback-sections.areas-for-improvement.title",
+        "german":  "Verbesserungsbereiche",
+        "english":  "Areas for Improvement",
+        "category":  "feedback-sections",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "feedback-sections.areas-for-improvement.placeholder",
+        "german":  "Welche Bereiche könnten verbessert werden?",
+        "english":  "What areas could be improved?",
+        "category":  "feedback-sections",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "feedback-sections.additional-comments.title",
+        "german":  "Zusätzliche Kommentare",
+        "english":  "Additional Comments",
+        "category":  "feedback-sections",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "feedback-sections.additional-comments.placeholder",
+        "german":  "Weitere Kommentare oder Beobachtungen",
+        "english":  "Any other comments or observations",
+        "category":  "feedback-sections",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
     },
     {
         "key":  "dialogs.add-goal",
@@ -1253,6 +1344,48 @@
         "createdDate":  "2025-12-05T21:00:00.0000000+00:00"
     },
     {
+        "key":  "guidelines.general-feedback",
+        "german":  "Geben Sie konstruktives Feedback basierend auf Ihrer Interaktion mit dem Mitarbeiter.",
+        "english":  "Provide constructive feedback based on your interaction with the employee.",
+        "category":  "guidelines",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "guidelines.customer-feedback",
+        "german":  "Beschreiben Sie Ihre Erfahrungen bei der Zusammenarbeit mit dem Mitarbeiter aus Kundenperspektive. Konzentrieren Sie sich auf Kommunikation, Professionalität und Ergebnisqualität.",
+        "english":  "Describe your experience working with the employee from a customer perspective. Focus on communication, professionalism, and quality of deliverables.",
+        "category":  "guidelines",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "guidelines.peer-feedback",
+        "german":  "Teilen Sie Ihre Beobachtungen als Kollege. Berücksichtigen Sie Teamzusammenarbeit, Problemlösungsfähigkeiten und Beiträge zum Team.",
+        "english":  "Share your observations as a peer. Consider teamwork, problem-solving skills, and contributions to the team.",
+        "category":  "guidelines",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "guidelines.project-colleague-feedback",
+        "german":  "Bewerten Sie die Leistung des Mitarbeiters im Projektkontext. Berücksichtigen Sie seinen Beitrag, Zusammenarbeit und Auswirkungen auf den Projekterfolg.",
+        "english":  "Evaluate the employee's performance within the project context. Consider their contribution, collaboration, and impact on project success.",
+        "category":  "guidelines",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "help.provider-role-required",
+        "german":  "Ihre Rolle im Verhältnis zum Mitarbeiter (erforderlich für nicht-Kunden-Feedback)",
+        "english":  "Your role in relation to the employee (required for non-customer feedback)",
+        "category":  "help",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "help.project-context-optional",
+        "german":  "Zusätzliche Details über das Projekt und Ihre Zusammenarbeit (optional)",
+        "english":  "Additional details about the project and your collaboration (optional)",
+        "category":  "help",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "labels.additional-requirements",
         "german":  "Zusätzliche Anforderungen",
         "english":  "Additional Requirements",
@@ -1407,9 +1540,9 @@
         "createdDate":  "2025-12-09T12:25:00.0000000+00:00"
     },
     {
-        "key":  "labels.english-description-required",
-        "german":  "Englische Beschreibung *",
-        "english":  "English Description *",
+        "key":  "labels.english-description-optional",
+        "german":  "Englische Beschreibung (optional)",
+        "english":  "English Description (Optional)",
         "category":  "labels",
         "createdDate":  "2025-12-09T12:25:00.0000000+00:00"
     },
@@ -1477,9 +1610,9 @@
         "createdDate":  "2025-12-09T12:25:00.0000000+00:00"
     },
     {
-        "key":  "labels.german-template-name-optional",
-        "german":  "Deutscher Vorlagenname (Optional)",
-        "english":  "German Template Name (Optional)",
+        "key":  "labels.german-template-name-required",
+        "german":  "Deutscher Vorlagenname *",
+        "english":  "German Template Name *",
         "category":  "labels",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
@@ -1911,6 +2044,41 @@
         "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
     },
     {
+        "key":  "labels.guidelines",
+        "german":  "Richtlinien",
+        "english":  "Guidelines",
+        "category":  "labels",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.provider-name",
+        "german":  "Anbietername",
+        "english":  "Provider Name",
+        "category":  "labels",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.provider-role",
+        "german":  "Anbieterrolle",
+        "english":  "Provider Role",
+        "category":  "labels",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.project-name",
+        "german":  "Projektname",
+        "english":  "Project Name",
+        "category":  "labels",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.project-context",
+        "german":  "Projektkontext",
+        "english":  "Project Context",
+        "category":  "labels",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "language.english",
         "german":  "Englisch",
         "english":  "English",
@@ -2000,6 +2168,20 @@
         "english":  "Error",
         "category":  "messages",
         "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.german-template-name-required",
+        "german":  "Deutscher Vorlagenname ist erforderlich",
+        "english":  "German template name is required",
+        "category":  "messages",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.template-name-required",
+        "german":  "Vorlagenname ist erforderlich",
+        "english":  "Template name is required",
+        "category":  "messages",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.error-cloning-template",
@@ -2245,6 +2427,13 @@
         "english":  "No feedback found",
         "category":  "messages",
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.no-templates-available",
+        "german":  "Keine Vorlagen verf\u00FCgbar. Sie k\u00F6nnen trotzdem Feedback ohne Vorlage erfassen.",
+        "english":  "No templates available. You can still record feedback without a template.",
+        "category":  "messages",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.no-goal-template-configuration-required",
@@ -2975,6 +3164,20 @@
         "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
+        "key":  "pages.record-employee-feedback",
+        "german":  "Mitarbeiter-Feedback erfassen",
+        "english":  "Record Employee Feedback",
+        "category":  "pages",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.record-employee-feedback-description",
+        "german":  "Erfassen Sie externes Feedback für einen Mitarbeiter",
+        "english":  "Record external feedback for an employee",
+        "category":  "pages",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "pages.feedback-template-builder",
         "german":  "Feedback-Vorlagen-Builder",
         "english":  "Feedback Template Builder",
@@ -3437,6 +3640,55 @@
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
+        "key":  "placeholders.enter-provider-name",
+        "german":  "Namen des Feedbackgebers eingeben",
+        "english":  "Enter provider name",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.enter-project-name",
+        "german":  "Projektnamen eingeben",
+        "english":  "Enter project name",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.enter-project-context",
+        "german":  "Projektkontext beschreiben",
+        "english":  "Describe project context",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.customer-role",
+        "german":  "z.B. Projektsponsor, Endbenutzer",
+        "english":  "e.g., Project Sponsor, End User",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.peer-role",
+        "german":  "z.B. Entwickler, Designer, Analyst",
+        "english":  "e.g., Developer, Designer, Analyst",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.colleague-role",
+        "german":  "z.B. Projektmanager, Tech Lead",
+        "english":  "e.g., Project Manager, Tech Lead",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.provider-role-generic",
+        "german":  "Rolle des Feedbackgebers",
+        "english":  "Provider's role",
+        "category":  "placeholders",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "questions.default-assessment-title",
         "german":  "Bewertungsbeurteilung",
         "english":  "Evaluation Assessment",
@@ -3556,6 +3808,13 @@
         "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
+        "key":  "sections.employee-selection",
+        "german":  "Mitarbeiterauswahl",
+        "english":  "Employee Selection",
+        "category":  "sections",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "sections.feedback-source",
         "german":  "Feedback-Quelle",
         "english":  "Feedback Source",
@@ -3589,6 +3848,13 @@
         "english":  "Open-Ended Questions",
         "category":  "sections",
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.provider-information",
+        "german":  "Anbieterinformationen",
+        "english":  "Provider Information",
+        "category":  "sections",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
     },
     {
         "key":  "sections.response",
@@ -3687,6 +3953,48 @@
         "english":  "Project Colleague",
         "category":  "source-types",
         "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.customer.name",
+        "german":  "Kunde",
+        "english":  "Customer",
+        "category":  "source-types",
+        "createdDate":  "2025-12-18T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.customer.description",
+        "german":  "Feedback von Kunden",
+        "english":  "Feedback from customers",
+        "category":  "source-types",
+        "createdDate":  "2025-12-18T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.peer.name",
+        "german":  "Kollege",
+        "english":  "Peer",
+        "category":  "source-types",
+        "createdDate":  "2025-12-18T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.peer.description",
+        "german":  "Feedback von Kollegen auf gleicher Ebene",
+        "english":  "Feedback from colleagues at same level",
+        "category":  "source-types",
+        "createdDate":  "2025-12-18T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.project-colleague.name",
+        "german":  "Projektkollege",
+        "english":  "Project Colleague",
+        "category":  "source-types",
+        "createdDate":  "2025-12-18T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "source-types.project-colleague.description",
+        "german":  "Feedback von Teammitgliedern im selben Projekt",
+        "english":  "Feedback from team members on same project",
+        "category":  "source-types",
+        "createdDate":  "2025-12-18T14:00:00.0000000+00:00"
     },
     {
         "key":  "status.active",
@@ -4128,6 +4436,55 @@
         "english":  "Translation key is required",
         "category":  "validation",
         "createdDate":  "2025-12-06T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "validation.employee-required",
+        "german":  "Mitarbeiter ist erforderlich",
+        "english":  "Employee is required",
+        "category":  "validation",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "validation.source-type-required",
+        "german":  "Feedback-Quelle ist erforderlich",
+        "english":  "Feedback source is required",
+        "category":  "validation",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "validation.provider-name-required",
+        "german":  "Anbietername ist erforderlich",
+        "english":  "Provider name is required",
+        "category":  "validation",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "validation.provider-role-required",
+        "german":  "Anbieterrolle ist erforderlich",
+        "english":  "Provider role is required",
+        "category":  "validation",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "validation.project-name-required",
+        "german":  "Projektname ist erforderlich",
+        "english":  "Project name is required",
+        "category":  "validation",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "validation.feedback-date-future",
+        "german":  "Feedback-Datum kann nicht in der Zukunft liegen",
+        "english":  "Feedback date cannot be in the future",
+        "category":  "validation",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "validation.feedback-content-required",
+        "german":  "Feedback-Inhalt ist erforderlich (mindestens eine Bewertung oder ein Kommentar)",
+        "english":  "Feedback content is required (at least one rating or comment)",
+        "category":  "validation",
+        "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
     },
     {
         "key":  "workflow-states.all",

@@ -61,6 +61,13 @@ public interface IEmployeeFeedbackApiService
     /// <param name="sourceType">Filter by specific source type</param>
     /// <returns>Available templates and criteria</returns>
     Task<Result<FeedbackTemplatesResponse>> GetFeedbackTemplatesAsync(int? sourceType = null);
+
+    /// <summary>
+    /// Gets source type options for feedback recording.
+    /// Returns metadata about available source types (Customer, Peer, ProjectColleague).
+    /// </summary>
+    /// <returns>Source type options with validation requirements</returns>
+    Task<Result<FeedbackTemplatesResponse>> GetSourceTypeOptionsAsync();
 }
 
 /// <summary>

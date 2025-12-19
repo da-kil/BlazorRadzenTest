@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ti8m.BeachBreak.QueryApi.Dto;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeFeedbackQueries;
-using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -154,6 +153,19 @@ public class EmployeeFeedbackController : BaseController
         var templates = await queryDispatcher.QueryAsync(query);
         var dtos = templates.Select(FeedbackTemplateDto.FromReadModel).ToList();
         return CreateResponse(Result<List<FeedbackTemplateDto>>.Success(dtos));
+    }
+
+    /// <summary>
+    /// Gets source type options for feedback recording.
+    /// Returns metadata about available source types (Customer, Peer, ProjectColleague).
+    /// </summary>
+    /// <returns>Source type options with validation requirements</returns>
+    [HttpGet("source-types")]
+    public async Task<IActionResult> GetSourceTypeOptions()
+    {
+        var query = new GetFeedbackTemplatesQuery();
+        var result = await queryDispatcher.QueryAsync(query);
+        return CreateResponse(result);
     }
 
 }

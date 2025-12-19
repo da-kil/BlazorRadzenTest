@@ -1,9 +1,9 @@
 @using Microsoft.AspNetCore.Components
 @using Radzen
 @using Radzen.Blazor
-@using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Models.Dto
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Services
 @inject IEmployeeFeedbackApiService FeedbackService
 @inherits OptimizedTranslatableComponentBase
 
@@ -14,15 +14,20 @@
 
     @if (sourceTypeOptions.Any())
     {
-        <RadzenRadioButtonList @bind-Value="@selectedSourceType"
-                             TValue="int?"
-                             Orientation="Orientation.Vertical"
-                             Change="@HandleSourceTypeChanged">
+        <div class="source-type-radio-group">
             @foreach (var option in sourceTypeOptions)
             {
-                <RadzenRadioButtonListItem Text="@GetOptionDisplay(option)" Value="@option.Value" />
+                <div class="radio-option">
+                    <input type="radio"
+                           name="sourceType"
+                           id="source_@option.Value"
+                           value="@option.Value"
+                           checked="@(selectedSourceType == option.Value)"
+                           @onchange="@(() => HandleSourceTypeChanged(option.Value))" />
+                    <label for="source_@option.Value">@GetOptionDisplay(option)</label>
+                </div>
             }
-        </RadzenRadioButtonList>
+        </div>
 
         <!-- Source Type Details -->
         @if (selectedSourceType.HasValue)
@@ -78,7 +83,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         selectedSourceType = SelectedSourceType;
+        // Try to load from API first, fallback only if needed
         await LoadSourceTypeOptions();
     }
 
@@ -91,14 +98,95 @@
         }
     }
 
+    private void InitializeFallbackOptions()
+    {
+        // Initialize with hardcoded source types as fallback when backend is unavailable
+        sourceTypeOptions = new List<SourceTypeOption>
+        {
+            new SourceTypeOption
+            {
+                Value = 0,
+                DisplayName = T("source-types.customer.name"),
+                Description = T("source-types.customer.description"),
+                RequiresProjectContext = false,
+                RequiresProviderRole = false
+            },
+            new SourceTypeOption
+            {
+                Value = 1,
+                DisplayName = T("source-types.peer.name"),
+                Description = T("source-types.peer.description"),
+                RequiresProjectContext = false,
+                RequiresProviderRole = true
+            },
+            new SourceTypeOption
+            {
+                Value = 2,
+                DisplayName = T("source-types.project-colleague.name"),
+                Description = T("source-types.project-colleague.description"),
+                RequiresProjectContext = true,
+                RequiresProviderRole = true
+            }
+        };
+    }
+
     private async Task LoadSourceTypeOptions()
     {
-        var result = await FeedbackService.GetFeedbackTemplatesAsync();
-        if (result.Succeeded && result.Payload != null)
+        try
         {
-            sourceTypeOptions = result.Payload.SourceTypeOptions;
+            // Try to load source types from backend
+            var result = await FeedbackService.GetSourceTypeOptionsAsync();
+
+            if (result.Succeeded && result.Payload?.SourceTypeOptions?.Any() == true)
+            {
+                // Backend returns options with empty DisplayName/Description (expects frontend to translate)
+                // So we populate the translations here
+                sourceTypeOptions = result.Payload.SourceTypeOptions.Select(opt => new SourceTypeOption
+                {
+                    Value = opt.Value,
+                    DisplayName = GetTranslatedName(opt.Value),
+                    Description = GetTranslatedDescription(opt.Value),
+                    RequiresProjectContext = opt.RequiresProjectContext,
+                    RequiresProviderRole = opt.RequiresProviderRole
+                }).ToList();
+            }
+            else
+            {
+                // Backend returned no options - use fallback
+                InitializeFallbackOptions();
+            }
+
             StateHasChanged();
         }
+        catch (Exception)
+        {
+            // On any exception, use fallback
+            // This ensures the component still works even if backend is unavailable
+            InitializeFallbackOptions();
+            StateHasChanged();
+        }
+    }
+
+    private string GetTranslatedName(int sourceType)
+    {
+        return sourceType switch
+        {
+            0 => T("source-types.customer.name"),
+            1 => T("source-types.peer.name"),
+            2 => T("source-types.project-colleague.name"),
+            _ => $"Source Type {sourceType}"
+        };
+    }
+
+    private string GetTranslatedDescription(int sourceType)
+    {
+        return sourceType switch
+        {
+            0 => T("source-types.customer.description"),
+            1 => T("source-types.peer.description"),
+            2 => T("source-types.project-colleague.description"),
+            _ => ""
+        };
     }
 
     private async Task HandleSourceTypeChanged(int? value)
@@ -138,3 +226,28 @@
         return display;
     }
 }
+
+<style>
+    .source-type-radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .radio-option {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .radio-option input[type="radio"] {
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+        cursor: pointer;
+    }
+
+    .radio-option label {
+        cursor: pointer;
+        user-select: none;
+    }
+</style>

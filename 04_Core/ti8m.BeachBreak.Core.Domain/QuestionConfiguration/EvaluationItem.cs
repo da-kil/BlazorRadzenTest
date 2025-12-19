@@ -22,14 +22,14 @@ public class EvaluationItem
     public string TitleGerman { get; set; }
 
     /// <summary>
-    /// English description providing context for this evaluation.
+    /// English description providing context for this evaluation (optional).
     /// </summary>
-    public string DescriptionEnglish { get; set; }
+    public string? DescriptionEnglish { get; set; }
 
     /// <summary>
-    /// German description providing context for this evaluation.
+    /// German description providing context for this evaluation (optional).
     /// </summary>
-    public string DescriptionGerman { get; set; }
+    public string? DescriptionGerman { get; set; }
 
     /// <summary>
     /// Indicates whether this evaluation item must be rated for the question to be considered complete.
@@ -49,16 +49,16 @@ public class EvaluationItem
         string key,
         string titleEnglish,
         string titleGerman,
-        string descriptionEnglish,
-        string descriptionGerman,
+        string? descriptionEnglish,
+        string? descriptionGerman,
         bool isRequired,
         int order)
     {
         Key = key;
         TitleEnglish = titleEnglish;
         TitleGerman = titleGerman;
-        DescriptionEnglish = descriptionEnglish;
-        DescriptionGerman = descriptionGerman;
+        DescriptionEnglish = descriptionEnglish ?? string.Empty;
+        DescriptionGerman = descriptionGerman ?? string.Empty;
         IsRequired = isRequired;
         Order = order;
     }
@@ -74,7 +74,7 @@ public class EvaluationItem
     /// <summary>
     /// Gets the localized description based on the specified language.
     /// </summary>
-    public string GetLocalizedDescription(Language language)
+    public string? GetLocalizedDescription(Language language)
     {
         return language == Language.German ? DescriptionGerman : DescriptionEnglish;
     }
@@ -94,7 +94,7 @@ public class EvaluationItem
     public string GetLocalizedDescriptionWithFallback(Language language)
     {
         var localized = GetLocalizedDescription(language);
-        return !string.IsNullOrWhiteSpace(localized) ? localized : DescriptionEnglish;
+        return !string.IsNullOrWhiteSpace(localized) ? localized : (DescriptionEnglish ?? string.Empty);
     }
 }
 

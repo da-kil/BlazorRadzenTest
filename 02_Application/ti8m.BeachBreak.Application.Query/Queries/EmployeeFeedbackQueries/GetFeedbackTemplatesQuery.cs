@@ -5,53 +5,28 @@ using ti8m.BeachBreak.Core;
 namespace ti8m.BeachBreak.Application.Query.Queries.EmployeeFeedbackQueries;
 
 /// <summary>
-/// Query to get available feedback templates and evaluation criteria.
-/// Used by the frontend to populate criteria selection UI.
+/// Query to get feedback source type metadata.
+/// Used by the frontend to display available feedback source types and their validation requirements.
+/// Templates are fully customizable - no predefined criteria are returned.
 /// </summary>
 public class GetFeedbackTemplatesQuery : IQuery<Result<FeedbackTemplatesResponse>>
 {
     /// <summary>
     /// Filter by specific source type (optional).
-    /// If provided, returns only templates/criteria relevant to that source type.
+    /// If provided, returns only metadata for that source type.
     /// </summary>
     public int? SourceType { get; set; }
-
-    /// <summary>
-    /// Whether to include all available criteria or just default ones.
-    /// Default: true (include all).
-    /// </summary>
-    public bool IncludeAllCriteria { get; set; } = true;
-
-    public GetFeedbackTemplatesQuery() { }
-
-    public GetFeedbackTemplatesQuery(int? sourceType = null)
-    {
-        SourceType = sourceType;
-    }
 }
 
 /// <summary>
-/// Response containing available feedback templates and criteria.
+/// Response containing feedback source type metadata for template building.
+/// Templates are fully customizable - users create their own rating+comment or text-only questions.
 /// </summary>
 public class FeedbackTemplatesResponse
 {
     /// <summary>
-    /// Default templates for each source type.
-    /// </summary>
-    public Dictionary<int, EmployeeFeedbackConfiguration> DefaultTemplates { get; set; } = new();
-
-    /// <summary>
-    /// All available evaluation criteria.
-    /// </summary>
-    public List<EvaluationItem> AvailableCriteria { get; set; } = new();
-
-    /// <summary>
-    /// Standard text sections for unstructured feedback.
-    /// </summary>
-    public List<TextSectionDefinition> StandardTextSections { get; set; } = new();
-
-    /// <summary>
-    /// Source type options for UI display.
+    /// Fixed system-level source type options (Customer, Peer, Project Colleague).
+    /// Includes validation requirements like RequiresProjectContext and RequiresProviderRole.
     /// </summary>
     public List<SourceTypeOption> SourceTypeOptions { get; set; } = new();
 }

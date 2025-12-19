@@ -48,6 +48,9 @@ public class FeedbackTemplate : AggregateRoot
         if (name == null || string.IsNullOrWhiteSpace(name.English))
             throw new ArgumentException("Name is required in English", nameof(name));
 
+        if (string.IsNullOrWhiteSpace(name.German))
+            throw new ArgumentException("Name is required in German", nameof(name));
+
         if (criteria == null || criteria.Count == 0)
             throw new ArgumentException("At least one criterion is required", nameof(criteria));
 
@@ -92,6 +95,9 @@ public class FeedbackTemplate : AggregateRoot
 
         if (name == null || string.IsNullOrWhiteSpace(name.English))
             throw new ArgumentException("Name is required in English", nameof(name));
+
+        if (string.IsNullOrWhiteSpace(name.German))
+            throw new ArgumentException("Name is required in German", nameof(name));
 
         if (!CanBeEdited())
             throw new InvalidOperationException("Template cannot be edited in current status");

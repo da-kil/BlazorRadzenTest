@@ -1,4 +1,6 @@
+using System.Text.Json;
 using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate;
+using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate.Events;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -182,5 +184,116 @@ public class EmployeeFeedbackReadModel
             var currentFiscalYear = now.Month >= 4 ? now.Year : now.Year - 1;
             return FiscalYear == currentFiscalYear;
         }
+    }
+
+    // Apply methods for Marten event sourcing projection
+
+    /// <summary>
+    /// Projects the EmployeeFeedbackRecorded event to create the initial read model.
+    /// </summary>
+    public void Apply(EmployeeFeedbackRecorded @event)
+    {
+        Id = @event.FeedbackId;
+        EmployeeId = @event.EmployeeId;
+
+        // Note: Employee names need to be populated separately via denormalization
+        // The events only contain IDs to keep them pure domain events
+        EmployeeName = string.Empty;
+        EmployeeFirstName = string.Empty;
+        EmployeeLastName = string.Empty;
+
+        SourceType = @event.SourceType;
+        SourceTypeDisplayName = GetSourceTypeDisplayName(@event.SourceType);
+
+        // Provider information
+        ProviderName = @event.ProviderInfo.ProviderName;
+        ProviderRole = @event.ProviderInfo.ProviderRole;
+        ProjectName = @event.ProviderInfo.ProjectName;
+        ProjectContext = @event.ProviderInfo.ProjectContext;
+
+        FeedbackDate = @event.FeedbackDate;
+        RecordedDate = @event.RecordedDate;
+        RecordedByEmployeeId = @event.RecordedByEmployeeId;
+
+        // Note: RecordedByEmployeeName needs to be populated separately via denormalization
+        RecordedByEmployeeName = string.Empty;
+
+        // Calculate metrics from feedback data
+        UpdateMetricsFromFeedbackData(@event.FeedbackData);
+
+        // Serialize feedback data to JSON for storage
+        FeedbackDataJson = JsonSerializer.Serialize(@event.FeedbackData);
+
+        IsDeleted = false;
+    }
+
+    /// <summary>
+    /// Projects the EmployeeFeedbackUpdated event to update the read model.
+    /// </summary>
+    public void Apply(EmployeeFeedbackUpdated @event)
+    {
+        // Provider information (may have changed)
+        ProviderName = @event.ProviderInfo.ProviderName;
+        ProviderRole = @event.ProviderInfo.ProviderRole;
+        ProjectName = @event.ProviderInfo.ProjectName;
+        ProjectContext = @event.ProviderInfo.ProjectContext;
+
+        FeedbackDate = @event.FeedbackDate;
+        LastModifiedDate = @event.UpdatedDate;
+        LastModifiedByEmployeeId = @event.UpdatedByEmployeeId;
+
+        // Note: LastModifiedByEmployeeName needs to be populated separately via denormalization
+        LastModifiedByEmployeeName = string.Empty;
+
+        // Recalculate metrics from updated feedback data
+        UpdateMetricsFromFeedbackData(@event.FeedbackData);
+
+        // Update serialized feedback data
+        FeedbackDataJson = JsonSerializer.Serialize(@event.FeedbackData);
+    }
+
+    /// <summary>
+    /// Projects the EmployeeFeedbackDeleted event to mark the read model as deleted.
+    /// </summary>
+    public void Apply(EmployeeFeedbackDeleted @event)
+    {
+        IsDeleted = true;
+        DeletedDate = @event.DeletedDate;
+        DeleteReason = @event.DeleteReason;
+    }
+
+    // Helper methods
+
+    private void UpdateMetricsFromFeedbackData(Domain.EmployeeFeedbackAggregate.ValueObjects.ConfigurableFeedbackData feedbackData)
+    {
+        // Calculate rating metrics
+        RatedCriteriaCount = feedbackData.RatedItemsCount;
+        TotalCriteriaCount = feedbackData.Ratings.Count;
+        AverageRating = feedbackData.AverageRating;
+
+        // Calculate comment metrics
+        HasUnstructuredFeedback = feedbackData.HasAnyComment;
+
+        var totalCommentLength = 0;
+        foreach (var rating in feedbackData.Ratings.Values)
+        {
+            totalCommentLength += rating.Comment?.Length ?? 0;
+        }
+        foreach (var comment in feedbackData.Comments.Values)
+        {
+            totalCommentLength += comment?.Length ?? 0;
+        }
+        CommentCharacterCount = totalCommentLength;
+    }
+
+    private static string GetSourceTypeDisplayName(FeedbackSourceType sourceType)
+    {
+        return sourceType switch
+        {
+            FeedbackSourceType.Customer => "Customer",
+            FeedbackSourceType.Peer => "Peer",
+            FeedbackSourceType.ProjectColleague => "Project Colleague",
+            _ => sourceType.ToString()
+        };
     }
 }
