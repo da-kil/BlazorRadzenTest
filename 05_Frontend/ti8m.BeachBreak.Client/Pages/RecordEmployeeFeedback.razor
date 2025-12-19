@@ -22,10 +22,10 @@
         <PageLayout Title="@T("pages.record-employee-feedback")"
                    Description="@T("pages.record-employee-feedback-description")">
             <ChildContent>
-                <RadzenStack Gap="1rem">
+                <RadzenStack Gap="2rem">
 
         <!-- Employee Selection -->
-        <RadzenCard>
+        <div class="form-section">
             <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
                 @T("sections.employee-selection")
             </RadzenText>
@@ -54,23 +54,23 @@
                                     Style="width: 100%;" />
                 </RadzenColumn>
             </RadzenRow>
-        </RadzenCard>
+        </div>
 
         <!-- Source Type Selection -->
-        <RadzenCard>
+        <div class="form-section">
             <FeedbackSourceSelector @bind-SelectedSourceType="@selectedSourceType"
                                    OnSourceTypeChanged="@OnSourceTypeChanged" />
-        </RadzenCard>
+        </div>
 
         <!-- Template Selection (Optional) -->
         @if (selectedSourceType.HasValue)
         {
-            <RadzenCard>
+            <div class="form-section">
                 <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
                     @T("sections.use-template")
                 </RadzenText>
 
-                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2 text-muted">
+                <RadzenText TextStyle="TextStyle.Body2" Class="mb-3 text-muted">
                     @T("labels.template-optional-description")
                 </RadzenText>
 
@@ -88,40 +88,39 @@
 
                     @if (selectedTemplateId.HasValue)
                     {
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mt-3">
+                        <RadzenText TextStyle="TextStyle.Body2" Class="mt-2 text-success">
+                            <RadzenIcon Icon="check_circle" Style="font-size: 1rem;" />
                             @T("messages.template-applied-successfully")
-                        </RadzenAlert>
+                        </RadzenText>
                     }
                 }
                 else
                 {
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                            <RadzenIcon Icon="info" />
-                            <RadzenText>@T("messages.no-templates-available")</RadzenText>
-                        </RadzenStack>
-                    </RadzenAlert>
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                        <RadzenIcon Icon="info" Style="font-size: 1rem;" />
+                        @T("messages.no-templates-available")
+                    </RadzenText>
                 }
-            </RadzenCard>
+            </div>
         }
 
         <!-- Provider Information -->
-        <RadzenCard>
+        <div class="form-section">
             <FeedbackProviderInfoSection @bind-ProviderInfo="@providerInfo"
                                        SourceType="@selectedSourceType"
                                        RequiresProjectContext="@RequiresProjectContext"
                                        RequiresProviderRole="@RequiresProviderRole" />
-        </RadzenCard>
+        </div>
 
         <!-- Configurable Feedback Section -->
         @if (selectedSourceType.HasValue && availableCriteria.Any())
         {
-            <RadzenCard>
+            <div class="form-section">
                 <ConfigurableFeedbackSection @bind-FeedbackData="@feedbackData"
                                            AvailableCriteria="@availableCriteria"
                                            TextSections="@textSections"
                                            RatingScale="@ratingScale" />
-            </RadzenCard>
+            </div>
         }
 
         <!-- Validation Errors -->
@@ -131,7 +130,7 @@
         }
 
         <!-- Action Buttons -->
-        <RadzenCard>
+        <div class="form-actions">
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="1rem">
                 <RadzenButton Text="@T("buttons.cancel")"
                             ButtonStyle="ButtonStyle.Light"
@@ -144,7 +143,7 @@
                             IsBusy="@isSaving"
                             Disabled="@(!IsFormValid)" />
             </RadzenStack>
-        </RadzenCard>
+        </div>
 
                 </RadzenStack>
             </ChildContent>
@@ -191,6 +190,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await LoadEmployees();
     }
 
@@ -415,3 +415,18 @@
         };
     }
 }
+
+<style>
+    .form-section {
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid var(--rz-border-color, #e0e0e0);
+    }
+
+    .form-section:last-of-type {
+        border-bottom: none;
+    }
+
+    .form-actions {
+        padding-top: 1rem;
+    }
+</style>

@@ -24,47 +24,13 @@
                            value="@option.Value"
                            checked="@(selectedSourceType == option.Value)"
                            @onchange="@(() => HandleSourceTypeChanged(option.Value))" />
-                    <label for="source_@option.Value">@GetOptionDisplay(option)</label>
+                    <label for="source_@option.Value">
+                        <div class="radio-label-main">@option.DisplayName</div>
+                        <div class="radio-label-description">@option.Description</div>
+                    </label>
                 </div>
             }
         </div>
-
-        <!-- Source Type Details -->
-        @if (selectedSourceType.HasValue)
-        {
-            var selectedOption = sourceTypeOptions.FirstOrDefault(o => o.Value == selectedSourceType.Value);
-            if (selectedOption != null)
-            {
-                <RadzenCard Class="mt-3" Style="background-color: var(--rz-base-50);">
-                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
-                        <strong>@T("labels.selected-source"):</strong> @selectedOption.DisplayName
-                    </RadzenText>
-                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                        @selectedOption.Description
-                    </RadzenText>
-
-                    @if (selectedOption.RequiresProjectContext || selectedOption.RequiresProviderRole)
-                    {
-                        <div class="mt-2">
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-info">
-                                <RadzenIcon Icon="info" Class="me-1" />
-                                @T("labels.additional-requirements"):
-                            </RadzenText>
-                            <ul class="requirements-list">
-                                @if (selectedOption.RequiresProviderRole)
-                                {
-                                    <li>@T("requirements.provider-role-required")</li>
-                                }
-                                @if (selectedOption.RequiresProjectContext)
-                                {
-                                    <li>@T("requirements.project-context-required")</li>
-                                }
-                            </ul>
-                        </div>
-                    }
-                </RadzenCard>
-            }
-        }
     }
     else
     {
@@ -209,35 +175,19 @@
             await OnSourceTypeChanged.InvokeAsync(value);
         }
     }
-
-    private string GetOptionDisplay(SourceTypeOption option)
-    {
-        var display = $"{option.DisplayName} - {option.Description}";
-
-        if (option.RequiresProjectContext || option.RequiresProviderRole)
-        {
-            var requirements = new List<string>();
-            if (option.RequiresProviderRole) requirements.Add(T("labels.role-required"));
-            if (option.RequiresProjectContext) requirements.Add(T("labels.project-required"));
-
-            display += $" ({string.Join(", ", requirements)})";
-        }
-
-        return display;
-    }
 }
 
 <style>
     .source-type-radio-group {
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 1rem;
     }
 
     .radio-option {
         display: flex;
         align-items: flex-start;
-        gap: 0.5rem;
+        gap: 0.75rem;
     }
 
     .radio-option input[type="radio"] {
@@ -249,5 +199,17 @@
     .radio-option label {
         cursor: pointer;
         user-select: none;
+        flex: 1;
+    }
+
+    .radio-label-main {
+        font-weight: 500;
+        margin-bottom: 0.25rem;
+    }
+
+    .radio-label-description {
+        font-size: 0.875rem;
+        color: var(--rz-text-secondary-color, #666);
+        line-height: 1.4;
     }
 </style>

@@ -33,12 +33,6 @@
                          MaxLength="100"
                          Change="@OnProviderInfoChanged"
                          Style="width: 100%;" />
-            @if (RequiresProviderRole)
-            {
-                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
-                    @T("help.provider-role-required")
-                </RadzenText>
-            }
         </RadzenColumn>
 
         <!-- Project Context (for Project Colleague feedback) -->
@@ -70,17 +64,6 @@
             </RadzenColumn>
         }
     </RadzenRow>
-
-    <!-- Source Type Specific Guidelines -->
-    <RadzenCard Class="mt-3" Style="background-color: var(--rz-info-lighter);">
-        <RadzenText TextStyle="TextStyle.Body2">
-            <RadzenIcon Icon="lightbulb" Class="me-2" />
-            <strong>@T("labels.guidelines"):</strong>
-        </RadzenText>
-        <RadzenText TextStyle="TextStyle.Body2" Class="mt-2">
-            @GetSourceTypeGuidelines()
-        </RadzenText>
-    </RadzenCard>
 </div>
 
 @code {
@@ -121,17 +104,6 @@
             1 => T("placeholders.peer-role"), // Peer
             2 => T("placeholders.colleague-role"), // Project Colleague
             _ => T("placeholders.provider-role-generic")
-        };
-    }
-
-    private string GetSourceTypeGuidelines()
-    {
-        return SourceType switch
-        {
-            0 => T("guidelines.customer-feedback"), // Customer feedback guidelines
-            1 => T("guidelines.peer-feedback"), // Peer feedback guidelines
-            2 => T("guidelines.project-colleague-feedback"), // Project colleague guidelines
-            _ => T("guidelines.general-feedback")
         };
     }
 }

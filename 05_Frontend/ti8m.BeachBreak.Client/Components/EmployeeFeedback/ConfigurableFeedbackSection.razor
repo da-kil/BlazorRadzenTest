@@ -14,89 +14,81 @@
     <!-- Structured Feedback (Ratings) -->
     @if (AvailableCriteria.Any())
     {
-        <RadzenCard Class="mb-4">
-            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-3">
+        <div class="feedback-subsection mb-4">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
                 @T("sections.structured-feedback")
             </RadzenText>
 
-            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3" Style="font-size: 0.875rem;">
                 @($"{T("help.rating-scale-description")} (1-{RatingScale})")
             </RadzenText>
 
-            <div class="criteria-grid">
+            <div class="criteria-list">
                 @foreach (var criterion in GetSelectedCriteria())
                 {
                     <div class="criterion-item">
-                        <RadzenCard Style="margin-bottom: 1rem;">
-                            <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 font-medium">
-                                @GetCriterionTitle(criterion)
-                            </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body1" Class="mb-2 font-medium">
+                            @GetCriterionTitle(criterion)
+                        </RadzenText>
 
-                            <!-- Rating Stars -->
-                            <div class="rating-section mb-3">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
-                                    @T("labels.rating"):
-                                </RadzenText>
-                                <div class="star-rating-container">
-                                    <RadzenButton Text="@T("buttons.not-rated")"
-                                                Size="ButtonSize.ExtraSmall"
-                                                ButtonStyle="@(GetCurrentRating(criterion) == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
-                                                Click="@(() => SetRating(criterion, 0))"
-                                                Class="not-rated-btn" />
+                        <!-- Rating Stars -->
+                        <div class="rating-section mb-2">
+                            <div class="star-rating-container">
+                                <RadzenButton Text="@T("buttons.not-rated")"
+                                            Size="ButtonSize.ExtraSmall"
+                                            ButtonStyle="@(GetCurrentRating(criterion) == 0 ? ButtonStyle.Primary : ButtonStyle.Light)"
+                                            Click="@(() => SetRating(criterion, 0))"
+                                            Class="not-rated-btn" />
 
-                                    <div class="star-rating">
-                                        @for (int i = 1; i <= RatingScale; i++)
-                                        {
-                                            var starIndex = i;
-                                            var isSelected = GetCurrentRating(criterion) >= starIndex;
-
-                                            <RadzenButton Icon="@(isSelected ? "star" : "star_border")"
-                                                        Size="ButtonSize.Small"
-                                                        ButtonStyle="ButtonStyle.Base"
-                                                        Variant="Variant.Text"
-                                                        Click="@(() => SetRating(criterion, starIndex))"
-                                                        Class="@($"star-btn {(isSelected ? "selected" : "")}")"
-                                                        title="@($"{starIndex}/{RatingScale}")" />
-                                        }
-                                    </div>
-
-                                    @if (GetCurrentRating(criterion) > 0)
+                                <div class="star-rating">
+                                    @for (int i = 1; i <= RatingScale; i++)
                                     {
-                                        <RadzenText TextStyle="TextStyle.Body2" Class="rating-display">
-                                            @GetCurrentRating(criterion)/@RatingScale (@GetRatingLabel(GetCurrentRating(criterion)))
-                                        </RadzenText>
+                                        var starIndex = i;
+                                        var isSelected = GetCurrentRating(criterion) >= starIndex;
+
+                                        <RadzenButton Icon="@(isSelected ? "star" : "star_border")"
+                                                    Size="ButtonSize.Small"
+                                                    ButtonStyle="ButtonStyle.Base"
+                                                    Variant="Variant.Text"
+                                                    Click="@(() => SetRating(criterion, starIndex))"
+                                                    Class="@($"star-btn {(isSelected ? "selected" : "")}")"
+                                                    title="@($"{starIndex}/{RatingScale}")" />
                                     }
                                 </div>
-                            </div>
 
-                            <!-- Optional Comment -->
-                            <div class="comment-section">
-                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
-                                    @T("labels.comment-optional"):
-                                </RadzenText>
-                                <RadzenTextArea Value="@GetCurrentComment(criterion)"
-                                              ValueChanged="@(async (string value) => await SetCriterionComment(criterion, value))"
-                                              Placeholder="@T("placeholders.add-specific-comment")"
-                                              Rows="2"
-                                              MaxLength="500"
-                                              Style="width: 100%;" />
+                                @if (GetCurrentRating(criterion) > 0)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="rating-display">
+                                        @GetCurrentRating(criterion)/@RatingScale (@GetRatingLabel(GetCurrentRating(criterion)))
+                                    </RadzenText>
+                                }
                             </div>
-                        </RadzenCard>
+                        </div>
+
+                        <!-- Optional Comment -->
+                        <div class="comment-section">
+                            <RadzenTextArea Value="@GetCurrentComment(criterion)"
+                                          ValueChanged="@(async (string value) => await SetCriterionComment(criterion, value))"
+                                          Placeholder="@T("placeholders.add-specific-comment")"
+                                          Rows="2"
+                                          MaxLength="500"
+                                          Style="width: 100%;" />
+                        </div>
                     </div>
                 }
             </div>
-        </RadzenCard>
+        </div>
     }
 
     <!-- Unstructured Feedback (Comments) -->
     @if (TextSections.Any())
     {
-        <RadzenCard>
-            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-3">
+        <div class="feedback-subsection">
+            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
                 @T("sections.unstructured-feedback")
             </RadzenText>
 
-            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3" Style="font-size: 0.875rem;">
                 @T("help.unstructured-feedback-description")
             </RadzenText>
 
@@ -115,27 +107,7 @@
                                   Style="width: 100%;" />
                 </div>
             }
-        </RadzenCard>
-    }
-
-    <!-- Summary -->
-    @if (HasAnyContent())
-    {
-        <RadzenCard Class="mt-3" Style="background-color: var(--rz-success-lighter);">
-            <RadzenText TextStyle="TextStyle.Body2">
-                <RadzenIcon Icon="check_circle" Class="me-2" />
-                <strong>@T("labels.feedback-summary"):</strong>
-            </RadzenText>
-            <RadzenText TextStyle="TextStyle.Body2" Class="mt-1">
-                @GetFeedbackSummary()
-            </RadzenText>
-        </RadzenCard>
-    }
-    else
-    {
-        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Class="mt-3">
-            @T("messages.no-feedback-content-yet")
-        </RadzenAlert>
+        </div>
     }
 </div>
 
@@ -257,34 +229,6 @@
         await OnFeedbackDataChanged();
     }
 
-    private bool HasAnyContent()
-    {
-        var hasRating = feedbackData.Ratings.Values.Any(r => r.Rating > 0);
-        var hasComment = feedbackData.Comments.Values.Any(c => !string.IsNullOrWhiteSpace(c)) ||
-                        feedbackData.Ratings.Values.Any(r => !string.IsNullOrWhiteSpace(r.Comment));
-        return hasRating || hasComment;
-    }
-
-    private string GetFeedbackSummary()
-    {
-        var parts = new List<string>();
-
-        var ratedCount = feedbackData.Ratings.Values.Count(r => r.Rating > 0);
-        if (ratedCount > 0)
-        {
-            parts.Add($"{ratedCount} {T("labels.ratings")}");
-        }
-
-        var commentCount = feedbackData.Comments.Values.Count(c => !string.IsNullOrWhiteSpace(c)) +
-                          feedbackData.Ratings.Values.Count(r => !string.IsNullOrWhiteSpace(r.Comment));
-        if (commentCount > 0)
-        {
-            parts.Add($"{commentCount} {T("labels.comments")}");
-        }
-
-        return parts.Any() ? string.Join(", ", parts) : T("messages.no-content");
-    }
-
     private async Task OnFeedbackDataChanged()
     {
         if (FeedbackDataChanged.HasDelegate)
@@ -293,3 +237,52 @@
         }
     }
 }
+
+<style>
+    .feedback-subsection {
+        padding-bottom: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid var(--rz-border-color, #e0e0e0);
+    }
+
+    .feedback-subsection:last-child {
+        border-bottom: none;
+    }
+
+    .criteria-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .criterion-item {
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .criterion-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .star-rating-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .star-rating {
+        display: flex;
+        gap: 0.25rem;
+    }
+
+    .star-btn.selected {
+        color: var(--rz-warning, #ffc107);
+    }
+
+    .rating-display {
+        font-size: 0.875rem;
+        color: var(--rz-text-secondary-color, #666);
+    }
+</style>

@@ -20,14 +20,10 @@
                    Description="@T("pages.employee-feedback-description")">
             <ChildContent>
                 <!-- Filters and Search -->
-                <RadzenCard Class="mb-4">
-                    <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
-                        @T("sections.filters")
-                    </RadzenText>
-
-                    <RadzenRow Gap="1rem">
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Class="mb-4">
+                    <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
                         <!-- Employee Filter -->
-                        <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenColumn Size="12" SizeMD="3">
                             <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
                                 @T("labels.employee")
                             </RadzenText>
@@ -61,33 +57,37 @@
                             <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
                                 @T("labels.date-range")
                             </RadzenText>
-                            <RadzenDatePicker @bind-Value="@fromDate"
-                                            Placeholder="@T("labels.from-date")"
-                                            Change="@OnFilterChanged"
-                                            DateFormat="yyyy-MM-dd"
-                                            Style="width: 100%; margin-bottom: 0.5rem;" />
-                            <RadzenDatePicker @bind-Value="@toDate"
-                                            Placeholder="@T("labels.to-date")"
-                                            Change="@OnFilterChanged"
-                                            DateFormat="yyyy-MM-dd"
-                                            Style="width: 100%;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenDatePicker @bind-Value="@fromDate"
+                                                Placeholder="@T("labels.from-date")"
+                                                Change="@OnFilterChanged"
+                                                DateFormat="yyyy-MM-dd"
+                                                Style="width: 100%;" />
+                                <RadzenDatePicker @bind-Value="@toDate"
+                                                Placeholder="@T("labels.to-date")"
+                                                Change="@OnFilterChanged"
+                                                DateFormat="yyyy-MM-dd"
+                                                Style="width: 100%;" />
+                            </RadzenStack>
                         </RadzenColumn>
 
                         <!-- Actions -->
-                        <RadzenColumn Size="12" SizeMD="2" Style="display: flex; flex-direction: column; justify-content: flex-end;">
-                            <RadzenButton Text="@T("buttons.record-feedback")"
-                                        Icon="add"
-                                        ButtonStyle="ButtonStyle.Success"
-                                        Click="@ShowRecordFeedbackDialog"
-                                        Style="width: 100%; margin-bottom: 0.5rem;" />
-                            <RadzenButton Text="@T("buttons.clear-filters")"
-                                        Icon="clear"
-                                        ButtonStyle="ButtonStyle.Light"
-                                        Click="@ClearFilters"
-                                        Style="width: 100%;" />
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Text="@T("buttons.record-feedback")"
+                                            Icon="add"
+                                            ButtonStyle="ButtonStyle.Success"
+                                            Size="ButtonSize.Small"
+                                            Click="@ShowRecordFeedbackDialog" />
+                                <RadzenButton Text="@T("buttons.clear-filters")"
+                                            Icon="clear"
+                                            ButtonStyle="ButtonStyle.Light"
+                                            Size="ButtonSize.Small"
+                                            Click="@ClearFilters" />
+                            </RadzenStack>
                         </RadzenColumn>
                     </RadzenRow>
-                </RadzenCard>
+                </RadzenStack>
 
                 <!-- Summary Statistics -->
                 @if (feedbackList?.Any() == true)
@@ -308,6 +308,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await LoadInitialData();
         await LoadFeedback();
     }
