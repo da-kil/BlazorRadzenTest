@@ -101,20 +101,12 @@
                                 </Template>
                             </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn Title="@T("columns.rating-scale")" Width="100px" TextAlign="TextAlign.Center">
-                                <Template Context="template">
-                                    <RadzenText TextStyle="TextStyle.Body2">1-@template.RatingScale</RadzenText>
-                                </Template>
-                            </RadzenDataGridColumn>
-
                             <RadzenDataGridColumn Property="@nameof(FeedbackTemplate.Status)" Title="@T("columns.status")" Width="120px">
                                 <Template Context="template">
                                     <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(template.Status)"
                                                Text="@GetStatusText(template.Status)" />
                                 </Template>
                             </RadzenDataGridColumn>
-
-                            <RadzenDataGridColumn Property="@nameof(FeedbackTemplate.CreatedDate)" Title="@T("columns.created")" Width="120px" FormatString="{0:dd/MM/yyyy}" />
 
                             <RadzenDataGridColumn Property="@nameof(FeedbackTemplate.PublishedDate)" Title="@T("columns.published")" Width="120px" FormatString="{0:dd/MM/yyyy}">
                                 <Template Context="template">
@@ -129,7 +121,7 @@
                                 </Template>
                             </RadzenDataGridColumn>
 
-                            <RadzenDataGridColumn Filterable="false" Sortable="false" Width="240px" TextAlign="TextAlign.Center">
+                            <RadzenDataGridColumn Filterable="false" Sortable="false" Width="60px" TextAlign="TextAlign.Center">
                                 <Template Context="template">
                                     <div class="template-actions">
                                         @if (CanEditTemplate(template))

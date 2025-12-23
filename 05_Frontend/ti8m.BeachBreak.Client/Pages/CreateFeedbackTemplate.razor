@@ -11,7 +11,7 @@
 @inject NavigationManager NavigationManager
 @inherits OptimizedTranslatableComponentBase
 
-<AuthorizeView Policy="HR">
+<AuthorizeView Policy="TeamLead">
     <Authorized>
         <PageLayout Title="@T("pages.create-feedback-template")" Description="@T("pages.create-feedback-template-description")">
             <ChildContent>
@@ -144,7 +144,7 @@
         </PageLayout>
     </Authorized>
     <NotAuthorized>
-        <AccessDeniedComponent RequiredRole="HR" PageName="@T("pages.create-feedback-template")" />
+        <AccessDeniedComponent RequiredRole="TeamLead" PageName="@T("pages.create-feedback-template")" />
     </NotAuthorized>
 </AuthorizeView>
 
@@ -211,10 +211,9 @@
                 ScaleLowLabel = scaleLowLabel,
                 ScaleHighLabel = scaleHighLabel,
                 Status = TemplateStatus.Draft,
-                // For now, we'll create templates with default criteria
-                // In a full implementation, this page would allow configuring criteria
-                Criteria = CreateDefaultCriteria(),
-                TextSections = ConvertToTextSectionDefinitions(CreateDefaultTextSections()),
+                // Create empty template - user will configure criteria in the template builder
+                Criteria = new List<EvaluationItem>(),
+                TextSections = new List<TextSectionDefinition>(),
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -287,57 +286,5 @@
         validationErrors.Clear();
     }
 
-    private List<EvaluationItem> CreateDefaultCriteria()
-    {
-        return new List<EvaluationItem>
-        {
-            new("communication", T("criteria.communication"), "", false, 1),
-            new("teamwork", T("criteria.teamwork"), "", false, 2),
-            new("problem_solving", T("criteria.problem-solving"), "", false, 3),
-            new("quality", T("criteria.quality"), "", false, 4),
-            new("reliability", T("criteria.reliability"), "", false, 5),
-            new("overall", T("criteria.overall"), "", false, 6)
-        };
-    }
 
-    private List<TextSection> CreateDefaultTextSections()
-    {
-        return new List<TextSection>
-        {
-            new()
-            {
-                TitleEnglish = T("feedback-sections.positive-feedback.title"),
-                TitleGerman = T("feedback-sections.positive-feedback.title"),
-                DescriptionEnglish = T("feedback-sections.positive-feedback.placeholder"),
-                DescriptionGerman = T("feedback-sections.positive-feedback.placeholder"),
-                IsRequired = false,
-                Order = 1
-            },
-            new()
-            {
-                TitleEnglish = T("feedback-sections.areas-for-improvement.title"),
-                TitleGerman = T("feedback-sections.areas-for-improvement.title"),
-                DescriptionEnglish = T("feedback-sections.areas-for-improvement.placeholder"),
-                DescriptionGerman = T("feedback-sections.areas-for-improvement.placeholder"),
-                IsRequired = false,
-                Order = 2
-            }
-        };
-    }
-
-    private List<TextSectionDefinition> ConvertToTextSectionDefinitions(List<TextSection> textSections)
-    {
-        return textSections.Select((section, index) => new TextSectionDefinition
-        {
-            Key = $"section_{index + 1}",
-            TitleEnglish = section.TitleEnglish,
-            TitleGerman = section.TitleGerman,
-            DescriptionEnglish = section.DescriptionEnglish,
-            DescriptionGerman = section.DescriptionGerman,
-            PlaceholderEnglish = section.DescriptionEnglish,
-            PlaceholderGerman = section.DescriptionGerman,
-            IsRequired = section.IsRequired,
-            Order = section.Order
-        }).ToList();
-    }
 }

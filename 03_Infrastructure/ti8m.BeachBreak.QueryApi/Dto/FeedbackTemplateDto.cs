@@ -27,6 +27,7 @@ public class FeedbackTemplateDto
 
     public Guid CreatedByEmployeeId { get; set; }
     public ApplicationRole CreatedByRole { get; set; }
+    public string CreatedByEmployeeName { get; set; } = string.Empty;
 
     public TemplateStatus Status { get; set; }
     public DateTime CreatedDate { get; set; }
@@ -58,6 +59,7 @@ public class FeedbackTemplateDto
             AllowedSourceTypes = readModel.AllowedSourceTypes,
             CreatedByEmployeeId = readModel.CreatedByEmployeeId,
             CreatedByRole = readModel.CreatedByRole,
+            CreatedByEmployeeName = readModel.CreatedByEmployeeName,
             Status = ConvertToDtoStatus(readModel.Status),
             CreatedDate = readModel.CreatedDate,
             PublishedDate = readModel.PublishedDate,

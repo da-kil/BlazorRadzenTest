@@ -23,6 +23,12 @@ public interface IFeedbackTemplateService
     Task<List<FeedbackTemplate>> GetTemplatesBySourceTypeAsync(FeedbackSourceType sourceType);
 
     /// <summary>
+    /// Gets templates that support a specific feedback source type and are published,
+    /// filtered by visibility rules (HR+ templates visible to all, TeamLead templates visible only to creator)
+    /// </summary>
+    Task<List<FeedbackTemplate>> GetVisibleTemplatesBySourceTypeAsync(FeedbackSourceType sourceType);
+
+    /// <summary>
     /// Creates a new feedback template
     /// </summary>
     Task<FeedbackTemplate> CreateTemplateAsync(FeedbackTemplate template);

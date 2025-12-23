@@ -30,16 +30,28 @@ public class CreateFeedbackTemplateCommandHandler : ICommandHandler<CreateFeedba
     {
         try
         {
-            // Get current user's employee ID and role
-            var employeeId = Guid.Parse(userContext.Id);
-            var employee = await employeeRepository.LoadAsync<Employee>(employeeId, cancellationToken: cancellationToken);
+            // Get current user's employee ID and role - follows EmployeeCommandHandler pattern exactly
+            var employeeId = Guid.TryParse(userContext.Id, out var parsedUserId) ? parsedUserId : Guid.Empty;
 
-            if (employee == null)
+            ApplicationRole userRole;
+            if (employeeId != Guid.Empty)
             {
-                return Result.Fail("Employee not found", StatusCodes.Status404NotFound);
+                var employee = await employeeRepository.LoadAsync<Employee>(employeeId, cancellationToken: cancellationToken);
+                if (employee != null)
+                {
+                    userRole = employee.ApplicationRole;
+                }
+                else
+                {
+                    // Employee not found - default to Admin for service principals
+                    userRole = ApplicationRole.Admin;
+                }
             }
-
-            var userRole = employee.ApplicationRole;
+            else
+            {
+                // Service principal operation (no valid employee ID) - default to Admin
+                userRole = ApplicationRole.Admin;
+            }
 
             // Validate user has permission (TeamLead or higher)
             if (userRole < ApplicationRole.TeamLead)

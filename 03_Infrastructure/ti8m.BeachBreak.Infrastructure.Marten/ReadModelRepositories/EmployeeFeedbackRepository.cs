@@ -22,7 +22,12 @@ internal class EmployeeFeedbackRepository(IDocumentStore store) : IEmployeeFeedb
             query = query.Where(f => !f.IsDeleted);
         }
 
-        return await query.SingleOrDefaultAsync(cancellationToken);
+        var feedback = await query.SingleOrDefaultAsync(cancellationToken);
+        if (feedback != null)
+        {
+            await PopulateEmployeeNamesAsync(session, new[] { feedback }, cancellationToken);
+        }
+        return feedback;
     }
 
     public async Task<List<EmployeeFeedbackReadModel>> GetEmployeeFeedbackAsync(
@@ -51,6 +56,7 @@ internal class EmployeeFeedbackRepository(IDocumentStore store) : IEmployeeFeedb
         // This approach avoids intermediate query variable assignments which cause type issues with Marten
 
         var results = await ApplyFiltersAndSorting(
+            session,
             baseQuery,
             employeeId,
             sourceType,
@@ -70,6 +76,7 @@ internal class EmployeeFeedbackRepository(IDocumentStore store) : IEmployeeFeedb
     }
 
     private async Task<List<EmployeeFeedbackReadModel>> ApplyFiltersAndSorting(
+        IDocumentSession session,
         IQueryable<EmployeeFeedbackReadModel> baseQuery,
         Guid? employeeId,
         FeedbackSourceType? sourceType,
@@ -184,7 +191,20 @@ internal class EmployeeFeedbackRepository(IDocumentStore store) : IEmployeeFeedb
                 : await query.OrderByDescending(f => f.FeedbackDate).Skip(skip).Take(pageSize).ToListAsync(cancellationToken);
         }
 
-        return results.ToList();
+        var resultList = results.ToList();
+
+        // Populate employee names
+        await PopulateEmployeeNamesAsync(session, resultList, cancellationToken);
+
+        // Handle employee name sorting if needed (re-sort in memory since we populated names after DB query)
+        if (sortField.ToLower() == "employeename")
+        {
+            resultList = sortAscending
+                ? resultList.OrderBy(f => f.EmployeeName).ToList()
+                : resultList.OrderByDescending(f => f.EmployeeName).ToList();
+        }
+
+        return resultList;
     }
 
     public async Task<List<EmployeeFeedbackReadModel>> GetCurrentYearFeedbackAsync(
@@ -204,6 +224,62 @@ internal class EmployeeFeedbackRepository(IDocumentStore store) : IEmployeeFeedb
             .ThenByDescending(f => f.FeedbackDate)
             .ToListAsync(cancellationToken);
 
+        // Populate employee names
+        await PopulateEmployeeNamesAsync(session, results, cancellationToken);
+
         return results.ToList();
+    }
+
+    /// <summary>
+    /// Helper method to populate employee names for a collection of feedback records
+    /// </summary>
+    private async Task PopulateEmployeeNamesAsync(
+        IDocumentSession session,
+        IEnumerable<EmployeeFeedbackReadModel> feedbackRecords,
+        CancellationToken cancellationToken)
+    {
+        var feedbackList = feedbackRecords.ToList();
+        if (!feedbackList.Any())
+        {
+            return;
+        }
+
+        // Get unique employee IDs from the results
+        var allEmployeeIds = feedbackList
+            .SelectMany(f => new Guid?[] { f.EmployeeId, f.RecordedByEmployeeId, f.LastModifiedByEmployeeId }
+                .Where(id => id.HasValue).Select(id => id!.Value))
+            .Distinct()
+            .ToList();
+
+        // Get all employee names in one query
+        var employees = await session.Query<EmployeeReadModel>()
+            .Where(e => allEmployeeIds.Contains(e.Id))
+            .ToListAsync(cancellationToken);
+
+        var employeeNameLookup = employees.ToDictionary(
+            e => e.Id,
+            e => new { FullName = $"{e.FirstName} {e.LastName}", e.FirstName, e.LastName });
+
+        // Populate names in the feedback results
+        foreach (var feedback in feedbackList)
+        {
+            if (employeeNameLookup.TryGetValue(feedback.EmployeeId, out var emp))
+            {
+                feedback.EmployeeName = emp.FullName;
+                feedback.EmployeeFirstName = emp.FirstName;
+                feedback.EmployeeLastName = emp.LastName;
+            }
+
+            if (employeeNameLookup.TryGetValue(feedback.RecordedByEmployeeId, out var recordedBy))
+            {
+                feedback.RecordedByEmployeeName = recordedBy.FullName;
+            }
+
+            if (feedback.LastModifiedByEmployeeId.HasValue &&
+                employeeNameLookup.TryGetValue(feedback.LastModifiedByEmployeeId.Value, out var modifiedBy))
+            {
+                feedback.LastModifiedByEmployeeName = modifiedBy.FullName;
+            }
+        }
     }
 }

@@ -10,6 +10,11 @@ namespace ti8m.BeachBreak.Application.Command.Commands.EmployeeFeedbackCommands;
 public class RecordEmployeeFeedbackCommand : ICommand<Result<Guid>>
 {
     /// <summary>
+    /// Optional ID for the feedback record. If not provided, a new one will be generated.
+    /// </summary>
+    public Guid? FeedbackId { get; set; }
+
+    /// <summary>
     /// ID of the employee the feedback is about.
     /// </summary>
     public Guid EmployeeId { get; set; }
@@ -41,8 +46,10 @@ public class RecordEmployeeFeedbackCommand : ICommand<Result<Guid>>
         FeedbackSourceType sourceType,
         FeedbackProviderInfo providerInfo,
         DateTime feedbackDate,
-        ConfigurableFeedbackData feedbackData)
+        ConfigurableFeedbackData feedbackData,
+        Guid? feedbackId = null)
     {
+        FeedbackId = feedbackId;
         EmployeeId = employeeId;
         SourceType = sourceType;
         ProviderInfo = providerInfo;

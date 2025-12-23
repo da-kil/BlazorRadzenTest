@@ -26,6 +26,7 @@ public class EmployeeFeedback : AggregateRoot
 
     // Factory method for creating new feedback
     public static EmployeeFeedback RecordFeedback(
+        Guid feedbackId,
         Guid employeeId,
         FeedbackSourceType sourceType,
         FeedbackProviderInfo providerInfo,
@@ -34,6 +35,9 @@ public class EmployeeFeedback : AggregateRoot
         Guid recordedByEmployeeId)
     {
         // Validate business rules
+        if (feedbackId == Guid.Empty)
+            throw new ArgumentException("FeedbackId cannot be empty", nameof(feedbackId));
+
         if (employeeId == Guid.Empty)
             throw new ArgumentException("EmployeeId cannot be empty", nameof(employeeId));
 
@@ -56,7 +60,7 @@ public class EmployeeFeedback : AggregateRoot
         var feedback = new EmployeeFeedback();
 
         feedback.RaiseEvent(new EmployeeFeedbackRecorded(
-            feedback.Id,
+            feedbackId,
             employeeId,
             sourceType,
             providerInfo,

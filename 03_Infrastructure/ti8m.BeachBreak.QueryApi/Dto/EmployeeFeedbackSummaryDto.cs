@@ -1,4 +1,6 @@
+using System.Text.Json;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate.ValueObjects;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
@@ -89,10 +91,45 @@ public class EmployeeFeedbackSummaryDto
     public decimal CompletionPercentage { get; set; }
 
     /// <summary>
+    /// Detailed feedback data including ratings and comments.
+    /// Available when retrieving individual feedback records.
+    /// </summary>
+    public ConfigurableFeedbackDataDto? FeedbackData { get; set; }
+
+    /// <summary>
     /// Creates DTO from read model.
     /// </summary>
     public static EmployeeFeedbackSummaryDto FromReadModel(EmployeeFeedbackReadModel readModel)
     {
+        // Deserialize feedback data from JSON if available
+        ConfigurableFeedbackDataDto? feedbackData = null;
+        if (!string.IsNullOrWhiteSpace(readModel.FeedbackDataJson))
+        {
+            try
+            {
+                var domainFeedbackData = JsonSerializer.Deserialize<ConfigurableFeedbackData>(readModel.FeedbackDataJson);
+                if (domainFeedbackData != null)
+                {
+                    feedbackData = new ConfigurableFeedbackDataDto
+                    {
+                        Ratings = domainFeedbackData.Ratings.ToDictionary(
+                            kvp => kvp.Key,
+                            kvp => new FeedbackRatingDto
+                            {
+                                Rating = kvp.Value.Rating,
+                                Comment = kvp.Value.Comment
+                            }),
+                        Comments = new Dictionary<string, string>(domainFeedbackData.Comments)
+                    };
+                }
+            }
+            catch (JsonException)
+            {
+                // If deserialization fails, leave feedbackData as null
+                // This ensures the API doesn't break if JSON format changes
+            }
+        }
+
         return new EmployeeFeedbackSummaryDto
         {
             Id = readModel.Id,
@@ -110,7 +147,8 @@ public class EmployeeFeedbackSummaryDto
             RatedCriteriaCount = readModel.RatedCriteriaCount,
             HasUnstructuredFeedback = readModel.HasUnstructuredFeedback,
             IsProjectFeedback = readModel.IsProjectFeedback,
-            CompletionPercentage = readModel.CompletionPercentage
+            CompletionPercentage = readModel.CompletionPercentage,
+            FeedbackData = feedbackData
         };
     }
 }

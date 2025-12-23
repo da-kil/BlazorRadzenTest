@@ -85,6 +85,7 @@ public static class ApplicationRoleAuthorizationService
         ["HR"] = [ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
         ["HROrApp"] = [ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin], // Same as HR, plus service principals with DataSeeder role (checked in ASP.NET Core policy)
         ["HRLead"] = [ApplicationRole.HRLead, ApplicationRole.Admin],
-        ["TeamLead"] = [ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin]
+        ["TeamLead"] = [ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin],
+        ["TeamLeadOrApp"] = [ApplicationRole.TeamLead, ApplicationRole.HR, ApplicationRole.HRLead, ApplicationRole.Admin]
     };
 }

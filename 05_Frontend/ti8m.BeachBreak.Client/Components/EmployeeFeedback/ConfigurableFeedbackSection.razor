@@ -120,6 +120,11 @@
 
     private ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto feedbackData = new();
 
+    protected override Task OnInitializedAsync()
+    {
+        return base.OnInitializedAsync();
+    }
+
     protected override void OnInitialized()
     {
         feedbackData = FeedbackData ?? new ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto();
@@ -277,8 +282,19 @@
         gap: 0.25rem;
     }
 
+    .star-btn {
+        color: #ccc !important;
+        transition: color 0.2s ease;
+    }
+
     .star-btn.selected {
-        color: var(--rz-warning, #ffc107);
+        color: #ffc107 !important;
+        background-color: rgba(255, 193, 7, 0.1);
+        border-radius: 4px;
+    }
+
+    .star-btn:hover {
+        color: #ffb300 !important;
     }
 
     .rating-display {

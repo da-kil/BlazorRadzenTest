@@ -30,6 +30,7 @@ public class FeedbackTemplateReadModel
     // Ownership tracking
     public Guid CreatedByEmployeeId { get; set; }
     public ApplicationRole CreatedByRole { get; set; }
+    public string CreatedByEmployeeName { get; set; } = string.Empty;
 
     // Lifecycle
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;

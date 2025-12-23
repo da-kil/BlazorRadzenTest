@@ -8,8 +8,8 @@
 @using ti8m.BeachBreak.Client.Components.EmployeeFeedback
 @inject IEmployeeFeedbackApiService FeedbackService
 @inject IEmployeeApiService EmployeeService
+@inject IFeedbackTemplateService TemplateService
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inherits OptimizedTranslatableComponentBase
 
 <div class="edit-feedback-dialog">
@@ -22,78 +22,76 @@
     {
         <RadzenStack Gap="1rem">
             <!-- Employee Information (Read-only) -->
-            <RadzenCard>
-                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
-                    @T("sections.employee-information")
-                </RadzenText>
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                @T("sections.employee-information")
+            </RadzenText>
 
-                <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
-                            @T("labels.employee")
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body1" Class="font-medium">
-                            @feedback.EmployeeName
-                        </RadzenText>
-                    </RadzenColumn>
+            <RadzenRow Gap="1rem">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
+                        @T("labels.employee")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="font-medium">
+                        @feedback.EmployeeName
+                    </RadzenText>
+                </RadzenColumn>
 
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
-                            @T("labels.feedback-date")
-                        </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body1" Class="font-medium">
-                            @feedback.FeedbackDate.ToString("yyyy-MM-dd")
-                        </RadzenText>
-                    </RadzenColumn>
-                </RadzenRow>
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
+                        @T("labels.feedback-date")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="font-medium">
+                        @feedback.FeedbackDate.ToString("yyyy-MM-dd")
+                    </RadzenText>
+                </RadzenColumn>
+            </RadzenRow>
 
-                <RadzenRow Gap="1rem" Class="mt-2">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
-                            @T("labels.source-type")
-                        </RadzenText>
-                        <RadzenBadge Text="@feedback.SourceTypeDisplayName"
-                                   Variant="Variant.Flat"
-                                   IsPill="true"
-                                   Class="@feedback.SourceTypeBadgeClass" />
-                    </RadzenColumn>
+            <RadzenRow Gap="1rem" Class="mt-2">
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
+                        @T("labels.source-type")
+                    </RadzenText>
+                    <RadzenBadge Text="@feedback.SourceTypeDisplayName"
+                                 Variant="Variant.Flat"
+                                 IsPill="true"
+                                 Class="@feedback.SourceTypeBadgeClass" />
+                </RadzenColumn>
 
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
-                            @T("labels.feedback-provider")
+                <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
+                        @T("labels.feedback-provider")
+                    </RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="font-medium">
+                        @feedback.ProviderName
+                    </RadzenText>
+                    @if (!string.IsNullOrWhiteSpace(feedback.ProviderRole))
+                    {
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                            @feedback.ProviderRole
                         </RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body1" Class="font-medium">
-                            @feedback.ProviderName
-                        </RadzenText>
-                        @if (!string.IsNullOrWhiteSpace(feedback.ProviderRole))
-                        {
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-                                @feedback.ProviderRole
-                            </RadzenText>
-                        }
-                    </RadzenColumn>
-                </RadzenRow>
-            </RadzenCard>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
 
             <!-- Editable Feedback Content -->
             <ConfigurableFeedbackSection @bind-FeedbackData="@editableFeedbackData"
-                                       AvailableCriteria="@availableCriteria"
-                                       TextSections="@availableTextSections"
-                                       RatingScale="10" />
+                                         AvailableCriteria="@availableCriteria"
+                                         TextSections="@availableTextSections"
+                                         RatingScale="@ratingScale" />
 
             <!-- Action Buttons -->
             <RadzenCard>
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                     <RadzenButton Text="@T("buttons.cancel")"
-                                ButtonStyle="ButtonStyle.Light"
-                                Click="@CancelEdit"
-                                Icon="cancel" />
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@CancelEdit"
+                                  Icon="cancel" />
 
                     <RadzenButton Text="@T("buttons.save-changes")"
-                                ButtonStyle="ButtonStyle.Primary"
-                                Click="@SaveChanges"
-                                Icon="save"
-                                IsBusy="@isSaving" />
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="@SaveChanges"
+                                  Icon="save"
+                                  IsBusy="@isSaving" />
                 </RadzenStack>
             </RadzenCard>
         </RadzenStack>
@@ -115,9 +113,11 @@
     private ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto editableFeedbackData = new();
     private List<EvaluationItem> availableCriteria = new();
     private List<TextSection> availableTextSections = new();
+    private int ratingScale = 10;
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
         await LoadFeedback();
     }
 
@@ -134,10 +134,8 @@
                 feedback = result.Payload;
                 editableFeedbackData = feedback.FeedbackData ?? new ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto();
 
-                // For now, create some default criteria and sections
-                // In a full implementation, these would come from templates or API
-                availableCriteria = CreateDefaultCriteria();
-                availableTextSections = CreateDefaultTextSections();
+                // Load template data based on the feedback source type
+                await LoadTemplateData((FeedbackSourceType)feedback.SourceType);
             }
             else
             {
@@ -229,45 +227,59 @@
         DialogService.Close(false);
     }
 
-    private List<EvaluationItem> CreateDefaultCriteria()
+    private async Task LoadTemplateData(FeedbackSourceType sourceType)
     {
-        return new List<EvaluationItem>
+        try
         {
-            new("communication", T("criteria.communication"), "", false, 1),
-            new("teamwork", T("criteria.teamwork"), "", false, 2),
-            new("problem_solving", T("criteria.problem-solving"), "", false, 3),
-            new("quality", T("criteria.quality"), "", false, 4),
-            new("reliability", T("criteria.reliability"), "", false, 5),
-            new("initiative", T("criteria.initiative"), "", false, 6),
-            new("overall", T("criteria.overall"), "", false, 7)
-        };
+            // Load templates that support the feedback source type
+            var templates = await TemplateService.GetTemplatesBySourceTypeAsync(sourceType);
+
+            // Use the most recently published template as the reference
+            // Note: Since feedback doesn't store the original template ID, we use the latest published template
+            // This is a reasonable approximation as templates are typically stable within an organization
+            var template = templates
+                .Where(t => t.CanBeUsedForFeedback) // Published and not deleted
+                .OrderByDescending(t => t.PublishedDate)
+                .FirstOrDefault();
+
+            if (template != null)
+            {
+                // Set criteria directly from template
+                availableCriteria = template.Criteria;
+
+                // Set rating scale from template
+                ratingScale = template.RatingScale;
+
+                // Convert TextSectionDefinition to TextSection
+                availableTextSections = template.TextSections.Select(section => new TextSection
+                {
+                    TitleEnglish = section.TitleEnglish,
+                    TitleGerman = section.TitleGerman,
+                    DescriptionEnglish = section.DescriptionEnglish,
+                    DescriptionGerman = section.DescriptionGerman,
+                    IsRequired = section.IsRequired,
+                    Order = section.Order,
+                    // Note: TextSection doesn't have Key or Placeholder fields like TextSectionDefinition
+                    // These are only needed for template editing, not for feedback display
+                }).ToList();
+            }
+            else
+            {
+                // If no template is found, leave empty (fallback to existing behavior)
+                availableCriteria = new List<EvaluationItem>();
+                availableTextSections = new List<TextSection>();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Log the error but don't show it to the user since template loading is auxiliary
+            // The feedback can still be edited without the template structure
+            availableCriteria = new List<EvaluationItem>();
+            availableTextSections = new List<TextSection>();
+
+            // Optionally log the exception (if logging is available)
+            Console.WriteLine($"Error loading template data for source type {sourceType}: {ex.Message}");
+        }
     }
 
-    private List<TextSection> CreateDefaultTextSections()
-    {
-        return new List<TextSection>
-        {
-            new() {
-                TitleEnglish = T("feedback-sections.positive-feedback.title"),
-                TitleGerman = T("feedback-sections.positive-feedback.title"),
-                DescriptionEnglish = T("feedback-sections.positive-feedback.placeholder"),
-                DescriptionGerman = T("feedback-sections.positive-feedback.placeholder"),
-                Order = 1
-            },
-            new() {
-                TitleEnglish = T("feedback-sections.areas-for-improvement.title"),
-                TitleGerman = T("feedback-sections.areas-for-improvement.title"),
-                DescriptionEnglish = T("feedback-sections.areas-for-improvement.placeholder"),
-                DescriptionGerman = T("feedback-sections.areas-for-improvement.placeholder"),
-                Order = 2
-            },
-            new() {
-                TitleEnglish = T("feedback-sections.additional-comments.title"),
-                TitleGerman = T("feedback-sections.additional-comments.title"),
-                DescriptionEnglish = T("feedback-sections.additional-comments.placeholder"),
-                DescriptionGerman = T("feedback-sections.additional-comments.placeholder"),
-                Order = 3
-            }
-        };
-    }
 }

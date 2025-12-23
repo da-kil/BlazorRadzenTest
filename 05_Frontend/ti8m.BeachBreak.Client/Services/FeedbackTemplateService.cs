@@ -12,8 +12,11 @@ public class FeedbackTemplateService : BaseApiService, IFeedbackTemplateService
     private const string TemplateCommandEndpoint = "c/api/v1/employee-feedbacks/templates";
     private const string TemplateQueryEndpoint = "q/api/v1/employee-feedbacks/templates";
 
-    public FeedbackTemplateService(IHttpClientFactory factory) : base(factory)
+    private readonly IAuthService _authService;
+
+    public FeedbackTemplateService(IHttpClientFactory factory, IAuthService authService) : base(factory)
     {
+        _authService = authService;
     }
 
     /// <inheritdoc/>
@@ -32,6 +35,40 @@ public class FeedbackTemplateService : BaseApiService, IFeedbackTemplateService
     public async Task<List<FeedbackTemplate>> GetTemplatesBySourceTypeAsync(FeedbackSourceType sourceType)
     {
         return await GetAllAsync<FeedbackTemplate>($"{TemplateQueryEndpoint}/by-source/{(int)sourceType}");
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<FeedbackTemplate>> GetVisibleTemplatesBySourceTypeAsync(FeedbackSourceType sourceType)
+    {
+        try
+        {
+            // First get all templates for the source type
+            var allTemplates = await GetTemplatesBySourceTypeAsync(sourceType);
+
+            // Get current user context for visibility filtering
+            var userRole = await _authService.GetMyRoleAsync();
+            if (userRole == null)
+            {
+                LogError("Unable to get user role for template visibility filtering", new Exception("GetMyRoleAsync returned null"));
+                return new List<FeedbackTemplate>();
+            }
+
+            // Apply visibility filtering rules
+            var visibleTemplates = allTemplates.Where(template =>
+                // HR+ templates: visible to everyone
+                (ApplicationRole)template.CreatedByRole >= ApplicationRole.HR ||
+                // TeamLead templates: only visible to creator
+                ((ApplicationRole)template.CreatedByRole == ApplicationRole.TeamLead &&
+                 template.CreatedByEmployeeId == userRole.EmployeeId)
+            ).ToList();
+
+            return visibleTemplates;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error getting visible templates for source type {sourceType}", ex);
+            return new List<FeedbackTemplate>();
+        }
     }
 
     /// <inheritdoc/>

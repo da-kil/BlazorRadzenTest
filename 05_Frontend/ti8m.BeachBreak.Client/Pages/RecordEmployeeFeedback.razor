@@ -62,16 +62,16 @@
                                    OnSourceTypeChanged="@OnSourceTypeChanged" />
         </div>
 
-        <!-- Template Selection (Optional) -->
+        <!-- Template Selection (Required) -->
         @if (selectedSourceType.HasValue)
         {
             <div class="form-section">
                 <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
-                    @T("sections.use-template")
+                    @T("sections.select-template") <span class="text-danger">*</span>
                 </RadzenText>
 
                 <RadzenText TextStyle="TextStyle.Body2" Class="mb-3 text-muted">
-                    @T("labels.template-optional-description")
+                    @T("messages.template-required-description")
                 </RadzenText>
 
                 @if (availableTemplates.Any())
@@ -79,7 +79,7 @@
                     <RadzenDropDown TValue="Guid?"
                                   Data="@availableTemplates"
                                   @bind-Value="@selectedTemplateId"
-                                  Placeholder="@T("placeholders.select-template-optional")"
+                                  Placeholder="@T("placeholders.select-template-required")"
                                   TextProperty="@GetTemplateNameProperty()"
                                   ValueProperty="Id"
                                   Change="@OnTemplateSelected"
@@ -113,7 +113,7 @@
         </div>
 
         <!-- Configurable Feedback Section -->
-        @if (selectedSourceType.HasValue && availableCriteria.Any())
+        @if (selectedSourceType.HasValue && selectedTemplateId.HasValue && availableCriteria.Any())
         {
             <div class="form-section">
                 <ConfigurableFeedbackSection @bind-FeedbackData="@feedbackData"
@@ -183,6 +183,7 @@
     private bool IsFormValid =>
         selectedEmployeeId.HasValue &&
         selectedSourceType.HasValue &&
+        selectedTemplateId.HasValue &&
         !string.IsNullOrWhiteSpace(providerInfo.ProviderName) &&
         (!RequiresProviderRole || !string.IsNullOrWhiteSpace(providerInfo.ProviderRole)) &&
         (!RequiresProjectContext || !string.IsNullOrWhiteSpace(providerInfo.ProjectName)) &&
@@ -212,12 +213,12 @@
         // Load templates for selected source type
         if (sourceType.HasValue)
         {
-            availableTemplates = await TemplateService.GetTemplatesBySourceTypeAsync((FeedbackSourceType)sourceType.Value);
+            // Load templates with visibility filtering (HR+ templates visible to all, TeamLead templates only to creator)
+            availableTemplates = await TemplateService.GetVisibleTemplatesBySourceTypeAsync((FeedbackSourceType)sourceType.Value);
 
-            // Load default criteria if no template selected
-            availableCriteria = CreateDefaultCriteria();
-            textSections = CreateDefaultTextSections();
-            ratingScale = 10;
+            // Clear any existing criteria/sections - user must select a template
+            availableCriteria.Clear();
+            textSections.Clear();
         }
         else
         {
@@ -260,10 +261,10 @@
         }
         else
         {
-            // Template cleared - reset to defaults
-            availableCriteria = CreateDefaultCriteria();
-            textSections = CreateDefaultTextSections();
-            ratingScale = 10;
+            // Template cleared - no criteria/sections without template
+            availableCriteria.Clear();
+            textSections.Clear();
+            ratingScale = 10; // Keep default scale
             StateHasChanged();
         }
     }
@@ -350,6 +351,9 @@
         if (!selectedSourceType.HasValue)
             validationErrors.Add(T("validation.source-type-required"));
 
+        if (!selectedTemplateId.HasValue)
+            validationErrors.Add(T("validation.template-required"));
+
         if (string.IsNullOrWhiteSpace(providerInfo.ProviderName))
             validationErrors.Add(T("validation.provider-name-required"));
 
@@ -373,47 +377,6 @@
         NavigationManager.NavigateTo("/employee-feedback-management");
     }
 
-    private List<EvaluationItem> CreateDefaultCriteria()
-    {
-        return new List<EvaluationItem>
-        {
-            new("communication", T("criteria.communication"), "", false, 1),
-            new("teamwork", T("criteria.teamwork"), "", false, 2),
-            new("problem_solving", T("criteria.problem-solving"), "", false, 3),
-            new("quality", T("criteria.quality"), "", false, 4),
-            new("reliability", T("criteria.reliability"), "", false, 5),
-            new("initiative", T("criteria.initiative"), "", false, 6),
-            new("overall", T("criteria.overall"), "", false, 7)
-        };
-    }
-
-    private List<TextSection> CreateDefaultTextSections()
-    {
-        return new List<TextSection>
-        {
-            new() {
-                TitleEnglish = T("feedback-sections.positive-feedback.title"),
-                TitleGerman = T("feedback-sections.positive-feedback.title"),
-                DescriptionEnglish = T("feedback-sections.positive-feedback.placeholder"),
-                DescriptionGerman = T("feedback-sections.positive-feedback.placeholder"),
-                Order = 1
-            },
-            new() {
-                TitleEnglish = T("feedback-sections.areas-for-improvement.title"),
-                TitleGerman = T("feedback-sections.areas-for-improvement.title"),
-                DescriptionEnglish = T("feedback-sections.areas-for-improvement.placeholder"),
-                DescriptionGerman = T("feedback-sections.areas-for-improvement.placeholder"),
-                Order = 2
-            },
-            new() {
-                TitleEnglish = T("feedback-sections.additional-comments.title"),
-                TitleGerman = T("feedback-sections.additional-comments.title"),
-                DescriptionEnglish = T("feedback-sections.additional-comments.placeholder"),
-                DescriptionGerman = T("feedback-sections.additional-comments.placeholder"),
-                Order = 3
-            }
-        };
-    }
 }
 
 <style>

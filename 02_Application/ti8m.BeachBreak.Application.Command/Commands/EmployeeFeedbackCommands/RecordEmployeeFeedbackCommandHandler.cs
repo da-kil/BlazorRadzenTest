@@ -65,7 +65,11 @@ public class RecordEmployeeFeedbackCommandHandler
             // but we can add additional business rule validation here if needed
 
             // Create the feedback aggregate using the factory method
+            // Use provided ID if available, otherwise generate new one
+            var feedbackId = command.FeedbackId != null && command.FeedbackId != Guid.Empty ? command.FeedbackId.Value : Guid.NewGuid();
+
             var feedback = EmployeeFeedback.RecordFeedback(
+                feedbackId,
                 command.EmployeeId,
                 command.SourceType,
                 command.ProviderInfo,
@@ -79,10 +83,10 @@ public class RecordEmployeeFeedbackCommandHandler
             logger.LogInformation(
                 "Successfully recorded {SourceType} feedback {FeedbackId} for employee {EmployeeId}",
                 command.SourceType,
-                feedback.Id,
+                feedbackId,
                 command.EmployeeId);
 
-            return Result<Guid>.Success(feedback.Id);
+            return Result<Guid>.Success(feedbackId);
         }
         catch (ArgumentException ex)
         {

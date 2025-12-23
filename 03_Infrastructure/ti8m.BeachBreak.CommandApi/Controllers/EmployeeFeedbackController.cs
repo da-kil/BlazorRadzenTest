@@ -12,7 +12,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 /// </summary>
 [ApiController]
 [Route("c/api/v{version:apiVersion}/employee-feedbacks")]
-[Authorize(Policy = "TeamLead")] // TeamLead, HR and above can access feedback operations
+[Authorize(Policy = "TeamLeadOrApp")] // TeamLead, HR and above can access feedback operations
 public class EmployeeFeedbackController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
