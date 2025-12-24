@@ -1,0 +1,183 @@
+@using Microsoft.AspNetCore.Components
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inject IEmployeeFeedbackApiService FeedbackService
+@inherits OptimizedTranslatableComponentBase
+
+<div class="employee-feedback-summary">
+    @if (CurrentUserRole >= 1) @* TeamLead or higher *@
+    {
+        <div class="feedback-section mt-4">
+            <RadzenCard Class="mb-3">
+                <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                    <RadzenIcon Icon="feedback" Class="me-2" />
+                    @T("sections.customer-feedback") (@DateTime.Now.Year)
+                </RadzenText>
+
+                @if (isLoading)
+                {
+                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (feedbackBySource?.Any() == true)
+                {
+                    @foreach (var sourceGroup in feedbackBySource)
+                    {
+                        var sourceTypeName = GetSourceTypeName(sourceGroup.Key);
+                        var feedbackList = sourceGroup.Value;
+
+                        <div class="source-type-group mb-4">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
+                                <RadzenBadge Text="@sourceTypeName"
+                                           Variant="Variant.Flat"
+                                           IsPill="true"
+                                           Class="@GetSourceTypeBadgeClass(sourceGroup.Key)" />
+                                <span class="ms-2">(@feedbackList.Count)</span>
+                            </RadzenText>
+
+                            <div class="feedback-cards">
+                                @foreach (var feedback in feedbackList.Take(3)) @* Show max 3 per source type in review *@
+                                {
+                                    <EmployeeFeedbackDisplayCard Feedback="@feedback"
+                                                                IsReadOnly="true"
+                                                                ShowSourceType="false" />
+                                }
+
+                                @if (feedbackList.Count > 3)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">
+                                        @($"{T("messages.and-more-feedback")} ({feedbackList.Count - 3})")
+                                    </RadzenText>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Summary Statistics -->
+                    <RadzenCard Class="mt-3" Style="background-color: var(--rz-info-lighter);">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("labels.total-feedback")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6">@GetTotalFeedbackCount()</RadzenText>
+                            </RadzenColumn>
+                            <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("labels.average-rating")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6">@GetOverallAverageRating()</RadzenText>
+                            </RadzenColumn>
+                            <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("labels.sources")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6">@feedbackBySource.Count</RadzenText>
+                            </RadzenColumn>
+                            <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("labels.with-comments")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6">@GetFeedbackWithCommentsCount()</RadzenText>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenCard>
+                }
+                else
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                        <RadzenText>@T("messages.no-feedback-current-year")</RadzenText>
+                    </RadzenAlert>
+                }
+            </RadzenCard>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid EmployeeId { get; set; }
+    [Parameter] public int CurrentUserRole { get; set; } = 0; // ApplicationRole
+
+    private Dictionary<int, List<EmployeeFeedbackSummaryDto>> feedbackBySource = new();
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EmployeeId != Guid.Empty && CurrentUserRole >= 1)
+        {
+            await LoadCurrentYearFeedback();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (EmployeeId != Guid.Empty && CurrentUserRole >= 1)
+        {
+            await LoadCurrentYearFeedback();
+        }
+    }
+
+    private async Task LoadCurrentYearFeedback()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await FeedbackService.GetCurrentYearFeedbackAsync(EmployeeId);
+
+            if (result.Succeeded)
+            {
+                feedbackBySource = result.Payload ?? new Dictionary<int, List<EmployeeFeedbackSummaryDto>>();
+            }
+        }
+        catch (Exception)
+        {
+            // Silently fail in review mode - feedback is supplementary information
+            feedbackBySource = new Dictionary<int, List<EmployeeFeedbackSummaryDto>>();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private string GetSourceTypeName(int sourceType)
+    {
+        return sourceType switch
+        {
+            0 => T("labels.customer-feedback"),
+            1 => T("labels.peer-feedback"),
+            2 => T("labels.project-colleague-feedback"),
+            _ => T("labels.unknown-source")
+        };
+    }
+
+    private string GetSourceTypeBadgeClass(int sourceType)
+    {
+        return sourceType switch
+        {
+            0 => "badge-customer", // Customer - blue
+            1 => "badge-peer", // Peer - green
+            2 => "badge-project", // Project Colleague - orange
+            _ => "badge-unknown"
+        };
+    }
+
+    private int GetTotalFeedbackCount()
+    {
+        return feedbackBySource.Values.SelectMany(list => list).Count();
+    }
+
+    private string GetOverallAverageRating()
+    {
+        var allFeedback = feedbackBySource.Values.SelectMany(list => list).ToList();
+        var ratingsWithValues = allFeedback.Where(f => f.AverageRating.HasValue).ToList();
+
+        if (!ratingsWithValues.Any())
+            return "N/A";
+
+        var average = ratingsWithValues.Average(f => f.AverageRating!.Value);
+        return $"{average:F1}/10";
+    }
+
+    private int GetFeedbackWithCommentsCount()
+    {
+        return feedbackBySource.Values.SelectMany(list => list).Count(f => f.HasUnstructuredFeedback);
+    }
+}

@@ -61,5 +61,19 @@ public static class AuthorizationPolicyConfiguration
                 context.User.HasClaim("roles", "DataSeeder") ||
                 context.User.HasClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "DataSeeder")
             ));
+
+        // TeamLeadOrApp policy: TeamLead users OR service principals with DataSeeder app role
+        // Used for bulk operations that can be called by automated scripts
+        options.AddPolicy("TeamLeadOrApp", policy =>
+            policy.RequireAssertion(context =>
+                // Allow users with TeamLead, HR, HRLead, or Admin roles
+                context.User.HasClaim("ApplicationRole", "TeamLead") ||
+                context.User.HasClaim("ApplicationRole", "HR") ||
+                context.User.HasClaim("ApplicationRole", "HRLead") ||
+                context.User.HasClaim("ApplicationRole", "Admin") ||
+                // OR allow service principals with DataSeeder app role
+                context.User.HasClaim("roles", "DataSeeder") ||
+                context.User.HasClaim("http://schemas.microsoft.com/ws/2008/06/identity/claims/role", "DataSeeder")
+            ));
     }
 }

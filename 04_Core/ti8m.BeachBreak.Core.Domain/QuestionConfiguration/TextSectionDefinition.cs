@@ -7,6 +7,11 @@ namespace ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 public class TextSectionDefinition
 {
     /// <summary>
+    /// Unique identifier for this text section within the question.
+    /// </summary>
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>
     /// English title of the text section.
     /// </summary>
     public string TitleEnglish { get; set; } = string.Empty;
@@ -25,6 +30,16 @@ public class TextSectionDefinition
     /// German description providing context for this text section.
     /// </summary>
     public string DescriptionGerman { get; set; } = string.Empty;
+
+    /// <summary>
+    /// English placeholder text for the text input field.
+    /// </summary>
+    public string PlaceholderEnglish { get; set; } = string.Empty;
+
+    /// <summary>
+    /// German placeholder text for the text input field.
+    /// </summary>
+    public string PlaceholderGerman { get; set; } = string.Empty;
 
     /// <summary>
     /// Indicates whether this text section must be filled for the question to be considered complete.

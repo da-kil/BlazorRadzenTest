@@ -1,0 +1,252 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@inject DialogService DialogService
+@inherits ti8m.BeachBreak.Client.Components.Shared.OptimizedTranslatableComponentBase
+
+<div class="criteria-selection-content">
+
+    <!-- Evaluation Criteria Section -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">@T("sections.evaluation-criteria")</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @T("messages.criteria-description") (@Template.Criteria.Count @T("labels.items"))
+                </RadzenText>
+            </div>
+            <RadzenButton Text="@T("buttons.add-criterion")"
+                         Icon="add"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Size="ButtonSize.Small"
+                         Click="@AddCriterion"
+                         Disabled="@(!Template.IsAvailableForEditing)" />
+        </div>
+
+        @if (Template.Criteria.Count == 0)
+        {
+            <div class="alert alert-info">
+                <RadzenIcon Icon="info" Class="me-2" />
+                @T("messages.no-criteria-added")
+            </div>
+        }
+        else
+        {
+            <div class="criteria-list">
+                @foreach (var criterion in Template.Criteria.OrderBy(c => c.Order))
+                {
+                    <UnifiedItemCard TitleEnglish="@criterion.TitleEnglish"
+                                    TitleGerman="@criterion.TitleGerman"
+                                    DescriptionEnglish="@criterion.DescriptionEnglish"
+                                    DescriptionGerman="@criterion.DescriptionGerman"
+                                    IsRequired="@criterion.IsRequired"
+                                    TitleEnglishLabel="@T("labels.criterion-title-english")"
+                                    TitleGermanLabel="@T("labels.criterion-title-german")"
+                                    TitleEnglishPlaceholder="@T("placeholders.criterion-title-english")"
+                                    TitleGermanPlaceholder="@T("placeholders.criterion-title-german")"
+                                    DescriptionEnglishLabel="@T("labels.criterion-description-english")"
+                                    DescriptionGermanLabel="@T("labels.criterion-description-german")"
+                                    DescriptionEnglishPlaceholder="@T("placeholders.criterion-description-english")"
+                                    DescriptionGermanPlaceholder="@T("placeholders.criterion-description-german")"
+                                    OnTitleEnglishChanged="@(v => { criterion.TitleEnglish = v; StateHasChanged(); })"
+                                    OnTitleGermanChanged="@(v => { criterion.TitleGerman = v; StateHasChanged(); })"
+                                    OnDescriptionEnglishChanged="@(v => { criterion.DescriptionEnglish = v; StateHasChanged(); })"
+                                    OnDescriptionGermanChanged="@(v => { criterion.DescriptionGerman = v; StateHasChanged(); })"
+                                    OnRequiredChanged="@((bool v) => { criterion.IsRequired = v; StateHasChanged(); })"
+                                    OnMoveUp="@(() => MoveCriterionUp(criterion))"
+                                    OnMoveDown="@(() => MoveCriterionDown(criterion))"
+                                    OnDelete="@(() => RemoveCriterion(criterion))"
+                                    ShowActions="true"
+                                    Disabled="@(!Template.IsAvailableForEditing)" />
+                }
+            </div>
+        }
+    </div>
+
+    <hr class="my-4" />
+
+    <!-- Text Sections -->
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">@T("sections.text-sections")</RadzenText>
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @T("messages.text-sections-description") (@Template.TextSections.Count @T("labels.items"))
+                </RadzenText>
+            </div>
+            <RadzenButton Text="@T("buttons.add-text-section")"
+                         Icon="add"
+                         ButtonStyle="ButtonStyle.Primary"
+                         Size="ButtonSize.Small"
+                         Click="@AddTextSection"
+                         Disabled="@(!Template.IsAvailableForEditing)" />
+        </div>
+
+        @if (Template.TextSections.Count == 0)
+        {
+            <div class="alert alert-info">
+                <RadzenIcon Icon="info" Class="me-2" />
+                @T("messages.no-text-sections-added")
+            </div>
+        }
+        else
+        {
+            <div class="text-sections-list">
+                @foreach (var textSection in Template.TextSections.OrderBy(s => s.Order))
+                {
+                    <UnifiedItemCard TitleEnglish="@textSection.TitleEnglish"
+                                    TitleGerman="@textSection.TitleGerman"
+                                    DescriptionEnglish="@textSection.DescriptionEnglish"
+                                    DescriptionGerman="@textSection.DescriptionGerman"
+                                    IsRequired="@textSection.IsRequired"
+                                    TitleEnglishLabel="@T("labels.section-title-english")"
+                                    TitleGermanLabel="@T("labels.section-title-german")"
+                                    TitleEnglishPlaceholder="@T("placeholders.section-title-english")"
+                                    TitleGermanPlaceholder="@T("placeholders.section-title-german")"
+                                    DescriptionEnglishLabel="@T("labels.section-description-english")"
+                                    DescriptionGermanLabel="@T("labels.section-description-german")"
+                                    DescriptionEnglishPlaceholder="@T("placeholders.section-description-english")"
+                                    DescriptionGermanPlaceholder="@T("placeholders.section-description-german")"
+                                    OnTitleEnglishChanged="@(v => { textSection.TitleEnglish = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnTitleGermanChanged="@(v => { textSection.TitleGerman = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnDescriptionEnglishChanged="@(v => { textSection.DescriptionEnglish = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnDescriptionGermanChanged="@(v => { textSection.DescriptionGerman = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnRequiredChanged="@((bool v) => { textSection.IsRequired = v; State.MarkAsDirty(); StateHasChanged(); })"
+                                    OnMoveUp="@(() => MoveTextSectionUp(textSection))"
+                                    OnMoveDown="@(() => MoveTextSectionDown(textSection))"
+                                    OnDelete="@(() => RemoveTextSection(textSection))"
+                                    MoveUpDisabled="@(textSection.Order == 0)"
+                                    MoveDownDisabled="@(textSection.Order == Template.TextSections.Count - 1)"
+                                    ShowActions="true"
+                                    Disabled="@(!Template.IsAvailableForEditing)" />
+                }
+            </div>
+        }
+    </div>
+
+</div>
+
+@code {
+    [Parameter, EditorRequired] public FeedbackTemplate Template { get; set; } = null!;
+    [Parameter, EditorRequired] public FeedbackTemplateBuilderState State { get; set; } = null!;
+
+    private void AddCriterion()
+    {
+        var newCriterion = new EvaluationItem(
+            $"criterion_{Guid.NewGuid().ToString()[..8]}",
+            "",
+            "",
+            false,
+            Template.Criteria.Count);
+
+        Template.Criteria.Add(newCriterion);
+        State.MarkAsDirty();
+        StateHasChanged();
+    }
+
+    private void RemoveCriterion(EvaluationItem criterion)
+    {
+        Template.Criteria.Remove(criterion);
+        ReorderCriteria();
+        State.MarkAsDirty();
+        StateHasChanged();
+    }
+
+    private void MoveCriterionUp(EvaluationItem criterion)
+    {
+        var index = Template.Criteria.IndexOf(criterion);
+        if (index > 0)
+        {
+            Template.Criteria.RemoveAt(index);
+            Template.Criteria.Insert(index - 1, criterion);
+            ReorderCriteria();
+            State.MarkAsDirty();
+            StateHasChanged();
+        }
+    }
+
+    private void MoveCriterionDown(EvaluationItem criterion)
+    {
+        var index = Template.Criteria.IndexOf(criterion);
+        if (index < Template.Criteria.Count - 1)
+        {
+            Template.Criteria.RemoveAt(index);
+            Template.Criteria.Insert(index + 1, criterion);
+            ReorderCriteria();
+            State.MarkAsDirty();
+            StateHasChanged();
+        }
+    }
+
+    private void ReorderCriteria()
+    {
+        for (int i = 0; i < Template.Criteria.Count; i++)
+        {
+            Template.Criteria[i].Order = i;
+        }
+    }
+
+    private void AddTextSection()
+    {
+        var newSection = new TextSectionDefinition
+        {
+            Key = $"section_{Guid.NewGuid().ToString()[..8]}",
+            TitleEnglish = "",
+            TitleGerman = "",
+            DescriptionEnglish = "",
+            DescriptionGerman = "",
+            PlaceholderEnglish = "Enter your feedback here...",
+            PlaceholderGerman = "",
+            IsRequired = false,
+            Order = Template.TextSections.Count
+        };
+
+        Template.TextSections.Add(newSection);
+        State.MarkAsDirty();
+        StateHasChanged();
+    }
+
+
+    private void RemoveTextSection(TextSectionDefinition section)
+    {
+        Template.TextSections.Remove(section);
+        ReorderTextSections();
+        State.MarkAsDirty();
+        StateHasChanged();
+    }
+
+    private void MoveTextSectionUp(TextSectionDefinition section)
+    {
+        var index = Template.TextSections.IndexOf(section);
+        if (index > 0)
+        {
+            Template.TextSections.RemoveAt(index);
+            Template.TextSections.Insert(index - 1, section);
+            ReorderTextSections();
+            State.MarkAsDirty();
+            StateHasChanged();
+        }
+    }
+
+    private void MoveTextSectionDown(TextSectionDefinition section)
+    {
+        var index = Template.TextSections.IndexOf(section);
+        if (index < Template.TextSections.Count - 1)
+        {
+            Template.TextSections.RemoveAt(index);
+            Template.TextSections.Insert(index + 1, section);
+            ReorderTextSections();
+            State.MarkAsDirty();
+            StateHasChanged();
+        }
+    }
+
+    private void ReorderTextSections()
+    {
+        for (int i = 0; i < Template.TextSections.Count; i++)
+        {
+            Template.TextSections[i].Order = i;
+        }
+    }
+}

@@ -1,0 +1,237 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@inject FeedbackTemplateValidationService ValidationService
+@inherits ti8m.BeachBreak.Client.Components.Shared.OptimizedTranslatableComponentBase
+
+<div class="review-tab-content">
+
+    <!-- Template Summary Card -->
+    <div class="card mb-4 p-4">
+        <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-3">@T("sections.template-summary")</RadzenText>
+
+        <RadzenRow Gap="2rem">
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("labels.template-name")</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">
+                        @(string.IsNullOrWhiteSpace(Template.NameEnglish) ? T("labels.untitled-template") : Template.NameEnglish)
+                    </RadzenText>
+                    @if (!string.IsNullOrWhiteSpace(Template.NameGerman))
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">(@Template.NameGerman)</RadzenText>
+                    }
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Template.DescriptionEnglish))
+                {
+                    <div class="mb-3">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("labels.description")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2">@Template.DescriptionEnglish</RadzenText>
+                    </div>
+                }
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("labels.rating-scale")</RadzenText>
+                    <RadzenText TextStyle="TextStyle.Body1">
+                        1 - @Template.RatingScale
+                        <span class="text-muted">(@Template.ScaleLowLabel - @Template.ScaleHighLabel)</span>
+                    </RadzenText>
+                </div>
+
+                <div class="mb-3">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@T("labels.allowed-source-types")</RadzenText>
+                    <div class="d-flex gap-2 flex-wrap">
+                        @foreach (var sourceType in Template.GetSourceTypes())
+                        {
+                            <RadzenBadge Text="@GetSourceTypeName(sourceType)"
+                                        BadgeStyle="BadgeStyle.Info"
+                                        Class="px-2 py-1" />
+                        }
+                    </div>
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+    </div>
+
+    <!-- Evaluation Criteria Card -->
+    <div class="card mb-4 p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <RadzenText TextStyle="TextStyle.H6" Class="fw-bold">@T("sections.evaluation-criteria")</RadzenText>
+            <RadzenBadge Text="@($"{Template.Criteria.Count} {T("labels.items")}")"
+                        BadgeStyle="BadgeStyle.Secondary"
+                        Class="px-3 py-1" />
+        </div>
+
+        @if (Template.Criteria.Count == 0)
+        {
+            <div class="alert alert-warning">
+                <RadzenIcon Icon="warning" Class="me-2" />
+                @T("messages.no-criteria-configured")
+            </div>
+        }
+        else
+        {
+            <RadzenDataList Data="@Template.Criteria.OrderBy(c => c.Order)" TItem="EvaluationItem">
+                <Template Context="criterion">
+                    <div class="mb-2 p-2 border-start border-primary border-3 ps-3">
+                        <div class="d-flex align-items-start">
+                            <span class="me-2 text-muted">#@(criterion.Order + 1)</span>
+                            <div class="flex-grow-1">
+                                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">
+                                    @criterion.TitleEnglish
+                                    @if (criterion.IsRequired)
+                                    {
+                                        <RadzenBadge Text="@T("labels.required")" BadgeStyle="BadgeStyle.Danger" Class="ms-2" />
+                                    }
+                                </RadzenText>
+                                @if (!string.IsNullOrWhiteSpace(criterion.TitleGerman))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@criterion.TitleGerman</RadzenText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(criterion.DescriptionEnglish))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@criterion.DescriptionEnglish</RadzenText>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </Template>
+            </RadzenDataList>
+        }
+    </div>
+
+    <!-- Text Sections Card -->
+    <div class="card mb-4 p-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <RadzenText TextStyle="TextStyle.H6" Class="fw-bold">@T("sections.text-sections")</RadzenText>
+            <RadzenBadge Text="@($"{Template.TextSections.Count} {T("labels.items")}")"
+                        BadgeStyle="BadgeStyle.Secondary"
+                        Class="px-3 py-1" />
+        </div>
+
+        @if (Template.TextSections.Count == 0)
+        {
+            <div class="alert alert-info">
+                <RadzenIcon Icon="info" Class="me-2" />
+                @T("messages.no-text-sections-configured")
+            </div>
+        }
+        else
+        {
+            <RadzenDataList Data="@Template.TextSections.OrderBy(s => s.Order)" TItem="TextSectionDefinition">
+                <Template Context="textSection">
+                    <div class="mb-2 p-2 border-start border-success border-3 ps-3">
+                        <div class="d-flex align-items-start">
+                            <span class="me-2 text-muted">#@(textSection.Order + 1)</span>
+                            <div class="flex-grow-1">
+                                <RadzenText TextStyle="TextStyle.Body1" Class="fw-bold">
+                                    @textSection.TitleEnglish
+                                    @if (textSection.IsRequired)
+                                    {
+                                        <RadzenBadge Text="@T("labels.required")" BadgeStyle="BadgeStyle.Danger" Class="ms-2" />
+                                    }
+                                </RadzenText>
+                                @if (!string.IsNullOrWhiteSpace(textSection.TitleGerman))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">@textSection.TitleGerman</RadzenText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(textSection.DescriptionEnglish))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-1">@textSection.DescriptionEnglish</RadzenText>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(textSection.PlaceholderEnglish))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                                        <em>@T("labels.placeholder"): @textSection.PlaceholderEnglish</em>
+                                    </RadzenText>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </Template>
+            </RadzenDataList>
+        }
+    </div>
+
+    <!-- Validation Summary -->
+    <div class="card p-4" style="@GetValidationCardStyle()">
+        <div class="d-flex align-items-center">
+            <RadzenIcon Icon="@GetValidationIcon()" Class="me-3" Style="font-size: 2rem;" />
+            <div class="flex-grow-1">
+                <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">@GetValidationTitle()</RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2">@GetValidationMessage()</RadzenText>
+
+                @if (!IsTemplateValid())
+                {
+                    <div class="mt-3">
+                        <ul class="mb-0">
+                            @foreach (var error in GetValidationErrors())
+                            {
+                                <li><RadzenText TextStyle="TextStyle.Body2" Class="text-danger">@error</RadzenText></li>
+                            }
+                        </ul>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    [Parameter, EditorRequired] public FeedbackTemplate Template { get; set; } = null!;
+
+    private string GetSourceTypeName(FeedbackSourceType sourceType)
+    {
+        return sourceType switch
+        {
+            FeedbackSourceType.Customer => T("source-types.customer"),
+            FeedbackSourceType.Peer => T("source-types.peer"),
+            FeedbackSourceType.ProjectColleague => T("source-types.project-colleague"),
+            _ => sourceType.ToString()
+        };
+    }
+
+    private bool IsTemplateValid()
+    {
+        return ValidationService.IsTemplateValid(Template);
+    }
+
+    private List<string> GetValidationErrors()
+    {
+        return ValidationService.ValidateTemplate(Template);
+    }
+
+    private string GetValidationCardStyle()
+    {
+        return IsTemplateValid()
+            ? "background-color: var(--rz-success-lighter); border-left: 4px solid var(--rz-success);"
+            : "background-color: var(--rz-warning-lighter); border-left: 4px solid var(--rz-warning);";
+    }
+
+    private string GetValidationIcon()
+    {
+        return IsTemplateValid() ? "check_circle" : "warning";
+    }
+
+    private string GetValidationTitle()
+    {
+        return IsTemplateValid()
+            ? T("messages.template-ready-to-publish")
+            : T("messages.template-has-validation-issues");
+    }
+
+    private string GetValidationMessage()
+    {
+        if (IsTemplateValid())
+        {
+            return T("messages.template-validation-success");
+        }
+
+        var errorCount = GetValidationErrors().Count;
+        return T("messages.template-has-issues-count").Replace("{0}", errorCount.ToString());
+    }
+}

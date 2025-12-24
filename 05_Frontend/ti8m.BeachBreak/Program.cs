@@ -291,22 +291,53 @@ public class Program
         // Register the bearer token handler
         builder.Services.AddScoped<BearerTokenHandler>();
 
+        // ============================================================================
+        // ASPIRE SERVICE DISCOVERY CONFIGURATION - NOT HARDCODED URLS
+        // ============================================================================
+        // The strings "services:CommandApi:https:0" and "services:QueryApi:https:0" below
+        // are CONFIGURATION KEYS, NOT hardcoded URLs!
+        //
+        // How Aspire Service Discovery Works:
+        // 1. AppHost registers services by name: "CommandApi", "QueryApi"
+        // 2. Aspire injects actual URLs into configuration at runtime
+        // 3. Configuration keys follow pattern: "services:{ServiceName}:https:0"
+        // 4. Actual URLs are DYNAMIC - different ports/addresses per environment
+        //
+        // Example runtime resolution:
+        // "services:CommandApi:https:0" → "https://localhost:7062" (dev)
+        // "services:QueryApi:https:0"  → "https://localhost:7143" (dev)
+        //
+        // In production, these could resolve to completely different URLs:
+        // "services:CommandApi:https:0" → "https://commandapi.company.com"
+        // "services:QueryApi:https:0"  → "https://queryapi.company.com"
+        //
+        // This is FLEXIBLE configuration, not hardcoding!
+        // ============================================================================
+
+        // COMMAND API HTTP CLIENT - Uses Aspire Service Discovery
+        // Configuration key "services:CommandApi:https:0" is resolved to actual URL by Aspire
         builder.Services.AddHttpClient("CommandClient", httpClient =>
         {
+            // This gets the ACTUAL URL injected by Aspire service discovery
+            // NOT a hardcoded URL - resolved dynamically at runtime
             var uri = builder.Configuration.GetValue<string>("services:CommandApi:https:0");
             if (uri is null)
             {
-                throw new Exception("Command-API URI not found");
+                throw new Exception("Command-API URI not found - check Aspire service registration");
             }
             httpClient.BaseAddress = new Uri(uri);
         }).AddHttpMessageHandler<BearerTokenHandler>();
 
+        // QUERY API HTTP CLIENT - Uses Aspire Service Discovery
+        // Configuration key "services:QueryApi:https:0" is resolved to actual URL by Aspire
         builder.Services.AddHttpClient("QueryClient", httpClient =>
         {
+            // This gets the ACTUAL URL injected by Aspire service discovery
+            // NOT a hardcoded URL - resolved dynamically at runtime
             var uri = builder.Configuration.GetValue<string>("services:QueryApi:https:0");
             if (uri is null)
             {
-                throw new Exception("Query-API URI not found");
+                throw new Exception("Query-API URI not found - check Aspire service registration");
             }
             httpClient.BaseAddress = new Uri(uri);
         }).AddHttpMessageHandler<BearerTokenHandler>();
@@ -323,10 +354,13 @@ public class Program
         builder.Services.AddScoped<IProjectionReplayApiService, ProjectionReplayApiService>();
         builder.Services.AddScoped<IGoalApiService, GoalApiService>();
         builder.Services.AddScoped<ITranslationApiService, TranslationApiService>();
+        builder.Services.AddScoped<IEmployeeFeedbackApiService, EmployeeFeedbackApiService>();
+        builder.Services.AddScoped<IFeedbackTemplateService, FeedbackTemplateService>();
 
         // Register refactoring services
         builder.Services.AddScoped<QuestionConfigurationService>();
         builder.Services.AddScoped<QuestionnaireValidationService>();
+        builder.Services.AddScoped<FeedbackTemplateValidationService>();
         builder.Services.AddScoped<GoalService>();
 
         // Register export services
@@ -343,6 +377,7 @@ public class Program
 
         // Register state management
         builder.Services.AddScoped<QuestionnaireBuilderState>();
+        builder.Services.AddScoped<FeedbackTemplateBuilderState>();
 
         var app = builder.Build();
 

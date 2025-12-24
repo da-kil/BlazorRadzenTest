@@ -1,0 +1,109 @@
+@using Microsoft.AspNetCore.Components
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+
+<div class="feedback-provider-info-section">
+    <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+        @T("sections.provider-information")
+    </RadzenText>
+
+    <RadzenRow Gap="1rem">
+        <!-- Provider Name -->
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                @T("labels.provider-name") <span class="text-danger">*</span>
+            </RadzenText>
+            <RadzenTextBox @bind-Value="@providerInfo.ProviderName"
+                         Placeholder="@T("placeholders.enter-provider-name")"
+                         MaxLength="100"
+                         Change="@OnProviderInfoChanged"
+                         Style="width: 100%;" />
+        </RadzenColumn>
+
+        <!-- Provider Role -->
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                @T("labels.provider-role") @(RequiresProviderRole ? "*" : "")
+            </RadzenText>
+            <RadzenTextBox @bind-Value="@providerInfo.ProviderRole"
+                         Placeholder="@GetProviderRolePlaceholder()"
+                         MaxLength="100"
+                         Change="@OnProviderInfoChanged"
+                         Style="width: 100%;" />
+        </RadzenColumn>
+
+        <!-- Project Context (for Project Colleague feedback) -->
+        @if (RequiresProjectContext)
+        {
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                    @T("labels.project-name") <span class="text-danger">*</span>
+                </RadzenText>
+                <RadzenTextBox @bind-Value="@providerInfo.ProjectName"
+                             Placeholder="@T("placeholders.enter-project-name")"
+                             MaxLength="200"
+                             Change="@OnProviderInfoChanged"
+                             Style="width: 100%;" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                    @T("labels.project-context")
+                </RadzenText>
+                <RadzenTextBox @bind-Value="@providerInfo.ProjectContext"
+                             Placeholder="@T("placeholders.enter-project-context")"
+                             MaxLength="500"
+                             Change="@OnProviderInfoChanged"
+                             Style="width: 100%;" />
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                    @T("help.project-context-optional")
+                </RadzenText>
+            </RadzenColumn>
+        }
+    </RadzenRow>
+</div>
+
+@code {
+    [Parameter] public ti8m.BeachBreak.Client.Models.Dto.FeedbackProviderInfoDto ProviderInfo { get; set; } = new();
+    [Parameter] public EventCallback<ti8m.BeachBreak.Client.Models.Dto.FeedbackProviderInfoDto> ProviderInfoChanged { get; set; }
+    [Parameter] public int? SourceType { get; set; }
+    [Parameter] public bool RequiresProjectContext { get; set; }
+    [Parameter] public bool RequiresProviderRole { get; set; }
+
+    private ti8m.BeachBreak.Client.Models.Dto.FeedbackProviderInfoDto providerInfo = new();
+
+    protected override void OnInitialized()
+    {
+        providerInfo = ProviderInfo ?? new ti8m.BeachBreak.Client.Models.Dto.FeedbackProviderInfoDto();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (ProviderInfo != null && ProviderInfo != providerInfo)
+        {
+            providerInfo = ProviderInfo;
+        }
+    }
+
+    private async Task OnProviderInfoChanged()
+    {
+        if (ProviderInfoChanged.HasDelegate)
+        {
+            await ProviderInfoChanged.InvokeAsync(providerInfo);
+        }
+    }
+
+    private string GetProviderRolePlaceholder()
+    {
+        return SourceType switch
+        {
+            0 => T("placeholders.customer-role"), // Customer
+            1 => T("placeholders.peer-role"), // Peer
+            2 => T("placeholders.colleague-role"), // Project Colleague
+            _ => T("placeholders.provider-role-generic")
+        };
+    }
+}

@@ -22,14 +22,14 @@ public class EvaluationItem
     public string TitleGerman { get; set; }
 
     /// <summary>
-    /// English description providing context for this evaluation.
+    /// English description providing context for this evaluation (optional).
     /// </summary>
-    public string DescriptionEnglish { get; set; }
+    public string? DescriptionEnglish { get; set; }
 
     /// <summary>
-    /// German description providing context for this evaluation.
+    /// German description providing context for this evaluation (optional).
     /// </summary>
-    public string DescriptionGerman { get; set; }
+    public string? DescriptionGerman { get; set; }
 
     /// <summary>
     /// Indicates whether this evaluation item must be rated for the question to be considered complete.
@@ -40,6 +40,28 @@ public class EvaluationItem
     /// Display order of this evaluation item within the question.
     /// </summary>
     public int Order { get; set; }
+
+
+    /// <summary>
+    /// Constructor for creating evaluation items with all properties.
+    /// </summary>
+    public EvaluationItem(
+        string key,
+        string titleEnglish,
+        string titleGerman,
+        string? descriptionEnglish,
+        string? descriptionGerman,
+        bool isRequired,
+        int order)
+    {
+        Key = key;
+        TitleEnglish = titleEnglish;
+        TitleGerman = titleGerman;
+        DescriptionEnglish = descriptionEnglish ?? string.Empty;
+        DescriptionGerman = descriptionGerman ?? string.Empty;
+        IsRequired = isRequired;
+        Order = order;
+    }
 
     /// <summary>
     /// Gets the localized title based on the specified language.
@@ -52,7 +74,7 @@ public class EvaluationItem
     /// <summary>
     /// Gets the localized description based on the specified language.
     /// </summary>
-    public string GetLocalizedDescription(Language language)
+    public string? GetLocalizedDescription(Language language)
     {
         return language == Language.German ? DescriptionGerman : DescriptionEnglish;
     }
@@ -72,7 +94,7 @@ public class EvaluationItem
     public string GetLocalizedDescriptionWithFallback(Language language)
     {
         var localized = GetLocalizedDescription(language);
-        return !string.IsNullOrWhiteSpace(localized) ? localized : DescriptionEnglish;
+        return !string.IsNullOrWhiteSpace(localized) ? localized : (DescriptionEnglish ?? string.Empty);
     }
 }
 

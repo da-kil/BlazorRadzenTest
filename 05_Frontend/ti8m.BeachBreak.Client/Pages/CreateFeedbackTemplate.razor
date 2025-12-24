@@ -1,0 +1,290 @@
+@page "/create-feedback-template"
+@using Microsoft.AspNetCore.Components.Authorization
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@using Radzen
+@using Radzen.Blazor
+@inject IFeedbackTemplateService TemplateService
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+@inherits OptimizedTranslatableComponentBase
+
+<AuthorizeView Policy="TeamLead">
+    <Authorized>
+        <PageLayout Title="@T("pages.create-feedback-template")" Description="@T("pages.create-feedback-template-description")">
+            <ChildContent>
+                <RadzenStack Gap="1rem">
+
+                    <!-- Basic Template Information -->
+                    <RadzenCard>
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                            @T("sections.template-information")
+                        </RadzenText>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                    @T("labels.template-name") <span class="text-danger">*</span>
+                                </RadzenText>
+                                <RadzenTextBox @bind-Value="@templateName"
+                                             Placeholder="@T("placeholders.template-name")"
+                                             Style="width: 100%;"
+                                             MaxLength="100" />
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                    @T("labels.source-type") <span class="text-danger">*</span>
+                                </RadzenText>
+                                <RadzenDropDown @bind-Value="@selectedSourceType"
+                                              Data="@sourceTypes"
+                                              TextProperty="DisplayName"
+                                              ValueProperty="Value"
+                                              Placeholder="@T("placeholders.select-source-type")"
+                                              Style="width: 100%;" />
+                            </RadzenColumn>
+                        </RadzenRow>
+
+                        <RadzenRow Gap="1rem" Class="mt-3">
+                            <RadzenColumn Size="12">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                    @T("labels.description")
+                                </RadzenText>
+                                <RadzenTextArea @bind-Value="@description"
+                                              Placeholder="@T("placeholders.template-description")"
+                                              Style="width: 100%; height: 100px;" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenCard>
+
+                    <!-- Rating Scale Configuration -->
+                    <RadzenCard>
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                            @T("sections.rating-scale")
+                        </RadzenText>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                    @T("labels.rating-scale")
+                                </RadzenText>
+                                <RadzenNumeric @bind-Value="@ratingScale"
+                                             Min="2" Max="10" Step="1"
+                                             Style="width: 100%;" />
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                    @T("labels.scale-low-label")
+                                </RadzenText>
+                                <RadzenTextBox @bind-Value="@scaleLowLabel"
+                                             Style="width: 100%;" />
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="4">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                    @T("labels.scale-high-label")
+                                </RadzenText>
+                                <RadzenTextBox @bind-Value="@scaleHighLabel"
+                                             Style="width: 100%;" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenCard>
+
+                    <!-- Template Options -->
+                    <RadzenCard>
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                            @T("sections.template-options")
+                        </RadzenText>
+
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCheckBox @bind-Value="@isActive" Name="isActiveCheck" />
+                                <RadzenLabel Text="@T("labels.template-active")" Component="isActiveCheck" Class="ms-2" />
+                            </RadzenColumn>
+
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCheckBox @bind-Value="@isDefault" Name="isDefaultCheck" />
+                                <RadzenLabel Text="@T("labels.set-as-default")" Component="isDefaultCheck" Class="ms-2" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenCard>
+
+                    <!-- Note about criteria and text sections -->
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Title="@T("messages.template-note-title")">
+                        @T("messages.template-note-description")
+                    </RadzenAlert>
+
+                    <!-- Validation Errors -->
+                    @if (validationErrors.Any())
+                    {
+                        <ValidationErrorAlert Errors="@validationErrors" />
+                    }
+
+                    <!-- Action Buttons -->
+                    <RadzenCard>
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.End" Gap="1rem">
+                            <RadzenButton Text="@T("buttons.cancel")"
+                                        ButtonStyle="ButtonStyle.Light"
+                                        Click="@Cancel" />
+
+                            <RadzenButton Text="@T("buttons.create-template")"
+                                        ButtonStyle="ButtonStyle.Primary"
+                                        Icon="add"
+                                        Click="@CreateTemplate"
+                                        IsBusy="@isCreating"
+                                        Disabled="@(!IsFormValid)" />
+                        </RadzenStack>
+                    </RadzenCard>
+
+                </RadzenStack>
+            </ChildContent>
+        </PageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="TeamLead" PageName="@T("pages.create-feedback-template")" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    // Form data
+    private string templateName = string.Empty;
+    private string description = string.Empty;
+    private int? selectedSourceType;
+    private int ratingScale = 10;
+    private string scaleLowLabel = "";
+    private string scaleHighLabel = "";
+    private bool isActive = true;
+    private bool isDefault = false;
+
+    // UI state
+    private bool isCreating;
+    private List<string> validationErrors = new();
+
+    private List<SourceTypeOption> sourceTypes = new();
+
+    protected override void OnInitialized()
+    {
+        // Initialize source types with proper translations
+        sourceTypes = new List<SourceTypeOption>
+        {
+            new() { Value = 0, DisplayName = T("source-types.customer.name"), Description = T("source-types.customer.description"), RequiresProjectContext = false, RequiresProviderRole = false },
+            new() { Value = 1, DisplayName = T("source-types.peer.name"), Description = T("source-types.peer.description"), RequiresProjectContext = false, RequiresProviderRole = true },
+            new() { Value = 2, DisplayName = T("source-types.project-colleague.name"), Description = T("source-types.project-colleague.description"), RequiresProjectContext = true, RequiresProviderRole = true }
+        };
+
+        // Initialize scale labels with default translations
+        scaleLowLabel = T("rating-scale.poor");
+        scaleHighLabel = T("rating-scale.excellent");
+
+        base.OnInitialized();
+    }
+
+    private bool IsFormValid =>
+        !string.IsNullOrWhiteSpace(templateName) &&
+        selectedSourceType.HasValue &&
+        !string.IsNullOrWhiteSpace(scaleLowLabel) &&
+        !string.IsNullOrWhiteSpace(scaleHighLabel);
+
+    private async Task CreateTemplate()
+    {
+        if (!ValidateForm())
+            return;
+
+        isCreating = true;
+        StateHasChanged();
+
+        try
+        {
+            // Convert form data to FeedbackTemplate model
+            var template = new FeedbackTemplate
+            {
+                Id = Guid.NewGuid(),
+                NameEnglish = templateName,
+                NameGerman = templateName, // Use same name for both languages initially
+                DescriptionEnglish = description ?? string.Empty,
+                DescriptionGerman = description ?? string.Empty,
+                AllowedSourceTypes = new List<int> { selectedSourceType!.Value },
+                RatingScale = ratingScale,
+                ScaleLowLabel = scaleLowLabel,
+                ScaleHighLabel = scaleHighLabel,
+                Status = TemplateStatus.Draft,
+                // Create empty template - user will configure criteria in the template builder
+                Criteria = new List<EvaluationItem>(),
+                TextSections = new List<TextSectionDefinition>(),
+                CreatedDate = DateTime.UtcNow
+            };
+
+            // Create the template via the service
+            var createdTemplate = await TemplateService.CreateTemplateAsync(template);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = T("messages.success"),
+                Detail = T("messages.template-created-successfully")
+            });
+
+            // Reset form
+            ResetForm();
+
+            // Navigate to the template builder for further editing
+            NavigationManager.NavigateTo($"/feedback-template-builder/{createdTemplate.Id}");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = T("messages.error"),
+                Detail = $"Failed to create template: {ex.Message}"
+            });
+        }
+        finally
+        {
+            isCreating = false;
+            StateHasChanged();
+        }
+    }
+
+    private bool ValidateForm()
+    {
+        validationErrors.Clear();
+
+        if (string.IsNullOrWhiteSpace(templateName))
+            validationErrors.Add(T("validation.template-name-required"));
+
+        if (!selectedSourceType.HasValue)
+            validationErrors.Add(T("validation.source-type-required"));
+
+        if (string.IsNullOrWhiteSpace(scaleLowLabel))
+            validationErrors.Add(T("validation.scale-low-label-required"));
+
+        if (string.IsNullOrWhiteSpace(scaleHighLabel))
+            validationErrors.Add(T("validation.scale-high-label-required"));
+
+        return !validationErrors.Any();
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close(false);
+    }
+
+    private void ResetForm()
+    {
+        templateName = string.Empty;
+        description = string.Empty;
+        selectedSourceType = null;
+        ratingScale = 10;
+        scaleLowLabel = "";
+        scaleHighLabel = "";
+        isActive = true;
+        isDefault = false;
+        validationErrors.Clear();
+    }
+
+
+}

@@ -201,6 +201,33 @@ try {
 Write-Host "`nWaiting 2 seconds..." -ForegroundColor Cyan
 Start-Sleep -Seconds 2
 
+Write-Host "`nInserting feedback template..." -ForegroundColor Cyan
+try {
+    $templateResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/employee-feedbacks/templates" `
+      -Method POST `
+      -Headers $headers `
+      -InFile "test-feedback-template.json"
+    Write-Host "Feedback template inserted successfully!" -ForegroundColor Green
+
+    # Publish the template
+    Write-Host "Publishing feedback template..." -ForegroundColor Cyan
+    $templateId = "c212e0cd-55b1-423a-9839-dcfe039ea02b"
+    $publishResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/employee-feedbacks/templates/$templateId/publish" `
+      -Method POST `
+      -Headers $headers
+    Write-Host "Feedback template published successfully!" -ForegroundColor Green
+} catch {
+    Write-Host "Error with feedback template: $($_.Exception.Message)" -ForegroundColor Red
+    if ($_.Exception.Response) {
+        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+        $responseBody = $reader.ReadToEnd()
+        Write-Host "Response: $responseBody" -ForegroundColor Red
+    }
+}
+
+Write-Host "`nWaiting 2 seconds..." -ForegroundColor Cyan
+Start-Sleep -Seconds 2
+
 Write-Host "`nInserting organizations..." -ForegroundColor Cyan
 try {
     $orgResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/organizations/bulk-import" `

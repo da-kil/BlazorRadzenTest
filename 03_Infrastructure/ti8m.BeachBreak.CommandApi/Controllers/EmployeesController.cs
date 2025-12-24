@@ -11,7 +11,6 @@ using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.CommandApi.Mappers;
 using ti8m.BeachBreak.CommandApi.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using CommandResult = ti8m.BeachBreak.Application.Command.Commands.Result;
 

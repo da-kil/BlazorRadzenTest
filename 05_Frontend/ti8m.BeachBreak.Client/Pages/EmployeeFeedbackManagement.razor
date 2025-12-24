@@ -1,0 +1,453 @@
+@page "/employee-feedback-management"
+@using Microsoft.AspNetCore.Components.Authorization
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Layout
+@inject IEmployeeFeedbackApiService FeedbackService
+@inject IEmployeeApiService EmployeeService
+@inject DialogService DialogService
+@inject NavigationManager NavigationManager
+@inherits OptimizedTranslatableComponentBase
+
+<PageTitle>@T("pages.employee-feedback-management")</PageTitle>
+
+<AuthorizeView Policy="TeamLead">
+    <Authorized>
+        <PageLayout Title="@T("pages.employee-feedback-management")"
+                   Description="@T("pages.employee-feedback-description")">
+            <ChildContent>
+                <!-- Filters and Search -->
+                <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" Class="mb-4">
+                    <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
+                        <!-- Employee Filter -->
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                @T("labels.employee")
+                            </RadzenText>
+                            <RadzenDropDown @bind-Value="@selectedEmployeeId"
+                                          Data="@employees"
+                                          TextProperty="FullName"
+                                          ValueProperty="Id"
+                                          Placeholder="@T("placeholders.select-employee")"
+                                          AllowClear="true"
+                                          Change="@OnFilterChanged"
+                                          Style="width: 100%;" />
+                        </RadzenColumn>
+
+                        <!-- Source Type Filter -->
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                @T("labels.feedback-source")
+                            </RadzenText>
+                            <RadzenDropDown @bind-Value="@selectedSourceType"
+                                          Data="@sourceTypeOptions"
+                                          TextProperty="DisplayName"
+                                          ValueProperty="Value"
+                                          Placeholder="@T("placeholders.all-sources")"
+                                          AllowClear="true"
+                                          Change="@OnFilterChanged"
+                                          Style="width: 100%;" />
+                        </RadzenColumn>
+
+                        <!-- Date Range -->
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenText TextStyle="TextStyle.Body2" Class="mb-2">
+                                @T("labels.date-range")
+                            </RadzenText>
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenDatePicker @bind-Value="@fromDate"
+                                                Placeholder="@T("labels.from-date")"
+                                                Change="@OnFilterChanged"
+                                                DateFormat="yyyy-MM-dd"
+                                                Style="width: 100%;" />
+                                <RadzenDatePicker @bind-Value="@toDate"
+                                                Placeholder="@T("labels.to-date")"
+                                                Change="@OnFilterChanged"
+                                                DateFormat="yyyy-MM-dd"
+                                                Style="width: 100%;" />
+                            </RadzenStack>
+                        </RadzenColumn>
+
+                        <!-- Actions -->
+                        <RadzenColumn Size="12" SizeMD="3">
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                <RadzenButton Text="@T("buttons.record-feedback")"
+                                            Icon="add"
+                                            ButtonStyle="ButtonStyle.Success"
+                                            Size="ButtonSize.Small"
+                                            Click="@ShowRecordFeedbackDialog" />
+                                <RadzenButton Text="@T("buttons.clear-filters")"
+                                            Icon="clear"
+                                            ButtonStyle="ButtonStyle.Light"
+                                            Size="ButtonSize.Small"
+                                            Click="@ClearFilters" />
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenStack>
+
+                <!-- Summary Statistics -->
+                @if (feedbackList?.Any() == true)
+                {
+                    <RadzenCard Class="mb-4">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("labels.total-feedback")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H5">@feedbackList.Count</RadzenText>
+                            </RadzenColumn>
+                            <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("labels.average-rating")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H5">@GetAverageRating()</RadzenText>
+                            </RadzenColumn>
+                            <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("labels.with-comments")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H5">@feedbackList.Count(f => f.HasUnstructuredFeedback)</RadzenText>
+                            </RadzenColumn>
+                            <RadzenColumn Size="6" SizeMD="3">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@T("labels.project-feedback")</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H5">@feedbackList.Count(f => f.IsProjectFeedback)</RadzenText>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenCard>
+                }
+
+                <!-- Feedback List -->
+                @if (isLoading)
+                {
+                    <RadzenProgressBar Mode="ProgressBarMode.Indeterminate" />
+                }
+                else if (feedbackList?.Any() != true)
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
+                        <RadzenText>@T("messages.no-feedback-found")</RadzenText>
+                    </RadzenAlert>
+                }
+                else
+                {
+                    <RadzenCard>
+                        <RadzenDataGrid @ref="feedbackGrid"
+                                      Data="@feedbackList"
+                                      TItem="EmployeeFeedbackSummaryDto"
+                                      AllowFiltering="false"
+                                      AllowColumnResize="true"
+                                      AllowSorting="true"
+                                      AllowPaging="true"
+                                      PageSize="20"
+                                      AllowAlternatingRows="false">
+                            <Columns>
+                                <!-- Employee Name -->
+                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
+                                                    Property="EmployeeName"
+                                                    Title="@T("columns.employee")"
+                                                    Width="150px"
+                                                    Sortable="true">
+                                    <Template Context="feedback">
+                                        <RadzenText TextStyle="TextStyle.Body1" Class="font-medium">
+                                            @feedback.EmployeeName
+                                        </RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <!-- Source Type -->
+                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
+                                                    Property="SourceType"
+                                                    Title="@T("columns.source-type")"
+                                                    Width="130px"
+                                                    Sortable="true">
+                                    <Template Context="feedback">
+                                        <RadzenBadge Text="@feedback.SourceTypeDisplayName"
+                                                   Variant="Variant.Flat"
+                                                   IsPill="true"
+                                                   Class="@feedback.SourceTypeBadgeClass" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <!-- Provider -->
+                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
+                                                    Property="ProviderName"
+                                                    Title="@T("columns.provider")"
+                                                    Width="180px"
+                                                    Sortable="true">
+                                    <Template Context="feedback">
+                                        <div>
+                                            <RadzenText TextStyle="TextStyle.Body1">@feedback.ProviderName</RadzenText>
+                                            @if (!string.IsNullOrWhiteSpace(feedback.ProviderRole))
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                                    @feedback.ProviderRole
+                                                </RadzenText>
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <!-- Project (if applicable) -->
+                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
+                                                    Property="ProjectName"
+                                                    Title="@T("columns.project")"
+                                                    Width="130px"
+                                                    Sortable="true">
+                                    <Template Context="feedback">
+                                        @if (feedback.IsProjectFeedback)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2">
+                                                @feedback.ProjectDisplay
+                                            </RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">N/A</RadzenText>
+                                        }
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <!-- Rating -->
+                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
+                                                    Property="AverageRating"
+                                                    Title="@T("columns.rating")"
+                                                    Width="100px"
+                                                    Sortable="true">
+                                    <Template Context="feedback">
+                                        <div class="rating-display">
+                                            <RadzenText TextStyle="TextStyle.Body1">@feedback.RatingDisplay</RadzenText>
+                                            @if (feedback.RatedCriteriaCount > 0)
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                                    @feedback.RatedCriteriaCount @T("labels.criteria")
+                                                </RadzenText>
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <!-- Feedback Date -->
+                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
+                                                    Property="FeedbackDate"
+                                                    Title="@T("columns.feedback-date")"
+                                                    Width="120px"
+                                                    Sortable="true">
+                                    <Template Context="feedback">
+                                        <div>
+                                            <RadzenText TextStyle="TextStyle.Body2">
+                                                @feedback.FeedbackDate.ToString("yyyy-MM-dd")
+                                            </RadzenText>
+                                            @if (feedback.IsRecent)
+                                            {
+                                                <RadzenBadge Text="@T("labels.recent")"
+                                                           Variant="Variant.Flat"
+                                                           IsPill="true"
+                                                           BadgeStyle="BadgeStyle.Success" />
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <!-- Summary -->
+                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
+                                                    Title="@T("columns.summary")"
+                                                    Width="150px">
+                                    <Template Context="feedback">
+                                        <RadzenText TextStyle="TextStyle.Body2">
+                                            @feedback.FeedbackSummary
+                                        </RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+
+                                <!-- Actions -->
+                                <RadzenDataGridColumn TItem="EmployeeFeedbackSummaryDto"
+                                                    Title="@T("columns.actions")"
+                                                    Width="120px"
+                                                    Sortable="false">
+                                    <Template Context="feedback">
+                                        <RadzenButton Icon="edit"
+                                                    ButtonStyle="ButtonStyle.Light"
+                                                    Variant="Variant.Flat"
+                                                    Size="ButtonSize.Small"
+                                                    Click="@(() => EditFeedback(feedback))"
+                                                    title="@T("buttons.edit")" />
+                                        <RadzenButton Icon="delete"
+                                                    ButtonStyle="ButtonStyle.Danger"
+                                                    Variant="Variant.Flat"
+                                                    Size="ButtonSize.Small"
+                                                    Click="@(() => DeleteFeedback(feedback))"
+                                                    title="@T("buttons.delete")"
+                                                    Class="ml-2" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    </RadzenCard>
+                }
+
+            </ChildContent>
+        </PageLayout>
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="TeamLead" PageName="Employee Feedback Management" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    // Data
+    private List<EmployeeFeedbackSummaryDto> feedbackList = new();
+    private List<EmployeeDto> employees = new();
+    private List<SourceTypeOption> sourceTypeOptions = new();
+
+    // Filters
+    private Guid? selectedEmployeeId;
+    private int? selectedSourceType;
+    private DateTime? fromDate;
+    private DateTime? toDate;
+
+    // UI State
+    private bool isLoading = true;
+    private RadzenDataGrid<EmployeeFeedbackSummaryDto>? feedbackGrid;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoadInitialData();
+        await LoadFeedback();
+    }
+
+    private async Task LoadInitialData()
+    {
+        // Load employees for filter dropdown
+        employees = await EmployeeService.GetAllEmployeesAsync();
+
+        // Load source type options
+        var templatesResult = await FeedbackService.GetFeedbackTemplatesAsync();
+        if (templatesResult.Succeeded)
+        {
+            sourceTypeOptions = templatesResult.Payload?.SourceTypeOptions ?? new List<SourceTypeOption>();
+        }
+    }
+
+    private async Task LoadFeedback()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        var parameters = new FeedbackQueryParams
+        {
+            EmployeeId = selectedEmployeeId,
+            SourceType = selectedSourceType,
+            FromDate = fromDate,
+            ToDate = toDate,
+            PageSize = 200, // Maximum allowed by backend validation
+            SortField = "FeedbackDate",
+            SortAscending = false
+        };
+
+        var result = await FeedbackService.GetEmployeeFeedbackAsync(parameters);
+
+        if (result.Succeeded)
+        {
+            feedbackList = result.Payload ?? new List<EmployeeFeedbackSummaryDto>();
+        }
+        else
+        {
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = T("messages.error"),
+                Detail = result.ErrorMessage ?? T("messages.failed-to-load-feedback")
+            });
+        }
+
+        isLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task OnFilterChanged()
+    {
+        await LoadFeedback();
+    }
+
+    private async Task ClearFilters()
+    {
+        selectedEmployeeId = null;
+        selectedSourceType = null;
+        fromDate = null;
+        toDate = null;
+        await LoadFeedback();
+    }
+
+    private void ShowRecordFeedbackDialog()
+    {
+        NavigationManager.NavigateTo("/record-employee-feedback");
+    }
+
+    private async Task EditFeedback(EmployeeFeedbackSummaryDto feedback)
+    {
+        var result = await DialogService.OpenAsync<EditEmployeeFeedback>(
+            T("dialogs.edit-feedback-title"),
+            new Dictionary<string, object> { { "FeedbackId", feedback.Id } },
+            new DialogOptions
+            {
+                Width = "800px",
+                Height = "600px",
+                Resizable = true,
+                Draggable = true
+            });
+
+        if (result == true)
+        {
+            await LoadFeedback();
+        }
+    }
+
+    private async Task DeleteFeedback(EmployeeFeedbackSummaryDto feedback)
+    {
+        var confirmed = await DialogService.Confirm(
+            $"{T("messages.confirm-delete-feedback")} {feedback.ProviderName} - {feedback.EmployeeName}",
+            T("dialogs.confirm-delete"),
+            new ConfirmOptions
+            {
+                OkButtonText = T("buttons.delete"),
+                CancelButtonText = T("buttons.cancel")
+            });
+
+        if (confirmed == true)
+        {
+            var result = await FeedbackService.DeleteFeedbackAsync(feedback.Id, "Deleted from management interface");
+
+            if (result.Succeeded)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = T("messages.success"),
+                    Detail = T("messages.feedback-deleted-successfully")
+                });
+
+                await LoadFeedback();
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = T("messages.error"),
+                    Detail = result.ErrorMessage ?? T("messages.failed-to-delete-feedback")
+                });
+            }
+        }
+    }
+
+    private string GetAverageRating()
+    {
+        if (feedbackList?.Any() != true)
+            return "N/A";
+
+        var ratingsWithValues = feedbackList.Where(f => f.AverageRating.HasValue).ToList();
+        if (!ratingsWithValues.Any())
+            return "N/A";
+
+        var average = ratingsWithValues.Average(f => f.AverageRating!.Value);
+        return $"{average:F1}/10";
+    }
+}
