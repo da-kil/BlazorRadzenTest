@@ -130,7 +130,7 @@ else
                                     var employeeResponse = GetSectionResponse(currentSection.Id, CompletionRole.Employee);
                                     var managerResponse = GetSectionResponse(currentSection.Id, CompletionRole.Manager);
 
-                                    <ReviewModeAssessmentRenderer Section="@currentSection"
+                                    <ReviewModeAssessmentRenderer Question="@currentSection"
                                                                   EmployeeResponse="@employeeResponse"
                                                                   ManagerResponse="@managerResponse"
                                                                   OnEditAnswer="@((args) => EditAnswer(args.Item1, args.Item2, args.Item3))"
@@ -293,6 +293,14 @@ else
                     </div>
                 }
             </div>
+
+            <!-- InReview Notes Panel -->
+            @if (Assignment.WorkflowState == WorkflowState.InReview && HasManagerPrivileges)
+            {
+                <InReviewNotesPanel Assignment="@Assignment"
+                                   CurrentSection="@currentSection"
+                                   OnNotesChanged="@OnNotesUpdated" />
+            }
         </ChildContent>
     </PageLayout>
 }
@@ -752,5 +760,12 @@ else
                      roleQuestion != null;
 
         return $"{roleToFetch} (has_data: {hasData})";
+    }
+
+    private async Task OnNotesUpdated()
+    {
+        // Optionally reload assignment to get latest notes
+        // For now, optimistic updates handle this
+        StateHasChanged();
     }
 }

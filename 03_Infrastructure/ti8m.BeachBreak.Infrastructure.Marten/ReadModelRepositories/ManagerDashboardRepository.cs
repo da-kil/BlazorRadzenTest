@@ -1,6 +1,7 @@
 using Marten;
 using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Application.Query.Projections.Models;
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Application.Query.Mappers;
 using ti8m.BeachBreak.Domain;
@@ -57,7 +58,7 @@ internal class ManagerDashboardRepository(IDocumentStore store, ILanguageContext
                 ManagerFullName = $"{manager.FirstName} {manager.LastName}",
                 ManagerEmail = manager.EMail,
                 TeamMemberCount = teamMembers.Count,
-                TeamMembers = teamMembers.Select(tm => new ManagerDashboardReadModel.TeamMemberMetrics
+                TeamMembers = teamMembers.Select(tm => new TeamMemberMetrics
                 {
                     EmployeeId = tm.Id,
                     EmployeeName = $"{tm.FirstName} {tm.LastName}",
@@ -88,7 +89,7 @@ internal class ManagerDashboardRepository(IDocumentStore store, ILanguageContext
 
         // Calculate per-team-member metrics
         var now = DateTime.UtcNow;
-        var teamMemberMetrics = new List<ManagerDashboardReadModel.TeamMemberMetrics>();
+        var teamMemberMetrics = new List<TeamMemberMetrics>();
 
         foreach (var teamMember in teamMembers)
         {
@@ -108,7 +109,7 @@ internal class ManagerDashboardRepository(IDocumentStore store, ILanguageContext
 
             var hasOverdue = urgentAssignments.Any(a => a.DueDate!.Value < now);
 
-            teamMemberMetrics.Add(new ManagerDashboardReadModel.TeamMemberMetrics
+            teamMemberMetrics.Add(new TeamMemberMetrics
             {
                 EmployeeId = teamMember.Id,
                 EmployeeName = $"{teamMember.FirstName} {teamMember.LastName}",
@@ -131,7 +132,7 @@ internal class ManagerDashboardRepository(IDocumentStore store, ILanguageContext
                 var employee = teamMembers.First(e => e.Id == a.EmployeeId);
                 var daysUntilDue = (int)Math.Ceiling((a.DueDate!.Value - now).TotalDays);
 
-                return new ManagerDashboardReadModel.TeamUrgentAssignment
+                return new TeamUrgentAssignment
                 {
                     AssignmentId = a.Id,
                     EmployeeId = a.EmployeeId,

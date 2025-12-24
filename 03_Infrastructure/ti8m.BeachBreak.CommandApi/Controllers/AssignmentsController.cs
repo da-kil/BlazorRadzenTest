@@ -644,6 +644,76 @@ public class AssignmentsController : BaseController
         }
     }
 
+    [HttpPost("{assignmentId}/notes")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> AddInReviewNote(Guid assignmentId, [FromBody] AddInReviewNoteDto noteDto)
+    {
+        try
+        {
+            var command = new AddInReviewNoteCommand(
+                assignmentId,
+                noteDto.Content,
+                noteDto.SectionId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error adding InReview note for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while adding note");
+        }
+    }
+
+    [HttpPut("{assignmentId}/notes/{noteId}")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateInReviewNote(Guid assignmentId, Guid noteId, [FromBody] UpdateInReviewNoteDto noteDto)
+    {
+        try
+        {
+            var command = new UpdateInReviewNoteCommand(
+                assignmentId,
+                noteId,
+                noteDto.Content);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error updating InReview note {NoteId} for assignment {AssignmentId}", noteId, assignmentId);
+            return StatusCode(500, "An error occurred while updating note");
+        }
+    }
+
+    [HttpDelete("{assignmentId}/notes/{noteId}")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteInReviewNote(Guid assignmentId, Guid noteId)
+    {
+        try
+        {
+            var command = new DeleteInReviewNoteCommand(assignmentId, noteId);
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error deleting InReview note {NoteId} for assignment {AssignmentId}", noteId, assignmentId);
+            return StatusCode(500, "An error occurred while deleting note");
+        }
+    }
+
     [HttpPost("reminder")]
     [Authorize(Policy = "TeamLead")]
     [ProducesResponseType(StatusCodes.Status200OK)]

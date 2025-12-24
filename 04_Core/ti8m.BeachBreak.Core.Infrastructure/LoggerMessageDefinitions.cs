@@ -46,4 +46,53 @@ public static partial class LoggerMessageDefinitions
     Level = LogLevel.Information,
     Message = "Authorization cache manually invalidated for employee {EmployeeId} by admin {AdminId}")]
     public static partial void LogAuthorizationCacheInvalidated(this ILogger logger, Guid employeeId, string adminId);
+
+    // InReview note operations logging (7001-7010)
+    [LoggerMessage(
+    EventId = 7001,
+    Level = LogLevel.Information,
+    Message = "InReview note added for assignment {AssignmentId} by employee {EmployeeId} with note ID {NoteId}")]
+    public static partial void InReviewNoteAdded(this ILogger logger, Guid assignmentId, Guid noteId, Guid employeeId, Exception? exception);
+
+    [LoggerMessage(
+    EventId = 7002,
+    Level = LogLevel.Information,
+    Message = "InReview note {NoteId} updated for assignment {AssignmentId} by employee {EmployeeId}")]
+    public static partial void InReviewNoteUpdated(this ILogger logger, Guid noteId, Guid assignmentId, Guid employeeId, Exception? exception);
+
+    [LoggerMessage(
+    EventId = 7003,
+    Level = LogLevel.Information,
+    Message = "InReview note {NoteId} deleted for assignment {AssignmentId} by employee {EmployeeId}")]
+    public static partial void InReviewNoteDeleted(this ILogger logger, Guid noteId, Guid assignmentId, Guid employeeId, Exception? exception);
+
+    [LoggerMessage(
+    EventId = 7004,
+    Level = LogLevel.Error,
+    Message = "Failed to add InReview note for assignment {AssignmentId}: {ErrorMessage}")]
+    public static partial void AddInReviewNoteFailed(this ILogger logger, Guid assignmentId, string errorMessage, Exception exception);
+
+    [LoggerMessage(
+    EventId = 7005,
+    Level = LogLevel.Error,
+    Message = "Failed to update InReview note {NoteId} for assignment {AssignmentId}: {ErrorMessage}")]
+    public static partial void UpdateInReviewNoteFailed(this ILogger logger, Guid noteId, Guid assignmentId, string errorMessage, Exception exception);
+
+    [LoggerMessage(
+    EventId = 7006,
+    Level = LogLevel.Error,
+    Message = "Failed to delete InReview note {NoteId} for assignment {AssignmentId}: {ErrorMessage}")]
+    public static partial void DeleteInReviewNoteFailed(this ILogger logger, Guid noteId, Guid assignmentId, string errorMessage, Exception exception);
+
+    [LoggerMessage(
+    EventId = 7007,
+    Level = LogLevel.Warning,
+    Message = "Attempted to add InReview note for assignment {AssignmentId} in invalid state {WorkflowState}")]
+    public static partial void InReviewNoteInvalidState(this ILogger logger, Guid assignmentId, string workflowState);
+
+    [LoggerMessage(
+    EventId = 7008,
+    Level = LogLevel.Warning,
+    Message = "User {UserId} attempted to modify InReview note {NoteId} without ownership permissions")]
+    public static partial void InReviewNoteUnauthorizedModification(this ILogger logger, Guid userId, Guid noteId);
 }

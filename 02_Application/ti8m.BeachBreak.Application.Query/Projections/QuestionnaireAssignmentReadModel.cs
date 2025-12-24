@@ -1,6 +1,5 @@
 using ti8m.BeachBreak.Application.Query.Mappers;
 using ti8m.BeachBreak.Application.Query.Models;
-using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
@@ -28,7 +27,7 @@ public class QuestionnaireAssignmentReadModel
 
     // Workflow properties
     public WorkflowState WorkflowState { get; set; } = WorkflowState.Assigned;
-    public List<SectionProgressDto> SectionProgress { get; set; } = new();
+    public List<SectionProgress> SectionProgress { get; set; } = new();
 
     // Submission phase
     public DateTime? EmployeeSubmittedDate { get; set; }
@@ -45,6 +44,9 @@ public class QuestionnaireAssignmentReadModel
     public DateTime? EmployeeReviewConfirmedDate { get; set; }
     public Guid? EmployeeReviewConfirmedByEmployeeId { get; set; }
     public string? EmployeeReviewComments { get; set; }
+
+    // InReview discussion notes
+    public List<InReviewNote> InReviewNotes { get; set; } = new();
 
     // Final state
     public DateTime? FinalizedDate { get; set; }
@@ -109,7 +111,7 @@ public class QuestionnaireAssignmentReadModel
         }
         else
         {
-            SectionProgress.Add(new SectionProgressDto
+            SectionProgress.Add(new SectionProgress
             {
                 SectionId = @event.SectionId,
                 IsEmployeeCompleted = true,
@@ -130,7 +132,7 @@ public class QuestionnaireAssignmentReadModel
         }
         else
         {
-            SectionProgress.Add(new SectionProgressDto
+            SectionProgress.Add(new SectionProgress
             {
                 SectionId = @event.SectionId,
                 IsManagerCompleted = true,
@@ -294,5 +296,38 @@ public class QuestionnaireAssignmentReadModel
     public void Apply(PredecessorQuestionnaireLinked @event)
     {
         PredecessorLinksByQuestion[@event.QuestionId] = @event.PredecessorAssignmentId;
+    }
+
+    // Apply methods for InReview notes
+    public void Apply(InReviewNoteAdded @event)
+    {
+        InReviewNotes.Add(new InReviewNote
+        {
+            Id = @event.NoteId,
+            Content = @event.Content,
+            Timestamp = @event.Timestamp,
+            SectionId = @event.SectionId,
+            AuthorEmployeeId = @event.AuthorEmployeeId
+        });
+    }
+
+    public void Apply(InReviewNoteUpdated @event)
+    {
+        var note = InReviewNotes.FirstOrDefault(n => n.Id == @event.NoteId);
+        if (note != null)
+        {
+            note.Content = @event.Content;
+            note.Timestamp = @event.UpdatedAt;
+            // Preserve SectionId, SectionTitle, AuthorEmployeeId, AuthorName
+        }
+    }
+
+    public void Apply(InReviewNoteDeleted @event)
+    {
+        var note = InReviewNotes.FirstOrDefault(n => n.Id == @event.NoteId);
+        if (note != null)
+        {
+            InReviewNotes.Remove(note);
+        }
     }
 }

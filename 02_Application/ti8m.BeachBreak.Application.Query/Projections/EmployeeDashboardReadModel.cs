@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+using ti8m.BeachBreak.Application.Query.Projections.Models;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
@@ -23,13 +24,4 @@ public class EmployeeDashboardReadModel
 
     // Last Updated
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
-
-    public class UrgentAssignmentItem
-    {
-        public Guid AssignmentId { get; set; }
-        public string QuestionnaireTemplateName { get; set; } = string.Empty;
-        public DateTime DueDate { get; set; }
-        public WorkflowState WorkflowState { get; set; }
-        public bool IsOverdue { get; set; }
-    }
 }

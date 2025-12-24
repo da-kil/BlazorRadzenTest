@@ -242,7 +242,14 @@ public class QuestionnaireAssignmentQueryHandler :
 
             // Workflow properties
             WorkflowState = readModel.WorkflowState,
-            SectionProgress = readModel.SectionProgress,
+            SectionProgress = readModel.SectionProgress.Select(sp => new SectionProgressDto
+            {
+                SectionId = sp.SectionId,
+                IsEmployeeCompleted = sp.IsEmployeeCompleted,
+                IsManagerCompleted = sp.IsManagerCompleted,
+                EmployeeCompletedDate = sp.EmployeeCompletedDate,
+                ManagerCompletedDate = sp.ManagerCompletedDate
+            }).ToList(),
 
             // Submission phase
             EmployeeSubmittedDate = readModel.EmployeeSubmittedDate,
