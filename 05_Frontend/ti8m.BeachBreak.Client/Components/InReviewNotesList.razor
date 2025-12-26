@@ -1,0 +1,220 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject DialogService DialogService
+
+<div class="notes-list">
+    @if (!Notes.Any())
+    {
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted text-center p-3">
+            @T("messages.no-notes-yet")
+        </RadzenText>
+    }
+    else
+    {
+        <RadzenStack Gap="1rem">
+            @foreach (var note in Notes.OrderByDescending(n => n.Timestamp))
+            {
+                <div class="note-item">
+                    <!-- Note header -->
+                    <div class="note-header">
+                        <RadzenStack Orientation="Orientation.Horizontal"
+                                   AlignItems="AlignItems.Center"
+                                   JustifyContent="JustifyContent.SpaceBetween">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenBadge BadgeStyle="@GetNoteBadgeStyle(note)"
+                                           Text="@note.SectionTitle" />
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    @note.Timestamp.ToString("MMM dd, HH:mm")
+                                </RadzenText>
+                                @if (!string.IsNullOrEmpty(note.AuthorName))
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                        by @note.AuthorName
+                                    </RadzenText>
+                                }
+                            </RadzenStack>
+
+                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                <RadzenButton Icon="edit"
+                                            ButtonStyle="ButtonStyle.Light"
+                                            Size="ButtonSize.ExtraSmall"
+                                            Click="@(() => EditNote(note))"
+                                            title="@T("buttons.edit-note")" />
+                                <RadzenButton Icon="delete"
+                                            ButtonStyle="ButtonStyle.Danger"
+                                            Size="ButtonSize.ExtraSmall"
+                                            Click="@(() => DeleteNote(note))"
+                                            title="@T("buttons.delete-note")" />
+                            </RadzenStack>
+                        </RadzenStack>
+                    </div>
+
+                    <!-- Note content -->
+                    <RadzenCard Class="note-content p-3 mt-2">
+                        <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
+                            @note.Content
+                        </RadzenText>
+                    </RadzenCard>
+                </div>
+            }
+        </RadzenStack>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<InReviewNote> Notes { get; set; } = new();
+    [Parameter, EditorRequired] public Guid AssignmentId { get; set; }
+    [Parameter] public EventCallback<InReviewNote> OnNoteUpdated { get; set; }
+    [Parameter] public EventCallback<Guid> OnNoteDeleted { get; set; }
+    [Parameter] public Models.QuestionSection? CurrentSection { get; set; }
+
+    private BadgeStyle GetNoteBadgeStyle(InReviewNote note)
+    {
+        return note.SectionId.HasValue ? BadgeStyle.Info : BadgeStyle.Secondary;
+    }
+
+    private async Task EditNote(InReviewNote note)
+    {
+        var parameters = new Dictionary<string, object>
+        {
+            { "Content", note.Content },
+            { "MaxLength", 2000 },
+            { "IsGeneralNote", !note.SectionId.HasValue }
+        };
+
+        if (CurrentSection != null)
+        {
+            parameters.Add("CurrentSection", CurrentSection);
+        }
+
+        var result = await DialogService.OpenAsync<EditNoteDialog>(
+            T("dialogs.edit-note"),
+            parameters,
+            new DialogOptions { Width = "600px", Height = "500px" });
+
+        if (result is not null)
+        {
+            try
+            {
+                // Handle both old string format and new object format for backward compatibility
+                string newContent;
+                bool isGeneralNote;
+
+                if (result is string stringResult)
+                {
+                    // Old format - content only
+                    newContent = stringResult;
+                    isGeneralNote = !note.SectionId.HasValue; // Keep original status
+                }
+                else if (result.GetType().GetProperty("Content") != null && result.GetType().GetProperty("IsGeneralNote") != null)
+                {
+                    // New format - object with Content and IsGeneralNote
+                    newContent = result.GetType().GetProperty("Content")?.GetValue(result)?.ToString() ?? "";
+                    isGeneralNote = (bool)(result.GetType().GetProperty("IsGeneralNote")?.GetValue(result) ?? false);
+                }
+                else
+                {
+                    return; // Invalid result format
+                }
+
+                if (string.IsNullOrWhiteSpace(newContent))
+                    return;
+
+                // Check if anything actually changed
+                var contentChanged = newContent != note.Content;
+                var generalStatusChanged = isGeneralNote != !note.SectionId.HasValue;
+
+                if (!contentChanged && !generalStatusChanged)
+                    return; // No changes made
+
+                var success = await AssignmentService.UpdateInReviewNoteAsync(
+                    AssignmentId,
+                    note.Id,
+                    newContent);
+
+                if (success)
+                {
+                    var updatedNote = new InReviewNote
+                    {
+                        Id = note.Id,
+                        Content = newContent,
+                        Timestamp = DateTime.Now,
+                        SectionId = isGeneralNote ? null : CurrentSection?.Id,
+                        SectionTitle = isGeneralNote ? T("sections.general-notes") :
+                            (CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("sections.general-notes")),
+                        AuthorEmployeeId = note.AuthorEmployeeId,
+                        AuthorName = note.AuthorName
+                    };
+
+                    NotificationService.Notify(NotificationSeverity.Success,
+                        T("messages.note-updated"),
+                        T("messages.note-updated-successfully"));
+
+                    if (OnNoteUpdated.HasDelegate)
+                        await OnNoteUpdated.InvokeAsync(updatedNote);
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error,
+                        T("messages.error"),
+                        T("messages.failed-to-update-note"));
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error,
+                    T("messages.error"),
+                    $"Failed to update note: {ex.Message}");
+            }
+        }
+    }
+
+    private async Task DeleteNote(InReviewNote note)
+    {
+        var confirmed = await DialogService.Confirm(
+            T("messages.confirm-delete-note"),
+            T("dialogs.delete-note"),
+            new ConfirmOptions
+            {
+                OkButtonText = T("buttons.delete"),
+                CancelButtonText = T("buttons.cancel")
+            });
+
+        if (confirmed == true)
+        {
+            try
+            {
+                var success = await AssignmentService.DeleteInReviewNoteAsync(
+                    AssignmentId,
+                    note.Id);
+
+                if (success)
+                {
+                    NotificationService.Notify(NotificationSeverity.Success,
+                        T("messages.note-deleted"),
+                        T("messages.note-deleted-successfully"));
+
+                    if (OnNoteDeleted.HasDelegate)
+                        await OnNoteDeleted.InvokeAsync(note.Id);
+                }
+                else
+                {
+                    NotificationService.Notify(NotificationSeverity.Error,
+                        T("messages.error"),
+                        T("messages.failed-to-delete-note"));
+                }
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error,
+                    T("messages.error"),
+                    $"Failed to delete note: {ex.Message}");
+            }
+        }
+    }
+}

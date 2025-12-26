@@ -1,6 +1,7 @@
 using Marten;
 using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Application.Query.Projections.Models;
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Application.Query.Mappers;
 using ti8m.BeachBreak.Domain;
@@ -52,7 +53,7 @@ internal class EmployeeDashboardRepository(IDocumentStore store, ILanguageContex
             .Where(a => a.DueDate.HasValue &&
                         (a.DueDate.Value - now).TotalDays <= 3 &&
                         a.WorkflowState != WorkflowState.Finalized)
-            .Select(a => new EmployeeDashboardReadModel.UrgentAssignmentItem
+            .Select(a => new UrgentAssignmentItem
             {
                 AssignmentId = a.Id,
                 QuestionnaireTemplateName = templateDict.GetValueOrDefault(a.TemplateId, "Unknown"),

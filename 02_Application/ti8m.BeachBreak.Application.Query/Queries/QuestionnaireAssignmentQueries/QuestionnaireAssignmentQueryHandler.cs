@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Application.Query.Repositories;
 using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Domain;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
@@ -15,6 +16,7 @@ public class QuestionnaireAssignmentQueryHandler :
     private readonly IQuestionnaireTemplateRepository templateRepository;
     private readonly IEmployeeRepository employeeRepository;
     private readonly ILanguageContext languageContext;
+    private readonly IUITranslationService translationService;
     private readonly ILogger<QuestionnaireAssignmentQueryHandler> logger;
 
     public QuestionnaireAssignmentQueryHandler(
@@ -22,12 +24,14 @@ public class QuestionnaireAssignmentQueryHandler :
         IQuestionnaireTemplateRepository templateRepository,
         IEmployeeRepository employeeRepository,
         ILanguageContext languageContext,
+        IUITranslationService translationService,
         ILogger<QuestionnaireAssignmentQueryHandler> logger)
     {
         this.repository = repository;
         this.templateRepository = templateRepository;
         this.employeeRepository = employeeRepository;
         this.languageContext = languageContext;
+        this.translationService = translationService;
         this.logger = logger;
     }
 
@@ -119,6 +123,9 @@ public class QuestionnaireAssignmentQueryHandler :
         var currentLanguageCode = await languageContext.GetCurrentLanguageCodeAsync();
         var currentLanguage = LanguageMapper.FromLanguageCode(currentLanguageCode);
 
+        // Pre-load the "General Notes" translation for use in note enrichment
+        var generalNotesTranslation = await translationService.GetTextAsync("sections.general-notes", currentLanguage, cancellationToken);
+
         // Get unique employee IDs that need to be resolved
         var employeeIds = readModelsList
             .SelectMany(rm => new[] {
@@ -131,6 +138,8 @@ public class QuestionnaireAssignmentQueryHandler :
                 rm.FinalizedByEmployeeId,
                 rm.LastReopenedByEmployeeId
             })
+            .Concat(readModelsList
+                .SelectMany(rm => rm.InReviewNotes.Select(note => (Guid?)note.AuthorEmployeeId)))
             .Where(id => id.HasValue)
             .Select(id => id!.Value)
             .Distinct()
@@ -215,6 +224,38 @@ public class QuestionnaireAssignmentQueryHandler :
                 assignment.LastReopenedByEmployeeName = lastReopenedByName;
             }
 
+            // Enrich InReview notes with author names and section titles
+            foreach (var note in assignment.InReviewNotes)
+            {
+                if (employeeLookup.TryGetValue(note.AuthorEmployeeId, out var authorName))
+                {
+                    note.AuthorName = authorName;
+                }
+
+                // Enrich section title based on whether note has a SectionId
+                if (note.SectionId.HasValue)
+                {
+                    // Section-specific note - lookup section title from template
+                    if (templateLookup.TryGetValue(readModel.TemplateId, out var templateData))
+                    {
+                        var section = templateData.template.Sections
+                            .FirstOrDefault(s => s.Id == note.SectionId.Value);
+
+                        if (section != null)
+                        {
+                            note.SectionTitle = currentLanguage == Models.Language.German
+                                ? section.TitleGerman
+                                : section.TitleEnglish;
+                        }
+                    }
+                }
+                else
+                {
+                    // General note - use proper translation
+                    note.SectionTitle = generalNotesTranslation;
+                }
+            }
+
             return assignment;
         });
     }
@@ -242,7 +283,14 @@ public class QuestionnaireAssignmentQueryHandler :
 
             // Workflow properties
             WorkflowState = readModel.WorkflowState,
-            SectionProgress = readModel.SectionProgress,
+            SectionProgress = readModel.SectionProgress.Select(sp => new SectionProgressDto
+            {
+                SectionId = sp.SectionId,
+                IsEmployeeCompleted = sp.IsEmployeeCompleted,
+                IsManagerCompleted = sp.IsManagerCompleted,
+                EmployeeCompletedDate = sp.EmployeeCompletedDate,
+                ManagerCompletedDate = sp.ManagerCompletedDate
+            }).ToList(),
 
             // Submission phase
             EmployeeSubmittedDate = readModel.EmployeeSubmittedDate,
@@ -270,7 +318,19 @@ public class QuestionnaireAssignmentQueryHandler :
             LastReopenedDate = readModel.LastReopenedDate,
             LastReopenedByEmployeeId = readModel.LastReopenedByEmployeeId,
             LastReopenedByRole = readModel.LastReopenedByRole,
-            LastReopenReason = readModel.LastReopenReason
+            LastReopenReason = readModel.LastReopenReason,
+
+            // InReview notes system
+            InReviewNotes = readModel.InReviewNotes.Select(note => new InReviewNoteDto
+            {
+                Id = note.Id,
+                Content = note.Content,
+                Timestamp = note.Timestamp,
+                SectionId = note.SectionId,
+                SectionTitle = string.Empty, // Will be enriched later
+                AuthorEmployeeId = note.AuthorEmployeeId,
+                AuthorName = string.Empty // Will be enriched later
+            }).ToList()
         };
     }
 

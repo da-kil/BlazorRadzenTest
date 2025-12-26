@@ -38,6 +38,11 @@ public interface IQuestionnaireAssignmentService
     Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy, string? comments);
     Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy, string? finalNotes);
 
+    // InReview note management
+    Task<Result<Guid>> AddInReviewNoteAsync(Guid assignmentId, string content, Guid? sectionId);
+    Task<bool> UpdateInReviewNoteAsync(Guid assignmentId, Guid noteId, string content);
+    Task<bool> DeleteInReviewNoteAsync(Guid assignmentId, Guid noteId);
+
     // Review changes tracking
     Task<List<ReviewChangeDto>> GetReviewChangesAsync(Guid assignmentId);
 

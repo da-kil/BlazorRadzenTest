@@ -1,0 +1,85 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+@inject DialogService DialogService
+
+<RadzenStack Gap="1rem">
+    <RadzenText TextStyle="TextStyle.H6">@T("dialogs.edit-note")</RadzenText>
+
+    <RadzenTextArea @bind-Value="@Content"
+                    Rows="6"
+                    MaxLength="@MaxLength"
+                    Style="width: 100%; resize: vertical;"
+                    Placeholder="@T("placeholders.enter-discussion-note")" />
+
+    <!-- General note toggle -->
+    @if (CurrentSection != null)
+    {
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+            <RadzenCheckBox @bind-Value="@isGeneralNote" Name="editGeneralNote" />
+            <RadzenLabel Text="@T("sections.general-notes")" Component="editGeneralNote" />
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                @if (isGeneralNote)
+                {
+                    @T("messages.note-will-be-general")
+                }
+                else
+                {
+                    @($"{T("labels.current-section")}: {CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage)}")
+                }
+            </RadzenText>
+        </RadzenStack>
+    }
+
+    <RadzenStack Orientation="Orientation.Horizontal"
+                 AlignItems="AlignItems.Center"
+                 JustifyContent="JustifyContent.SpaceBetween">
+        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+            @(Content?.Length ?? 0) / @MaxLength @T("forms.characters")
+        </RadzenText>
+
+        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+            <RadzenButton Text="@T("buttons.cancel")"
+                          ButtonStyle="ButtonStyle.Light"
+                          Click="@Cancel" />
+            <RadzenButton Text="@T("buttons.save")"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Click="@Save"
+                          Disabled="@(string.IsNullOrWhiteSpace(Content))" />
+        </RadzenStack>
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public string Content { get; set; } = string.Empty;
+    [Parameter] public int MaxLength { get; set; } = 2000;
+    [Parameter] public Models.QuestionSection? CurrentSection { get; set; }
+    [Parameter] public bool IsGeneralNote { get; set; }
+
+    private bool isGeneralNote;
+
+    protected override void OnInitialized()
+    {
+        isGeneralNote = IsGeneralNote;
+        base.OnInitialized();
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close();
+    }
+
+    private void Save()
+    {
+        if (!string.IsNullOrWhiteSpace(Content))
+        {
+            var result = new
+            {
+                Content = Content.Trim(),
+                IsGeneralNote = isGeneralNote
+            };
+            DialogService.Close(result);
+        }
+    }
+}

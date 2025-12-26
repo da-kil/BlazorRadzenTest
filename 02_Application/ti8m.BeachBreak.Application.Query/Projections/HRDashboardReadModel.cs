@@ -1,3 +1,5 @@
+using ti8m.BeachBreak.Application.Query.Projections.Models;
+
 namespace ti8m.BeachBreak.Application.Query.Projections;
 
 public class HRDashboardReadModel
@@ -31,43 +33,4 @@ public class HRDashboardReadModel
     public List<UrgentAssignment> UrgentAssignments { get; set; } = new();
 
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
-}
-
-public class OrganizationMetrics
-{
-    public int OrganizationNumber { get; set; }
-    public string OrganizationName { get; set; } = string.Empty;
-    public int EmployeeCount { get; set; } = 0;
-    public int TotalAssignments { get; set; } = 0;
-    public int PendingCount { get; set; } = 0;
-    public int InProgressCount { get; set; } = 0;
-    public int CompletedCount { get; set; } = 0;
-    public int OverdueCount { get; set; } = 0;
-    public double CompletionRate { get; set; } = 0.0;
-}
-
-public class ManagerOverview
-{
-    public Guid ManagerId { get; set; }
-    public string ManagerName { get; set; } = string.Empty;
-    public string ManagerEmail { get; set; } = string.Empty;
-    public int TeamSize { get; set; } = 0;
-    public int TotalAssignments { get; set; } = 0;
-    public int CompletedAssignments { get; set; } = 0;
-    public int OverdueAssignments { get; set; } = 0;
-    public double CompletionRate { get; set; } = 0.0;
-}
-
-public class UrgentAssignment
-{
-    public Guid AssignmentId { get; set; }
-    public Guid EmployeeId { get; set; }
-    public string EmployeeName { get; set; } = string.Empty;
-    public string ManagerName { get; set; } = string.Empty;
-    public string QuestionnaireTemplateName { get; set; } = string.Empty;
-    public DateTime DueDate { get; set; }
-    public string WorkflowState { get; set; } = string.Empty;
-    public bool IsOverdue { get; set; }
-    public int DaysUntilDue { get; set; }
-    public string OrganizationName { get; set; } = string.Empty;
 }

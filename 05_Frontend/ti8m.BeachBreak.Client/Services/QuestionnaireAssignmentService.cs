@@ -366,6 +366,70 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
+    // InReview note management
+    public async Task<Result<Guid>> AddInReviewNoteAsync(Guid assignmentId, string content, Guid? sectionId)
+    {
+        try
+        {
+            var dto = new
+            {
+                Content = content,
+                SectionId = sectionId,
+            };
+
+            var response = await HttpCommandClient.PostAsJsonAsync(
+                $"{AssignmentCommandEndpoint}/{assignmentId}/notes",
+                dto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadFromJsonAsync<Result<Guid>>();
+                return result ?? Result<Guid>.Fail("Failed to deserialize response");
+            }
+
+            return Result<Guid>.Fail($"API call failed: {response.StatusCode}");
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error adding InReview note for assignment {assignmentId}", ex);
+            return Result<Guid>.Fail($"Network error: {ex.Message}");
+        }
+    }
+
+    public async Task<bool> UpdateInReviewNoteAsync(Guid assignmentId, Guid noteId, string content)
+    {
+        try
+        {
+            var dto = new { Content = content };
+            var response = await HttpCommandClient.PutAsJsonAsync(
+                $"{AssignmentCommandEndpoint}/{assignmentId}/notes/{noteId}",
+                dto);
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error updating InReview note {noteId} for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> DeleteInReviewNoteAsync(Guid assignmentId, Guid noteId)
+    {
+        try
+        {
+            var response = await HttpCommandClient.DeleteAsync(
+                $"{AssignmentCommandEndpoint}/{assignmentId}/notes/{noteId}");
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error deleting InReview note {noteId} for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
     // Review changes tracking
     public async Task<List<ReviewChangeDto>> GetReviewChangesAsync(Guid assignmentId)
     {

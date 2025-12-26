@@ -43,6 +43,9 @@ public class QuestionnaireAssignment : AggregateRoot
     public Guid? EmployeeReviewConfirmedByEmployeeId { get; private set; }
     public string? EmployeeReviewComments { get; private set; }
 
+    // InReview discussion notes
+    public List<InReviewNote> InReviewNotes { get; private set; } = new();
+
     // Final state
     public DateTime? FinalizedDate { get; private set; }
     public Guid? FinalizedByEmployeeId { get; private set; }
@@ -462,6 +465,74 @@ public class QuestionnaireAssignment : AggregateRoot
         ));
     }
 
+    // InReview note management methods
+    public Guid AddInReviewNote(
+        string content,
+        Guid? sectionId,
+        Guid authorEmployeeId)
+    {
+        if (WorkflowState != WorkflowState.InReview)
+            throw new InvalidOperationException("Notes can only be added during InReview state");
+
+        if (string.IsNullOrWhiteSpace(content))
+            throw new ArgumentException("Note content cannot be empty", nameof(content));
+
+        if (content.Length > 2000)
+            throw new ArgumentException("Note content cannot exceed 2000 characters", nameof(content));
+
+        var noteId = Guid.NewGuid();
+        RaiseEvent(new InReviewNoteAdded(
+            noteId,
+            content.Trim(),
+            DateTime.UtcNow,
+            sectionId,
+            authorEmployeeId
+        ));
+
+        return noteId;
+    }
+
+    public void UpdateInReviewNote(Guid noteId, string content, Guid editorEmployeeId)
+    {
+        if (WorkflowState != WorkflowState.InReview)
+            throw new InvalidOperationException("Notes can only be updated during InReview state");
+
+        if (string.IsNullOrWhiteSpace(content))
+            throw new ArgumentException("Note content cannot be empty", nameof(content));
+
+        if (content.Length > 2000)
+            throw new ArgumentException("Note content cannot exceed 2000 characters", nameof(content));
+
+        var note = InReviewNotes.FirstOrDefault(n => n.Id == noteId);
+        if (note == null)
+            throw new InvalidOperationException($"Note {noteId} not found");
+
+        if (note.AuthorEmployeeId != editorEmployeeId)
+            throw new InvalidOperationException("Only note author can edit the note");
+
+        RaiseEvent(new InReviewNoteUpdated(
+            noteId,
+            content.Trim(),
+            DateTime.UtcNow,
+            editorEmployeeId
+        ));
+    }
+
+    public void DeleteInReviewNote(Guid noteId, Guid deleterEmployeeId)
+    {
+        if (WorkflowState != WorkflowState.InReview)
+            throw new InvalidOperationException("Notes can only be deleted during InReview state");
+
+        var note = InReviewNotes.FirstOrDefault(n => n.Id == noteId);
+        if (note == null)
+            throw new InvalidOperationException($"Note {noteId} not found");
+
+        if (note.AuthorEmployeeId != deleterEmployeeId)
+            throw new InvalidOperationException("Only note author can delete the note");
+
+        RaiseEvent(new InReviewNoteDeleted(noteId, deleterEmployeeId));
+    }
+
     // Goal management methods
     public void LinkPredecessorQuestionnaire(
         Guid questionId,
@@ -637,6 +708,43 @@ public class QuestionnaireAssignment : AggregateRoot
         FinalizedDate = @event.FinalizedDate;
         FinalizedByEmployeeId = @event.FinalizedByEmployeeId;
         ManagerFinalNotes = @event.ManagerFinalNotes;
+    }
+
+    public void Apply(InReviewNoteAdded @event)
+    {
+        InReviewNotes.Add(new InReviewNote(
+            @event.NoteId,
+            @event.Content,
+            @event.Timestamp,
+            @event.SectionId,
+            @event.AuthorEmployeeId
+        ));
+    }
+
+    public void Apply(InReviewNoteUpdated @event)
+    {
+        var note = InReviewNotes.FirstOrDefault(n => n.Id == @event.NoteId);
+        if (note != null)
+        {
+            // Replace with new immutable instance
+            InReviewNotes.Remove(note);
+            InReviewNotes.Add(new InReviewNote(
+                @event.NoteId,
+                @event.Content,
+                @event.UpdatedAt,
+                note.SectionId,
+                note.AuthorEmployeeId
+            ));
+        }
+    }
+
+    public void Apply(InReviewNoteDeleted @event)
+    {
+        var note = InReviewNotes.FirstOrDefault(n => n.Id == @event.NoteId);
+        if (note != null)
+        {
+            InReviewNotes.Remove(note);
+        }
     }
 
     public void Apply(QuestionnaireAutoFinalized @event)

@@ -130,7 +130,7 @@ else
                                     var employeeResponse = GetSectionResponse(currentSection.Id, CompletionRole.Employee);
                                     var managerResponse = GetSectionResponse(currentSection.Id, CompletionRole.Manager);
 
-                                    <ReviewModeAssessmentRenderer Section="@currentSection"
+                                    <ReviewModeAssessmentRenderer Question="@currentSection"
                                                                   EmployeeResponse="@employeeResponse"
                                                                   ManagerResponse="@managerResponse"
                                                                   OnEditAnswer="@((args) => EditAnswer(args.Item1, args.Item2, args.Item3))"
@@ -293,6 +293,14 @@ else
                     </div>
                 }
             </div>
+
+            <!-- InReview Notes Panel -->
+            @if (Assignment.WorkflowState == WorkflowState.InReview && HasManagerPrivileges)
+            {
+                <InReviewNotesPanel Assignment="@Assignment"
+                                   CurrentSection="@currentSection"
+                                   OnNotesChanged="@OnNotesUpdated" />
+            }
         </ChildContent>
     </PageLayout>
 }
@@ -301,10 +309,15 @@ else
     [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
     [Parameter] public EventCallback OnReviewFinished { get; set; }
 
+    // Accept pre-loaded data as parameters to avoid duplicate API calls
+    [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
+    [Parameter, EditorRequired] public QuestionnaireResponse Response { get; set; } = null!;
+    [Parameter, EditorRequired] public ApplicationRole UserRole { get; set; }
+
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse? response;
     private int currentSectionIndex = 0;
-    private bool isLoading = true;
+    private bool isLoading = false; // No loading needed since data is passed as parameters
     private string currentManagerName = string.Empty;
 
     // Token to trigger goal component refresh after assignment response reload
@@ -752,5 +765,12 @@ else
                      roleQuestion != null;
 
         return $"{roleToFetch} (has_data: {hasData})";
+    }
+
+    private async Task OnNotesUpdated()
+    {
+        // Optionally reload assignment to get latest notes
+        // For now, optimistic updates handle this
+        StateHasChanged();
     }
 }

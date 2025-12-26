@@ -1,0 +1,207 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+@inject IQuestionnaireAssignmentService AssignmentService
+
+<div class="inreview-notes-panel">
+    <RadzenStack Gap="1rem">
+        <!-- Header with collapse toggle -->
+        <div class="notes-header notes-header-clickable" @onclick="ToggleCollapsed">
+            <RadzenStack Orientation="Orientation.Horizontal"
+                       AlignItems="AlignItems.Center"
+                       JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="comment" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                        @T("sections.discussion-notes")
+                    </RadzenText>
+                    @if (!IsCollapsed && Assignment.InReviewNotes.Any())
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                   Text="@Assignment.InReviewNotes.Count.ToString()" />
+                    }
+                </RadzenStack>
+                <RadzenIcon Icon="@(IsCollapsed ? "expand_more" : "expand_less")" />
+            </RadzenStack>
+        </div>
+
+        <!-- Content (collapsible) -->
+        @if (!IsCollapsed)
+        {
+            <!-- Current section context -->
+            <div class="section-context">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @T("labels.current-section"): <strong>@CurrentSectionTitle</strong>
+                </RadzenText>
+            </div>
+
+            <!-- Note input -->
+            <RadzenStack Gap="0.5rem" Class="note-input-container">
+                    <RadzenTextArea @bind-Value="@newNoteContent"
+                                  Placeholder="@T("placeholders.enter-discussion-note")"
+                                  Rows="3"
+                                  MaxLength="2000"
+                                  Class="textarea-full-width"
+                                  @oninput="OnNoteContentChanged" />
+
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                               AlignItems="AlignItems.Center"
+                               JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            @(newNoteContent?.Length ?? 0) / 2000 @T("forms.characters")
+                        </RadzenText>
+
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenCheckBox @bind-Value="@isGeneralNote"
+                                          Name="generalNote" />
+                            <RadzenLabel Text="@T("sections.general-notes")" Component="generalNote" />
+
+                            <RadzenButton Text="@T("buttons.add-note")"
+                                        ButtonStyle="ButtonStyle.Primary"
+                                        Size="ButtonSize.Small"
+                                        Icon="add"
+                                        Click="@AddNote"
+                                        Disabled="@(string.IsNullOrWhiteSpace(newNoteContent) || isSaving)" />
+                        </RadzenStack>
+                    </RadzenStack>
+            </RadzenStack>
+
+            <!-- Existing notes list -->
+            <InReviewNotesList Notes="@Assignment.InReviewNotes"
+                             AssignmentId="@Assignment.Id"
+                             CurrentSection="@CurrentSection"
+                             OnNoteUpdated="@OnNoteUpdated"
+                             OnNoteDeleted="@OnNoteDeleted" />
+        }
+    </RadzenStack>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
+    [Parameter] public QuestionSection? CurrentSection { get; set; }
+    [Parameter] public EventCallback OnNotesChanged { get; set; }
+
+    private bool IsCollapsed { get; set; } = true; // Start collapsed
+    private string newNoteContent = string.Empty;
+    private bool isGeneralNote = false;
+    private bool isSaving = false;
+
+    private string CurrentSectionTitle => isGeneralNote ? T("sections.general-notes") :
+        (CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("sections.general-notes"));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Auto-expand if this is the first note and panel is collapsed
+        if (IsCollapsed && !Assignment.InReviewNotes.Any() && CurrentSection != null)
+        {
+            // Don't auto-expand - let user choose when to open
+        }
+
+        await base.OnParametersSetAsync();
+    }
+
+    private void ToggleCollapsed()
+    {
+        IsCollapsed = !IsCollapsed;
+    }
+
+    private async Task OnNoteContentChanged(ChangeEventArgs e)
+    {
+        newNoteContent = e.Value?.ToString() ?? string.Empty;
+
+        // Auto-save draft to local storage (optional enhancement)
+        // await JSRuntime.InvokeVoidAsync("localStorage.setItem", "notesDraft", newNoteContent);
+    }
+
+    private async Task AddNote()
+    {
+        if (string.IsNullOrWhiteSpace(newNoteContent))
+            return;
+
+        try
+        {
+            isSaving = true;
+            StateHasChanged();
+
+            var sectionId = isGeneralNote ? null : CurrentSection?.Id;
+
+            var result = await AssignmentService.AddInReviewNoteAsync(
+                Assignment.Id,
+                newNoteContent.Trim(),
+                sectionId);
+
+            if (result.Succeeded)
+            {
+                // Add optimistic update
+                Assignment.InReviewNotes.Add(new InReviewNote
+                {
+                    Id = result.Payload,
+                    Content = newNoteContent.Trim(),
+                    Timestamp = DateTime.Now,
+                    SectionId = sectionId,
+                    SectionTitle = isGeneralNote ? T("sections.general-notes") :
+                        (CurrentSection?.GetLocalizedTitleWithFallback(CurrentLanguage) ?? T("sections.general-notes"))
+                });
+
+                // Clear form
+                newNoteContent = string.Empty;
+                isGeneralNote = false;
+
+                NotificationService.Notify(NotificationSeverity.Success,
+                    T("messages.note-saved"),
+                    T("messages.note-saved-successfully"));
+
+                // Notify parent component
+                if (OnNotesChanged.HasDelegate)
+                    await OnNotesChanged.InvokeAsync();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error,
+                    T("messages.error"),
+                    result.ErrorMessage ?? T("messages.failed-to-save-note"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error,
+                T("messages.error"),
+                $"Failed to add note: {ex.Message}");
+        }
+        finally
+        {
+            isSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnNoteUpdated(InReviewNote note)
+    {
+        // Update local collection optimistically
+        var existingNote = Assignment.InReviewNotes.FirstOrDefault(n => n.Id == note.Id);
+        if (existingNote != null)
+        {
+            existingNote.Content = note.Content;
+            existingNote.Timestamp = DateTime.Now;
+        }
+
+        if (OnNotesChanged.HasDelegate)
+            await OnNotesChanged.InvokeAsync();
+    }
+
+    private async Task OnNoteDeleted(Guid noteId)
+    {
+        // Remove from local collection optimistically
+        var noteToRemove = Assignment.InReviewNotes.FirstOrDefault(n => n.Id == noteId);
+        if (noteToRemove != null)
+        {
+            Assignment.InReviewNotes.Remove(noteToRemove);
+        }
+
+        if (OnNotesChanged.HasDelegate)
+            await OnNotesChanged.InvokeAsync();
+    }
+}

@@ -51,6 +51,9 @@ public class QuestionnaireAssignment
     public string? EmployeeReviewConfirmedByEmployeeName { get; set; }
     public string? EmployeeReviewComments { get; set; }
 
+    // InReview notes system
+    public List<InReviewNoteDto> InReviewNotes { get; set; } = new();
+
     // Final state
     public DateTime? FinalizedDate { get; set; }
     public Guid? FinalizedByEmployeeId { get; set; }
