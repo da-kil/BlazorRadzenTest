@@ -65,4 +65,7 @@ public class QuestionnaireAssignmentDto
     public string? LastReopenedByEmployeeName { get; set; }
     public string? LastReopenedByRole { get; set; }
     public string? LastReopenReason { get; set; }
+
+    // InReview notes system
+    public List<ti8m.BeachBreak.QueryApi.Dto.InReviewNoteDto> InReviewNotes { get; set; } = new();
 }

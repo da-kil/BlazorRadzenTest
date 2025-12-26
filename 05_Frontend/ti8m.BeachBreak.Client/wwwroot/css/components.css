@@ -932,6 +932,12 @@
     overflow: hidden;
 }
 
+/* Clickable notes header - override background on hover */
+.notes-header-clickable {
+    cursor: pointer;
+    background: none !important;
+}
+
 .notes-header::before {
     content: '';
     position: absolute;
@@ -943,24 +949,12 @@
     transition: left 0.3s ease;
 }
 
-.notes-header:hover::before {
-    left: 100%;
-}
-
-.notes-header:hover {
-    background: linear-gradient(135deg,
-        color-mix(in srgb, var(--rz-primary) 8%, var(--rz-panel-background-color)) 0%,
-        color-mix(in srgb, var(--rz-primary) 12%, var(--rz-panel-background-color)) 100%);
-    border-bottom-color: var(--rz-primary-lighter);
-}
-
 /* Section Context Display */
 .section-context {
     background: var(--background-light, rgba(0, 0, 0, 0.02));
     border-radius: var(--radius-sm, 4px);
     padding: var(--spacing-sm, 0.75rem);
     margin-bottom: var(--spacing-md, 1rem);
-    border-left: 3px solid var(--rz-info);
 }
 
 /* Note Input Section */
@@ -972,13 +966,23 @@
     border: 1px solid var(--border-light, rgba(0, 0, 0, 0.1));
 }
 
+/* Note input container with custom spacing */
+.note-input-container {
+    margin-bottom: 1.5rem;
+}
+
+/* Full width textarea */
+.textarea-full-width {
+    width: 100%;
+}
+
 /* Individual Note Items */
 .note-item {
     background: var(--rz-panel-background-color);
     border: 1px solid var(--rz-border-color);
     border-radius: var(--radius-sm, 4px);
     margin-bottom: var(--spacing-sm, 0.75rem);
-    padding: var(--spacing-sm, 0.75rem);
+    padding: var(--spacing-xs, 0.5rem);
     transition: all 0.15s ease;
     position: relative;
 }
@@ -1012,7 +1016,7 @@
 .notes-list {
     max-height: 500px;
     overflow-y: auto;
-    padding: var(--spacing-sm, 0.75rem);
+    padding: 0;
 }
 
 .notes-list::-webkit-scrollbar {
@@ -1063,8 +1067,23 @@
     transition: all 0.2s ease;
 }
 
-.note-item:hover .rz-badge {
-    transform: scale(1.05);
+/* Disable hover effects for badges in notes panel header */
+.notes-header .rz-badge,
+.notes-header .rz-badge:hover,
+.notes-header:hover .rz-badge {
+    transition: none !important;
+    transform: none !important;
+    scale: 1 !important;
+    box-shadow: inherit !important;
+    border-color: inherit !important;
+    background-color: inherit !important;
+    color: inherit !important;
+    opacity: inherit !important;
+}
+
+/* Ensure no pointer cursor for info badges */
+.notes-header .rz-badge {
+    cursor: default !important;
 }
 
 /* Responsive Design for Notes */
@@ -1083,13 +1102,13 @@
     }
 
     .note-item {
-        padding: var(--spacing-sm, 0.75rem);
+        padding: var(--spacing-xs, 0.5rem);
         margin-bottom: var(--spacing-sm, 0.75rem);
     }
 
     .notes-list {
         max-height: 300px;
-        padding: var(--spacing-xs, 0.5rem);
+        padding: 0;
     }
 }
 
@@ -1107,6 +1126,11 @@
     .note-content {
         background: rgba(255, 255, 255, 0.03);
         border-color: rgba(255, 255, 255, 0.1);
+        color: var(--rz-text-color) !important;
+    }
+
+    .note-content .rz-text {
+        color: var(--rz-text-color) !important;
     }
 
     .notes-list .text-center.text-muted {
@@ -1124,13 +1148,6 @@
     .note-item .rz-badge {
         transition: none;
         animation: none;
-    }
-
-    .notes-header:hover,
-    .note-item:hover,
-    .note-item .rz-button:hover,
-    .note-item .rz-badge:hover {
-        transform: none;
     }
 }
 

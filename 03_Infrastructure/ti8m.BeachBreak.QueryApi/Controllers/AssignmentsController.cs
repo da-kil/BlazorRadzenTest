@@ -253,7 +253,19 @@ public class AssignmentsController : BaseController
             LastReopenedByEmployeeId = assignment.LastReopenedByEmployeeId,
             LastReopenedByEmployeeName = assignment.LastReopenedByEmployeeName,
             LastReopenedByRole = assignment.LastReopenedByRole,
-            LastReopenReason = assignment.LastReopenReason
+            LastReopenReason = assignment.LastReopenReason,
+
+            // InReview notes system
+            InReviewNotes = assignment.InReviewNotes.Select(note => new ti8m.BeachBreak.QueryApi.Dto.InReviewNoteDto
+            {
+                Id = note.Id,
+                Content = note.Content,
+                Timestamp = note.Timestamp,
+                SectionId = note.SectionId,
+                SectionTitle = note.SectionTitle,
+                AuthorEmployeeId = note.AuthorEmployeeId,
+                AuthorName = note.AuthorName
+            }).ToList()
         };
     }
 

@@ -305,7 +305,19 @@ public class EmployeesController : BaseController
                     LastReopenedByEmployeeId = assignment.LastReopenedByEmployeeId,
                     LastReopenedByEmployeeName = assignment.LastReopenedByEmployeeName,
                     LastReopenedByRole = assignment.LastReopenedByRole,
-                    LastReopenReason = assignment.LastReopenReason
+                    LastReopenReason = assignment.LastReopenReason,
+
+                    // InReview notes system
+                    InReviewNotes = assignment.InReviewNotes.Select(note => new ti8m.BeachBreak.QueryApi.Dto.InReviewNoteDto
+                    {
+                        Id = note.Id,
+                        Content = note.Content,
+                        Timestamp = note.Timestamp,
+                        SectionId = note.SectionId,
+                        SectionTitle = note.SectionTitle,
+                        AuthorEmployeeId = note.AuthorEmployeeId,
+                        AuthorName = note.AuthorName
+                    }).ToList()
                 });
             });
         }
@@ -498,7 +510,19 @@ public class EmployeesController : BaseController
                 LastReopenedByEmployeeId = assignment.LastReopenedByEmployeeId,
                 LastReopenedByEmployeeName = assignment.LastReopenedByEmployeeName,
                 LastReopenedByRole = assignment.LastReopenedByRole,
-                LastReopenReason = assignment.LastReopenReason
+                LastReopenReason = assignment.LastReopenReason,
+
+                // InReview notes system
+                InReviewNotes = assignment.InReviewNotes.Select(note => new ti8m.BeachBreak.QueryApi.Dto.InReviewNoteDto
+                {
+                    Id = note.Id,
+                    Content = note.Content,
+                    Timestamp = note.Timestamp,
+                    SectionId = note.SectionId,
+                    SectionTitle = note.SectionTitle,
+                    AuthorEmployeeId = note.AuthorEmployeeId,
+                    AuthorName = note.AuthorName
+                }).ToList()
             };
 
             return Ok(dto);
@@ -753,7 +777,19 @@ public class EmployeesController : BaseController
                     DueDate = assignment.DueDate,
                     CompletedDate = assignment.CompletedDate,
                     AssignedBy = assignment.AssignedBy,
-                    Notes = assignment.Notes
+                    Notes = assignment.Notes,
+
+                    // InReview notes system
+                    InReviewNotes = assignment.InReviewNotes.Select(note => new ti8m.BeachBreak.QueryApi.Dto.InReviewNoteDto
+                    {
+                        Id = note.Id,
+                        Content = note.Content,
+                        Timestamp = note.Timestamp,
+                        SectionId = note.SectionId,
+                        SectionTitle = note.SectionTitle,
+                        AuthorEmployeeId = note.AuthorEmployeeId,
+                        AuthorName = note.AuthorName
+                    }).ToList()
                 });
             });
         }

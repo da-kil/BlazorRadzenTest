@@ -14,7 +14,6 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Extensions
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject NavigationManager NavigationManager
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
 @inject IQuestionnaireAssignmentService AssignmentService
@@ -40,7 +39,11 @@
 else if (assignment != null && assignment.WorkflowState == WorkflowState.InReview && isManager)
 {
     <!-- Show Review Mode for managers during InReview state -->
-    <QuestionnaireReviewMode Assignment="@assignment" OnReviewFinished="@OnReviewFinished" />
+    <QuestionnaireReviewMode Assignment="@assignment"
+                             OnReviewFinished="@OnReviewFinished"
+                             Template="@(template!)"
+                             Response="@response"
+                             UserRole="@userRole" />
 }
 else
 {

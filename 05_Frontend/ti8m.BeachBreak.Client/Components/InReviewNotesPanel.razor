@@ -5,83 +5,78 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits OptimizedTranslatableComponentBase
 @inject IQuestionnaireAssignmentService AssignmentService
-@inject NotificationService NotificationService
 
 <div class="inreview-notes-panel">
-    <RadzenCard Class="notes-container">
-        <RadzenStack Gap="1rem">
-            <!-- Header with collapse toggle -->
-            <div class="notes-header" @onclick="ToggleCollapsed" style="cursor: pointer;">
-                <RadzenStack Orientation="Orientation.Horizontal"
-                           AlignItems="AlignItems.Center"
-                           JustifyContent="JustifyContent.SpaceBetween">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                        <RadzenIcon Icon="comment" />
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
-                            @T("sections.discussion-notes")
-                        </RadzenText>
-                        @if (!IsCollapsed && Assignment.InReviewNotes.Any())
-                        {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Info"
-                                       Text="@Assignment.InReviewNotes.Count.ToString()" />
-                        }
-                    </RadzenStack>
-                    <RadzenIcon Icon="@(IsCollapsed ? "expand_more" : "expand_less")" />
+    <RadzenStack Gap="1rem">
+        <!-- Header with collapse toggle -->
+        <div class="notes-header notes-header-clickable" @onclick="ToggleCollapsed">
+            <RadzenStack Orientation="Orientation.Horizontal"
+                       AlignItems="AlignItems.Center"
+                       JustifyContent="JustifyContent.SpaceBetween">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="comment" />
+                    <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
+                        @T("sections.discussion-notes")
+                    </RadzenText>
+                    @if (!IsCollapsed && Assignment.InReviewNotes.Any())
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info"
+                                   Text="@Assignment.InReviewNotes.Count.ToString()" />
+                    }
                 </RadzenStack>
+                <RadzenIcon Icon="@(IsCollapsed ? "expand_more" : "expand_less")" />
+            </RadzenStack>
+        </div>
+
+        <!-- Content (collapsible) -->
+        @if (!IsCollapsed)
+        {
+            <!-- Current section context -->
+            <div class="section-context">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                    @T("labels.current-section"): <strong>@CurrentSectionTitle</strong>
+                </RadzenText>
             </div>
 
-            <!-- Content (collapsible) -->
-            @if (!IsCollapsed)
-            {
-                <!-- Current section context -->
-                <div class="section-context">
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                        @T("labels.current-section"): <strong>@CurrentSectionTitle</strong>
-                    </RadzenText>
-                </div>
+            <!-- Note input -->
+            <RadzenStack Gap="0.5rem" Class="note-input-container">
+                    <RadzenTextArea @bind-Value="@newNoteContent"
+                                  Placeholder="@T("placeholders.enter-discussion-note")"
+                                  Rows="3"
+                                  MaxLength="2000"
+                                  Class="textarea-full-width"
+                                  @oninput="OnNoteContentChanged" />
 
-                <!-- Note input -->
-                <div class="note-input-section">
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenTextArea @bind-Value="@newNoteContent"
-                                      Placeholder="@T("placeholders.enter-discussion-note")"
-                                      Rows="3"
-                                      MaxLength="2000"
-                                      Style="width: 100%;"
-                                      @oninput="OnNoteContentChanged" />
+                    <RadzenStack Orientation="Orientation.Horizontal"
+                               AlignItems="AlignItems.Center"
+                               JustifyContent="JustifyContent.SpaceBetween">
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                            @(newNoteContent?.Length ?? 0) / 2000 @T("forms.characters")
+                        </RadzenText>
 
-                        <RadzenStack Orientation="Orientation.Horizontal"
-                                   AlignItems="AlignItems.Center"
-                                   JustifyContent="JustifyContent.SpaceBetween">
-                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                @(newNoteContent?.Length ?? 0) / 2000 @T("forms.characters")
-                            </RadzenText>
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenCheckBox @bind-Value="@isGeneralNote"
+                                          Name="generalNote" />
+                            <RadzenLabel Text="@T("sections.general-notes")" Component="generalNote" />
 
-                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                <RadzenCheckBox @bind-Value="@isGeneralNote"
-                                              Name="generalNote" />
-                                <RadzenLabel Text="@T("sections.general-notes")" Component="generalNote" />
-
-                                <RadzenButton Text="@T("buttons.add-note")"
-                                            ButtonStyle="ButtonStyle.Primary"
-                                            Size="ButtonSize.Small"
-                                            Icon="add"
-                                            Click="@AddNote"
-                                            Disabled="@(string.IsNullOrWhiteSpace(newNoteContent) || isSaving)" />
-                            </RadzenStack>
+                            <RadzenButton Text="@T("buttons.add-note")"
+                                        ButtonStyle="ButtonStyle.Primary"
+                                        Size="ButtonSize.Small"
+                                        Icon="add"
+                                        Click="@AddNote"
+                                        Disabled="@(string.IsNullOrWhiteSpace(newNoteContent) || isSaving)" />
                         </RadzenStack>
                     </RadzenStack>
-                </div>
+            </RadzenStack>
 
-                <!-- Existing notes list -->
-                <InReviewNotesList Notes="@Assignment.InReviewNotes"
-                                 AssignmentId="@Assignment.Id"
-                                 CurrentSection="@CurrentSection"
-                                 OnNoteUpdated="@OnNoteUpdated"
-                                 OnNoteDeleted="@OnNoteDeleted" />
-            }
-        </RadzenStack>
-    </RadzenCard>
+            <!-- Existing notes list -->
+            <InReviewNotesList Notes="@Assignment.InReviewNotes"
+                             AssignmentId="@Assignment.Id"
+                             CurrentSection="@CurrentSection"
+                             OnNoteUpdated="@OnNoteUpdated"
+                             OnNoteDeleted="@OnNoteDeleted" />
+        }
+    </RadzenStack>
 </div>
 
 @code {
