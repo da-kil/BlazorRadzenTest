@@ -1,0 +1,238 @@
+@page "/questionnaire/{AssignmentId:guid}/finish-review"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@using ti8m.BeachBreak.Client.Extensions
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.WorkflowPages
+@inject NavigationManager NavigationManager
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject IQuestionnaireTemplateService TemplateService
+@inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthService AuthService
+@inherits OptimizedTranslatableComponentBase
+
+<PageTitle>@(template?.GetLocalizedNameWithFallback(CurrentLanguage) ?? T("pages.complete-review-meeting-title"))</PageTitle>
+
+@if (isLoading)
+{
+    <div class="text-center p-5">
+        <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
+        <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@T("messages.loading-review-completion")</RadzenText>
+    </div>
+}
+else if (assignment == null || template == null)
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
+        <RadzenText TextStyle="TextStyle.Body1">@T("messages.unable-to-load-questionnaire-data")</RadzenText>
+    </RadzenAlert>
+}
+else if (!CanCompleteReview())
+{
+    <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
+        <RadzenText TextStyle="TextStyle.Body1">
+            @T("messages.review-completion-not-allowed")
+        </RadzenText>
+    </RadzenAlert>
+}
+else
+{
+    <PageLayout Title="@T("pages.complete-review-meeting-title")"
+                Description="@string.Format(T("pages.finalize-review-discussion"), template.GetLocalizedNameWithFallback(CurrentLanguage))"
+                ShowDefaultFooter="false">
+        <ChildContent>
+            <!-- Breadcrumb Navigation -->
+            <div class="breadcrumb-container mb-4">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <RadzenLink Path="@GetReturnUrl()" Text="@T("navigation.back-to-review")" Icon="arrow_back" />
+                        </li>
+                        <li class="breadcrumb-item active" aria-current="page">
+                            @T("pages.complete-review-meeting")
+                        </li>
+                    </ol>
+                </nav>
+            </div>
+
+            <!-- Review Summary Card -->
+            <ReviewSummaryCard Assignment="@assignment" Template="@template" />
+
+            <!-- Review Completion Form -->
+            <div class="review-completion-section mt-4">
+                <ReviewCompletionForm
+                    ExistingReviewSummary="@assignment.ManagerReviewSummary"
+                    IsSubmitting="@isSubmitting"
+                    OnSubmit="@HandleFinishReview"
+                    OnCancel="@HandleCancel" />
+            </div>
+
+            <!-- Next Steps Card -->
+            <NextStepsCard />
+        </ChildContent>
+    </PageLayout>
+}
+
+@code {
+    [Parameter] public Guid AssignmentId { get; set; }
+
+    private QuestionnaireAssignment? assignment;
+    private QuestionnaireTemplate? template;
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private string currentManagerName = string.Empty;
+    private ApplicationRole currentUserRole = ApplicationRole.Employee;
+
+    private bool HasManagerPrivileges => currentUserRole is ApplicationRole.TeamLead
+        or ApplicationRole.HR
+        or ApplicationRole.HRLead
+        or ApplicationRole.Admin;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await InitializeUserRole();
+        await LoadData();
+    }
+
+    private async Task InitializeUserRole()
+    {
+        try
+        {
+            var roleData = await AuthService.GetMyRoleAsync();
+            if (roleData != null)
+            {
+                currentUserRole = roleData.ApplicationRole;
+            }
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            currentManagerName = authState.User.Identity?.Name ?? T("labels.unknown-manager");
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-to-get-user-role")}: {ex.Message}");
+            currentUserRole = ApplicationRole.Employee;
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load assignment
+            assignment = await AssignmentService.GetAssignmentByIdAsync(AssignmentId);
+            if (assignment == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.assignment-not-found"));
+                NavigateBack();
+                return;
+            }
+
+            // Load template
+            template = await TemplateService.GetTemplateByIdAsync(assignment.TemplateId);
+            if (template == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.template-not-found"));
+                NavigateBack();
+                return;
+            }
+
+            // Validate user can complete this review
+            if (!CanCompleteReview())
+            {
+                NotificationService.Notify(NotificationSeverity.Warning, T("notifications.access-denied"),
+                    T("messages.review-permission-denied"));
+                NavigateBack();
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-to-load-data")}: {ex.Message}");
+            NavigateBack();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private bool CanCompleteReview()
+    {
+        return assignment != null &&
+               assignment.WorkflowState == WorkflowState.InReview &&
+               HasManagerPrivileges;
+    }
+
+    private async Task HandleFinishReview(string reviewSummary)
+    {
+        if (assignment == null || isSubmitting)
+            return;
+
+        try
+        {
+            isSubmitting = true;
+            StateHasChanged();
+
+            var success = await AssignmentService.FinishReviewMeetingAsync(
+                assignment.Id,
+                currentManagerName,
+                string.IsNullOrWhiteSpace(reviewSummary) ? null : reviewSummary);
+
+            if (success)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"),
+                    T("messages.review-meeting-finished-successfully"));
+
+                // Navigate back to the questionnaire
+                NavigateToQuestionnaire();
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
+                    T("messages.failed-to-finish-review-meeting"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"),
+                $"{T("messages.error-finishing-review-meeting")}: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+            StateHasChanged();
+        }
+    }
+
+    private void HandleCancel()
+    {
+        NavigateBack();
+    }
+
+    private void NavigateBack()
+    {
+        var returnUrl = GetReturnUrl();
+        NavigationManager.NavigateTo(returnUrl);
+    }
+
+    private void NavigateToQuestionnaire()
+    {
+        NavigationManager.NavigateTo($"/questionnaire/{AssignmentId}");
+    }
+
+    private string GetReturnUrl()
+    {
+        // Return to the main questionnaire page
+        return $"/questionnaire/{AssignmentId}";
+    }
+}

@@ -4737,5 +4737,411 @@
         "english":  "Note will be saved as general note",
         "category":  "messages",
         "createdDate":  "2025-12-24T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "pages.complete-review-meeting",
+        "german": "Bewertungsgesprüch abschliessen",
+        "english": "Complete Review Meeting",
+        "category": "pages",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "navigation.back-to-review",
+        "german": "Zurück zur Bewertung",
+        "english": "Back to Review",
+        "category": "navigation",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "sections.review-summary",
+        "german": "Bewertungsüberblick",
+        "english": "Review Summary",
+        "category": "sections",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.assigned-date",
+        "german": "Zugewiesenes Datum",
+        "english": "Assigned Date",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.sections-count",
+        "german": "Abschnitte",
+        "english": "sections",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.current-status",
+        "german": "Aktueller Status",
+        "english": "Current Status",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.review-meeting-active",
+        "german": "Bewertungsgesprüch aktiv",
+        "english": "Review Meeting Active",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "messages.review-meeting-progress-description",
+        "german": "Sie befinden sich derzeit in einem aktiven Bewertungsgesprüch. Alle Änderungen werden verfolgt und sind für beide Parteien sichtbar.",
+        "english": "You are currently in an active review meeting. All changes are tracked and visible to both parties.",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "sections.questionnaire-sections",
+        "german": "Fragebogen-Abschnitte",
+        "english": "Questionnaire Sections",
+        "category": "sections",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.assessment",
+        "german": "Bewertung",
+        "english": "Assessment",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.text-question",
+        "german": "Textfrage",
+        "english": "Text Question",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.goal",
+        "german": "Ziel",
+        "english": "Goal",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.employee-only",
+        "german": "Nur Mitarbeiter",
+        "english": "Employee Only",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.manager-only",
+        "german": "Nur Manager",
+        "english": "Manager Only",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.both-roles",
+        "german": "Beide Rollen",
+        "english": "Both Roles",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.finish-review-meeting",
+        "german": "Bewertungsgesprüch beenden",
+        "english": "Finish Review Meeting",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.complete-review-meeting-description",
+        "german": "Schliessen Sie das Bewertungsgesprüch ab und fahren Sie mit dem nächsten Schritt fort",
+        "english": "Complete the review meeting and proceed to the next step",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.what-happens-next",
+        "german": "Was passiert als nächstes?",
+        "english": "What happens next?",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.after-finishing-review-meeting",
+        "german": "Nach dem Abschluss des Bewertungsgesprüchs:",
+        "english": "After finishing the review meeting:",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.sections-become-readonly",
+        "german": "Alle Abschnitte werden schreibgeschützt",
+        "english": "All sections become read-only",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.employee-notified-confirm",
+        "german": "Der Mitarbeiter wird benachrichtigt, um das Ergebnis zu bestütigen",
+        "english": "Employee will be notified to confirm the outcome",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.able-finalize-after-confirmation",
+        "german": "Sie können nach der Bestütigung finalisieren",
+        "english": "You'll be able to finalize after confirmation",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.review-summary-optional",
+        "german": "Bewertungszusammenfassung (optional)",
+        "english": "Review Summary (Optional)",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.summarize-key-points-discussed",
+        "german": "Fassen Sie die wichtigsten besprochenen Punkte zusammen",
+        "english": "Summarize the key points discussed",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.existing-summary-loaded",
+        "german": "Vorhandene Zusammenfassung geladen",
+        "english": "Existing summary loaded",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.can-edit-replace-summary",
+        "german": "Sie können diese bearbeiten oder ersetzen",
+        "english": "You can edit or replace this",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "placeholders.enter-review-summary-optional",
+        "german": "Geben Sie eine optionale Bewertungszusammenfassung ein...",
+        "english": "Enter an optional review summary...",
+        "category": "placeholders",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "dialogs.finishing",
+        "german": "Beende...",
+        "english": "Finishing...",
+        "category": "dialogs",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "messages.sections-readonly-explanation",
+        "german": "Das Bewertungsgesprüch ist abgeschlossen und Antworten können nicht mehr bearbeitet werden",
+        "english": "The review meeting is complete and answers can no longer be edited",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "messages.employee-notification-explanation",
+        "german": "Der Mitarbeiter erhült eine Benachrichtigung, um die Bewertungsergebnisse zu überprüfen und zu bestütigen",
+        "english": "The employee will receive a notification to review and confirm the assessment outcomes",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "messages.finalization-explanation",
+        "german": "Nach der Bestütigung des Mitarbeiters können Sie den Fragebogen endgültig abschliessen",
+        "english": "After employee confirmation, you can finalize the questionnaire permanently",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.workflow-progression",
+        "german": "Arbeitsablauf-Fortschritt",
+        "english": "Workflow Progression",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "workflow-states.ManagerReviewConfirmed",
+        "german": "Manager-Bewertung bestütigt",
+        "english": "Manager Review Confirmed",
+        "category": "workflow-states",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "workflow-states.EmployeeReviewConfirmed",
+        "german": "Mitarbeiter-Bewertung bestütigt",
+        "english": "Employee Review Confirmed",
+        "category": "workflow-states",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "workflow-states.Finalized",
+        "german": "Abgeschlossen",
+        "english": "Finalized",
+        "category": "workflow-states",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.important",
+        "german": "Wichtig",
+        "english": "Important",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "messages.review-completion-impact",
+        "german": "Diese Aktion wird das Bewertungsgesprüch beenden und den Workflow zum nüchsten Schritt überführen.",
+        "english": "This action will end the review meeting and advance the workflow to the next step.",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "labels.note",
+        "german": "Hinweis",
+        "english": "Note",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "messages.review-completion-note",
+        "german": "Stellen Sie sicher, dass alle notwendigen Diskussionen abgeschlossen sind, bevor Sie fortfahren.",
+        "english": "Ensure all necessary discussions are complete before proceeding.",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key": "messages.loading-review-completion",
+        "german": "Bewertungsabschluss wird geladen...",
+        "english": "Loading review completion...",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.unable-to-load-questionnaire-data",
+        "german": "Fragebogendaten für den Bewertungsabschluss können nicht geladen werden.",
+        "english": "Unable to load questionnaire data for review completion.",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.review-completion-not-allowed",
+        "german": "Dieser Fragebogen befindet sich nicht in einem Zustand, in dem die Bewertung abgeschlossen werden kann, oder Sie haben keine Berechtigung dazu.",
+        "english": "This questionnaire is not in a state where the review can be completed, or you don't have permission to complete it.",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "pages.complete-review-meeting-title",
+        "german": "Bewertungsgesprüch abschliessen",
+        "english": "Complete Review Meeting",
+        "category": "pages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "pages.finalize-review-discussion",
+        "german": "Abschliessung der Bewertungsdiskussion für {0}",
+        "english": "Finalize the review discussion for {0}",
+        "category": "pages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "labels.unknown-manager",
+        "german": "Unbekannter Manager",
+        "english": "Unknown Manager",
+        "category": "labels",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.failed-to-get-user-role",
+        "german": "Fehler beim Abrufen der Benutzerrolle: {0}",
+        "english": "Failed to get user role: {0}",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.assignment-not-found",
+        "german": "Zuweisung nicht gefunden",
+        "english": "Assignment not found",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.template-not-found",
+        "german": "Vorlage nicht gefunden",
+        "english": "Template not found",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.review-completion-access-denied",
+        "german": "Sie haben keine Berechtigung, diese Bewertung abzuschliessen, oder sie befindet sich nicht im richtigen Zustand.",
+        "english": "You don't have permission to complete this review or it's not in the correct state.",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.failed-to-load-data",
+        "german": "Fehler beim Laden der Daten: {0}",
+        "english": "Failed to load data: {0}",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.review-meeting-finished-successfully",
+        "german": "Bewertungsgesprüch erfolgreich abgeschlossen",
+        "english": "Review meeting finished successfully",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.failed-to-finish-review-meeting",
+        "german": "Bewertungsgesprüch konnte nicht abgeschlossen werden",
+        "english": "Failed to finish review meeting",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.error-finishing-review-meeting",
+        "german": "Fehler beim Abschliessen des Bewertungsgesprächs: {0}",
+        "english": "Error finishing review meeting: {0}",
+        "category": "messages",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "messages.review-permission-denied",
+        "german": "Sie haben keine Berechtigung, diese Überprüfung abzuschliessen, oder sie befindet sich nicht im korrekten Zustand.",
+        "english": "You don't have permission to complete this review or it's not in the correct state.",
+        "category": "messages",
+        "createdDate": "2025-12-30T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "notifications.error",
+        "german": "Fehler",
+        "english": "Error",
+        "category": "notifications",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "notifications.success",
+        "german": "Erfolg",
+        "english": "Success",
+        "category": "notifications",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "notifications.access-denied",
+        "german": "Zugriff verweigert",
+        "english": "Access Denied",
+        "category": "notifications",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key": "notifications.warning",
+        "german": "Warnung",
+        "english": "Warning",
+        "category": "notifications",
+        "createdDate": "2025-12-29T12:30:00.0000000+00:00"
     }
 ]
