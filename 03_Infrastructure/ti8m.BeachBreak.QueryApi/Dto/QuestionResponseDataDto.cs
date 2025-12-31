@@ -7,9 +7,9 @@ namespace ti8m.BeachBreak.QueryApi.Dto;
 /// Base class for different types of question response data.
 /// This maintains type safety while being independent of domain value objects.
 /// </summary>
-[JsonDerivedType(typeof(TextResponseDataDto), typeDiscriminator: "text")]
-[JsonDerivedType(typeof(AssessmentResponseDataDto), typeDiscriminator: "assessment")]
-[JsonDerivedType(typeof(GoalResponseDataDto), typeDiscriminator: "goal")]
+[JsonDerivedType(typeof(AssessmentResponseDataDto), typeDiscriminator: 0)]
+[JsonDerivedType(typeof(TextResponseDataDto), typeDiscriminator: 1)]
+[JsonDerivedType(typeof(GoalResponseDataDto), typeDiscriminator: 2)]
 public abstract class QuestionResponseDataDto
 {
 }

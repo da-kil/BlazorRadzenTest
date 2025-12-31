@@ -6,10 +6,8 @@ namespace ti8m.BeachBreak.Client.Models.DTOs;
 /// <summary>
 /// Base class for different types of question response data.
 /// This maintains type safety while matching the API structure.
+/// Uses custom QuestionResponseDataDtoJsonConverter for polymorphic deserialization.
 /// </summary>
-[JsonDerivedType(typeof(TextResponseDataDto), typeDiscriminator: "text")]
-[JsonDerivedType(typeof(AssessmentResponseDataDto), typeDiscriminator: "assessment")]
-[JsonDerivedType(typeof(GoalResponseDataDto), typeDiscriminator: "goal")]
 public abstract class QuestionResponseDataDto
 {
 }
