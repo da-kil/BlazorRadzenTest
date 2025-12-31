@@ -14,14 +14,11 @@ public class QuestionResponseDataDtoJsonConverter : JsonConverter<QuestionRespon
     {
         if (reader.TokenType != JsonTokenType.StartObject)
         {
-            Console.WriteLine($"DEBUG CONVERTER: Expected StartObject, got {reader.TokenType}");
             return null;
         }
 
         using var doc = JsonDocument.ParseValue(ref reader);
         var root = doc.RootElement;
-
-        Console.WriteLine($"DEBUG CONVERTER: Raw JSON: {root.GetRawText()}");
 
         // Try to get the $type discriminator
         string? typeDiscriminator = null;
@@ -32,17 +29,11 @@ public class QuestionResponseDataDtoJsonConverter : JsonConverter<QuestionRespon
             if (typeElement.ValueKind == JsonValueKind.String)
             {
                 typeDiscriminator = typeElement.GetString();
-                Console.WriteLine($"DEBUG CONVERTER: Found string discriminator: '{typeDiscriminator}'");
             }
             else if (typeElement.ValueKind == JsonValueKind.Number)
             {
                 numericDiscriminator = typeElement.GetInt32();
-                Console.WriteLine($"DEBUG CONVERTER: Found numeric discriminator: {numericDiscriminator}");
             }
-        }
-        else
-        {
-            Console.WriteLine("DEBUG CONVERTER: No $type discriminator found");
         }
 
         // Create the appropriate type based on discriminator
@@ -57,7 +48,6 @@ public class QuestionResponseDataDtoJsonConverter : JsonConverter<QuestionRespon
                 2 => JsonSerializer.Deserialize<GoalResponseDataDto>(root.GetRawText(), options),
                 _ => null
             };
-            Console.WriteLine($"DEBUG CONVERTER: Created {result?.GetType().Name} from numeric discriminator {numericDiscriminator}");
         }
         else if (!string.IsNullOrEmpty(typeDiscriminator))
         {
@@ -68,7 +58,6 @@ public class QuestionResponseDataDtoJsonConverter : JsonConverter<QuestionRespon
                 "goal" => JsonSerializer.Deserialize<GoalResponseDataDto>(root.GetRawText(), options),
                 _ => null
             };
-            Console.WriteLine($"DEBUG CONVERTER: Created {result?.GetType().Name} from string discriminator '{typeDiscriminator}'");
         }
         else
         {
@@ -76,27 +65,15 @@ public class QuestionResponseDataDtoJsonConverter : JsonConverter<QuestionRespon
             if (root.TryGetProperty("Evaluations", out _))
             {
                 result = JsonSerializer.Deserialize<AssessmentResponseDataDto>(root.GetRawText(), options);
-                Console.WriteLine("DEBUG CONVERTER: Inferred AssessmentResponseDataDto from Evaluations property");
             }
             else if (root.TryGetProperty("TextSections", out _))
             {
                 result = JsonSerializer.Deserialize<TextResponseDataDto>(root.GetRawText(), options);
-                Console.WriteLine("DEBUG CONVERTER: Inferred TextResponseDataDto from TextSections property");
             }
             else if (root.TryGetProperty("Goals", out _))
             {
                 result = JsonSerializer.Deserialize<GoalResponseDataDto>(root.GetRawText(), options);
-                Console.WriteLine("DEBUG CONVERTER: Inferred GoalResponseDataDto from Goals property");
             }
-        }
-
-        if (result == null)
-        {
-            Console.WriteLine("DEBUG CONVERTER: Failed to create any response data type!");
-        }
-        else
-        {
-            Console.WriteLine($"DEBUG CONVERTER: Successfully created {result.GetType().Name}");
         }
 
         return result;
