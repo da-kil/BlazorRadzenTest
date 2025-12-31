@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using ti8m.BeachBreak.Client.Converters;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -14,7 +15,8 @@ public abstract class BaseApiService
     protected static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = null, // PascalCase
-        PropertyNameCaseInsensitive = false // Strict enforcement
+        PropertyNameCaseInsensitive = false, // Strict enforcement
+        Converters = { new QuestionResponseDataDtoJsonConverter() }
     };
 
     protected BaseApiService(IHttpClientFactory factory)

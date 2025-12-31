@@ -632,9 +632,11 @@ else
         {
             QuestionnaireResponse? existingResponse = null;
 
-            // After review meeting, everyone loads ALL role responses for full transparency
+            // After submission and review phases, everyone loads ALL role responses for full transparency
             var isPostReviewState = assignment != null &&
-                (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                (assignment.WorkflowState is WorkflowState.BothSubmitted or
+                                             WorkflowState.InReview or
+                                             WorkflowState.ManagerReviewConfirmed or
                                              WorkflowState.EmployeeReviewConfirmed or
                                              WorkflowState.Finalized);
 
