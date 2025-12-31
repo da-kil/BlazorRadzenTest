@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using ti8m.BeachBreak.Client.Models;
 using ti8m.BeachBreak.Client.Models.DTOs;
 using ti8m.BeachBreak.Client.Models.DTOs.Api;
@@ -30,11 +31,15 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
     {
         try
         {
-            // API returns ApiQuestionnaireResponseDto directly (not wrapped in Result)
-            var apiResponse = await HttpQueryClient.GetFromJsonAsync<ApiQuestionnaireResponseDto>($"{ResponseQueryEndpoint}/assignment/{assignmentId}", JsonOptions);
+            var response = await HttpQueryClient.GetAsync($"{ResponseQueryEndpoint}/assignment/{assignmentId}");
+            response.EnsureSuccessStatusCode();
+
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var apiResponse = JsonSerializer.Deserialize<ApiQuestionnaireResponseDto>(jsonString, JsonOptions);
 
             if (apiResponse == null)
             {
+                LogError($"API response is null for assignment {assignmentId}", null);
                 return null;
             }
 
@@ -55,21 +60,32 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
                     RoleResponses = new Dictionary<ResponseRole, QuestionResponse>()
                 };
 
-                // Map each role's response
+                // Map each role's response (handle nested structure: role -> sectionId -> question)
                 foreach (var roleKvp in apiSection.RoleResponses)
                 {
                     var role = roleKvp.Key;
-                    var apiQuestion = roleKvp.Value;
+                    var roleSectionResponses = roleKvp.Value;
 
-                    var questionResponse = new QuestionResponse
+                    // Get the question response for this section ID
+                    var sectionIdStr = apiSection.SectionId.ToString();
+                    if (roleSectionResponses.TryGetValue(sectionIdStr, out var apiQuestion))
                     {
-                        QuestionId = apiQuestion.QuestionId,
-                        QuestionType = apiQuestion.QuestionType,
-                        LastModified = apiQuestion.LastModified,
-                        ResponseData = apiQuestion.ResponseData
-                    };
+                        var questionResponse = new QuestionResponse
+                        {
+                            QuestionId = apiQuestion.QuestionId,
+                            QuestionType = apiQuestion.QuestionType,
+                            LastModified = apiQuestion.LastModified,
+                            ResponseData = apiQuestion.ResponseData
+                        };
 
-                    sectionResponse.RoleResponses[role] = questionResponse;
+                        // Log error if ResponseData is null
+                        if (apiQuestion.ResponseData == null)
+                        {
+                            LogError($"ResponseData is null for section {apiSection.SectionId}, role {role}, questionType {apiQuestion.QuestionType}", null);
+                        }
+
+                        sectionResponse.RoleResponses[role] = questionResponse;
+                    }
                 }
 
                 questionnaireResponse.SectionResponses[sectionKvp.Key] = sectionResponse;
