@@ -413,6 +413,20 @@
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
     },
     {
+        "key":  "buttons.signing-off",
+        "german":  "Abzeichnung läuft...",
+        "english":  "Signing Off...",
+        "category":  "buttons",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.sign-off-review",
+        "german":  "Überprüfung abzeichnen",
+        "english":  "Sign Off Review",
+        "category":  "buttons",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "buttons.start-new-replay",
         "german":  "Neue Wiederholung starten",
         "english":  "Start New Replay",
@@ -1337,13 +1351,6 @@
         "createdDate":  "2025-12-24T12:00:00.0000000+00:00"
     },
     {
-        "key":  "forms.characters",
-        "german":  "Zeichen",
-        "english":  "characters",
-        "category":  "forms",
-        "createdDate":  "2025-12-03T12:17:11.8998637+00:00"
-    },
-    {
         "key":  "forms.describe-goal-objective",
         "german":  "Beschreiben Sie das Ziel...",
         "english":  "Describe the goal objective...",
@@ -1855,6 +1862,13 @@
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
     },
     {
+        "key":  "labels.not-available",
+        "german":  "Nicht verfügbar",
+        "english":  "Not Available",
+        "category":  "labels",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "labels.notes",
         "german":  "Notizen",
         "english":  "Notes",
@@ -1986,6 +2000,20 @@
         "english":  "Requires Manager Review",
         "category":  "labels",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.review-completed",
+        "german":  "Überprüfung abgeschlossen",
+        "english":  "Review Completed",
+        "category":  "labels",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.review-completed-date",
+        "german":  "Überprüfung abgeschlossen am",
+        "english":  "Review Completed Date",
+        "category":  "labels",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.review-meeting-active",
@@ -2184,11 +2212,18 @@
         "createdDate":  "2025-12-31T23:09:52.0626007+01:00"
     },
     {
+        "key":  "labels.unknown-employee",
+        "german":  "Unbekannter Mitarbeiter",
+        "english":  "Unknown Employee",
+        "category":  "labels",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "labels.unknown-manager",
         "german":  "Unbekannter Manager",
         "english":  "Unknown Manager",
         "category":  "labels",
-        "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.unknown-questionnaire",
@@ -2233,11 +2268,25 @@
         "createdDate":  "2025-12-03T12:17:11.8998721+00:00"
     },
     {
+        "key":  "messages.acknowledge-review-completion",
+        "german":  "Bestätigen Sie den Abschluss der Überprüfung und geben Sie optional Feedback ab.",
+        "english":  "Acknowledge the completion of the review and optionally provide feedback.",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.add-sections-to-see-summary",
         "german":  "Fügen Sie Abschnitte hinzu, um eine Zusammenfassung zu sehen",
         "english":  "Add sections to see summary",
         "category":  "messages",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.agree-with-review-process",
+        "german":  "Sie stimmen dem Überprüfungsprozess und den Ergebnissen zu",
+        "english":  "You agree with the review process and outcomes",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.assignment-not-found",
@@ -2252,6 +2301,13 @@
         "english":  "Are you sure you want to cancel the assignment for",
         "category":  "messages",
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.can-edit-replace-comments",
+        "german":  "Sie können diese bearbeiten oder durch neue Kommentare ersetzen.",
+        "english":  "You can edit these or replace them with new comments.",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.cloning",
@@ -2303,6 +2359,13 @@
         "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.discussed-changes-during-meeting",
+        "german":  "Sie haben Ãnderungen und Verbesserungen während des Meetings besprochen",
+        "english":  "You have discussed changes and improvements during the meeting",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.employee-notification-explanation",
         "german":  "Der Mitarbeiter erhült eine Benachrichtigung, um die Bewertungsergebnisse zu überprüfen und zu bestätigen",
         "english":  "The employee will receive a notification to review and confirm the assessment outcomes",
@@ -2329,6 +2392,20 @@
         "english":  "Error finishing review meeting: {0}",
         "category":  "messages",
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.error-signing-off-review",
+        "german":  "Fehler beim Abzeichnen der Überprüfung",
+        "english":  "Error signing off review",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.existing-comments-loaded",
+        "german":  "Vorhandene Kommentare wurden geladen",
+        "english":  "Existing comments have been loaded",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.failed-archive-template",
@@ -2415,6 +2492,13 @@
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
     },
     {
+        "key":  "messages.failed-to-get-user-info",
+        "german":  "Fehler beim Abrufen der Benutzerinformationen",
+        "english":  "Failed to get user information",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.failed-to-get-user-role",
         "german":  "Fehler beim Abrufen der Benutzerrolle: {0}",
         "english":  "Failed to get user role: {0}",
@@ -2455,6 +2539,13 @@
         "english":  "Failed to save note",
         "category":  "messages",
         "createdDate":  "2025-12-24T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.failed-to-sign-off-review",
+        "german":  "Fehler beim Abzeichnen der ÜberprÜfung. Bitte versuchen Sie es erneut.",
+        "english":  "Failed to sign off the review. Please try again.",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.failed-to-update-note",
@@ -2562,11 +2653,32 @@
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
     },
     {
+        "key":  "messages.loading-sign-off-page",
+        "german":  "Abzeichnungsseite wird geladen...",
+        "english":  "Loading sign-off page...",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.loading-team-data",
         "german":  "Team-Daten werden geladen...",
         "english":  "Loading team data...",
         "category":  "messages",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.manager-has-completed-review",
+        "german":  "Ihr Manager hat die Überprüfung abgeschlossen und wartet auf Ihre Bestätigung.",
+        "english":  "Your manager has completed the review and is waiting for your acknowledgment.",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.may-add-comments-about-review",
+        "german":  "Sie können zusätzliche Kommentare zur Überprüfung hinzufügen (optional).",
+        "english":  "You may add additional comments about the review (optional).",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.no-active-replays",
@@ -2674,6 +2786,13 @@
         "createdDate":  "2025-12-24T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.notes-from-review-meeting",
+        "german":  "Notizen aus dem Überprüfungsgespräch, die während der Diskussion erstellt wurden.",
+        "english":  "Notes from the review meeting that were created during the discussion.",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.note-updated",
         "german":  "Notiz aktualisiert",
         "english":  "Note updated",
@@ -2772,6 +2891,13 @@
         "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.reviewed-sections-with-manager",
+        "german":  "Sie haben alle Abschnitte mit Ihrem Manager besprochen",
+        "english":  "You have reviewed all sections with your manager",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "messages.review-meeting-finished-successfully",
         "german":  "Bewertungsgespräch erfolgreich abgeschlossen",
         "english":  "Review meeting finished successfully",
@@ -2791,6 +2917,13 @@
         "english":  "You don\u0027t have permission to complete this review or it\u0027s not in the correct state.",
         "category":  "messages",
         "createdDate":  "2025-12-30T12:30:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.review-signed-off-successfully",
+        "german":  "Überprüfung erfolgreich abgezeichnet. Der Manager kann nun den Fragebogen finalisieren.",
+        "english":  "Review signed off successfully. The manager can now finalize the questionnaire.",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.saving",
@@ -2819,6 +2952,27 @@
         "english":  "Send a reminder notification to",
         "category":  "messages",
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.sign-off-not-allowed",
+        "german":  "Abzeichnung ist in diesem Stadium nicht zulässig. Die Überprüfung muss vom Manager abgeschlossen sein.",
+        "english":  "Sign-off is not allowed at this stage. The review must be completed by the manager first.",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.sign-off-notice",
+        "german":  "Durch die Abzeichnung bestätigen Sie, dass Sie die Überprüfungsergebnisse verstehen und mit dem Prozess einverstanden sind.",
+        "english":  "By signing off, you confirm that you understand the review outcomes and agree with the process.",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.sign-off-permission-denied",
+        "german":  "Sie haben keine Berechtigung, diese Überprüfung abzuzeichnen. Möglicherweise ist die Überprüfung noch nicht abgeschlossen oder Sie sind nicht der zugewiesene Mitarbeiter.",
+        "english":  "You do not have permission to sign off this review. The review may not be completed yet or you may not be the assigned employee.",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.status-updated",
@@ -2885,13 +3039,6 @@
     },
     {
         "key":  "messages.template-not-found",
-        "german":  "Vorlage nicht gefunden. Erstelle neue Vorlage.",
-        "english":  "Template not found. Creating new template.",
-        "category":  "messages",
-        "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
-    },
-    {
-        "key":  "messages.template-not-found",
         "german":  "Vorlage nicht gefunden",
         "english":  "Template not found",
         "category":  "messages",
@@ -2952,6 +3099,13 @@
         "english":  "Unable to load questionnaire data for review completion.",
         "category":  "messages",
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.understand-final-outcome",
+        "german":  "Sie verstehen das endgültige Ergebnis der Überprüfung",
+        "english":  "You understand the final outcome of the review",
+        "category":  "messages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.workflow-manager-review-explanation",
@@ -3115,6 +3269,13 @@
         "createdDate":  "2025-12-03T12:17:11.8998592+00:00"
     },
     {
+        "key":  "navigation.back-to-questionnaire",
+        "german":  "Zurück zum Fragebogen",
+        "english":  "Back to Questionnaire",
+        "category":  "navigation",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "navigation.back-to-review",
         "german":  "Zurück zur Bewertung",
         "english":  "Back to Review",
@@ -3223,13 +3384,6 @@
         "key":  "notifications.edit-dialog-placeholder",
         "german":  "Hier zeigen wir den Dialog zum Bearbeiten der Zuweisung",
         "english":  "Here we show edit assignment dialog",
-        "category":  "notifications",
-        "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
-    },
-    {
-        "key":  "notifications.error",
-        "german":  "Fehler",
-        "english":  "Error",
         "category":  "notifications",
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
     },
@@ -3420,13 +3574,6 @@
         "german":  "Erfolg",
         "english":  "Success",
         "category":  "notifications",
-        "createdDate":  "2025-12-03T12:17:11.899864+00:00"
-    },
-    {
-        "key":  "notifications.success",
-        "german":  "Erfolg",
-        "english":  "Success",
-        "category":  "notifications",
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
     },
     {
@@ -3469,13 +3616,6 @@
         "german":  "Warnung",
         "english":  "Warning",
         "category":  "notifications",
-        "createdDate":  "2025-12-03T12:17:11.8998642+00:00"
-    },
-    {
-        "key":  "notifications.warning",
-        "german":  "Warnung",
-        "english":  "Warning",
-        "category":  "notifications",
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
     },
     {
@@ -3484,6 +3624,13 @@
         "english":  "Complete Review Meeting",
         "category":  "pages",
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.confirm-review-discussion",
+        "german":  "Bestätigen Sie die Überprüfungsdiskussion für {0}",
+        "english":  "Confirm the review discussion for {0}",
+        "category":  "pages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "pages.employee-feedback-description",
@@ -3498,6 +3645,13 @@
         "english":  "Employee Feedback Management",
         "category":  "pages",
         "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "pages.employee-sign-off-title",
+        "german":  "Mitarbeiter-Abzeichnung",
+        "english":  "Employee Sign-Off",
+        "category":  "pages",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "pages.feedback-template-builder",
@@ -3528,13 +3682,6 @@
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
     },
     {
-        "key":  "pages.my-questionnaires",
-        "german":  "Meine Fragebögen",
-        "english":  "My Questionnaires",
-        "category":  "pages",
-        "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "pages.hr-dashboard",
         "german":  "HR-Dashboard",
         "english":  "HR Dashboard",
@@ -3547,6 +3694,13 @@
         "english":  "Manager Dashboard",
         "category":  "pages",
         "createdDate":  "2025-12-31T23:09:02.4670944+01:00"
+    },
+    {
+        "key":  "pages.my-questionnaires",
+        "german":  "Meine Fragebögen",
+        "english":  "My Questionnaires",
+        "category":  "pages",
+        "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
         "key":  "pages.my-questionnaires-description",
@@ -3778,6 +3932,13 @@
         "english":  "Describe the purpose of this feedback template (German, optional)",
         "category":  "placeholders",
         "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
+    },
+    {
+        "key":  "placeholders.enter-additional-comments-optional",
+        "german":  "Geben Sie zusätzliche Kommentare ein (optional)...",
+        "english":  "Enter additional comments (optional)...",
+        "category":  "placeholders",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "placeholders.enter-category",
@@ -4109,6 +4270,13 @@
         "createdDate":  "2025-12-31T23:09:52.0626007+01:00"
     },
     {
+        "key":  "sections.additional-comments",
+        "german":  "Zusätzliche Kommentare",
+        "english":  "Additional Comments",
+        "category":  "sections",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "sections.assignment-settings",
         "german":  "Zuweisungseinstellungen",
         "english":  "Assignment Settings",
@@ -4123,11 +4291,25 @@
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
     },
     {
+        "key":  "sections.by-signing-off-you-confirm",
+        "german":  "Durch die Abzeichnung bestätigen Sie",
+        "english":  "By signing off, you confirm",
+        "category":  "sections",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "sections.discussion-notes",
         "german":  "Diskussionsnotizen",
         "english":  "Discussion Notes",
         "category":  "sections",
         "createdDate":  "2025-12-24T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.employee-acknowledgment",
+        "german":  "Mitarbeiter-Bestätigung",
+        "english":  "Employee Acknowledgment",
+        "category":  "sections",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "sections.employee-information",
@@ -4179,6 +4361,13 @@
         "createdDate":  "2025-12-24T12:00:00.0000000+00:00"
     },
     {
+        "key":  "sections.managers-review-summary",
+        "german":  "Manager-Überprüfungszusammenfassung",
+        "english":  "Manager\u0027s Review Summary",
+        "category":  "sections",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "sections.multiple-text-sections-to-complete",
         "german":  "{count} Textabschnitte auszufüllen",
         "english":  "{count} text sections to complete",
@@ -4198,6 +4387,13 @@
         "english":  "Response",
         "category":  "sections",
         "createdDate":  "2025-12-05T21:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.review-outcome",
+        "german":  "Überprüfungsergebnis",
+        "english":  "Review Outcome",
+        "category":  "sections",
+        "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
         "key":  "sections.review-summary",

@@ -267,7 +267,7 @@
                     }
                     else
                     {
-                        <div class="achievement-display p-2 bg-light rounded">
+                        <div class="achievement-display p-2 theme-aware-summary-bg rounded">
                             <RadzenText TextStyle="TextStyle.H6" Class="fw-bold mb-0">
                                 @degree.ToString("0")%
                             </RadzenText>
@@ -289,13 +289,13 @@
                     }
                     else if (!string.IsNullOrEmpty(justification))
                     {
-                        <div class="justification-display p-2 bg-light rounded">
+                        <div class="justification-display p-2 theme-aware-summary-bg rounded">
                             <RadzenText TextStyle="TextStyle.Body2">@justification</RadzenText>
                         </div>
                     }
                     else
                     {
-                        <div class="justification-display p-2 bg-light rounded text-muted">
+                        <div class="justification-display p-2 theme-aware-summary-bg rounded text-muted">
                             <em>No justification provided</em>
                         </div>
                     }

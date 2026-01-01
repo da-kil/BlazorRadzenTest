@@ -5,6 +5,7 @@
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject NotificationService NotificationService
 @inject DialogService DialogService
+@inject NavigationManager NavigationManager
 
 <div class="workflow-action-buttons">
     @if (Assignment != null)
@@ -125,81 +126,13 @@
         }
     }
 
-    private async Task ConfirmEmployeeReview()
+    private void ConfirmEmployeeReview()
     {
         if (Assignment == null) return;
 
-        // Open dialog to collect optional employee comments
-        // Pass existing EmployeeReviewComments if reopening (will be shown in dialog)
-        var result = await DialogService.OpenAsync<ConfirmEmployeeReviewDialog>(
-            "Employee Sign-Off",
-            new Dictionary<string, object>
-            {
-                { "ExistingComments", Assignment.EmployeeReviewComments }
-            },
-            new DialogOptions
-            {
-                Width = "600px",
-                Resizable = false,
-                Draggable = true
-            });
-
-        // If dialog was cancelled, return
-        if (result == null)
-        {
-            return;
-        }
-
-        isProcessing = true;
-        try
-        {
-            // Result is the employee comments (can be null or empty string)
-            var employeeComments = result as string;
-
-            var success = await AssignmentService.ConfirmEmployeeReviewAsync(
-                Assignment.Id,
-                UserName,
-                string.IsNullOrWhiteSpace(employeeComments) ? null : employeeComments);
-
-            if (success)
-            {
-                NotificationService.Notify(new NotificationMessage
-                {
-                    Severity = NotificationSeverity.Success,
-                    Summary = "Success",
-                    Detail = "Review confirmed by employee",
-                    Duration = 4000
-                });
-                await OnActionCompleted.InvokeAsync();
-                StateHasChanged(); // Force re-render after assignment is reloaded
-            }
-        }
-        catch (HttpRequestException ex)
-        {
-            // Show the specific error message from the server
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Cannot Confirm Review",
-                Detail = ex.Message,
-                Duration = 6000
-            });
-        }
-        catch (Exception ex)
-        {
-            // Generic error handler
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Error",
-                Detail = $"An unexpected error occurred: {ex.Message}",
-                Duration = 6000
-            });
-        }
-        finally
-        {
-            isProcessing = false;
-        }
+        // Navigate to dedicated employee sign-off page following Phase 1 patterns
+        var signOffUrl = $"/questionnaire/{Assignment.Id}/sign-off";
+        NavigationManager.NavigateTo(signOffUrl);
     }
 
     private async Task FinalizeQuestionnaire()

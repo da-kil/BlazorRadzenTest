@@ -27,7 +27,7 @@
                         </RadzenText>
                     }
                 </div>
-                <RadzenCard Class="comment-content p-3 bg-light">
+                <RadzenCard Class="comment-content p-3">
                     @if (!string.IsNullOrWhiteSpace(Assignment?.ManagerReviewSummary))
                     {
                         <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
@@ -61,7 +61,7 @@
                         </RadzenText>
                     }
                 </div>
-                <RadzenCard Class="comment-content p-3 bg-light">
+                <RadzenCard Class="comment-content p-3">
                     @if (!string.IsNullOrWhiteSpace(Assignment?.EmployeeReviewComments))
                     {
                         <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
@@ -95,7 +95,7 @@
                         </RadzenText>
                     }
                 </div>
-                <RadzenCard Class="comment-content p-3 bg-light">
+                <RadzenCard Class="comment-content p-3">
                     @if (!string.IsNullOrWhiteSpace(Assignment?.ManagerFinalNotes))
                     {
                         <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
@@ -117,7 +117,7 @@
 <style>
     .review-comments-card {
         border-left: 4px solid #667eea;
-        background: #f8f9fa;
+        background: var(--rz-panel-background-color);
         margin-top: 2rem;
     }
 
@@ -133,7 +133,8 @@
     }
 
     .comment-content {
-        border-left: 3px solid #dee2e6;
+        border-left: 3px solid var(--border-color);
+        background: var(--background-light);
     }
 
     .manager-comment .comment-content {

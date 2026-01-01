@@ -11,6 +11,7 @@ public interface IQuestionnaireAssignmentService
     // Assignment CRUD operations
     Task<List<QuestionnaireAssignment>> GetAllAssignmentsAsync();
     Task<QuestionnaireAssignment?> GetAssignmentByIdAsync(Guid id);
+    Task<QuestionnaireAssignment?> GetMyAssignmentByIdAsync(Guid id);
     Task<bool> DeleteAssignmentAsync(Guid id);
 
     // Assignment creation and management

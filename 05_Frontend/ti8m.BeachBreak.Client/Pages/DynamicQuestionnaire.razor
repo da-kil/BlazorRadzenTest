@@ -778,44 +778,55 @@ else
             var employeeResponse = GetQuestionResponseForRole(sectionData.Id, "Employee");
             var managerResponse = GetQuestionResponseForRole(sectionData.Id, "Manager");
 
-            return @<div>
-                @* Employee's Answer *@
-                <div class="role-response-section mb-4">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-success mb-2">
-                        <RadzenIcon Icon="person" Class="me-1" />
-                        EMPLOYEE'S ANSWER
-                    </RadzenText>
-                    <div class="ps-3 border-start border-success border-3">
-                        <OptimizedQuestionRenderer
-                            Section="@sectionData"
-                            Response="@employeeResponse"
-                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-                            IsReadOnly="true"
-                            HideHeader="true"
-                            AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="ApplicationRole.Employee"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
-                            SectionData="@currentSectionData" />
+            return @<div class="question-comparison-card">
+                <!-- Side-by-side view within the section card -->
+                <div class="side-by-side-view">
+                    <!-- Employee Answer -->
+                    <div class="answer-column employee">
+                        <div class="answer-header">
+                            <span class="answer-label">
+                                <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-medium ms-1">
+                                    Employee's Answer
+                                </RadzenText>
+                            </span>
+                        </div>
+                        <div class="answer-content">
+                            <OptimizedQuestionRenderer
+                                Section="@sectionData"
+                                Response="@employeeResponse"
+                                OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                                IsReadOnly="true"
+                                HideHeader="true"
+                                AssignmentId="@(assignmentId ?? Guid.Empty)"
+                                CurrentUserRole="ApplicationRole.Employee"
+                                AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+                                SectionData="@currentSectionData" />
+                        </div>
                     </div>
-                </div>
 
-                @* Manager's Answer *@
-                <div class="role-response-section">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info mb-2">
-                        <RadzenIcon Icon="manage_accounts" Class="me-1" />
-                        MANAGER'S ANSWER
-                    </RadzenText>
-                    <div class="ps-3 border-start border-info border-3">
-                        <OptimizedQuestionRenderer
-                            Section="@sectionData"
-                            Response="@managerResponse"
-                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-                            IsReadOnly="true"
-                            HideHeader="true"
-                            AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="@ParseApplicationRole(managerContextRole)"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)"
-                            SectionData="@currentSectionData" />
+                    <!-- Manager Answer -->
+                    <div class="answer-column manager">
+                        <div class="answer-header">
+                            <span class="answer-label">
+                                <RadzenIcon Icon="manage_accounts" Style="font-size: 1rem;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-medium ms-1">
+                                    Manager's Answer
+                                </RadzenText>
+                            </span>
+                        </div>
+                        <div class="answer-content">
+                            <OptimizedQuestionRenderer
+                                Section="@sectionData"
+                                Response="@managerResponse"
+                                OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                                IsReadOnly="true"
+                                HideHeader="true"
+                                AssignmentId="@(assignmentId ?? Guid.Empty)"
+                                CurrentUserRole="@ParseApplicationRole(managerContextRole)"
+                                AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)"
+                                SectionData="@currentSectionData" />
+                        </div>
                     </div>
                 </div>
             </div>;

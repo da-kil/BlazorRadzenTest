@@ -8,6 +8,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
 {
     private const string AssignmentQueryEndpoint = "q/api/v1/assignments";
     private const string AssignmentCommandEndpoint = "c/api/v1/assignments";
+    private const string EmployeeAssignmentEndpoint = "q/api/v1/employees/me/assignments";
     private const string AnalyticsEndpoint = "q/api/v1/analytics";
 
     public QuestionnaireAssignmentService(IHttpClientFactory factory) : base(factory)
@@ -23,6 +24,15 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     public async Task<QuestionnaireAssignment?> GetAssignmentByIdAsync(Guid id)
     {
         return await GetByIdAsync<QuestionnaireAssignment>(AssignmentQueryEndpoint, id);
+    }
+
+    /// <summary>
+    /// Gets a specific assignment for the currently authenticated employee.
+    /// Uses the employee endpoint that requires the assignment to belong to the current user.
+    /// </summary>
+    public async Task<QuestionnaireAssignment?> GetMyAssignmentByIdAsync(Guid id)
+    {
+        return await GetByIdAsync<QuestionnaireAssignment>(EmployeeAssignmentEndpoint, id);
     }
 
     public async Task<bool> DeleteAssignmentAsync(Guid id)

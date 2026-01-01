@@ -60,7 +60,7 @@
         @* Show progress summary *@
         @if (allCurrentGoals.Any())
         {
-            <div class="goals-summary mt-4 p-3 bg-light rounded">
+            <div class="goals-summary mt-4 p-3 rounded" style="background-color: var(--rz-body-background-color, #ffffff); border: 1px solid var(--rz-text-disabled-color, #dee2e6); color: var(--rz-text-color, #000000);">
                 <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">@T("goals.summary-title")</RadzenText>
                 <RadzenRow>
                     <RadzenColumn Size="6">

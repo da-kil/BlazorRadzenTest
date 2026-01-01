@@ -126,10 +126,10 @@ p, h1, h2, h3, h4, h5, h6 {
     transition: var(--transition-fast);
 }
 
-.wizard__nav-button:hover {
-    background: var(--background-light);
-    border-color: var(--primary-color);
-}
+    .wizard__nav-button:hover {
+        background: var(--background-light);
+        border-color: var(--primary-color);
+    }
 
 .wizard__nav-button--primary {
     background: var(--primary-color);
@@ -137,9 +137,9 @@ p, h1, h2, h3, h4, h5, h6 {
     border-color: var(--primary-color);
 }
 
-.wizard__nav-button--primary:hover {
-    background: color-mix(in srgb, var(--primary-color) 90%, black);
-}
+    .wizard__nav-button--primary:hover {
+        background: color-mix(in srgb, var(--primary-color) 90%, black);
+    }
 
 /* Dialog Tab Headers (formerly generic .tab-header) */
 .dialog-tab__header {
@@ -157,10 +157,10 @@ p, h1, h2, h3, h4, h5, h6 {
     transition: var(--transition-fast);
 }
 
-.dialog-tab__item:hover {
-    color: var(--text-color);
-    background: var(--background-muted);
-}
+    .dialog-tab__item:hover {
+        color: var(--text-color);
+        background: var(--background-muted);
+    }
 
 .dialog-tab__item--active {
     color: var(--primary-color);
@@ -217,9 +217,9 @@ p, h1, h2, h3, h4, h5, h6 {
     contain: layout;
 }
 
-.card-container > * {
-    will-change: auto;
-}
+    .card-container > * {
+        will-change: auto;
+    }
 
 /* Optimize Animations */
 @media (prefers-reduced-motion: reduce) {
@@ -257,11 +257,15 @@ p, h1, h2, h3, h4, h5, h6 {
 
 /* Mobile First Approach */
 @media (min-width: 576px) {
-    .container { max-width: 540px; }
+    .container {
+        max-width: 540px;
+    }
 }
 
 @media (min-width: 768px) {
-    .container { max-width: 720px; }
+    .container {
+        max-width: 720px;
+    }
 
     .employee-card {
         padding: var(--spacing-lg);
@@ -269,11 +273,15 @@ p, h1, h2, h3, h4, h5, h6 {
 }
 
 @media (min-width: 992px) {
-    .container { max-width: 960px; }
+    .container {
+        max-width: 960px;
+    }
 }
 
 @media (min-width: 1200px) {
-    .container { max-width: 1140px; }
+    .container {
+        max-width: 1140px;
+    }
 }
 
 /* =============================================
@@ -333,6 +341,150 @@ p, h1, h2, h3, h4, h5, h6 {
     padding: var(--spacing-xl) 0;
     margin-bottom: var(--spacing-lg);
     will-change: transform;
+}
+
+/* =============================================
+   TEXT READABILITY FIXES
+   ============================================= */
+
+/* Fix for editable RadzenTextArea components */
+.rz-textarea,
+.rz-textbox,
+textarea.rz-textarea {
+    color: var(--rz-text-color) !important;
+    background-color: var(--rz-panel-background-color) !important;
+    border: 1px solid var(--rz-border-color) !important;
+}
+
+    .rz-textarea:focus,
+    .rz-textbox:focus,
+    textarea.rz-textarea:focus {
+        color: var(--rz-text-color) !important;
+        background-color: var(--rz-panel-background-color) !important;
+        border-color: var(--rz-primary) !important;
+        box-shadow: 0 0 0 2px rgba(var(--rz-primary-rgb), 0.2) !important;
+        outline: none !important;
+    }
+
+/* =============================================
+   READONLY TEXT FIX - THE REAL ISSUE
+   ============================================= */
+
+/* Fix readonly text visibility in dark themes */
+.readonly-text,
+div.readonly-text,
+.readonly-text.bg-light,
+div.readonly-text.bg-light {
+    color: var(--rz-text-color, #ffffff) !important;
+    background-color: var(--rz-panel-background-color, #2d2d2d) !important;
+    border: 1px solid var(--rz-border-color, #4a4a4a) !important;
+    line-height: 1.6 !important;
+    font-size: var(--font-size-base, 1rem) !important;
+}
+
+/* Specific override for dark themes */
+[data-theme*="dark"] .readonly-text,
+[data-theme*="dark"] div.readonly-text,
+body[data-theme*="dark"] .readonly-text,
+body[data-theme*="dark"] div.readonly-text {
+    color: #ffffff !important;
+    background-color: #2d2d2d !important;
+    border-color: #4a4a4a !important;
+}
+
+/* Override Bootstrap bg-light in dark themes */
+[data-theme*="dark"] .bg-light,
+body[data-theme*="dark"] .bg-light {
+    background-color: var(--rz-panel-background-color, #2d2d2d) !important;
+    color: var(--rz-text-color, #ffffff) !important;
+}
+
+/* Enhanced bg-light override for all dark themes - covers Radzen Material Dark, Standard Dark, etc. */
+body.rz-dark .bg-light,
+.rz-dark .bg-light,
+body[class*="dark"] .bg-light,
+body[class*="Dark"] .bg-light {
+    background-color: var(--rz-panel-background-color, #2d2d2d) !important;
+    color: var(--rz-text-color, #ffffff) !important;
+    border-color: var(--rz-border-color, #4a4a4a) !important;
+}
+
+/* Specific fix for goals summary section in dark themes */
+body.rz-dark .goals-summary.bg-light,
+.rz-dark .goals-summary.bg-light,
+body[class*="dark"] .goals-summary.bg-light,
+body[class*="Dark"] .goals-summary.bg-light {
+    background-color: var(--rz-panel-background-color, #2d2d2d) !important;
+    color: var(--rz-text-color, #ffffff) !important;
+    border: 1px solid var(--rz-border-color, #4a4a4a) !important;
+}
+
+/* =============================================
+   DIRECT GOALS SUMMARY BACKGROUND FIX
+   ============================================= */
+
+/* Force override goals summary background to use proper theme-aware styling */
+.goals-summary {
+    /* Override with high specificity and important declarations */
+    background-color: transparent !important;
+    background: transparent !important;
+    border: none !important;
+}
+
+/* Force the inline styles to take precedence */
+.goals-summary[style*="background-color"] {
+    /* Ensure inline styles work properly */
+    background: var(--rz-body-background-color) !important;
+    color: var(--rz-text-color) !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+}
+
+/* Fallback for when CSS variables don't work */
+.goals-summary {
+    background: #f8f9fa !important; /* Light theme fallback */
+    color: #000000 !important;
+    border: 1px solid #dee2e6 !important;
+}
+
+/* Media query for dark theme detection */
+@media (prefers-color-scheme: dark) {
+    .goals-summary {
+        background: #212529 !important; /* Dark theme fallback */
+        color: #ffffff !important;
+        border: 1px solid #495057 !important;
+    }
+}
+
+/* =============================================
+   NUCLEAR OPTION - OVERRIDE EVERYTHING
+   ============================================= */
+
+/* If all else fails, this should definitely work */
+div.goals-summary.mt-4.p-3.rounded,
+.goals-summary,
+.goals-summary * {
+    background-color: var(--rz-body-background-color, #ffffff) !important;
+    background: var(--rz-body-background-color, #ffffff) !important;
+}
+
+/* System dark theme override */
+@media (prefers-color-scheme: dark) {
+    div.goals-summary.mt-4.p-3.rounded,
+    .goals-summary,
+    .goals-summary * {
+        background-color: #2d2d2d !important;
+        background: #2d2d2d !important;
+        color: #ffffff !important;
+        border-color: #4a4a4a !important;
+    }
+}
+
+/* No-response text styling for consistency */
+.no-response,
+div.no-response {
+    color: var(--rz-text-secondary-color, #cccccc) !important;
+    background-color: var(--rz-panel-background-color, #2d2d2d) !important;
+    border: 1px solid var(--rz-border-color, #4a4a4a) !important;
 }
 
 .qb-step-header {

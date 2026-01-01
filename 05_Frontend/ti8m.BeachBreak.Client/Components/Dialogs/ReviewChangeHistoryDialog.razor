@@ -63,7 +63,7 @@
                                         <RadzenIcon Icon="remove_circle_outline" Style="font-size: 14px; vertical-align: middle;" Class="me-1" />
                                         BEFORE
                                     </RadzenText>
-                                    <div class="change-value p-3 bg-light rounded">
+                                    <div class="change-value p-3 theme-aware-summary-bg rounded">
                                         <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
                                             @(string.IsNullOrWhiteSpace(change.OldValue) ? "(empty)" : FormatValue(change.OldValue))
                                         </RadzenText>
@@ -79,7 +79,7 @@
                                         <RadzenIcon Icon="add_circle_outline" Style="font-size: 14px; vertical-align: middle;" Class="me-1" />
                                         AFTER
                                     </RadzenText>
-                                    <div class="change-value p-3 bg-light rounded">
+                                    <div class="change-value p-3 theme-aware-summary-bg rounded">
                                         <RadzenText TextStyle="TextStyle.Body2" Style="white-space: pre-wrap;">
                                             @(string.IsNullOrWhiteSpace(change.NewValue) ? "(empty)" : FormatValue(change.NewValue))
                                         </RadzenText>

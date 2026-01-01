@@ -1,0 +1,125 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+
+<div class="employee-sign-off-form">
+    <RadzenStack Gap="1rem">
+        <!-- Header -->
+        <div class="form-header">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-0">
+                @T("sections.employee-acknowledgment")
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">
+                @T("messages.acknowledge-review-completion")
+            </RadzenText>
+        </div>
+
+        <!-- Acknowledgment Requirements -->
+        <div class="acknowledgment-requirements">
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                @T("sections.by-signing-off-you-confirm")
+            </RadzenText>
+            <div class="requirements-list">
+                <ul class="acknowledgment-checklist">
+                    <li>
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2">@T("messages.reviewed-sections-with-manager")</RadzenText>
+                    </li>
+                    <li>
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2">@T("messages.discussed-changes-during-meeting")</RadzenText>
+                    </li>
+                    <li>
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2">@T("messages.understand-final-outcome")</RadzenText>
+                    </li>
+                    <li>
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2">@T("messages.agree-with-review-process")</RadzenText>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
+                <RadzenButton Text="@T("buttons.cancel")"
+                              ButtonStyle="ButtonStyle.Light"
+                              Icon="cancel"
+                              Size="ButtonSize.Medium"
+                              Click="@HandleCancel"
+                              Disabled="@IsSubmitting" />
+
+                <AsyncButton Text="@T("buttons.sign-off-review")"
+                            ProcessingText="@T("buttons.signing-off")"
+                            ButtonStyle="ButtonStyle.Success"
+                            Icon="verified"
+                            Size="ButtonSize.Medium"
+                            Click="@HandleSubmit"
+                            IsProcessing="@IsSubmitting" />
+            </RadzenStack>
+        </div>
+
+    </RadzenStack>
+</div>
+
+<style>
+.employee-sign-off-form {
+    margin-bottom: 1rem;
+}
+
+.form-actions {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.acknowledgment-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.acknowledgment-checklist li {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.acknowledgment-requirements {
+    background-color: var(--rz-base-50);
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-base-300);
+    padding: 1rem;
+}
+
+.requirements-list {
+    margin-top: 0.5rem;
+}
+</style>
+
+@code {
+    [Parameter] public bool IsSubmitting { get; set; }
+    [Parameter] public EventCallback OnSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private async Task HandleSubmit()
+    {
+        if (OnSubmit.HasDelegate)
+        {
+            await OnSubmit.InvokeAsync();
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        if (OnCancel.HasDelegate)
+        {
+            await OnCancel.InvokeAsync();
+        }
+    }
+}
