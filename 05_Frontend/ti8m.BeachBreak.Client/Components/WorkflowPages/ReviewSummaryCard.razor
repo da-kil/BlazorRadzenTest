@@ -7,17 +7,13 @@
 @inherits OptimizedTranslatableComponentBase
 
 <div class="review-summary-card">
-    <RadzenCard Class="h-100">
-        <RadzenStack Gap="1rem">
-            <!-- Header -->
-            <div class="card-header">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="summarize" Style="color: var(--primary-color); font-size: 1.25rem;" />
-                    <RadzenText TextStyle="TextStyle.H6" Class="mb-0">
-                        @T("sections.review-summary")
-                    </RadzenText>
-                </RadzenStack>
-            </div>
+    <RadzenStack Gap="1rem">
+        <!-- Header -->
+        <div class="card-header">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-0">
+                @T("sections.review-summary")
+            </RadzenText>
+        </div>
 
             <!-- Questionnaire Information -->
             <div class="questionnaire-info">
@@ -37,7 +33,6 @@
                     <RadzenRow Gap="1rem">
                         <RadzenColumn Size="6">
                             <div class="detail-item">
-                                <RadzenIcon Icon="person" Class="detail-icon" />
                                 <div>
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">
                                         @T("labels.employee")
@@ -50,7 +45,6 @@
                         </RadzenColumn>
                         <RadzenColumn Size="6">
                             <div class="detail-item">
-                                <RadzenIcon Icon="event" Class="detail-icon" />
                                 <div>
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">
                                         @T("labels.assigned-date")
@@ -66,7 +60,6 @@
                     <RadzenRow Gap="1rem" class="mt-2">
                         <RadzenColumn Size="6">
                             <div class="detail-item">
-                                <RadzenIcon Icon="quiz" Class="detail-icon" />
                                 <div>
                                     <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">
                                         @T("labels.sections")
@@ -74,17 +67,6 @@
                                     <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
                                         @Template.Sections.Count @T("labels.sections-count")
                                     </RadzenText>
-                                </div>
-                            </div>
-                        </RadzenColumn>
-                        <RadzenColumn Size="6">
-                            <div class="detail-item">
-                                <RadzenIcon Icon="schedule" Class="detail-icon" />
-                                <div>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">
-                                        @T("labels.current-status")
-                                    </RadzenText>
-                                    <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@T("workflow-states.InReview")" />
                                 </div>
                             </div>
                         </RadzenColumn>
@@ -102,37 +84,7 @@
                 </RadzenAlert>
             </div>
 
-            <!-- Section Overview -->
-            @if (Template.Sections.Any())
-            {
-                <div class="sections-overview">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
-                        @T("sections.questionnaire-sections")
-                    </RadzenText>
-                    <div class="sections-list">
-                        @foreach (var section in Template.Sections.OrderBy(s => s.Order))
-                        {
-                            <div class="section-item">
-                                <RadzenIcon Icon="@GetSectionIcon(section.Type)" Class="section-icon" />
-                                <div class="section-info">
-                                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-0">
-                                        @(section.GetLocalizedTitleWithFallback(CurrentLanguage))
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                                        @GetSectionTypeLabel(section.Type) • @GetCompletionRoleLabel(section.CompletionRole)
-                                    </RadzenText>
-                                </div>
-                                @if (section.IsRequired)
-                                {
-                                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@T("labels.required")" />
-                                }
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-        </RadzenStack>
-    </RadzenCard>
+    </RadzenStack>
 </div>
 
 <style>
@@ -143,78 +95,12 @@
 .detail-item {
     display: flex;
     align-items: flex-start;
-    gap: 0.5rem;
 }
 
-.detail-icon {
-    color: var(--primary-color);
-    margin-top: 0.125rem;
-    font-size: 1rem;
-}
-
-.sections-list {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.section-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.section-item:last-child {
-    border-bottom: none;
-}
-
-.section-icon {
-    color: var(--success-color);
-    font-size: 1rem;
-    flex-shrink: 0;
-}
-
-.section-info {
-    flex-grow: 1;
-    min-width: 0;
-}
 </style>
 
 @code {
     [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
 
-    private string GetSectionIcon(QuestionType type)
-    {
-        return type switch
-        {
-            QuestionType.Assessment => "assessment",
-            QuestionType.TextQuestion => "edit_note",
-            QuestionType.Goal => "flag",
-            _ => "quiz"
-        };
-    }
-
-    private string GetSectionTypeLabel(QuestionType type)
-    {
-        return type switch
-        {
-            QuestionType.Assessment => T("labels.assessment"),
-            QuestionType.TextQuestion => T("labels.text-question"),
-            QuestionType.Goal => T("labels.goal"),
-            _ => T("labels.unknown")
-        };
-    }
-
-    private string GetCompletionRoleLabel(CompletionRole role)
-    {
-        return role switch
-        {
-            CompletionRole.Employee => T("labels.employee-only"),
-            CompletionRole.Manager => T("labels.manager-only"),
-            CompletionRole.Both => T("labels.both-roles"),
-            _ => T("labels.unknown")
-        };
-    }
 }

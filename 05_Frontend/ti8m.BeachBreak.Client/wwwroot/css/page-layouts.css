@@ -8,10 +8,10 @@
 
 /* Unified Page Layout - Single consistent approach for all pages */
 .page-layout {
-    min-height: calc(100vh - 60px); /* Account for nav */
     background-color: var(--rz-base-background-color);
     display: flex;
     flex-direction: column;
+    height: 100%; /* Fill available parent space */
 }
 
 .page-layout-header {

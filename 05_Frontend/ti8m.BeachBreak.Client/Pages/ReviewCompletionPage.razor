@@ -48,22 +48,28 @@ else
                 Description="@string.Format(T("pages.finalize-review-discussion"), template.GetLocalizedNameWithFallback(CurrentLanguage))"
                 ShowDefaultFooter="false">
         <ChildContent>
-            <!-- Breadcrumb Navigation -->
-            <div class="breadcrumb-container mb-4">
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item">
-                            <RadzenLink Path="@GetReturnUrl()" Text="@T("navigation.back-to-review")" Icon="arrow_back" />
-                        </li>
-                        <li class="breadcrumb-item active" aria-current="page">
-                            @T("pages.complete-review-meeting")
-                        </li>
-                    </ol>
-                </nav>
+            <!-- Back Navigation -->
+            <div class="back-navigation mb-4">
+                <RadzenLink Path="@GetReturnUrl()" Text="@T("navigation.back-to-review")" Icon="arrow_back" />
             </div>
 
             <!-- Review Summary Card -->
             <ReviewSummaryCard Assignment="@assignment" Template="@template" />
+
+            <!-- Display existing discussion notes from the review process -->
+            @if (assignment.InReviewNotes.Any())
+            {
+                <div class="discussion-notes-section mt-4">
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-3">
+                        @T("sections.discussion-notes")
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@assignment.InReviewNotes.Count.ToString()" Class="ms-2" />
+                    </RadzenText>
+                    <InReviewNotesList Notes="@assignment.InReviewNotes"
+                                     AssignmentId="@assignment.Id"
+                                     CurrentSection="null"
+                                     IsReadOnly="true" />
+                </div>
+            }
 
             <!-- Review Completion Form -->
             <div class="review-completion-section mt-4">
@@ -74,8 +80,6 @@ else
                     OnCancel="@HandleCancel" />
             </div>
 
-            <!-- Next Steps Card -->
-            <NextStepsCard />
         </ChildContent>
     </PageLayout>
 }

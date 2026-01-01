@@ -4,19 +4,25 @@
 @inherits OptimizedTranslatableComponentBase
 
 <div class="review-completion-form">
-    <RadzenCard Class="h-100">
-        <RadzenStack Gap="1rem">
-            <!-- Header -->
-            <div class="form-header">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="event_available" Style="color: var(--success-color); font-size: 1.25rem;" />
-                    <RadzenText TextStyle="TextStyle.H6" Class="mb-0">
-                        @T("dialogs.finish-review-meeting")
+    <RadzenStack Gap="1rem">
+        <!-- Header -->
+        <div class="form-header">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-0">
+                @T("dialogs.finish-review-meeting")
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">
+                @T("dialogs.complete-review-meeting-description")
+            </RadzenText>
+        </div>
+
+            <!-- Important Note -->
+            <div class="important-note-prominent">
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>@T("labels.important"):</strong>
+                        <span> @T("messages.review-completion-note")</span>
                     </RadzenText>
-                </RadzenStack>
-                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">
-                    @T("dialogs.complete-review-meeting-description")
-                </RadzenText>
+                </RadzenAlert>
             </div>
 
             <!-- Review Summary Section -->
@@ -61,6 +67,7 @@
                 </div>
             </div>
 
+
             <!-- Action Buttons -->
             <div class="form-actions">
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
@@ -81,17 +88,7 @@
                 </RadzenStack>
             </div>
 
-            <!-- Important Note -->
-            <div class="important-note">
-                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
-                    <RadzenText TextStyle="TextStyle.Body2">
-                        <strong>@T("labels.note"):</strong>
-                        <span> @T("messages.review-completion-note")</span>
-                    </RadzenText>
-                </RadzenAlert>
-            </div>
-        </RadzenStack>
-    </RadzenCard>
+    </RadzenStack>
 </div>
 
 <style>
@@ -115,10 +112,9 @@
     margin-top: 0.5rem;
 }
 
-.important-note {
-    border-top: 1px solid var(--border-color);
-    padding-top: 1rem;
+.important-note-prominent {
     margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
 }
 </style>
 
@@ -148,9 +144,23 @@
     {
         if (OnSubmit.HasDelegate)
         {
-            // Return the review summary (return empty string if null)
-            await OnSubmit.InvokeAsync(reviewSummary ?? string.Empty);
+            // Combine review summary and notes
+            var combinedReview = BuildCombinedReview();
+            await OnSubmit.InvokeAsync(combinedReview);
         }
+    }
+
+    private string BuildCombinedReview()
+    {
+        var parts = new System.Collections.Generic.List<string>();
+
+        if (!string.IsNullOrWhiteSpace(reviewSummary))
+        {
+            parts.Add(reviewSummary);
+        }
+
+
+        return string.Join("\n\n", parts);
     }
 
     private async Task HandleCancel()

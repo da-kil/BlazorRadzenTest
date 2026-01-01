@@ -8,7 +8,7 @@
     Size="@Size"
     Click="@HandleClick"
     Disabled="@GetDisabledState()"
-    IsBusy="@(ShowBusyIndicator && IsProcessing)"
+    IsBusy="@(ShowBusyIndicator && GetEffectiveProcessingState())"
     BusyText="@BusyText"
     Class="@Class"
     Style="@Style"
@@ -114,7 +114,17 @@
     /// </summary>
     [Parameter] public ButtonType ButtonType { get; set; } = ButtonType.Button;
 
-    private bool IsProcessing { get; set; }
+    /// <summary>
+    /// External processing state. When set, overrides internal processing state.
+    /// </summary>
+    [Parameter] public bool IsProcessing { get; set; }
+
+    private bool InternalIsProcessing { get; set; }
+
+    /// <summary>
+    /// Gets the effective processing state (external or internal)
+    /// </summary>
+    private bool GetEffectiveProcessingState() => IsProcessing || InternalIsProcessing;
 
     private string? GetButtonText()
     {
@@ -124,7 +134,7 @@
             return null;
         }
 
-        if (IsProcessing && ShowProcessingIndicator)
+        if (GetEffectiveProcessingState() && ShowProcessingIndicator)
         {
             return ProcessingText ?? $"{Text}...";
         }
@@ -133,7 +143,7 @@
 
     private string? GetButtonIcon()
     {
-        if (IsProcessing && ProcessingIcon != null)
+        if (GetEffectiveProcessingState() && ProcessingIcon != null)
         {
             return ProcessingIcon;
         }
@@ -142,14 +152,14 @@
 
     private bool GetDisabledState()
     {
-        return Disabled || IsProcessing;
+        return Disabled || GetEffectiveProcessingState();
     }
 
     private async Task HandleClick(MouseEventArgs args)
     {
-        if (IsProcessing) return;
+        if (GetEffectiveProcessingState()) return;
 
-        IsProcessing = true;
+        InternalIsProcessing = true;
         StateHasChanged();
 
         try
@@ -165,7 +175,7 @@
         }
         finally
         {
-            IsProcessing = false;
+            InternalIsProcessing = false;
             StateHasChanged();
         }
     }
