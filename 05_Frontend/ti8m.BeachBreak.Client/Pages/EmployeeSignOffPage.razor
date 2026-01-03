@@ -68,6 +68,7 @@ else
             <!-- Employee Sign-Off Form -->
             <div class="sign-off-section mt-4">
                 <EmployeeSignOffForm
+                    ExistingEmployeeComments="@assignment.EmployeeReviewComments"
                     IsSubmitting="@isSubmitting"
                     OnSubmit="@HandleSignOff"
                     OnCancel="@HandleCancel" />
@@ -165,7 +166,7 @@ else
                assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
     }
 
-    private async Task HandleSignOff()
+    private async Task HandleSignOff(string? comments)
     {
         if (assignment == null || isSubmitting)
             return;
@@ -178,7 +179,7 @@ else
             var success = await AssignmentService.ConfirmEmployeeReviewAsync(
                 assignment.Id,
                 currentUserName,
-                null); // No employee comments during sign-off
+                comments);
 
             if (success)
             {

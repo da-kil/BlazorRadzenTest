@@ -353,7 +353,7 @@ p, h1, h2, h3, h4, h5, h6 {
 textarea.rz-textarea {
     color: var(--rz-text-color) !important;
     background-color: var(--rz-panel-background-color) !important;
-    border: 1px solid var(--rz-border-color) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
     .rz-textarea:focus,
@@ -361,8 +361,8 @@ textarea.rz-textarea {
     textarea.rz-textarea:focus {
         color: var(--rz-text-color) !important;
         background-color: var(--rz-panel-background-color) !important;
-        border-color: var(--rz-primary) !important;
-        box-shadow: 0 0 0 2px rgba(var(--rz-primary-rgb), 0.2) !important;
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 2px var(--focus-ring-color) !important;
         outline: none !important;
     }
 
@@ -377,7 +377,7 @@ div.readonly-text,
 div.readonly-text.bg-light {
     color: var(--rz-text-color, #ffffff) !important;
     background-color: var(--rz-panel-background-color, #2d2d2d) !important;
-    border: 1px solid var(--rz-border-color, #4a4a4a) !important;
+    border: 1px solid var(--border-color, #4a4a4a) !important;
     line-height: 1.6 !important;
     font-size: var(--font-size-base, 1rem) !important;
 }
@@ -389,7 +389,7 @@ body[data-theme*="dark"] .readonly-text,
 body[data-theme*="dark"] div.readonly-text {
     color: #ffffff !important;
     background-color: #2d2d2d !important;
-    border-color: #4a4a4a !important;
+    border-color: var(--border-color) !important;
 }
 
 /* Override Bootstrap bg-light in dark themes */
@@ -406,77 +406,17 @@ body[class*="dark"] .bg-light,
 body[class*="Dark"] .bg-light {
     background-color: var(--rz-panel-background-color, #2d2d2d) !important;
     color: var(--rz-text-color, #ffffff) !important;
-    border-color: var(--rz-border-color, #4a4a4a) !important;
-}
-
-/* Specific fix for goals summary section in dark themes */
-body.rz-dark .goals-summary.bg-light,
-.rz-dark .goals-summary.bg-light,
-body[class*="dark"] .goals-summary.bg-light,
-body[class*="Dark"] .goals-summary.bg-light {
-    background-color: var(--rz-panel-background-color, #2d2d2d) !important;
-    color: var(--rz-text-color, #ffffff) !important;
-    border: 1px solid var(--rz-border-color, #4a4a4a) !important;
+    border-color: var(--border-color, #4a4a4a) !important;
 }
 
 /* =============================================
-   DIRECT GOALS SUMMARY BACKGROUND FIX
+   THEME-AWARE BACKGROUND CLASSES
    ============================================= */
 
-/* Force override goals summary background to use proper theme-aware styling */
-.goals-summary {
-    /* Override with high specificity and important declarations */
-    background-color: transparent !important;
-    background: transparent !important;
-    border: none !important;
-}
-
-/* Force the inline styles to take precedence */
-.goals-summary[style*="background-color"] {
-    /* Ensure inline styles work properly */
-    background: var(--rz-body-background-color) !important;
-    color: var(--rz-text-color) !important;
-    border: 1px solid rgba(0,0,0,0.1) !important;
-}
-
-/* Fallback for when CSS variables don't work */
-.goals-summary {
-    background: #f8f9fa !important; /* Light theme fallback */
-    color: #000000 !important;
-    border: 1px solid #dee2e6 !important;
-}
-
-/* Media query for dark theme detection */
-@media (prefers-color-scheme: dark) {
-    .goals-summary {
-        background: #212529 !important; /* Dark theme fallback */
-        color: #ffffff !important;
-        border: 1px solid #495057 !important;
-    }
-}
-
-/* =============================================
-   NUCLEAR OPTION - OVERRIDE EVERYTHING
-   ============================================= */
-
-/* If all else fails, this should definitely work */
-div.goals-summary.mt-4.p-3.rounded,
-.goals-summary,
-.goals-summary * {
-    background-color: var(--rz-body-background-color, #ffffff) !important;
-    background: var(--rz-body-background-color, #ffffff) !important;
-}
-
-/* System dark theme override */
-@media (prefers-color-scheme: dark) {
-    div.goals-summary.mt-4.p-3.rounded,
-    .goals-summary,
-    .goals-summary * {
-        background-color: #2d2d2d !important;
-        background: #2d2d2d !important;
-        color: #ffffff !important;
-        border-color: #4a4a4a !important;
-    }
+/* Clean CSS class for theme-aware backgrounds - no inline styles needed */
+.theme-aware-bg {
+    background-color: var(--rz-panel-background-color) !important;
+    border: 1px solid var(--border-color) !important;
 }
 
 /* No-response text styling for consistency */
@@ -484,7 +424,7 @@ div.goals-summary.mt-4.p-3.rounded,
 div.no-response {
     color: var(--rz-text-secondary-color, #cccccc) !important;
     background-color: var(--rz-panel-background-color, #2d2d2d) !important;
-    border: 1px solid var(--rz-border-color, #4a4a4a) !important;
+    border: 1px solid var(--border-color, #4a4a4a) !important;
 }
 
 .qb-step-header {

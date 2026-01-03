@@ -42,6 +42,24 @@
             </div>
         </div>
 
+        <!-- Employee Comments Section -->
+        <div class="employee-comments">
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                @T("sections.employee-comments")
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                @T("messages.optional-employee-comment-description")
+            </RadzenText>
+
+            <RadzenTextArea @bind-Value="@employeeComments"
+                           Placeholder="@T("placeholders.employee-sign-off-comments")"
+                           Rows="4"
+                           MaxLength="2000"
+                           ShowCharacterCount="true"
+                           Class="w-100"
+                           Disabled="@IsSubmitting" />
+        </div>
+
 
         <!-- Action Buttons -->
         <div class="form-actions">
@@ -91,27 +109,52 @@
 }
 
 .acknowledgment-requirements {
-    background-color: var(--rz-base-50);
+    background-color: var(--rz-panel-background-color);
     border-radius: var(--rz-border-radius);
-    border: 1px solid var(--rz-base-300);
+    border: 1px solid var(--rz-border-color);
     padding: 1rem;
 }
 
 .requirements-list {
     margin-top: 0.5rem;
 }
+
+.employee-comments {
+    background-color: var(--rz-panel-background-color);
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-border-color);
+    padding: 1rem;
+}
 </style>
 
 @code {
+    [Parameter] public string? ExistingEmployeeComments { get; set; }
     [Parameter] public bool IsSubmitting { get; set; }
-    [Parameter] public EventCallback OnSubmit { get; set; }
+    [Parameter] public EventCallback<string?> OnSubmit { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string? employeeComments;
+
+    protected override void OnInitialized()
+    {
+        // Initialize with existing comments if returning to sign-off
+        employeeComments = ExistingEmployeeComments;
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update employeeComments when parameters are set
+        employeeComments = ExistingEmployeeComments;
+        base.OnParametersSet();
+        StateHasChanged();
+    }
 
     private async Task HandleSubmit()
     {
         if (OnSubmit.HasDelegate)
         {
-            await OnSubmit.InvokeAsync();
+            await OnSubmit.InvokeAsync(employeeComments);
         }
     }
 

@@ -671,11 +671,11 @@
 }
 
 .stat-box {
-    background: var(--rz-base-50);
+    background: var(--rz-panel-background-color);
 }
 
 .assignment-item {
-    background: var(--rz-base-50);
+    background: var(--rz-panel-background-color);
     border-radius: 0.25rem;
 }
 
@@ -725,7 +725,7 @@
 }
 
 .assignment-detail-item:hover {
-    background: var(--rz-base-100);
+    background: var(--rz-panel-background-color);
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
