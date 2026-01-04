@@ -3,7 +3,7 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 /// <summary>
 /// Command to finish a review meeting.
 /// Manager finishes the review meeting after making any necessary edits.
-/// Transitions from InReview to ManagerReviewConfirmed state.
+/// Transitions from InReview to ReviewFinished state.
 /// </summary>
 public record FinishReviewMeetingCommand(
     Guid AssignmentId,

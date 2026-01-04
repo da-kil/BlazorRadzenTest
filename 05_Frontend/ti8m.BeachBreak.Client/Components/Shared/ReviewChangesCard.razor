@@ -247,7 +247,7 @@
 
     // Only show the component if the assignment has been through review
     private bool IsVisible => WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
-                              WorkflowState == WorkflowState.ManagerReviewConfirmed ||
+                              WorkflowState == WorkflowState.ReviewFinished ||
                               WorkflowState == WorkflowState.Finalized;
 
     protected override async Task OnParametersSetAsync()

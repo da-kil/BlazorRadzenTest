@@ -164,9 +164,9 @@
     {
         if (Assignment == null) return false;
 
-        // Show comments in ManagerReviewConfirmed, EmployeeReviewConfirmed, or Finalized states
+        // Show comments in ReviewFinished, EmployeeReviewConfirmed, or Finalized states
         return Assignment.WorkflowState is
-            WorkflowState.ManagerReviewConfirmed or
+            WorkflowState.ReviewFinished or
             WorkflowState.EmployeeReviewConfirmed or
             WorkflowState.Finalized;
     }
@@ -178,7 +178,7 @@
         // Show manager review summary after manager has finished the review meeting
         // Both employees and managers should see it in these states
         if (Assignment.WorkflowState is
-            WorkflowState.ManagerReviewConfirmed or
+            WorkflowState.ReviewFinished or
             WorkflowState.EmployeeReviewConfirmed or
             WorkflowState.Finalized)
         {

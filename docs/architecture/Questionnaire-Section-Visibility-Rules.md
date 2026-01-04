@@ -89,14 +89,18 @@ This dual-response structure enables side-by-side comparison during review meeti
 ---
 
 ### 4. Post-Review Confirmation States
-**States**: `ManagerReviewConfirmed`, `EmployeeReviewConfirmed`
+**States**: `ReviewFinished`, `EmployeeReviewConfirmed`
 
-**Both Employee and Manager see:**
-- ✅ **ALL sections with ALL responses** (read-only)
-- ✅ Full transparency after review meeting
+**ReviewFinished State:**
+- **Employee**: Can view ALL sections (read-only) and edit comments during sign-off
+- **Manager**: Can view ALL sections (read-only), waiting for employee sign-off
+
+**EmployeeReviewConfirmed State:**
+- **Both Employee and Manager**: Can view ALL sections with ALL responses (read-only)
+- ✅ Full transparency after employee sign-off
 - ✅ Both parties can see Employee and Manager responses in Both sections
 
-**Purpose**: Full transparency for confirmation. Employee confirms review outcome (can add comments). Manager sees employee comments and finalizes.
+**Purpose**: Employee signs off on review outcome (can edit comments). Manager sees employee comments and can finalize.
 
 ---
 
@@ -124,7 +128,7 @@ This dual-response structure enables side-by-side comparison during review meeti
 **Logic**:
 ```csharp
 // Post-review states: Show all sections
-if (state is ManagerReviewConfirmed or EmployeeReviewConfirmed or Finalized)
+if (state is ReviewFinished or EmployeeReviewConfirmed or Finalized)
     return ALL sections;
 
 // InReview: Manager sees all, Employee sees their sections
@@ -205,8 +209,8 @@ stateDiagram-v2
     ManagerSubmitted --> BothSubmitted
 
     BothSubmitted --> InReview
-    InReview --> ManagerReviewConfirmed
-    ManagerReviewConfirmed --> EmployeeReviewConfirmed
+    InReview --> ReviewFinished
+    ReviewFinished --> EmployeeReviewConfirmed
     EmployeeReviewConfirmed --> Finalized
     Finalized --> [*]
 ```
@@ -238,16 +242,16 @@ For complete workflow details, see [WorkflowDiagram.md](../../WorkflowDiagram.md
 - In Section 1, Employee sees only their own Employee responses
 - All sections are read-only for Employee
 
-### Test 3: Both Parties After ManagerReviewConfirmed
+### Test 3: Employee Sign-Off State
 **Setup**:
-- Assignment in `ManagerReviewConfirmed` state
+- Assignment in `ReviewFinished` state
 - Manager has finished review meeting
 
 **Expected Result**:
 - Both Employee and Manager see: ALL 3 sections
 - In Section 1 (Both), both see Employee AND Manager responses
 - All sections are read-only
-- Employee can add confirmation comments
+- Employee can edit comments during sign-off process
 
 ---
 
@@ -296,8 +300,8 @@ public enum WorkflowState
     ManagerSubmitted = 5,
     BothSubmitted = 6,
     InReview = 7,
-    EmployeeReviewConfirmed = 8,
-    ManagerReviewConfirmed = 9,
+    ReviewFinished = 8,
+    EmployeeReviewConfirmed = 9,
     Finalized = 10
 }
 ```
@@ -308,6 +312,7 @@ public enum WorkflowState
 
 | Date | Author | Change |
 |------|--------|--------|
+| 2025-01-04 | Claude Code | Simplified workflow states - Removed redundant AwaitingEmployeeSignOff state, fixed ReviewFinished implementation |
 | 2025-10-29 | Claude Code | Initial documentation based on implemented business rules |
 
 ---

@@ -144,7 +144,7 @@
     {
         // In review and post-review states with access to full section data, load goals from all roles
         if (AssignmentWorkflowState is WorkflowState.InReview or
-                                        WorkflowState.ManagerReviewConfirmed or
+                                        WorkflowState.ReviewFinished or
                                         WorkflowState.EmployeeReviewConfirmed or
                                         WorkflowState.Finalized && SectionData != null)
         {
@@ -645,7 +645,7 @@
     private bool IsInReviewPhase()
     {
         return AssignmentWorkflowState is WorkflowState.InReview or
-                                         WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.ReviewFinished or
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized;
     }
@@ -799,7 +799,7 @@
             WorkflowState.InReview => GetDisplayRole(CurrentUserRole),
 
             // Post-review phases: Use current user's role
-            WorkflowState.ManagerReviewConfirmed or
+            WorkflowState.ReviewFinished or
             WorkflowState.EmployeeReviewConfirmed or
             WorkflowState.Finalized => GetDisplayRole(CurrentUserRole),
 
@@ -819,7 +819,7 @@
             WorkflowState.InReview => CurrentUserRole,
 
             // Post-review phases: Use current user's role
-            WorkflowState.ManagerReviewConfirmed or
+            WorkflowState.ReviewFinished or
             WorkflowState.EmployeeReviewConfirmed or
             WorkflowState.Finalized => CurrentUserRole,
 

@@ -234,7 +234,7 @@ public static class QuestionnairePageConfigurationFactory
                             or WorkflowState.BothSubmitted
                             or WorkflowState.InReview
                             or WorkflowState.EmployeeReviewConfirmed
-                            or WorkflowState.ManagerReviewConfirmed)
+                            or WorkflowState.ReviewFinished)
                     },
                     new()
                     {

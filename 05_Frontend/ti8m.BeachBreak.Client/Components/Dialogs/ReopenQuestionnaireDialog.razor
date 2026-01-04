@@ -29,7 +29,7 @@
             <strong>@T("labels.employee"):</strong> @Assignment?.EmployeeName (@Assignment?.EmployeeEmail)
         </RadzenText>
         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
-            <strong>Current State:</strong> @GetStateName(Assignment?.WorkflowState)
+            <strong>@T("labels.current-state"):</strong> @(Assignment?.WorkflowState != null ? T(WorkflowStateHelper.GetStateDisplayName(Assignment.WorkflowState)) : "Unknown")
         </RadzenText>
     </div>
 
@@ -181,8 +181,8 @@
                 options.Add(new ReopenStateOption
                 {
                     State = WorkflowState.EmployeeInProgress,
-                    DisplayName = "Employee In Progress",
-                    Description = "Allow employee to continue editing"
+                    DisplayName = T(WorkflowStateHelper.GetStateDisplayName(WorkflowState.EmployeeInProgress)),
+                    Description = T("reopen-descriptions.allow-employee-continue-editing")
                 });
                 break;
 
@@ -190,8 +190,8 @@
                 options.Add(new ReopenStateOption
                 {
                     State = WorkflowState.ManagerInProgress,
-                    DisplayName = "Manager In Progress",
-                    Description = "Allow manager to continue editing"
+                    DisplayName = T(WorkflowStateHelper.GetStateDisplayName(WorkflowState.ManagerInProgress)),
+                    Description = T("reopen-descriptions.allow-manager-continue-editing")
                 });
                 break;
 
@@ -199,20 +199,20 @@
                 options.Add(new ReopenStateOption
                 {
                     State = WorkflowState.BothInProgress,
-                    DisplayName = "Both In Progress",
-                    Description = "Allow both employee and manager to edit"
+                    DisplayName = T(WorkflowStateHelper.GetStateDisplayName(WorkflowState.BothInProgress)),
+                    Description = T("reopen-descriptions.allow-both-continue-editing")
                 });
                 options.Add(new ReopenStateOption
                 {
                     State = WorkflowState.EmployeeInProgress,
-                    DisplayName = "Employee In Progress",
-                    Description = "Allow only employee to edit"
+                    DisplayName = T(WorkflowStateHelper.GetStateDisplayName(WorkflowState.EmployeeInProgress)),
+                    Description = T("reopen-descriptions.allow-only-employee-edit")
                 });
                 options.Add(new ReopenStateOption
                 {
                     State = WorkflowState.ManagerInProgress,
-                    DisplayName = "Manager In Progress",
-                    Description = "Allow only manager to edit"
+                    DisplayName = T(WorkflowStateHelper.GetStateDisplayName(WorkflowState.ManagerInProgress)),
+                    Description = T("reopen-descriptions.allow-only-manager-edit")
                 });
                 break;
 
@@ -220,18 +220,32 @@
                 options.Add(new ReopenStateOption
                 {
                     State = WorkflowState.BothSubmitted,
-                    DisplayName = "Both Submitted",
-                    Description = "Return to submitted state"
+                    DisplayName = T(WorkflowStateHelper.GetStateDisplayName(WorkflowState.BothSubmitted)),
+                    Description = T("reopen-descriptions.return-to-submitted-state")
                 });
                 break;
 
-            case WorkflowState.ManagerReviewConfirmed:
-            case WorkflowState.EmployeeReviewConfirmed:
+            case WorkflowState.ReviewFinished:
                 options.Add(new ReopenStateOption
                 {
                     State = WorkflowState.InReview,
-                    DisplayName = "In Review",
-                    Description = "Return to review phase"
+                    DisplayName = T(WorkflowStateHelper.GetStateDisplayName(WorkflowState.InReview)),
+                    Description = T("reopen-descriptions.return-to-review-meeting-phase")
+                });
+                break;
+
+            case WorkflowState.EmployeeReviewConfirmed:
+                options.Add(new ReopenStateOption
+                {
+                    State = WorkflowState.ReviewFinished,
+                    DisplayName = T(WorkflowStateHelper.GetStateDisplayName(WorkflowState.ReviewFinished)),
+                    Description = T("reopen-descriptions.return-to-employee-signoff-phase")
+                });
+                options.Add(new ReopenStateOption
+                {
+                    State = WorkflowState.InReview,
+                    DisplayName = T(WorkflowStateHelper.GetStateDisplayName(WorkflowState.InReview)),
+                    Description = T("reopen-descriptions.return-to-review-meeting-phase")
                 });
                 break;
         }
@@ -239,27 +253,6 @@
         return options;
     }
 
-    private string GetStateName(WorkflowState? state)
-    {
-        if (!state.HasValue)
-            return "Unknown";
-
-        return state.Value switch
-        {
-            WorkflowState.Assigned => "Assigned",
-            WorkflowState.EmployeeInProgress => "Employee In Progress",
-            WorkflowState.ManagerInProgress => "Manager In Progress",
-            WorkflowState.BothInProgress => "Both In Progress",
-            WorkflowState.EmployeeSubmitted => "Employee Submitted",
-            WorkflowState.ManagerSubmitted => "Manager Submitted",
-            WorkflowState.BothSubmitted => "Both Submitted",
-            WorkflowState.InReview => "In Review",
-            WorkflowState.EmployeeReviewConfirmed => "Employee Review Confirmed",
-            WorkflowState.ManagerReviewConfirmed => "Manager Review Confirmed",
-            WorkflowState.Finalized => "Finalized",
-            _ => state.Value.ToString()
-        };
-    }
 
     public class ReopenStateOption
     {

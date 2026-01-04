@@ -403,7 +403,7 @@ else
 
         // Determine which role's responses to fetch based on section's CompletionRole
         var isPostReviewState = Assignment != null &&
-            (Assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+            (Assignment.WorkflowState is WorkflowState.ReviewFinished or
                                         WorkflowState.EmployeeReviewConfirmed or
                                         WorkflowState.Finalized);
 
@@ -692,7 +692,7 @@ else
 
         // Copy the same logic from GetGenericQuestionResponse to show what role it would fetch
         var isPostReviewState = Assignment != null &&
-            (Assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+            (Assignment.WorkflowState is WorkflowState.ReviewFinished or
                                         WorkflowState.EmployeeReviewConfirmed or
                                         WorkflowState.Finalized);
 

@@ -12,8 +12,8 @@ public static class WorkflowStateHelper
         WorkflowState.ManagerSubmitted,
         WorkflowState.BothSubmitted,
         WorkflowState.InReview,
+        WorkflowState.ReviewFinished,
         WorkflowState.EmployeeReviewConfirmed,
-        WorkflowState.ManagerReviewConfirmed,
         WorkflowState.Finalized
     };
 
@@ -35,17 +35,17 @@ public static class WorkflowStateHelper
     {
         return state switch
         {
-            WorkflowState.Assigned => "Assigned",
-            WorkflowState.EmployeeInProgress => "Employee Working",
-            WorkflowState.ManagerInProgress => "Manager Working",
-            WorkflowState.BothInProgress => "Both Working",
-            WorkflowState.EmployeeSubmitted => "Employee Submitted",
-            WorkflowState.ManagerSubmitted => "Manager Submitted",
-            WorkflowState.BothSubmitted => "Both Submitted - Ready for Review",
-            WorkflowState.InReview => "In Review",
-            WorkflowState.EmployeeReviewConfirmed => "Employee Review Confirmed",
-            WorkflowState.ManagerReviewConfirmed => "Manager Review Confirmed",
-            WorkflowState.Finalized => "Finalized",
+            WorkflowState.Assigned => "workflow-states.assigned",
+            WorkflowState.EmployeeInProgress => "workflow-states.employee-working",
+            WorkflowState.ManagerInProgress => "workflow-states.manager-working",
+            WorkflowState.BothInProgress => "workflow-states.both-working",
+            WorkflowState.EmployeeSubmitted => "workflow-states.employee-submitted",
+            WorkflowState.ManagerSubmitted => "workflow-states.manager-submitted",
+            WorkflowState.BothSubmitted => "workflow-states.both-submitted-ready-review",
+            WorkflowState.InReview => "workflow-states.in-review",
+            WorkflowState.ReviewFinished => "workflow-states.review-finished",
+            WorkflowState.EmployeeReviewConfirmed => "workflow-states.employee-review-confirmed",
+            WorkflowState.Finalized => "workflow-states.finalized",
             _ => state.ToString()
         };
     }
@@ -58,7 +58,8 @@ public static class WorkflowStateHelper
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "var(--rz-primary)",
             WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "var(--rz-secondary)",
             WorkflowState.InReview => "var(--rz-warning)",
-            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "var(--rz-success)",
+            WorkflowState.ReviewFinished => "var(--rz-success)",
+            WorkflowState.EmployeeReviewConfirmed => "var(--rz-success)",
             WorkflowState.Finalized => "var(--rz-success-dark)",
             _ => "var(--rz-base-500)"
         };
@@ -72,7 +73,8 @@ public static class WorkflowStateHelper
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "edit",
             WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "send",
             WorkflowState.InReview => "rate_review",
-            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "verified",
+            WorkflowState.ReviewFinished => "verified",
+            WorkflowState.EmployeeReviewConfirmed => "verified",
             WorkflowState.Finalized => "lock",
             _ => "help"
         };
@@ -135,14 +137,20 @@ public static class WorkflowStateHelper
 
     public static bool CanManagerFinishReviewMeeting(QuestionnaireAssignment assignment)
     {
-        // Manager finishes the review meeting, transitioning from InReview to ManagerReviewConfirmed
+        // Manager finishes the review meeting, transitioning from InReview to ReviewFinished
         return assignment.WorkflowState == WorkflowState.InReview;
+    }
+
+    public static bool CanEmployeeSignOff(QuestionnaireAssignment assignment)
+    {
+        // Employee signs-off on review outcome when review is finished
+        return assignment.WorkflowState == WorkflowState.ReviewFinished;
     }
 
     public static bool CanEmployeeConfirmReview(QuestionnaireAssignment assignment)
     {
-        // Employee confirms review outcome after manager finishes the review meeting
-        return assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+        // Employee can confirm review when review is finished
+        return assignment.WorkflowState == WorkflowState.ReviewFinished;
     }
 
     public static bool CanManagerFinalize(QuestionnaireAssignment assignment)
@@ -155,17 +163,17 @@ public static class WorkflowStateHelper
     {
         return assignment.WorkflowState switch
         {
-            WorkflowState.Assigned => "Start completing your sections",
-            WorkflowState.EmployeeInProgress => "Complete and submit your sections",
-            WorkflowState.BothInProgress => "Complete and submit your sections",
-            WorkflowState.EmployeeSubmitted => "Waiting for manager to submit",
-            WorkflowState.ManagerSubmitted => "Complete and submit your sections",
-            WorkflowState.BothSubmitted => "Waiting for manager to initiate review meeting",
-            WorkflowState.InReview => "Review meeting in progress (read-only)",
-            WorkflowState.ManagerReviewConfirmed => "Confirm the review outcome",
-            WorkflowState.EmployeeReviewConfirmed => "Waiting for manager to finalize",
-            WorkflowState.Finalized => "Questionnaire is finalized",
-            _ => "No action required"
+            WorkflowState.Assigned => "actions.employee.start-completing-sections",
+            WorkflowState.EmployeeInProgress => "actions.employee.complete-submit-sections",
+            WorkflowState.BothInProgress => "actions.employee.complete-submit-sections",
+            WorkflowState.EmployeeSubmitted => "actions.employee.waiting-manager-submit",
+            WorkflowState.ManagerSubmitted => "actions.employee.complete-submit-sections",
+            WorkflowState.BothSubmitted => "actions.employee.waiting-manager-review",
+            WorkflowState.InReview => "actions.employee.review-meeting-readonly",
+            WorkflowState.ReviewFinished => "actions.employee.signoff-review-outcome",
+            WorkflowState.EmployeeReviewConfirmed => "actions.employee.waiting-manager-finalize",
+            WorkflowState.Finalized => "actions.employee.questionnaire-finalized",
+            _ => "actions.employee.no-action-required"
         };
     }
 
@@ -173,17 +181,17 @@ public static class WorkflowStateHelper
     {
         return assignment.WorkflowState switch
         {
-            WorkflowState.Assigned => "Start completing your sections",
-            WorkflowState.ManagerInProgress => "Complete and submit your sections",
-            WorkflowState.BothInProgress => "Complete and submit your sections",
-            WorkflowState.EmployeeSubmitted => "Complete and submit your sections",
-            WorkflowState.ManagerSubmitted => "Waiting for employee to submit",
-            WorkflowState.BothSubmitted => "Initiate performance review meeting",
-            WorkflowState.InReview => "Conduct review meeting and finish when done",
-            WorkflowState.ManagerReviewConfirmed => "Waiting for employee to confirm review",
-            WorkflowState.EmployeeReviewConfirmed => "Finalize the questionnaire",
-            WorkflowState.Finalized => "Questionnaire is finalized",
-            _ => "No action required"
+            WorkflowState.Assigned => "actions.manager.start-completing-sections",
+            WorkflowState.ManagerInProgress => "actions.manager.complete-submit-sections",
+            WorkflowState.BothInProgress => "actions.manager.complete-submit-sections",
+            WorkflowState.EmployeeSubmitted => "actions.manager.complete-submit-sections",
+            WorkflowState.ManagerSubmitted => "actions.manager.waiting-employee-submit",
+            WorkflowState.BothSubmitted => "actions.manager.initiate-review-meeting",
+            WorkflowState.InReview => "actions.manager.conduct-review-meeting",
+            WorkflowState.ReviewFinished => "actions.manager.waiting-employee-signoff",
+            WorkflowState.EmployeeReviewConfirmed => "actions.manager.finalize-questionnaire",
+            WorkflowState.Finalized => "actions.manager.questionnaire-finalized",
+            _ => "actions.manager.no-action-required"
         };
     }
 }

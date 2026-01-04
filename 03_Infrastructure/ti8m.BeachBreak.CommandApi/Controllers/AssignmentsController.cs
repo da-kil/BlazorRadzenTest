@@ -532,7 +532,7 @@ public class AssignmentsController : BaseController
     // Refined review workflow endpoints
     /// <summary>
     /// Manager finishes the review meeting.
-    /// Transitions from InReview to ManagerReviewConfirmed state.
+    /// Transitions from InReview to ReviewFinished state.
     /// </summary>
     [HttpPost("{assignmentId}/review/finish")]
     [Authorize(Policy = "TeamLead")]
@@ -569,9 +569,47 @@ public class AssignmentsController : BaseController
     }
 
     /// <summary>
+    /// Employee signs-off on review outcome.
+    /// This is the intermediate step after manager finishes review meeting
+    /// but before final employee confirmation.
+    /// Transitions from ReviewFinished to EmployeeReviewConfirmed state.
+    /// </summary>
+    [HttpPost("{assignmentId}/review/sign-off")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> SignOffReviewOutcome(Guid assignmentId, [FromBody] SignOffReviewDto signOffDto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Get employee ID from authenticated user context
+            if (!Guid.TryParse(userContext.Id, out var employeeId))
+            {
+                logger.LogWarning("SignOffReviewOutcome failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            var command = new SignOffReviewOutcomeAsEmployeeCommand(
+                assignmentId,
+                employeeId,
+                signOffDto.SignOffComments,
+                signOffDto.ExpectedVersion);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error signing-off review outcome for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while signing-off review outcome");
+        }
+    }
+
+    /// <summary>
     /// Employee confirms the review outcome.
     /// Employee cannot reject but can add comments.
-    /// Transitions from ManagerReviewConfirmed to EmployeeReviewConfirmed state.
+    /// Transitions from ReviewFinished to EmployeeReviewConfirmed state.
     /// </summary>
     [HttpPost("{assignmentId}/review/confirm-employee")]
     [ProducesResponseType(StatusCodes.Status200OK)]

@@ -448,7 +448,7 @@ public class ResponsesController : BaseController
     /// - Employees: See Employee + Both sections (but in Both sections, only their own Employee responses)
     /// - Managers: See Manager + Both sections (but in Both sections, only their own Manager responses)
     /// - InReview state: Manager sees ALL sections with ALL responses, Employee sees Employee + Both sections
-    /// - ManagerReviewConfirmed onwards: Everyone sees ALL sections with ALL responses
+    /// - Post-review states (ReviewFinished onwards): Everyone sees ALL sections with ALL responses
     /// </summary>
     private QuestionnaireResponseDto FilterSectionsByUserRoleAndWorkflowState(
         QuestionnaireResponseDto response,
@@ -458,8 +458,8 @@ public class ResponsesController : BaseController
     {
         var isManager = userRole is Application.Query.Models.ApplicationRole.TeamLead or Application.Query.Models.ApplicationRole.HR or Application.Query.Models.ApplicationRole.HRLead or Application.Query.Models.ApplicationRole.Admin;
 
-        // From ManagerReviewConfirmed onwards: Everyone sees ALL sections with ALL responses
-        if (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or WorkflowState.EmployeeReviewConfirmed or WorkflowState.Finalized)
+        // From post-review states onwards: Everyone sees ALL sections with ALL responses
+        if (assignment.WorkflowState is WorkflowState.ReviewFinished or WorkflowState.EmployeeReviewConfirmed or WorkflowState.Finalized)
         {
             return response; // Full transparency
         }

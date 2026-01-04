@@ -121,7 +121,7 @@
         or WorkflowState.BothSubmitted
         or WorkflowState.InReview
         or WorkflowState.EmployeeReviewConfirmed
-        or WorkflowState.ManagerReviewConfirmed);
+        or WorkflowState.ReviewFinished);
     private int OverdueCount => Assignments.Count(a =>
         a.DueDate.HasValue &&
         a.DueDate.Value < DateTime.Now &&
@@ -144,7 +144,7 @@
             WorkflowState.Assigned => BadgeStyle.Secondary,
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => BadgeStyle.Info,
             WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => BadgeStyle.Primary,
-            WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => BadgeStyle.Warning,
+            WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ReviewFinished => BadgeStyle.Warning,
             WorkflowState.Finalized => BadgeStyle.Success,
             _ => BadgeStyle.Light
         };
@@ -160,7 +160,7 @@
             WorkflowState.Assigned => "border-warning",
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "border-info",
             WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted => "border-info",
-            WorkflowState.BothSubmitted or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "border-primary",
+            WorkflowState.BothSubmitted or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ReviewFinished => "border-primary",
             WorkflowState.Finalized => "border-success",
             _ => "border-secondary"
         };
@@ -188,7 +188,7 @@
                assignment.WorkflowState == WorkflowState.BothSubmitted ||
                assignment.WorkflowState == WorkflowState.InReview ||
                assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
-               assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+               assignment.WorkflowState == WorkflowState.ReviewFinished;
     }
 
     private async Task OnReopenAssignment(QuestionnaireAssignment assignment)

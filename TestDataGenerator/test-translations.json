@@ -1,5 +1,145 @@
 ﻿[
     {
+        "key":  "actions.employee.complete-submit-sections",
+        "german":  "Vervollständigen und reichen Sie Ihre Abschnitte ein",
+        "english":  "Complete and submit your sections",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8274641+01:00"
+    },
+    {
+        "key":  "actions.employee.no-action-required",
+        "german":  "Keine Aktion erforderlich",
+        "english":  "No action required",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8692102+01:00"
+    },
+    {
+        "key":  "actions.employee.questionnaire-finalized",
+        "german":  "Fragebogen ist abgeschlossen",
+        "english":  "Questionnaire is finalized",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8641957+01:00"
+    },
+    {
+        "key":  "actions.employee.review-completed-transition",
+        "german":  "Überprüfungssitzung abgeschlossen (Übergangszustand)",
+        "english":  "Review meeting completed (transition state)",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8491875+01:00"
+    },
+    {
+        "key":  "actions.employee.review-meeting-readonly",
+        "german":  "Überprüfungssitzung läuft (nur lesen)",
+        "english":  "Review meeting in progress (read-only)",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8440730+01:00"
+    },
+    {
+        "key":  "actions.employee.signoff-review-outcome",
+        "german":  "Überprüfungsergebnis abzeichnen",
+        "english":  "Sign-off on review outcome",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8532019+01:00"
+    },
+    {
+        "key":  "actions.employee.start-completing-sections",
+        "german":  "Beginnen Sie mit dem Ausfällen Ihrer Abschnitte",
+        "english":  "Start completing your sections",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8224456+01:00"
+    },
+    {
+        "key":  "actions.employee.waiting-manager-finalize",
+        "german":  "Warten auf Manager-Finalisierung",
+        "english":  "Waiting for manager to finalize",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8587105+01:00"
+    },
+    {
+        "key":  "actions.employee.waiting-manager-review",
+        "german":  "Warten auf Manager-Überprüfungssitzung",
+        "english":  "Waiting for manager to initiate review meeting",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8380552+01:00"
+    },
+    {
+        "key":  "actions.employee.waiting-manager-submit",
+        "german":  "Warten auf Manager-Einreichung",
+        "english":  "Waiting for manager to submit",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.8325463+01:00"
+    },
+    {
+        "key":  "actions.manager.complete-submit-sections",
+        "german":  "Vervollständigen und reichen Sie Ihre Abschnitte ein",
+        "english":  "Complete and submit your sections",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9076793+01:00"
+    },
+    {
+        "key":  "actions.manager.conduct-review-meeting",
+        "german":  "Überprüfungssitzung durchführen und abschliessen",
+        "english":  "Conduct review meeting and finish when done",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9195674+01:00"
+    },
+    {
+        "key":  "actions.manager.finalize-questionnaire",
+        "german":  "Fragebogen finalisieren",
+        "english":  "Finalize the questionnaire",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9326018+01:00"
+    },
+    {
+        "key":  "actions.manager.initiate-review-meeting",
+        "german":  "Leistungsüberprüfungssitzung initiieren",
+        "english":  "Initiate performance review meeting",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9160607+01:00"
+    },
+    {
+        "key":  "actions.manager.no-action-required",
+        "german":  "Keine Aktion erforderlich",
+        "english":  "No action required",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9477906+01:00"
+    },
+    {
+        "key":  "actions.manager.questionnaire-finalized",
+        "german":  "Fragebogen ist abgeschlossen",
+        "english":  "Questionnaire is finalized",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9437922+01:00"
+    },
+    {
+        "key":  "actions.manager.review-completed-transition",
+        "german":  "Überprüfungssitzung abgeschlossen (Übergangszustand)",
+        "english":  "Review meeting completed (transition state)",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9250888+01:00"
+    },
+    {
+        "key":  "actions.manager.start-completing-sections",
+        "german":  "Beginnen Sie mit dem Ausfüllen Ihrer Abschnitte",
+        "english":  "Start completing your sections",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9005720+01:00"
+    },
+    {
+        "key":  "actions.manager.waiting-employee-signoff",
+        "german":  "Warten auf Mitarbeiter-Abzeichnung",
+        "english":  "Waiting for employee to sign-off",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9295992+01:00"
+    },
+    {
+        "key":  "actions.manager.waiting-employee-submit",
+        "german":  "Warten auf Mitarbeiter-Einreichung",
+        "english":  "Waiting for employee to submit",
+        "category":  "actions",
+        "createdDate":  "2026-01-03T22:02:10.9125444+01:00"
+    },
+    {
         "key":  "buttons.add",
         "german":  "Hinzufügen",
         "english":  "Add",
@@ -425,6 +565,13 @@
         "english":  "Sign Off Review",
         "category":  "buttons",
         "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "buttons.sign-off-review",
+        "german":  "Review bestätigen",
+        "english":  "Sign-Off Review",
+        "category":  "buttons",
+        "createdDate":  "2026-01-03T12:00:00.0000000+00:00"
     },
     {
         "key":  "buttons.start-new-replay",
@@ -1603,6 +1750,13 @@
         "createdDate":  "2025-12-24T12:00:00.0000000+00:00"
     },
     {
+        "key":  "labels.current-state",
+        "german":  "Aktueller Status",
+        "english":  "Current State",
+        "category":  "labels",
+        "createdDate":  "2026-01-03T22:06:34.0946015+01:00"
+    },
+    {
         "key":  "labels.date-range",
         "german":  "Datumsbereich",
         "english":  "Date Range",
@@ -2126,6 +2280,13 @@
         "english":  "Showing {0} of {1} team members",
         "category":  "labels",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "labels.sign-off-comments",
+        "german":  "Bestätigungs-Kommentare",
+        "english":  "Sign-Off Comments",
+        "category":  "labels",
+        "createdDate":  "2026-01-03T12:00:00.0000000+00:00"
     },
     {
         "key":  "labels.sort-by",
@@ -2833,6 +2994,13 @@
         "english":  "Not Implemented",
         "category":  "messages",
         "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.optional-employee-comment-description",
+        "german":  "Optional können Sie hier Ihre eigenen Kommentare oder Gedanken zum Überprüfungsprozess hinzufügen.",
+        "english":  "Optionally, you can add your own comments or thoughts about the review process here.",
+        "category":  "messages",
+        "createdDate":  "2026-01-02T12:00:00.0000000+00:00"
     },
     {
         "key":  "messages.publishing",
@@ -3934,6 +4102,13 @@
         "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
+        "key":  "placeholders.employee-sign-off-comments",
+        "german":  "Ihre Gedanken zum Überprüfungsprozess (optional)...",
+        "english":  "Your thoughts on the review process (optional)...",
+        "category":  "placeholders",
+        "createdDate":  "2026-01-02T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "placeholders.enter-additional-comments-optional",
         "german":  "Geben Sie zusätzliche Kommentare ein (optional)...",
         "english":  "Enter additional comments (optional)...",
@@ -4270,6 +4445,118 @@
         "createdDate":  "2025-12-31T23:09:52.0626007+01:00"
     },
     {
+        "key":  "reopen.both-questionnaires-corrections",
+        "german":  "Beide Fragebögen für Korrekturen wieder öffnen",
+        "english":  "Reopen both questionnaires for corrections",
+        "category":  "reopen",
+        "createdDate":  "2026-01-03T22:02:11.0414295+01:00"
+    },
+    {
+        "key":  "reopen.employee-questionnaire-corrections",
+        "german":  "Mitarbeiter-Fragebogen für Korrekturen wieder öffnen",
+        "english":  "Reopen employee questionnaire for corrections",
+        "category":  "reopen",
+        "createdDate":  "2026-01-03T22:02:11.0307762+01:00"
+    },
+    {
+        "key":  "reopen.manager-questionnaire-corrections",
+        "german":  "Manager-Fragebogen für Korrekturen wieder öffnen",
+        "english":  "Reopen manager questionnaire for corrections",
+        "category":  "reopen",
+        "createdDate":  "2026-01-03T22:02:11.0364158+01:00"
+    },
+    {
+        "key":  "reopen.return-to-employee-signoff",
+        "german":  "Zurück zur Mitarbeiter-Abzeichnungsphase",
+        "english":  "Return to employee sign-off phase",
+        "category":  "reopen",
+        "createdDate":  "2026-01-03T22:02:11.0551203+01:00"
+    },
+    {
+        "key":  "reopen.review-meeting-after-confirmation",
+        "german":  "Überprüfungssitzung nach Mitarbeiter-Bestätigung wieder öffnen",
+        "english":  "Reopen review meeting after employee confirmation",
+        "category":  "reopen",
+        "createdDate":  "2026-01-03T22:02:11.0581203+01:00"
+    },
+    {
+        "key":  "reopen.review-meeting-from-signoff",
+        "german":  "Überprüfungssitzung von Mitarbeiter-Abzeichnungsphase wieder öffnen",
+        "english":  "Reopen review meeting from employee sign-off phase",
+        "category":  "reopen",
+        "createdDate":  "2026-01-03T22:02:11.0509391+01:00"
+    },
+    {
+        "key":  "reopen.review-meeting-manager-revisions",
+        "german":  "Überprüfungssitzung für Manager-Revisionen wieder öffnen",
+        "english":  "Reopen review meeting for manager revisions",
+        "category":  "reopen",
+        "createdDate":  "2026-01-03T22:02:11.0454333+01:00"
+    },
+    {
+        "key":  "reopen-descriptions.allow-both-continue-editing",
+        "german":  "Beide können weiter bearbeiten",
+        "english":  "Allow both employee and manager to edit",
+        "category":  "reopen-descriptions",
+        "createdDate":  "2026-01-03T22:06:34.1138375+01:00"
+    },
+    {
+        "key":  "reopen-descriptions.allow-employee-continue-editing",
+        "german":  "Mitarbeiter kann weiter bearbeiten",
+        "english":  "Allow employee to continue editing",
+        "category":  "reopen-descriptions",
+        "createdDate":  "2026-01-03T22:06:34.1031115+01:00"
+    },
+    {
+        "key":  "reopen-descriptions.allow-manager-continue-editing",
+        "german":  "Manager kann weiter bearbeiten",
+        "english":  "Allow manager to continue editing",
+        "category":  "reopen-descriptions",
+        "createdDate":  "2026-01-03T22:06:34.1087833+01:00"
+    },
+    {
+        "key":  "reopen-descriptions.allow-only-employee-edit",
+        "german":  "Nur Mitarbeiter kann bearbeiten",
+        "english":  "Allow only employee to edit",
+        "category":  "reopen-descriptions",
+        "createdDate":  "2026-01-03T22:06:34.1188365+01:00"
+    },
+    {
+        "key":  "reopen-descriptions.allow-only-manager-edit",
+        "german":  "Nur Manager kann bearbeiten",
+        "english":  "Allow only manager to edit",
+        "category":  "reopen-descriptions",
+        "createdDate":  "2026-01-03T22:06:34.1239944+01:00"
+    },
+    {
+        "key":  "reopen-descriptions.return-to-employee-signoff-phase",
+        "german":  "Zurück zur Mitarbeiter-Abzeichnungsphase",
+        "english":  "Return to employee sign-off phase",
+        "category":  "reopen-descriptions",
+        "createdDate":  "2026-01-03T22:06:34.1440904+01:00"
+    },
+    {
+        "key":  "reopen-descriptions.return-to-review-meeting-phase",
+        "german":  "Zurück zur Überprüfungssitzungsphase",
+        "english":  "Return to review meeting phase",
+        "category":  "reopen-descriptions",
+        "createdDate":  "2026-01-03T22:06:34.1391087+01:00"
+    },
+    {
+        "key":  "reopen-descriptions.return-to-review-phase",
+        "german":  "Zurück zur Überprüfungsphase",
+        "english":  "Return to review phase",
+        "category":  "reopen-descriptions",
+        "createdDate":  "2026-01-03T22:06:34.1345150+01:00"
+    },
+    {
+        "key":  "reopen-descriptions.return-to-submitted-state",
+        "german":  "Zurück zum eingereichten Status",
+        "english":  "Return to submitted state",
+        "category":  "reopen-descriptions",
+        "createdDate":  "2026-01-03T22:06:34.1279942+01:00"
+    },
+    {
         "key":  "sections.additional-comments",
         "german":  "Zusätzliche Kommentare",
         "english":  "Additional Comments",
@@ -4310,6 +4597,13 @@
         "english":  "Employee Acknowledgment",
         "category":  "sections",
         "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "sections.employee-comments",
+        "german":  "Mitarbeiter-Kommentare",
+        "english":  "Employee Comments",
+        "category":  "sections",
+        "createdDate":  "2026-01-02T12:00:00.0000000+00:00"
     },
     {
         "key":  "sections.employee-information",
@@ -4998,6 +5292,125 @@
         "createdDate":  "2025-12-31T23:09:52.0636002+01:00"
     },
     {
+        "key":  "transitions.auto-finalize-no-review",
+        "german":  "Auto-Finalisierung (keine Manager-Überprüfung erforderlich)",
+        "english":  "Auto-finalize (no manager review required)",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9977385+01:00"
+    },
+    {
+        "key":  "transitions.both-start-filling",
+        "german":  "Beide beginnen mit dem Ausfüllen",
+        "english":  "Both start filling sections",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9599934+01:00"
+    },
+    {
+        "key":  "transitions.employee-completes-submission",
+        "german":  "Mitarbeiter reicht Fragebogen ein",
+        "english":  "Employee submits questionnaire",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:11.0014648+01:00"
+    },
+    {
+        "key":  "transitions.employee-joins-filling",
+        "german":  "Mitarbeiter schliesst sich dem Ausfüllen an",
+        "english":  "Employee starts filling sections",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9750175+01:00"
+    },
+    {
+        "key":  "transitions.employee-needs-signoff",
+        "german":  "Manager schliesst Überprüfung ab, Mitarbeiter muss abzeichnen",
+        "english":  "Manager completes review, employee needs to sign-off",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:11.0131069+01:00"
+    },
+    {
+        "key":  "transitions.employee-signs-off",
+        "german":  "Mitarbeiter zeichnet ab und bestätigt Überprüfungsergebnis",
+        "english":  "Employee signs-off and confirms review outcome",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:11.0197531+01:00"
+    },
+    {
+        "key":  "transitions.employee-starts-filling",
+        "german":  "Mitarbeiter beginnt mit dem Ausfüllen",
+        "english":  "Employee starts filling sections",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9507985+01:00"
+    },
+    {
+        "key":  "transitions.employee-submits",
+        "german":  "Mitarbeiter reicht Fragebogen ein",
+        "english":  "Employee submits questionnaire",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9705073+01:00"
+    },
+    {
+        "key":  "transitions.employee-submits-first",
+        "german":  "Mitarbeiter reicht zuerst ein",
+        "english":  "Employee submits first",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9865505+01:00"
+    },
+    {
+        "key":  "transitions.manager-completes-submission",
+        "german":  "Manager reicht Fragebogen ein",
+        "english":  "Manager submits questionnaire",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9937381+01:00"
+    },
+    {
+        "key":  "transitions.manager-finalizes",
+        "german":  "Manager finalisiert Fragebogen",
+        "english":  "Manager finalizes questionnaire",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:11.0272742+01:00"
+    },
+    {
+        "key":  "transitions.manager-finishes-review",
+        "german":  "Manager beendet Überprüfungssitzung",
+        "english":  "Manager finishes review meeting",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:11.0090938+01:00"
+    },
+    {
+        "key":  "transitions.manager-initiates-review",
+        "german":  "Manager initiiert Überprüfungssitzung",
+        "english":  "Manager initiates review meeting",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:11.0050921+01:00"
+    },
+    {
+        "key":  "transitions.manager-joins-filling",
+        "german":  "Manager schliesst sich dem Ausfüllen an",
+        "english":  "Manager starts filling sections",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9665038+01:00"
+    },
+    {
+        "key":  "transitions.manager-starts-filling",
+        "german":  "Manager beginnt mit dem Ausfüllen",
+        "english":  "Manager starts filling sections",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9564811+01:00"
+    },
+    {
+        "key":  "transitions.manager-submits",
+        "german":  "Manager reicht Fragebogen ein",
+        "english":  "Manager submits questionnaire",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9825473+01:00"
+    },
+    {
+        "key":  "transitions.manager-submits-first",
+        "german":  "Manager reicht zuerst ein",
+        "english":  "Manager submits first",
+        "category":  "transitions",
+        "createdDate":  "2026-01-03T22:02:10.9901695+01:00"
+    },
+    {
         "key":  "validation.employee-required",
         "german":  "Mitarbeiter ist erforderlich",
         "english":  "Employee is required",
@@ -5117,6 +5530,13 @@
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
     },
     {
+        "key":  "workflow-states.awaiting-employee-sign-off",
+        "german":  "Wartet auf Mitarbeiter-Bestätigung",
+        "english":  "Awaiting Employee Sign-Off",
+        "category":  "workflow-states",
+        "createdDate":  "2026-01-03T12:00:00.0000000+00:00"
+    },
+    {
         "key":  "workflow-states.both-in-progress",
         "german":  "Beide in Bearbeitung",
         "english":  "Both In Progress",
@@ -5129,6 +5549,20 @@
         "english":  "Both Submitted",
         "category":  "workflow-states",
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.both-submitted-ready-review",
+        "german":  "Beide eingereicht - Bereit für Überprüfung",
+        "english":  "Both Submitted - Ready for Review",
+        "category":  "workflow-states",
+        "createdDate":  "2026-01-03T22:02:10.7895148+01:00"
+    },
+    {
+        "key":  "workflow-states.both-working",
+        "german":  "Beide in Bearbeitung",
+        "english":  "Both Working",
+        "category":  "workflow-states",
+        "createdDate":  "2026-01-03T22:02:10.7715964+01:00"
     },
     {
         "key":  "workflow-states.employee-in-progress",
@@ -5157,6 +5591,13 @@
         "english":  "Employee Submitted",
         "category":  "workflow-states",
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
+    },
+    {
+        "key":  "workflow-states.employee-working",
+        "german":  "Mitarbeiter in Bearbeitung",
+        "english":  "Employee Working",
+        "category":  "workflow-states",
+        "createdDate":  "2026-01-03T22:02:10.7559170+01:00"
     },
     {
         "key":  "workflow-states.finalized",
@@ -5208,6 +5649,13 @@
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
     },
     {
+        "key":  "workflow-states.manager-working",
+        "german":  "Manager in Bearbeitung",
+        "english":  "Manager Working",
+        "category":  "workflow-states",
+        "createdDate":  "2026-01-03T22:02:10.7664830+01:00"
+    },
+    {
         "key":  "workflow-states.overdue",
         "german":  "Überfällig",
         "english":  "Overdue",
@@ -5220,5 +5668,152 @@
         "english":  "Submitted",
         "category":  "workflow-states",
         "createdDate":  "2025-12-31T23:09:02.4666031+01:00"
+    },
+    {
+        "key": "messages.viewing-employee-questionnaire-readonly",
+        "german": "Mitarbeiter-Fragebogen im schreibgeschützten Modus anzeigen.",
+        "english": "Viewing employee questionnaire in read-only mode.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-manager-input-required",
+        "german": "Dieser Fragebogen erfordert keine Manager-Eingaben. Sie können die Antworten des Mitarbeiters zu Überwachungszwecken einsehen.",
+        "english": "This questionnaire does not require manager input. You can view the employee's responses for monitoring purposes.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.questionnaire-finalized-locked",
+        "german": "Dieser Fragebogen wurde finalisiert und ist jetzt gesperrt.",
+        "english": "This questionnaire has been finalized and is now locked.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.no-further-changes-allowed",
+        "german": "Keine weiteren Änderungen sind möglich. Sie können die finalen Antworten unten einsehen.",
+        "english": "No further changes can be made. You can review the final responses below.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.awaiting-employee-signoff",
+        "german": "Warten auf Mitarbeiter-Abzeichnung.",
+        "english": "Awaiting employee sign-off.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.review-meeting-completed-waiting-signoff",
+        "german": "Das Überprüfungsgespräch wurde abgeschlossen. Warten auf Abzeichnung des Mitarbeiters vor der Finalisierung.",
+        "english": "The review meeting has been completed. Waiting for the employee to sign off before finalization.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+  {
+    "key": "messages.review-meeting-completed",
+    "german": "Überprüfungsgespräch abgeschlossen.",
+    "english": "Review meeting completed.",
+    "category": "messages",
+    "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+  },
+  {
+    "key": "messages.review-meeting-finished-please-signoff",
+    "german": "Das Überprüfungsgespräch wurde beendet. Bitte zeichnen Sie das Überprüfungsergebnis ab, um fortzufahren.",
+    "english": "The review meeting has been finished. Please sign off on the review outcome to proceed.",
+    "category": "messages",
+    "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+  },
+    {
+        "key": "messages.ready-to-finalize",
+        "german": "Bereit zur Finalisierung.",
+        "english": "Ready to finalize.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.employee-signed-off-can-finalize",
+        "german": "Der Mitarbeiter hat abgezeichnet. Sie können den Fragebogen jetzt finalisieren.",
+        "english": "The employee has signed off. You can now finalize the questionnaire.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.review-signed-off",
+        "german": "Überprüfung abgezeichnet.",
+        "english": "Review signed off.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.waiting-final-confirmation",
+        "german": "Sie haben die Überprüfung abgezeichnet. Warten auf finale Bestätigung zum Abschluss des Fragebogens.",
+        "english": "You have signed off on the review. Waiting for final confirmation to complete the questionnaire.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.review-meeting-in-progress",
+        "german": "Überprüfungsgespräch läuft.",
+        "english": "Review meeting in progress.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.questionnaire-in-review-readonly",
+        "german": "Dieser Fragebogen wird derzeit überprüft. Antworten sind während der Überprüfungsphase vorübergehend schreibgeschützt.",
+        "english": "This questionnaire is currently in review. Responses are temporarily read-only during the review phase.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.questionnaire-submitted",
+        "german": "Fragebogen eingereicht.",
+        "english": "Questionnaire submitted.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.responses-submitted-readonly",
+        "german": "Ihre Antworten wurden eingereicht und sind jetzt schreibgeschützt. Warten auf die nächste Phase des Workflows.",
+        "english": "Your responses have been submitted and are now read-only. Waiting for the next phase of the workflow.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.questionnaire-readonly",
+        "german": "Dieser Fragebogen ist jetzt schreibgeschützt.",
+        "english": "This questionnaire is now read-only.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.review-responses-no-changes",
+        "german": "Sie könen Ihre Antworten unten einsehen, aber keine Änderungen vornehmen.",
+        "english": "You can review your responses below, but cannot make changes.",
+        "category": "messages",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.employee-answer",
+        "german": "Mitarbeiter-Antwort",
+        "english": "Employee's Answer",
+        "category": "labels",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.manager-answer",
+        "german": "Manager-Antwort",
+        "english": "Manager's Answer",
+        "category": "labels",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.section-counter",
+        "german": "Abschnitt",
+        "english": "Section",
+        "category": "sections",
+        "createdDate": "2026-01-04T14:00:00.0000000+01:00"
     }
 ]

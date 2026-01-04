@@ -163,7 +163,7 @@ else
     {
         // Employee can sign off when review is confirmed by manager
         return assignment != null &&
-               assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed;
+               assignment.WorkflowState == WorkflowState.ReviewFinished;
     }
 
     private async Task HandleSignOff(string? comments)

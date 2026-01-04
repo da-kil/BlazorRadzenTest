@@ -14,58 +14,58 @@ public static class WorkflowTransitions
     {
         [WorkflowState.Assigned] = new List<StateTransition>
         {
-            new(WorkflowState.EmployeeInProgress, "Employee starts filling sections"),
-            new(WorkflowState.ManagerInProgress, "Manager starts filling sections"),
-            new(WorkflowState.BothInProgress, "Both start filling sections")
+            new(WorkflowState.EmployeeInProgress, "transitions.employee-starts-filling"),
+            new(WorkflowState.ManagerInProgress, "transitions.manager-starts-filling"),
+            new(WorkflowState.BothInProgress, "transitions.both-start-filling")
         },
 
         [WorkflowState.EmployeeInProgress] = new List<StateTransition>
         {
-            new(WorkflowState.BothInProgress, "Manager starts filling sections"),
-            new(WorkflowState.EmployeeSubmitted, "Employee submits questionnaire")
+            new(WorkflowState.BothInProgress, "transitions.manager-joins-filling"),
+            new(WorkflowState.EmployeeSubmitted, "transitions.employee-submits")
         },
 
         [WorkflowState.ManagerInProgress] = new List<StateTransition>
         {
-            new(WorkflowState.BothInProgress, "Employee starts filling sections"),
-            new(WorkflowState.ManagerSubmitted, "Manager submits questionnaire")
+            new(WorkflowState.BothInProgress, "transitions.employee-joins-filling"),
+            new(WorkflowState.ManagerSubmitted, "transitions.manager-submits")
         },
 
         [WorkflowState.BothInProgress] = new List<StateTransition>
         {
-            new(WorkflowState.EmployeeSubmitted, "Employee submits first"),
-            new(WorkflowState.ManagerSubmitted, "Manager submits first")
+            new(WorkflowState.EmployeeSubmitted, "transitions.employee-submits-first"),
+            new(WorkflowState.ManagerSubmitted, "transitions.manager-submits-first")
         },
 
         [WorkflowState.EmployeeSubmitted] = new List<StateTransition>
         {
-            new(WorkflowState.BothSubmitted, "Manager submits questionnaire"),
-            new(WorkflowState.Finalized, "Auto-finalize (no manager review required)")
+            new(WorkflowState.BothSubmitted, "transitions.manager-completes-submission"),
+            new(WorkflowState.Finalized, "transitions.auto-finalize-no-review")
         },
 
         [WorkflowState.ManagerSubmitted] = new List<StateTransition>
         {
-            new(WorkflowState.BothSubmitted, "Employee submits questionnaire")
+            new(WorkflowState.BothSubmitted, "transitions.employee-completes-submission")
         },
 
         [WorkflowState.BothSubmitted] = new List<StateTransition>
         {
-            new(WorkflowState.InReview, "Manager initiates review meeting")
+            new(WorkflowState.InReview, "transitions.manager-initiates-review")
         },
 
         [WorkflowState.InReview] = new List<StateTransition>
         {
-            new(WorkflowState.ManagerReviewConfirmed, "Manager finishes review meeting")
+            new(WorkflowState.ReviewFinished, "transitions.manager-finishes-review")
         },
 
-        [WorkflowState.ManagerReviewConfirmed] = new List<StateTransition>
+        [WorkflowState.ReviewFinished] = new List<StateTransition>
         {
-            new(WorkflowState.EmployeeReviewConfirmed, "Employee confirms review outcome")
+            new(WorkflowState.EmployeeReviewConfirmed, "transitions.employee-confirms-review")
         },
 
         [WorkflowState.EmployeeReviewConfirmed] = new List<StateTransition>
         {
-            new(WorkflowState.Finalized, "Manager finalizes questionnaire")
+            new(WorkflowState.Finalized, "transitions.manager-finalizes")
         },
 
         [WorkflowState.Finalized] = new List<StateTransition>() // Terminal state - no transitions
@@ -81,35 +81,38 @@ public static class WorkflowTransitions
         [WorkflowState.EmployeeSubmitted] = new List<ReopenTransition>
         {
             new(WorkflowState.EmployeeInProgress,
-                "Reopen employee questionnaire for corrections",
+                "reopen.employee-questionnaire-corrections",
                 new[] { "Admin", "HR", "TeamLead" })
         },
 
         [WorkflowState.ManagerSubmitted] = new List<ReopenTransition>
         {
             new(WorkflowState.ManagerInProgress,
-                "Reopen manager questionnaire for corrections",
+                "reopen.manager-questionnaire-corrections",
                 new[] { "Admin", "HR", "TeamLead" })
         },
 
         [WorkflowState.BothSubmitted] = new List<ReopenTransition>
         {
             new(WorkflowState.BothInProgress,
-                "Reopen both questionnaires for corrections",
+                "reopen.both-questionnaires-corrections",
                 new[] { "Admin", "HR", "TeamLead" })
         },
 
-        [WorkflowState.ManagerReviewConfirmed] = new List<ReopenTransition>
+        [WorkflowState.ReviewFinished] = new List<ReopenTransition>
         {
             new(WorkflowState.InReview,
-                "Reopen review meeting for manager revisions",
+                "reopen.review-meeting-manager-revisions",
                 new[] { "Admin", "HR", "TeamLead" }) // TeamLead can reopen review states for their team
         },
 
         [WorkflowState.EmployeeReviewConfirmed] = new List<ReopenTransition>
         {
+            new(WorkflowState.ReviewFinished,
+                "reopen.return-to-employee-signoff",
+                new[] { "Admin", "HR", "TeamLead" }),
             new(WorkflowState.InReview,
-                "Reopen review meeting after employee confirmation",
+                "reopen.review-meeting-after-confirmation",
                 new[] { "Admin", "HR", "TeamLead" }) // TeamLead can reopen review states for their team
         }
 

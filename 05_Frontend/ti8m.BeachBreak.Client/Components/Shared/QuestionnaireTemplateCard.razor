@@ -2,6 +2,8 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 
 <RadzenCard Class="questionnaire-template-card mb-3">
     <!-- Questionnaire Template Header with clear visual distinction -->
@@ -116,7 +118,7 @@
                                 </RadzenText>
                             }
                         </div>
-                        <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
+                        <RadzenBadge Text="@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))"
                                     BadgeStyle="@GetStatusBadgeStyle(assignment.WorkflowState)"
                                     Class="ms-2" />
                     </div>
@@ -214,7 +216,7 @@
             WorkflowState.Assigned => BadgeStyle.Secondary,
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => BadgeStyle.Info,
             WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => BadgeStyle.Primary,
-            WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => BadgeStyle.Warning,
+            WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ReviewFinished => BadgeStyle.Warning,
             WorkflowState.Finalized => BadgeStyle.Success,
             _ => BadgeStyle.Light
         };

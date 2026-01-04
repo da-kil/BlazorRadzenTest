@@ -226,7 +226,7 @@
             WorkflowState.ManagerSubmitted => "verified",
             WorkflowState.BothSubmitted => "done_all",
             WorkflowState.InReview => "rate_review",
-            WorkflowState.ManagerReviewConfirmed => "event_available",
+            WorkflowState.ReviewFinished => "event_available",
             WorkflowState.EmployeeReviewConfirmed => "verified",
             WorkflowState.Finalized => "lock",
             _ => "assignment"
@@ -247,7 +247,7 @@
             WorkflowState.ManagerSubmitted => "Manager Submitted",
             WorkflowState.BothSubmitted => "Both Submitted",
             WorkflowState.InReview => "Review Meeting in Progress",
-            WorkflowState.ManagerReviewConfirmed => "Awaiting Employee Sign-Off",
+            WorkflowState.ReviewFinished => "Review Meeting Finished",
             WorkflowState.EmployeeReviewConfirmed => "Ready to Finalize",
             WorkflowState.Finalized => "Finalized & Locked",
             _ => "Unknown Status"

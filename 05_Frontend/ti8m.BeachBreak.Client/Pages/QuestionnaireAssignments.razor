@@ -373,7 +373,7 @@
 
                                             <RadzenDataGridColumn Property="@nameof(QuestionnaireAssignment.WorkflowState)" Title="@T("columns.status")" Width="180px">
                                                 <Template Context="assignment">
-                                                    <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
+                                                    <RadzenBadge Text="@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))"
                                                                  BadgeStyle="BadgeStyle.Light"
                                                                  Style="@($"font-size: 0.75rem; background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)}; color: white;")" />
                                                 </Template>
@@ -501,7 +501,7 @@
             new(T("workflow-states.both-submitted"), WorkflowState.BothSubmitted),
             new(T("workflow-states.in-review"), WorkflowState.InReview),
             new(T("workflow-states.employee-review-confirmed"), WorkflowState.EmployeeReviewConfirmed),
-            new(T("workflow-states.manager-review-confirmed"), WorkflowState.ManagerReviewConfirmed),
+            new(T("workflow-states.manager-review-confirmed"), WorkflowState.ReviewFinished),
             new(T("workflow-states.finalized"), WorkflowState.Finalized)
         };
     }
