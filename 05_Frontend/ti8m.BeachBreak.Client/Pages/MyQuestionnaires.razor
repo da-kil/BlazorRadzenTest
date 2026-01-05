@@ -147,7 +147,7 @@
 			or WorkflowState.BothSubmitted
 			or WorkflowState.InReview
 			or WorkflowState.EmployeeReviewConfirmed
-			or WorkflowState.ManagerReviewConfirmed).ToList();
+			or WorkflowState.ReviewFinished).ToList();
 
 		// Completed: ONLY finalized questionnaires
 		completedQuestionnaires = allAssignments.Where(a =>

@@ -115,8 +115,8 @@ else
                 {
                     <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                         <RadzenText TextStyle="TextStyle.Body1">
-                            <strong>Viewing employee questionnaire in read-only mode.</strong>
-                            <span> This questionnaire does not require manager input. You can view the employee's responses for monitoring purposes.</span>
+                            <strong>@T("messages.viewing-employee-questionnaire-readonly")</strong>
+                            <span> @T("messages.no-manager-input-required")</span>
                         </RadzenText>
                     </RadzenAlert>
                 }
@@ -127,24 +127,24 @@ else
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body1">
-                                <strong>This questionnaire has been finalized and is now locked.</strong>
-                                <span> No further changes can be made. You can review the final responses below.</span>
+                                <strong>@T("messages.questionnaire-finalized-locked")</strong>
+                                <span> @T("messages.no-further-changes-allowed")</span>
                             </RadzenText>
                         </RadzenAlert>
                     }
-                    else if (assignment?.WorkflowState == WorkflowState.ManagerReviewConfirmed)
+                    else if (assignment?.WorkflowState == WorkflowState.ReviewFinished)
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body1">
                                 @if (isManager)
                                 {
-                                    <strong>Awaiting employee sign-off.</strong>
-                                    <span> You have confirmed the review. Waiting for the employee to sign off before finalization.</span>
+                                    <strong>@T("messages.awaiting-employee-signoff")</strong>
+                                    <span> @T("messages.review-meeting-completed-waiting-signoff")</span>
                                 }
                                 else
                                 {
-                                    <strong>Manager review confirmed.</strong>
-                                    <span> The manager has confirmed the review. You can now sign off on the review outcome.</span>
+                                    <strong>@T("messages.review-meeting-completed")</strong>
+                                    <span> @T("messages.review-meeting-finished-please-signoff")</span>
                                 }
                             </RadzenText>
                         </RadzenAlert>
@@ -155,13 +155,13 @@ else
                             <RadzenText TextStyle="TextStyle.Body1">
                                 @if (isManager)
                                 {
-                                    <strong>Ready to finalize.</strong>
-                                    <span> The employee has signed off. You can now finalize the questionnaire.</span>
+                                    <strong>@T("messages.ready-to-finalize")</strong>
+                                    <span> @T("messages.employee-signed-off-can-finalize")</span>
                                 }
                                 else
                                 {
-                                    <strong>Review signed off.</strong>
-                                    <span> You have signed off on the review. Waiting for final confirmation to complete the questionnaire.</span>
+                                    <strong>@T("messages.review-signed-off")</strong>
+                                    <span> @T("messages.waiting-final-confirmation")</span>
                                 }
                             </RadzenText>
                         </RadzenAlert>
@@ -170,8 +170,8 @@ else
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body1">
-                                <strong>Review meeting in progress.</strong>
-                                <span> This questionnaire is currently in review. Responses are temporarily read-only during the review phase.</span>
+                                <strong>@T("messages.review-meeting-in-progress")</strong>
+                                <span> @T("messages.questionnaire-in-review-readonly")</span>
                             </RadzenText>
                         </RadzenAlert>
                     }
@@ -181,8 +181,8 @@ else
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body1">
-                                <strong>Questionnaire submitted.</strong>
-                                <span> Your responses have been submitted and are now read-only. Waiting for the next phase of the workflow.</span>
+                                <strong>@T("messages.questionnaire-submitted")</strong>
+                                <span> @T("messages.responses-submitted-readonly")</span>
                             </RadzenText>
                         </RadzenAlert>
                     }
@@ -190,8 +190,8 @@ else
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                             <RadzenText TextStyle="TextStyle.Body1">
-                                <strong>This questionnaire is now read-only.</strong>
-                                <span> You can review your responses below, but cannot make changes.</span>
+                                <strong>@T("messages.questionnaire-readonly")</strong>
+                                <span> @T("messages.review-responses-no-changes")</span>
                             </RadzenText>
                         </RadzenAlert>
                     }
@@ -201,7 +201,7 @@ else
             @* Show review changes summary after review meeting finishes *@
             @if (assignment != null && assignmentId.HasValue && response != null &&
                  template != null && template.RequiresManagerReview &&
-                 (assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed ||
+                 (assignment.WorkflowState == WorkflowState.ReviewFinished ||
                   assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
                   assignment.WorkflowState == WorkflowState.Finalized))
             {
@@ -210,7 +210,7 @@ else
 
             <div class="section-counter mb-4 mt-3">
                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted text-end">
-                    Section @(currentSectionIndex + 1) of @visibleSections.Count
+                    @T("sections.section-counter") @(currentSectionIndex + 1) of @visibleSections.Count
                 </RadzenText>
             </div>
 
@@ -240,7 +240,7 @@ else
             @* Review Comments Display - Below Questionnaire *@
             @* Show after review meeting finishes so employee can see manager's summary before signing off *@
             @if (assignment != null && template != null && template.RequiresManagerReview &&
-                 (assignment.WorkflowState == WorkflowState.ManagerReviewConfirmed ||
+                 (assignment.WorkflowState == WorkflowState.ReviewFinished ||
                   assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
                   assignment.WorkflowState == WorkflowState.Finalized))
             {
@@ -335,7 +335,7 @@ else
         var isPhase2ReadOnly = assignment.WorkflowState == WorkflowState.Finalized;
 
         // After review confirmation states (waiting for finalization)
-        var isPostReviewConfirmation = assignment.WorkflowState is WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed;
+        var isPostReviewConfirmation = assignment.WorkflowState is WorkflowState.EmployeeReviewConfirmed or WorkflowState.ReviewFinished;
 
         // Managers/HR viewing employee-only questionnaires should always see read-only
         if (isManager && template != null && !template.RequiresManagerReview)
@@ -489,7 +489,7 @@ else
         // After review meeting finishes, EVERYONE sees ALL sections (employee, manager, and both)
         // This ensures transparency - both parties can see what was discussed and agreed upon
         var isPostReviewState = assignment != null &&
-            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+            (assignment.WorkflowState is WorkflowState.ReviewFinished or
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
 
@@ -508,7 +508,7 @@ else
         // - Employees: See Employee + Both sections (backend filters responses in Both sections to only Employee responses)
         // - Managers: See Manager + Both sections (backend filters responses in Both sections to only Manager responses)
         // - InReview state: Manager sees ALL sections, Employee sees Employee + Both sections
-        // - ManagerReviewConfirmed onwards: Everyone sees ALL sections (full transparency)
+        // - ReviewFinished onwards: Everyone sees ALL sections (full transparency)
         visibleSections = template.Sections
             .Where(s =>
             {
@@ -522,8 +522,8 @@ else
                     return false;
                 }
 
-                // From ManagerReviewConfirmed onwards: Everyone sees ALL sections
-                if (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+                // From ReviewFinished onwards: Everyone sees ALL sections
+                if (assignment.WorkflowState is WorkflowState.ReviewFinished or
                                                 WorkflowState.EmployeeReviewConfirmed or
                                                 WorkflowState.Finalized)
                 {
@@ -636,7 +636,7 @@ else
             var isPostReviewState = assignment != null &&
                 (assignment.WorkflowState is WorkflowState.BothSubmitted or
                                              WorkflowState.InReview or
-                                             WorkflowState.ManagerReviewConfirmed or
+                                             WorkflowState.ReviewFinished or
                                              WorkflowState.EmployeeReviewConfirmed or
                                              WorkflowState.Finalized);
 
@@ -739,7 +739,7 @@ else
     {
         // Check if we're in post-review state and sectionData is "Both"
         var isPostReviewState = assignment != null &&
-            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+            (assignment.WorkflowState is WorkflowState.ReviewFinished or
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized);
 
@@ -778,44 +778,55 @@ else
             var employeeResponse = GetQuestionResponseForRole(sectionData.Id, "Employee");
             var managerResponse = GetQuestionResponseForRole(sectionData.Id, "Manager");
 
-            return @<div>
-                @* Employee's Answer *@
-                <div class="role-response-section mb-4">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-success mb-2">
-                        <RadzenIcon Icon="person" Class="me-1" />
-                        EMPLOYEE'S ANSWER
-                    </RadzenText>
-                    <div class="ps-3 border-start border-success border-3">
-                        <OptimizedQuestionRenderer
-                            Section="@sectionData"
-                            Response="@employeeResponse"
-                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-                            IsReadOnly="true"
-                            HideHeader="true"
-                            AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="ApplicationRole.Employee"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
-                            SectionData="@currentSectionData" />
+            return @<div class="question-comparison-card">
+                <!-- Side-by-side view within the section card -->
+                <div class="side-by-side-view">
+                    <!-- Employee Answer -->
+                    <div class="answer-column employee">
+                        <div class="answer-header">
+                            <span class="answer-label">
+                                <RadzenIcon Icon="person" Style="font-size: 1rem;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-medium ms-1">
+                                    @T("labels.employee-answer")
+                                </RadzenText>
+                            </span>
+                        </div>
+                        <div class="answer-content">
+                            <OptimizedQuestionRenderer
+                                Section="@sectionData"
+                                Response="@employeeResponse"
+                                OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                                IsReadOnly="true"
+                                HideHeader="true"
+                                AssignmentId="@(assignmentId ?? Guid.Empty)"
+                                CurrentUserRole="ApplicationRole.Employee"
+                                AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.EmployeeInProgress)"
+                                SectionData="@currentSectionData" />
+                        </div>
                     </div>
-                </div>
 
-                @* Manager's Answer *@
-                <div class="role-response-section">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold text-info mb-2">
-                        <RadzenIcon Icon="manage_accounts" Class="me-1" />
-                        MANAGER'S ANSWER
-                    </RadzenText>
-                    <div class="ps-3 border-start border-info border-3">
-                        <OptimizedQuestionRenderer
-                            Section="@sectionData"
-                            Response="@managerResponse"
-                            OnResponseChanged="@HandleQuestionResponseChangedDynamic"
-                            IsReadOnly="true"
-                            HideHeader="true"
-                            AssignmentId="@(assignmentId ?? Guid.Empty)"
-                            CurrentUserRole="@ParseApplicationRole(managerContextRole)"
-                            AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)"
-                            SectionData="@currentSectionData" />
+                    <!-- Manager Answer -->
+                    <div class="answer-column manager">
+                        <div class="answer-header">
+                            <span class="answer-label">
+                                <RadzenIcon Icon="manage_accounts" Style="font-size: 1rem;" />
+                                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-medium ms-1">
+                                    @T("labels.manager-answer")
+                                </RadzenText>
+                            </span>
+                        </div>
+                        <div class="answer-content">
+                            <OptimizedQuestionRenderer
+                                Section="@sectionData"
+                                Response="@managerResponse"
+                                OnResponseChanged="@HandleQuestionResponseChangedDynamic"
+                                IsReadOnly="true"
+                                HideHeader="true"
+                                AssignmentId="@(assignmentId ?? Guid.Empty)"
+                                CurrentUserRole="@ParseApplicationRole(managerContextRole)"
+                                AssignmentWorkflowState="@(assignment?.WorkflowState ?? WorkflowState.ManagerInProgress)"
+                                SectionData="@currentSectionData" />
+                        </div>
                     </div>
                 </div>
             </div>;
@@ -897,7 +908,7 @@ else
         // Employees in post-review states also need to view responses based on sectionData's CompletionRole
         // After review meeting or when viewing employee-only questionnaires
         var isPostReviewState = assignment != null &&
-            (assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+            (assignment.WorkflowState is WorkflowState.ReviewFinished or
                                           WorkflowState.EmployeeReviewConfirmed or
                                           WorkflowState.Finalized);
 
@@ -1455,9 +1466,9 @@ else
                     var shouldNavigateBack = assignment.WorkflowState switch
                     {
                         // After manager finishes review meeting, take them back to team overview
-                        WorkflowState.ManagerReviewConfirmed when previousState == WorkflowState.InReview => true,
+                        WorkflowState.ReviewFinished when previousState == WorkflowState.InReview => true,
                         // After employee signs off, take them back to overview
-                        WorkflowState.EmployeeReviewConfirmed when previousState == WorkflowState.ManagerReviewConfirmed => true,
+                        WorkflowState.EmployeeReviewConfirmed when previousState == WorkflowState.ReviewFinished => true,
                         // After manager finalizes, take them back to overview
                         WorkflowState.Finalized when previousState == WorkflowState.EmployeeReviewConfirmed => true,
                         // Don't navigate for other state transitions (keep them on the questionnaire)

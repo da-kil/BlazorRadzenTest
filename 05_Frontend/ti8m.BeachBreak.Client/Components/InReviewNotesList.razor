@@ -39,18 +39,21 @@
                                 }
                             </RadzenStack>
 
-                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                                <RadzenButton Icon="edit"
-                                            ButtonStyle="ButtonStyle.Light"
-                                            Size="ButtonSize.ExtraSmall"
-                                            Click="@(() => EditNote(note))"
-                                            title="@T("buttons.edit-note")" />
-                                <RadzenButton Icon="delete"
-                                            ButtonStyle="ButtonStyle.Danger"
-                                            Size="ButtonSize.ExtraSmall"
-                                            Click="@(() => DeleteNote(note))"
-                                            title="@T("buttons.delete-note")" />
-                            </RadzenStack>
+                            @if (!IsReadOnly)
+                            {
+                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                                    <RadzenButton Icon="edit"
+                                                ButtonStyle="ButtonStyle.Light"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => EditNote(note))"
+                                                title="@T("buttons.edit-note")" />
+                                    <RadzenButton Icon="delete"
+                                                ButtonStyle="ButtonStyle.Danger"
+                                                Size="ButtonSize.ExtraSmall"
+                                                Click="@(() => DeleteNote(note))"
+                                                title="@T("buttons.delete-note")" />
+                                </RadzenStack>
+                            }
                         </RadzenStack>
                     </div>
 
@@ -72,6 +75,7 @@
     [Parameter] public EventCallback<InReviewNote> OnNoteUpdated { get; set; }
     [Parameter] public EventCallback<Guid> OnNoteDeleted { get; set; }
     [Parameter] public Models.QuestionSection? CurrentSection { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; } = false;
 
     private BadgeStyle GetNoteBadgeStyle(InReviewNote note)
     {

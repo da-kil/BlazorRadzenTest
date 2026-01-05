@@ -485,7 +485,7 @@
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "hourglass_top",
             WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "send",
             WorkflowState.InReview => "rate_review",
-            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed => "check_circle_outline",
+            WorkflowState.EmployeeReviewConfirmed or WorkflowState.ReviewFinished => "check_circle_outline",
             WorkflowState.Finalized => "check_circle",
             _ => "assignment"
         };

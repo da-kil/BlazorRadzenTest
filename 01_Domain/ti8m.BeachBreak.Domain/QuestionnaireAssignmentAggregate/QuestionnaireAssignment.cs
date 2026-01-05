@@ -429,13 +429,33 @@ public class QuestionnaireAssignment : AggregateRoot
         ));
     }
 
+    public void SignOffReviewOutcome(Guid employeeId, string? signOffComments)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot sign-off review - questionnaire is finalized");
+
+        if (WorkflowState != WorkflowState.ReviewFinished)
+            throw new InvalidOperationException("Employee sign-off only allowed in ReviewFinished state");
+
+        // Only the assigned employee can sign-off their own review
+        if (employeeId != EmployeeId)
+            throw new InvalidOperationException("Only the assigned employee can sign-off the review outcome");
+
+        RaiseEvent(new EmployeeSignedOffReviewOutcome(
+            Id,
+            DateTime.UtcNow,
+            employeeId,
+            signOffComments
+        ));
+    }
+
     public void ConfirmReviewOutcomeAsEmployee(Guid confirmedByEmployeeId, string? comments)
     {
         if (IsLocked)
             throw new InvalidOperationException("Cannot confirm review - questionnaire is finalized");
 
-        if (WorkflowState != WorkflowState.ManagerReviewConfirmed)
-            throw new InvalidOperationException("Manager must finish review meeting before employee confirmation");
+        if (WorkflowState != WorkflowState.ReviewFinished)
+            throw new InvalidOperationException("Employee can only confirm review outcome in ReviewFinished state");
 
         // Only the assigned employee can confirm their own review
         if (confirmedByEmployeeId != EmployeeId)
@@ -688,10 +708,18 @@ public class QuestionnaireAssignment : AggregateRoot
 
     public void Apply(ManagerReviewMeetingFinished @event)
     {
-        WorkflowState = WorkflowState.ManagerReviewConfirmed;
+        WorkflowState = WorkflowState.ReviewFinished;
         ManagerReviewFinishedDate = @event.FinishedDate;
         ManagerReviewFinishedByEmployeeId = @event.FinishedByEmployeeId;
         ManagerReviewSummary = @event.ReviewSummary;
+    }
+
+    public void Apply(EmployeeSignedOffReviewOutcome @event)
+    {
+        WorkflowState = WorkflowState.EmployeeReviewConfirmed;
+        EmployeeReviewConfirmedDate = @event.SignedOffDate;
+        EmployeeReviewConfirmedByEmployeeId = @event.SignedOffByEmployeeId;
+        EmployeeReviewComments = @event.SignOffComments;
     }
 
     public void Apply(EmployeeConfirmedReviewOutcome @event)

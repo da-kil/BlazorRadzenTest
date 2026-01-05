@@ -20,8 +20,8 @@ public enum WorkflowState
     InReview = 7,
 
     // Post-review confirmation
-    EmployeeReviewConfirmed = 8,
-    ManagerReviewConfirmed = 9,
+    ReviewFinished = 8,
+    EmployeeReviewConfirmed = 9,
 
     // Final state (Phase 2 Read-Only)
     Finalized = 10

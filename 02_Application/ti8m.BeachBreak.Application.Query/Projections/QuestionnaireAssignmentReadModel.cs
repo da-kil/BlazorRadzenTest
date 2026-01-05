@@ -178,7 +178,7 @@ public class QuestionnaireAssignmentReadModel
 
     public void Apply(ManagerReviewMeetingFinished @event)
     {
-        WorkflowState = WorkflowState.ManagerReviewConfirmed;
+        WorkflowState = WorkflowState.ReviewFinished;
         ManagerReviewFinishedDate = @event.FinishedDate;
         ManagerReviewFinishedByEmployeeId = @event.FinishedByEmployeeId;
         ManagerReviewSummary = @event.ReviewSummary;

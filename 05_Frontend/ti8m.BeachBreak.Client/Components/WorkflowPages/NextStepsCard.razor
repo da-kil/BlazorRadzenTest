@@ -1,0 +1,163 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+
+<div class="next-steps-card">
+    <RadzenCard Class="h-100">
+        <RadzenStack Gap="1rem">
+            <!-- Header -->
+            <div class="card-header">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="info" Style="color: var(--info-color); font-size: 1.25rem;" />
+                    <RadzenText TextStyle="TextStyle.H6" Class="mb-0">
+                        @T("dialogs.what-happens-next")
+                    </RadzenText>
+                </RadzenStack>
+            </div>
+
+            <!-- Description -->
+            <div class="next-steps-description">
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+                    @T("dialogs.after-finishing-review-meeting")
+                </RadzenText>
+            </div>
+
+            <!-- Steps List -->
+            <div class="steps-list">
+                <RadzenStack Gap="0.75rem">
+                    <!-- Step 1: Sections become readonly -->
+                    <div class="step-item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.75rem">
+                            <div class="step-icon">
+                                <RadzenIcon Icon="lock" Style="color: var(--warning-color); font-size: 1.125rem;" />
+                            </div>
+                            <div class="step-content">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-1">
+                                    @T("dialogs.sections-become-readonly")
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    @T("messages.sections-readonly-explanation")
+                                </RadzenText>
+                            </div>
+                        </RadzenStack>
+                    </div>
+
+                    <!-- Step 2: Employee notified -->
+                    <div class="step-item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.75rem">
+                            <div class="step-icon">
+                                <RadzenIcon Icon="notifications" Style="color: var(--primary-color); font-size: 1.125rem;" />
+                            </div>
+                            <div class="step-content">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-1">
+                                    @T("dialogs.employee-notified-confirm")
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    @T("messages.employee-notification-explanation")
+                                </RadzenText>
+                            </div>
+                        </RadzenStack>
+                    </div>
+
+                    <!-- Step 3: Finalization available -->
+                    <div class="step-item">
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Start" Gap="0.75rem">
+                            <div class="step-icon">
+                                <RadzenIcon Icon="check_circle" Style="color: var(--success-color); font-size: 1.125rem;" />
+                            </div>
+                            <div class="step-content">
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-1">
+                                    @T("dialogs.able-finalize-after-confirmation")
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                    @T("messages.finalization-explanation")
+                                </RadzenText>
+                            </div>
+                        </RadzenStack>
+                    </div>
+                </RadzenStack>
+            </div>
+
+            <!-- Workflow State Progression -->
+            <div class="workflow-progression">
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-2">
+                    @T("labels.workflow-progression"):
+                </RadzenText>
+                <div class="workflow-steps">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                        <RadzenBadge BadgeStyle="BadgeStyle.Warning" Text="@T("workflow-states.InReview")" />
+                        <RadzenIcon Icon="arrow_forward" Style="color: var(--muted-color);" />
+                        <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@T("workflow-states.ReviewFinished")" />
+                        <RadzenIcon Icon="arrow_forward" Style="color: var(--muted-color);" />
+                        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("workflow-states.EmployeeReviewConfirmed")" Variant="Variant.Text" />
+                        <RadzenIcon Icon="arrow_forward" Style="color: var(--muted-color);" />
+                        <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("workflow-states.finalized")" Variant="Variant.Text" />
+                    </RadzenStack>
+                </div>
+            </div>
+
+            <!-- Important Notice -->
+            <div class="important-notice">
+                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>@T("labels.important"):</strong>
+                        <span> @T("messages.review-completion-impact")</span>
+                    </RadzenText>
+                </RadzenAlert>
+            </div>
+        </RadzenStack>
+    </RadzenCard>
+</div>
+
+<style>
+.next-steps-card {
+    margin-bottom: 1rem;
+}
+
+.step-item {
+    padding: 0.75rem;
+    background-color: var(--background-secondary);
+    border-radius: var(--border-radius);
+    border-left: 4px solid var(--primary-color);
+}
+
+.step-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    border-radius: 50%;
+}
+
+.step-content {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.workflow-progression {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.workflow-steps {
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+
+.important-notice {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+/* Make workflow progression responsive */
+.workflow-steps {
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+}
+</style>

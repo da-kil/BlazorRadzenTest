@@ -96,11 +96,11 @@
     --text-white-75: color-mix(in srgb, var(--rz-text-contrast-color) 75%, transparent);
     --text-white-50: color-mix(in srgb, var(--rz-text-contrast-color) 50%, transparent);
 
-    /* Background Colors - Using Radzen Base Palette */
+    /* Background Colors - Theme-aware using Radzen variables */
     --background-color: var(--rz-body-background-color);
-    --background-light: var(--rz-base-50);
-    --background-muted: var(--rz-base-100);
-    --background-dark: var(--rz-base-200);
+    --background-light: var(--rz-panel-background-color);
+    --background-muted: var(--rz-panel-background-color);
+    --background-dark: var(--rz-panel-background-color);
 
     /* Border Colors - Using Radzen Base Palette */
     --border-color: var(--rz-base-300);
@@ -114,8 +114,8 @@
     --focus-ring-offset: 2px;
     --focus-ring-width: 3px;
     --focus-border: var(--rz-primary);
-    --hover-background: var(--rz-base-50);
-    --active-background: var(--rz-base-100);
+    --hover-background: var(--rz-panel-background-color);
+    --active-background: var(--rz-panel-background-color);
 
     /* Shadows - Theme-aware using Radzen shadow system */
     --shadow-color: color-mix(in srgb, var(--rz-base-1000) 10%, transparent);

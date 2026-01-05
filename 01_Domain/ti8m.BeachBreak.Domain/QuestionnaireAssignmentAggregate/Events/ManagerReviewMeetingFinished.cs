@@ -4,7 +4,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 
 /// <summary>
 /// Domain event raised when a manager finishes the review meeting.
-/// Transitions from InReview to ManagerReviewConfirmed state.
+/// Transitions from InReview to ReviewFinished state.
 /// Employee must then confirm the review outcome.
 /// </summary>
 public record ManagerReviewMeetingFinished(

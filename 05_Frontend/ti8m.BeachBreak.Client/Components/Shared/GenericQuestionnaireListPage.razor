@@ -328,7 +328,7 @@
                     @if (assignment.WorkflowState != WorkflowState.Assigned)
                     {
                         <div class="mt-2">
-                            <RadzenBadge Text="@WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState)"
+                            <RadzenBadge Text="@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))"
                                         BadgeStyle="BadgeStyle.Light"
                                         Class="questionnaire-card-workflow-badge"
                                         Style="@($"background-color: {WorkflowStateHelper.GetStateColor(assignment.WorkflowState)};")" />
@@ -1455,10 +1455,10 @@
 
         // For employees: questionnaire is "completed" (read-only VIEW button) when:
         // - Employee has submitted (EmployeeSubmitted, BothSubmitted)
-        // - In review phase (InReview, EmployeeReviewConfirmed, ManagerReviewConfirmed)
+        // - In review phase (InReview, EmployeeReviewConfirmed, ReviewFinished)
         // - Finalized
         return assignment.WorkflowState is WorkflowState.EmployeeSubmitted or WorkflowState.BothSubmitted
-            or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ManagerReviewConfirmed
+            or WorkflowState.InReview or WorkflowState.EmployeeReviewConfirmed or WorkflowState.ReviewFinished
             or WorkflowState.Finalized;
     }
 
@@ -1718,7 +1718,7 @@
             or WorkflowState.BothSubmitted
             or WorkflowState.InReview
             or WorkflowState.EmployeeReviewConfirmed
-            or WorkflowState.ManagerReviewConfirmed);
+            or WorkflowState.ReviewFinished);
 
         public int CompletedCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Finalized);
 

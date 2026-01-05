@@ -1,0 +1,134 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Extensions
+@inherits OptimizedTranslatableComponentBase
+
+<div class="review-outcome-card">
+    <RadzenStack Gap="1rem">
+        <!-- Header -->
+        <div class="card-header">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-0">
+                @T("sections.review-outcome")
+            </RadzenText>
+        </div>
+
+        <!-- Questionnaire Information -->
+        <div class="questionnaire-info">
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                @Template.GetLocalizedNameWithFallback(CurrentLanguage)
+            </RadzenText>
+
+            @if (!string.IsNullOrWhiteSpace(Template.GetLocalizedDescriptionWithFallback(CurrentLanguage)))
+            {
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+                    @Template.GetLocalizedDescriptionWithFallback(CurrentLanguage)
+                </RadzenText>
+            }
+
+            <!-- Assignment Details -->
+            <div class="assignment-details">
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="6">
+                        <div class="detail-item">
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">
+                                    @T("labels.manager")
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
+                                    @(Assignment.ManagerReviewFinishedByEmployeeName ?? T("labels.unknown-manager"))
+                                </RadzenText>
+                            </div>
+                        </div>
+                    </RadzenColumn>
+                    <RadzenColumn Size="6">
+                        <div class="detail-item">
+                            <div>
+                                <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">
+                                    @T("labels.review-completed-date")
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
+                                    @(Assignment.ManagerReviewFinishedDate?.ToString("MMM dd, yyyy") ?? T("labels.not-available"))
+                                </RadzenText>
+                            </div>
+                        </div>
+                    </RadzenColumn>
+                </RadzenRow>
+            </div>
+        </div>
+
+        <!-- Manager's Review Summary -->
+        @if (!string.IsNullOrWhiteSpace(Assignment.ManagerReviewSummary))
+        {
+            <div class="manager-review-summary">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                    @T("sections.managers-review-summary")
+                </RadzenText>
+                <div class="summary-content">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        @Assignment.ManagerReviewSummary
+                    </RadzenText>
+                </div>
+            </div>
+        }
+
+        <!-- Review Status Information -->
+        <div class="review-status">
+            <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    <strong>@T("labels.review-completed"):</strong>
+                    <span> @T("messages.manager-has-completed-review")</span>
+                </RadzenText>
+            </RadzenAlert>
+        </div>
+
+        <!-- Process Notes -->
+        @if (Assignment.InReviewNotes.Any())
+        {
+            <div class="discussion-notes">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                    @T("sections.discussion-notes")
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@Assignment.InReviewNotes.Count.ToString()" Class="ms-2" />
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                    @T("messages.notes-from-review-meeting")
+                </RadzenText>
+                <InReviewNotesList Notes="@Assignment.InReviewNotes"
+                                 AssignmentId="@Assignment.Id"
+                                 CurrentSection="null"
+                                 IsReadOnly="true" />
+            </div>
+        }
+
+    </RadzenStack>
+</div>
+
+<style>
+.review-outcome-card {
+    margin-bottom: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+}
+
+.summary-content {
+    background-color: var(--rz-panel-background-color);
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-border-color);
+    padding: 1rem;
+}
+
+.discussion-notes {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+}
+</style>
+
+@code {
+    [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
+    [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
+}

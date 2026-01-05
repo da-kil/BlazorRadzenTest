@@ -4,8 +4,8 @@
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Models.Dto
-@using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Questions
+@using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Layout
 @using Microsoft.AspNetCore.Components.Authorization
 @using ti8m.BeachBreak.Client.Extensions
@@ -18,6 +18,7 @@
 @inject DialogService DialogService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IAuthService AuthService
+@inject NavigationManager NavigationManager
 
 
 @if (isLoading)
@@ -65,10 +66,10 @@ else
                 }
                 else
                 {
-                    <RadzenButton Text="Finish Review Meeting"
+                    <RadzenButton Text="Complete Review"
                                   ButtonStyle="ButtonStyle.Success"
-                                  Icon="check_circle"
-                                  Click="@FinishReview" />
+                                  Icon="arrow_forward"
+                                  Click="@NavigateToReviewCompletion" />
                 }
             </div>
         </DefaultFooterContent>
@@ -402,7 +403,7 @@ else
 
         // Determine which role's responses to fetch based on section's CompletionRole
         var isPostReviewState = Assignment != null &&
-            (Assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+            (Assignment.WorkflowState is WorkflowState.ReviewFinished or
                                         WorkflowState.EmployeeReviewConfirmed or
                                         WorkflowState.Finalized);
 
@@ -560,61 +561,10 @@ else
         }
     }
 
-    private async Task FinishReview()
+    private void NavigateToReviewCompletion()
     {
-        try
-        {
-            // Open dialog to collect optional review summary
-            // Pass existing ManagerReviewSummary if reopening review (will be shown in dialog)
-            var result = await DialogService.OpenAsync<FinishReviewMeetingDialog>(
-                "Finish Review Meeting",
-                new Dictionary<string, object>
-                {
-                    { "ExistingReviewSummary", Assignment.ManagerReviewSummary }
-                },
-                new DialogOptions
-                {
-                    Width = "650px",
-                    Height = "600px",
-                    Resizable = false,
-                    Draggable = true,
-                    ShowClose = true
-                });
-
-            // If dialog was cancelled, return
-            if (result == null)
-            {
-                return;
-            }
-
-            // Result is the review summary (can be null or empty string)
-            var reviewSummary = result as string;
-
-            // Call API to finish review meeting with summary
-            var success = await AssignmentService.FinishReviewMeetingAsync(
-                Assignment.Id,
-                currentManagerName,
-                string.IsNullOrWhiteSpace(reviewSummary) ? null : reviewSummary);
-
-            if (success)
-            {
-                NotificationService.Notify(NotificationSeverity.Success, "Success", "Review meeting finished successfully");
-
-                // Trigger the callback to reload assignment
-                if (OnReviewFinished.HasDelegate)
-                {
-                    await OnReviewFinished.InvokeAsync();
-                }
-            }
-            else
-            {
-                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to finish review meeting");
-            }
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error finishing review meeting: {ex.Message}");
-        }
+        var url = $"/questionnaire/{Assignment.Id}/finish-review";
+        NavigationManager.NavigateTo(url);
     }
 
     private string GetRoleClass(CompletionRole role)
@@ -742,7 +692,7 @@ else
 
         // Copy the same logic from GetGenericQuestionResponse to show what role it would fetch
         var isPostReviewState = Assignment != null &&
-            (Assignment.WorkflowState is WorkflowState.ManagerReviewConfirmed or
+            (Assignment.WorkflowState is WorkflowState.ReviewFinished or
                                         WorkflowState.EmployeeReviewConfirmed or
                                         WorkflowState.Finalized);
 

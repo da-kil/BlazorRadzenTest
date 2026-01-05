@@ -1,0 +1,106 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.DTOs
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Extensions
+@inherits OptimizedTranslatableComponentBase
+
+<div class="review-summary-card">
+    <RadzenStack Gap="1rem">
+        <!-- Header -->
+        <div class="card-header">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-0">
+                @T("sections.review-summary")
+            </RadzenText>
+        </div>
+
+            <!-- Questionnaire Information -->
+            <div class="questionnaire-info">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                    @Template.GetLocalizedNameWithFallback(CurrentLanguage)
+                </RadzenText>
+
+                @if (!string.IsNullOrWhiteSpace(Template.GetLocalizedDescriptionWithFallback(CurrentLanguage)))
+                {
+                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+                        @Template.GetLocalizedDescriptionWithFallback(CurrentLanguage)
+                    </RadzenText>
+                }
+
+                <!-- Assignment Details -->
+                <div class="assignment-details">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="6">
+                            <div class="detail-item">
+                                <div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">
+                                        @T("labels.employee")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
+                                        @Assignment.EmployeeName
+                                    </RadzenText>
+                                </div>
+                            </div>
+                        </RadzenColumn>
+                        <RadzenColumn Size="6">
+                            <div class="detail-item">
+                                <div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">
+                                        @T("labels.assigned-date")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
+                                        @Assignment.AssignedDate.ToString("MMM dd, yyyy")
+                                    </RadzenText>
+                                </div>
+                            </div>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="1rem" class="mt-2">
+                        <RadzenColumn Size="6">
+                            <div class="detail-item">
+                                <div>
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mb-0">
+                                        @T("labels.sections")
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-bold mb-0">
+                                        @Template.Sections.Count @T("labels.sections-count")
+                                    </RadzenText>
+                                </div>
+                            </div>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </div>
+            </div>
+
+            <!-- Review Progress Information -->
+            <div class="review-progress">
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        <strong>@T("labels.review-meeting-active"):</strong>
+                        <span> @T("messages.review-meeting-progress-description")</span>
+                    </RadzenText>
+                </RadzenAlert>
+            </div>
+
+    </RadzenStack>
+</div>
+
+<style>
+.review-summary-card {
+    margin-bottom: 1rem;
+}
+
+.detail-item {
+    display: flex;
+    align-items: flex-start;
+}
+
+</style>
+
+@code {
+    [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
+    [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
+
+}

@@ -201,7 +201,7 @@ else
     private bool IsInReviewPhase()
     {
         return AssignmentWorkflowState is WorkflowState.InReview or
-                                         WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.ReviewFinished or
                                          WorkflowState.EmployeeReviewConfirmed or
                                          WorkflowState.Finalized;
     }

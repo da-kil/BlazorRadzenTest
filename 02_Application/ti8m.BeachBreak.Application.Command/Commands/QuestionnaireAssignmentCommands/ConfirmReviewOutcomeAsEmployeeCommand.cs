@@ -3,7 +3,7 @@ namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCo
 /// <summary>
 /// Command for employee to confirm the review outcome.
 /// Employee cannot reject but can add comments about the review.
-/// Transitions from ManagerReviewConfirmed to EmployeeReviewConfirmed state.
+/// Transitions from ReviewFinished to EmployeeReviewConfirmed state.
 /// </summary>
 public record ConfirmReviewOutcomeAsEmployeeCommand(
     Guid AssignmentId,

@@ -340,7 +340,7 @@
     private bool IsInReviewMeeting()
     {
         return AssignmentWorkflowState is WorkflowState.InReview or
-                                         WorkflowState.ManagerReviewConfirmed or
+                                         WorkflowState.ReviewFinished or
                                          WorkflowState.EmployeeReviewConfirmed;
     }
 
