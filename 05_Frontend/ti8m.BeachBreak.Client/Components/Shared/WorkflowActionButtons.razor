@@ -22,6 +22,15 @@
             </div>
 
             <div class="button-group">
+                @if (IsManager && WorkflowStateHelper.CanManagerInitialize(Assignment))
+                {
+                    <RadzenButton Text="Initialize Assignment"
+                                  Icon="settings"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Click="@NavigateToInitialization"
+                                  Size="ButtonSize.Medium" />
+                }
+
                 @if (IsManager && WorkflowStateHelper.CanInitiateReview(Assignment))
                 {
                     <AsyncButton Text="Initiate Review Meeting"
@@ -124,6 +133,15 @@
         {
             isProcessing = false;
         }
+    }
+
+    private void NavigateToInitialization()
+    {
+        if (Assignment == null) return;
+
+        // Navigate to initialization page for Assigned state
+        var initUrl = $"/assignments/{Assignment.Id}/initialize";
+        NavigationManager.NavigateTo(initUrl);
     }
 
     private void ConfirmEmployeeReview()
