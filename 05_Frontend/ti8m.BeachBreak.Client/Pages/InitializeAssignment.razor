@@ -1,0 +1,357 @@
+@page "/assignments/{AssignmentId:guid}/initialize"
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@using ti8m.BeachBreak.Client.Extensions
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.Dialogs
+@inject NavigationManager NavigationManager
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject IQuestionnaireTemplateService TemplateService
+@inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthService AuthService
+@inherits OptimizedTranslatableComponentBase
+
+<PageTitle>@T("pages.initialize-assignment")</PageTitle>
+
+<AuthorizeView Policy="TeamLead">
+    <Authorized>
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@T("messages.loading")</RadzenText>
+            </div>
+        }
+        else if (assignment == null || template == null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
+                <RadzenText TextStyle="TextStyle.Body1">@T("messages.unable-to-load-data")</RadzenText>
+            </RadzenAlert>
+        }
+        else if (!WorkflowStateHelper.CanManagerInitialize(assignment))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
+                <RadzenText TextStyle="TextStyle.Body1">
+                    @T("messages.initialization-not-allowed")
+                </RadzenText>
+            </RadzenAlert>
+        }
+        else
+        {
+            <PageLayout Title="@T("pages.initialize-assignment")"
+                        Description="@string.Format(T("pages.initialize-assignment-description"), template.GetLocalizedNameWithFallback(CurrentLanguage))"
+                        ShowDefaultFooter="false">
+                <ChildContent>
+                    <!-- Back Navigation -->
+                    <div class="back-navigation mb-4">
+                        <RadzenLink Path="/manager" Text="@T("navigation.back-to-dashboard")" Icon="arrow_back" />
+                    </div>
+
+                    <!-- Assignment Details Card -->
+                    <RadzenCard Class="mb-4">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("sections.assignment-details")</RadzenText>
+                        <RadzenRow>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.employee")</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1"><strong>@assignment.EmployeeName</strong></RadzenText>
+                                </div>
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.template")</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1">@template.GetLocalizedNameWithFallback(CurrentLanguage)</RadzenText>
+                                </div>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.due-date")</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1">@(assignment.DueDate?.ToString("d") ?? T("labels.no-due-date"))</RadzenText>
+                                </div>
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.status")</RadzenText>
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))" />
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenCard>
+
+                    <!-- Initialization Tasks Card -->
+                    <RadzenCard Class="mb-4">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("sections.initialization-tasks")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-4">@T("messages.initialization-tasks-description")</RadzenText>
+
+                        <!-- Link Predecessor Questionnaire -->
+                        <div class="mb-4">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
+                                @T("labels.link-predecessor-questionnaire")
+                                <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.link-predecessor-description")</RadzenText>
+
+                            @if (predecessorLinked)
+                            {
+                                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Class="d-inline-flex align-items-center">
+                                    <RadzenIcon Icon="check_circle" Class="me-2" />
+                                    @T("messages.predecessor-linked")
+                                </RadzenAlert>
+                            }
+                            else
+                            {
+                                <RadzenButton Text="@T("buttons.link-predecessor")"
+                                            Icon="link"
+                                            ButtonStyle="ButtonStyle.Light"
+                                            Click="@OpenLinkPredecessorDialog" />
+                            }
+                        </div>
+
+                        <!-- Add Custom Questions -->
+                        <div class="mb-3">
+                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
+                                @T("labels.add-custom-questions")
+                                <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.add-custom-questions-description")</RadzenText>
+
+                            @if (customSections.Any())
+                            {
+                                <div class="custom-sections-list mb-3">
+                                    @foreach (var customSection in customSections)
+                                    {
+                                        <RadzenCard Class="mb-2">
+                                            <RadzenRow AlignItems="AlignItems.Center">
+                                                <RadzenColumn Size="10">
+                                                    <RadzenText TextStyle="TextStyle.Body1">
+                                                        <strong>@customSection.GetLocalizedTitle(CurrentLanguage)</strong>
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                                        @customSection.GetLocalizedDescription(CurrentLanguage)
+                                                    </RadzenText>
+                                                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@T($"question-types.{customSection.Type.ToString().ToLower()}")" Class="mt-1" />
+                                                </RadzenColumn>
+                                                <RadzenColumn Size="2" Class="text-end">
+                                                    <RadzenButton Icon="delete"
+                                                                ButtonStyle="ButtonStyle.Danger"
+                                                                Variant="Variant.Text"
+                                                                Size="ButtonSize.Small"
+                                                                Click="@(() => RemoveCustomSection(customSection))" />
+                                                </RadzenColumn>
+                                            </RadzenRow>
+                                        </RadzenCard>
+                                    }
+                                </div>
+                            }
+
+                            <RadzenButton Text="@T("buttons.add-custom-question")"
+                                        Icon="add"
+                                        ButtonStyle="ButtonStyle.Light"
+                                        Click="@OpenAddCustomQuestionDialog" />
+                        </div>
+                    </RadzenCard>
+
+                    <!-- Initialization Notes -->
+                    <RadzenCard Class="mb-4">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("labels.initialization-notes")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.initialization-notes-description")</RadzenText>
+                        <RadzenTextArea @bind-Value="@initializationNotes"
+                                      Rows="5"
+                                      Placeholder="@T("placeholders.initialization-notes")"
+                                      MaxLength="5000"
+                                      Class="w-100" />
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                            @initializationNotes?.Length.ToString() / 5000 @T("labels.characters")
+                        </RadzenText>
+                    </RadzenCard>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton Text="@T("buttons.cancel")"
+                                    Icon="cancel"
+                                    ButtonStyle="ButtonStyle.Light"
+                                    Click="@HandleCancel"
+                                    Disabled="@isSubmitting" />
+                        <RadzenButton Text="@T("buttons.complete-initialization")"
+                                    Icon="check_circle"
+                                    ButtonStyle="ButtonStyle.Primary"
+                                    Click="@HandleCompleteInitialization"
+                                    Disabled="@isSubmitting" />
+                    </div>
+
+                    @if (isSubmitting)
+                    {
+                        <div class="text-center mt-3">
+                            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Size="ProgressBarCircularSize.Small" />
+                        </div>
+                    }
+
+                </ChildContent>
+            </PageLayout>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="@T("roles.team-lead")" PageName="@T("pages.initialize-assignment")" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter] public Guid AssignmentId { get; set; }
+
+    private QuestionnaireAssignment? assignment;
+    private QuestionnaireTemplate? template;
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool predecessorLinked = false;
+    private string? initializationNotes;
+    private List<QuestionSection> customSections = new();
+    private ApplicationRole currentUserRole = ApplicationRole.Employee;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await InitializeUserRole();
+        await LoadData();
+    }
+
+    private async Task InitializeUserRole()
+    {
+        try
+        {
+            var roleData = await AuthService.GetMyRoleAsync();
+            if (roleData != null)
+            {
+                currentUserRole = roleData.ApplicationRole;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-to-get-user-role")}: {ex.Message}");
+            currentUserRole = ApplicationRole.Employee;
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load assignment
+            assignment = await AssignmentService.GetAssignmentByIdAsync(AssignmentId);
+            if (assignment == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.assignment-not-found"));
+                HandleCancel();
+                return;
+            }
+
+            // Load template
+            template = await TemplateService.GetTemplateByIdAsync(assignment.TemplateId);
+            if (template == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.template-not-found"));
+                HandleCancel();
+                return;
+            }
+
+            // Note: Predecessor linking status checked via separate dialog
+            // predecessorLinked flag will be updated when dialog closes successfully
+            predecessorLinked = false;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-to-load-data")}: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OpenLinkPredecessorDialog()
+    {
+        if (assignment == null) return;
+
+        var result = await DialogService.OpenAsync<LinkPredecessorDialog>(
+            T("dialogs.link-predecessor-title"),
+            new Dictionary<string, object>
+            {
+                { "AssignmentId", assignment.Id },
+                { "EmployeeId", assignment.EmployeeId },
+                { "TemplateId", assignment.TemplateId }
+            },
+            new DialogOptions { Width = "700px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            predecessorLinked = true;
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("messages.predecessor-linked-successfully"));
+        }
+    }
+
+    private async Task OpenAddCustomQuestionDialog()
+    {
+        // TODO: Implement AddCustomQuestionDialog
+        // For now, show a placeholder notification
+        NotificationService.Notify(NotificationSeverity.Info, T("notifications.info"), "Add Custom Question Dialog - Coming in task 4.5");
+    }
+
+    private void RemoveCustomSection(QuestionSection section)
+    {
+        customSections.Remove(section);
+        NotificationService.Notify(NotificationSeverity.Info, T("notifications.info"), T("messages.custom-section-removed"));
+    }
+
+    private async Task HandleCompleteInitialization()
+    {
+        if (assignment == null) return;
+
+        try
+        {
+            isSubmitting = true;
+
+            // First, add any custom sections
+            if (customSections.Any())
+            {
+                var dto = new AddCustomSectionsDto { Sections = customSections };
+                var addSectionsResult = await AssignmentService.AddCustomSectionsAsync(assignment.Id, dto);
+
+                if (!addSectionsResult)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-to-add-custom-sections"));
+                    return;
+                }
+            }
+
+            // Then, complete initialization
+            var initializeResult = await AssignmentService.InitializeAssignmentAsync(assignment.Id, initializationNotes);
+
+            if (initializeResult)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("messages.initialization-completed"));
+                NavigationManager.NavigateTo("/manager");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.initialization-failed"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.initialization-failed")}: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void HandleCancel()
+    {
+        NavigationManager.NavigateTo("/manager");
+    }
+}
