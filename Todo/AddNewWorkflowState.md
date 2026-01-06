@@ -1,6 +1,6 @@
 # TODO: Add "Initialized" Workflow State
 
-**Status**: 🟡 Phase 1 In Progress (Domain Foundation Complete)
+**Status**: 🟡 Phase 2 Complete (Application Layer Implemented)
 **Priority**: High
 **Estimated Effort**: 13-16 days
 **Branch**: `feature/AddNewWorkflowState`
@@ -161,42 +161,46 @@ Add a new "Initialized" workflow state (value = 1) between "Assigned" and "Emplo
 
 ### 2.1 Create Initialize Assignment Command
 
-- [ ] **Create command**: `02_Application/ti8m.BeachBreak.Application.Command/Commands/QuestionnaireAssignmentCommands/InitializeAssignmentCommand.cs`
-  - [ ] Properties: AssignmentId, InitializedByEmployeeId, InitializationNotes
-  - [ ] Result type: Result
+- [x] **Create command**: `02_Application/ti8m.BeachBreak.Application.Command/Commands/QuestionnaireAssignmentCommands/InitializeAssignmentCommand.cs`
+  - [x] Properties: AssignmentId, InitializedByEmployeeId, InitializationNotes
+  - [x] Result type: Result
 
-- [ ] **Create handler**: `InitializeAssignmentCommandHandler.cs`
-  - [ ] Load assignment from repository
-  - [ ] Validate state is Assigned
-  - [ ] Call `assignment.StartInitialization()`
-  - [ ] Persist aggregate
-  - [ ] Add logging call
+- [x] **Create handler**: `InitializeAssignmentCommandHandler.cs`
+  - [x] Load assignment from repository
+  - [x] Validate state is Assigned (handled by domain method)
+  - [x] Call `assignment.StartInitialization()`
+  - [x] Persist aggregate
+  - [x] Add logging calls (LogInitializeAssignment, LogAssignmentInitialized, LogInitializeAssignmentFailed)
 
-- [ ] **Add logging definition**: `LoggerMessageDefinitions.cs`
-  - [ ] `LogAssignmentInitialized(Guid assignmentId, Guid employeeId)` with EventId 6100
+- [x] **Add logging definitions**: `LoggerMessageDefinitions.cs`
+  - [x] EventId 6100: LogInitializeAssignment
+  - [x] EventId 6101: LogAssignmentInitialized
+  - [x] EventId 6102: LogInitializeAssignmentFailed
 
-**Tests**: Create command handler unit tests
+**Tests**: Create command handler unit tests (Phase 5)
 
 ---
 
 ### 2.2 Create Add Custom Sections Command
 
-- [ ] **Create command**: `02_Application/ti8m.BeachBreak.Application.Command/Commands/QuestionnaireAssignmentCommands/AddCustomSectionsCommand.cs`
-  - [ ] Properties: AssignmentId, Sections (List<CommandQuestionSection>), AddedByEmployeeId
-  - [ ] Result type: Result
+- [x] **Create command**: `02_Application/ti8m.BeachBreak.Application.Command/Commands/QuestionnaireAssignmentCommands/AddCustomSectionsCommand.cs`
+  - [x] Properties: AssignmentId, Sections (List<CommandQuestionSection>), AddedByEmployeeId
+  - [x] Result type: Result
 
-- [ ] **Create handler**: `AddCustomSectionsCommandHandler.cs`
-  - [ ] Load assignment from repository
-  - [ ] Validate state is Initialized
-  - [ ] Map CommandQuestionSection DTOs to domain QuestionSection entities
-  - [ ] Call `assignment.AddCustomSections()`
-  - [ ] Persist aggregate
-  - [ ] Add logging call
+- [x] **Create handler**: `AddCustomSectionsCommandHandler.cs`
+  - [x] Load assignment from repository
+  - [x] Validate state is Initialized (handled by domain method)
+  - [x] Map CommandQuestionSection DTOs to domain QuestionSection entities using CreateCustomSection factory
+  - [x] Call `assignment.AddCustomSections()`
+  - [x] Persist aggregate
+  - [x] Add logging calls (LogAddCustomSections, LogCustomSectionsAdded, LogAddCustomSectionsFailed)
 
-- [ ] **Add logging definition**: `LoggerMessageDefinitions.cs`
-  - [ ] `LogCustomSectionsAdded(Guid assignmentId, Guid employeeId)` with EventId 6101
+- [x] **Add logging definitions**: `LoggerMessageDefinitions.cs`
+  - [x] EventId 6103: LogAddCustomSections
+  - [x] EventId 6104: LogCustomSectionsAdded
+  - [x] EventId 6105: LogAddCustomSectionsFailed
 
-**Tests**: Create command handler unit tests
+**Tests**: Create command handler unit tests (Phase 5)
 
 ---
 
@@ -204,33 +208,35 @@ Add a new "Initialized" workflow state (value = 1) between "Assigned" and "Emplo
 
 **File**: `02_Application/ti8m.BeachBreak.Application.Query/Projections/QuestionnaireAssignmentReadModel.cs`
 
-- [ ] **Add properties**:
-  - [ ] `public DateTime? InitializedDate { get; set; }`
-  - [ ] `public Guid? InitializedByEmployeeId { get; set; }`
-  - [ ] `public string? InitializationNotes { get; set; }`
-  - [ ] `public List<QuestionSectionReadModel> CustomSections { get; set; } = new()`
+- [x] **Add properties**:
+  - [x] `public DateTime? InitializedDate { get; set; }`
+  - [x] `public Guid? InitializedByEmployeeId { get; set; }`
+  - [x] `public string? InitializationNotes { get; set; }`
+  - [x] `public List<QuestionSection> CustomSections { get; set; } = new()` (uses existing QuestionnaireTemplateQueries.QuestionSection)
 
-- [ ] **Add Apply methods**:
-  - [ ] `Apply(AssignmentInitialized @event)` - Set properties, WorkflowState=Initialized
-  - [ ] `Apply(CustomSectionsAddedToAssignment @event)` - Add to CustomSections list
+- [x] **Add Apply methods**:
+  - [x] `Apply(AssignmentInitialized @event)` - Set InitializedDate, InitializedByEmployeeId, InitializationNotes, WorkflowState=Initialized
+  - [x] `Apply(CustomSectionsAddedToAssignment @event)` - Map QuestionSectionData to QuestionSection query DTO and add to CustomSections
 
-- [ ] **Create QuestionSectionReadModel** (if doesn't exist)
+- [x] **Update QuestionSection query model**: Added IsInstanceSpecific property to `02_Application/ti8m.BeachBreak.Application.Query/Queries/QuestionnaireTemplateQueries/QuestionSection.cs`
 
-**Verification**: Check projections rebuild correctly
+**Verification**: Projections will rebuild correctly on next app run
 
 ---
 
 ### 2.4 Create Custom Sections Query
 
-- [ ] **Create query**: `02_Application/ti8m.BeachBreak.Application.Query/Queries/QuestionnaireAssignmentQueries/GetAssignmentCustomSectionsQuery.cs`
-  - [ ] Property: AssignmentId
-  - [ ] Result: List<QuestionSectionDto>
+- [x] **Create query**: `02_Application/ti8m.BeachBreak.Application.Query/Queries/QuestionnaireAssignmentQueries/GetAssignmentCustomSectionsQuery.cs`
+  - [x] Property: AssignmentId
+  - [x] Result: Result<IEnumerable<QuestionSection>>
 
-- [ ] **Create handler**: `GetAssignmentCustomSectionsQueryHandler.cs`
-  - [ ] Load assignment read model
-  - [ ] Return CustomSections as DTOs
+- [x] **Create handler**: `GetAssignmentCustomSectionsQueryHandler.cs`
+  - [x] Load assignment read model
+  - [x] Return CustomSections directly from read model
+  - [x] Handle not found scenario with 404 status
+  - [x] Handle exceptions with 500 status
 
-**Tests**: Create query handler tests
+**Tests**: Create query handler tests (Phase 5)
 
 ---
 

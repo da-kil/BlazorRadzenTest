@@ -264,6 +264,43 @@ public static partial class LoggerMessageDefinitions
     Message = "Failed to withdraw assignment `{AssignmentId}`: {ErrorMessage}")]
     public static partial void LogWithdrawAssignmentFailed(this ILogger logger, Guid assignmentId, string errorMessage, Exception exception);
 
+    // Assignment Initialization Operations (6100-6119)
+    [LoggerMessage(
+    EventId = 6100,
+    Level = LogLevel.Information,
+    Message = "Initializing assignment `{AssignmentId}` by employee `{EmployeeId}`.")]
+    public static partial void LogInitializeAssignment(this ILogger logger, Guid assignmentId, Guid employeeId);
+
+    [LoggerMessage(
+    EventId = 6101,
+    Level = LogLevel.Information,
+    Message = "Successfully initialized assignment `{AssignmentId}` by employee `{EmployeeId}`.")]
+    public static partial void LogAssignmentInitialized(this ILogger logger, Guid assignmentId, Guid employeeId);
+
+    [LoggerMessage(
+    EventId = 6102,
+    Level = LogLevel.Error,
+    Message = "Failed to initialize assignment `{AssignmentId}`: {ErrorMessage}")]
+    public static partial void LogInitializeAssignmentFailed(this ILogger logger, Guid assignmentId, string errorMessage, Exception exception);
+
+    [LoggerMessage(
+    EventId = 6103,
+    Level = LogLevel.Information,
+    Message = "Adding custom sections to assignment `{AssignmentId}` by employee `{EmployeeId}`.")]
+    public static partial void LogAddCustomSections(this ILogger logger, Guid assignmentId, Guid employeeId);
+
+    [LoggerMessage(
+    EventId = 6104,
+    Level = LogLevel.Information,
+    Message = "Successfully added `{SectionCount}` custom sections to assignment `{AssignmentId}`.")]
+    public static partial void LogCustomSectionsAdded(this ILogger logger, Guid assignmentId, int sectionCount);
+
+    [LoggerMessage(
+    EventId = 6105,
+    Level = LogLevel.Error,
+    Message = "Failed to add custom sections to assignment `{AssignmentId}`: {ErrorMessage}")]
+    public static partial void LogAddCustomSectionsFailed(this ILogger logger, Guid assignmentId, string errorMessage, Exception exception);
+
     // Employee Role Management Operations (7001-7099)
     [LoggerMessage(
     EventId = 7001,

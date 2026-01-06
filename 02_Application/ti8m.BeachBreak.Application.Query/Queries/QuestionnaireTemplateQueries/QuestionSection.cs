@@ -14,4 +14,5 @@ public class QuestionSection
     public string CompletionRole { get; set; } = "Employee";
     public string Type { get; set; } = string.Empty;
     public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
+    public bool IsInstanceSpecific { get; set; } = false;
 }
