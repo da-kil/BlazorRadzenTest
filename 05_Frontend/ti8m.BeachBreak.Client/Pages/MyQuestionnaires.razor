@@ -135,10 +135,11 @@
 		newQuestionnaires = new List<QuestionnaireAssignment>();
 
 		// Current: Employee is working, submitted, or in review process
-		// Includes Assigned state because user may have saved responses without completing sections
+		// Excludes Assigned state (manager-only initialization phase)
+		// Includes Initialized state and onwards (employee can see and start working)
 		// Includes all states where employee might still need to take action or is waiting
 		inProgressQuestionnaires = allAssignments.Where(a =>
-			a.WorkflowState is WorkflowState.Assigned
+			a.WorkflowState is WorkflowState.Initialized
 			or WorkflowState.EmployeeInProgress
 			or WorkflowState.ManagerInProgress
 			or WorkflowState.BothInProgress
