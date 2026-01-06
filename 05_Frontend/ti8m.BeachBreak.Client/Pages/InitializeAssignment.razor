@@ -295,9 +295,17 @@
 
     private async Task OpenAddCustomQuestionDialog()
     {
-        // TODO: Implement AddCustomQuestionDialog
-        // For now, show a placeholder notification
-        NotificationService.Notify(NotificationSeverity.Info, T("notifications.info"), "Add Custom Question Dialog - Coming in task 4.5");
+        var result = await DialogService.OpenAsync<AddCustomQuestionDialog>(
+            T("dialogs.add-custom-question-title"),
+            null,
+            new DialogOptions { Width = "800px", Resizable = true, Draggable = true });
+
+        if (result is QuestionSection section)
+        {
+            section.Order = customSections.Count;
+            customSections.Add(section);
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("messages.custom-question-added"));
+        }
     }
 
     private void RemoveCustomSection(QuestionSection section)
