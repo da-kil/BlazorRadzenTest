@@ -46,6 +46,78 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - **Debugging Auth Issues**: Check database records, NOT JWT token claims
 - **Common Mistake**: Assuming roles are in JWT - they're dynamically looked up per request
 
+## Questionnaire Workflow States
+
+### Initialized Workflow State (Added 2026-01-06)
+
+**Purpose**: The `Initialized` state represents a manager-only initialization phase between assignment creation and employee access. This allows managers to prepare the assignment with optional customizations before employees begin work.
+
+**Workflow Sequence**:
+1. **Assigned** (value=0) - Assignment created, manager-only access
+2. **Initialized** (value=1) - Manager completed initialization, both can access
+3. **EmployeeInProgress** / **ManagerInProgress** / **BothInProgress** (values=2-4)
+4. Continue through existing workflow states (5-11)
+
+**Key Features**:
+- **Manager Initialization Tasks** (all optional):
+  - Link predecessor questionnaire for goal tracking
+  - Add custom Assessment or TextQuestion sections (`IsInstanceSpecific = true`)
+  - Add initialization notes for employee (max 5000 characters)
+- **Access Control**:
+  - Employees CANNOT see assignments in `Assigned` state
+  - Employees CAN see and work on assignments in `Initialized+` states
+  - Only managers (TeamLead/HR/HRLead/Admin) can initialize
+
+**Custom Sections**:
+- Marked with `IsInstanceSpecific = true`
+- Created during manager initialization (Assigned state only)
+- Appear seamlessly with template sections in UI
+- **Excluded from aggregate reports** (instance-specific, not comparable across assignments)
+- Cannot add Goal-type custom sections (created dynamically during workflow)
+
+**Commands**:
+- `InitializeAssignmentCommand` - Transitions Assigned → Initialized
+- `AddCustomSectionsCommand` - Adds custom questions (must be in Assigned state)
+- `GetCustomSectionsQuery` - Retrieves custom sections for an assignment
+
+**Events**:
+- `AssignmentInitializedEvent` - Marks completion of manager initialization
+- `CustomSectionsAddedEvent` - Tracks addition of custom questions
+
+**Frontend Routes**:
+- `/assignments/{id}/initialize` - Manager-only initialization page (AuthorizeView: TeamLead policy)
+- Page includes: predecessor linking, custom question dialog, initialization notes
+
+**Translation Keys** (46 total, EN/DE):
+- `workflow-states.initialized`
+- `actions.employee.waiting-manager-initialization`
+- `actions.manager.initialize-assignment`
+- See `TestDataGenerator/test-translations.json` for complete list
+
+**Validation Rules**:
+- Can only initialize from `Assigned` state
+- Cannot go backwards from `Initialized` to `Assigned`
+- Custom sections can only be added in `Assigned` state (before initialization)
+- Assigned → EmployeeInProgress is **invalid** (must initialize first)
+
+**Implementation Locations**:
+- Domain: `01_Domain/QuestionnaireAssignmentAggregate/WorkflowState.cs` (enum value=1)
+- Commands: `02_Application/Application.Command/Commands/QuestionnaireAssignmentCommands/`
+- Handlers: `02_Application/Application.Command/Commands/QuestionnaireAssignmentCommands/`
+- Frontend: `05_Frontend/ti8m.BeachBreak.Client/Pages/InitializeAssignment.razor`
+- Component: `05_Frontend/ti8m.BeachBreak.Client/Components/Dialogs/AddCustomQuestionDialog.razor`
+- Helper: `05_Frontend/ti8m.BeachBreak.Client/Models/WorkflowStateHelper.cs`
+
+**Testing**:
+- Unit tests: `Tests/ti8m.BeachBreak.Domain.Tests/WorkflowStateMachineTests.cs`
+- Manual E2E checklist: `Tests/README.md`
+
+**Design Decisions**:
+- Enum value 1 explicitly set (all workflow states have explicit values per CLAUDE.md Section 8)
+- IsInstanceSpecific flag prevents custom sections from appearing in cross-instance reports
+- Initialization is optional (manager can complete it immediately with no customizations)
+- Maintains event sourcing pattern with explicit domain events
+
 ## Domain Events Guidelines
 
 ### Event Characteristics
