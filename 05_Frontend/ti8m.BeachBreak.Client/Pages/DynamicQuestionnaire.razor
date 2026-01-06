@@ -317,6 +317,7 @@ else
 
     private string currentUserName = string.Empty;
     private string managerContextRole = string.Empty;
+    private List<QuestionSection> customSections = new();
     private List<QuestionSection> visibleSections = new();
     private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
     private SectionResponse? currentSectionData => currentSection != null && response.SectionResponses.TryGetValue(currentSection.Id, out var sectionData) ? sectionData : null;
@@ -458,12 +459,21 @@ else
                 }
 
                 template = await TemplateService.GetTemplateByIdAsync(assignment.TemplateId);
+
+                // Load custom sections for this assignment (if any)
+                await LoadCustomSections();
             }
             else if (TemplateId.HasValue)
             {
                 // Legacy route: /my-questionnaires/{templateId} (employee only)
                 await LoadTemplate();
                 await LoadAssignmentForCurrentEmployee();
+
+                // Load custom sections after assignment is loaded
+                if (assignmentId.HasValue)
+                {
+                    await LoadCustomSections();
+                }
             }
             else
             {
@@ -478,6 +488,45 @@ else
         }
     }
 
+    private async Task LoadCustomSections()
+    {
+        try
+        {
+            if (assignmentId.HasValue)
+            {
+                customSections = await AssignmentService.GetCustomSectionsAsync(assignmentId.Value);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the whole page if custom sections can't be loaded
+            // They might not exist yet (Assigned state before initialization)
+            Console.WriteLine($"Could not load custom sections: {ex.Message}");
+            customSections = new List<QuestionSection>();
+        }
+    }
+
+    /// <summary>
+    /// Gets all sections for this questionnaire: template sections + custom sections
+    /// Custom sections are instance-specific and added during manager initialization
+    /// </summary>
+    private List<QuestionSection> GetAllSections()
+    {
+        if (template == null)
+            return new List<QuestionSection>();
+
+        var allSections = new List<QuestionSection>();
+
+        // Add template sections
+        allSections.AddRange(template.Sections);
+
+        // Add custom sections (instance-specific)
+        allSections.AddRange(customSections);
+
+        // Sort by Order to maintain proper sequence
+        return allSections.OrderBy(s => s.Order).ToList();
+    }
+
     private async Task FilterVisibleSections()
     {
         if (template == null)
@@ -485,6 +534,9 @@ else
             visibleSections = new List<QuestionSection>();
             return;
         }
+
+        // Get all sections (template + custom)
+        var allSections = GetAllSections();
 
         // After review meeting finishes, EVERYONE sees ALL sections (employee, manager, and both)
         // This ensures transparency - both parties can see what was discussed and agreed upon
@@ -499,7 +551,7 @@ else
         if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // Show ALL sections in read-only view
-            visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
+            visibleSections = allSections.OrderBy(s => s.Order).ToList();
             return;
         }
 
@@ -509,7 +561,7 @@ else
         // - Managers: See Manager + Both sections (backend filters responses in Both sections to only Manager responses)
         // - InReview state: Manager sees ALL sections, Employee sees Employee + Both sections
         // - ReviewFinished onwards: Everyone sees ALL sections (full transparency)
-        visibleSections = template.Sections
+        visibleSections = allSections
             .Where(s =>
             {
                 if (assignment == null)
@@ -555,9 +607,9 @@ else
             .ToList();
 
         // If no visible sections, show helpful error
-        if (!visibleSections.Any() && template.Sections.Any())
+        if (!visibleSections.Any() && allSections.Any())
         {
-            var sectionDetails = string.Join(", ", template.Sections.Select(s => $"'{s.GetLocalizedTitleWithFallback(CurrentLanguage)}' (assigned to {s.CompletionRole})"));
+            var sectionDetails = string.Join(", ", allSections.Select(s => $"'{s.GetLocalizedTitleWithFallback(CurrentLanguage)}' (assigned to {s.CompletionRole})"));
             var roleDescription = isManager ? "managers" : "employees";
             NotificationService.Notify(NotificationSeverity.Warning, "No Sections Available",
                 $"This questionnaire has no sections assigned to {roleDescription}. " +
@@ -715,8 +767,9 @@ else
             EmployeeId = employeeGuid
         };
 
-        // Initialize sectionData responses with role-based structure
-        foreach (var sectionData in template.Sections)
+        // Initialize sectionData responses with role-based structure (template + custom sections)
+        var allSections = GetAllSections();
+        foreach (var sectionData in allSections)
         {
             var sectionResponse = new SectionResponse
             {
@@ -1197,11 +1250,12 @@ else
     {
         if (template == null) return;
 
-        // Each sectionData IS one question - count required sections only
-        var totalSections = template.Sections.Count(s => s.IsRequired);
+        // Each sectionData IS one question - count required sections only (template + custom)
+        var allSections = GetAllSections();
+        var totalSections = allSections.Count(s => s.IsRequired);
         var answeredSections = 0;
 
-        foreach (var sectionData in template.Sections.Where(s => s.IsRequired))
+        foreach (var sectionData in allSections.Where(s => s.IsRequired))
         {
             if (response.SectionResponses.TryGetValue(sectionData.Id, out var sectionResponse) &&
                 sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
@@ -1312,9 +1366,10 @@ else
     {
         if (!CanSubmit())
         {
+            var allSections = GetAllSections();
             var incompleteSections = visibleSections.Where(s =>
             {
-                var sectionData = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+                var sectionData = allSections.FirstOrDefault(sec => sec.Id == s.Id);
                 if (sectionData == null) return false;
 
                 if (!sectionData.IsRequired) return false;
