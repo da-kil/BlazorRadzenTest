@@ -5,6 +5,10 @@ namespace ti8m.BeachBreak.Client.Models.Reports;
 /// <summary>
 /// Report data structure for organization-wide questionnaire analytics.
 /// Contains overall organization metrics and individual employee details.
+///
+/// NOTE: If section-level details are added to this report in the future,
+/// ensure custom sections (IsInstanceSpecific = true) are filtered out to
+/// maintain consistency across questionnaire instances.
 /// </summary>
 public class OrganizationReportData : BaseQuestionnaireReportData
 {

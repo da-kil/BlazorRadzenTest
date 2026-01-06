@@ -72,6 +72,8 @@ public class ProgressCalculationService : IProgressCalculationService
     /// <summary>
     /// Counts total required sections per role from the template.
     /// Sections with CompletionRole.Both count for BOTH roles.
+    /// NOTE: Includes instance-specific (custom) sections. For aggregate analysis across multiple
+    /// questionnaire instances, filter out sections with IsInstanceSpecific=true before counting.
     /// </summary>
     private (int employeeTotal, int managerTotal) CountTotalRequiredQuestions(QuestionnaireTemplate template)
     {
