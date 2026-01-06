@@ -5,6 +5,7 @@ public static class WorkflowStateHelper
     private static readonly List<WorkflowState> StateOrder = new()
     {
         WorkflowState.Assigned,
+        WorkflowState.Initialized,
         WorkflowState.EmployeeInProgress,
         WorkflowState.ManagerInProgress,
         WorkflowState.BothInProgress,
@@ -36,6 +37,7 @@ public static class WorkflowStateHelper
         return state switch
         {
             WorkflowState.Assigned => "workflow-states.assigned",
+            WorkflowState.Initialized => "workflow-states.initialized",
             WorkflowState.EmployeeInProgress => "workflow-states.employee-working",
             WorkflowState.ManagerInProgress => "workflow-states.manager-working",
             WorkflowState.BothInProgress => "workflow-states.both-working",
@@ -55,6 +57,7 @@ public static class WorkflowStateHelper
         return state switch
         {
             WorkflowState.Assigned => "var(--rz-base-500)",
+            WorkflowState.Initialized => "var(--rz-info)",
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "var(--rz-primary)",
             WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "var(--rz-secondary)",
             WorkflowState.InReview => "var(--rz-warning)",
@@ -70,6 +73,7 @@ public static class WorkflowStateHelper
         return state switch
         {
             WorkflowState.Assigned => "assignment",
+            WorkflowState.Initialized => "settings",
             WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress => "edit",
             WorkflowState.EmployeeSubmitted or WorkflowState.ManagerSubmitted or WorkflowState.BothSubmitted => "send",
             WorkflowState.InReview => "rate_review",
@@ -86,12 +90,15 @@ public static class WorkflowStateHelper
 
         var state = assignment.WorkflowState;
 
+        // Employee CANNOT access during Assigned (manager-only initialization setup)
+        // Once Initialized, employee can start working
         // Employee can edit until they themselves submit
         // Employee can continue editing even if manager has already submitted (ManagerSubmitted)
         // Employee and manager can work simultaneously before any submission
         // Employee is READ-ONLY during InReview (manager-led review meeting)
-        return state is WorkflowState.Assigned or WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress or WorkflowState.ManagerSubmitted;
+        return state is WorkflowState.Initialized or WorkflowState.EmployeeInProgress or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress or WorkflowState.ManagerSubmitted;
 
+        // Cannot access: Assigned (waiting for manager to complete initialization)
         // Cannot edit after employee submits: EmployeeSubmitted, BothSubmitted
         // Cannot edit during review: InReview
         // Cannot edit after finalization: Finalized
@@ -103,10 +110,11 @@ public static class WorkflowStateHelper
 
         var state = assignment.WorkflowState;
 
+        // Manager can edit during initialization phase (Assigned, Initialized)
         // Manager can edit until they themselves submit
         // Manager can continue editing even if employee has already submitted (EmployeeSubmitted)
         // During InReview, manager has special editing privileges (handled via CanManagerEditDuringReview)
-        return state is WorkflowState.Assigned or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress or WorkflowState.EmployeeSubmitted;
+        return state is WorkflowState.Assigned or WorkflowState.Initialized or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress or WorkflowState.EmployeeSubmitted;
 
         // Cannot edit after manager submits: ManagerSubmitted, BothSubmitted
         // Cannot edit after finalization: Finalized
@@ -163,7 +171,8 @@ public static class WorkflowStateHelper
     {
         return assignment.WorkflowState switch
         {
-            WorkflowState.Assigned => "actions.employee.start-completing-sections",
+            WorkflowState.Assigned => "actions.employee.waiting-manager-initialization",
+            WorkflowState.Initialized => "actions.employee.start-completing-sections",
             WorkflowState.EmployeeInProgress => "actions.employee.complete-submit-sections",
             WorkflowState.BothInProgress => "actions.employee.complete-submit-sections",
             WorkflowState.EmployeeSubmitted => "actions.employee.waiting-manager-submit",
@@ -181,7 +190,8 @@ public static class WorkflowStateHelper
     {
         return assignment.WorkflowState switch
         {
-            WorkflowState.Assigned => "actions.manager.start-completing-sections",
+            WorkflowState.Assigned => "actions.manager.initialize-assignment",
+            WorkflowState.Initialized => "actions.manager.start-completing-sections",
             WorkflowState.ManagerInProgress => "actions.manager.complete-submit-sections",
             WorkflowState.BothInProgress => "actions.manager.complete-submit-sections",
             WorkflowState.EmployeeSubmitted => "actions.manager.complete-submit-sections",
@@ -193,5 +203,26 @@ public static class WorkflowStateHelper
             WorkflowState.Finalized => "actions.manager.questionnaire-finalized",
             _ => "actions.manager.no-action-required"
         };
+    }
+
+    public static bool CanEmployeeView(QuestionnaireAssignment assignment)
+    {
+        // Employees cannot see assignments in Assigned state (manager initialization)
+        // Once Initialized, employee can view and start working
+        return assignment.WorkflowState != WorkflowState.Assigned;
+    }
+
+    public static bool CanManagerInitialize(QuestionnaireAssignment assignment)
+    {
+        // Managers can access initialization page ONLY when assignment is Assigned
+        // Once Initialized, manager can no longer go to init page
+        return assignment.WorkflowState == WorkflowState.Assigned;
+    }
+
+    public static bool CanAddCustomSections(QuestionnaireAssignment assignment)
+    {
+        // Custom sections can be added when manager is on initialization page (Assigned state)
+        // Once initialized, custom sections are locked
+        return assignment.WorkflowState == WorkflowState.Assigned;
     }
 }

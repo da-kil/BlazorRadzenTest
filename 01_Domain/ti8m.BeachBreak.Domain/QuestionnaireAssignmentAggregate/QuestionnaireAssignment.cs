@@ -521,12 +521,12 @@ public class QuestionnaireAssignment : AggregateRoot
     /// <summary>
     /// Adds custom question sections to the assignment during initialization.
     /// Custom sections are instance-specific and excluded from aggregate reports.
-    /// Can only be called during Initialized state.
+    /// Can only be called during Assigned state (before calling StartInitialization).
     /// </summary>
     public void AddCustomSections(List<QuestionSection> sections, Guid addedBy)
     {
-        if (WorkflowState != WorkflowState.Initialized)
-            throw new InvalidOperationException($"Custom sections can only be added during Initialized state. Current state: {WorkflowState}");
+        if (WorkflowState != WorkflowState.Assigned)
+            throw new InvalidOperationException($"Custom sections can only be added during Assigned state (before initialization). Current state: {WorkflowState}");
 
         if (sections == null || !sections.Any())
             throw new ArgumentException("Custom sections list cannot be null or empty", nameof(sections));
