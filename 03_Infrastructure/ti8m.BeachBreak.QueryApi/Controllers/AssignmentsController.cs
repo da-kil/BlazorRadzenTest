@@ -352,6 +352,54 @@ public class AssignmentsController : BaseController
         }
     }
 
+    /// <summary>
+    /// Gets all custom sections for a specific assignment.
+    /// Custom sections are instance-specific and added during initialization phase.
+    /// Managers can only view custom sections for their direct reports' assignments.
+    /// HR/Admin can view custom sections for any assignment.
+    /// </summary>
+    [HttpGet("{assignmentId}/custom-sections")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(typeof(IEnumerable<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionSection>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCustomSections(Guid assignmentId)
+    {
+        try
+        {
+            // Get authenticated user ID
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("Failed to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Check if user has elevated role (HR/Admin)
+            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+            if (!hasElevatedRole)
+            {
+                // Managers can only access assignments for their direct reports
+                var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, assignmentId);
+                if (!canAccess)
+                {
+                    logger.LogWarning("Manager {UserId} attempted to access custom sections for assignment {AssignmentId} for non-direct report",
+                        userId, assignmentId);
+                    return Forbid();
+                }
+            }
+
+            var query = new GetAssignmentCustomSectionsQuery(assignmentId);
+            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving custom sections for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while retrieving custom sections");
+        }
+    }
+
     #region Goal Queries
 
     /// <summary>

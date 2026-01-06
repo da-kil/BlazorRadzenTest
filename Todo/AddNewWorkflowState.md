@@ -240,17 +240,17 @@ Add a new "Initialized" workflow state (value = 1) between "Assigned" and "Emplo
 
 ---
 
-## Phase 3: Infrastructure Layer (2 days)
+## Phase 3: Infrastructure Layer (2 days) ✅ COMPLETED
 
 ### 3.1 Create CommandApi DTOs
 
 **Location**: `03_Infrastructure/ti8m.BeachBreak.CommandApi/Dto/`
 
-- [ ] **Create InitializeAssignmentDto.cs**:
-  - [ ] `string? InitializationNotes`
+- [x] **Create InitializeAssignmentDto.cs**:
+  - [x] `string? InitializationNotes`
 
-- [ ] **Create AddCustomSectionsDto.cs**:
-  - [ ] `List<QuestionSectionDto> Sections`
+- [x] **Create AddCustomSectionsDto.cs**:
+  - [x] `List<QuestionSectionDto> Sections`
 
 ---
 
@@ -258,35 +258,41 @@ Add a new "Initialized" workflow state (value = 1) between "Assigned" and "Emplo
 
 **File**: `03_Infrastructure/ti8m.BeachBreak.CommandApi/Controllers/AssignmentsController.cs`
 
-- [ ] **POST /api/v1/assignments/{id}/initialize**:
-  - [ ] `[Authorize(Policy = "TeamLead")]`
-  - [ ] Create InitializeAssignmentCommand from DTO
-  - [ ] Use UserContext.Id for InitializedByEmployeeId
-  - [ ] Dispatch command
-  - [ ] Return `CreateResponse(result)` (NOT Ok/BadRequest)
+- [x] **POST /api/v1/assignments/{id}/initialize**:
+  - [x] `[Authorize(Policy = "TeamLead")]`
+  - [x] Manager/HR/Admin authorization check using CanAccessAssignmentAsync
+  - [x] Create InitializeAssignmentCommand from DTO
+  - [x] Use UserContext.Id for InitializedByEmployeeId
+  - [x] Dispatch command
+  - [x] Return `CreateResponse(result)` (NOT Ok/BadRequest)
 
-- [ ] **POST /api/v1/assignments/{id}/custom-sections**:
-  - [ ] `[Authorize(Policy = "TeamLead")]`
-  - [ ] Map AddCustomSectionsDto to command
-  - [ ] Use UserContext.Id for AddedByEmployeeId
-  - [ ] Dispatch command
-  - [ ] Return `CreateResponse(result)`
+- [x] **POST /api/v1/assignments/{id}/custom-sections**:
+  - [x] `[Authorize(Policy = "TeamLead")]`
+  - [x] Manager/HR/Admin authorization check using CanAccessAssignmentAsync
+  - [x] Validate at least one section required
+  - [x] Map AddCustomSectionsDto to command (using CommandQuestionSection)
+  - [x] Use UserContext.Id for AddedByEmployeeId
+  - [x] Dispatch command
+  - [x] Return `CreateResponse(result)`
 
-**Tests**: Create API integration tests
+**Tests**: Create API integration tests (Phase 5)
 
 ---
 
 ### 3.3 Add QueryApi Endpoint
 
-**File**: `03_Infrastructure/ti8m.BeachBreak.QueryApi/Controllers/AssignmentsController.cs` (or similar)
+**File**: `03_Infrastructure/ti8m.BeachBreak.QueryApi/Controllers/AssignmentsController.cs`
 
-- [ ] **GET /api/v1/assignments/{id}/custom-sections**:
-  - [ ] `[Authorize]`
-  - [ ] Create GetAssignmentCustomSectionsQuery
-  - [ ] Dispatch query
-  - [ ] Return Ok(sections)
+- [x] **GET /api/v1/assignments/{assignmentId}/custom-sections**:
+  - [x] `[Authorize(Policy = "TeamLead")]`
+  - [x] Manager/HR/Admin authorization check using CanAccessAssignmentAsync
+  - [x] Create GetAssignmentCustomSectionsQuery(assignmentId)
+  - [x] Dispatch query
+  - [x] Return CreateResponse(result) for consistent error handling
 
-**Tests**: Create API integration tests
+**Tests**: Create API integration tests (Phase 5)
+
+**Build Status**: ✅ Solution builds successfully with 0 errors
 
 ---
 
