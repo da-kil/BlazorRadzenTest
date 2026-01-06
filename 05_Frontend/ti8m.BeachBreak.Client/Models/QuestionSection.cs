@@ -23,6 +23,7 @@ public class QuestionSection
 
     public QuestionType Type { get; set; }
     public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
+    public bool IsInstanceSpecific { get; set; } = false;
 
     // Helper methods using strongly-typed configuration
     public int GetItemCount()

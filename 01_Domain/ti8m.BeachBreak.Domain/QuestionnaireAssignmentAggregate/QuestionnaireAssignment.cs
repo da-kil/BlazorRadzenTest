@@ -1,7 +1,9 @@
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
+using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
@@ -57,6 +59,15 @@ public class QuestionnaireAssignment : AggregateRoot
 
     // Public readonly accessors for query purposes
     public IReadOnlyDictionary<Guid, Guid> PredecessorLinks => _predecessorLinks;
+
+    // Initialization phase properties
+    public DateTime? InitializedDate { get; private set; }
+    public Guid? InitializedByEmployeeId { get; private set; }
+    public string? InitializationNotes { get; private set; }
+
+    // Custom sections added during initialization
+    private readonly List<QuestionSection> customSections = new();
+    public IReadOnlyList<QuestionSection> CustomSections => customSections.AsReadOnly();
 
     private QuestionnaireAssignment() { }
 
@@ -151,14 +162,13 @@ public class QuestionnaireAssignment : AggregateRoot
     // Workflow state query methods (business rules)
     /// <summary>
     /// Determines if an employee can edit the questionnaire based on current workflow state.
-    /// Employee can edit when: Assigned, EmployeeInProgress, ManagerInProgress, BothInProgress, ManagerSubmitted.
-    /// Employee is READ-ONLY during: InReview (manager-led review meeting).
+    /// Employee can edit when: EmployeeInProgress, ManagerInProgress, BothInProgress, ManagerSubmitted.
+    /// Employee is BLOCKED during: Assigned, Initialized (manager-only initialization phase), InReview (manager-led review meeting).
     /// Employee is blocked after submission: EmployeeSubmitted, BothSubmitted, and all review/final states.
     /// </summary>
     public bool CanEmployeeEdit()
     {
         return WorkflowState is
-            WorkflowState.Assigned or
             WorkflowState.EmployeeInProgress or
             WorkflowState.ManagerInProgress or
             WorkflowState.BothInProgress or
@@ -167,7 +177,7 @@ public class QuestionnaireAssignment : AggregateRoot
 
     /// <summary>
     /// Determines if a manager can edit the questionnaire based on current workflow state.
-    /// Manager can edit when: Assigned, EmployeeInProgress, ManagerInProgress, BothInProgress, EmployeeSubmitted.
+    /// Manager can edit when: Assigned, Initialized, EmployeeInProgress, ManagerInProgress, BothInProgress, EmployeeSubmitted.
     /// Manager can edit ALL sections during: InReview (including employee-only sections).
     /// Manager is blocked after submission: ManagerSubmitted, BothSubmitted, and all confirmation/final states.
     /// </summary>
@@ -175,6 +185,7 @@ public class QuestionnaireAssignment : AggregateRoot
     {
         return WorkflowState is
             WorkflowState.Assigned or
+            WorkflowState.Initialized or
             WorkflowState.EmployeeInProgress or
             WorkflowState.ManagerInProgress or
             WorkflowState.BothInProgress or
@@ -485,6 +496,88 @@ public class QuestionnaireAssignment : AggregateRoot
         ));
     }
 
+    // Initialization phase methods
+    /// <summary>
+    /// Starts the initialization phase for this assignment.
+    /// Can only be called from Assigned state. Transitions to Initialized state.
+    /// </summary>
+    public void StartInitialization(Guid initializedBy, string? initializationNotes = null)
+    {
+        if (WorkflowState != WorkflowState.Assigned)
+            throw new InvalidOperationException($"Cannot start initialization from state {WorkflowState}. Must be in Assigned state.");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot initialize a withdrawn assignment");
+
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot initialize a finalized questionnaire");
+
+        RaiseEvent(new AssignmentInitialized(
+            DateTime.UtcNow,
+            initializedBy,
+            initializationNotes));
+    }
+
+    /// <summary>
+    /// Adds custom question sections to the assignment during initialization.
+    /// Custom sections are instance-specific and excluded from aggregate reports.
+    /// Can only be called during Initialized state.
+    /// </summary>
+    public void AddCustomSections(List<QuestionSection> sections, Guid addedBy)
+    {
+        if (WorkflowState != WorkflowState.Initialized)
+            throw new InvalidOperationException($"Custom sections can only be added during Initialized state. Current state: {WorkflowState}");
+
+        if (sections == null || !sections.Any())
+            throw new ArgumentException("Custom sections list cannot be null or empty", nameof(sections));
+
+        // Validate all sections are instance-specific
+        var nonInstanceSpecific = sections.Where(s => !s.IsInstanceSpecific).ToList();
+        if (nonInstanceSpecific.Any())
+            throw new InvalidOperationException("All custom sections must have IsInstanceSpecific = true");
+
+        // Validate no Goal type questions
+        var goalSections = sections.Where(s => s.Type == QuestionType.Goal).ToList();
+        if (goalSections.Any())
+            throw new InvalidOperationException("Goal type questions cannot be added as custom sections");
+
+        var sectionDataList = sections.Select(MapToData).ToList();
+
+        RaiseEvent(new CustomSectionsAddedToAssignment(
+            sectionDataList,
+            DateTime.UtcNow,
+            addedBy));
+    }
+
+    // Helper methods for mapping QuestionSection to/from QuestionSectionData
+    private static QuestionSectionData MapToData(QuestionSection section)
+    {
+        return new QuestionSectionData(
+            section.Id,
+            section.Title,
+            section.Description,
+            section.Order,
+            section.IsRequired,
+            section.CompletionRole,
+            section.Type,
+            section.Configuration,
+            section.IsInstanceSpecific);
+    }
+
+    private static QuestionSection MapFromData(QuestionSectionData data)
+    {
+        return new QuestionSection(
+            data.Id,
+            data.Title,
+            data.Description,
+            data.Order,
+            data.IsRequired,
+            data.CompletionRole,
+            data.Type,
+            data.Configuration,
+            data.IsInstanceSpecific);
+    }
+
     // InReview note management methods
     public Guid AddInReviewNote(
         string content,
@@ -618,6 +711,20 @@ public class QuestionnaireAssignment : AggregateRoot
     public void Apply(AssignmentWorkStarted @event)
     {
         StartedDate = @event.StartedDate;
+    }
+
+    public void Apply(AssignmentInitialized @event)
+    {
+        InitializedDate = @event.InitializedDate;
+        InitializedByEmployeeId = @event.InitializedByEmployeeId;
+        InitializationNotes = @event.InitializationNotes;
+        WorkflowState = WorkflowState.Initialized;
+    }
+
+    public void Apply(CustomSectionsAddedToAssignment @event)
+    {
+        var sections = @event.CustomSections.Select(MapFromData).ToList();
+        customSections.AddRange(sections);
     }
 
     public void Apply(AssignmentWorkCompleted @event)

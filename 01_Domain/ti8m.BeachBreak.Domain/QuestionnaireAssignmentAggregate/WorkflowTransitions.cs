@@ -14,6 +14,14 @@ public static class WorkflowTransitions
     {
         [WorkflowState.Assigned] = new List<StateTransition>
         {
+            new(WorkflowState.Initialized, "transitions.manager-starts-initialization"),
+            new(WorkflowState.EmployeeInProgress, "transitions.employee-starts-filling"),
+            new(WorkflowState.ManagerInProgress, "transitions.manager-starts-filling"),
+            new(WorkflowState.BothInProgress, "transitions.both-start-filling")
+        },
+
+        [WorkflowState.Initialized] = new List<StateTransition>
+        {
             new(WorkflowState.EmployeeInProgress, "transitions.employee-starts-filling"),
             new(WorkflowState.ManagerInProgress, "transitions.manager-starts-filling"),
             new(WorkflowState.BothInProgress, "transitions.both-start-filling")
@@ -78,6 +86,13 @@ public static class WorkflowTransitions
     /// </summary>
     public static readonly Dictionary<WorkflowState, List<ReopenTransition>> BackwardTransitions = new()
     {
+        [WorkflowState.Initialized] = new List<ReopenTransition>
+        {
+            new(WorkflowState.Assigned,
+                "reopen.reset-initialization",
+                new[] { "Admin", "HR", "TeamLead" })
+        },
+
         [WorkflowState.EmployeeSubmitted] = new List<ReopenTransition>
         {
             new(WorkflowState.EmployeeInProgress,

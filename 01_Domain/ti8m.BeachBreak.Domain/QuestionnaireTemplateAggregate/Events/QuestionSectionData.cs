@@ -15,4 +15,5 @@ public record QuestionSectionData(
     bool IsRequired,
     CompletionRole CompletionRole,
     QuestionType Type,
-    IQuestionConfiguration Configuration);
+    IQuestionConfiguration Configuration,
+    bool IsInstanceSpecific = false);

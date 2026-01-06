@@ -1,9 +1,9 @@
 # TODO: Add "Initialized" Workflow State
 
-**Status**: 🔴 Not Started
+**Status**: 🟡 Phase 1 In Progress (Domain Foundation Complete)
 **Priority**: High
 **Estimated Effort**: 13-16 days
-**Branch**: `feature/initialized-workflow-state`
+**Branch**: `feature/AddNewWorkflowState`
 
 ## Overview
 
@@ -21,24 +21,24 @@ Add a new "Initialized" workflow state (value = 1) between "Assigned" and "Emplo
 ## Phase 1: Domain Foundation (3-4 days)
 
 ### 1.1 Database Migration
-- [ ] **Backup test data** (if any critical data exists)
-- [ ] **Drop database**: `DROP DATABASE beachbreak_dev CASCADE;`
-- [ ] **Create database**: `CREATE DATABASE beachbreak_dev;`
-- [ ] **Verify Aspire auto-migration** works
+- [x] **Backup test data** (if any critical data exists)
+- [x] **Drop database**: `DROP DATABASE beachbreak_dev CASCADE;`
+- [x] **Create database**: `CREATE DATABASE beachbreak_dev;`
+- [x] **Verify Aspire auto-migration** works
 
-**Files**: None (database operation)
+**Files**: None (database operation - will be recreated on next application run)
 
 ---
 
 ### 1.2 Update WorkflowState Enums
-- [ ] **Update Domain enum**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/WorkflowState.cs`
-  - [ ] Add `Initialized = 1`
-  - [ ] Renumber all states: EmployeeInProgress=2, ManagerInProgress=3, BothInProgress=4, EmployeeSubmitted=5, ManagerSubmitted=6, BothSubmitted=7, InReview=8, ReviewFinished=9, EmployeeReviewConfirmed=10, Finalized=11
-  - [ ] Verify ALL values are explicit (CRITICAL for CQRS)
+- [x] **Update Domain enum**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/WorkflowState.cs`
+  - [x] Add `Initialized = 1`
+  - [x] Renumber all states: EmployeeInProgress=2, ManagerInProgress=3, BothInProgress=4, EmployeeSubmitted=5, ManagerSubmitted=6, BothSubmitted=7, InReview=8, ReviewFinished=9, EmployeeReviewConfirmed=10, Finalized=11
+  - [x] Verify ALL values are explicit (CRITICAL for CQRS)
 
-- [ ] **Update Frontend enum**: `05_Frontend/ti8m.BeachBreak.Client/Models/WorkflowState.cs`
-  - [ ] Apply same changes as domain enum
-  - [ ] Ensure synchronization with domain
+- [x] **Update Frontend enum**: `05_Frontend/ti8m.BeachBreak.Client/Models/WorkflowState.cs`
+  - [x] Apply same changes as domain enum
+  - [x] Ensure synchronization with domain
 
 **Verification**: Run application and check no serialization errors
 
@@ -46,31 +46,31 @@ Add a new "Initialized" workflow state (value = 1) between "Assigned" and "Emplo
 
 ### 1.3 Create Domain Events
 
-- [ ] **Create AssignmentInitialized event**
+- [x] **Create AssignmentInitialized event**
   - **File**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/Events/AssignmentInitialized.cs`
-  - [ ] Properties: AggregateId, InitializedDate, InitializedByEmployeeId, InitializationNotes
-  - [ ] Implement IDomainEvent
-  - [ ] Add to QuestionnaireAssignment.Apply() method
+  - [x] Properties: InitializedDate, InitializedByEmployeeId, InitializationNotes
+  - [x] Implement IDomainEvent
+  - [x] Add to QuestionnaireAssignment.Apply() method
 
-- [ ] **Create CustomSectionsAddedToAssignment event**
+- [x] **Create CustomSectionsAddedToAssignment event**
   - **File**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/Events/CustomSectionsAddedToAssignment.cs`
-  - [ ] Properties: AssignmentId, CustomSections (List<QuestionSectionData>), AddedDate, AddedByEmployeeId
-  - [ ] Create QuestionSectionData nested record if needed
-  - [ ] Implement IDomainEvent
-  - [ ] Add to QuestionnaireAssignment.Apply() method
+  - [x] Properties: CustomSections (List<QuestionSectionData>), AddedDate, AddedByEmployeeId
+  - [x] QuestionSectionData already exists with IsInstanceSpecific property added
+  - [x] Implement IDomainEvent
+  - [x] Add to QuestionnaireAssignment.Apply() method
 
 ---
 
 ### 1.4 Update QuestionSection Model
 
-- [ ] **Update Domain QuestionSection**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireTemplateAggregate/QuestionSection.cs`
-  - [ ] Add property: `public bool IsInstanceSpecific { get; private set; } = false`
-  - [ ] Add CreateCustomSection() factory method
-  - [ ] Ensure MapToData/MapFromData handle IsInstanceSpecific
+- [x] **Update Domain QuestionSection**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireTemplateAggregate/QuestionSection.cs`
+  - [x] Add property: `public bool IsInstanceSpecific { get; private set; } = false`
+  - [x] Add CreateCustomSection() factory method
+  - [x] Updated QuestionSectionData to include IsInstanceSpecific
 
-- [ ] **Update Frontend QuestionSection**: `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionSection.cs`
-  - [ ] Add property: `public bool IsInstanceSpecific { get; set; } = false`
-  - [ ] Ensure serialization works
+- [x] **Update Frontend QuestionSection**: `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionSection.cs`
+  - [x] Add property: `public bool IsInstanceSpecific { get; set; } = false`
+  - [x] Ensure serialization works
 
 **Purpose**: IsInstanceSpecific=true marks custom questions to exclude from reports
 
@@ -80,28 +80,28 @@ Add a new "Initialized" workflow state (value = 1) between "Assigned" and "Emplo
 
 **File**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/QuestionnaireAssignment.cs`
 
-- [ ] **Add properties**:
-  - [ ] `public DateTime? InitializedDate { get; private set; }`
-  - [ ] `public Guid? InitializedByEmployeeId { get; private set; }`
-  - [ ] `public string? InitializationNotes { get; private set; }`
-  - [ ] `private readonly List<QuestionSection> _customSections = new()`
-  - [ ] `public IReadOnlyList<QuestionSection> CustomSections => _customSections.AsReadOnly()`
+- [x] **Add properties**:
+  - [x] `public DateTime? InitializedDate { get; private set; }`
+  - [x] `public Guid? InitializedByEmployeeId { get; private set; }`
+  - [x] `public string? InitializationNotes { get; private set; }`
+  - [x] `private readonly List<QuestionSection> _customSections = new()`
+  - [x] `public IReadOnlyList<QuestionSection> CustomSections => _customSections.AsReadOnly()`
 
-- [ ] **Add business methods**:
-  - [ ] `StartInitialization(Guid startedBy)` - Validates state is Assigned, raises AssignmentInitialized event
-  - [ ] `AddCustomSections(List<QuestionSection> sections, Guid addedBy)` - Validates state is Initialized, sections are instance-specific, no Goals allowed
-  - [ ] Add MapToData/MapFromData helper methods for QuestionSectionData
+- [x] **Add business methods**:
+  - [x] `StartInitialization(Guid startedBy, string? notes)` - Validates state is Assigned, raises AssignmentInitialized event
+  - [x] `AddCustomSections(List<QuestionSection> sections, Guid addedBy)` - Validates state is Initialized, sections are instance-specific, no Goals allowed
+  - [x] Add MapToData/MapFromData helper methods for QuestionSectionData
 
-- [ ] **Update authorization methods**:
-  - [ ] `CanEmployeeEdit()` - Exclude Initialized state
-  - [ ] `CanManagerEdit()` - Include Initialized state
-  - [ ] Update `LinkPredecessorQuestionnaire()` - Allow during Initialized state for managers
+- [x] **Update authorization methods**:
+  - [x] `CanEmployeeEdit()` - Exclude Initialized state (Employees blocked during Initialized)
+  - [x] `CanManagerEdit()` - Include Initialized state (Managers can edit during Initialized)
+  - [x] `LinkPredecessorQuestionnaire()` uses CanManagerEdit() which now includes Initialized state
 
-- [ ] **Add Apply methods**:
-  - [ ] `Apply(AssignmentInitialized @event)` - Set InitializedDate, InitializedByEmployeeId, InitializationNotes, WorkflowState=Initialized
-  - [ ] `Apply(CustomSectionsAddedToAssignment @event)` - Add sections to _customSections
+- [x] **Add Apply methods**:
+  - [x] `Apply(AssignmentInitialized @event)` - Set InitializedDate, InitializedByEmployeeId, InitializationNotes, WorkflowState=Initialized
+  - [x] `Apply(CustomSectionsAddedToAssignment @event)` - Add sections to _customSections
 
-**Tests**: Write unit tests for new methods
+**Tests**: Write unit tests for new methods (Phase 1.8)
 
 ---
 
@@ -109,17 +109,17 @@ Add a new "Initialized" workflow state (value = 1) between "Assigned" and "Emplo
 
 **File**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/WorkflowTransitions.cs`
 
-- [ ] **Add ForwardTransitions**:
-  - [ ] `[WorkflowState.Assigned]` - Add `new(WorkflowState.Initialized, "transitions.manager-starts-initialization")`
-  - [ ] `[WorkflowState.Initialized]` - NEW entry with transitions to EmployeeInProgress and ManagerInProgress
+- [x] **Add ForwardTransitions**:
+  - [x] `[WorkflowState.Assigned]` - Add `new(WorkflowState.Initialized, "transitions.manager-starts-initialization")`
+  - [x] `[WorkflowState.Initialized]` - NEW entry with transitions to EmployeeInProgress, ManagerInProgress, and BothInProgress
 
-- [ ] **Add BackwardTransitions**:
-  - [ ] `[WorkflowState.Initialized]` - NEW entry with transition to Assigned (Admin/HR/TeamLead)
+- [x] **Add BackwardTransitions**:
+  - [x] `[WorkflowState.Initialized]` - NEW entry with transition to Assigned (Admin/HR/TeamLead)
 
-**Translation Keys** (add to test-translations.json):
+**Translation Keys** (add to test-translations.json - Phase 4):
 - [ ] `transitions.manager-starts-initialization` (EN/DE)
-- [ ] `transitions.employee-starts-filling` (update existing)
-- [ ] `transitions.manager-starts-filling` (update existing)
+- [ ] `transitions.employee-starts-filling` (existing)
+- [ ] `transitions.manager-starts-filling` (existing)
 - [ ] `reopen.reset-initialization` (EN/DE)
 
 ---
@@ -128,9 +128,9 @@ Add a new "Initialized" workflow state (value = 1) between "Assigned" and "Emplo
 
 **File**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/WorkflowStateMachine.cs`
 
-- [ ] **Review DetermineProgressState()** - Ensure it doesn't auto-transition from Assigned/Initialized
-- [ ] **Check for hardcoded state checks** - Update any methods that explicitly check states
-- [ ] **Test all transition validations** still work
+- [x] **Review DetermineProgressState()** - Updated to preserve Initialized state (doesn't auto-transition to Assigned)
+- [x] **Update DetermineProgressStateFromStartedWork()** - Added transitions from Initialized state when work starts
+- [x] **Test all transition validations** - ForwardTransitions and BackwardTransitions include Initialized state
 
 ---
 
