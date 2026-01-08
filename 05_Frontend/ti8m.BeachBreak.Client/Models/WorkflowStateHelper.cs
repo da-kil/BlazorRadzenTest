@@ -110,12 +110,14 @@ public static class WorkflowStateHelper
 
         var state = assignment.WorkflowState;
 
-        // Manager can edit during initialization phase (Assigned, Initialized)
+        // Manager can edit questionnaire content after initialization (Initialized+)
         // Manager can edit until they themselves submit
         // Manager can continue editing even if employee has already submitted (EmployeeSubmitted)
+        // Manager is blocked during initialization: Assigned (must use initialization workflow)
         // During InReview, manager has special editing privileges (handled via CanManagerEditDuringReview)
-        return state is WorkflowState.Assigned or WorkflowState.Initialized or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress or WorkflowState.EmployeeSubmitted;
+        return state is WorkflowState.Initialized or WorkflowState.ManagerInProgress or WorkflowState.BothInProgress or WorkflowState.EmployeeSubmitted;
 
+        // Cannot edit during initialization: Assigned (use initialization page only)
         // Cannot edit after manager submits: ManagerSubmitted, BothSubmitted
         // Cannot edit after finalization: Finalized
     }

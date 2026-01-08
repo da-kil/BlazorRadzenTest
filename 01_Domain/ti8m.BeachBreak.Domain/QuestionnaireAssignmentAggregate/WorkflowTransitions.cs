@@ -14,10 +14,7 @@ public static class WorkflowTransitions
     {
         [WorkflowState.Assigned] = new List<StateTransition>
         {
-            new(WorkflowState.Initialized, "transitions.manager-starts-initialization"),
-            new(WorkflowState.EmployeeInProgress, "transitions.employee-starts-filling"),
-            new(WorkflowState.ManagerInProgress, "transitions.manager-starts-filling"),
-            new(WorkflowState.BothInProgress, "transitions.both-start-filling")
+            new(WorkflowState.Initialized, "transitions.manager-starts-initialization")
         },
 
         [WorkflowState.Initialized] = new List<StateTransition>

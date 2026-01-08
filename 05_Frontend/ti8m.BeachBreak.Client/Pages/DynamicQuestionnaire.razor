@@ -373,6 +373,23 @@ else
         await base.OnInitializedAsync();
         await DetermineUserRole();
         await LoadAssignmentAndTemplate();
+
+        // Redirect managers to initialization page if assignment is in Assigned state
+        if (assignment != null && assignment.WorkflowState == WorkflowState.Assigned)
+        {
+            if (isManager)
+            {
+                NavigationManager.NavigateTo($"/assignments/{assignment.Id}/initialize", replace: true);
+                return;
+            }
+            else
+            {
+                // Employees cannot access assignments in Assigned state
+                NavigationManager.NavigateTo("/my-questionnaires", replace: true);
+                return;
+            }
+        }
+
         await InitializeResponseAsync();
         await LoadExistingResponse();
         await FilterVisibleSections();

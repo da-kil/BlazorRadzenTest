@@ -202,9 +202,7 @@ public class WorkflowStateMachine
         {
             return (currentState, startedBy) switch
             {
-                // From Assigned or Initialized state
-                (WorkflowState.Assigned, CompletionRole.Employee) => WorkflowState.EmployeeInProgress,
-                (WorkflowState.Assigned, CompletionRole.Manager) => WorkflowState.ManagerInProgress,
+                // From Initialized state only
                 (WorkflowState.Initialized, CompletionRole.Employee) => WorkflowState.EmployeeInProgress,
                 (WorkflowState.Initialized, CompletionRole.Manager) => WorkflowState.ManagerInProgress,
 
