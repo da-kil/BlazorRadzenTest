@@ -2,6 +2,7 @@
 @using ti8m.BeachBreak.Client.Services
 @using ti8m.BeachBreak.Client.Components.Dialogs
 @using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject NotificationService NotificationService
 @inject DialogService DialogService
@@ -16,7 +17,7 @@
                     <RadzenIcon Icon="@GetWorkflowIcon()" />
                 </div>
                 <div class="workflow-text">
-                    <div class="workflow-title">Workflow Status</div>
+                    <div class="workflow-title">@T("labels.workflow-status")</div>
                     <div class="workflow-status">@GetWorkflowStatusText()</div>
                 </div>
             </div>
@@ -24,7 +25,7 @@
             <div class="button-group">
                 @if (IsManager && WorkflowStateHelper.CanManagerInitialize(Assignment))
                 {
-                    <RadzenButton Text="Initialize Assignment"
+                    <RadzenButton Text="@T("buttons.initialize-assignment")"
                                   Icon="settings"
                                   ButtonStyle="ButtonStyle.Primary"
                                   Click="@NavigateToInitialization"
@@ -33,8 +34,8 @@
 
                 @if (IsManager && WorkflowStateHelper.CanInitiateReview(Assignment))
                 {
-                    <AsyncButton Text="Initiate Review Meeting"
-                                 ProcessingText="Initiating"
+                    <AsyncButton Text="@T("buttons.initiate-review-meeting")"
+                                 ProcessingText="@T("buttons.initiating")"
                                  Icon="rate_review"
                                  ButtonStyle="ButtonStyle.Primary"
                                  Click="@InitiateReview"
@@ -44,8 +45,8 @@
 
                 @if (IsEmployee && WorkflowStateHelper.CanEmployeeConfirmReview(Assignment))
                 {
-                    <AsyncButton Text="Sign Off on Review"
-                                 ProcessingText="Signing Off"
+                    <AsyncButton Text="@T("buttons.sign-off-on-review")"
+                                 ProcessingText="@T("buttons.signing-off")"
                                  Icon="verified"
                                  ButtonStyle="ButtonStyle.Success"
                                  Click="@ConfirmEmployeeReview"
@@ -55,8 +56,8 @@
 
                 @if (IsManager && WorkflowStateHelper.CanManagerFinalize(Assignment))
                 {
-                    <AsyncButton Text="Finalize Questionnaire"
-                                 ProcessingText="Finalizing"
+                    <AsyncButton Text="@T("buttons.finalize-questionnaire")"
+                                 ProcessingText="@T("buttons.finalizing")"
                                  Icon="lock"
                                  ButtonStyle="ButtonStyle.Warning"
                                  Click="@FinalizeQuestionnaire"
@@ -99,8 +100,8 @@
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
-                    Summary = "Success",
-                    Detail = "Performance review initiated",
+                    Summary = T("notifications.success"),
+                    Detail = T("notifications.review-initiated"),
                     Duration = 4000
                 });
                 await OnActionCompleted.InvokeAsync();
@@ -113,7 +114,7 @@
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Cannot Initiate Review",
+                Summary = T("notifications.cannot-initiate-review"),
                 Detail = ex.Message,
                 Duration = 6000
             });
@@ -124,8 +125,8 @@
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Error",
-                Detail = $"An unexpected error occurred: {ex.Message}",
+                Summary = T("notifications.error"),
+                Detail = string.Format(T("notifications.unexpected-error"), ex.Message),
                 Duration = 6000
             });
         }
@@ -194,8 +195,8 @@
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Success,
-                    Summary = "Success",
-                    Detail = "Questionnaire finalized and locked",
+                    Summary = T("notifications.success"),
+                    Detail = T("notifications.questionnaire-finalized"),
                     Duration = 4000
                 });
                 await OnActionCompleted.InvokeAsync();
@@ -208,7 +209,7 @@
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Cannot Finalize Questionnaire",
+                Summary = T("notifications.cannot-finalize-questionnaire"),
                 Detail = ex.Message,
                 Duration = 6000
             });
@@ -219,8 +220,8 @@
             NotificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Error,
-                Summary = "Error",
-                Detail = $"An unexpected error occurred: {ex.Message}",
+                Summary = T("notifications.error"),
+                Detail = string.Format(T("notifications.unexpected-error"), ex.Message),
                 Duration = 6000
             });
         }
@@ -254,23 +255,23 @@
 
     private string GetWorkflowStatusText()
     {
-        if (Assignment == null) return "Unknown";
+        if (Assignment == null) return T("workflow-states.unknown");
 
         return Assignment.WorkflowState switch
         {
-            WorkflowState.Assigned => "Assigned - Not Started",
-            WorkflowState.Initialized => "Initialized - Ready to Start",
-            WorkflowState.EmployeeInProgress => "Employee in Progress",
-            WorkflowState.ManagerInProgress => "Manager in Progress",
-            WorkflowState.BothInProgress => "Both in Progress",
-            WorkflowState.EmployeeSubmitted => "Employee Submitted",
-            WorkflowState.ManagerSubmitted => "Manager Submitted",
-            WorkflowState.BothSubmitted => "Both Submitted",
-            WorkflowState.InReview => "Review Meeting in Progress",
-            WorkflowState.ReviewFinished => "Review Meeting Finished",
-            WorkflowState.EmployeeReviewConfirmed => "Ready to Finalize",
-            WorkflowState.Finalized => "Finalized & Locked",
-            _ => "Unknown Status"
+            WorkflowState.Assigned => T("workflow-states.assigned-description"),
+            WorkflowState.Initialized => T("workflow-states.initialized-description"),
+            WorkflowState.EmployeeInProgress => T("workflow-states.employee-in-progress-description"),
+            WorkflowState.ManagerInProgress => T("workflow-states.manager-in-progress-description"),
+            WorkflowState.BothInProgress => T("workflow-states.both-in-progress-description"),
+            WorkflowState.EmployeeSubmitted => T("workflow-states.employee-submitted-description"),
+            WorkflowState.ManagerSubmitted => T("workflow-states.manager-submitted-description"),
+            WorkflowState.BothSubmitted => T("workflow-states.both-submitted-description"),
+            WorkflowState.InReview => T("workflow-states.in-review-description"),
+            WorkflowState.ReviewFinished => T("workflow-states.review-finished-description"),
+            WorkflowState.EmployeeReviewConfirmed => T("workflow-states.employee-review-confirmed-description"),
+            WorkflowState.Finalized => T("workflow-states.finalized-description"),
+            _ => T("workflow-states.unknown")
         };
     }
 }

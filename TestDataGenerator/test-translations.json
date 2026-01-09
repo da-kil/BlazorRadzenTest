@@ -43,13 +43,6 @@
   },
   {
     "key": "actions.employee.start-completing-sections",
-    "german": "Beginnen Sie mit dem Ausfällen Ihrer Abschnitte",
-    "english": "Start completing your sections",
-    "category": "actions",
-    "createdDate": "2026-01-03T22:02:10.8224456+01:00"
-  },
-  {
-    "key": "actions.employee.start-completing-sections",
     "german": "Beginnen Sie mit dem Ausfüllen der Abschnitte",
     "english": "Start completing sections",
     "category": "actions",
@@ -141,13 +134,6 @@
   },
   {
     "key": "actions.manager.start-completing-sections",
-    "german": "Beginnen Sie mit dem Ausfüllen Ihrer Abschnitte",
-    "english": "Start completing your sections",
-    "category": "actions",
-    "createdDate": "2026-01-03T22:02:10.9005720+01:00"
-  },
-  {
-    "key": "actions.manager.start-completing-sections",
     "german": "Beginnen Sie mit dem Ausfüllen der Abschnitte",
     "english": "Start completing sections",
     "category": "actions",
@@ -222,13 +208,6 @@
     "english": "Add Note",
     "category": "buttons",
     "createdDate": "2025-12-24T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "buttons.add-text-section",
-    "german": "Textabschnitt hinzufügen",
-    "english": "Add Text Section",
-    "category": "buttons",
-    "createdDate": "2025-12-16T14:00:00.0000000+00:00"
   },
   {
     "key": "buttons.add-text-section",
@@ -410,7 +389,14 @@
     "german": "Fragebogen abschliessen",
     "english": "Finalize Questionnaire",
     "category": "buttons",
-    "createdDate": "2025-12-31T23:09:52.0584202+01:00"
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "buttons.finalizing",
+    "german": "Abschliessen...",
+    "english": "Finalizing",
+    "category": "buttons",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "buttons.goal-achievement",
@@ -418,6 +404,27 @@
     "english": "Goal Achievement",
     "category": "buttons",
     "createdDate": "2025-12-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "buttons.initialize-assignment",
+    "german": "Zuweisung initialisieren",
+    "english": "Initialize Assignment",
+    "category": "buttons",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "buttons.initiate-review-meeting",
+    "german": "�berpr�fungssitzung einleiten",
+    "english": "Initiate Review Meeting",
+    "category": "buttons",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "buttons.initiating",
+    "german": "Einleitung...",
+    "english": "Initiating",
+    "category": "buttons",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "buttons.keep-assignment",
@@ -432,13 +439,6 @@
     "english": "Link Predecessor",
     "category": "buttons",
     "createdDate": "2025-12-31T23:09:52.0616018+01:00"
-  },
-  {
-    "key": "buttons.link-predecessor",
-    "german": "Vorgänger verknüpfen",
-    "english": "Link Predecessor",
-    "category": "buttons",
-    "createdDate": "2026-01-06T12:00:00.0000000+00:00"
   },
   {
     "key": "buttons.loading",
@@ -616,11 +616,18 @@
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
   },
   {
-    "key": "buttons.sign-off-review",
-    "german": "Überprüfung abzeichnen",
-    "english": "Sign Off Review",
+    "key": "buttons.signing-off",
+    "german": "Abzeichnung...",
+    "english": "Signing Off",
     "category": "buttons",
-    "createdDate": "2026-01-01T12:00:00.0000000+00:00"
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "buttons.sign-off-on-review",
+    "german": "Überprüfung abzeichnen",
+    "english": "Sign Off on Review",
+    "category": "buttons",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "buttons.sign-off-review",
@@ -628,13 +635,6 @@
     "english": "Sign-Off Review",
     "category": "buttons",
     "createdDate": "2026-01-03T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "buttons.signing-off",
-    "german": "Abzeichnung läuft...",
-    "english": "Signing Off...",
-    "category": "buttons",
-    "createdDate": "2026-01-01T12:00:00.0000000+00:00"
   },
   {
     "key": "buttons.start-new-replay",
@@ -1141,18 +1141,18 @@
     "createdDate": "2025-12-31T23:09:52.0616018+01:00"
   },
   {
-    "key": "dialogs.can-edit-replace-summary",
-    "german": "Sie können diese bearbeiten oder ersetzen",
-    "english": "You can edit or replace this",
-    "category": "dialogs",
-    "createdDate": "2025-12-29T12:00:00.0000000+00:00"
-  },
-  {
     "key": "dialogs.cancel-assignment",
     "german": "Zuweisung stornieren",
     "english": "Cancel Assignment",
     "category": "dialogs",
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
+  },
+  {
+    "key": "dialogs.can-edit-replace-summary",
+    "german": "Sie können diese bearbeiten oder ersetzen",
+    "english": "You can edit or replace this",
+    "category": "dialogs",
+    "createdDate": "2025-12-29T12:00:00.0000000+00:00"
   },
   {
     "key": "dialogs.clone-template-confirm",
@@ -1302,16 +1302,16 @@
     "createdDate": "2025-12-31T23:09:52.0616018+01:00"
   },
   {
-    "key": "dialogs.finish-review-meeting",
-    "german": "Bewertungsgesprüch beenden",
-    "english": "Finish Review Meeting",
+    "key": "dialogs.finishing",
+    "german": "Beende...",
+    "english": "Finishing...",
     "category": "dialogs",
     "createdDate": "2025-12-29T12:00:00.0000000+00:00"
   },
   {
-    "key": "dialogs.finishing",
-    "german": "Beende...",
-    "english": "Finishing...",
+    "key": "dialogs.finish-review-meeting",
+    "german": "Bewertungsgesprüch beenden",
+    "english": "Finish Review Meeting",
     "category": "dialogs",
     "createdDate": "2025-12-29T12:00:00.0000000+00:00"
   },
@@ -1372,18 +1372,18 @@
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
   },
   {
-    "key": "dialogs.sign-off-review",
-    "german": "Besprechung bestätigen",
-    "english": "Sign Off on Review",
-    "category": "dialogs",
-    "createdDate": "2025-12-03T12:17:11.8998682+00:00"
-  },
-  {
     "key": "dialogs.signing-off",
     "german": "Bestätige...",
     "english": "Signing Off",
     "category": "dialogs",
     "createdDate": "2025-12-03T12:17:11.8998683+00:00"
+  },
+  {
+    "key": "dialogs.sign-off-review",
+    "german": "Besprechung bestätigen",
+    "english": "Sign Off on Review",
+    "category": "dialogs",
+    "createdDate": "2025-12-03T12:17:11.8998682+00:00"
   },
   {
     "key": "dialogs.summarize-key-points-discussed",
@@ -2226,16 +2226,16 @@
     "createdDate": "2025-12-04T12:00:00.0000000+00:00"
   },
   {
-    "key": "labels.questionnaire-type-required",
-    "german": "Fragebogen-Typ *",
-    "english": "Questionnaire Type *",
+    "key": "labels.questionnaires",
+    "german": "Fragebögen",
+    "english": "Questionnaires",
     "category": "labels",
     "createdDate": "2025-12-07T12:00:00.0000000+00:00"
   },
   {
-    "key": "labels.questionnaires",
-    "german": "Fragebögen",
-    "english": "Questionnaires",
+    "key": "labels.questionnaire-type-required",
+    "german": "Fragebogen-Typ *",
+    "english": "Questionnaire Type *",
     "category": "labels",
     "createdDate": "2025-12-07T12:00:00.0000000+00:00"
   },
@@ -2345,13 +2345,6 @@
     "createdDate": "2025-12-14T12:00:00.0000000+00:00"
   },
   {
-    "key": "labels.section",
-    "german": "Abschnitt",
-    "english": "Section",
-    "category": "labels",
-    "createdDate": "2026-01-06T12:00:00.0000000+00:00"
-  },
-  {
     "key": "labels.section-default",
     "german": "Abschnitt {0}",
     "english": "Section {0}",
@@ -2373,20 +2366,6 @@
     "createdDate": "2025-12-17T12:00:00.0000000+00:00"
   },
   {
-    "key": "labels.section-title-english",
-    "german": "Titel (Englisch)",
-    "english": "Title (English)",
-    "category": "labels",
-    "createdDate": "2025-12-17T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "labels.section-title-german",
-    "german": "Titel (Deutsch)",
-    "english": "Title (German)",
-    "category": "labels",
-    "createdDate": "2025-12-17T12:00:00.0000000+00:00"
-  },
-  {
     "key": "labels.sections",
     "german": "Abschnitte",
     "english": "Sections",
@@ -2399,6 +2378,20 @@
     "english": "sections",
     "category": "labels",
     "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "labels.section-title-english",
+    "german": "Titel (Englisch)",
+    "english": "Title (English)",
+    "category": "labels",
+    "createdDate": "2025-12-17T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "labels.section-title-german",
+    "german": "Titel (Deutsch)",
+    "english": "Title (German)",
+    "category": "labels",
+    "createdDate": "2025-12-17T12:00:00.0000000+00:00"
   },
   {
     "key": "labels.selected-count",
@@ -2562,6 +2555,13 @@
     "createdDate": "2025-12-29T12:00:00.0000000+00:00"
   },
   {
+    "key": "labels.workflow-status",
+    "german": "Workflow-Status",
+    "english": "Workflow Status",
+    "category": "labels",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
     "key": "labels.yes",
     "german": "Ja",
     "english": "Yes",
@@ -2632,18 +2632,18 @@
     "createdDate": "2026-01-04T14:00:00.0000000+01:00"
   },
   {
-    "key": "messages.can-edit-replace-comments",
-    "german": "Sie können diese bearbeiten oder durch neue Kommentare ersetzen.",
-    "english": "You can edit these or replace them with new comments.",
-    "category": "messages",
-    "createdDate": "2026-01-01T12:00:00.0000000+00:00"
-  },
-  {
     "key": "messages.cancel-assignment-confirmation",
     "german": "Sind Sie sicher, dass Sie die Zuweisung stornieren mÜchten für",
     "english": "Are you sure you want to cancel the assignment for",
     "category": "messages",
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
+  },
+  {
+    "key": "messages.can-edit-replace-comments",
+    "german": "Sie können diese bearbeiten oder durch neue Kommentare ersetzen.",
+    "english": "You can edit these or replace them with new comments.",
+    "category": "messages",
+    "createdDate": "2026-01-01T12:00:00.0000000+00:00"
   },
   {
     "key": "messages.cloning",
@@ -3178,34 +3178,6 @@
     "createdDate": "2025-12-07T12:00:00.0000000+00:00"
   },
   {
-    "key": "messages.no-templates-available",
-    "german": "Keine Vorlagen verfügbar. Sie können trotzdem Feedback ohne Vorlage erfassen.",
-    "english": "No templates available. You can still record feedback without a template.",
-    "category": "messages",
-    "createdDate": "2025-12-18T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "messages.no-text-sections-added",
-    "german": "Keine Textabschnitte hinzugefügt. Klicken Sie auf 'Textabschnitt hinzufügen', um zu beginnen.",
-    "english": "No text sections added. Click 'Add Text Section' to get started.",
-    "category": "messages",
-    "createdDate": "2025-12-16T14:00:00.0000000+00:00"
-  },
-  {
-    "key": "messages.no-text-sections-configured",
-    "german": "Keine Textabschnitte konfiguriert",
-    "english": "No text sections configured",
-    "category": "messages",
-    "createdDate": "2025-12-16T14:00:00.0000000+00:00"
-  },
-  {
-    "key": "messages.not-implemented",
-    "german": "Nicht implementiert",
-    "english": "Not Implemented",
-    "category": "messages",
-    "createdDate": "2025-12-16T12:00:00.0000000+00:00"
-  },
-  {
     "key": "messages.note-deleted",
     "german": "Notiz gelöscht",
     "english": "Note deleted",
@@ -3220,6 +3192,13 @@
     "createdDate": "2025-12-24T12:00:00.0000000+00:00"
   },
   {
+    "key": "messages.no-templates-available",
+    "german": "Keine Vorlagen verfügbar. Sie können trotzdem Feedback ohne Vorlage erfassen.",
+    "english": "No templates available. You can still record feedback without a template.",
+    "category": "messages",
+    "createdDate": "2025-12-18T12:00:00.0000000+00:00"
+  },
+  {
     "key": "messages.note-saved",
     "german": "Notiz gespeichert",
     "english": "Note saved",
@@ -3232,6 +3211,13 @@
     "english": "The note was saved successfully.",
     "category": "messages",
     "createdDate": "2025-12-24T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "messages.notes-from-review-meeting",
+    "german": "Notizen aus dem Überprüfungsgespräch, die während der Diskussion erstellt wurden.",
+    "english": "Notes from the review meeting that were created during the discussion.",
+    "category": "messages",
+    "createdDate": "2026-01-01T12:00:00.0000000+00:00"
   },
   {
     "key": "messages.note-updated",
@@ -3255,11 +3241,25 @@
     "createdDate": "2025-12-24T12:00:00.0000000+00:00"
   },
   {
-    "key": "messages.notes-from-review-meeting",
-    "german": "Notizen aus dem Überprüfungsgespräch, die während der Diskussion erstellt wurden.",
-    "english": "Notes from the review meeting that were created during the discussion.",
+    "key": "messages.no-text-sections-added",
+    "german": "Keine Textabschnitte hinzugefügt. Klicken Sie auf 'Textabschnitt hinzufügen', um zu beginnen.",
+    "english": "No text sections added. Click 'Add Text Section' to get started.",
     "category": "messages",
-    "createdDate": "2026-01-01T12:00:00.0000000+00:00"
+    "createdDate": "2025-12-16T14:00:00.0000000+00:00"
+  },
+  {
+    "key": "messages.no-text-sections-configured",
+    "german": "Keine Textabschnitte konfiguriert",
+    "english": "No text sections configured",
+    "category": "messages",
+    "createdDate": "2025-12-16T14:00:00.0000000+00:00"
+  },
+  {
+    "key": "messages.not-implemented",
+    "german": "Nicht implementiert",
+    "english": "Not Implemented",
+    "category": "messages",
+    "createdDate": "2025-12-16T12:00:00.0000000+00:00"
   },
   {
     "key": "messages.optional-employee-comment-description",
@@ -3304,18 +3304,18 @@
     "createdDate": "2026-01-04T14:00:00.0000000+01:00"
   },
   {
-    "key": "messages.questionnaire-submitted",
-    "german": "Fragebogen eingereicht.",
-    "english": "Questionnaire submitted.",
-    "category": "messages",
-    "createdDate": "2026-01-04T14:00:00.0000000+01:00"
-  },
-  {
     "key": "messages.questionnaires-assigned-to-team",
     "german": "Ihrem Team zugewiesene Fragebögen erscheinen hier.",
     "english": "Questionnaires assigned to your team will appear here.",
     "category": "messages",
     "createdDate": "2025-12-07T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "messages.questionnaire-submitted",
+    "german": "Fragebogen eingereicht.",
+    "english": "Questionnaire submitted.",
+    "category": "messages",
+    "createdDate": "2026-01-04T14:00:00.0000000+01:00"
   },
   {
     "key": "messages.rating-scale-explanation",
@@ -3372,6 +3372,13 @@
     "english": "Ensure all necessary discussions are complete before proceeding.",
     "category": "messages",
     "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "messages.reviewed-sections-with-manager",
+    "german": "Sie haben alle Abschnitte mit Ihrem Manager besprochen",
+    "english": "You have reviewed all sections with your manager",
+    "category": "messages",
+    "createdDate": "2026-01-01T12:00:00.0000000+00:00"
   },
   {
     "key": "messages.review-meeting-completed",
@@ -3440,13 +3447,6 @@
     "key": "messages.review-signed-off-successfully",
     "german": "Überprüfung erfolgreich abgezeichnet. Der Manager kann nun den Fragebogen finalisieren.",
     "english": "Review signed off successfully. The manager can now finalize the questionnaire.",
-    "category": "messages",
-    "createdDate": "2026-01-01T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "messages.reviewed-sections-with-manager",
-    "german": "Sie haben alle Abschnitte mit Ihrem Manager besprochen",
-    "english": "You have reviewed all sections with your manager",
     "category": "messages",
     "createdDate": "2026-01-01T12:00:00.0000000+00:00"
   },
@@ -3717,18 +3717,18 @@
     "createdDate": "2025-12-17T12:00:00.0000000+00:00"
   },
   {
-    "key": "nav.manage-questionnaires",
-    "german": "Fragebogen verwalten",
-    "english": "Manage Questionnaires",
-    "category": "navigation",
-    "createdDate": "2025-12-03T12:17:11.8998596+00:00"
-  },
-  {
     "key": "nav.management",
     "german": "Verwaltung",
     "english": "Management",
     "category": "navigation",
     "createdDate": "2025-12-03T12:17:11.8998593+00:00"
+  },
+  {
+    "key": "nav.manage-questionnaires",
+    "german": "Fragebogen verwalten",
+    "english": "Manage Questionnaires",
+    "category": "navigation",
+    "createdDate": "2025-12-03T12:17:11.8998596+00:00"
   },
   {
     "key": "nav.menu-toggle",
@@ -3836,13 +3836,6 @@
     "createdDate": "2025-12-05T12:00:00.0000000+00:00"
   },
   {
-    "key": "notifications.assign-to-more",
-    "german": "Weiteren Mitarbeitern zuweisen",
-    "english": "Assign to More Employees",
-    "category": "notifications",
-    "createdDate": "2025-12-04T00:00:00.0000000+00:00"
-  },
-  {
     "key": "notifications.assignment-creation-error",
     "german": "Bei der Erstellung der Zuweisungen ist ein Fehler aufgetreten",
     "english": "An error occurred while creating assignments",
@@ -3871,6 +3864,13 @@
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
   },
   {
+    "key": "notifications.assign-to-more",
+    "german": "Weiteren Mitarbeitern zuweisen",
+    "english": "Assign to More Employees",
+    "category": "notifications",
+    "createdDate": "2025-12-04T00:00:00.0000000+00:00"
+  },
+  {
     "key": "notifications.bulk-assignment-message",
     "german": "Massenzuweisungsfunktion wird geöffnet mit vorausgewählt",
     "english": "Bulk assignment feature will open with pre-selected",
@@ -3890,6 +3890,20 @@
     "english": "Assignment cancellation will be implemented with proper workflow state management",
     "category": "notifications",
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.cannot-finalize-questionnaire",
+    "german": "Fragebogen kann nicht abgeschlossen werden",
+    "english": "Cannot Finalize Questionnaire",
+    "category": "notifications",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.cannot-initiate-review",
+    "german": "Überprüfung kann nicht eingeleitet werden",
+    "english": "Cannot Initiate Review",
+    "category": "notifications",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "notifications.cloned",
@@ -3931,7 +3945,7 @@
     "german": "Fehler",
     "english": "Error",
     "category": "notifications",
-    "createdDate": "2025-12-29T12:30:00.0000000+00:00"
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "notifications.failed",
@@ -4081,6 +4095,13 @@
     "createdDate": "2025-12-05T12:00:00.0000000+00:00"
   },
   {
+    "key": "notifications.questionnaire-finalized",
+    "german": "Fragebogen abgeschlossen und gesperrt",
+    "english": "Questionnaire finalized and locked",
+    "category": "notifications",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
     "key": "notifications.reminder-sent",
     "german": "Erinnerung gesendet",
     "english": "Reminder Sent",
@@ -4100,6 +4121,13 @@
     "english": "Restored",
     "category": "notifications",
     "createdDate": "2025-12-05T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.review-initiated",
+    "german": "LeistungsÜberprüfung eingeleitet",
+    "english": "Performance review initiated",
+    "category": "notifications",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "notifications.saved",
@@ -4142,6 +4170,13 @@
     "english": "Translation updated successfully",
     "category": "notifications",
     "createdDate": "2025-12-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "notifications.unexpected-error",
+    "german": "Ein unerwarteter Fehler ist aufgetreten: {0}",
+    "english": "An unexpected error occurred: {0}",
+    "category": "notifications",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "notifications.unpublished",
@@ -4733,13 +4768,6 @@
   },
   {
     "key": "placeholders.section-title-english",
-    "german": "Geben Sie den Abschnittstitel auf Englisch ein...",
-    "english": "Enter section title in English...",
-    "category": "placeholders",
-    "createdDate": "2025-12-17T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "placeholders.section-title-english",
     "german": "Abschnittstitel auf Englisch eingeben",
     "english": "Enter section title in English",
     "category": "placeholders",
@@ -4758,13 +4786,6 @@
     "english": "Enter section title in German...",
     "category": "placeholders",
     "createdDate": "2025-12-17T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "placeholders.section-title-german",
-    "german": "Abschnittstitel auf Deutsch eingeben",
-    "english": "Enter section title in German",
-    "category": "placeholders",
-    "createdDate": "2026-01-06T12:00:00.0000000+00:00"
   },
   {
     "key": "placeholders.section-title-german-example",
@@ -4809,27 +4830,6 @@
     "createdDate": "2025-12-31T23:09:52.0626007+01:00"
   },
   {
-    "key": "question-types.assessment",
-    "german": "Bewertung",
-    "english": "Assessment",
-    "category": "question-types",
-    "createdDate": "2025-12-05T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "question-types.goal-achievement",
-    "german": "Zielerreichung",
-    "english": "Goal Achievement",
-    "category": "question-types",
-    "createdDate": "2025-12-05T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "question-types.text-question",
-    "german": "Textfrage",
-    "english": "Text Question",
-    "category": "question-types",
-    "createdDate": "2025-12-05T12:00:00.0000000+00:00"
-  },
-  {
     "key": "questions.default-assessment-title",
     "german": "Bewertungsbeurteilung",
     "english": "Evaluation Assessment",
@@ -4851,18 +4851,25 @@
     "createdDate": "2025-12-09T12:00:00.0000000+00:00"
   },
   {
-    "key": "rating-scale.excellent",
-    "german": "Ausgezeichnet",
-    "english": "Excellent",
-    "category": "rating-scale",
-    "createdDate": "2025-12-31T23:09:52.0626007+01:00"
+    "key": "question-types.assessment",
+    "german": "Bewertung",
+    "english": "Assessment",
+    "category": "question-types",
+    "createdDate": "2025-12-05T12:00:00.0000000+00:00"
   },
   {
-    "key": "rating-scale.poor",
-    "german": "Schlecht",
-    "english": "Poor",
-    "category": "rating-scale",
-    "createdDate": "2025-12-31T23:09:52.0626007+01:00"
+    "key": "question-types.goal-achievement",
+    "german": "Zielerreichung",
+    "english": "Goal Achievement",
+    "category": "question-types",
+    "createdDate": "2025-12-05T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "question-types.text-question",
+    "german": "Textfrage",
+    "english": "Text Question",
+    "category": "question-types",
+    "createdDate": "2025-12-05T12:00:00.0000000+00:00"
   },
   {
     "key": "rating.excellent",
@@ -4891,6 +4898,69 @@
     "english": "Poor",
     "category": "rating",
     "createdDate": "2025-12-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "rating-scale.excellent",
+    "german": "Ausgezeichnet",
+    "english": "Excellent",
+    "category": "rating-scale",
+    "createdDate": "2025-12-31T23:09:52.0626007+01:00"
+  },
+  {
+    "key": "rating-scale.poor",
+    "german": "Schlecht",
+    "english": "Poor",
+    "category": "rating-scale",
+    "createdDate": "2025-12-31T23:09:52.0626007+01:00"
+  },
+  {
+    "key": "reopen.both-questionnaires-corrections",
+    "german": "Beide Fragebögen für Korrekturen wieder öffnen",
+    "english": "Reopen both questionnaires for corrections",
+    "category": "reopen",
+    "createdDate": "2026-01-03T22:02:11.0414295+01:00"
+  },
+  {
+    "key": "reopen.employee-questionnaire-corrections",
+    "german": "Mitarbeiter-Fragebogen für Korrekturen wieder öffnen",
+    "english": "Reopen employee questionnaire for corrections",
+    "category": "reopen",
+    "createdDate": "2026-01-03T22:02:11.0307762+01:00"
+  },
+  {
+    "key": "reopen.manager-questionnaire-corrections",
+    "german": "Manager-Fragebogen für Korrekturen wieder öffnen",
+    "english": "Reopen manager questionnaire for corrections",
+    "category": "reopen",
+    "createdDate": "2026-01-03T22:02:11.0364158+01:00"
+  },
+  {
+    "key": "reopen.return-to-employee-signoff",
+    "german": "Zurück zur Mitarbeiter-Abzeichnungsphase",
+    "english": "Return to employee sign-off phase",
+    "category": "reopen",
+    "createdDate": "2026-01-03T22:02:11.0551203+01:00"
+  },
+  {
+    "key": "reopen.review-meeting-after-confirmation",
+    "german": "Überprüfungssitzung nach Mitarbeiter-Bestätigung wieder öffnen",
+    "english": "Reopen review meeting after employee confirmation",
+    "category": "reopen",
+    "createdDate": "2026-01-03T22:02:11.0581203+01:00"
+  },
+  {
+    "key": "reopen.review-meeting-from-signoff",
+    "german": "Überprüfungssitzung von Mitarbeiter-Abzeichnungsphase wieder öffnen",
+    "english": "Reopen review meeting from employee sign-off phase",
+    "category": "reopen",
+    "createdDate": "2026-01-03T22:02:11.0509391+01:00"
+  },
+  {
+    "key": "reopen.review-meeting-manager-revisions",
+    "german": "Überprüfungssitzung für Manager-Revisionen wieder öffnen",
+    "english": "Reopen review meeting for manager revisions",
+    "category": "reopen",
+    "createdDate": "2026-01-03T22:02:11.0454333+01:00"
   },
   {
     "key": "reopen-descriptions.allow-both-continue-editing",
@@ -4954,55 +5024,6 @@
     "english": "Return to submitted state",
     "category": "reopen-descriptions",
     "createdDate": "2026-01-03T22:06:34.1279942+01:00"
-  },
-  {
-    "key": "reopen.both-questionnaires-corrections",
-    "german": "Beide Fragebögen für Korrekturen wieder öffnen",
-    "english": "Reopen both questionnaires for corrections",
-    "category": "reopen",
-    "createdDate": "2026-01-03T22:02:11.0414295+01:00"
-  },
-  {
-    "key": "reopen.employee-questionnaire-corrections",
-    "german": "Mitarbeiter-Fragebogen für Korrekturen wieder öffnen",
-    "english": "Reopen employee questionnaire for corrections",
-    "category": "reopen",
-    "createdDate": "2026-01-03T22:02:11.0307762+01:00"
-  },
-  {
-    "key": "reopen.manager-questionnaire-corrections",
-    "german": "Manager-Fragebogen für Korrekturen wieder öffnen",
-    "english": "Reopen manager questionnaire for corrections",
-    "category": "reopen",
-    "createdDate": "2026-01-03T22:02:11.0364158+01:00"
-  },
-  {
-    "key": "reopen.return-to-employee-signoff",
-    "german": "Zurück zur Mitarbeiter-Abzeichnungsphase",
-    "english": "Return to employee sign-off phase",
-    "category": "reopen",
-    "createdDate": "2026-01-03T22:02:11.0551203+01:00"
-  },
-  {
-    "key": "reopen.review-meeting-after-confirmation",
-    "german": "Überprüfungssitzung nach Mitarbeiter-Bestätigung wieder öffnen",
-    "english": "Reopen review meeting after employee confirmation",
-    "category": "reopen",
-    "createdDate": "2026-01-03T22:02:11.0581203+01:00"
-  },
-  {
-    "key": "reopen.review-meeting-from-signoff",
-    "german": "Überprüfungssitzung von Mitarbeiter-Abzeichnungsphase wieder öffnen",
-    "english": "Reopen review meeting from employee sign-off phase",
-    "category": "reopen",
-    "createdDate": "2026-01-03T22:02:11.0509391+01:00"
-  },
-  {
-    "key": "reopen.review-meeting-manager-revisions",
-    "german": "Überprüfungssitzung für Manager-Revisionen wieder öffnen",
-    "english": "Reopen review meeting for manager revisions",
-    "category": "reopen",
-    "createdDate": "2026-01-03T22:02:11.0454333+01:00"
   },
   {
     "key": "sections.additional-comments",
@@ -5376,18 +5397,18 @@
     "createdDate": "2025-12-31T23:09:52.0636002+01:00"
   },
   {
-    "key": "status.in-progress",
-    "german": "In Bearbeitung",
-    "english": "In Progress",
-    "category": "status",
-    "createdDate": "2025-12-07T12:00:00.0000000+00:00"
-  },
-  {
     "key": "status.inactive",
     "german": "Inaktiv",
     "english": "Inactive",
     "category": "status",
     "createdDate": "2025-12-03T12:17:11.8998716+00:00"
+  },
+  {
+    "key": "status.in-progress",
+    "german": "In Bearbeitung",
+    "english": "In Progress",
+    "category": "status",
+    "createdDate": "2025-12-07T12:00:00.0000000+00:00"
   },
   {
     "key": "status.not-rated",
@@ -5978,20 +5999,6 @@
     "createdDate": "2025-12-31T23:09:52.0636002+01:00"
   },
   {
-    "key": "workflow-states.EmployeeReviewConfirmed",
-    "german": "Mitarbeiter-Bewertung bestätigt",
-    "english": "Employee Review Confirmed",
-    "category": "workflow-states",
-    "createdDate": "2025-12-29T12:00:00.0000000+00:00"
-  },
-  {
-    "key": "workflow-states.ManagerReviewConfirmed",
-    "german": "Manager-Bewertung bestätigt",
-    "english": "Manager Review Confirmed",
-    "category": "workflow-states",
-    "createdDate": "2025-12-29T12:00:00.0000000+00:00"
-  },
-  {
     "key": "workflow-states.all",
     "german": "Alle",
     "english": "All",
@@ -6004,6 +6011,13 @@
     "english": "Assigned",
     "category": "workflow-states",
     "createdDate": "2025-12-07T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "workflow-states.assigned-description",
+    "german": "Zugewiesen - Nicht gestartet",
+    "english": "Assigned - Not Started",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "workflow-states.awaiting-employee-sign-off",
@@ -6020,11 +6034,25 @@
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
   },
   {
+    "key": "workflow-states.both-in-progress-description",
+    "german": "Beide in Bearbeitung",
+    "english": "Both in Progress",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
     "key": "workflow-states.both-submitted",
     "german": "Beide eingereicht",
     "english": "Both Submitted",
     "category": "workflow-states",
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
+  },
+  {
+    "key": "workflow-states.both-submitted-description",
+    "german": "Beide eingereicht",
+    "english": "Both Submitted",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "workflow-states.both-submitted-ready-review",
@@ -6048,6 +6076,20 @@
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
   },
   {
+    "key": "workflow-states.employee-in-progress-description",
+    "german": "Mitarbeiter in Bearbeitung",
+    "english": "Employee in Progress",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "workflow-states.EmployeeReviewConfirmed",
+    "german": "Mitarbeiter-Bewertung bestätigt",
+    "english": "Employee Review Confirmed",
+    "category": "workflow-states",
+    "createdDate": "2025-12-29T12:00:00.0000000+00:00"
+  },
+  {
     "key": "workflow-states.employee-review-confirmed",
     "german": "Mitarbeiter-Überprüfung bestätigt",
     "english": "Employee Review Confirmed",
@@ -6055,11 +6097,25 @@
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
   },
   {
+    "key": "workflow-states.employee-review-confirmed-description",
+    "german": "Bereit zum Abschlie�en",
+    "english": "Ready to Finalize",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
     "key": "workflow-states.employee-submitted",
     "german": "Mitarbeiter eingereicht",
     "english": "Employee Submitted",
     "category": "workflow-states",
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
+  },
+  {
+    "key": "workflow-states.employee-submitted-description",
+    "german": "Mitarbeiter eingereicht",
+    "english": "Employee Submitted",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "workflow-states.employee-working",
@@ -6076,6 +6132,27 @@
     "createdDate": "2025-12-29T12:00:00.0000000+00:00"
   },
   {
+    "key": "workflow-states.finalized-description",
+    "german": "Abgeschlossen & Gesperrt",
+    "english": "Finalized & Locked",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "workflow-states.initialized",
+    "german": "Initialisiert",
+    "english": "Initialized",
+    "category": "workflow-states",
+    "createdDate": "2026-01-06T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "workflow-states.initialized-description",
+    "german": "Initialisiert - Bereit zum Starten",
+    "english": "Initialized - Ready to Start",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
     "key": "workflow-states.in-progress",
     "german": "In Bearbeitung",
     "english": "In Progress",
@@ -6090,11 +6167,11 @@
     "createdDate": "2025-12-07T12:00:00.0000000+00:00"
   },
   {
-    "key": "workflow-states.initialized",
-    "german": "Initialisiert",
-    "english": "Initialized",
+    "key": "workflow-states.in-review-description",
+    "german": "Überprüfungssitzung läuft",
+    "english": "Review Meeting in Progress",
     "category": "workflow-states",
-    "createdDate": "2026-01-06T12:00:00.0000000+00:00"
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   },
   {
     "key": "workflow-states.manager-in-progress",
@@ -6102,6 +6179,20 @@
     "english": "Manager In Progress",
     "category": "workflow-states",
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
+  },
+  {
+    "key": "workflow-states.manager-in-progress-description",
+    "german": "Manager in Bearbeitung",
+    "english": "Manager in Progress",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "workflow-states.ManagerReviewConfirmed",
+    "german": "Manager-Bewertung bestätigt",
+    "english": "Manager Review Confirmed",
+    "category": "workflow-states",
+    "createdDate": "2025-12-29T12:00:00.0000000+00:00"
   },
   {
     "key": "workflow-states.manager-review-confirmed",
@@ -6118,6 +6209,13 @@
     "createdDate": "2025-12-04T00:00:00.0000000+00:00"
   },
   {
+    "key": "workflow-states.manager-submitted-description",
+    "german": "Manager eingereicht",
+    "english": "Manager Submitted",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
     "key": "workflow-states.manager-working",
     "german": "Manager in Bearbeitung",
     "english": "Manager Working",
@@ -6132,10 +6230,24 @@
     "createdDate": "2025-12-31T23:09:02.4666031+01:00"
   },
   {
+    "key": "workflow-states.review-finished-description",
+    "german": "Überprüfungssitzung abgeschlossen",
+    "english": "Review Meeting Finished",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
+  },
+  {
     "key": "workflow-states.submitted",
     "german": "Eingereicht",
     "english": "Submitted",
     "category": "workflow-states",
     "createdDate": "2025-12-31T23:09:02.4666031+01:00"
+  },
+  {
+    "key": "workflow-states.unknown",
+    "german": "Unbekannt",
+    "english": "Unknown",
+    "category": "workflow-states",
+    "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   }
 ]
