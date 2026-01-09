@@ -257,6 +257,19 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
+    public async Task<List<QuestionSection>> GetMyCustomSectionsAsync(Guid assignmentId)
+    {
+        try
+        {
+            return await HttpQueryClient.GetFromJsonAsync<List<QuestionSection>>($"{EmployeeAssignmentEndpoint}/{assignmentId}/custom-sections") ?? new List<QuestionSection>();
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error fetching custom sections for my assignment {assignmentId}", ex);
+            return new List<QuestionSection>();
+        }
+    }
+
     public async Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy)
     {
         try

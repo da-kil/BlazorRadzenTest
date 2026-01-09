@@ -237,6 +237,7 @@
         return Assignment.WorkflowState switch
         {
             WorkflowState.Assigned => "assignment_turned_in",
+            WorkflowState.Initialized => "settings",
             WorkflowState.EmployeeInProgress => "edit",
             WorkflowState.ManagerInProgress => "rate_review",
             WorkflowState.BothInProgress => "people",
@@ -258,6 +259,7 @@
         return Assignment.WorkflowState switch
         {
             WorkflowState.Assigned => "Assigned - Not Started",
+            WorkflowState.Initialized => "Initialized - Ready to Start",
             WorkflowState.EmployeeInProgress => "Employee in Progress",
             WorkflowState.ManagerInProgress => "Manager in Progress",
             WorkflowState.BothInProgress => "Both in Progress",

@@ -360,7 +360,7 @@ public class AssignmentsController : BaseController
     /// </summary>
     [HttpGet("{assignmentId}/custom-sections")]
     [Authorize(Policy = "TeamLead")]
-    [ProducesResponseType(typeof(IEnumerable<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionSection>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(IEnumerable<QuestionSectionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetCustomSections(Guid assignmentId)
@@ -391,7 +391,8 @@ public class AssignmentsController : BaseController
             var query = new GetAssignmentCustomSectionsQuery(assignmentId);
             var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 
-            return CreateResponse(result);
+            // Map query model (strings) to DTOs (enums) - same pattern as templates
+            return CreateResponse(result, sections => sections.Select(MapSectionToDto));
         }
         catch (Exception ex)
         {
@@ -530,6 +531,53 @@ public class AssignmentsController : BaseController
                 assignmentId, questionId);
             return StatusCode(500, "An error occurred while retrieving goal data");
         }
+    }
+
+    #endregion
+
+    #region Section Mapping Helpers
+
+    /// <summary>
+    /// Maps query-side QuestionSection (strings) to DTO (enums) for client consumption.
+    /// Same pattern used by QuestionnaireTemplatesController for consistency.
+    /// </summary>
+    private static QuestionSectionDto MapSectionToDto(Application.Query.Queries.QuestionnaireTemplateQueries.QuestionSection section)
+    {
+        return new QuestionSectionDto
+        {
+            Id = section.Id,
+            TitleGerman = section.TitleGerman,
+            TitleEnglish = section.TitleEnglish,
+            DescriptionGerman = section.DescriptionGerman,
+            DescriptionEnglish = section.DescriptionEnglish,
+            Order = section.Order,
+            IsRequired = section.IsRequired,
+            CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
+            Type = MapQuestionTypeFromString(section.Type),
+            Configuration = section.Configuration,
+            IsInstanceSpecific = section.IsInstanceSpecific
+        };
+    }
+
+    private static Domain.QuestionnaireTemplateAggregate.CompletionRole MapToCompletionRoleEnum(string completionRole)
+    {
+        return completionRole?.ToLower() switch
+        {
+            "manager" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager,
+            "both" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Both,
+            _ => Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee
+        };
+    }
+
+    private static QueryApi.Dto.QuestionType MapQuestionTypeFromString(string type)
+    {
+        return type?.ToLower() switch
+        {
+            "textquestion" => QueryApi.Dto.QuestionType.TextQuestion,
+            "goal" => QueryApi.Dto.QuestionType.Goal,
+            "assessment" => QueryApi.Dto.QuestionType.Assessment,
+            _ => QueryApi.Dto.QuestionType.Assessment
+        };
     }
 
     #endregion

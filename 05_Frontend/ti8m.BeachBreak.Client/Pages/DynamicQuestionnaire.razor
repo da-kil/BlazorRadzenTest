@@ -511,7 +511,15 @@ else
         {
             if (assignmentId.HasValue)
             {
-                customSections = await AssignmentService.GetCustomSectionsAsync(assignmentId.Value);
+                // Use employee-specific endpoint if user is employee-only, otherwise use manager endpoint
+                if (isEmployeeOnly)
+                {
+                    customSections = await AssignmentService.GetMyCustomSectionsAsync(assignmentId.Value);
+                }
+                else
+                {
+                    customSections = await AssignmentService.GetCustomSectionsAsync(assignmentId.Value);
+                }
             }
         }
         catch (Exception ex)

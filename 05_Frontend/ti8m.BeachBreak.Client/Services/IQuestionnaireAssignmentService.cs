@@ -34,6 +34,7 @@ public interface IQuestionnaireAssignmentService
     Task<bool> InitializeAssignmentAsync(Guid assignmentId, string? initializationNotes);
     Task<bool> AddCustomSectionsAsync(Guid assignmentId, AddCustomSectionsDto dto);
     Task<List<QuestionSection>> GetCustomSectionsAsync(Guid assignmentId);
+    Task<List<QuestionSection>> GetMyCustomSectionsAsync(Guid assignmentId);
     Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> SubmitManagerQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> InitiateReviewAsync(Guid assignmentId, string initiatedBy);

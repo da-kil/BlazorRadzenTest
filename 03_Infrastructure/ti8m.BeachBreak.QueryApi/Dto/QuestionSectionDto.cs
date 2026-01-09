@@ -15,4 +15,5 @@ public class QuestionSectionDto
     public CompletionRole CompletionRole { get; set; } = CompletionRole.Employee;
     public QuestionType Type { get; set; } = QuestionType.Assessment;
     public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
+    public bool IsInstanceSpecific { get; set; } = false;
 }
