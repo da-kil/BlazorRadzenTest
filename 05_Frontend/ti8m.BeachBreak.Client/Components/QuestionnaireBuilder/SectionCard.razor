@@ -228,6 +228,7 @@
     [Parameter] public EventCallback<string> OnTitleGermanChanged { get; set; }
     [Parameter] public EventCallback<string> OnDescriptionEnglishChanged { get; set; }
     [Parameter] public EventCallback<string> OnDescriptionGermanChanged { get; set; }
+    [Parameter] public EventCallback OnItemChanged { get; set; } // New callback for when evaluation items/text sections change
 
     private async Task OnMoveUpClick() => await OnMoveUp.InvokeAsync();
     private async Task OnMoveDownClick() => await OnMoveDown.InvokeAsync();
@@ -269,13 +270,14 @@
         return new List<EvaluationItem>();
     }
 
-    private void UpdateAssessmentConfiguration(List<EvaluationItem> evaluations)
+    private async void UpdateAssessmentConfiguration(List<EvaluationItem> evaluations)
     {
         if (Section.Configuration is AssessmentConfiguration config)
         {
             config.Evaluations = evaluations;
         }
         StateHasChanged();
+        await OnItemChanged.InvokeAsync(); // Notify parent that evaluation items changed
     }
 
     private void UpdateEvaluationRequired(int index, bool value)
@@ -380,13 +382,14 @@
         return new List<TextSection>();
     }
 
-    private void UpdateTextQuestionConfiguration(List<TextSection> sections)
+    private async void UpdateTextQuestionConfiguration(List<TextSection> sections)
     {
         if (Section.Configuration is TextQuestionConfiguration config)
         {
             config.TextSections = sections;
         }
         StateHasChanged();
+        await OnItemChanged.InvokeAsync(); // Notify parent that text sections changed
     }
 
     private void UpdateTextSectionRequired(int index, bool value)

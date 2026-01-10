@@ -216,7 +216,9 @@ public static class QuestionnairePageConfigurationFactory
                         Icon = "schedule",
                         IconClass = "text-warning",
                         CssClass = "stats-not-started",
-                        ValueCalculator = () => allAssignments.Count(a => a.WorkflowState == WorkflowState.Assigned)
+                        ValueCalculator = () => allAssignments.Count(a =>
+                            a.WorkflowState == WorkflowState.Assigned ||
+                            a.WorkflowState == WorkflowState.Initialized)
                     },
                     new()
                     {

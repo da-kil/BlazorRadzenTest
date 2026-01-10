@@ -178,10 +178,11 @@
                                             CanMoveDown="false"
                                             OnDelete="@CancelAddingAssessment"
                                             OnAddItemDirectly="@(() => AddAssessmentItem(newAssessmentSection))"
-                                            OnTitleEnglishChanged="@(async (value) => await Task.CompletedTask)"
-                                            OnTitleGermanChanged="@(async (value) => await Task.CompletedTask)"
-                                            OnDescriptionEnglishChanged="@(async (value) => await Task.CompletedTask)"
-                                            OnDescriptionGermanChanged="@(async (value) => await Task.CompletedTask)" />
+                                            OnTitleEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnTitleGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnDescriptionEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnDescriptionGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnItemChanged="@(async () => { StateHasChanged(); })" />
                                         <div class="section-editor-actions mt-3 d-flex justify-content-end gap-2">
                                             <AsyncButton Text="@T("buttons.cancel")"
                                                         Icon="cancel"
@@ -207,10 +208,11 @@
                                             CanMoveDown="false"
                                             OnDelete="@CancelAddingTextQuestion"
                                             OnAddItemDirectly="@(() => AddTextQuestionSection(newTextQuestionSection))"
-                                            OnTitleEnglishChanged="@(async (value) => await Task.CompletedTask)"
-                                            OnTitleGermanChanged="@(async (value) => await Task.CompletedTask)"
-                                            OnDescriptionEnglishChanged="@(async (value) => await Task.CompletedTask)"
-                                            OnDescriptionGermanChanged="@(async (value) => await Task.CompletedTask)" />
+                                            OnTitleEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnTitleGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnDescriptionEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnDescriptionGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnItemChanged="@(async () => { StateHasChanged(); })" />
                                         <div class="section-editor-actions mt-3 d-flex justify-content-end gap-2">
                                             <AsyncButton Text="@T("buttons.cancel")"
                                                         Icon="cancel"
@@ -250,10 +252,11 @@
                                                             OnMoveDown="@(() => MoveSectionDown(index))"
                                                             OnDelete="@(() => RemoveCustomSection(customSections[index]))"
                                                             OnAddItemDirectly="@(() => AddItemToSection(customSections[index]))"
-                                                            OnTitleEnglishChanged="@(async (value) => await Task.CompletedTask)"
-                                                            OnTitleGermanChanged="@(async (value) => await Task.CompletedTask)"
-                                                            OnDescriptionEnglishChanged="@(async (value) => await Task.CompletedTask)"
-                                                            OnDescriptionGermanChanged="@(async (value) => await Task.CompletedTask)" />
+                                                            OnTitleEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                                            OnTitleGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                                            OnDescriptionEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                                            OnDescriptionGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                                            OnItemChanged="@(async () => { StateHasChanged(); })" />
                                                         <div class="section-editor-actions mt-3 d-flex justify-content-end gap-2">
                                                             <AsyncButton Text="@T("buttons.cancel")"
                                                                         Icon="cancel"
@@ -279,10 +282,11 @@
                                                         OnMoveDown="@(() => MoveSectionDown(index))"
                                                         OnDelete="@(() => RemoveCustomSection(customSections[index]))"
                                                         OnAddItemDirectly="@(() => StartEditingSection(index))"
-                                                        OnTitleEnglishChanged="@(async (value) => await Task.CompletedTask)"
-                                                        OnTitleGermanChanged="@(async (value) => await Task.CompletedTask)"
-                                                        OnDescriptionEnglishChanged="@(async (value) => await Task.CompletedTask)"
-                                                        OnDescriptionGermanChanged="@(async (value) => await Task.CompletedTask)" />
+                                                        OnTitleEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                                        OnTitleGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                                        OnDescriptionEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                                        OnDescriptionGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                                        OnItemChanged="@(async () => { StateHasChanged(); })" />
                                                 }
                                             }
                                         </div>
@@ -561,7 +565,9 @@
     {
         if (IsNewSectionValid(newAssessmentSection))
         {
-            newAssessmentSection.Order = customSections.Count;
+            // Assign Order after template sections to prevent collisions
+            var maxTemplateOrder = template?.Sections.Max(s => s.Order) ?? -1;
+            newAssessmentSection.Order = maxTemplateOrder + 1 + customSections.Count;
             customSections.Add(newAssessmentSection);
             isAddingAssessment = false;
             StateHasChanged();
@@ -573,7 +579,9 @@
     {
         if (IsNewSectionValid(newTextQuestionSection))
         {
-            newTextQuestionSection.Order = customSections.Count;
+            // Assign Order after template sections to prevent collisions
+            var maxTemplateOrder = template?.Sections.Max(s => s.Order) ?? -1;
+            newTextQuestionSection.Order = maxTemplateOrder + 1 + customSections.Count;
             customSections.Add(newTextQuestionSection);
             isAddingTextQuestion = false;
             StateHasChanged();
@@ -670,10 +678,11 @@
             customSections.RemoveAt(index);
             customSections.Insert(index - 1, section);
 
-            // Update orders
+            // Update orders to maintain position after template sections
+            var maxTemplateOrder = template?.Sections.Max(s => s.Order) ?? -1;
             for (int i = 0; i < customSections.Count; i++)
             {
-                customSections[i].Order = i;
+                customSections[i].Order = maxTemplateOrder + 1 + i;
             }
 
             StateHasChanged();
@@ -688,10 +697,11 @@
             customSections.RemoveAt(index);
             customSections.Insert(index + 1, section);
 
-            // Update orders
+            // Update orders to maintain position after template sections
+            var maxTemplateOrder = template?.Sections.Max(s => s.Order) ?? -1;
             for (int i = 0; i < customSections.Count; i++)
             {
-                customSections[i].Order = i;
+                customSections[i].Order = maxTemplateOrder + 1 + i;
             }
 
             StateHasChanged();
@@ -752,7 +762,7 @@
                 IsRequired = true,
                 Order = config.Evaluations.Count
             });
-            StateHasChanged();
+            StateHasChanged(); // Trigger re-validation
         }
     }
 
@@ -770,7 +780,7 @@
                 IsRequired = true,
                 Order = config.TextSections.Count
             });
-            StateHasChanged();
+            StateHasChanged(); // Trigger re-validation
         }
     }
 

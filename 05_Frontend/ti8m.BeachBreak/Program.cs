@@ -395,6 +395,8 @@ public class Program
 
         app.UseHttpsRedirection();
 
+        app.UseStaticFiles();
+
         app.UseAuthentication();
 
         // Map API proxies for WebAssembly client
