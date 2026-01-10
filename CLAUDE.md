@@ -618,61 +618,6 @@ This will merge, deduplicate, and sort all translations alphabetically by key.
 - `--font-weight-button: 500` - Button text
 - `--font-weight-nav-item: 500` - Navigation items
 
-#### Typography Rules
-
-**✅ DO**:
-```css
-/* Use semantic variables */
-.employee-name { font-weight: var(--font-weight-emphasis); }
-
-/* Use component-specific variables */
-.card-header { font-weight: var(--font-weight-card-title); }
-
-/* Rely on inheritance for headings */
-<h3 class="section-title">Title</h3> /* Already inherits font-weight: 500 */
-```
-
-**❌ DON'T**:
-```css
-/* Never hardcode numeric values */
-.title { font-weight: 500; }
-.label { font-weight: 600; }
-.text { font-weight: bold; }
-
-/* Don't override inherited heading weights unnecessarily */
-h3 { font-weight: 500; } /* Already inherited from root */
-```
-
-#### Utility Classes Available
-
-Use these for inline emphasis in HTML:
-- `.font-light` - Light text (300)
-- `.font-medium` - Medium emphasis (500)
-- `.font-semibold` - Strong emphasis (600)
-
-```html
-<!-- Good: Utility classes for emphasis -->
-<p class="font-medium">Important text</p>
-<span class="font-light">Subtle text</span>
-```
-
-#### Maintenance Guidelines
-
-**Single Source of Truth**: All font-weight changes happen in `shared-variables.css`
-
-**Component Changes**: Use semantic variables, not hardcoded values
-```css
-/* Component CSS - Use semantic variables */
-.special-title {
-    font-weight: var(--font-weight-section-title); /* Good */
-}
-```
-
-**Design System Evolution**: Change variable values to update entire application
-```css
-/* To make all sections bolder, change one variable: */
---font-weight-section-title: var(--font-weight-semibold); /* Updates everywhere */
-```
 
 ## 11. Strongly-Typed Question Configuration Pattern
 
@@ -684,13 +629,6 @@ Use these for inline emphasis in HTML:
 
 All question configurations implement the `IQuestionConfiguration` interface:
 
-```csharp
-public interface IQuestionConfiguration
-{
-    QuestionType QuestionType { get; }
-}
-```
-
 **Available Configuration Types:**
 
 1. **AssessmentConfiguration** - For competency/skill assessments
@@ -701,173 +639,6 @@ public interface IQuestionConfiguration
 
 **ALWAYS** use pattern matching with the `is` operator to access configuration properties:
 
-```csharp
-// ✅ CORRECT: Pattern matching for type-safe access
-if (question.Configuration is AssessmentConfiguration config)
-{
-    var evaluations = config.Evaluations;
-    var ratingScale = config.RatingScale;
-    var lowLabel = config.ScaleLowLabel;
-    var highLabel = config.ScaleHighLabel;
-}
-
-// ❌ WRONG: Don't use Dictionary access
-var evaluations = question.Configuration["Evaluations"]; // Compiler error!
-```
-
-### AssessmentConfiguration
-
-Used for questions that assess competencies/skills with ratings:
-
-```csharp
-public sealed class AssessmentConfiguration : IQuestionConfiguration
-{
-    public QuestionType QuestionType => QuestionType.Assessment;
-    public List<EvaluationItem> Evaluations { get; set; } = new();
-    public int RatingScale { get; set; } = 4;
-    public string ScaleLowLabel { get; set; } = "Poor";
-    public string ScaleHighLabel { get; set; } = "Excellent";
-}
-```
-
-**Example Usage:**
-```csharp
-private void UpdateRatingScale(QuestionItem question, int newScale)
-{
-    if (question.Configuration is AssessmentConfiguration config)
-    {
-        config.RatingScale = newScale;
-        // Direct property access - compile-time safe!
-    }
-}
-```
-
-### TextQuestionConfiguration
-
-Used for questions with text input sections:
-
-```csharp
-public sealed class TextQuestionConfiguration : IQuestionConfiguration
-{
-    public QuestionType QuestionType => QuestionType.TextQuestion;
-    public List<TextSection> TextSections { get; set; } = new();
-}
-```
-
-**Example Usage:**
-```csharp
-private List<TextSection> GetTextSections(QuestionItem question)
-{
-    if (question.Configuration is TextQuestionConfiguration config)
-    {
-        return config.TextSections; // Direct access, no parsing!
-    }
-    return new List<TextSection>();
-}
-```
-
-### GoalConfiguration
-
-Used for goal management questions (goals added dynamically during workflow):
-
-```csharp
-public sealed class GoalConfiguration : IQuestionConfiguration
-{
-    public QuestionType QuestionType => QuestionType.Goal;
-    public bool ShowGoalSection { get; set; } = true;
-}
-```
-
-**Key Point:** Goals don't have template-level items. The `ShowGoalSection` flag controls visibility in the UI.
-
-**Example Usage:**
-```csharp
-private bool ShouldShowGoalSection(QuestionItem question)
-{
-    if (question.Configuration is GoalConfiguration config)
-    {
-        return config.ShowGoalSection;
-    }
-    return true; // Default to visible
-}
-```
-
-### Pattern: Initializing Configuration
-
-When creating new questions, initialize with typed configuration:
-
-```csharp
-// ✅ CORRECT: Create typed configuration
-var question = new QuestionItem
-{
-    Type = QuestionType.Assessment,
-    Configuration = new AssessmentConfiguration
-    {
-        Evaluations = new List<EvaluationItem>
-        {
-            new EvaluationItem("evaluation_1", "Leadership", "", false, 0)
-        },
-        RatingScale = 4,
-        ScaleLowLabel = "Poor",
-        ScaleHighLabel = "Excellent"
-    }
-};
-
-// ❌ WRONG: Don't create Dictionary
-var question = new QuestionItem
-{
-    Configuration = new Dictionary<string, object>() // Don't do this!
-};
-```
-
-### Pattern: Updating Configuration
-
-Always check type before updating:
-
-```csharp
-// ✅ CORRECT: Type-safe updates
-public void AddEvaluation(QuestionItem question, EvaluationItem evaluation)
-{
-    if (question.Configuration is AssessmentConfiguration config)
-    {
-        config.Evaluations.Add(evaluation);
-    }
-    else
-    {
-        // Initialize if needed
-        question.Configuration = new AssessmentConfiguration
-        {
-            Evaluations = new List<EvaluationItem> { evaluation }
-        };
-    }
-}
-```
-
-### Common Mistakes to Avoid
-
-1. **❌ Don't use Dictionary methods:**
-   ```csharp
-   // WRONG - Will not compile
-   question.Configuration.ContainsKey("Evaluations")
-   question.Configuration["RatingScale"] = 5
-   question.Configuration.TryGetValue("TextSections", out var value)
-   ```
-
-2. **❌ Don't parse JSON manually:**
-   ```csharp
-   // WRONG - No longer needed
-   var jsonElement = configuration["Evaluations"] as JsonElement;
-   var evaluations = JsonSerializer.Deserialize<List<EvaluationItem>>(jsonElement.GetRawText());
-   ```
-
-3. **❌ Don't create helper methods for Dictionary parsing:**
-   ```csharp
-   // WRONG - This pattern is obsolete
-   private List<EvaluationItem> GetEvaluationsFromConfiguration(Dictionary<string, object> config)
-   {
-       // 50 lines of JSON parsing logic - NO LONGER NEEDED!
-   }
-   ```
 
 ### Services Using Typed Configuration
 
@@ -888,18 +659,6 @@ The following services have been updated to use typed configuration:
 4. **Maintainability**: Single source of truth for configuration structure
 5. **Refactoring Support**: Rename refactoring works across entire codebase
 
-### Historical Context
-
-**Why This Pattern Exists:**
-
-Prior to 2025-12, this codebase used `Dictionary<string, object>` for question configurations, which resulted in:
-- ~550+ lines of duplicate JSON parsing logic across 15+ files
-- No compile-time type safety (runtime errors only)
-- Historical validation bug (2025-11-10) due to parsing complexity
-- Difficult maintenance when adding new question types
-
-The refactoring to typed configuration (completed 2025-12-08) eliminated these issues and provides a robust, type-safe foundation for future development.
-
 ### Adding New Question Types
 
 If you need to add a new question type:
@@ -909,16 +668,6 @@ If you need to add a new question type:
 3. Create a handler class implementing `IQuestionTypeHandler`
 4. Update rendering components to handle the new type
 5. Update validation logic if needed
-
-**Example:**
-```csharp
-public sealed class MultipleChoiceConfiguration : IQuestionConfiguration
-{
-    public QuestionType QuestionType => QuestionType.MultipleChoice;
-    public List<ChoiceOption> Options { get; set; } = new();
-    public bool AllowMultipleSelections { get; set; } = false;
-}
-```
 
 ### References
 
@@ -967,13 +716,7 @@ The questionnaire configuration uses polymorphic JSON serialization with a `$typ
 The apparent redundancy is **intentional and necessary**:
 
 1. **Validation Safety**: The two values must always match, validated by `ValidateConfigurationMatchesType()`:
-   ```csharp
-   if (Type != Configuration.QuestionType)
-   {
-       throw new InvalidOperationException(
-           $"Configuration type mismatch: Section Type is {Type} but Configuration is for {Configuration.QuestionType}");
-   }
-   ```
+
    This catches bugs where frontend and backend disagree on types.
 
 2. **Separation of Concerns**: `IQuestionConfiguration` is used independently in many contexts without access to the parent section:
