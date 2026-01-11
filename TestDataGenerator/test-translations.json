@@ -6264,4 +6264,40 @@
     "category": "workflow-states",
     "createdDate": "2026-01-09T12:00:00.0000000+00:00"
   }
+  ,
+  {
+    "key": "templates.allows-customization",
+    "german": "Ermöglicht Anpassung",
+    "english": "Allows Customization",
+    "category": "templates",
+    "createdDate": "2026-01-11T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "templates.customization-tooltip",
+    "german": "Wenn aktiviert, können Manager während der Zuweisungsinitialisierung benutzerdefinierte Abschnitte hinzufügen",
+    "english": "When enabled, managers can add custom sections during assignment initialization",
+    "category": "templates",
+    "createdDate": "2026-01-11T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "assignments.auto-initialized",
+    "german": "Automatisch initialisiert",
+    "english": "Auto-initialized",
+    "category": "assignments",
+    "createdDate": "2026-01-11T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "assignments.no-customization-support",
+    "german": "Diese Vorlage unterstützt keine benutzerdefinierten Abschnitte",
+    "english": "This template does not support custom sections",
+    "category": "assignments",
+    "createdDate": "2026-01-11T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "labels.not-available",
+    "german": "Nicht verfügbar",
+    "english": "Not Available",
+    "category": "labels",
+    "createdDate": "2026-01-11T12:00:00.0000000+00:00"
+  }
 ]

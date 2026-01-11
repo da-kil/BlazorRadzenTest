@@ -9,6 +9,7 @@ public record QuestionnaireTemplateCloned(
     Translation Description,
     Guid CategoryId,
     bool RequiresManagerReview,
+    bool IsCustomizable,
     List<QuestionSectionData> Sections,
     DateTime CreatedDate
 ) : IDomainEvent

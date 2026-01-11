@@ -94,6 +94,7 @@ public class AssignmentsController : BaseController
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
                 assignedBy,
+                userId,
                 bulkAssignmentDto.Notes);
 
             var result = await commandDispatcher.SendAsync(command);
@@ -181,6 +182,7 @@ public class AssignmentsController : BaseController
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
                 assignedBy,
+                managerId,
                 bulkAssignmentDto.Notes);
 
             var result = await commandDispatcher.SendAsync(command);

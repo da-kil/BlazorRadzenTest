@@ -66,11 +66,20 @@
 
     <div class="settings-section mt-4 p-3 rounded border">
         <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">@T("sections.workflow-configuration")</RadzenText>
-        <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
-        <RadzenLabel Text="@T("labels.requires-manager-review")" Component="requiresManagerReview" Class="font-medium" />
-        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
-            @T("messages.workflow-manager-review-explanation")
-        </RadzenText>
+        <div class="mb-3">
+            <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
+            <RadzenLabel Text="@T("labels.requires-manager-review")" Component="requiresManagerReview" Class="font-medium" />
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
+                @T("messages.workflow-manager-review-explanation")
+            </RadzenText>
+        </div>
+        <div class="mb-3">
+            <RadzenCheckBox @bind-Value="@Template.IsCustomizable" Name="isCustomizable" Disabled="@(!Template.IsAvailableForEditing)" />
+            <RadzenLabel Text="@T("templates.allows-customization")" Component="isCustomizable" Class="font-medium" />
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
+                @T("templates.customization-tooltip")
+            </RadzenText>
+        </div>
     </div>
 </div>
 

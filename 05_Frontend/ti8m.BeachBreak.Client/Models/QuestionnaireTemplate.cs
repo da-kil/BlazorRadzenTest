@@ -12,6 +12,7 @@ public class QuestionnaireTemplate
 
     public Guid CategoryId { get; set; }
     public bool RequiresManagerReview { get; set; } = true;
+    public bool IsCustomizable { get; set; } = false;
     public DateTime CreatedDate { get; set; } = DateTime.Now;
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }        // First publish timestamp

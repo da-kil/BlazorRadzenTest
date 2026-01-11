@@ -112,14 +112,16 @@
                         </div>
 
                         <!-- Add Custom Questions -->
-                        <div class="mb-3">
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
-                                @T("labels.add-custom-questions")
-                                <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
-                            </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.add-custom-questions-description")</RadzenText>
+                        @if (template.IsCustomizable)
+                        {
+                            <div class="mb-3">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
+                                    @T("labels.add-custom-questions")
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.add-custom-questions-description")</RadzenText>
 
-                            <!-- Custom Questions Container -->
+                                <!-- Custom Questions Container -->
                             <div class="custom-questions-container">
                                 <!-- Add Question Type Cards -->
                                 @if (!isAddingAssessment && !isAddingTextQuestion)
@@ -292,8 +294,23 @@
                                         </div>
                                     </div>
                                 }
+                                </div>
                             </div>
-                        </div>
+                        }
+                        else
+                        {
+                            <div class="mb-3">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
+                                    @T("labels.add-custom-questions")
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.not-available")" Class="ms-2" />
+                                </RadzenText>
+                                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        @T("assignments.no-customization-support")
+                                    </RadzenText>
+                                </RadzenAlert>
+                            </div>
+                        }
                     </RadzenCard>
 
                     <!-- Initialization Notes -->

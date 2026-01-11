@@ -10,6 +10,7 @@ public class QuestionnaireTemplate : AggregateRoot
     public Translation Description { get; private set; } = new("", "");
     public Guid CategoryId { get; private set; }
     public bool RequiresManagerReview { get; private set; } = true;
+    public bool IsCustomizable { get; private set; } = false;
 
     public TemplateStatus Status { get; private set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; private set; }
@@ -29,6 +30,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Translation description,
         Guid categoryId,
         bool requiresManagerReview = true,
+        bool isCustomizable = false,
         List<QuestionSection>? sections = null)
     {
         if (name == null || (string.IsNullOrWhiteSpace(name.English) && string.IsNullOrWhiteSpace(name.German)))
@@ -43,6 +45,7 @@ public class QuestionnaireTemplate : AggregateRoot
             description ?? new Translation("", ""),
             categoryId,
             requiresManagerReview,
+            isCustomizable,
             QuestionnaireTemplateEventDataMapper.MapSectionsToData(sections ?? new()),
             DateTime.UtcNow));
     }
@@ -111,6 +114,29 @@ public class QuestionnaireTemplate : AggregateRoot
             }
 
             RaiseEvent(new QuestionnaireTemplateReviewRequirementChanged(requiresManagerReview));
+        }
+    }
+
+    public async Task ChangeCustomizabilityAsync(
+        bool isCustomizable,
+        IQuestionnaireAssignmentService assignmentService,
+        CancellationToken cancellationToken = default)
+    {
+        if (!CanBeEdited())
+            throw new InvalidOperationException("Template cannot be edited in current status");
+
+        // If IsCustomizable is being changed, check for existing assignments
+        if (IsCustomizable != isCustomizable)
+        {
+            if (await assignmentService.HasActiveAssignmentsAsync(Id, cancellationToken))
+            {
+                var assignmentCount = await assignmentService.GetActiveAssignmentCountAsync(Id, cancellationToken);
+                throw new InvalidOperationException(
+                    $"Cannot change customizability setting: {assignmentCount} active assignment(s) exist. " +
+                    "Complete or withdraw these assignments first, or create a new template with the desired setting.");
+            }
+
+            RaiseEvent(new QuestionnaireTemplateCustomizabilityChanged(isCustomizable));
         }
     }
 
@@ -277,6 +303,7 @@ public class QuestionnaireTemplate : AggregateRoot
             source.Description,
             source.CategoryId,
             source.RequiresManagerReview,
+            source.IsCustomizable,
             QuestionnaireTemplateEventDataMapper.MapSectionsToData(clonedSections),
             DateTime.UtcNow
         ));
@@ -292,6 +319,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Description = @event.Description;
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
+        IsCustomizable = @event.IsCustomizable;
         Sections = QuestionnaireTemplateEventDataMapper.MapDataToSections(@event.Sections);
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
@@ -316,6 +344,11 @@ public class QuestionnaireTemplate : AggregateRoot
     public void Apply(QuestionnaireTemplateReviewRequirementChanged @event)
     {
         RequiresManagerReview = @event.RequiresManagerReview;
+    }
+
+    public void Apply(QuestionnaireTemplateCustomizabilityChanged @event)
+    {
+        IsCustomizable = @event.IsCustomizable;
     }
 
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
@@ -361,6 +394,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Description = @event.Description;
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
+        IsCustomizable = @event.IsCustomizable;
         Sections = QuestionnaireTemplateEventDataMapper.MapDataToSections(@event.Sections);
         Status = TemplateStatus.Draft;  // Always draft
         CreatedDate = @event.CreatedDate;

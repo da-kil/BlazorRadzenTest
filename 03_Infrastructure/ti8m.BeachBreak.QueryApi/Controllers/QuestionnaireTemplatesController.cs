@@ -154,6 +154,7 @@ public class QuestionnaireTemplatesController : BaseController
             DescriptionEnglish = template.DescriptionEnglish,
             CategoryId = template.CategoryId,
             RequiresManagerReview = template.RequiresManagerReview,
+            IsCustomizable = template.IsCustomizable,
             CreatedDate = template.CreatedDate,
             Status = MapToStatusDto(template.Status),
             PublishedDate = template.PublishedDate,

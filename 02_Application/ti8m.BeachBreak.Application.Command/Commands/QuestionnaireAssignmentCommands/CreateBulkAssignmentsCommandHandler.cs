@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Repositories;
+using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
@@ -10,13 +11,16 @@ public class CreateBulkAssignmentsCommandHandler
     : ICommandHandler<CreateBulkAssignmentsCommand, Result>
 {
     private readonly IQuestionnaireAssignmentAggregateRepository repository;
+    private readonly IQuestionnaireTemplateAggregateRepository templateRepository;
     private readonly ILogger<CreateBulkAssignmentsCommandHandler> logger;
 
     public CreateBulkAssignmentsCommandHandler(
         IQuestionnaireAssignmentAggregateRepository repository,
+        IQuestionnaireTemplateAggregateRepository templateRepository,
         ILogger<CreateBulkAssignmentsCommandHandler> logger)
     {
         this.repository = repository;
+        this.templateRepository = templateRepository;
         this.logger = logger;
     }
 
@@ -26,6 +30,12 @@ public class CreateBulkAssignmentsCommandHandler
         {
             logger.LogInformation("Creating {EmployeeCount} assignments with template {TemplateId}",
                 command.EmployeeAssignments.Count, command.TemplateId);
+
+            // Load the template to check if it supports customization
+            var template = await templateRepository.LoadRequiredAsync<QuestionnaireTemplate>(command.TemplateId, null, cancellationToken);
+
+            logger.LogInformation("Template {TemplateId} IsCustomizable: {IsCustomizable}",
+                command.TemplateId, template.IsCustomizable);
 
             var createdAssignmentIds = new List<Guid>();
             var assignedDate = DateTime.UtcNow;
@@ -45,6 +55,17 @@ public class CreateBulkAssignmentsCommandHandler
                     command.DueDate,
                     command.AssignedBy,
                     command.Notes);
+
+                // Auto-initialize non-customizable templates
+                if (!template.IsCustomizable && command.AssignedByEmployeeId.HasValue)
+                {
+                    assignment.StartInitialization(
+                        command.AssignedByEmployeeId.Value,
+                        "Auto-initialized for non-customizable template");
+
+                    logger.LogInformation("Auto-initialized assignment {AssignmentId} for non-customizable template",
+                        assignmentId);
+                }
 
                 await repository.StoreAsync(assignment, cancellationToken);
                 createdAssignmentIds.Add(assignmentId);
