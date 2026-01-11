@@ -125,7 +125,6 @@ public class QuestionnaireTemplateReadModel
             DescriptionGerman = s.Description.German,
             DescriptionEnglish = s.Description.English,
             Order = s.Order,
-            IsRequired = s.IsRequired,
             CompletionRole = s.CompletionRole.ToString(),
             Type = s.Type.ToString(),
             Configuration = s.Configuration

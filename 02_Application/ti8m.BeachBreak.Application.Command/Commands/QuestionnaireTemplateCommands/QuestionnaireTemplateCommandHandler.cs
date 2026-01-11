@@ -351,7 +351,6 @@ public class QuestionnaireTemplateCommandHandler :
             new Translation(section.TitleGerman, section.TitleEnglish),
             new Translation(section.DescriptionGerman, section.DescriptionEnglish),
             section.Order,
-            section.IsRequired,
             section.CompletionRole,
             section.Type,
             section.Configuration

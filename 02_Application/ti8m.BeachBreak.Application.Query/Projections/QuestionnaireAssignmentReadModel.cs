@@ -109,7 +109,6 @@ public class QuestionnaireAssignmentReadModel
             DescriptionEnglish = data.Description.English,
             DescriptionGerman = data.Description.German,
             Order = data.Order,
-            IsRequired = data.IsRequired,
             CompletionRole = data.CompletionRole.ToString(),
             Type = data.Type.ToString(),
             Configuration = data.Configuration,

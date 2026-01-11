@@ -262,7 +262,6 @@ public class QuestionnaireTemplate : AggregateRoot
                 section.Title,
                 section.Description,
                 section.Order,
-                section.IsRequired,
                 section.CompletionRole,
                 section.Type,
                 section.Configuration  // Configuration objects are immutable, safe to share

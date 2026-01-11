@@ -11,7 +11,6 @@ public class QuestionSectionDto
     public string DescriptionGerman { get; set; } = string.Empty;
     public string DescriptionEnglish { get; set; } = string.Empty;
     public int Order { get; set; }
-    public bool IsRequired { get; set; } = true;
     public CompletionRole CompletionRole { get; set; } = CompletionRole.Employee;
     public QuestionType Type { get; set; } = QuestionType.Assessment;
     public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();

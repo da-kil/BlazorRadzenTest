@@ -52,7 +52,7 @@
                 <ChildContent>
                     <!-- Back Navigation -->
                     <div class="back-navigation mb-4">
-                        <RadzenLink Path="/manager" Text="@T("navigation.back-to-dashboard")" Icon="arrow_back" />
+                        <RadzenLink Path="/team/questionnaires" Text="@T("navigation.back-to-dashboard")" Icon="arrow_back" />
                     </div>
 
                     <!-- Assignment Details Card -->
@@ -485,7 +485,7 @@
             if (initializeResult)
             {
                 NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("messages.initialization-completed"));
-                NavigationManager.NavigateTo("/manager");
+                NavigationManager.NavigateTo("/team/questionnaires");
             }
             else
             {
@@ -504,7 +504,7 @@
 
     private void HandleCancel()
     {
-        NavigationManager.NavigateTo("/manager");
+        NavigationManager.NavigateTo("/team/questionnaires");
     }
 
     private void InitializeTemplates()

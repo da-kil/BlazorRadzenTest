@@ -458,7 +458,6 @@ public class AssignmentsController : BaseController
                 DescriptionGerman = dto.DescriptionGerman,
                 DescriptionEnglish = dto.DescriptionEnglish,
                 Order = dto.Order,
-                IsRequired = dto.IsRequired,
                 CompletionRole = dto.CompletionRole,
                 Type = dto.Type,
                 Configuration = dto.Configuration

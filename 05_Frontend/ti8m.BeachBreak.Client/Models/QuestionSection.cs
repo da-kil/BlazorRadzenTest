@@ -12,7 +12,6 @@ public class QuestionSection
 
 
     public int Order { get; set; }
-    public bool IsRequired { get; set; } = true;
 
     // Role assignment for dual completion workflow
     public CompletionRole CompletionRole { get; set; } = CompletionRole.Employee;

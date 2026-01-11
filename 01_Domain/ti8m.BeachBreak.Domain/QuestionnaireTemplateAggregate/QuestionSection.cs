@@ -8,7 +8,6 @@ public class QuestionSection : Entity<Guid>
     public Translation Title { get; private set; } = new("", "");
     public Translation Description { get; private set; } = new("", "");
     public int Order { get; private set; }
-    public bool IsRequired { get; private set; } = true;
     public CompletionRole CompletionRole { get; private set; } = CompletionRole.Employee;
     public QuestionType Type { get; private set; }
     public IQuestionConfiguration Configuration { get; private set; } = new AssessmentConfiguration();
@@ -21,7 +20,6 @@ public class QuestionSection : Entity<Guid>
         Translation title,
         Translation description,
         int order,
-        bool isRequired = true,
         CompletionRole completionRole = CompletionRole.Employee,
         QuestionType type = QuestionType.Assessment,
         IQuestionConfiguration? configuration = null,
@@ -31,7 +29,6 @@ public class QuestionSection : Entity<Guid>
         Title = title ?? throw new ArgumentNullException(nameof(title));
         Description = description ?? new Translation("", "");
         Order = order;
-        IsRequired = isRequired;
         CompletionRole = completionRole;
         Type = type;
         Configuration = configuration ?? new AssessmentConfiguration();
@@ -49,7 +46,6 @@ public class QuestionSection : Entity<Guid>
         Translation title,
         Translation description,
         int order,
-        bool isRequired,
         CompletionRole completionRole,
         QuestionType type,
         IQuestionConfiguration configuration)
@@ -64,7 +60,6 @@ public class QuestionSection : Entity<Guid>
             title,
             description,
             order,
-            isRequired,
             completionRole,
             type,
             configuration,
@@ -84,11 +79,6 @@ public class QuestionSection : Entity<Guid>
     public void UpdateOrder(int order)
     {
         Order = order;
-    }
-
-    public void UpdateIsRequired(bool isRequired)
-    {
-        IsRequired = isRequired;
     }
 
     public void UpdateType(QuestionType type)

@@ -19,7 +19,6 @@ public static class QuestionnaireTemplateEventDataMapper
             s.Title,
             s.Description,
             s.Order,
-            s.IsRequired,
             s.CompletionRole,
             s.Type,
             s.Configuration
@@ -36,7 +35,6 @@ public static class QuestionnaireTemplateEventDataMapper
             s.Title,
             s.Description,
             s.Order,
-            s.IsRequired,
             s.CompletionRole,
             s.Type,
             s.Configuration

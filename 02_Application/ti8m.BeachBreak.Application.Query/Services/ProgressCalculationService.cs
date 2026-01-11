@@ -82,10 +82,6 @@ public class ProgressCalculationService : IProgressCalculationService
 
         foreach (var section in template.Sections)
         {
-            // Only count if section itself is required
-            if (!section.IsRequired)
-                continue;
-
             // Query model uses string for CompletionRole
             var roleStr = section.CompletionRole;
 
@@ -120,10 +116,6 @@ public class ProgressCalculationService : IProgressCalculationService
 
         foreach (var section in template.Sections)
         {
-            // Only count required sections (Section IS the question)
-            if (!section.IsRequired)
-                continue;
-
             // Skip if no responses for this section
             if (!sectionResponses.TryGetValue(section.Id, out var roleResponses))
             {

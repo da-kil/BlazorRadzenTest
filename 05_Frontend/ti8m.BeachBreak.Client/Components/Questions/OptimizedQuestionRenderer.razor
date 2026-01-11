@@ -81,7 +81,7 @@
     {
         // Create hash based on section properties that affect rendering
         var configHash = Section.Configuration?.GetHashCode() ?? 0;
-        return $"{Section.Id}|{Section.TitleEnglish}|{Section.TitleGerman}|{Section.Type}|{Section.IsRequired}|{Section.DescriptionEnglish}|{Section.DescriptionGerman}|{configHash}";
+        return $"{Section.Id}|{Section.TitleEnglish}|{Section.TitleGerman}|{Section.Type}|{Section.DescriptionEnglish}|{Section.DescriptionGerman}|{configHash}";
     }
 
     private string ComputeResponseHash()

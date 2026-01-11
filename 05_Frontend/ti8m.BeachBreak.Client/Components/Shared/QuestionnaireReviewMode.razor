@@ -113,10 +113,6 @@ else
                         <div class="question-wrapper mb-4">
                             <div class="question-title">
                                 @currentSection.GetLocalizedTitleWithFallback(CurrentLanguage)
-                                @if (currentSection.IsRequired)
-                                {
-                                    <span class="text-danger">*</span>
-                                }
                             </div>
 
                             @if (!string.IsNullOrWhiteSpace(currentSection.GetLocalizedDescriptionWithFallback(CurrentLanguage)))

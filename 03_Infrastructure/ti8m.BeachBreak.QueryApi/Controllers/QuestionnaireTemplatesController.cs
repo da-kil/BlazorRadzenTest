@@ -168,7 +168,6 @@ public class QuestionnaireTemplatesController : BaseController
                 DescriptionGerman = section.DescriptionGerman,
                 DescriptionEnglish = section.DescriptionEnglish,
                 Order = section.Order,
-                IsRequired = section.IsRequired,
                 CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
                 Type = MapQuestionTypeFromString(section.Type),
                 Configuration = section.Configuration

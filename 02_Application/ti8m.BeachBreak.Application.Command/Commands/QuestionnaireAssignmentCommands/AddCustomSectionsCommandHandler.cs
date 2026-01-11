@@ -42,7 +42,6 @@ public class AddCustomSectionsCommandHandler
                     new Translation(dto.TitleEnglish, dto.TitleGerman),
                     new Translation(dto.DescriptionEnglish, dto.DescriptionGerman),
                     dto.Order,
-                    dto.IsRequired,
                     dto.CompletionRole,
                     dto.Type,
                     dto.Configuration))

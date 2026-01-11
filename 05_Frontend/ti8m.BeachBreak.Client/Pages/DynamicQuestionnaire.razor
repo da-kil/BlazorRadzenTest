@@ -1130,7 +1130,6 @@ else
     private bool CanProceedFromCurrentSection()
     {
         if (currentSection == null) return true;
-        if (!currentSection.IsRequired) return true;
 
         if (!response.SectionResponses.TryGetValue(currentSection.Id, out var sectionResponse))
             return false;
@@ -1265,9 +1264,6 @@ else
         var sectionData = template!.Sections.First(s => s.Id == sectionId);
 
         // Direct sectionData validation (no question iteration needed)
-        if (!sectionData.IsRequired)
-            return true;
-
         return IsSectionAnswered(sectionData, sectionQuestionResponse);
     }
 
@@ -1275,12 +1271,12 @@ else
     {
         if (template == null) return;
 
-        // Each sectionData IS one question - count required sections only (template + custom)
+        // Each sectionData IS one question - count all sections (template + custom)
         var allSections = GetAllSections();
-        var totalSections = allSections.Count(s => s.IsRequired);
+        var totalSections = allSections.Count;
         var answeredSections = 0;
 
-        foreach (var sectionData in allSections.Where(s => s.IsRequired))
+        foreach (var sectionData in allSections)
         {
             if (response.SectionResponses.TryGetValue(sectionData.Id, out var sectionResponse) &&
                 sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
@@ -1300,24 +1296,30 @@ else
         // If no visible sections, allow submission
         if (!visibleSections.Any()) return true;
 
+        // Get all sections (template + custom sections)
+        var allSections = GetAllSections();
+
         // Check only visible sections for current user role
-        // A sectionData is considered complete if it's not required OR it's answered
         return visibleSections.All(s =>
         {
-            var sectionData = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+            var sectionData = allSections.FirstOrDefault(sec => sec.Id == s.Id);
             if (sectionData == null) return true;
 
-            // If sectionData is not required, it's complete
-            if (!sectionData.IsRequired) return true;
-
-            // Check if required sectionData is answered
+            // Check if sectionData has response data
             if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
+            {
+                // No response data exists - section is incomplete
                 return false;
+            }
 
             if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
+            {
+                // No role-specific response exists - section is incomplete
                 return false;
+            }
 
-            // Direct sectionData validation
+            // ALWAYS validate items within the section (both required and optional sections)
+            // This is critical: even optional sections must validate their required items if the user started filling them out
             return IsSectionAnswered(sectionData, sectionQuestionResponse);
         });
     }
@@ -1396,8 +1398,6 @@ else
             {
                 var sectionData = allSections.FirstOrDefault(sec => sec.Id == s.Id);
                 if (sectionData == null) return false;
-
-                if (!sectionData.IsRequired) return false;
 
                 if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
                     return true;

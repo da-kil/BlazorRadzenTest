@@ -3339,6 +3339,20 @@
     "createdDate": "2025-12-31T23:09:52.0626007+01:00"
   },
   {
+    "key": "messages.required-field",
+    "german": "Pflichtfeld",
+    "english": "Required Field",
+    "category": "messages",
+    "createdDate": "2026-01-11T12:00:00.0000000+01:00"
+  },
+  {
+    "key": "messages.required-items-cannot-be-empty",
+    "german": "Pflichtfelder dürfen nicht leer sein.",
+    "english": "Required items cannot be empty.",
+    "category": "messages",
+    "createdDate": "2026-01-11T12:00:00.0000000+01:00"
+  },
+  {
     "key": "messages.responses-submitted-readonly",
     "german": "Ihre Antworten wurden eingereicht und sind jetzt schreibgeschützt. Warten auf die nächste Phase des Workflows.",
     "english": "Your responses have been submitted and are now read-only. Waiting for the next phase of the workflow.",

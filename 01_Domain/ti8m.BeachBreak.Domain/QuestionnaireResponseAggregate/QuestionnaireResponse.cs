@@ -82,13 +82,6 @@ public class QuestionnaireResponse : AggregateRoot
 
         foreach (var section in template.Sections)
         {
-            // If section is not required, it's automatically complete
-            if (!section.IsRequired)
-            {
-                completedSectionIds.Add(section.Id);
-                continue;
-            }
-
             // Check if this section has responses for the specified role
             if (!SectionResponses.TryGetValue(section.Id, out var roleResponses))
             {

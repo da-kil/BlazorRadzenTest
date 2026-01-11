@@ -12,7 +12,6 @@ public record QuestionSectionData(
     Translation Title,
     Translation Description,
     int Order,
-    bool IsRequired,
     CompletionRole CompletionRole,
     QuestionType Type,
     IQuestionConfiguration Configuration,
