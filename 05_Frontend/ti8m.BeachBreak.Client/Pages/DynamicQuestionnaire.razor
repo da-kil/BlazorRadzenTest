@@ -1185,30 +1185,24 @@ else
         var textSections = config.TextSections;
         if (textSections.Count == 0) return true;
 
-        if (sectionResponse.ResponseData is not TextResponseDataDto textData) return false;
-
-        // Match the format used by OptimizedTextQuestion
-        if (textSections.Count == 1)
+        if (sectionResponse.ResponseData is not TextResponseDataDto textData)
         {
-            // Single sectionData - check first TextSection
-            var hasValue = textData.TextSections.Count > 0 &&
-                          !string.IsNullOrWhiteSpace(textData.TextSections[0]);
-            return hasValue;
+            // Invalid response data - check if section has any required items
+            var requiredSections = textSections.Where(ts => ts.IsRequired).ToList();
+            if (!requiredSections.Any())
+            {
+                return true; // No required text sections + invalid data = section complete
+            }
+            return false; // Has required text sections but invalid data = section incomplete
         }
 
-        // Multiple sections - check corresponding TextSections by index
-        // Get only required text sections
+        // Get only required text sections (works for single or multiple sections)
         var requiredTextSections = textSections.Where(ts => ts.IsRequired).ToList();
 
-        // If no required text sections exist, check if at least one sectionData has content
+        // If no required text sections exist, section is automatically complete
         if (!requiredTextSections.Any())
         {
-            return textSections.Select((ts, index) => index).Any(index =>
-            {
-                var hasValue = index < textData.TextSections.Count &&
-                              !string.IsNullOrWhiteSpace(textData.TextSections[index]);
-                return hasValue;
-            });
+            return true; // Nothing required = automatically complete (matches domain logic)
         }
 
         // Check that ALL required text sections have non-empty values
@@ -1229,15 +1223,25 @@ else
         var evaluations = config.Evaluations;
         if (evaluations.Count == 0) return true;
 
-        if (sectionResponse.ResponseData is not AssessmentResponseDataDto assessmentData) return false;
+        if (sectionResponse.ResponseData is not AssessmentResponseDataDto assessmentData)
+        {
+            // Invalid response data - check if section has any required items
+            // If all evaluations are optional, invalid response data should not block submission
+            var requiredEvals = evaluations.Where(c => c.IsRequired).ToList();
+            if (!requiredEvals.Any())
+            {
+                return true; // No required evaluations + invalid data = section complete
+            }
+            return false; // Has required evaluations but invalid data = section incomplete
+        }
 
         // Get only required evaluations
         var requiredEvaluations = evaluations.Where(c => c.IsRequired).ToList();
 
-        // If no required evaluations exist, check if at least one evaluation is rated
+        // If no required evaluations exist, section is automatically complete
         if (!requiredEvaluations.Any())
         {
-            return evaluations.Any(c => HasEvaluationRating(assessmentData, c.Key));
+            return true; // Nothing required = automatically complete (matches domain logic)
         }
 
         // Check that ALL required evaluations have been rated
@@ -1308,20 +1312,65 @@ else
             // Check if sectionData has response data
             if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
             {
-                // No response data exists - section is incomplete
-                return false;
+                // No response data exists - check if section has any required items
+                return IsEmptySectionComplete(sectionData);
             }
 
             if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
             {
-                // No role-specific response exists - section is incomplete
-                return false;
+                // No role-specific response exists - check if section has any required items
+                return IsEmptySectionComplete(sectionData);
             }
 
             // ALWAYS validate items within the section (both required and optional sections)
             // This is critical: even optional sections must validate their required items if the user started filling them out
             return IsSectionAnswered(sectionData, sectionQuestionResponse);
         });
+    }
+
+    /// <summary>
+    /// Determines if a section with no response data should be considered complete.
+    /// A section is automatically complete if it has no required items.
+    /// </summary>
+    private bool IsEmptySectionComplete(QuestionSection sectionData)
+    {
+        return sectionData.Type switch
+        {
+            QuestionType.Assessment => IsAssessmentEmptyComplete(sectionData),
+            QuestionType.TextQuestion => IsTextQuestionEmptyComplete(sectionData),
+            QuestionType.Goal => true, // Goals never block submission
+            _ => true
+        };
+    }
+
+    /// <summary>
+    /// Checks if an assessment section with no response data is complete (all evaluations are optional).
+    /// </summary>
+    private bool IsAssessmentEmptyComplete(QuestionSection sectionData)
+    {
+        if (sectionData.Configuration is not AssessmentConfiguration config)
+            return true; // Invalid config = don't block submission
+
+        var evaluations = config.Evaluations;
+        if (evaluations.Count == 0) return true; // No evaluations = complete
+
+        // If no evaluations are marked as required, the empty section is complete
+        return !evaluations.Any(e => e.IsRequired);
+    }
+
+    /// <summary>
+    /// Checks if a text question section with no response data is complete (all text sections are optional).
+    /// </summary>
+    private bool IsTextQuestionEmptyComplete(QuestionSection sectionData)
+    {
+        if (sectionData.Configuration is not TextQuestionConfiguration config)
+            return true; // Invalid config = don't block submission
+
+        var textSections = config.TextSections;
+        if (textSections.Count == 0) return true; // No text sections = complete
+
+        // If no text sections are marked as required, the empty section is complete
+        return !textSections.Any(ts => ts.IsRequired);
     }
 
     private async Task SaveProgress()
