@@ -31,11 +31,11 @@ public class CreateBulkAssignmentsCommandHandler
             logger.LogInformation("Creating {EmployeeCount} assignments with template {TemplateId}",
                 command.EmployeeAssignments.Count, command.TemplateId);
 
-            // Load the template to check if it supports customization
+            // Load the template to check auto-initialization setting
             var template = await templateRepository.LoadRequiredAsync<QuestionnaireTemplate>(command.TemplateId, null, cancellationToken);
 
-            logger.LogInformation("Template {TemplateId} IsCustomizable: {IsCustomizable}",
-                command.TemplateId, template.IsCustomizable);
+            logger.LogInformation("Template {TemplateId} AutoInitialize: {AutoInitialize}",
+                command.TemplateId, template.AutoInitialize);
 
             var createdAssignmentIds = new List<Guid>();
             var assignedDate = DateTime.UtcNow;
@@ -56,14 +56,14 @@ public class CreateBulkAssignmentsCommandHandler
                     command.AssignedBy,
                     command.Notes);
 
-                // Auto-initialize non-customizable templates
-                if (!template.IsCustomizable && command.AssignedByEmployeeId.HasValue)
+                // Auto-initialize templates configured for auto-initialization
+                if (template.AutoInitialize && command.AssignedByEmployeeId.HasValue)
                 {
                     assignment.StartInitialization(
                         command.AssignedByEmployeeId.Value,
-                        "Auto-initialized for non-customizable template");
+                        "Auto-initialized per template configuration");
 
-                    logger.LogInformation("Auto-initialized assignment {AssignmentId} for non-customizable template",
+                    logger.LogInformation("Auto-initialized assignment {AssignmentId} per template configuration",
                         assignmentId);
                 }
 

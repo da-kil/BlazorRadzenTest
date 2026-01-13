@@ -11,6 +11,7 @@ public class QuestionnaireTemplate : AggregateRoot
     public Guid CategoryId { get; private set; }
     public bool RequiresManagerReview { get; private set; } = true;
     public bool IsCustomizable { get; private set; } = false;
+    public bool AutoInitialize { get; private set; } = false;
 
     public TemplateStatus Status { get; private set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; private set; }
@@ -31,6 +32,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Guid categoryId,
         bool requiresManagerReview = true,
         bool isCustomizable = false,
+        bool autoInitialize = false,
         List<QuestionSection>? sections = null)
     {
         if (name == null || (string.IsNullOrWhiteSpace(name.English) && string.IsNullOrWhiteSpace(name.German)))
@@ -46,6 +48,7 @@ public class QuestionnaireTemplate : AggregateRoot
             categoryId,
             requiresManagerReview,
             isCustomizable,
+            autoInitialize,
             QuestionnaireTemplateEventDataMapper.MapSectionsToData(sections ?? new()),
             DateTime.UtcNow));
     }
@@ -137,6 +140,29 @@ public class QuestionnaireTemplate : AggregateRoot
             }
 
             RaiseEvent(new QuestionnaireTemplateCustomizabilityChanged(isCustomizable));
+        }
+    }
+
+    public async Task ChangeAutoInitializeAsync(
+        bool autoInitialize,
+        IQuestionnaireAssignmentService assignmentService,
+        CancellationToken cancellationToken = default)
+    {
+        if (!CanBeEdited())
+            throw new InvalidOperationException("Template cannot be edited in current status");
+
+        // If AutoInitialize is being changed, check for existing assignments
+        if (AutoInitialize != autoInitialize)
+        {
+            if (await assignmentService.HasActiveAssignmentsAsync(Id, cancellationToken))
+            {
+                var assignmentCount = await assignmentService.GetActiveAssignmentCountAsync(Id, cancellationToken);
+                throw new InvalidOperationException(
+                    $"Cannot change auto-initialize setting: {assignmentCount} active assignment(s) exist. " +
+                    "Complete or withdraw these assignments first, or create a new template with the desired setting.");
+            }
+
+            RaiseEvent(new QuestionnaireTemplateAutoInitializeChanged(autoInitialize));
         }
     }
 
@@ -304,6 +330,7 @@ public class QuestionnaireTemplate : AggregateRoot
             source.CategoryId,
             source.RequiresManagerReview,
             source.IsCustomizable,
+            source.AutoInitialize,
             QuestionnaireTemplateEventDataMapper.MapSectionsToData(clonedSections),
             DateTime.UtcNow
         ));
@@ -320,6 +347,7 @@ public class QuestionnaireTemplate : AggregateRoot
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         IsCustomizable = @event.IsCustomizable;
+        AutoInitialize = @event.AutoInitialize;
         Sections = QuestionnaireTemplateEventDataMapper.MapDataToSections(@event.Sections);
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
@@ -349,6 +377,11 @@ public class QuestionnaireTemplate : AggregateRoot
     public void Apply(QuestionnaireTemplateCustomizabilityChanged @event)
     {
         IsCustomizable = @event.IsCustomizable;
+    }
+
+    public void Apply(QuestionnaireTemplateAutoInitializeChanged @event)
+    {
+        AutoInitialize = @event.AutoInitialize;
     }
 
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
@@ -395,6 +428,7 @@ public class QuestionnaireTemplate : AggregateRoot
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         IsCustomizable = @event.IsCustomizable;
+        AutoInitialize = @event.AutoInitialize;
         Sections = QuestionnaireTemplateEventDataMapper.MapDataToSections(@event.Sections);
         Status = TemplateStatus.Draft;  // Always draft
         CreatedDate = @event.CreatedDate;

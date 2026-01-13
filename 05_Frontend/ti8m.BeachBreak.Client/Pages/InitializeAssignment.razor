@@ -87,29 +87,32 @@
                         <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("sections.initialization-tasks")</RadzenText>
                         <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-4">@T("messages.initialization-tasks-description")</RadzenText>
 
-                        <!-- Link Predecessor Questionnaire -->
-                        <div class="mb-4">
-                            <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
-                                @T("labels.link-predecessor-questionnaire")
-                                <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
-                            </RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.link-predecessor-description")</RadzenText>
+                        <!-- Link Predecessor Questionnaire (only shown if template has Goal sections) -->
+                        @if (template?.Sections.Any(s => s.Type == QuestionType.Goal) == true)
+                        {
+                            <div class="mb-4">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
+                                    @T("labels.link-predecessor-questionnaire")
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.link-predecessor-description")</RadzenText>
 
-                            @if (predecessorLinked)
-                            {
-                                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Class="d-inline-flex align-items-center">
-                                    <RadzenIcon Icon="check_circle" Class="me-2" />
-                                    @T("messages.predecessor-linked")
-                                </RadzenAlert>
-                            }
-                            else
-                            {
-                                <RadzenButton Text="@T("buttons.link-predecessor")"
-                                            Icon="link"
-                                            ButtonStyle="ButtonStyle.Light"
-                                            Click="@OpenLinkPredecessorDialog" />
-                            }
-                        </div>
+                                @if (predecessorLinked)
+                                {
+                                    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Class="d-inline-flex align-items-center">
+                                        <RadzenIcon Icon="check_circle" Class="me-2" />
+                                        @T("messages.predecessor-linked")
+                                    </RadzenAlert>
+                                }
+                                else
+                                {
+                                    <RadzenButton Text="@T("buttons.link-predecessor")"
+                                                Icon="link"
+                                                ButtonStyle="ButtonStyle.Light"
+                                                Click="@OpenLinkPredecessorDialog" />
+                                }
+                            </div>
+                        }
 
                         <!-- Add Custom Questions -->
                         @if (template.IsCustomizable)

@@ -53,6 +53,7 @@ public class QuestionnaireTemplateCommandHandler :
                 command.QuestionnaireTemplate.CategoryId,
                 command.QuestionnaireTemplate.RequiresManagerReview,
                 command.QuestionnaireTemplate.IsCustomizable,
+                command.QuestionnaireTemplate.AutoInitialize,
                 sections);
 
             // Validate that section completion roles match review requirement
@@ -98,6 +99,12 @@ public class QuestionnaireTemplateCommandHandler :
             // Handle IsCustomizable change (validates no active assignments exist)
             await questionnaireTemplate.ChangeCustomizabilityAsync(
                 command.QuestionnaireTemplate.IsCustomizable,
+                assignmentService,
+                cancellationToken);
+
+            // Handle AutoInitialize change (validates no active assignments exist)
+            await questionnaireTemplate.ChangeAutoInitializeAsync(
+                command.QuestionnaireTemplate.AutoInitialize,
                 assignmentService,
                 cancellationToken);
 

@@ -6280,9 +6280,23 @@
     "createdDate": "2026-01-11T12:00:00.0000000+00:00"
   },
   {
+    "key": "templates.auto-initialize",
+    "german": "Automatisch initialisieren",
+    "english": "Auto-initialize assignments",
+    "category": "templates",
+    "createdDate": "2026-01-13T12:00:00.0000000+00:00"
+  },
+  {
+    "key": "templates.auto-initialize-tooltip",
+    "german": "Wenn aktiviert, werden Zuweisungen automatisch initialisiert und sind sofort f\u00FCr Mitarbeiter verf\u00FCgbar. Wenn deaktiviert, m\u00FCssen Manager die Zuweisung vor dem Start manuell initialisieren (z.B. um Vorg\u00E4nger zu verkn\u00FCpfen oder Notizen hinzuzuf\u00FCgen).",
+    "english": "When enabled, assignments are automatically initialized and immediately available to employees. When disabled, managers must manually initialize assignments before employees can start (e.g., to link predecessors or add notes).",
+    "category": "templates",
+    "createdDate": "2026-01-13T12:00:00.0000000+00:00"
+  },
+  {
     "key": "assignments.auto-initialized",
-    "german": "Automatisch initialisiert",
-    "english": "Auto-initialized",
+    "german": "Automatisch initialisiert (Vorlagenkonfiguration)",
+    "english": "Auto-initialized per template configuration",
     "category": "assignments",
     "createdDate": "2026-01-11T12:00:00.0000000+00:00"
   },

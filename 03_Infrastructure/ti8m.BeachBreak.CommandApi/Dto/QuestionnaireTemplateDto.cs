@@ -10,6 +10,7 @@ public class QuestionnaireTemplateDto
     public Guid CategoryId { get; set; }
     public bool RequiresManagerReview { get; set; } = true;
     public bool IsCustomizable { get; set; } = false;
+    public bool AutoInitialize { get; set; } = false;
 
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }        // First publish timestamp

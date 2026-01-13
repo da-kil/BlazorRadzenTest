@@ -10,5 +10,6 @@ public class CommandQuestionnaireTemplate
     public Guid CategoryId { get; set; }
     public bool RequiresManagerReview { get; set; } = true;
     public bool IsCustomizable { get; set; } = false;
+    public bool AutoInitialize { get; set; } = false;
     public List<CommandQuestionSection> Sections { get; set; } = new();
 }

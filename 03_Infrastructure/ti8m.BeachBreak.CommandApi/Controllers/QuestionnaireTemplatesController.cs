@@ -49,6 +49,7 @@ public class QuestionnaireTemplatesController : BaseController
                 NameEnglish = questionnaireTemplate.NameEnglish,
                 RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
                 IsCustomizable = questionnaireTemplate.IsCustomizable,
+                AutoInitialize = questionnaireTemplate.AutoInitialize,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     DescriptionGerman = section.DescriptionGerman,
@@ -93,6 +94,7 @@ public class QuestionnaireTemplatesController : BaseController
                 NameEnglish = questionnaireTemplate.NameEnglish,
                 RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
                 IsCustomizable = questionnaireTemplate.IsCustomizable,
+                AutoInitialize = questionnaireTemplate.AutoInitialize,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     DescriptionGerman = section.DescriptionGerman,

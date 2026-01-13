@@ -100,6 +100,24 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - Custom sections can only be added in `Assigned` state (before initialization)
 - Assigned → EmployeeInProgress is **invalid** (must initialize first)
 
+**Auto-Initialization (Added 2026-01-13)**:
+- **AutoInitialize Flag**: Questionnaire templates have an `AutoInitialize` boolean property (default: `false`)
+- **Purpose**: Controls whether assignments from this template skip the initialization phase
+- **Separation of Concerns**: Independent from `IsCustomizable` flag
+  - `IsCustomizable`: Can managers add custom sections to this template?
+  - `AutoInitialize`: Should assignments skip the initialization phase?
+- **Valid Combinations**:
+  - `IsCustomizable=false, AutoInitialize=false` - No custom sections, requires initialization (for linking predecessors/notes)
+  - `IsCustomizable=false, AutoInitialize=true` - No custom sections, skip initialization (simple surveys)
+  - `IsCustomizable=true, AutoInitialize=false` - Allow custom sections, requires initialization (most flexible)
+  - `IsCustomizable=true, AutoInitialize=true` - Allow custom sections, skip initialization (uncommon)
+- **Behavior**:
+  - When `AutoInitialize=true`: Bulk assignment creation automatically calls `StartInitialization()` during creation
+  - When `AutoInitialize=false`: Assignments remain in `Assigned` state until manager explicitly initializes
+- **UI Control**: Checkbox in Questionnaire Builder > Basic Info Tab (disabled when template is Published/Archived)
+- **Business Logic**: `CreateBulkAssignmentsCommandHandler` checks `template.AutoInitialize` instead of `!template.IsCustomizable`
+- **Translation Keys**: `templates.auto-initialize`, `templates.auto-initialize-tooltip`, `assignments.auto-initialized`
+
 **Implementation Locations**:
 - Domain: `01_Domain/QuestionnaireAssignmentAggregate/WorkflowState.cs` (enum value=1)
 - Commands: `02_Application/Application.Command/Commands/QuestionnaireAssignmentCommands/`

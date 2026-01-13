@@ -13,6 +13,7 @@ public class QuestionnaireTemplateReadModel
     public Guid CategoryId { get; set; }
     public bool RequiresManagerReview { get; set; } = true;
     public bool IsCustomizable { get; set; } = false;
+    public bool AutoInitialize { get; set; } = false;
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }
     public DateTime? LastPublishedDate { get; set; }
@@ -35,6 +36,7 @@ public class QuestionnaireTemplateReadModel
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         IsCustomizable = @event.IsCustomizable;
+        AutoInitialize = @event.AutoInitialize;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
@@ -66,6 +68,11 @@ public class QuestionnaireTemplateReadModel
     public void Apply(QuestionnaireTemplateCustomizabilityChanged @event)
     {
         IsCustomizable = @event.IsCustomizable;
+    }
+
+    public void Apply(QuestionnaireTemplateAutoInitializeChanged @event)
+    {
+        AutoInitialize = @event.AutoInitialize;
     }
 
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
@@ -114,6 +121,7 @@ public class QuestionnaireTemplateReadModel
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
         IsCustomizable = @event.IsCustomizable;
+        AutoInitialize = @event.AutoInitialize;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
