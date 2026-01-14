@@ -39,6 +39,11 @@
             Template="@Template" />
         break;
 
+    case QuestionType.EmployeeFeedback:
+        <EmployeeFeedbackQuestionRenderer
+            Section="@Section" />
+        break;
+
     default:
         <div class="unknown-question-type">
             <RadzenIcon Icon="error_outline" Class="error-icon" />

@@ -63,38 +63,42 @@
     <!-- Section Content Area -->
     <div class="section-content-modern">
 
-        <!-- Title Inputs -->
-        <MultilingualInputComponent
-            EnglishLabel="English Title"
-            GermanLabel="German Title"
-            EnglishValue="@Section.TitleEnglish"
-            GermanValue="@Section.TitleGerman"
-            EnglishValueChanged="@OnSectionTitleEnglishChanged"
-            GermanValueChanged="@OnSectionTitleGermanChanged"
-            EnglishPlaceholder="@T("placeholders.section-title-english-example")"
-            GermanPlaceholder="@T("placeholders.section-title-german-example")"
-            InputType="InputType.TextBox"
-            InputCssClass="title-input-modern"
-            AdditionalClasses="mb-3"
-            Required="true"
-            Disabled="@(!Template.IsAvailableForEditing)" />
+        @* Only show title/description inputs for Assessment and TextQuestion sections *@
+        @if (Section.Type != QuestionType.Goal && Section.Type != QuestionType.EmployeeFeedback)
+        {
+            <!-- Title Inputs -->
+            <MultilingualInputComponent
+                EnglishLabel="English Title"
+                GermanLabel="German Title"
+                EnglishValue="@Section.TitleEnglish"
+                GermanValue="@Section.TitleGerman"
+                EnglishValueChanged="@OnSectionTitleEnglishChanged"
+                GermanValueChanged="@OnSectionTitleGermanChanged"
+                EnglishPlaceholder="@T("placeholders.section-title-english-example")"
+                GermanPlaceholder="@T("placeholders.section-title-german-example")"
+                InputType="InputType.TextBox"
+                InputCssClass="title-input-modern"
+                AdditionalClasses="mb-3"
+                Required="true"
+                Disabled="@(!Template.IsAvailableForEditing)" />
 
-        <!-- Description Inputs -->
-        <MultilingualInputComponent
-            EnglishLabel="English Description"
-            GermanLabel="German Description"
-            EnglishValue="@Section.DescriptionEnglish"
-            GermanValue="@Section.DescriptionGerman"
-            EnglishValueChanged="@OnSectionDescriptionEnglishChanged"
-            GermanValueChanged="@OnSectionDescriptionGermanChanged"
-            EnglishPlaceholder="@T("placeholders.section-description-english")"
-            GermanPlaceholder="@T("placeholders.section-description-german")"
-            InputType="InputType.TextArea"
-            InputCssClass="description-input-modern"
-            AdditionalClasses="mb-3"
-            TextAreaRows="3"
-            Required="true"
-            Disabled="@(!Template.IsAvailableForEditing)" />
+            <!-- Description Inputs -->
+            <MultilingualInputComponent
+                EnglishLabel="English Description"
+                GermanLabel="German Description"
+                EnglishValue="@Section.DescriptionEnglish"
+                GermanValue="@Section.DescriptionGerman"
+                EnglishValueChanged="@OnSectionDescriptionEnglishChanged"
+                GermanValueChanged="@OnSectionDescriptionGermanChanged"
+                EnglishPlaceholder="@T("placeholders.section-description-english")"
+                GermanPlaceholder="@T("placeholders.section-description-german")"
+                InputType="InputType.TextArea"
+                InputCssClass="description-input-modern"
+                AdditionalClasses="mb-3"
+                TextAreaRows="3"
+                Required="true"
+                Disabled="@(!Template.IsAvailableForEditing)" />
+        }
 
         <!-- Rating Scale Configuration - only for Assessment sections -->
         @if (Section.Type == QuestionType.Assessment)
@@ -155,7 +159,7 @@
     <!-- Items Area - No padding for consistent flat design -->
     <div class="items-area">
         @* Only show Items header and Add Item button for Assessment and TextQuestion sections *@
-        @if (Section.Type != QuestionType.Goal)
+        @if (Section.Type != QuestionType.Goal && Section.Type != QuestionType.EmployeeFeedback)
         {
             <div class="items-header mb-3">
                 <div class="d-flex justify-content-between align-items-center">
@@ -524,6 +528,7 @@
             QuestionType.Assessment => Section.Configuration is AssessmentConfiguration config && config.Evaluations.Count > 0,
             QuestionType.TextQuestion => Section.Configuration is TextQuestionConfiguration config && config.TextSections.Count > 0,
             QuestionType.Goal => Section.Configuration is GoalConfiguration,
+            QuestionType.EmployeeFeedback => Section.Configuration is EmployeeFeedbackConfiguration,
             _ => false
         };
     }
