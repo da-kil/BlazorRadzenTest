@@ -197,7 +197,6 @@
             DescriptionEnglish = Question.DescriptionEnglish,
             DescriptionGerman = Question.DescriptionGerman,
             Type = Question.Type,
-            IsRequired = Question.IsRequired,
             Order = Question.Order,
             Configuration = Question.Configuration // Use typed configuration directly
         };
@@ -247,10 +246,10 @@
 
     private async Task SaveChanges()
     {
-        // Validate required field
-        if (Question.IsRequired && !IsAnswerValid())
+        // Validate required items within the question
+        if (!IsAnswerValid())
         {
-            NotificationService.Notify(NotificationSeverity.Warning, "Required Field", "This field is required and cannot be empty.");
+            NotificationService.Notify(NotificationSeverity.Warning, T("messages.required-field"), T("messages.required-items-cannot-be-empty"));
             return;
         }
 

@@ -154,6 +154,8 @@ public class QuestionnaireTemplatesController : BaseController
             DescriptionEnglish = template.DescriptionEnglish,
             CategoryId = template.CategoryId,
             RequiresManagerReview = template.RequiresManagerReview,
+            IsCustomizable = template.IsCustomizable,
+            AutoInitialize = template.AutoInitialize,
             CreatedDate = template.CreatedDate,
             Status = MapToStatusDto(template.Status),
             PublishedDate = template.PublishedDate,
@@ -168,7 +170,6 @@ public class QuestionnaireTemplatesController : BaseController
                 DescriptionGerman = section.DescriptionGerman,
                 DescriptionEnglish = section.DescriptionEnglish,
                 Order = section.Order,
-                IsRequired = section.IsRequired,
                 CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
                 Type = MapQuestionTypeFromString(section.Type),
                 Configuration = section.Configuration

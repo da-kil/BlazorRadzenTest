@@ -52,6 +52,8 @@ public class QuestionnaireTemplateCommandHandler :
                 new Translation(command.QuestionnaireTemplate.DescriptionGerman, command.QuestionnaireTemplate.DescriptionEnglish),
                 command.QuestionnaireTemplate.CategoryId,
                 command.QuestionnaireTemplate.RequiresManagerReview,
+                command.QuestionnaireTemplate.IsCustomizable,
+                command.QuestionnaireTemplate.AutoInitialize,
                 sections);
 
             // Validate that section completion roles match review requirement
@@ -91,6 +93,18 @@ public class QuestionnaireTemplateCommandHandler :
             // Handle RequiresManagerReview change (validates no active assignments exist)
             await questionnaireTemplate.ChangeReviewRequirementAsync(
                 command.QuestionnaireTemplate.RequiresManagerReview,
+                assignmentService,
+                cancellationToken);
+
+            // Handle IsCustomizable change (validates no active assignments exist)
+            await questionnaireTemplate.ChangeCustomizabilityAsync(
+                command.QuestionnaireTemplate.IsCustomizable,
+                assignmentService,
+                cancellationToken);
+
+            // Handle AutoInitialize change (validates no active assignments exist)
+            await questionnaireTemplate.ChangeAutoInitializeAsync(
+                command.QuestionnaireTemplate.AutoInitialize,
                 assignmentService,
                 cancellationToken);
 
@@ -351,7 +365,6 @@ public class QuestionnaireTemplateCommandHandler :
             new Translation(section.TitleGerman, section.TitleEnglish),
             new Translation(section.DescriptionGerman, section.DescriptionEnglish),
             section.Order,
-            section.IsRequired,
             section.CompletionRole,
             section.Type,
             section.Configuration

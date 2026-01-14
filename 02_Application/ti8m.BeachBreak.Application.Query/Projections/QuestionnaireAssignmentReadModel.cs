@@ -63,6 +63,14 @@ public class QuestionnaireAssignmentReadModel
     // Predecessor data (projection)
     public Dictionary<Guid, Guid> PredecessorLinksByQuestion { get; set; } = new();
 
+    // Initialization phase properties
+    public DateTime? InitializedDate { get; set; }
+    public Guid? InitializedByEmployeeId { get; set; }
+    public string? InitializationNotes { get; set; }
+
+    // Custom sections added during initialization
+    public List<Queries.QuestionnaireTemplateQueries.QuestionSection> CustomSections { get; set; } = new();
+
     // Apply methods for all QuestionnaireAssignment domain events
     public void Apply(QuestionnaireAssignmentAssigned @event)
     {
@@ -81,6 +89,33 @@ public class QuestionnaireAssignmentReadModel
     public void Apply(AssignmentWorkStarted @event)
     {
         StartedDate = @event.StartedDate;
+    }
+
+    public void Apply(AssignmentInitialized @event)
+    {
+        InitializedDate = @event.InitializedDate;
+        InitializedByEmployeeId = @event.InitializedByEmployeeId;
+        InitializationNotes = @event.InitializationNotes;
+        WorkflowState = WorkflowState.Initialized;
+    }
+
+    public void Apply(CustomSectionsAddedToAssignment @event)
+    {
+        var sections = @event.CustomSections.Select(data => new Queries.QuestionnaireTemplateQueries.QuestionSection
+        {
+            Id = data.Id,
+            TitleEnglish = data.Title.English,
+            TitleGerman = data.Title.German,
+            DescriptionEnglish = data.Description.English,
+            DescriptionGerman = data.Description.German,
+            Order = data.Order,
+            CompletionRole = data.CompletionRole.ToString(),
+            Type = data.Type.ToString(),
+            Configuration = data.Configuration,
+            IsInstanceSpecific = data.IsInstanceSpecific
+        }).ToList();
+
+        CustomSections.AddRange(sections);
     }
 
     public void Apply(AssignmentWorkCompleted @event)

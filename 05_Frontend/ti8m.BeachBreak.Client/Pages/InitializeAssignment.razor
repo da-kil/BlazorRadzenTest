@@ -1,0 +1,817 @@
+@page "/assignments/{AssignmentId:guid}/initialize"
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Layout
+@using Microsoft.AspNetCore.Components.Authorization
+@using ti8m.BeachBreak.Client.Extensions
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Components.Dialogs
+@using ti8m.BeachBreak.Client.Components.QuestionnaireBuilder
+@inject NavigationManager NavigationManager
+@inject IQuestionnaireAssignmentService AssignmentService
+@inject IQuestionnaireTemplateService TemplateService
+@inject DialogService DialogService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthService AuthService
+@inherits OptimizedTranslatableComponentBase
+
+<PageTitle>@T("pages.initialize-assignment")</PageTitle>
+
+<AuthorizeView Policy="TeamLead">
+    <Authorized>
+        @if (isLoading)
+        {
+            <div class="text-center p-5">
+                <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Class="mb-3" />
+                <RadzenText TextStyle="TextStyle.Body1" Class="text-muted">@T("messages.loading")</RadzenText>
+            </div>
+        }
+        else if (assignment == null || template == null)
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat">
+                <RadzenText TextStyle="TextStyle.Body1">@T("messages.unable-to-load-data")</RadzenText>
+            </RadzenAlert>
+        }
+        else if (!WorkflowStateHelper.CanManagerInitialize(assignment))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
+                <RadzenText TextStyle="TextStyle.Body1">
+                    @T("messages.initialization-not-allowed")
+                </RadzenText>
+            </RadzenAlert>
+        }
+        else
+        {
+            <PageLayout Title="@T("pages.initialize-assignment")"
+                        Description="@string.Format(T("pages.initialize-assignment-description"), template.GetLocalizedNameWithFallback(CurrentLanguage))"
+                        ShowDefaultFooter="false">
+                <ChildContent>
+                    <!-- Back Navigation -->
+                    <div class="back-navigation mb-4">
+                        <RadzenLink Path="/team/questionnaires" Text="@T("navigation.back-to-dashboard")" Icon="arrow_back" />
+                    </div>
+
+                    <!-- Assignment Details Card -->
+                    <RadzenCard Class="mb-4">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("sections.assignment-details")</RadzenText>
+                        <RadzenRow>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.employee")</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1"><strong>@assignment.EmployeeName</strong></RadzenText>
+                                </div>
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.template")</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1">@template.GetLocalizedNameWithFallback(CurrentLanguage)</RadzenText>
+                                </div>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.due-date")</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body1">@(assignment.DueDate?.ToString("d") ?? T("labels.no-due-date"))</RadzenText>
+                                </div>
+                                <div class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Overline" Class="text-muted">@T("labels.status")</RadzenText>
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@T(WorkflowStateHelper.GetStateDisplayName(assignment.WorkflowState))" />
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenCard>
+
+                    <!-- Initialization Tasks Card -->
+                    <RadzenCard Class="mb-4">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("sections.initialization-tasks")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-4">@T("messages.initialization-tasks-description")</RadzenText>
+
+                        <!-- Link Predecessor Questionnaire (only shown if template has Goal sections) -->
+                        @if (template?.Sections.Any(s => s.Type == QuestionType.Goal) == true)
+                        {
+                            <div class="mb-4">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
+                                    @T("labels.link-predecessor-questionnaire")
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.link-predecessor-description")</RadzenText>
+
+                                @if (predecessorLinked)
+                                {
+                                    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Class="d-inline-flex align-items-center">
+                                        <RadzenIcon Icon="check_circle" Class="me-2" />
+                                        @T("messages.predecessor-linked")
+                                    </RadzenAlert>
+                                }
+                                else
+                                {
+                                    <RadzenButton Text="@T("buttons.link-predecessor")"
+                                                Icon="link"
+                                                ButtonStyle="ButtonStyle.Light"
+                                                Click="@OpenLinkPredecessorDialog" />
+                                }
+                            </div>
+                        }
+
+                        <!-- Add Custom Questions -->
+                        @if (template.IsCustomizable)
+                        {
+                            <div class="mb-3">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
+                                    @T("labels.add-custom-questions")
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.optional")" Class="ms-2" />
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.add-custom-questions-description")</RadzenText>
+
+                                <!-- Custom Questions Container -->
+                            <div class="custom-questions-container">
+                                <!-- Add Question Type Cards -->
+                                @if (!isAddingAssessment && !isAddingTextQuestion)
+                                {
+                                    <div class="add-question-cards mb-4">
+                                        <!-- Add Assessment Question Card -->
+                                        <div class="modern-section-card add-question-card" @onclick="@StartAddingAssessment" style="cursor: pointer; border: 2px dashed var(--primary-color-alpha); background: var(--primary-color-alpha-subtle); transition: all 0.2s ease;">
+                                            <div class="section-header-modern">
+                                                <div class="header-top-row">
+                                                    <div class="section-badges">
+                                                        <div class="section-type-badge">
+                                                            <RadzenIcon Icon="assessment" Class="badge-icon" />
+                                                            <span class="badge-text">@T("labels.add-assessment-question")</span>
+                                                        </div>
+                                                    </div>
+                                                    <RadzenIcon Icon="add_circle_outline" Style="color: var(--primary-color); font-size: 1.5rem;" />
+                                                </div>
+                                            </div>
+                                            <div class="section-content-modern">
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--text-muted);">
+                                                    @T("messages.click-to-add-assessment")
+                                                </RadzenText>
+                                            </div>
+                                        </div>
+
+                                        <!-- Add Text Question Card -->
+                                        <div class="modern-section-card add-question-card mt-3" @onclick="@StartAddingTextQuestion" style="cursor: pointer; border: 2px dashed var(--question-text-response); background: var(--question-text-alpha-subtle); transition: all 0.2s ease;">
+                                            <div class="section-header-modern">
+                                                <div class="header-top-row">
+                                                    <div class="section-badges">
+                                                        <div class="section-type-badge" style="background: var(--question-text-alpha-subtle); border-color: var(--question-text-response);">
+                                                            <RadzenIcon Icon="text_fields" Class="badge-icon" style="color: var(--question-text-response);" />
+                                                            <span class="badge-text" style="color: var(--question-text-response);">@T("labels.add-text-question")</span>
+                                                        </div>
+                                                    </div>
+                                                    <RadzenIcon Icon="add_circle_outline" Style="color: var(--question-text-response); font-size: 1.5rem;" />
+                                                </div>
+                                            </div>
+                                            <div class="section-content-modern">
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--text-muted);">
+                                                    @T("messages.click-to-add-text-question")
+                                                </RadzenText>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Inline Section Editor for Assessment -->
+                                @if (isAddingAssessment)
+                                {
+                                    <div class="inline-section-editor">
+                                        <SectionCard
+                                            Section="@newAssessmentSection"
+                                            Template="@customQuestionTemplate"
+                                            CanMoveUp="false"
+                                            CanMoveDown="false"
+                                            OnDelete="@CancelAddingAssessment"
+                                            OnAddItemDirectly="@(() => AddAssessmentItem(newAssessmentSection))"
+                                            OnTitleEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnTitleGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnDescriptionEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnDescriptionGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnItemChanged="@(async () => { StateHasChanged(); })" />
+                                        <div class="section-editor-actions mt-3 d-flex justify-content-end gap-2">
+                                            <AsyncButton Text="@T("buttons.cancel")"
+                                                        Icon="cancel"
+                                                        ButtonStyle="ButtonStyle.Light"
+                                                        ClickAsync="@CancelAddingAssessment" />
+                                            <AsyncButton Text="@T("buttons.save")"
+                                                        Icon="save"
+                                                        ButtonStyle="ButtonStyle.Success"
+                                                        ClickAsync="@SaveAssessmentSection"
+                                                        Disabled="@(!IsNewSectionValid(newAssessmentSection))" />
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Inline Section Editor for Text Question -->
+                                @if (isAddingTextQuestion)
+                                {
+                                    <div class="inline-section-editor">
+                                        <SectionCard
+                                            Section="@newTextQuestionSection"
+                                            Template="@customQuestionTemplate"
+                                            CanMoveUp="false"
+                                            CanMoveDown="false"
+                                            OnDelete="@CancelAddingTextQuestion"
+                                            OnAddItemDirectly="@(() => AddTextQuestionSection(newTextQuestionSection))"
+                                            OnTitleEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnTitleGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnDescriptionEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnDescriptionGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                            OnItemChanged="@(async () => { StateHasChanged(); })" />
+                                        <div class="section-editor-actions mt-3 d-flex justify-content-end gap-2">
+                                            <AsyncButton Text="@T("buttons.cancel")"
+                                                        Icon="cancel"
+                                                        ButtonStyle="ButtonStyle.Light"
+                                                        ClickAsync="@CancelAddingTextQuestion" />
+                                            <AsyncButton Text="@T("buttons.save")"
+                                                        Icon="save"
+                                                        ButtonStyle="ButtonStyle.Success"
+                                                        ClickAsync="@SaveTextQuestionSection"
+                                                        Disabled="@(!IsNewSectionValid(newTextQuestionSection))" />
+                                        </div>
+                                    </div>
+                                }
+
+                                <!-- Configured Custom Questions -->
+                                @if (customSections.Any())
+                                {
+                                    <div class="configured-custom-questions">
+                                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="mb-3" Style="font-weight: var(--font-weight-emphasis); color: var(--text-color);">
+                                            @T("labels.configured-custom-questions") (@customSections.Count)
+                                        </RadzenText>
+
+                                        <div class="sections-container">
+                                            @for (int i = 0; i < customSections.Count; i++)
+                                            {
+                                                var index = i; // Capture for lambda
+                                                @if (editingIndex == index)
+                                                {
+                                                    <!-- Editing mode: Use SectionCard directly -->
+                                                    <div class="inline-section-editor">
+                                                        <SectionCard
+                                                            Section="@customSections[index]"
+                                                            Template="@customQuestionTemplate"
+                                                            CanMoveUp="@(index > 0)"
+                                                            CanMoveDown="@(index < customSections.Count - 1)"
+                                                            OnMoveUp="@(() => MoveSectionUp(index))"
+                                                            OnMoveDown="@(() => MoveSectionDown(index))"
+                                                            OnDelete="@(() => RemoveCustomSection(customSections[index]))"
+                                                            OnAddItemDirectly="@(() => AddItemToSection(customSections[index]))"
+                                                            OnTitleEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                                            OnTitleGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                                            OnDescriptionEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                                            OnDescriptionGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                                            OnItemChanged="@(async () => { StateHasChanged(); })" />
+                                                        <div class="section-editor-actions mt-3 d-flex justify-content-end gap-2">
+                                                            <AsyncButton Text="@T("buttons.cancel")"
+                                                                        Icon="cancel"
+                                                                        ButtonStyle="ButtonStyle.Light"
+                                                                        ClickAsync="@CancelEditingSection" />
+                                                            <AsyncButton Text="@T("buttons.save")"
+                                                                        Icon="save"
+                                                                        ButtonStyle="ButtonStyle.Success"
+                                                                        ClickAsync="@(() => SaveEditedSection(index))"
+                                                                        Disabled="@(!IsNewSectionValid(customSections[index]))" />
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <!-- View mode: Show SectionCard in read-only mode -->
+                                                    <SectionCard
+                                                        Section="@customSections[index]"
+                                                        Template="@readOnlyTemplate"
+                                                        CanMoveUp="@(index > 0)"
+                                                        CanMoveDown="@(index < customSections.Count - 1)"
+                                                        OnMoveUp="@(() => MoveSectionUp(index))"
+                                                        OnMoveDown="@(() => MoveSectionDown(index))"
+                                                        OnDelete="@(() => RemoveCustomSection(customSections[index]))"
+                                                        OnAddItemDirectly="@(() => StartEditingSection(index))"
+                                                        OnTitleEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                                        OnTitleGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                                        OnDescriptionEnglishChanged="@(async (value) => { StateHasChanged(); })"
+                                                        OnDescriptionGermanChanged="@(async (value) => { StateHasChanged(); })"
+                                                        OnItemChanged="@(async () => { StateHasChanged(); })" />
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-3">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Class="mb-2">
+                                    @T("labels.add-custom-questions")
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@T("labels.not-available")" Class="ms-2" />
+                                </RadzenText>
+                                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Class="mb-3">
+                                    <RadzenText TextStyle="TextStyle.Body2">
+                                        @T("assignments.no-customization-support")
+                                    </RadzenText>
+                                </RadzenAlert>
+                            </div>
+                        }
+                    </RadzenCard>
+
+                    <!-- Initialization Notes -->
+                    <RadzenCard Class="mb-4">
+                        <RadzenText TextStyle="TextStyle.H6" Class="mb-3">@T("labels.initialization-notes")</RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">@T("messages.initialization-notes-description")</RadzenText>
+                        <RadzenTextArea @bind-Value="@initializationNotes"
+                                      Rows="5"
+                                      Placeholder="@T("placeholders.initialization-notes")"
+                                      MaxLength="5000"
+                                      Class="w-100" />
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted mt-1">
+                            @initializationNotes?.Length.ToString() / 5000 @T("labels.characters")
+                        </RadzenText>
+                    </RadzenCard>
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton Text="@T("buttons.cancel")"
+                                    Icon="cancel"
+                                    ButtonStyle="ButtonStyle.Light"
+                                    Click="@HandleCancel"
+                                    Disabled="@isSubmitting" />
+                        <RadzenButton Text="@T("buttons.complete-initialization")"
+                                    Icon="check_circle"
+                                    ButtonStyle="ButtonStyle.Primary"
+                                    Click="@HandleCompleteInitialization"
+                                    Disabled="@isSubmitting" />
+                    </div>
+
+                    @if (isSubmitting)
+                    {
+                        <div class="text-center mt-3">
+                            <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Value="100" ShowValue="false" Size="ProgressBarCircularSize.Small" />
+                        </div>
+                    }
+
+                </ChildContent>
+            </PageLayout>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <AccessDeniedComponent RequiredRole="@T("roles.team-lead")" PageName="@T("pages.initialize-assignment")" />
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    [Parameter] public Guid AssignmentId { get; set; }
+
+    private QuestionnaireAssignment? assignment;
+    private QuestionnaireTemplate? template;
+    private bool isLoading = true;
+    private bool isSubmitting = false;
+    private bool predecessorLinked = false;
+    private string? initializationNotes;
+    private List<QuestionSection> customSections = new();
+    private ApplicationRole currentUserRole = ApplicationRole.Employee;
+
+    // Inline section editing state
+    private bool isAddingAssessment = false;
+    private bool isAddingTextQuestion = false;
+    private int editingIndex = -1;
+
+    // Template references for SectionCard components
+    private QuestionnaireTemplate customQuestionTemplate = null!;
+    private QuestionnaireTemplate readOnlyTemplate = null!;
+
+    // New sections being created
+    private QuestionSection newAssessmentSection = null!;
+    private QuestionSection newTextQuestionSection = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await InitializeUserRole();
+        await LoadData();
+    }
+
+    private async Task InitializeUserRole()
+    {
+        try
+        {
+            var roleData = await AuthService.GetMyRoleAsync();
+            if (roleData != null)
+            {
+                currentUserRole = roleData.ApplicationRole;
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-to-get-user-role")}: {ex.Message}");
+            currentUserRole = ApplicationRole.Employee;
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+
+            // Load assignment
+            assignment = await AssignmentService.GetAssignmentByIdAsync(AssignmentId);
+            if (assignment == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.assignment-not-found"));
+                HandleCancel();
+                return;
+            }
+
+            // Load template
+            template = await TemplateService.GetTemplateByIdAsync(assignment.TemplateId);
+            if (template == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.template-not-found"));
+                HandleCancel();
+                return;
+            }
+
+            // Note: Predecessor linking status checked via separate dialog
+            // predecessorLinked flag will be updated when dialog closes successfully
+            predecessorLinked = false;
+
+            // Initialize templates for SectionCard components
+            InitializeTemplates();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.failed-to-load-data")}: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task OpenLinkPredecessorDialog()
+    {
+        if (assignment == null) return;
+
+        var result = await DialogService.OpenAsync<LinkPredecessorDialog>(
+            T("dialogs.link-predecessor-title"),
+            new Dictionary<string, object>
+            {
+                { "AssignmentId", assignment.Id },
+                { "EmployeeId", assignment.EmployeeId },
+                { "TemplateId", assignment.TemplateId }
+            },
+            new DialogOptions { Width = "700px", Resizable = true, Draggable = true });
+
+        if (result == true)
+        {
+            predecessorLinked = true;
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("messages.predecessor-linked-successfully"));
+        }
+    }
+
+
+    private void RemoveCustomSection(QuestionSection section)
+    {
+        customSections.Remove(section);
+        NotificationService.Notify(NotificationSeverity.Info, T("notifications.info"), T("messages.custom-section-removed"));
+    }
+
+    private async Task HandleCompleteInitialization()
+    {
+        if (assignment == null) return;
+
+        try
+        {
+            isSubmitting = true;
+
+            // First, add any custom sections
+            if (customSections.Any())
+            {
+                var dto = new AddCustomSectionsDto { Sections = customSections };
+                var addSectionsResult = await AssignmentService.AddCustomSectionsAsync(assignment.Id, dto);
+
+                if (!addSectionsResult)
+                {
+                    NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.failed-to-add-custom-sections"));
+                    return;
+                }
+            }
+
+            // Then, complete initialization
+            var initializeResult = await AssignmentService.InitializeAssignmentAsync(assignment.Id, initializationNotes);
+
+            if (initializeResult)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("messages.initialization-completed"));
+                NavigationManager.NavigateTo("/team/questionnaires");
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), T("messages.initialization-failed"));
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, T("notifications.error"), $"{T("messages.initialization-failed")}: {ex.Message}");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void HandleCancel()
+    {
+        NavigationManager.NavigateTo("/team/questionnaires");
+    }
+
+    private void InitializeTemplates()
+    {
+        // Create a minimal template for custom question editing
+        customQuestionTemplate = new QuestionnaireTemplate
+        {
+            Id = Guid.NewGuid(),
+            NameEnglish = "Custom Questions Template",
+            NameGerman = "Custom Questions Template",
+            Status = TemplateStatus.Draft, // This makes IsAvailableForEditing = true
+            RequiresManagerReview = true
+        };
+
+        // Create a read-only template for viewing sections
+        readOnlyTemplate = new QuestionnaireTemplate
+        {
+            Id = Guid.NewGuid(),
+            NameEnglish = "Read Only Template",
+            NameGerman = "Read Only Template",
+            Status = TemplateStatus.Published, // This makes IsAvailableForEditing = false
+            RequiresManagerReview = true
+        };
+    }
+
+    // Inline section editing methods using SectionCard
+    private void StartAddingAssessment()
+    {
+        newAssessmentSection = CreateNewSection(QuestionType.Assessment);
+        isAddingAssessment = true;
+        isAddingTextQuestion = false;
+        editingIndex = -1;
+        StateHasChanged();
+    }
+
+    private void StartAddingTextQuestion()
+    {
+        newTextQuestionSection = CreateNewSection(QuestionType.TextQuestion);
+        isAddingTextQuestion = true;
+        isAddingAssessment = false;
+        editingIndex = -1;
+        StateHasChanged();
+    }
+
+    private async Task CancelAddingAssessment()
+    {
+        isAddingAssessment = false;
+        StateHasChanged();
+    }
+
+    private async Task CancelAddingTextQuestion()
+    {
+        isAddingTextQuestion = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveAssessmentSection()
+    {
+        if (IsNewSectionValid(newAssessmentSection))
+        {
+            // Assign Order after template sections to prevent collisions
+            var maxTemplateOrder = template?.Sections.Max(s => s.Order) ?? -1;
+            newAssessmentSection.Order = maxTemplateOrder + 1 + customSections.Count;
+            customSections.Add(newAssessmentSection);
+            isAddingAssessment = false;
+            StateHasChanged();
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("messages.custom-question-added"));
+        }
+    }
+
+    private async Task SaveTextQuestionSection()
+    {
+        if (IsNewSectionValid(newTextQuestionSection))
+        {
+            // Assign Order after template sections to prevent collisions
+            var maxTemplateOrder = template?.Sections.Max(s => s.Order) ?? -1;
+            newTextQuestionSection.Order = maxTemplateOrder + 1 + customSections.Count;
+            customSections.Add(newTextQuestionSection);
+            isAddingTextQuestion = false;
+            StateHasChanged();
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("messages.custom-question-added"));
+        }
+    }
+
+    private void StartEditingSection(int index)
+    {
+        editingIndex = index;
+        isAddingAssessment = false;
+        isAddingTextQuestion = false;
+        StateHasChanged();
+    }
+
+    private async Task CancelEditingSection()
+    {
+        editingIndex = -1;
+        StateHasChanged();
+    }
+
+    private async Task SaveEditedSection(int index)
+    {
+        if (index >= 0 && index < customSections.Count && IsNewSectionValid(customSections[index]))
+        {
+            editingIndex = -1;
+            StateHasChanged();
+            NotificationService.Notify(NotificationSeverity.Success, T("notifications.success"), T("messages.custom-question-updated"));
+        }
+    }
+
+    private QuestionSection CreateNewSection(QuestionType type)
+    {
+        var section = new QuestionSection
+        {
+            Id = Guid.NewGuid(),
+            Type = type,
+            CompletionRole = CompletionRole.Both,
+            IsInstanceSpecific = true,
+            TitleEnglish = "",
+            TitleGerman = "",
+            DescriptionEnglish = "",
+            DescriptionGerman = ""
+        };
+
+        // Set default configuration based on type
+        if (type == QuestionType.Assessment)
+        {
+            section.Configuration = new AssessmentConfiguration
+            {
+                RatingScale = 5,
+                ScaleLowLabel = "Poor",
+                ScaleHighLabel = "Excellent",
+                Evaluations = new List<EvaluationItem>()
+            };
+        }
+        else if (type == QuestionType.TextQuestion)
+        {
+            section.Configuration = new TextQuestionConfiguration
+            {
+                TextSections = new List<TextSection>()
+            };
+        }
+
+        return section;
+    }
+
+    private bool IsNewSectionValid(QuestionSection section)
+    {
+        if (string.IsNullOrWhiteSpace(section.TitleEnglish))
+            return false;
+
+        if (section.Type == QuestionType.Assessment)
+        {
+            var config = section.Configuration as AssessmentConfiguration;
+            return config?.Evaluations?.Any(e => !string.IsNullOrWhiteSpace(e.TitleEnglish)) == true;
+        }
+
+        if (section.Type == QuestionType.TextQuestion)
+        {
+            var config = section.Configuration as TextQuestionConfiguration;
+            return config?.TextSections?.Any(s => !string.IsNullOrWhiteSpace(s.TitleEnglish)) == true;
+        }
+
+        return true;
+    }
+
+    private void MoveSectionUp(int index)
+    {
+        if (index > 0 && index < customSections.Count)
+        {
+            var section = customSections[index];
+            customSections.RemoveAt(index);
+            customSections.Insert(index - 1, section);
+
+            // Update orders to maintain position after template sections
+            var maxTemplateOrder = template?.Sections.Max(s => s.Order) ?? -1;
+            for (int i = 0; i < customSections.Count; i++)
+            {
+                customSections[i].Order = maxTemplateOrder + 1 + i;
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    private void MoveSectionDown(int index)
+    {
+        if (index >= 0 && index < customSections.Count - 1)
+        {
+            var section = customSections[index];
+            customSections.RemoveAt(index);
+            customSections.Insert(index + 1, section);
+
+            // Update orders to maintain position after template sections
+            var maxTemplateOrder = template?.Sections.Max(s => s.Order) ?? -1;
+            for (int i = 0; i < customSections.Count; i++)
+            {
+                customSections[i].Order = maxTemplateOrder + 1 + i;
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    // Helper methods for UI (still needed for remaining functionality)
+    private string GetQuestionTypeIcon(QuestionType type) => type switch
+    {
+        QuestionType.Assessment => "assessment",
+        QuestionType.TextQuestion => "text_fields",
+        QuestionType.Goal => "flag",
+        _ => "help"
+    };
+
+    private string GetCompletionRoleIcon(CompletionRole role) => role switch
+    {
+        CompletionRole.Employee => "person",
+        CompletionRole.Manager => "supervisor_account",
+        CompletionRole.Both => "groups",
+        _ => "help"
+    };
+
+    private string GetCompletionRoleText(CompletionRole role) => role switch
+    {
+        CompletionRole.Employee => T("completion-roles.employee"),
+        CompletionRole.Manager => T("completion-roles.manager"),
+        CompletionRole.Both => T("completion-roles.both"),
+        _ => T("completion-roles.unknown")
+    };
+
+    private int GetItemCount(QuestionSection section)
+    {
+        if (section.Configuration is AssessmentConfiguration assessmentConfig)
+        {
+            return assessmentConfig.Evaluations?.Count ?? 0;
+        }
+        else if (section.Configuration is TextQuestionConfiguration textConfig)
+        {
+            return textConfig.TextSections?.Count ?? 0;
+        }
+        return 0;
+    }
+
+    // Methods for adding items to sections
+    private async Task AddAssessmentItem(QuestionSection section)
+    {
+        if (section.Configuration is AssessmentConfiguration config)
+        {
+            config.Evaluations ??= new List<EvaluationItem>();
+            config.Evaluations.Add(new EvaluationItem
+            {
+                Key = $"evaluation_{config.Evaluations.Count}",
+                TitleEnglish = "",
+                TitleGerman = "",
+                DescriptionEnglish = "",
+                DescriptionGerman = "",
+                IsRequired = true,
+                Order = config.Evaluations.Count
+            });
+            StateHasChanged(); // Trigger re-validation
+        }
+    }
+
+    private async Task AddTextQuestionSection(QuestionSection section)
+    {
+        if (section.Configuration is TextQuestionConfiguration config)
+        {
+            config.TextSections ??= new List<TextSection>();
+            config.TextSections.Add(new TextSection
+            {
+                TitleEnglish = "",
+                TitleGerman = "",
+                DescriptionEnglish = "",
+                DescriptionGerman = "",
+                IsRequired = true,
+                Order = config.TextSections.Count
+            });
+            StateHasChanged(); // Trigger re-validation
+        }
+    }
+
+    private async Task AddItemToSection(QuestionSection section)
+    {
+        if (section.Type == QuestionType.Assessment)
+        {
+            await AddAssessmentItem(section);
+        }
+        else if (section.Type == QuestionType.TextQuestion)
+        {
+            await AddTextQuestionSection(section);
+        }
+    }
+}

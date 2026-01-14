@@ -8,5 +8,7 @@ public record QuestionnaireTemplateCreated(
     Translation Description,
     Guid CategoryId,
     bool RequiresManagerReview,
+    bool IsCustomizable,
+    bool AutoInitialize,
     List<QuestionSectionData> Sections,
     DateTime CreatedDate) : IDomainEvent;

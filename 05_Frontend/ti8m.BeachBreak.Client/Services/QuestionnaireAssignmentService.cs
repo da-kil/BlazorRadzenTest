@@ -215,6 +215,61 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     }
 
     // Workflow operations
+    public async Task<bool> InitializeAssignmentAsync(Guid assignmentId, string? initializationNotes)
+    {
+        try
+        {
+            var dto = new InitializeAssignmentDto { InitializationNotes = initializationNotes };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/initialize", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error initializing assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<bool> AddCustomSectionsAsync(Guid assignmentId, AddCustomSectionsDto dto)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/custom-sections", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error adding custom sections to assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    public async Task<List<QuestionSection>> GetCustomSectionsAsync(Guid assignmentId)
+    {
+        try
+        {
+            return await HttpQueryClient.GetFromJsonAsync<List<QuestionSection>>($"{AssignmentQueryEndpoint}/{assignmentId}/custom-sections") ?? new List<QuestionSection>();
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error fetching custom sections for assignment {assignmentId}", ex);
+            return new List<QuestionSection>();
+        }
+    }
+
+    public async Task<List<QuestionSection>> GetMyCustomSectionsAsync(Guid assignmentId)
+    {
+        try
+        {
+            return await HttpQueryClient.GetFromJsonAsync<List<QuestionSection>>($"{EmployeeAssignmentEndpoint}/{assignmentId}/custom-sections") ?? new List<QuestionSection>();
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error fetching custom sections for my assignment {assignmentId}", ex);
+            return new List<QuestionSection>();
+        }
+    }
+
     public async Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy)
     {
         try

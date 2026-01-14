@@ -48,12 +48,13 @@ public class QuestionnaireTemplatesController : BaseController
                 NameGerman = questionnaireTemplate.NameGerman,
                 NameEnglish = questionnaireTemplate.NameEnglish,
                 RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
+                IsCustomizable = questionnaireTemplate.IsCustomizable,
+                AutoInitialize = questionnaireTemplate.AutoInitialize,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     DescriptionGerman = section.DescriptionGerman,
                     DescriptionEnglish = section.DescriptionEnglish,
                     Id = section.Id,
-                    IsRequired = section.IsRequired,
                     Order = section.Order,
                     TitleGerman = section.TitleGerman,
                     TitleEnglish = section.TitleEnglish,
@@ -92,12 +93,13 @@ public class QuestionnaireTemplatesController : BaseController
                 NameGerman = questionnaireTemplate.NameGerman,
                 NameEnglish = questionnaireTemplate.NameEnglish,
                 RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
+                IsCustomizable = questionnaireTemplate.IsCustomizable,
+                AutoInitialize = questionnaireTemplate.AutoInitialize,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
                 {
                     DescriptionGerman = section.DescriptionGerman,
                     DescriptionEnglish = section.DescriptionEnglish,
                     Id = section.Id,
-                    IsRequired = section.IsRequired,
                     Order = section.Order,
                     TitleGerman = section.TitleGerman,
                     TitleEnglish = section.TitleEnglish,

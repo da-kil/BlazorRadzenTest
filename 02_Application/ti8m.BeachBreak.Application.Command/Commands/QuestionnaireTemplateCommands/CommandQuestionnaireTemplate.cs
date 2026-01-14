@@ -9,5 +9,7 @@ public class CommandQuestionnaireTemplate
     public string DescriptionEnglish { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
     public bool RequiresManagerReview { get; set; } = true;
+    public bool IsCustomizable { get; set; } = false;
+    public bool AutoInitialize { get; set; } = false;
     public List<CommandQuestionSection> Sections { get; set; } = new();
 }

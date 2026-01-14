@@ -10,8 +10,8 @@ public class QuestionSection
     public string DescriptionGerman { get; set; } = string.Empty;
     public string DescriptionEnglish { get; set; } = string.Empty;
     public int Order { get; set; }
-    public bool IsRequired { get; set; } = true;
     public string CompletionRole { get; set; } = "Employee";
     public string Type { get; set; } = string.Empty;
     public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
+    public bool IsInstanceSpecific { get; set; } = false;
 }

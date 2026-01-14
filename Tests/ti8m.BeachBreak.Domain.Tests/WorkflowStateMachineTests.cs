@@ -12,9 +12,12 @@ public class WorkflowStateMachineTests
     #region Forward Transition Tests
 
     [Theory]
-    [InlineData(WorkflowState.Assigned, WorkflowState.EmployeeInProgress, true)]
-    [InlineData(WorkflowState.Assigned, WorkflowState.ManagerInProgress, true)]
-    [InlineData(WorkflowState.Assigned, WorkflowState.BothInProgress, true)]
+    // Initialized state transitions (NEW - Phase 4)
+    [InlineData(WorkflowState.Assigned, WorkflowState.Initialized, true)] // Manager completes initialization
+    [InlineData(WorkflowState.Initialized, WorkflowState.EmployeeInProgress, true)] // Employee starts
+    [InlineData(WorkflowState.Initialized, WorkflowState.ManagerInProgress, true)] // Manager starts
+    [InlineData(WorkflowState.Initialized, WorkflowState.BothInProgress, true)] // Both start
+    // Existing transitions
     [InlineData(WorkflowState.EmployeeInProgress, WorkflowState.BothInProgress, true)]
     [InlineData(WorkflowState.EmployeeInProgress, WorkflowState.EmployeeSubmitted, true)]
     [InlineData(WorkflowState.EmployeeSubmitted, WorkflowState.BothSubmitted, true)]
@@ -35,6 +38,12 @@ public class WorkflowStateMachineTests
     }
 
     [Theory]
+    // Invalid Initialized state transitions (NEW - Phase 4)
+    [InlineData(WorkflowState.Assigned, WorkflowState.EmployeeInProgress)] // Must initialize first
+    [InlineData(WorkflowState.Assigned, WorkflowState.ManagerInProgress)] // Must initialize first
+    [InlineData(WorkflowState.Assigned, WorkflowState.BothInProgress)] // Must initialize first
+    [InlineData(WorkflowState.Initialized, WorkflowState.Assigned)] // Can't go backwards to Assigned
+    // Existing invalid transitions
     [InlineData(WorkflowState.Assigned, WorkflowState.Finalized)] // Can't skip to finalized
     [InlineData(WorkflowState.Assigned, WorkflowState.InReview)] // Can't jump to review
     [InlineData(WorkflowState.EmployeeInProgress, WorkflowState.ManagerSubmitted)] // Wrong role
@@ -142,6 +151,7 @@ public class WorkflowStateMachineTests
 
     [Theory]
     [InlineData(WorkflowState.Assigned)] // Not yet submitted
+    [InlineData(WorkflowState.Initialized)] // Manager initialization phase (NEW for Phase 4)
     [InlineData(WorkflowState.EmployeeInProgress)] // In progress
     [InlineData(WorkflowState.ManagerInProgress)] // In progress
     [InlineData(WorkflowState.BothInProgress)] // In progress
@@ -165,7 +175,8 @@ public class WorkflowStateMachineTests
     #region Helper Method Tests
 
     [Theory]
-    [InlineData(WorkflowState.Assigned, 3)] // Can go to 3 in-progress states
+    [InlineData(WorkflowState.Assigned, 1)] // Can only go to Initialized (UPDATED for Phase 4)
+    [InlineData(WorkflowState.Initialized, 3)] // Can go to 3 in-progress states (NEW for Phase 4)
     [InlineData(WorkflowState.EmployeeSubmitted, 2)] // BothSubmitted or Finalized
     [InlineData(WorkflowState.BothSubmitted, 1)] // Only InReview
     [InlineData(WorkflowState.Finalized, 0)] // Terminal state
@@ -227,17 +238,17 @@ public class WorkflowStateMachineTests
     [InlineData(true, true, WorkflowState.BothInProgress)]
     [InlineData(true, false, WorkflowState.EmployeeInProgress)]
     [InlineData(false, true, WorkflowState.ManagerInProgress)]
-    [InlineData(false, false, WorkflowState.Assigned)]
+    [InlineData(false, false, WorkflowState.Initialized)] // UPDATED: Default state is Initialized (not Assigned)
     public void DetermineProgressState_ReturnsCorrectState(
         bool hasEmployeeProgress,
         bool hasManagerProgress,
         WorkflowState expected)
     {
-        // Act
+        // Act - Start from Initialized state (UPDATED for Phase 4)
         var result = WorkflowStateMachine.DetermineProgressState(
             hasEmployeeProgress,
             hasManagerProgress,
-            WorkflowState.Assigned);
+            WorkflowState.Initialized);
 
         // Assert
         Assert.Equal(expected, result);

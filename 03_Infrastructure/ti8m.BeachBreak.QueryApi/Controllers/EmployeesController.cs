@@ -536,6 +536,65 @@ public class EmployeesController : BaseController
     }
 
     /// <summary>
+    /// Gets custom sections for a specific assignment for the currently authenticated employee.
+    /// Returns instance-specific sections that were added during manager initialization.
+    /// Employees can only access custom sections for their own assignments.
+    /// </summary>
+    [HttpGet("me/assignments/{assignmentId:guid}/custom-sections")]
+    [ProducesResponseType(typeof(IEnumerable<QuestionSectionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetMyAssignmentCustomSections(Guid assignmentId)
+    {
+        // Get employee ID from authenticated user context
+        if (!Guid.TryParse(userContext.Id, out var employeeId))
+        {
+            logger.LogWarning("GetMyAssignmentCustomSections failed: Unable to parse user ID from context");
+            return Unauthorized("User ID not found in authentication context");
+        }
+
+        logger.LogInformation("Received GetMyAssignmentCustomSections request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
+            employeeId, assignmentId);
+
+        try
+        {
+            // First verify the assignment belongs to this employee
+            var assignmentListResult = await queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
+
+            if (!assignmentListResult.Succeeded)
+            {
+                logger.LogWarning("GetMyAssignmentCustomSections failed for EmployeeId: {EmployeeId}, Error: {ErrorMessage}",
+                    employeeId, assignmentListResult.Message);
+                return StatusCode(500, assignmentListResult.Message);
+            }
+
+            // Check if assignment exists and belongs to employee
+            var assignment = assignmentListResult.Payload?.FirstOrDefault(a => a.Id == assignmentId);
+            if (assignment == null)
+            {
+                logger.LogWarning("Assignment {AssignmentId} not found for EmployeeId: {EmployeeId}", assignmentId, employeeId);
+                return NotFound($"Assignment {assignmentId} not found or does not belong to you");
+            }
+
+            // Get custom sections and map to DTOs with enums (same pattern as templates and manager endpoint)
+            var customSectionsQuery = new GetAssignmentCustomSectionsQuery(assignmentId);
+            var result = await queryDispatcher.QueryAsync(customSectionsQuery, HttpContext.RequestAborted);
+
+            logger.LogInformation("GetMyAssignmentCustomSections completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
+                employeeId, assignmentId);
+
+            return CreateResponse(result, sections => sections.Select(MapSectionToDto));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving custom sections for assignment {AssignmentId} for employee {EmployeeId}",
+                assignmentId, employeeId);
+            return StatusCode(500, "An error occurred while retrieving custom sections");
+        }
+    }
+
+    /// <summary>
     /// Gets the questionnaire response for a specific assignment for the currently authenticated employee.
     /// Uses UserContext to get the employee ID - more secure than accepting it as a parameter.
     /// </summary>
@@ -883,4 +942,45 @@ public class EmployeesController : BaseController
                employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.Admin;
     }
 
+    /// <summary>
+    /// Maps query-side QuestionSection (strings) to DTO (enums) for client consumption.
+    /// Same pattern used by QuestionnaireTemplatesController and AssignmentsController for consistency.
+    /// </summary>
+    private static QuestionSectionDto MapSectionToDto(Application.Query.Queries.QuestionnaireTemplateQueries.QuestionSection section)
+    {
+        return new QuestionSectionDto
+        {
+            Id = section.Id,
+            TitleGerman = section.TitleGerman,
+            TitleEnglish = section.TitleEnglish,
+            DescriptionGerman = section.DescriptionGerman,
+            DescriptionEnglish = section.DescriptionEnglish,
+            Order = section.Order,
+            CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
+            Type = MapQuestionTypeFromString(section.Type),
+            Configuration = section.Configuration,
+            IsInstanceSpecific = section.IsInstanceSpecific
+        };
+    }
+
+    private static Domain.QuestionnaireTemplateAggregate.CompletionRole MapToCompletionRoleEnum(string completionRole)
+    {
+        return completionRole?.ToLower() switch
+        {
+            "manager" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager,
+            "both" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Both,
+            _ => Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee
+        };
+    }
+
+    private static QueryApi.Dto.QuestionType MapQuestionTypeFromString(string type)
+    {
+        return type?.ToLower() switch
+        {
+            "textquestion" => QueryApi.Dto.QuestionType.TextQuestion,
+            "goal" => QueryApi.Dto.QuestionType.Goal,
+            "assessment" => QueryApi.Dto.QuestionType.Assessment,
+            _ => QueryApi.Dto.QuestionType.Assessment
+        };
+    }
 }

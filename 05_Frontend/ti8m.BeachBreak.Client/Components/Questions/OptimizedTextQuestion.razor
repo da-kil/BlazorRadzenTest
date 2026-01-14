@@ -10,7 +10,6 @@
         <header class="question-header">
             <h3 class="question-title">
                 @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
-                @if (Section.IsRequired) { <span class="text-danger">*</span> }
                 <EditedDuringReviewBadge Response="@Response" />
             </h3>
 
@@ -176,7 +175,7 @@ else
             {
                 TitleGerman = T("sections.response"),
                 TitleEnglish = T("sections.response"),
-                IsRequired = Section.IsRequired,
+                IsRequired = true, // Default fallback text section is required
                 Order = 0
             }
         };

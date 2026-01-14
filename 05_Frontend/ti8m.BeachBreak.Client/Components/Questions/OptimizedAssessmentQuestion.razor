@@ -11,7 +11,6 @@
         <header class="question-header">
             <h3 class="question-title">
                 @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
-                @if (Section.IsRequired) { <span class="text-danger">*</span> }
                 <EditedDuringReviewBadge Response="@Response" />
             </h3>
 

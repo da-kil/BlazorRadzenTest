@@ -12,7 +12,6 @@ public class QuestionSection
 
 
     public int Order { get; set; }
-    public bool IsRequired { get; set; } = true;
 
     // Role assignment for dual completion workflow
     public CompletionRole CompletionRole { get; set; } = CompletionRole.Employee;
@@ -23,6 +22,7 @@ public class QuestionSection
 
     public QuestionType Type { get; set; }
     public IQuestionConfiguration Configuration { get; set; } = new AssessmentConfiguration();
+    public bool IsInstanceSpecific { get; set; } = false;
 
     // Helper methods using strongly-typed configuration
     public int GetItemCount()

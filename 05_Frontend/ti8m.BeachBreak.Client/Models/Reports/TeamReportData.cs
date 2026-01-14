@@ -5,6 +5,10 @@ namespace ti8m.BeachBreak.Client.Models.Reports;
 /// <summary>
 /// Report data structure for team questionnaire analytics.
 /// Contains overall team metrics and individual team member details.
+///
+/// NOTE: If section-level details are added to this report in the future,
+/// ensure custom sections (IsInstanceSpecific = true) are filtered out to
+/// maintain consistency across questionnaire instances.
 /// </summary>
 public class TeamReportData : BaseQuestionnaireReportData
 {

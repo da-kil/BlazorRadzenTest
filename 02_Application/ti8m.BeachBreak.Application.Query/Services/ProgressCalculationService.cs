@@ -72,6 +72,8 @@ public class ProgressCalculationService : IProgressCalculationService
     /// <summary>
     /// Counts total required sections per role from the template.
     /// Sections with CompletionRole.Both count for BOTH roles.
+    /// NOTE: Includes instance-specific (custom) sections. For aggregate analysis across multiple
+    /// questionnaire instances, filter out sections with IsInstanceSpecific=true before counting.
     /// </summary>
     private (int employeeTotal, int managerTotal) CountTotalRequiredQuestions(QuestionnaireTemplate template)
     {
@@ -80,10 +82,6 @@ public class ProgressCalculationService : IProgressCalculationService
 
         foreach (var section in template.Sections)
         {
-            // Only count if section itself is required
-            if (!section.IsRequired)
-                continue;
-
             // Query model uses string for CompletionRole
             var roleStr = section.CompletionRole;
 
@@ -118,10 +116,6 @@ public class ProgressCalculationService : IProgressCalculationService
 
         foreach (var section in template.Sections)
         {
-            // Only count required sections (Section IS the question)
-            if (!section.IsRequired)
-                continue;
-
             // Skip if no responses for this section
             if (!sectionResponses.TryGetValue(section.Id, out var roleResponses))
             {

@@ -7,22 +7,23 @@ namespace ti8m.BeachBreak.Client.Models;
 public enum WorkflowState
 {
     Assigned = 0,
-    EmployeeInProgress = 1,
-    ManagerInProgress = 2,
-    BothInProgress = 3,
+    Initialized = 1,
+    EmployeeInProgress = 2,
+    ManagerInProgress = 3,
+    BothInProgress = 4,
 
     // Submission phase (Phase 1 Read-Only)
-    EmployeeSubmitted = 4,
-    ManagerSubmitted = 5,
-    BothSubmitted = 6,
+    EmployeeSubmitted = 5,
+    ManagerSubmitted = 6,
+    BothSubmitted = 7,
 
     // Review phase
-    InReview = 7,
+    InReview = 8,
 
     // Post-review confirmation
-    ReviewFinished = 8,
-    EmployeeReviewConfirmed = 9,
+    ReviewFinished = 9,
+    EmployeeReviewConfirmed = 10,
 
     // Final state (Phase 2 Read-Only)
-    Finalized = 10
+    Finalized = 11
 }

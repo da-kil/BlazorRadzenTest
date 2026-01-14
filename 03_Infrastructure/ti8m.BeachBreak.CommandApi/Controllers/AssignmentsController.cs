@@ -94,6 +94,7 @@ public class AssignmentsController : BaseController
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
                 assignedBy,
+                userId,
                 bulkAssignmentDto.Notes);
 
             var result = await commandDispatcher.SendAsync(command);
@@ -181,6 +182,7 @@ public class AssignmentsController : BaseController
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
                 assignedBy,
+                managerId,
                 bulkAssignmentDto.Notes);
 
             var result = await commandDispatcher.SendAsync(command);
@@ -342,6 +344,139 @@ public class AssignmentsController : BaseController
         {
             logger.LogError(ex, "Error withdrawing assignment");
             return StatusCode(500, "An error occurred while withdrawing assignment");
+        }
+    }
+
+    /// <summary>
+    /// Initializes a questionnaire assignment.
+    /// Transitions assignment from Assigned to Initialized state.
+    /// Managers can only initialize assignments for their direct reports.
+    /// HR/Admin can initialize any assignment.
+    /// </summary>
+    [HttpPost("{assignmentId}/initialize")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> InitializeAssignment(Guid assignmentId, [FromBody] InitializeAssignmentDto initializeDto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
+            Guid managerId;
+            try
+            {
+                managerId = await authorizationService.GetCurrentManagerIdAsync();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning("Authorization failed: {Message}", ex.Message);
+                return Unauthorized(ex.Message);
+            }
+
+            var hasElevatedRole = await HasElevatedRoleAsync(managerId);
+            if (!hasElevatedRole)
+            {
+                var canAccess = await authorizationService.CanAccessAssignmentAsync(managerId, assignmentId);
+
+                if (!canAccess)
+                {
+                    logger.LogWarning("Manager {ManagerId} attempted to initialize assignment {AssignmentId} for non-direct report",
+                        managerId, assignmentId);
+                    return Forbid();
+                }
+            }
+
+            var command = new InitializeAssignmentCommand(
+                assignmentId,
+                managerId,
+                initializeDto.InitializationNotes);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error initializing assignment");
+            return StatusCode(500, "An error occurred while initializing assignment");
+        }
+    }
+
+    /// <summary>
+    /// Adds custom question sections to an assignment during initialization.
+    /// Custom sections are instance-specific and excluded from aggregate reports.
+    /// Managers can only add sections to assignments for their direct reports.
+    /// HR/Admin can add sections to any assignment.
+    /// </summary>
+    [HttpPost("{assignmentId}/custom-sections")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> AddCustomSections(Guid assignmentId, [FromBody] AddCustomSectionsDto sectionsDto)
+    {
+        try
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (sectionsDto.Sections == null || !sectionsDto.Sections.Any())
+                return BadRequest("At least one custom section is required");
+
+            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
+            Guid managerId;
+            try
+            {
+                managerId = await authorizationService.GetCurrentManagerIdAsync();
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                logger.LogWarning("Authorization failed: {Message}", ex.Message);
+                return Unauthorized(ex.Message);
+            }
+
+            var hasElevatedRole = await HasElevatedRoleAsync(managerId);
+            if (!hasElevatedRole)
+            {
+                var canAccess = await authorizationService.CanAccessAssignmentAsync(managerId, assignmentId);
+
+                if (!canAccess)
+                {
+                    logger.LogWarning("Manager {ManagerId} attempted to add custom sections to assignment {AssignmentId} for non-direct report",
+                        managerId, assignmentId);
+                    return Forbid();
+                }
+            }
+
+            // Map QuestionSectionDto to CommandQuestionSection
+            var commandSections = sectionsDto.Sections.Select(dto => new Application.Command.Commands.QuestionnaireTemplateCommands.CommandQuestionSection
+            {
+                Id = dto.Id,
+                TitleGerman = dto.TitleGerman,
+                TitleEnglish = dto.TitleEnglish,
+                DescriptionGerman = dto.DescriptionGerman,
+                DescriptionEnglish = dto.DescriptionEnglish,
+                Order = dto.Order,
+                CompletionRole = dto.CompletionRole,
+                Type = dto.Type,
+                Configuration = dto.Configuration
+            }).ToList();
+
+            var command = new AddCustomSectionsCommand(
+                assignmentId,
+                commandSections,
+                managerId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error adding custom sections to assignment");
+            return StatusCode(500, "An error occurred while adding custom sections");
         }
     }
 

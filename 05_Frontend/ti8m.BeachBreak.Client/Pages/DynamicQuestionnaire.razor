@@ -317,6 +317,7 @@ else
 
     private string currentUserName = string.Empty;
     private string managerContextRole = string.Empty;
+    private List<QuestionSection> customSections = new();
     private List<QuestionSection> visibleSections = new();
     private QuestionSection? currentSection => visibleSections.ElementAtOrDefault(currentSectionIndex);
     private SectionResponse? currentSectionData => currentSection != null && response.SectionResponses.TryGetValue(currentSection.Id, out var sectionData) ? sectionData : null;
@@ -372,6 +373,23 @@ else
         await base.OnInitializedAsync();
         await DetermineUserRole();
         await LoadAssignmentAndTemplate();
+
+        // Redirect managers to initialization page if assignment is in Assigned state
+        if (assignment != null && assignment.WorkflowState == WorkflowState.Assigned)
+        {
+            if (isManager)
+            {
+                NavigationManager.NavigateTo($"/assignments/{assignment.Id}/initialize", replace: true);
+                return;
+            }
+            else
+            {
+                // Employees cannot access assignments in Assigned state
+                NavigationManager.NavigateTo("/my-questionnaires", replace: true);
+                return;
+            }
+        }
+
         await InitializeResponseAsync();
         await LoadExistingResponse();
         await FilterVisibleSections();
@@ -458,12 +476,21 @@ else
                 }
 
                 template = await TemplateService.GetTemplateByIdAsync(assignment.TemplateId);
+
+                // Load custom sections for this assignment (if any)
+                await LoadCustomSections();
             }
             else if (TemplateId.HasValue)
             {
                 // Legacy route: /my-questionnaires/{templateId} (employee only)
                 await LoadTemplate();
                 await LoadAssignmentForCurrentEmployee();
+
+                // Load custom sections after assignment is loaded
+                if (assignmentId.HasValue)
+                {
+                    await LoadCustomSections();
+                }
             }
             else
             {
@@ -478,6 +505,53 @@ else
         }
     }
 
+    private async Task LoadCustomSections()
+    {
+        try
+        {
+            if (assignmentId.HasValue)
+            {
+                // Use employee-specific endpoint if user is employee-only, otherwise use manager endpoint
+                if (isEmployeeOnly)
+                {
+                    customSections = await AssignmentService.GetMyCustomSectionsAsync(assignmentId.Value);
+                }
+                else
+                {
+                    customSections = await AssignmentService.GetCustomSectionsAsync(assignmentId.Value);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            // Don't fail the whole page if custom sections can't be loaded
+            // They might not exist yet (Assigned state before initialization)
+            Console.WriteLine($"Could not load custom sections: {ex.Message}");
+            customSections = new List<QuestionSection>();
+        }
+    }
+
+    /// <summary>
+    /// Gets all sections for this questionnaire: template sections + custom sections
+    /// Custom sections are instance-specific and added during manager initialization
+    /// </summary>
+    private List<QuestionSection> GetAllSections()
+    {
+        if (template == null)
+            return new List<QuestionSection>();
+
+        var allSections = new List<QuestionSection>();
+
+        // Add template sections
+        allSections.AddRange(template.Sections);
+
+        // Add custom sections (instance-specific)
+        allSections.AddRange(customSections);
+
+        // Sort by Order to maintain proper sequence
+        return allSections.OrderBy(s => s.Order).ToList();
+    }
+
     private async Task FilterVisibleSections()
     {
         if (template == null)
@@ -485,6 +559,9 @@ else
             visibleSections = new List<QuestionSection>();
             return;
         }
+
+        // Get all sections (template + custom)
+        var allSections = GetAllSections();
 
         // After review meeting finishes, EVERYONE sees ALL sections (employee, manager, and both)
         // This ensures transparency - both parties can see what was discussed and agreed upon
@@ -499,7 +576,7 @@ else
         if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
             // Show ALL sections in read-only view
-            visibleSections = template.Sections.OrderBy(s => s.Order).ToList();
+            visibleSections = allSections.OrderBy(s => s.Order).ToList();
             return;
         }
 
@@ -509,7 +586,7 @@ else
         // - Managers: See Manager + Both sections (backend filters responses in Both sections to only Manager responses)
         // - InReview state: Manager sees ALL sections, Employee sees Employee + Both sections
         // - ReviewFinished onwards: Everyone sees ALL sections (full transparency)
-        visibleSections = template.Sections
+        visibleSections = allSections
             .Where(s =>
             {
                 if (assignment == null)
@@ -555,9 +632,9 @@ else
             .ToList();
 
         // If no visible sections, show helpful error
-        if (!visibleSections.Any() && template.Sections.Any())
+        if (!visibleSections.Any() && allSections.Any())
         {
-            var sectionDetails = string.Join(", ", template.Sections.Select(s => $"'{s.GetLocalizedTitleWithFallback(CurrentLanguage)}' (assigned to {s.CompletionRole})"));
+            var sectionDetails = string.Join(", ", allSections.Select(s => $"'{s.GetLocalizedTitleWithFallback(CurrentLanguage)}' (assigned to {s.CompletionRole})"));
             var roleDescription = isManager ? "managers" : "employees";
             NotificationService.Notify(NotificationSeverity.Warning, "No Sections Available",
                 $"This questionnaire has no sections assigned to {roleDescription}. " +
@@ -715,8 +792,9 @@ else
             EmployeeId = employeeGuid
         };
 
-        // Initialize sectionData responses with role-based structure
-        foreach (var sectionData in template.Sections)
+        // Initialize sectionData responses with role-based structure (template + custom sections)
+        var allSections = GetAllSections();
+        foreach (var sectionData in allSections)
         {
             var sectionResponse = new SectionResponse
             {
@@ -1052,7 +1130,6 @@ else
     private bool CanProceedFromCurrentSection()
     {
         if (currentSection == null) return true;
-        if (!currentSection.IsRequired) return true;
 
         if (!response.SectionResponses.TryGetValue(currentSection.Id, out var sectionResponse))
             return false;
@@ -1108,30 +1185,24 @@ else
         var textSections = config.TextSections;
         if (textSections.Count == 0) return true;
 
-        if (sectionResponse.ResponseData is not TextResponseDataDto textData) return false;
-
-        // Match the format used by OptimizedTextQuestion
-        if (textSections.Count == 1)
+        if (sectionResponse.ResponseData is not TextResponseDataDto textData)
         {
-            // Single sectionData - check first TextSection
-            var hasValue = textData.TextSections.Count > 0 &&
-                          !string.IsNullOrWhiteSpace(textData.TextSections[0]);
-            return hasValue;
+            // Invalid response data - check if section has any required items
+            var requiredSections = textSections.Where(ts => ts.IsRequired).ToList();
+            if (!requiredSections.Any())
+            {
+                return true; // No required text sections + invalid data = section complete
+            }
+            return false; // Has required text sections but invalid data = section incomplete
         }
 
-        // Multiple sections - check corresponding TextSections by index
-        // Get only required text sections
+        // Get only required text sections (works for single or multiple sections)
         var requiredTextSections = textSections.Where(ts => ts.IsRequired).ToList();
 
-        // If no required text sections exist, check if at least one sectionData has content
+        // If no required text sections exist, section is automatically complete
         if (!requiredTextSections.Any())
         {
-            return textSections.Select((ts, index) => index).Any(index =>
-            {
-                var hasValue = index < textData.TextSections.Count &&
-                              !string.IsNullOrWhiteSpace(textData.TextSections[index]);
-                return hasValue;
-            });
+            return true; // Nothing required = automatically complete (matches domain logic)
         }
 
         // Check that ALL required text sections have non-empty values
@@ -1152,15 +1223,25 @@ else
         var evaluations = config.Evaluations;
         if (evaluations.Count == 0) return true;
 
-        if (sectionResponse.ResponseData is not AssessmentResponseDataDto assessmentData) return false;
+        if (sectionResponse.ResponseData is not AssessmentResponseDataDto assessmentData)
+        {
+            // Invalid response data - check if section has any required items
+            // If all evaluations are optional, invalid response data should not block submission
+            var requiredEvals = evaluations.Where(c => c.IsRequired).ToList();
+            if (!requiredEvals.Any())
+            {
+                return true; // No required evaluations + invalid data = section complete
+            }
+            return false; // Has required evaluations but invalid data = section incomplete
+        }
 
         // Get only required evaluations
         var requiredEvaluations = evaluations.Where(c => c.IsRequired).ToList();
 
-        // If no required evaluations exist, check if at least one evaluation is rated
+        // If no required evaluations exist, section is automatically complete
         if (!requiredEvaluations.Any())
         {
-            return evaluations.Any(c => HasEvaluationRating(assessmentData, c.Key));
+            return true; // Nothing required = automatically complete (matches domain logic)
         }
 
         // Check that ALL required evaluations have been rated
@@ -1187,9 +1268,6 @@ else
         var sectionData = template!.Sections.First(s => s.Id == sectionId);
 
         // Direct sectionData validation (no question iteration needed)
-        if (!sectionData.IsRequired)
-            return true;
-
         return IsSectionAnswered(sectionData, sectionQuestionResponse);
     }
 
@@ -1197,11 +1275,12 @@ else
     {
         if (template == null) return;
 
-        // Each sectionData IS one question - count required sections only
-        var totalSections = template.Sections.Count(s => s.IsRequired);
+        // Each sectionData IS one question - count all sections (template + custom)
+        var allSections = GetAllSections();
+        var totalSections = allSections.Count;
         var answeredSections = 0;
 
-        foreach (var sectionData in template.Sections.Where(s => s.IsRequired))
+        foreach (var sectionData in allSections)
         {
             if (response.SectionResponses.TryGetValue(sectionData.Id, out var sectionResponse) &&
                 sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
@@ -1221,26 +1300,77 @@ else
         // If no visible sections, allow submission
         if (!visibleSections.Any()) return true;
 
+        // Get all sections (template + custom sections)
+        var allSections = GetAllSections();
+
         // Check only visible sections for current user role
-        // A sectionData is considered complete if it's not required OR it's answered
         return visibleSections.All(s =>
         {
-            var sectionData = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+            var sectionData = allSections.FirstOrDefault(sec => sec.Id == s.Id);
             if (sectionData == null) return true;
 
-            // If sectionData is not required, it's complete
-            if (!sectionData.IsRequired) return true;
-
-            // Check if required sectionData is answered
+            // Check if sectionData has response data
             if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
-                return false;
+            {
+                // No response data exists - check if section has any required items
+                return IsEmptySectionComplete(sectionData);
+            }
 
             if (!sectionResponse.RoleResponses.TryGetValue(CurrentResponseRole, out var sectionQuestionResponse))
-                return false;
+            {
+                // No role-specific response exists - check if section has any required items
+                return IsEmptySectionComplete(sectionData);
+            }
 
-            // Direct sectionData validation
+            // ALWAYS validate items within the section (both required and optional sections)
+            // This is critical: even optional sections must validate their required items if the user started filling them out
             return IsSectionAnswered(sectionData, sectionQuestionResponse);
         });
+    }
+
+    /// <summary>
+    /// Determines if a section with no response data should be considered complete.
+    /// A section is automatically complete if it has no required items.
+    /// </summary>
+    private bool IsEmptySectionComplete(QuestionSection sectionData)
+    {
+        return sectionData.Type switch
+        {
+            QuestionType.Assessment => IsAssessmentEmptyComplete(sectionData),
+            QuestionType.TextQuestion => IsTextQuestionEmptyComplete(sectionData),
+            QuestionType.Goal => true, // Goals never block submission
+            _ => true
+        };
+    }
+
+    /// <summary>
+    /// Checks if an assessment section with no response data is complete (all evaluations are optional).
+    /// </summary>
+    private bool IsAssessmentEmptyComplete(QuestionSection sectionData)
+    {
+        if (sectionData.Configuration is not AssessmentConfiguration config)
+            return true; // Invalid config = don't block submission
+
+        var evaluations = config.Evaluations;
+        if (evaluations.Count == 0) return true; // No evaluations = complete
+
+        // If no evaluations are marked as required, the empty section is complete
+        return !evaluations.Any(e => e.IsRequired);
+    }
+
+    /// <summary>
+    /// Checks if a text question section with no response data is complete (all text sections are optional).
+    /// </summary>
+    private bool IsTextQuestionEmptyComplete(QuestionSection sectionData)
+    {
+        if (sectionData.Configuration is not TextQuestionConfiguration config)
+            return true; // Invalid config = don't block submission
+
+        var textSections = config.TextSections;
+        if (textSections.Count == 0) return true; // No text sections = complete
+
+        // If no text sections are marked as required, the empty section is complete
+        return !textSections.Any(ts => ts.IsRequired);
     }
 
     private async Task SaveProgress()
@@ -1312,12 +1442,11 @@ else
     {
         if (!CanSubmit())
         {
+            var allSections = GetAllSections();
             var incompleteSections = visibleSections.Where(s =>
             {
-                var sectionData = template!.Sections.FirstOrDefault(sec => sec.Id == s.Id);
+                var sectionData = allSections.FirstOrDefault(sec => sec.Id == s.Id);
                 if (sectionData == null) return false;
-
-                if (!sectionData.IsRequired) return false;
 
                 if (!response.SectionResponses.TryGetValue(s.Id, out var sectionResponse))
                     return true;

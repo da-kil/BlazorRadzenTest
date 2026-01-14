@@ -7,6 +7,7 @@ public class CreateBulkAssignmentsCommand : ICommand<Result>
     public List<EmployeeAssignmentData> EmployeeAssignments { get; init; } = new();
     public DateTime? DueDate { get; init; }
     public string? AssignedBy { get; init; }
+    public Guid? AssignedByEmployeeId { get; init; }
     public string? Notes { get; init; }
 
     public CreateBulkAssignmentsCommand(
@@ -15,6 +16,7 @@ public class CreateBulkAssignmentsCommand : ICommand<Result>
         List<EmployeeAssignmentData> employeeAssignments,
         DateTime? dueDate = null,
         string? assignedBy = null,
+        Guid? assignedByEmployeeId = null,
         string? notes = null)
     {
         TemplateId = templateId;
@@ -22,6 +24,7 @@ public class CreateBulkAssignmentsCommand : ICommand<Result>
         EmployeeAssignments = employeeAssignments;
         DueDate = dueDate;
         AssignedBy = assignedBy;
+        AssignedByEmployeeId = assignedByEmployeeId;
         Notes = notes;
     }
 }

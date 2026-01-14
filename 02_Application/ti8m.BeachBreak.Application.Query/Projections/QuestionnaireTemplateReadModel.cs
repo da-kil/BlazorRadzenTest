@@ -12,6 +12,8 @@ public class QuestionnaireTemplateReadModel
     public string DescriptionEnglish { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
     public bool RequiresManagerReview { get; set; } = true;
+    public bool IsCustomizable { get; set; } = false;
+    public bool AutoInitialize { get; set; } = false;
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
     public DateTime? PublishedDate { get; set; }
     public DateTime? LastPublishedDate { get; set; }
@@ -33,6 +35,8 @@ public class QuestionnaireTemplateReadModel
         DescriptionEnglish = @event.Description.English;
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
+        IsCustomizable = @event.IsCustomizable;
+        AutoInitialize = @event.AutoInitialize;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
@@ -59,6 +63,16 @@ public class QuestionnaireTemplateReadModel
     public void Apply(QuestionnaireTemplateReviewRequirementChanged @event)
     {
         RequiresManagerReview = @event.RequiresManagerReview;
+    }
+
+    public void Apply(QuestionnaireTemplateCustomizabilityChanged @event)
+    {
+        IsCustomizable = @event.IsCustomizable;
+    }
+
+    public void Apply(QuestionnaireTemplateAutoInitializeChanged @event)
+    {
+        AutoInitialize = @event.AutoInitialize;
     }
 
     public void Apply(QuestionnaireTemplateSectionsChanged @event)
@@ -106,6 +120,8 @@ public class QuestionnaireTemplateReadModel
         DescriptionEnglish = @event.Description.English;
         CategoryId = @event.CategoryId;
         RequiresManagerReview = @event.RequiresManagerReview;
+        IsCustomizable = @event.IsCustomizable;
+        AutoInitialize = @event.AutoInitialize;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
         Status = TemplateStatus.Draft;
         CreatedDate = @event.CreatedDate;
@@ -125,7 +141,6 @@ public class QuestionnaireTemplateReadModel
             DescriptionGerman = s.Description.German,
             DescriptionEnglish = s.Description.English,
             Order = s.Order,
-            IsRequired = s.IsRequired,
             CompletionRole = s.CompletionRole.ToString(),
             Type = s.Type.ToString(),
             Configuration = s.Configuration

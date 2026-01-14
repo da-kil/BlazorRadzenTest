@@ -164,6 +164,11 @@ public class WorkflowStateMachine
         if (hasManagerProgress)
             return WorkflowState.ManagerInProgress;
 
+        // Preserve Assigned or Initialized state if no progress yet
+        // Don't auto-transition from Initialized to Assigned
+        if (currentState == WorkflowState.Assigned || currentState == WorkflowState.Initialized)
+            return currentState;
+
         return WorkflowState.Assigned;
     }
 
@@ -197,9 +202,9 @@ public class WorkflowStateMachine
         {
             return (currentState, startedBy) switch
             {
-                // From Assigned state
-                (WorkflowState.Assigned, CompletionRole.Employee) => WorkflowState.EmployeeInProgress,
-                (WorkflowState.Assigned, CompletionRole.Manager) => WorkflowState.ManagerInProgress,
+                // From Initialized state only
+                (WorkflowState.Initialized, CompletionRole.Employee) => WorkflowState.EmployeeInProgress,
+                (WorkflowState.Initialized, CompletionRole.Manager) => WorkflowState.ManagerInProgress,
 
                 // From single-role in-progress to both
                 (WorkflowState.EmployeeInProgress, CompletionRole.Manager) => WorkflowState.BothInProgress,

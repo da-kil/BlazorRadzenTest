@@ -190,7 +190,7 @@
             return;
         }
 
-        // For Manager/HR views, load data from API as before
+        // For Manager/HR views, load data from API
         isLoading = true;
         NotifyStateChanged();
 
@@ -1102,7 +1102,7 @@
         var baseAssignments = Configuration.PageType == QuestionnairePageType.Employee
             ? Configuration.UpcomingAssignments
             : allAssignments.Where(a =>
-                a.WorkflowState == WorkflowState.Assigned &&
+                (a.WorkflowState == WorkflowState.Assigned || a.WorkflowState == WorkflowState.Initialized) &&
                 a.AssignedDate > DateTime.Now.AddDays(-1)).ToList();
         return ApplyFilteringToAssignments(baseAssignments);
     }
@@ -1654,8 +1654,9 @@
         // Apply filters to get the filtered assignments
         var filteredAssignments = ApplyFilteringToAssignments(allAssignments);
 
-        // Get employees who have filtered assignments (respect filters)
-        var employeesWithFilteredAssignments = filteredTeamMembers;
+        // Get all employees for department grouping (ignore filters for department view)
+        // This ensures "Show All" functionality works properly in department view
+        var employeesWithFilteredAssignments = employees;
 
         // Group employees by organization
         var departmentGroups = organizations
@@ -1707,7 +1708,9 @@
         public int EmployeeCount => Members.Count;
         public int TotalAssignments => Assignments.Count;
 
-        public int NotStartedCount => Assignments.Count(a => a.WorkflowState == WorkflowState.Assigned);
+        public int NotStartedCount => Assignments.Count(a =>
+            a.WorkflowState == WorkflowState.Assigned ||
+            a.WorkflowState == WorkflowState.Initialized);
 
         public int InProgressCount => Assignments.Count(a =>
             a.WorkflowState is WorkflowState.EmployeeInProgress
