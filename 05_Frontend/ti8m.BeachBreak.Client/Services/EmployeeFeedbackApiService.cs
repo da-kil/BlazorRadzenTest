@@ -251,4 +251,95 @@ public class EmployeeFeedbackApiService : BaseApiService, IEmployeeFeedbackApiSe
             return Result<FeedbackTemplatesResponse>.Fail($"Error getting source type options: {ex.Message}");
         }
     }
+
+    // Questionnaire Assignment Feedback Linking
+
+    /// <summary>
+    /// Links employee feedback to a questionnaire assignment.
+    /// </summary>
+    public async Task<bool> LinkFeedbackToAssignmentAsync(Guid assignmentId, LinkEmployeeFeedbackDto dto)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync(
+                $"c/api/v1/assignments/{assignmentId}/feedback/link", dto, JsonOptions);
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error linking feedback to assignment {assignmentId}: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Unlinks employee feedback from a questionnaire assignment.
+    /// </summary>
+    public async Task<bool> UnlinkFeedbackFromAssignmentAsync(Guid assignmentId, UnlinkEmployeeFeedbackDto dto)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync(
+                $"c/api/v1/assignments/{assignmentId}/feedback/unlink", dto, JsonOptions);
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error unlinking feedback from assignment {assignmentId}: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Gets all available employee feedback records that can be linked to an assignment.
+    /// </summary>
+    public async Task<List<LinkedEmployeeFeedbackDto>> GetAvailableFeedbackForAssignmentAsync(Guid assignmentId)
+    {
+        try
+        {
+            var response = await HttpQueryClient.GetAsync(
+                $"q/api/v1/assignments/{assignmentId}/feedback/available");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Failed to get available feedback for assignment {assignmentId}");
+                return new List<LinkedEmployeeFeedbackDto>();
+            }
+
+            return await response.Content.ReadFromJsonAsync<List<LinkedEmployeeFeedbackDto>>(JsonOptions)
+                ?? new List<LinkedEmployeeFeedbackDto>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching available feedback for assignment {assignmentId}: {ex.Message}");
+            return new List<LinkedEmployeeFeedbackDto>();
+        }
+    }
+
+    /// <summary>
+    /// Gets all linked feedback data for a specific question within an assignment.
+    /// </summary>
+    public async Task<FeedbackQuestionDataDto?> GetFeedbackQuestionDataAsync(Guid assignmentId, Guid questionId)
+    {
+        try
+        {
+            var response = await HttpQueryClient.GetAsync(
+                $"q/api/v1/assignments/{assignmentId}/feedback/{questionId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Failed to get feedback question data for question {questionId}");
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<FeedbackQuestionDataDto>(JsonOptions);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching feedback question data for question {questionId}: {ex.Message}");
+            return null;
+        }
+    }
 }

@@ -69,6 +69,13 @@ public class QuestionnaireAssignment : AggregateRoot
     private readonly List<QuestionSection> customSections = new();
     public IReadOnlyList<QuestionSection> CustomSections => customSections.AsReadOnly();
 
+    // Employee feedback linking (multiple feedback records per question)
+    private readonly Dictionary<Guid, HashSet<Guid>> _linkedFeedback = new();
+
+    // Public readonly accessor for feedback links
+    public IReadOnlyDictionary<Guid, IReadOnlySet<Guid>> LinkedFeedback =>
+        _linkedFeedback.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlySet<Guid>)kvp.Value);
+
     private QuestionnaireAssignment() { }
 
     public QuestionnaireAssignment(
@@ -682,6 +689,64 @@ public class QuestionnaireAssignment : AggregateRoot
             linkedByEmployeeId));
     }
 
+    // Employee Feedback management methods
+    public void LinkEmployeeFeedback(
+        Guid questionId,
+        Guid feedbackId,
+        ApplicationRole linkedByRole,
+        Guid linkedByEmployeeId)
+    {
+        // Validation 1: Not locked or withdrawn
+        if (IsLocked || IsWithdrawn)
+            throw new InvalidOperationException("Cannot link feedback to locked or withdrawn assignment");
+
+        // Validation 2: Role-based workflow validation
+        if (linkedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
+            throw new UnauthorizedAccessException("Employee cannot link feedback in current workflow state");
+        if (linkedByRole >= ApplicationRole.TeamLead && !CanManagerEdit())
+            throw new UnauthorizedAccessException("Manager cannot link feedback in current workflow state");
+
+        // Validation 3: Feedback not already linked to this question
+        if (_linkedFeedback.ContainsKey(questionId) && _linkedFeedback[questionId].Contains(feedbackId))
+            throw new InvalidOperationException($"Feedback {feedbackId} is already linked to question {questionId}");
+
+        RaiseEvent(new EmployeeFeedbackLinkedToAssignment(
+            feedbackId,
+            questionId,
+            linkedByRole,
+            DateTime.UtcNow,
+            linkedByEmployeeId));
+    }
+
+    public void UnlinkEmployeeFeedback(
+        Guid questionId,
+        Guid feedbackId,
+        ApplicationRole unlinkedByRole,
+        Guid unlinkedByEmployeeId)
+    {
+        // Validation: Feedback link exists
+        if (!_linkedFeedback.ContainsKey(questionId) || !_linkedFeedback[questionId].Contains(feedbackId))
+            throw new InvalidOperationException($"Feedback {feedbackId} is not linked to question {questionId}");
+
+        // Same workflow validation as linking
+        if (IsLocked || IsWithdrawn)
+            throw new InvalidOperationException("Cannot unlink feedback from locked or withdrawn assignment");
+
+        RaiseEvent(new EmployeeFeedbackUnlinkedFromAssignment(
+            feedbackId,
+            questionId,
+            unlinkedByRole,
+            DateTime.UtcNow,
+            unlinkedByEmployeeId));
+    }
+
+    // Helper method for getting linked feedback
+    public IReadOnlySet<Guid> GetLinkedFeedback(Guid questionId)
+    {
+        return _linkedFeedback.TryGetValue(questionId, out var feedbackIds)
+            ? feedbackIds
+            : new HashSet<Guid>();
+    }
 
     private bool IsInProgressState()
     {
@@ -1090,6 +1155,25 @@ public class QuestionnaireAssignment : AggregateRoot
     public void Apply(PredecessorQuestionnaireLinked @event)
     {
         _predecessorLinks[@event.QuestionId] = @event.PredecessorAssignmentId;
+    }
+
+    // Apply methods for employee feedback events
+    public void Apply(EmployeeFeedbackLinkedToAssignment @event)
+    {
+        if (!_linkedFeedback.ContainsKey(@event.QuestionId))
+            _linkedFeedback[@event.QuestionId] = new HashSet<Guid>();
+
+        _linkedFeedback[@event.QuestionId].Add(@event.FeedbackId);
+    }
+
+    public void Apply(EmployeeFeedbackUnlinkedFromAssignment @event)
+    {
+        if (_linkedFeedback.ContainsKey(@event.QuestionId))
+        {
+            _linkedFeedback[@event.QuestionId].Remove(@event.FeedbackId);
+            if (_linkedFeedback[@event.QuestionId].Count == 0)
+                _linkedFeedback.Remove(@event.QuestionId);
+        }
     }
 
 }

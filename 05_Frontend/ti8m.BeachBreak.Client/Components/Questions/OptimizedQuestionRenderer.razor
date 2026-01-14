@@ -18,6 +18,9 @@
         case QuestionType.Goal:
             @RenderGoalQuestionOptimized()
             break;
+        case QuestionType.EmployeeFeedback:
+            @RenderEmployeeFeedbackOptimized()
+            break;
         default:
             @RenderUnsupportedQuestion()
             break;
@@ -137,6 +140,13 @@
                               AssignmentWorkflowState="@AssignmentWorkflowState"
                               GoalRefreshToken="@GoalRefreshToken"
                               SectionData="@SectionData" />
+    };
+
+    private RenderFragment RenderEmployeeFeedbackOptimized() => __builder =>
+    {
+        <OptimizedEmployeeFeedbackQuestion Section="@Section"
+                                          HideHeader="@HideHeader"
+                                          AssignmentId="@AssignmentId" />
     };
 
     private RenderFragment RenderUnsupportedQuestion() => __builder =>

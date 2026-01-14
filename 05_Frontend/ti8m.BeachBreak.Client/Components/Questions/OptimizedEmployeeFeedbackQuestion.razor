@@ -1,0 +1,218 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Models.Dto
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Services
+@using ti8m.BeachBreak.Client.Extensions
+@inject EmployeeFeedbackApiService FeedbackApiService
+@inherits OptimizedTranslatableComponentBase
+
+@if (!HideHeader)
+{
+    <div class="feedback-question">
+        <header class="question-header">
+            <h3 class="question-title">
+                @Section.GetLocalizedTitleWithFallback(CurrentLanguage)
+            </h3>
+
+            @{
+                var questionDescription = Section.GetLocalizedDescriptionWithFallback(CurrentLanguage);
+            }
+            @if (!string.IsNullOrWhiteSpace(questionDescription))
+            {
+                <p class="question-description">@questionDescription</p>
+            }
+        </header>
+
+        @RenderFeedbackContent()
+    </div>
+}
+else
+{
+    @RenderFeedbackContent()
+}
+
+@code {
+    private RenderFragment RenderFeedbackContent() => __builder =>
+    {
+        <div class="feedback-question-content">
+            @if (isLoading)
+            {
+                <div class="text-center p-4">
+                    <RadzenProgressBarCircular ProgressBarStyle="ProgressBarStyle.Primary" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Small" />
+                </div>
+            }
+            else if (linkedFeedback == null || linkedFeedback.Count == 0)
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
+                    <RadzenText TextStyle="TextStyle.Body2">
+                        @T("messages.no-feedback-linked")
+                    </RadzenText>
+                </RadzenAlert>
+            }
+            else
+            {
+                <RadzenStack Gap="1.5rem">
+                    @foreach (var feedback in linkedFeedback)
+                    {
+                        <RadzenCard Class="feedback-display-card">
+                            <RadzenStack Gap="0.75rem">
+                                @* Header with source type badge and date *@
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <RadzenBadge BadgeStyle="@GetSourceTypeBadgeStyle(feedback.SourceType)"
+                                               Text="@GetSourceTypeDisplayName(feedback.SourceType)" />
+                                    <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                        @feedback.FeedbackDate.ToShortDateString()
+                                    </RadzenText>
+                                </div>
+
+                                @* Provider and Project Info *@
+                                <div>
+                                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">
+                                        @feedback.ProviderName
+                                    </RadzenText>
+                                    @if (!string.IsNullOrWhiteSpace(feedback.ProjectName))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                            @feedback.ProjectName
+                                            @if (!string.IsNullOrWhiteSpace(feedback.ProjectRole))
+                                            {
+                                                <text> - @feedback.ProjectRole</text>
+                                            }
+                                        </RadzenText>
+                                    }
+                                </div>
+
+                                @* Average Rating *@
+                                @if (feedback.AverageRating.HasValue)
+                                {
+                                    <div class="d-flex align-items-center gap-2">
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                            @T("labels.average-rating"):
+                                        </RadzenText>
+                                        <RadzenRating ReadOnly="true" Value="@((int)Math.Round(feedback.AverageRating.Value))" Stars="5" />
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                                            (@feedback.RatedItemsCount @T("labels.items-rated"))
+                                        </RadzenText>
+                                    </div>
+                                }
+
+                                @* Ratings Detail *@
+                                @if (feedback.FeedbackData?.Ratings?.Any() == true)
+                                {
+                                    <RadzenFieldset>
+                                        <HeaderTemplate>
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">
+                                                @T("sections.ratings")
+                                            </RadzenText>
+                                        </HeaderTemplate>
+                                        <ChildContent>
+                                            @foreach (var rating in feedback.FeedbackData.Ratings.Where(r => r.Value.IsRated))
+                                            {
+                                                <div class="mb-2">
+                                                    <RadzenText TextStyle="TextStyle.Body2" Class="mb-1">
+                                                        @rating.Key
+                                                    </RadzenText>
+                                                    <div class="d-flex align-items-center gap-2">
+                                                        <RadzenRating ReadOnly="true" Value="@rating.Value.Rating" Stars="10" />
+                                                        @if (!string.IsNullOrWhiteSpace(rating.Value.Comment))
+                                                        {
+                                                            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted fst-italic">
+                                                                "@rating.Value.Comment"
+                                                            </RadzenText>
+                                                        }
+                                                    </div>
+                                                </div>
+                                            }
+                                        </ChildContent>
+                                    </RadzenFieldset>
+                                }
+
+                                @* Comments Detail *@
+                                @if (feedback.FeedbackData?.Comments?.Any(c => !string.IsNullOrWhiteSpace(c.Value)) == true)
+                                {
+                                    <RadzenFieldset>
+                                        <HeaderTemplate>
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold">
+                                                @T("sections.comments")
+                                            </RadzenText>
+                                        </HeaderTemplate>
+                                        <ChildContent>
+                                            @foreach (var comment in feedback.FeedbackData.Comments.Where(c => !string.IsNullOrWhiteSpace(c.Value)))
+                                            {
+                                                <div class="mb-2">
+                                                    <RadzenText TextStyle="TextStyle.Body2" Class="fw-semibold mb-1">
+                                                        @comment.Key
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body2" Class="ms-3">
+                                                        @comment.Value
+                                                    </RadzenText>
+                                                </div>
+                                            }
+                                        </ChildContent>
+                                    </RadzenFieldset>
+                                }
+                            </RadzenStack>
+                        </RadzenCard>
+                    }
+                </RadzenStack>
+            }
+        </div>
+    };
+
+    [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
+    [Parameter] public bool HideHeader { get; set; } = false;
+    [Parameter] public Guid AssignmentId { get; set; }
+
+    private bool isLoading = true;
+    private List<LinkedEmployeeFeedbackDto> linkedFeedback = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadLinkedFeedback();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Reload if Section or AssignmentId changes
+        await LoadLinkedFeedback();
+    }
+
+    private async Task LoadLinkedFeedback()
+    {
+        isLoading = true;
+
+        try
+        {
+            var feedbackData = await FeedbackApiService.GetFeedbackQuestionDataAsync(AssignmentId, Section.Id);
+            if (feedbackData != null)
+            {
+                linkedFeedback = feedbackData.LinkedFeedback;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading linked feedback: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private BadgeStyle GetSourceTypeBadgeStyle(FeedbackSourceType sourceType) => sourceType switch
+    {
+        FeedbackSourceType.Customer => BadgeStyle.Success,
+        FeedbackSourceType.Peer => BadgeStyle.Info,
+        FeedbackSourceType.ProjectColleague => BadgeStyle.Warning,
+        _ => BadgeStyle.Light
+    };
+
+    private string GetSourceTypeDisplayName(FeedbackSourceType sourceType) => sourceType switch
+    {
+        FeedbackSourceType.Customer => T("feedback-source.customer"),
+        FeedbackSourceType.Peer => T("feedback-source.peer"),
+        FeedbackSourceType.ProjectColleague => T("feedback-source.project-colleague"),
+        _ => T("feedback-source.unknown")
+    };
+}

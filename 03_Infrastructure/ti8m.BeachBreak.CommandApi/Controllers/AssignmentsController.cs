@@ -1048,4 +1048,106 @@ public class AssignmentsController : BaseController
 
     #endregion
 
+    #region Employee Feedback Operations
+
+    /// <summary>
+    /// Links employee feedback to a questionnaire assignment.
+    /// Managers can link feedback during initialization phase.
+    /// </summary>
+    [HttpPost("{assignmentId}/feedback/link")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> LinkEmployeeFeedback(
+        Guid assignmentId,
+        [FromBody] LinkEmployeeFeedbackDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("LinkEmployeeFeedback failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Get user role from database
+            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
+            if (employeeRole == null)
+            {
+                logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+                return Unauthorized("User role not found");
+            }
+
+            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+            var userRole = ApplicationRoleMapper.MapFromQuery(queryRole);
+
+            var command = new LinkEmployeeFeedbackCommand(
+                assignmentId,
+                dto.QuestionId,
+                dto.FeedbackId,
+                userRole,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error linking employee feedback for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while linking employee feedback");
+        }
+    }
+
+    /// <summary>
+    /// Unlinks employee feedback from a questionnaire assignment.
+    /// Managers can unlink feedback during initialization phase.
+    /// </summary>
+    [HttpPost("{assignmentId}/feedback/unlink")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UnlinkEmployeeFeedback(
+        Guid assignmentId,
+        [FromBody] UnlinkEmployeeFeedbackDto dto)
+    {
+        try
+        {
+            if (!Guid.TryParse(userContext.Id, out var userId))
+            {
+                logger.LogWarning("UnlinkEmployeeFeedback failed: Unable to parse user ID from context");
+                return Unauthorized("User ID not found in authentication context");
+            }
+
+            // Get user role from database
+            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
+            if (employeeRole == null)
+            {
+                logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+                return Unauthorized("User role not found");
+            }
+
+            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+            var userRole = ApplicationRoleMapper.MapFromQuery(queryRole);
+
+            var command = new UnlinkEmployeeFeedbackCommand(
+                assignmentId,
+                dto.QuestionId,
+                dto.FeedbackId,
+                userRole,
+                userId);
+
+            var result = await commandDispatcher.SendAsync(command);
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error unlinking employee feedback from assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while unlinking employee feedback");
+        }
+    }
+
+    #endregion
+
 }
