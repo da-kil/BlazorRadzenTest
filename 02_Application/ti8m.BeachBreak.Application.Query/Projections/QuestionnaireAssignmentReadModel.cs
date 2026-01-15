@@ -71,6 +71,9 @@ public class QuestionnaireAssignmentReadModel
     // Custom sections added during initialization
     public List<Queries.QuestionnaireTemplateQueries.QuestionSection> CustomSections { get; set; } = new();
 
+    // Employee feedback linking data (projection) - multiple feedback records per question
+    public Dictionary<Guid, List<Guid>> LinkedFeedbackByQuestion { get; set; } = new();
+
     // Apply methods for all QuestionnaireAssignment domain events
     public void Apply(QuestionnaireAssignmentAssigned @event)
     {
@@ -331,6 +334,25 @@ public class QuestionnaireAssignmentReadModel
     public void Apply(PredecessorQuestionnaireLinked @event)
     {
         PredecessorLinksByQuestion[@event.QuestionId] = @event.PredecessorAssignmentId;
+    }
+
+    // Apply methods for employee feedback events
+    public void Apply(EmployeeFeedbackLinkedToAssignment @event)
+    {
+        if (!LinkedFeedbackByQuestion.ContainsKey(@event.QuestionId))
+            LinkedFeedbackByQuestion[@event.QuestionId] = new List<Guid>();
+
+        LinkedFeedbackByQuestion[@event.QuestionId].Add(@event.FeedbackId);
+    }
+
+    public void Apply(EmployeeFeedbackUnlinkedFromAssignment @event)
+    {
+        if (LinkedFeedbackByQuestion.ContainsKey(@event.QuestionId))
+        {
+            LinkedFeedbackByQuestion[@event.QuestionId].Remove(@event.FeedbackId);
+            if (LinkedFeedbackByQuestion[@event.QuestionId].Count == 0)
+                LinkedFeedbackByQuestion.Remove(@event.QuestionId);
+        }
     }
 
     // Apply methods for InReview notes

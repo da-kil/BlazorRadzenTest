@@ -580,4 +580,71 @@ public class AssignmentsController : BaseController
     }
 
     #endregion
+
+    #region Employee Feedback Queries
+
+    /// <summary>
+    /// Gets all available employee feedback records that can be linked to this assignment.
+    /// Returns non-deleted feedback for the employee.
+    /// </summary>
+    [HttpGet("{assignmentId}/feedback/available")]
+    [Authorize]
+    [ProducesResponseType(typeof(List<Application.Query.Projections.Models.LinkedEmployeeFeedbackDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetAvailableEmployeeFeedback(Guid assignmentId)
+    {
+        try
+        {
+            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetAvailableEmployeeFeedbackQuery(assignmentId);
+            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+            if (result == null)
+            {
+                logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
+                return NotFound();
+            }
+
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting available feedback for assignment {AssignmentId}", assignmentId);
+            return StatusCode(500, "An error occurred while retrieving available feedback");
+        }
+    }
+
+    /// <summary>
+    /// Gets all linked feedback data for a specific question within an assignment.
+    /// Returns the full feedback details for all linked feedback records.
+    /// </summary>
+    [HttpGet("{assignmentId}/feedback/{questionId}")]
+    [Authorize]
+    [ProducesResponseType(typeof(Application.Query.Projections.Models.FeedbackQuestionDataDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetFeedbackQuestionData(Guid assignmentId, Guid questionId)
+    {
+        try
+        {
+            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetFeedbackQuestionDataQuery(
+                assignmentId, questionId);
+            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+            if (result == null)
+            {
+                logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
+                    assignmentId, questionId);
+                return NotFound();
+            }
+
+            return CreateResponse(result);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error getting feedback data for assignment {AssignmentId}, question {QuestionId}",
+                assignmentId, questionId);
+            return StatusCode(500, "An error occurred while retrieving feedback data");
+        }
+    }
+
+    #endregion
 }

@@ -1,0 +1,34 @@
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+
+<RadzenCard Class="question-renderer-card">
+    <RadzenStack Gap="1rem">
+        <div class="d-flex align-items-center gap-2">
+            <RadzenIcon Icon="feedback" Style="color: var(--primary-color, #2563eb);" />
+            <RadzenText TextStyle="TextStyle.H6">
+                @T("question-types.employee-feedback")
+            </RadzenText>
+        </div>
+
+        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" ShowIcon="true">
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Body1">
+                    @T("messages.feedback-question-no-config-required")
+                </RadzenText>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    @T("messages.feedback-question-workflow-explanation")
+                </RadzenText>
+            </RadzenStack>
+        </RadzenAlert>
+
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted fst-italic">
+            @T("messages.feedback-linked-during-initialization")
+        </RadzenText>
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter, EditorRequired] public QuestionSection Section { get; set; } = default!;
+}

@@ -34,6 +34,13 @@
                             Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
                             Title="@T("tooltips.add-text-question-section")"
                             Disabled="@(!Template.IsAvailableForEditing)" />
+                <AsyncButton Text="@T("question-types.employee-feedback")"
+                            ButtonStyle="ButtonStyle.Info"
+                            Icon="feedback"
+                            Size="ButtonSize.Small"
+                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.EmployeeFeedback))"
+                            Title="@($"{T("buttons.add")} {T("question-types.employee-feedback")}")"
+                            Disabled="@(!Template.IsAvailableForEditing)" />
             </div>
         </div>
 

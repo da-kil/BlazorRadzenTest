@@ -35,6 +35,8 @@ public class QuestionSection
                 => 0, // Goals are added dynamically during workflow, not in template
             QuestionType.TextQuestion when Configuration is TextQuestionConfiguration textConfig
                 => textConfig.TextSections.Count,
+            QuestionType.EmployeeFeedback
+                => 0, // Feedback records are linked during workflow, not configured in template
             _ => 0
         };
     }
@@ -49,6 +51,8 @@ public class QuestionSection
                 => 0, // Goals are added dynamically during workflow, not in template
             QuestionType.TextQuestion when Configuration is TextQuestionConfiguration textConfig
                 => textConfig.TextSections.Count(t => t.IsRequired),
+            QuestionType.EmployeeFeedback
+                => 0, // Feedback records are linked during workflow, not configured in template
             _ => 0
         };
     }
@@ -60,6 +64,7 @@ public class QuestionSection
             QuestionType.Assessment => "self_improvement",
             QuestionType.Goal => "track_changes",
             QuestionType.TextQuestion => "psychology",
+            QuestionType.EmployeeFeedback => "feedback",
             _ => "help"
         };
     }
@@ -71,6 +76,7 @@ public class QuestionSection
             QuestionType.Assessment => "Assessment",
             QuestionType.Goal => "Goal Achievement",
             QuestionType.TextQuestion => "Text Question",
+            QuestionType.EmployeeFeedback => "Employee Feedback",
             _ => "Unknown"
         };
     }
@@ -82,6 +88,7 @@ public class QuestionSection
             QuestionType.Assessment => "var(--rz-primary)", // primary-color
             QuestionType.Goal => "var(--rz-success)", // success-color
             QuestionType.TextQuestion => "var(--rz-secondary)", // secondary-color
+            QuestionType.EmployeeFeedback => "var(--rz-info)", // info-color (light blue)
             _ => "var(--rz-base-500)"
         };
     }
