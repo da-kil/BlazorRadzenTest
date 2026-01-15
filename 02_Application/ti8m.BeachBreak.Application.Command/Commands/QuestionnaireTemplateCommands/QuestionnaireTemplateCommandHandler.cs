@@ -51,12 +51,13 @@ public class QuestionnaireTemplateCommandHandler :
                 new Translation(command.QuestionnaireTemplate.NameGerman, command.QuestionnaireTemplate.NameEnglish),
                 new Translation(command.QuestionnaireTemplate.DescriptionGerman, command.QuestionnaireTemplate.DescriptionEnglish),
                 command.QuestionnaireTemplate.CategoryId,
-                command.QuestionnaireTemplate.RequiresManagerReview,
+                command.QuestionnaireTemplate.ProcessType,
                 command.QuestionnaireTemplate.IsCustomizable,
                 command.QuestionnaireTemplate.AutoInitialize,
                 sections);
 
-            // Validate that section completion roles match review requirement
+            // Validate that section question types and completion roles match process type
+            questionnaireTemplate.ValidateSectionQuestionTypes();
             questionnaireTemplate.ValidateSectionCompletionRoles();
 
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
@@ -90,9 +91,9 @@ public class QuestionnaireTemplateCommandHandler :
             questionnaireTemplate.ChangeDescription(new Translation(command.QuestionnaireTemplate.DescriptionGerman, command.QuestionnaireTemplate.DescriptionEnglish));
             questionnaireTemplate.ChangeCategory(command.QuestionnaireTemplate.CategoryId);
 
-            // Handle RequiresManagerReview change (validates no active assignments exist)
-            await questionnaireTemplate.ChangeReviewRequirementAsync(
-                command.QuestionnaireTemplate.RequiresManagerReview,
+            // Handle ProcessType change (validates no active assignments exist)
+            await questionnaireTemplate.ChangeProcessTypeAsync(
+                command.QuestionnaireTemplate.ProcessType,
                 assignmentService,
                 cancellationToken);
 
@@ -112,7 +113,8 @@ public class QuestionnaireTemplateCommandHandler :
 
             questionnaireTemplate.UpdateSections(sections);
 
-            // Validate that section completion roles match review requirement
+            // Validate that section question types and completion roles match process type
+            questionnaireTemplate.ValidateSectionQuestionTypes();
             questionnaireTemplate.ValidateSectionCompletionRoles();
 
             await repository.StoreAsync(questionnaireTemplate, cancellationToken);
@@ -179,7 +181,8 @@ public class QuestionnaireTemplateCommandHandler :
                 return Result.Fail($"Questionnaire template with ID {command.Id} not found", StatusCodes.Status404NotFound);
             }
 
-            // Validate that section completion roles match review requirement before publishing
+            // Validate that section question types and completion roles match process type before publishing
+            questionnaireTemplate.ValidateSectionQuestionTypes();
             questionnaireTemplate.ValidateSectionCompletionRoles();
 
             // Pass employee ID directly to domain (now accepts Guid)

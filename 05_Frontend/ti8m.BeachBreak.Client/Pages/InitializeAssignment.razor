@@ -536,7 +536,7 @@
             NameEnglish = "Custom Questions Template",
             NameGerman = "Custom Questions Template",
             Status = TemplateStatus.Draft, // This makes IsAvailableForEditing = true
-            RequiresManagerReview = true
+            ProcessType = QuestionnaireProcessType.PerformanceReview
         };
 
         // Create a read-only template for viewing sections
@@ -546,7 +546,7 @@
             NameEnglish = "Read Only Template",
             NameGerman = "Read Only Template",
             Status = TemplateStatus.Published, // This makes IsAvailableForEditing = false
-            RequiresManagerReview = true
+            ProcessType = QuestionnaireProcessType.PerformanceReview
         };
     }
 

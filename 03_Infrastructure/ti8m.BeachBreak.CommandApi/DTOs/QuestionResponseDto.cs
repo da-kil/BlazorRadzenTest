@@ -1,5 +1,5 @@
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.CommandApi.DTOs;
 

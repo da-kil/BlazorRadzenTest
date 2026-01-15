@@ -1,3 +1,4 @@
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
@@ -9,7 +10,7 @@ public class QuestionnaireTemplate : AggregateRoot
     public Translation Name { get; private set; } = new("", "");
     public Translation Description { get; private set; } = new("", "");
     public Guid CategoryId { get; private set; }
-    public bool RequiresManagerReview { get; private set; } = true;
+    public QuestionnaireProcessType ProcessType { get; private set; } = QuestionnaireProcessType.PerformanceReview;
     public bool IsCustomizable { get; private set; } = false;
     public bool AutoInitialize { get; private set; } = false;
 
@@ -30,7 +31,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Translation name,
         Translation description,
         Guid categoryId,
-        bool requiresManagerReview = true,
+        QuestionnaireProcessType processType = QuestionnaireProcessType.PerformanceReview,
         bool isCustomizable = false,
         bool autoInitialize = false,
         List<QuestionSection>? sections = null)
@@ -46,7 +47,7 @@ public class QuestionnaireTemplate : AggregateRoot
             name,
             description ?? new Translation("", ""),
             categoryId,
-            requiresManagerReview,
+            processType,
             isCustomizable,
             autoInitialize,
             QuestionnaireTemplateEventDataMapper.MapSectionsToData(sections ?? new()),
@@ -97,26 +98,26 @@ public class QuestionnaireTemplate : AggregateRoot
         }
     }
 
-    public async Task ChangeReviewRequirementAsync(
-        bool requiresManagerReview,
+    public async Task ChangeProcessTypeAsync(
+        QuestionnaireProcessType processType,
         IQuestionnaireAssignmentService assignmentService,
         CancellationToken cancellationToken = default)
     {
         if (!CanBeEdited())
-            throw new InvalidOperationException("Template cannot be edited in current status");
+            throw new InvalidOperationException("Cannot change process type of non-draft template");
 
-        // If RequiresManagerReview is being changed, check for existing assignments
-        if (RequiresManagerReview != requiresManagerReview)
+        // If ProcessType is being changed, check for existing assignments
+        if (ProcessType != processType)
         {
             if (await assignmentService.HasActiveAssignmentsAsync(Id, cancellationToken))
             {
                 var assignmentCount = await assignmentService.GetActiveAssignmentCountAsync(Id, cancellationToken);
                 throw new InvalidOperationException(
-                    $"Cannot change review requirement: {assignmentCount} active assignment(s) exist. " +
+                    $"Cannot change process type: {assignmentCount} active assignment(s) exist. " +
                     "Complete or withdraw these assignments first, or create a new template with the desired setting.");
             }
 
-            RaiseEvent(new QuestionnaireTemplateReviewRequirementChanged(requiresManagerReview));
+            RaiseEvent(new QuestionnaireTemplateProcessTypeChanged(processType));
         }
     }
 
@@ -252,25 +253,41 @@ public class QuestionnaireTemplate : AggregateRoot
     }
 
     /// <summary>
-    /// Validates that section completion roles match the review requirement.
-    /// When RequiresManagerReview is false, all sections must be Employee-only.
+    /// Validates that section completion roles are allowed for this process type.
     /// </summary>
     public void ValidateSectionCompletionRoles()
     {
-        if (!RequiresManagerReview)
+        foreach (var section in Sections)
         {
-            var nonEmployeeSections = Sections
-                .Where(s => s.CompletionRole != CompletionRole.Employee)
-                .ToList();
-
-            if (nonEmployeeSections.Any())
+            if (!ProcessType.IsCompletionRoleAllowed(section.CompletionRole))
             {
-                var sectionTitles = string.Join(", ", nonEmployeeSections.Select(s =>
-                    string.IsNullOrWhiteSpace(s.Title.English) ? $"Section {s.Order + 1}" : s.Title.English));
+                var sectionTitle = string.IsNullOrWhiteSpace(section.Title.English)
+                    ? $"Section {section.Order + 1}"
+                    : section.Title.English;
 
                 throw new InvalidOperationException(
-                    $"When manager review is not required, all sections must be completed by Employee only. " +
-                    $"Found {nonEmployeeSections.Count} section(s) with Manager or Both completion roles: {sectionTitles}");
+                    $"Completion role '{section.CompletionRole}' is not allowed for process type '{ProcessType}' " +
+                    $"in section: {sectionTitle}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Validates that section question types are allowed for this process type.
+    /// </summary>
+    public void ValidateSectionQuestionTypes()
+    {
+        foreach (var section in Sections)
+        {
+            if (!ProcessType.IsQuestionTypeAllowed(section.Type))
+            {
+                var sectionTitle = string.IsNullOrWhiteSpace(section.Title.English)
+                    ? $"Section {section.Order + 1}"
+                    : section.Title.English;
+
+                throw new InvalidOperationException(
+                    $"Question type '{section.Type}' is not allowed for process type '{ProcessType}' " +
+                    $"in section: {sectionTitle}");
             }
         }
     }
@@ -328,7 +345,7 @@ public class QuestionnaireTemplate : AggregateRoot
             clonedName,
             source.Description,
             source.CategoryId,
-            source.RequiresManagerReview,
+            source.ProcessType,
             source.IsCustomizable,
             source.AutoInitialize,
             QuestionnaireTemplateEventDataMapper.MapSectionsToData(clonedSections),
@@ -345,7 +362,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Name = @event.Name;
         Description = @event.Description;
         CategoryId = @event.CategoryId;
-        RequiresManagerReview = @event.RequiresManagerReview;
+        ProcessType = @event.ProcessType;
         IsCustomizable = @event.IsCustomizable;
         AutoInitialize = @event.AutoInitialize;
         Sections = QuestionnaireTemplateEventDataMapper.MapDataToSections(@event.Sections);
@@ -369,9 +386,9 @@ public class QuestionnaireTemplate : AggregateRoot
         CategoryId = @event.CategoryId;
     }
 
-    public void Apply(QuestionnaireTemplateReviewRequirementChanged @event)
+    public void Apply(QuestionnaireTemplateProcessTypeChanged @event)
     {
-        RequiresManagerReview = @event.RequiresManagerReview;
+        ProcessType = @event.ProcessType;
     }
 
     public void Apply(QuestionnaireTemplateCustomizabilityChanged @event)
@@ -426,7 +443,7 @@ public class QuestionnaireTemplate : AggregateRoot
         Name = @event.Name;
         Description = @event.Description;
         CategoryId = @event.CategoryId;
-        RequiresManagerReview = @event.RequiresManagerReview;
+        ProcessType = @event.ProcessType;
         IsCustomizable = @event.IsCustomizable;
         AutoInitialize = @event.AutoInitialize;
         Sections = QuestionnaireTemplateEventDataMapper.MapDataToSections(@event.Sections);

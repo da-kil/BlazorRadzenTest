@@ -136,6 +136,94 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - Initialization is optional (manager can complete it immediately with no customizations)
 - Maintains event sourcing pattern with explicit domain events
 
+### Process Types (Added 2026-01-15)
+
+**Purpose**: The `QuestionnaireProcessType` enum defines different types of questionnaire processes, each with specific business rules that control three tightly coupled features: manager review requirements, allowed question types, and allowed completion roles.
+
+**Available Process Types**:
+1. **PerformanceReview** (value=0) - Traditional performance review with manager involvement
+2. **Survey** (value=1) - Employee-only survey without manager review
+
+**Business Rules by Process Type**:
+
+| Feature | PerformanceReview | Survey |
+|---------|------------------|--------|
+| **Requires Manager Review** | Yes | No |
+| **Allowed Question Types** | Assessment, TextQuestion, Goal, EmployeeFeedback | Assessment, TextQuestion only |
+| **Allowed Completion Roles** | Employee, Manager, Both | Employee only |
+
+**Key Characteristics**:
+- **Type Safety**: Separate enum types in each layer (Domain, CommandApi, QueryApi, Frontend) to prevent coupling
+- **Extension Methods**: Business logic encapsulated in `QuestionnaireProcessTypeExtensions`:
+  - `RequiresManagerReview()` - Returns whether manager review is required
+  - `IsQuestionTypeAllowed(QuestionType)` - Validates if a question type is allowed
+  - `IsCompletionRoleAllowed(CompletionRole)` - Validates if a completion role is allowed
+  - `GetAllowedQuestionTypes()` - Returns list of allowed question types
+  - `GetAllowedCompletionRoles()` - Returns list of allowed completion roles
+
+**Domain Events**:
+- `QuestionnaireTemplateProcessTypeChanged` - Raised when template process type is changed
+- Replaces previous `QuestionnaireTemplateReviewRequirementChanged` event
+
+**Validation**:
+- **Template Level**: `QuestionnaireTemplate` validates all sections on save:
+  - `ValidateSectionQuestionTypes()` - Ensures all question types are allowed for the process type
+  - `ValidateSectionCompletionRoles()` - Ensures all completion roles are allowed for the process type
+- **Frontend Level**: `QuestionnaireValidationService` performs real-time validation with translated error messages
+
+**UI Integration**:
+- **Template Builder**: ProcessType dropdown in BasicInfoTab with icons and descriptions
+- **Icons**: `assessment` (PerformanceReview), `poll` (Survey)
+- **Badge Classes**: `badge-performance-review`, `badge-survey`
+- **Helper**: `QuestionnaireProcessTypeHelper` provides UI-specific methods:
+  - `GetDisplayName()` - Translated display name
+  - `GetDescription()` - Translated description
+  - `GetIcon()` - Material icon name
+  - `GetBadgeClass()` - CSS class for badges
+  - `GetQuestionTypeRestrictionMessage()` - Validation error message for disallowed question types
+  - `GetCompletionRoleRestrictionMessage()` - Validation error message for disallowed completion roles
+
+**Translation Keys** (9 total, EN/DE):
+- See `TestDataGenerator/test-translations.json` for complete list
+
+**Implementation Locations**:
+- **Core Domain**: `04_Core/ti8m.BeachBreak.Core.Domain/QuestionnaireProcessType/`
+  - `QuestionnaireProcessType.cs` - Core enum definition
+  - `QuestionnaireProcessTypeExtensions.cs` - Business logic extension methods
+- **Domain Aggregates**:
+  - `01_Domain/QuestionnaireTemplateAggregate/QuestionnaireTemplate.cs` - ProcessType property and validation
+  - `01_Domain/QuestionnaireAssignmentAggregate/QuestionnaireAssignment.cs` - ProcessType property
+- **Application Layer**:
+  - Command/Query DTOs: `CommandQuestionnaireTemplate.cs`, `QuestionnaireTemplateReadModel.cs`
+  - Handlers: Updated to use ProcessType instead of RequiresManagerReview
+- **API Layer**:
+  - `03_Infrastructure/ti8m.BeachBreak.CommandApi/Dto/QuestionnaireProcessType.cs`
+  - `03_Infrastructure/ti8m.BeachBreak.QueryApi/Dto/QuestionnaireProcessType.cs`
+  - Controllers updated to map ProcessType across layers
+- **Frontend**:
+  - `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionnaireProcessType.cs`
+  - `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionnaireProcessTypeHelper.cs`
+  - `05_Frontend/ti8m.BeachBreak.Client/Services/QuestionnaireValidationService.cs`
+  - UI Components: BasicInfoTab, SectionCard, ReviewTab, DynamicQuestionnaire, etc.
+
+**Testing**:
+- Unit tests: `Tests/ti8m.BeachBreak.Core.Domain.Tests/QuestionnaireProcessTypeExtensionsTests.cs`
+- 25 comprehensive tests covering all extension methods and business rules
+- Test project added to solution: `ti8m.BeachBreak.Core.Domain.Tests.csproj`
+
+**Design Decisions**:
+- **Explicit Enum Values**: All enum values explicitly set (PerformanceReview=0, Survey=1) per CLAUDE.md Section 8
+- **Extension Method Pattern**: Prefer extension methods over switch statements for maintainability
+- **Separate Enums per Layer**: Independent enum types in each layer prevent coupling in CQRS architecture
+- **Coupled Features**: ProcessType controls three related features (manager review, question types, completion roles) that always change together
+- **Backward Compatibility**: Replaced `RequiresManagerReview` boolean with ProcessType enum while maintaining same behavior
+
+**Migration Notes**:
+- Previous `RequiresManagerReview` boolean property was replaced with `ProcessType` enum
+- `RequiresManagerReview=true` → `ProcessType=PerformanceReview`
+- `RequiresManagerReview=false` → `ProcessType=Survey`
+- Extension method `ProcessType.RequiresManagerReview()` provides backward-compatible behavior
+
 ## Domain Events Guidelines
 
 ### Event Characteristics

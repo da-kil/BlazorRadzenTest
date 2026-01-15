@@ -1,3 +1,4 @@
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
@@ -7,7 +8,7 @@ public record QuestionnaireTemplateCreated(
     Translation Name,
     Translation Description,
     Guid CategoryId,
-    bool RequiresManagerReview,
+    QuestionnaireProcessType ProcessType,
     bool IsCustomizable,
     bool AutoInitialize,
     List<QuestionSectionData> Sections,

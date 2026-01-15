@@ -1,5 +1,6 @@
 using ti8m.BeachBreak.Application.Query.Mappers;
 using ti8m.BeachBreak.Application.Query.Models;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
@@ -10,7 +11,7 @@ public class QuestionnaireAssignmentReadModel
 {
     public Guid Id { get; set; }
     public Guid TemplateId { get; set; }
-    public bool RequiresManagerReview { get; set; } = true;
+    public QuestionnaireProcessType ProcessType { get; set; } = QuestionnaireProcessType.PerformanceReview;
     public Guid EmployeeId { get; set; }
     public string EmployeeName { get; set; } = string.Empty;
     public string EmployeeEmail { get; set; } = string.Empty;
@@ -79,7 +80,7 @@ public class QuestionnaireAssignmentReadModel
     {
         Id = @event.AggregateId;
         TemplateId = @event.TemplateId;
-        RequiresManagerReview = @event.RequiresManagerReview;
+        ProcessType = @event.ProcessType;
         EmployeeId = @event.EmployeeId;
         EmployeeName = @event.EmployeeName;
         EmployeeEmail = @event.EmployeeEmail;

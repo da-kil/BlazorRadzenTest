@@ -67,10 +67,26 @@
     <div class="settings-section mt-4 p-3 rounded border">
         <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold mb-3">@T("sections.workflow-configuration")</RadzenText>
         <div class="mb-3">
-            <RadzenCheckBox @bind-Value="@Template.RequiresManagerReview" Name="requiresManagerReview" Disabled="@(!Template.IsAvailableForEditing)" />
-            <RadzenLabel Text="@T("labels.requires-manager-review")" Component="requiresManagerReview" Class="font-medium" />
-            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1 ms-4">
-                @T("messages.workflow-manager-review-explanation")
+            <RadzenLabel Text="@T("labels.process-type")" Component="processType" Class="font-medium" />
+            <div class="d-flex align-items-center gap-2 mt-1">
+                <RadzenBadge BadgeStyle="@(Template.ProcessType.GetBadgeStyle())"
+                            Text="@GetProcessTypeDisplayName(Template.ProcessType)"
+                            Class="px-3 py-2" />
+                <RadzenIcon Icon="@(Template.ProcessType.GetIcon())" />
+                @if (Template.IsAvailableForEditing && showProcessTypeChangeWarning)
+                {
+                    <RadzenButton Text="@T("buttons.change")"
+                                ButtonStyle="ButtonStyle.Light"
+                                Size="ButtonSize.ExtraSmall"
+                                Click="@ShowProcessTypeChangeDialog" />
+                }
+            </div>
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1">
+                @GetProcessTypeDescription(Template.ProcessType)
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted d-block mt-1">
+                <RadzenIcon Icon="info" Style="font-size: 14px; vertical-align: middle;" />
+                @T("messages.process-type-set-at-creation")
             </RadzenText>
         </div>
         <div class="mb-3">
@@ -94,13 +110,41 @@
     [Parameter, EditorRequired] public QuestionnaireTemplate Template { get; set; } = null!;
     [Parameter, EditorRequired] public IReadOnlyList<Category> Categories { get; set; } = null!;
 
+    private bool showProcessTypeChangeWarning = false; // For future enhancement: allow changing with warning
+
     protected override Task OnInitializedAsync()
     {
         return base.OnInitializedAsync();
     }
 
+    private Task ShowProcessTypeChangeDialog()
+    {
+        // Future enhancement: Show dialog to change process type with validation warnings
+        return Task.CompletedTask;
+    }
+
     private string GetCategoryNameProperty()
     {
         return CurrentLanguage == Language.German ? "NameDe" : "NameEn";
+    }
+
+    private string GetProcessTypeDisplayName(QuestionnaireProcessType processType)
+    {
+        return processType switch
+        {
+            QuestionnaireProcessType.PerformanceReview => T("process-types.performance-review"),
+            QuestionnaireProcessType.Survey => T("process-types.survey"),
+            _ => processType.ToString()
+        };
+    }
+
+    private string GetProcessTypeDescription(QuestionnaireProcessType processType)
+    {
+        return processType switch
+        {
+            QuestionnaireProcessType.PerformanceReview => T("process-types.performance-review-description"),
+            QuestionnaireProcessType.Survey => T("process-types.survey-description"),
+            _ => string.Empty
+        };
     }
 }

@@ -47,7 +47,7 @@ public class CreateBulkAssignmentsCommandHandler
                 var assignment = new Domain.QuestionnaireAssignmentAggregate.QuestionnaireAssignment(
                     assignmentId,
                     command.TemplateId,
-                    command.RequiresManagerReview,
+                    command.ProcessType,
                     employeeData.EmployeeId,
                     employeeData.EmployeeName,
                     employeeData.EmployeeEmail,

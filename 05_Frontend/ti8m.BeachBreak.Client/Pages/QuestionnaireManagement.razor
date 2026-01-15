@@ -24,7 +24,7 @@
                      ButtonStyle="ButtonStyle.Primary"
                      Icon="add"
                      Size="ButtonSize.Medium"
-                     Click="@(() => NavigationManager.NavigateTo("/questionnaire-builder"))" />
+                     Click="@ShowCreateTemplateDialog" />
     </HeaderActions>
     <ChildContent>
 
@@ -305,6 +305,28 @@
         ).ToList();
 
         StateHasChanged();
+    }
+
+    private async Task ShowCreateTemplateDialog()
+    {
+        var result = await DialogService.OpenAsync<CreateTemplateDialog>(
+            T("dialogs.create-questionnaire-template"),
+            new Dictionary<string, object>
+            {
+                { "Categories", categories }
+            },
+            new DialogOptions
+            {
+                Width = "600px",
+                CloseDialogOnEsc = true
+            });
+
+        if (result is CreateTemplateDialog.CreateTemplateResult createResult)
+        {
+            // Navigate to builder with query parameters for initial values
+            var url = $"/questionnaire-builder?name={Uri.EscapeDataString(createResult.TemplateName)}&categoryId={createResult.CategoryId}&processType={(int)createResult.ProcessType}";
+            NavigationManager.NavigateTo(url);
+        }
     }
 
     private void EditTemplate(QuestionnaireTemplate template)

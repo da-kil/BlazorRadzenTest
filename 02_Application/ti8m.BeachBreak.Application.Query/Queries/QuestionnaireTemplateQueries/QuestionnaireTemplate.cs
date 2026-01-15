@@ -1,4 +1,6 @@
-﻿namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+﻿using ti8m.BeachBreak.Core.Domain;
+
+namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 
 public class QuestionnaireTemplate
 {
@@ -8,7 +10,7 @@ public class QuestionnaireTemplate
     public string DescriptionGerman { get; set; } = string.Empty;
     public string DescriptionEnglish { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
-    public bool RequiresManagerReview { get; set; } = true;
+    public QuestionnaireProcessType ProcessType { get; set; } = QuestionnaireProcessType.PerformanceReview;
     public bool IsCustomizable { get; set; } = false;
     public bool AutoInitialize { get; set; } = false;
     public DateTime CreatedDate { get; set; } = DateTime.Now;

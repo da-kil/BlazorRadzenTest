@@ -45,7 +45,7 @@
             <div class="header-content-row">
                 <div class="role-assignment-section">
                     <RadzenText TextStyle="TextStyle.Caption" Class="role-label">Who completes this section?</RadzenText>
-                    @if (!Template.RequiresManagerReview)
+                    @if (!Template.ProcessType.RequiresManagerReview())
                     {
                         <RadzenText TextStyle="TextStyle.Caption" Class="text-warning d-block mb-2">
                             <RadzenIcon Icon="info" Style="font-size: 0.875rem;" />
@@ -602,7 +602,7 @@
     private List<RoleOption> GetFilteredRoleOptions()
     {
         // If manager review is not required, only allow Employee role
-        if (!Template.RequiresManagerReview)
+        if (!Template.ProcessType.RequiresManagerReview())
         {
             // Ensure section is set to Employee
             if (Section.CompletionRole != CompletionRole.Employee)
