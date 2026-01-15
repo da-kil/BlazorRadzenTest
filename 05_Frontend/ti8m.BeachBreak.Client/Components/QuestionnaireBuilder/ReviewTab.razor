@@ -173,6 +173,15 @@
 
     private RenderFragment GetCompletionRoleBadge(QuestionSection section)
     {
+        // Employee Feedback sections are read-only, not completed by anyone
+        if (section.Type == QuestionType.EmployeeFeedback)
+        {
+            return @<span class="role-badge" style="background-color: #6c757d;">
+                <RadzenIcon Icon="visibility" Style="font-size: 1rem;" />
+                @T("labels.read-only")
+            </span>;
+        }
+
         var roleColor = section.GetRoleColor();
         var roleIcon = section.GetRoleIcon();
         var roleText = GetCompletionRoleText(section.CompletionRole);

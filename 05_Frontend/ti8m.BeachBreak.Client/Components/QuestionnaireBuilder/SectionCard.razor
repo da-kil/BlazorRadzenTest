@@ -38,67 +38,67 @@
                 AdditionalClasses="section-actions" />
         </div>
 
-        <!-- Header Content Row: Role selector -->
-        <div class="header-content-row">
-            <div class="role-assignment-section">
-                <RadzenText TextStyle="TextStyle.Caption" Class="role-label">Who completes this section?</RadzenText>
-                @if (!Template.RequiresManagerReview)
-                {
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-warning d-block mb-2">
-                        <RadzenIcon Icon="info" Style="font-size: 0.875rem;" />
-                        Manager review disabled - sections must be completed by employees only
-                    </RadzenText>
-                }
-                <RadzenRadioButtonList @bind-Value="@Section.CompletionRole"
-                                       Data="@GetFilteredRoleOptions()"
-                                       TextProperty="Text"
-                                       ValueProperty="Value"
-                                       Orientation="Radzen.Orientation.Horizontal"
-                                       Class="role-select-modern"
-                                       Disabled="@(!Template.IsAvailableForEditing)" />
+        @* Only show role assignment for Assessment, TextQuestion, and Goal sections *@
+        @if (Section.Type != QuestionType.EmployeeFeedback)
+        {
+            <!-- Header Content Row: Role selector -->
+            <div class="header-content-row">
+                <div class="role-assignment-section">
+                    <RadzenText TextStyle="TextStyle.Caption" Class="role-label">Who completes this section?</RadzenText>
+                    @if (!Template.RequiresManagerReview)
+                    {
+                        <RadzenText TextStyle="TextStyle.Caption" Class="text-warning d-block mb-2">
+                            <RadzenIcon Icon="info" Style="font-size: 0.875rem;" />
+                            Manager review disabled - sections must be completed by employees only
+                        </RadzenText>
+                    }
+                    <RadzenRadioButtonList @bind-Value="@Section.CompletionRole"
+                                           Data="@GetFilteredRoleOptions()"
+                                           TextProperty="Text"
+                                           ValueProperty="Value"
+                                           Orientation="Radzen.Orientation.Horizontal"
+                                           Class="role-select-modern"
+                                           Disabled="@(!Template.IsAvailableForEditing)" />
+                </div>
             </div>
-        </div>
+        }
     </div>
 
     <!-- Section Content Area -->
     <div class="section-content-modern">
 
-        @* Only show title/description inputs for Assessment and TextQuestion sections *@
-        @if (Section.Type != QuestionType.Goal && Section.Type != QuestionType.EmployeeFeedback)
-        {
-            <!-- Title Inputs -->
-            <MultilingualInputComponent
-                EnglishLabel="English Title"
-                GermanLabel="German Title"
-                EnglishValue="@Section.TitleEnglish"
-                GermanValue="@Section.TitleGerman"
-                EnglishValueChanged="@OnSectionTitleEnglishChanged"
-                GermanValueChanged="@OnSectionTitleGermanChanged"
-                EnglishPlaceholder="@T("placeholders.section-title-english-example")"
-                GermanPlaceholder="@T("placeholders.section-title-german-example")"
-                InputType="InputType.TextBox"
-                InputCssClass="title-input-modern"
-                AdditionalClasses="mb-3"
-                Required="true"
-                Disabled="@(!Template.IsAvailableForEditing)" />
+        <!-- Title Inputs -->
+        <MultilingualInputComponent
+            EnglishLabel="English Title"
+            GermanLabel="German Title"
+            EnglishValue="@Section.TitleEnglish"
+            GermanValue="@Section.TitleGerman"
+            EnglishValueChanged="@OnSectionTitleEnglishChanged"
+            GermanValueChanged="@OnSectionTitleGermanChanged"
+            EnglishPlaceholder="@T("placeholders.section-title-english-example")"
+            GermanPlaceholder="@T("placeholders.section-title-german-example")"
+            InputType="InputType.TextBox"
+            InputCssClass="title-input-modern"
+            AdditionalClasses="mb-3"
+            Required="true"
+            Disabled="@(!Template.IsAvailableForEditing)" />
 
-            <!-- Description Inputs -->
-            <MultilingualInputComponent
-                EnglishLabel="English Description"
-                GermanLabel="German Description"
-                EnglishValue="@Section.DescriptionEnglish"
-                GermanValue="@Section.DescriptionGerman"
-                EnglishValueChanged="@OnSectionDescriptionEnglishChanged"
-                GermanValueChanged="@OnSectionDescriptionGermanChanged"
-                EnglishPlaceholder="@T("placeholders.section-description-english")"
-                GermanPlaceholder="@T("placeholders.section-description-german")"
-                InputType="InputType.TextArea"
-                InputCssClass="description-input-modern"
-                AdditionalClasses="mb-3"
-                TextAreaRows="3"
-                Required="true"
-                Disabled="@(!Template.IsAvailableForEditing)" />
-        }
+        <!-- Description Inputs -->
+        <MultilingualInputComponent
+            EnglishLabel="English Description"
+            GermanLabel="German Description"
+            EnglishValue="@Section.DescriptionEnglish"
+            GermanValue="@Section.DescriptionGerman"
+            EnglishValueChanged="@OnSectionDescriptionEnglishChanged"
+            GermanValueChanged="@OnSectionDescriptionGermanChanged"
+            EnglishPlaceholder="@T("placeholders.section-description-english")"
+            GermanPlaceholder="@T("placeholders.section-description-german")"
+            InputType="InputType.TextArea"
+            InputCssClass="description-input-modern"
+            AdditionalClasses="mb-3"
+            TextAreaRows="3"
+            Required="true"
+            Disabled="@(!Template.IsAvailableForEditing)" />
 
         <!-- Rating Scale Configuration - only for Assessment sections -->
         @if (Section.Type == QuestionType.Assessment)
