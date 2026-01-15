@@ -111,7 +111,7 @@ else
 
             @if (IsQuestionnaireCompleted())
             {
-                @if (isManager && template != null && !template.RequiresManagerReview)
+                @if (isManager && template != null && !template.ProcessType.RequiresManagerReview())
                 {
                     <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" Class="workflow-alert mb-4" ShowIcon="true">
                         <RadzenText TextStyle="TextStyle.Body1">
@@ -200,7 +200,7 @@ else
 
             @* Show review changes summary after review meeting finishes *@
             @if (assignment != null && assignmentId.HasValue && response != null &&
-                 template != null && template.RequiresManagerReview &&
+                 template != null && template.ProcessType.RequiresManagerReview() &&
                  (assignment.WorkflowState == WorkflowState.ReviewFinished ||
                   assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
                   assignment.WorkflowState == WorkflowState.Finalized))
@@ -239,7 +239,7 @@ else
 
             @* Review Comments Display - Below Questionnaire *@
             @* Show after review meeting finishes so employee can see manager's summary before signing off *@
-            @if (assignment != null && template != null && template.RequiresManagerReview &&
+            @if (assignment != null && template != null && template.ProcessType.RequiresManagerReview() &&
                  (assignment.WorkflowState == WorkflowState.ReviewFinished ||
                   assignment.WorkflowState == WorkflowState.EmployeeReviewConfirmed ||
                   assignment.WorkflowState == WorkflowState.Finalized))
@@ -339,7 +339,7 @@ else
         var isPostReviewConfirmation = assignment.WorkflowState is WorkflowState.EmployeeReviewConfirmed or WorkflowState.ReviewFinished;
 
         // Managers/HR viewing employee-only questionnaires should always see read-only
-        if (isManager && template != null && !template.RequiresManagerReview)
+        if (isManager && template != null && !template.ProcessType.RequiresManagerReview())
         {
             return true;
         }
@@ -571,7 +571,7 @@ else
                                          WorkflowState.Finalized);
 
         // Managers/HR can view employee-only questionnaires in read-only mode
-        var isManagerViewingEmployeeOnlyQuestionnaire = isManager && !template.RequiresManagerReview;
+        var isManagerViewingEmployeeOnlyQuestionnaire = isManager && !template.ProcessType.RequiresManagerReview();
 
         if (isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire)
         {
@@ -742,7 +742,7 @@ else
                     // Managers viewing employee-only questionnaires: load ALL responses
                     // Managers during InReview state: load ALL responses for active review
                     // Normal mode: only load current user's role responses
-                    var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
+                    var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.ProcessType.RequiresManagerReview();
                     var isManagerDuringReview = isManager && assignment != null && assignment.WorkflowState == WorkflowState.InReview;
 
                     if ((isPostReviewState || isManagerViewingEmployeeOnlyQuestionnaire || isManagerDuringReview) && sectionKvp.Value.RoleResponses != null)
@@ -990,7 +990,7 @@ else
                                           WorkflowState.EmployeeReviewConfirmed or
                                           WorkflowState.Finalized);
 
-        var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.RequiresManagerReview;
+        var isManagerViewingEmployeeOnlyQuestionnaire = isManager && template != null && !template.ProcessType.RequiresManagerReview();
 
         ResponseRole roleToFetch = CurrentResponseRole;
 

@@ -9,13 +9,13 @@ using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.Application.Query.Services;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 // ARCHITECTURAL NOTE: QueryApi references Domain for shared enum types only (WorkflowState, CompletionRole, ResponseRole).
 // This is pragmatic because Application.Query DTOs already use these Domain enums, and duplicating would cause ambiguity.
 // FUTURE: Consider moving shared enums to Core layer for proper layering.
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using ti8m.BeachBreak.Infrastructure.Marten.JsonSerialization;
 using ti8m.BeachBreak.QueryApi.Dto;
 

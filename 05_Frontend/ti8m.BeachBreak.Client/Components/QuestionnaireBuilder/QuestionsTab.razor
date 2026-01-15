@@ -13,34 +13,46 @@
                 </RadzenText>
             </div>
             <div class="d-flex gap-2">
-                <AsyncButton Text="@T("buttons.assessment")"
-                            ButtonStyle="ButtonStyle.Primary"
-                            Icon="self_improvement"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Assessment))"
-                            Title="@T("tooltips.add-assessment-section")"
-                            Disabled="@(!Template.IsAvailableForEditing)" />
-                <AsyncButton Text="@T("buttons.goal-achievement")"
-                            ButtonStyle="ButtonStyle.Success"
-                            Icon="track_changes"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Goal))"
-                            Title="@T("tooltips.add-goal-section")"
-                            Disabled="@(!Template.IsAvailableForEditing)" />
-                <AsyncButton Text="@T("buttons.text-question")"
-                            ButtonStyle="ButtonStyle.Secondary"
-                            Icon="psychology"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
-                            Title="@T("tooltips.add-text-question-section")"
-                            Disabled="@(!Template.IsAvailableForEditing)" />
-                <AsyncButton Text="@T("question-types.employee-feedback")"
-                            ButtonStyle="ButtonStyle.Info"
-                            Icon="feedback"
-                            Size="ButtonSize.Small"
-                            Click="@(() => OnAddSectionWithTypeInternal(QuestionType.EmployeeFeedback))"
-                            Title="@($"{T("buttons.add")} {T("question-types.employee-feedback")}")"
-                            Disabled="@(!Template.IsAvailableForEditing)" />
+                @if (IsQuestionTypeAllowed(QuestionType.Assessment))
+                {
+                    <AsyncButton Text="@T("buttons.assessment")"
+                                ButtonStyle="ButtonStyle.Primary"
+                                Icon="self_improvement"
+                                Size="ButtonSize.Small"
+                                Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Assessment))"
+                                Title="@T("tooltips.add-assessment-section")"
+                                Disabled="@(!Template.IsAvailableForEditing)" />
+                }
+                @if (IsQuestionTypeAllowed(QuestionType.Goal))
+                {
+                    <AsyncButton Text="@T("buttons.goal-achievement")"
+                                ButtonStyle="ButtonStyle.Success"
+                                Icon="track_changes"
+                                Size="ButtonSize.Small"
+                                Click="@(() => OnAddSectionWithTypeInternal(QuestionType.Goal))"
+                                Title="@T("tooltips.add-goal-section")"
+                                Disabled="@(!Template.IsAvailableForEditing)" />
+                }
+                @if (IsQuestionTypeAllowed(QuestionType.TextQuestion))
+                {
+                    <AsyncButton Text="@T("buttons.text-question")"
+                                ButtonStyle="ButtonStyle.Secondary"
+                                Icon="psychology"
+                                Size="ButtonSize.Small"
+                                Click="@(() => OnAddSectionWithTypeInternal(QuestionType.TextQuestion))"
+                                Title="@T("tooltips.add-text-question-section")"
+                                Disabled="@(!Template.IsAvailableForEditing)" />
+                }
+                @if (IsQuestionTypeAllowed(QuestionType.EmployeeFeedback))
+                {
+                    <AsyncButton Text="@T("question-types.employee-feedback")"
+                                ButtonStyle="ButtonStyle.Info"
+                                Icon="feedback"
+                                Size="ButtonSize.Small"
+                                Click="@(() => OnAddSectionWithTypeInternal(QuestionType.EmployeeFeedback))"
+                                Title="@($"{T("buttons.add")} {T("question-types.employee-feedback")}")"
+                                Disabled="@(!Template.IsAvailableForEditing)" />
+                }
             </div>
         </div>
 
@@ -159,6 +171,11 @@
         }
 
         return totalItems;
+    }
+
+    private bool IsQuestionTypeAllowed(QuestionType questionType)
+    {
+        return Template.ProcessType.IsQuestionTypeAllowed(questionType);
     }
 
 }

@@ -8,7 +8,7 @@ public class QuestionnaireTemplateDto
     public string DescriptionGerman { get; set; } = string.Empty;
     public string DescriptionEnglish { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
-    public bool RequiresManagerReview { get; set; } = true;
+    public QuestionnaireProcessType ProcessType { get; set; } = QuestionnaireProcessType.PerformanceReview;
     public bool IsCustomizable { get; set; } = false;
     public bool AutoInitialize { get; set; } = false;
 

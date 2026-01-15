@@ -4,9 +4,8 @@ using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.CommandApi.Services;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
-using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 

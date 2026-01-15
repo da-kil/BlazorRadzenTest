@@ -59,7 +59,7 @@ public class AssignmentsController : BaseController
             if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
                 return BadRequest("At least one employee assignment is required");
 
-            // Load template to get RequiresManagerReview flag
+            // Load template to get ProcessType
             var templateResult = await queryDispatcher.QueryAsync(
                 new QuestionnaireTemplateQuery(bulkAssignmentDto.TemplateId),
                 HttpContext.RequestAborted);
@@ -90,7 +90,7 @@ public class AssignmentsController : BaseController
 
             var command = new CreateBulkAssignmentsCommand(
                 bulkAssignmentDto.TemplateId,
-                templateResult.Payload.RequiresManagerReview,
+                templateResult.Payload.ProcessType,
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
                 assignedBy,
@@ -126,7 +126,7 @@ public class AssignmentsController : BaseController
             if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
                 return BadRequest("At least one employee assignment is required");
 
-            // Load template to get RequiresManagerReview flag
+            // Load template to get ProcessType
             var templateResult = await queryDispatcher.QueryAsync(
                 new QuestionnaireTemplateQuery(bulkAssignmentDto.TemplateId),
                 HttpContext.RequestAborted);
@@ -178,7 +178,7 @@ public class AssignmentsController : BaseController
 
             var command = new CreateBulkAssignmentsCommand(
                 bulkAssignmentDto.TemplateId,
-                templateResult.Payload.RequiresManagerReview,
+                templateResult.Payload.ProcessType,
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
                 assignedBy,

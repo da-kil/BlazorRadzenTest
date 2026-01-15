@@ -24,7 +24,7 @@
             <div class="info-card">
                 <h3 class="preview-section-title">@T("labels.review-required")</h3>
                 <div class="review-badge-container">
-                    @if (Template.RequiresManagerReview)
+                    @if (Template.ProcessType.RequiresManagerReview())
                     {
                         <span class="review-badge required">
                             <RadzenIcon Icon="check_circle" Style="font-size: 1rem;" />
@@ -55,7 +55,7 @@
             <h3 class="summary-title">@Template.GetLocalizedNameWithFallback(CurrentLanguage) @T("labels.summary")</h3>
             <p class="summary-stats">
                 @Template.Sections.Count @(Template.Sections.Count != 1 ? T("labels.sections").ToLower() : T("labels.section").ToLower()) •
-                @GetTotalItems() @(GetTotalItems() != 1 ? T("labels.total-items").ToLower() : T("labels.total-item").ToLower())@(Template.RequiresManagerReview ? " • " + T("labels.manager-review-required") : " • " + T("labels.no-manager-review"))
+                @GetTotalItems() @(GetTotalItems() != 1 ? T("labels.total-items").ToLower() : T("labels.total-item").ToLower())@(Template.ProcessType.RequiresManagerReview() ? " • " + T("labels.manager-review-required") : " • " + T("labels.no-manager-review"))
             </p>
         </div>
 

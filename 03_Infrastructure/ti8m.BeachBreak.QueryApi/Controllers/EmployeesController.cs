@@ -4,6 +4,7 @@ using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Services;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Dto;
@@ -253,7 +254,7 @@ public class EmployeesController : BaseController
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
                     TemplateId = assignment.TemplateId,
-                    RequiresManagerReview = assignment.RequiresManagerReview,
+                    ProcessType = MapProcessType(assignment.ProcessType),
                     TemplateName = assignment.TemplateName,
                     TemplateCategoryId = assignment.TemplateCategoryId,
                     WorkflowState = assignment.WorkflowState,
@@ -458,7 +459,7 @@ public class EmployeesController : BaseController
                 EmployeeName = assignment.EmployeeName,
                 EmployeeEmail = assignment.EmployeeEmail,
                 TemplateId = assignment.TemplateId,
-                RequiresManagerReview = assignment.RequiresManagerReview,
+                ProcessType = MapProcessType(assignment.ProcessType),
                 TemplateName = assignment.TemplateName,
                 TemplateCategoryId = assignment.TemplateCategoryId,
                 WorkflowState = assignment.WorkflowState,
@@ -648,7 +649,7 @@ public class EmployeesController : BaseController
                 var questionResponsesDict = new Dictionary<Guid, QuestionResponseDto>();
 
                 // Only extract Employee role responses for this endpoint
-                if (roleBasedResponses.TryGetValue(Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee, out var employeeResponse))
+                if (roleBasedResponses.TryGetValue(CompletionRole.Employee, out var employeeResponse))
                 {
                     var questionResponseDto = new QuestionResponseDto
                     {
@@ -963,13 +964,13 @@ public class EmployeesController : BaseController
         };
     }
 
-    private static Domain.QuestionnaireTemplateAggregate.CompletionRole MapToCompletionRoleEnum(string completionRole)
+    private static CompletionRole MapToCompletionRoleEnum(string completionRole)
     {
         return completionRole?.ToLower() switch
         {
-            "manager" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager,
-            "both" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Both,
-            _ => Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee
+            "manager" => CompletionRole.Manager,
+            "both" => CompletionRole.Both,
+            _ => CompletionRole.Employee
         };
     }
 
@@ -981,6 +982,16 @@ public class EmployeesController : BaseController
             "goal" => QueryApi.Dto.QuestionType.Goal,
             "assessment" => QueryApi.Dto.QuestionType.Assessment,
             _ => QueryApi.Dto.QuestionType.Assessment
+        };
+    }
+
+    private static QueryApi.Dto.QuestionnaireProcessType MapProcessType(Core.Domain.QuestionnaireProcessType domainProcessType)
+    {
+        return domainProcessType switch
+        {
+            Core.Domain.QuestionnaireProcessType.PerformanceReview => QueryApi.Dto.QuestionnaireProcessType.PerformanceReview,
+            Core.Domain.QuestionnaireProcessType.Survey => QueryApi.Dto.QuestionnaireProcessType.Survey,
+            _ => throw new ArgumentOutOfRangeException(nameof(domainProcessType), domainProcessType, "Unknown process type")
         };
     }
 }

@@ -1,9 +1,9 @@
 using Marten;
 using Marten.Events.Projections;
 using ti8m.BeachBreak.Application.Query.Projections;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate.Events;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Infrastructure.Marten.Projections;
 

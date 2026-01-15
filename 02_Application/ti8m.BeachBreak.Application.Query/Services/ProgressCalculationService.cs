@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using QuestionnaireTemplate = ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries.QuestionnaireTemplate;
 
 namespace ti8m.BeachBreak.Application.Query.Services;

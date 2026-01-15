@@ -1,0 +1,231 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Models
+@inject DialogService DialogService
+@inherits ti8m.BeachBreak.Client.Components.Shared.OptimizedTranslatableComponentBase
+
+<div class="dialog-container">
+    <div class="dialog-content-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+            @T("labels.english-template-name-required")
+        </RadzenText>
+        <RadzenTextBox @bind-Value="@templateName"
+                      Placeholder="@T("placeholders.enter-template-name-english")"
+                      Style="width: 100%;"
+                      MaxLength="200"
+                      Class="@(showValidation && string.IsNullOrWhiteSpace(templateName) ? "has-error" : "")" />
+        @if (showValidation && string.IsNullOrWhiteSpace(templateName))
+        {
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-danger mt-1">
+                @T("validation.template-name-required")
+            </RadzenText>
+        }
+    </div>
+
+    <div class="dialog-content-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+            @T("labels.questionnaire-type-required")
+        </RadzenText>
+        <RadzenDropDown @bind-Value="@selectedCategoryId"
+                       Data="@Categories"
+                       TextProperty="@GetCategoryNameProperty()"
+                       ValueProperty="Id"
+                       Placeholder="@T("placeholders.select-type-annual-review")"
+                       AllowClear="false"
+                       Style="width: 100%;"
+                       Class="@(showValidation && selectedCategoryId == Guid.Empty ? "has-error" : "")" />
+        @if (showValidation && selectedCategoryId == Guid.Empty)
+        {
+            <RadzenText TextStyle="TextStyle.Caption" Class="text-danger mt-1">
+                @T("validation.category-required")
+            </RadzenText>
+        }
+    </div>
+
+    <div class="dialog-content-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-3">
+            @T("labels.process-type") <span style="color: red;">*</span>
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3">
+            @T("messages.process-type-description")
+        </RadzenText>
+
+        <div class="process-type-options">
+            <div class="process-type-option @(selectedProcessType == QuestionnaireProcessType.PerformanceReview ? "selected" : "")"
+                 @onclick="@(() => selectedProcessType = QuestionnaireProcessType.PerformanceReview)"
+                 style="cursor: pointer;">
+                <div class="d-flex align-items-start">
+                    <div class="radio-indicator">
+                        @if (selectedProcessType == QuestionnaireProcessType.PerformanceReview)
+                        {
+                            <RadzenIcon Icon="radio_button_checked" />
+                        }
+                        else
+                        {
+                            <RadzenIcon Icon="radio_button_unchecked" />
+                        }
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <RadzenIcon Icon="@QuestionnaireProcessType.PerformanceReview.GetIcon()" Class="me-2" />
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                                @GetProcessTypeDisplayName(QuestionnaireProcessType.PerformanceReview)
+                            </RadzenText>
+                        </div>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                            @GetProcessTypeDescription(QuestionnaireProcessType.PerformanceReview)
+                        </RadzenText>
+                        <div class="mt-2">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                <strong>@T("labels.includes"):</strong> @T("process-types.allows-all-question-types")
+                            </RadzenText>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="process-type-option @(selectedProcessType == QuestionnaireProcessType.Survey ? "selected" : "")"
+                 @onclick="@(() => selectedProcessType = QuestionnaireProcessType.Survey)"
+                 style="cursor: pointer;">
+                <div class="d-flex align-items-start">
+                    <div class="radio-indicator">
+                        @if (selectedProcessType == QuestionnaireProcessType.Survey)
+                        {
+                            <RadzenIcon Icon="radio_button_checked" />
+                        }
+                        else
+                        {
+                            <RadzenIcon Icon="radio_button_unchecked" />
+                        }
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <RadzenIcon Icon="@QuestionnaireProcessType.Survey.GetIcon()" Class="me-2" />
+                            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                                @GetProcessTypeDisplayName(QuestionnaireProcessType.Survey)
+                            </RadzenText>
+                        </div>
+                        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                            @GetProcessTypeDescription(QuestionnaireProcessType.Survey)
+                        </RadzenText>
+                        <div class="mt-2">
+                            <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
+                                <strong>@T("labels.restrictions"):</strong> @T("process-types.employee-only-no-goals-feedback")
+                            </RadzenText>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dialog-actions">
+        <RadzenButton Text="@T("buttons.cancel")"
+                     ButtonStyle="ButtonStyle.Light"
+                     Click="@Cancel"
+                     Size="ButtonSize.Medium" />
+        <RadzenButton Text="@T("buttons.create-template")"
+                     ButtonStyle="ButtonStyle.Primary"
+                     Icon="add"
+                     Click="@CreateTemplate"
+                     Size="ButtonSize.Medium" />
+    </div>
+</div>
+
+<style>
+    .process-type-options {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .process-type-option {
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .process-type-option:hover {
+        border-color: #2196F3;
+        background-color: rgba(33, 150, 243, 0.05);
+    }
+
+    .process-type-option.selected {
+        border-color: #2196F3;
+        background-color: rgba(33, 150, 243, 0.1);
+    }
+
+    .has-error {
+        border-color: #f44336 !important;
+    }
+</style>
+
+@code {
+    [Parameter] public IReadOnlyList<Category> Categories { get; set; } = Array.Empty<Category>();
+
+    private string templateName = "";
+    private Guid selectedCategoryId = Guid.Empty;
+    private QuestionnaireProcessType selectedProcessType = QuestionnaireProcessType.PerformanceReview;
+    private bool showValidation = false;
+
+    private void Cancel()
+    {
+        DialogService.Close(null);
+    }
+
+    private void CreateTemplate()
+    {
+        showValidation = true;
+        StateHasChanged();
+
+        // Validate
+        if (string.IsNullOrWhiteSpace(templateName) || selectedCategoryId == Guid.Empty)
+        {
+            return;
+        }
+
+        // Return result
+        var result = new CreateTemplateResult
+        {
+            TemplateName = templateName.Trim(),
+            CategoryId = selectedCategoryId,
+            ProcessType = selectedProcessType
+        };
+
+        DialogService.Close(result);
+    }
+
+    private string GetCategoryNameProperty()
+    {
+        return CurrentLanguage == Language.German ? "NameDe" : "NameEn";
+    }
+
+    private string GetProcessTypeDisplayName(QuestionnaireProcessType processType)
+    {
+        return processType switch
+        {
+            QuestionnaireProcessType.PerformanceReview => T("process-types.performance-review"),
+            QuestionnaireProcessType.Survey => T("process-types.survey"),
+            _ => processType.ToString()
+        };
+    }
+
+    private string GetProcessTypeDescription(QuestionnaireProcessType processType)
+    {
+        return processType switch
+        {
+            QuestionnaireProcessType.PerformanceReview => T("process-types.performance-review-description"),
+            QuestionnaireProcessType.Survey => T("process-types.survey-description"),
+            _ => string.Empty
+        };
+    }
+
+    public class CreateTemplateResult
+    {
+        public string TemplateName { get; set; } = string.Empty;
+        public Guid CategoryId { get; set; }
+        public QuestionnaireProcessType ProcessType { get; set; }
+    }
+}

@@ -404,7 +404,7 @@ else
                                         WorkflowState.Finalized);
 
         // Review mode is always post-review state, but let's be explicit
-        var isManagerViewingEmployeeOnlyQuestionnaire = HasManagerPrivileges && template != null && !template.RequiresManagerReview;
+        var isManagerViewingEmployeeOnlyQuestionnaire = HasManagerPrivileges && template != null && !template.ProcessType.RequiresManagerReview();
 
         ResponseRole roleToFetch = CurrentResponseRole;
 
@@ -692,7 +692,7 @@ else
                                         WorkflowState.EmployeeReviewConfirmed or
                                         WorkflowState.Finalized);
 
-        var isManagerViewingEmployeeOnlyQuestionnaire = HasManagerPrivileges && template != null && !template.RequiresManagerReview;
+        var isManagerViewingEmployeeOnlyQuestionnaire = HasManagerPrivileges && template != null && !template.ProcessType.RequiresManagerReview();
 
         ResponseRole roleToFetch = CurrentResponseRole;
 

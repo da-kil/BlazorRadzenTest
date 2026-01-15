@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.QueryApi.Controllers;
 using ti8m.BeachBreak.QueryApi.Dto;
 
@@ -153,7 +154,7 @@ public class QuestionnaireTemplatesController : BaseController
             DescriptionGerman = template.DescriptionGerman,
             DescriptionEnglish = template.DescriptionEnglish,
             CategoryId = template.CategoryId,
-            RequiresManagerReview = template.RequiresManagerReview,
+            ProcessType = MapProcessType(template.ProcessType),
             IsCustomizable = template.IsCustomizable,
             AutoInitialize = template.AutoInitialize,
             CreatedDate = template.CreatedDate,
@@ -188,13 +189,13 @@ public class QuestionnaireTemplatesController : BaseController
         };
     }
 
-    private static Domain.QuestionnaireTemplateAggregate.CompletionRole MapToCompletionRoleEnum(string completionRole)
+    private static CompletionRole MapToCompletionRoleEnum(string completionRole)
     {
         return completionRole?.ToLower() switch
         {
-            "manager" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Manager,
-            "both" => Domain.QuestionnaireTemplateAggregate.CompletionRole.Both,
-            _ => Domain.QuestionnaireTemplateAggregate.CompletionRole.Employee
+            "manager" => CompletionRole.Manager,
+            "both" => CompletionRole.Both,
+            _ => CompletionRole.Employee
         };
     }
 
@@ -214,6 +215,16 @@ public class QuestionnaireTemplatesController : BaseController
             "TextQuestion" => QueryApi.Dto.QuestionType.TextQuestion,
             "Goal" => QueryApi.Dto.QuestionType.Goal,
             _ => QueryApi.Dto.QuestionType.Assessment // Default fallback
+        };
+    }
+
+    private static QueryApi.Dto.QuestionnaireProcessType MapProcessType(Core.Domain.QuestionnaireProcessType domainProcessType)
+    {
+        return domainProcessType switch
+        {
+            Core.Domain.QuestionnaireProcessType.PerformanceReview => QueryApi.Dto.QuestionnaireProcessType.PerformanceReview,
+            Core.Domain.QuestionnaireProcessType.Survey => QueryApi.Dto.QuestionnaireProcessType.Survey,
+            _ => throw new ArgumentOutOfRangeException(nameof(domainProcessType), domainProcessType, "Unknown process type")
         };
     }
 }

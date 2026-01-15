@@ -1,3 +1,4 @@
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
@@ -10,7 +11,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 public class QuestionnaireAssignment : AggregateRoot
 {
     public Guid TemplateId { get; private set; }
-    public bool RequiresManagerReview { get; private set; } = true;
+    public QuestionnaireProcessType ProcessType { get; private set; } = QuestionnaireProcessType.PerformanceReview;
     public Guid EmployeeId { get; private set; }
     public string EmployeeName { get; private set; }
     public string EmployeeEmail { get; private set; }
@@ -81,7 +82,7 @@ public class QuestionnaireAssignment : AggregateRoot
     public QuestionnaireAssignment(
         Guid id,
         Guid templateId,
-        bool requiresManagerReview,
+        QuestionnaireProcessType processType,
         Guid employeeId,
         string employeeName,
         string employeeEmail,
@@ -93,7 +94,7 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new QuestionnaireAssignmentAssigned(
             id,
             templateId,
-            requiresManagerReview,
+            processType,
             employeeId,
             employeeName,
             employeeEmail,
@@ -362,7 +363,7 @@ public class QuestionnaireAssignment : AggregateRoot
         RaiseEvent(new EmployeeQuestionnaireSubmitted(DateTime.UtcNow, submittedByEmployeeId));
 
         // Auto-finalize if manager review is not required
-        if (!RequiresManagerReview)
+        if (!ProcessType.RequiresManagerReview())
         {
             RaiseEvent(new QuestionnaireAutoFinalized(
                 Id,
@@ -760,7 +761,7 @@ public class QuestionnaireAssignment : AggregateRoot
     {
         Id = @event.AggregateId;
         TemplateId = @event.TemplateId;
-        RequiresManagerReview = @event.RequiresManagerReview;
+        ProcessType = @event.ProcessType;
         EmployeeId = @event.EmployeeId;
         EmployeeName = @event.EmployeeName;
         EmployeeEmail = @event.EmployeeEmail;
@@ -1140,7 +1141,7 @@ public class QuestionnaireAssignment : AggregateRoot
         var newState = WorkflowStateMachine.DetermineSubmissionState(
             EmployeeSubmittedDate.HasValue,
             ManagerSubmittedDate.HasValue,
-            RequiresManagerReview);
+            ProcessType);
 
         if (newState != WorkflowState)
         {

@@ -86,7 +86,7 @@
         </RadzenText>
         <ul style="margin-top: 0.5rem; margin-bottom: 0;">
             <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted"><strong>@Assignment?.EmployeeName</strong> (@Assignment?.EmployeeEmail)</RadzenText></li>
-            @if (Assignment?.RequiresManagerReview == true)
+            @if (Assignment?.ProcessType.RequiresManagerReview() == true)
             {
                 <li><RadzenText TextStyle="TextStyle.Body2" Class="text-muted">Manager (if applicable)</RadzenText></li>
             }

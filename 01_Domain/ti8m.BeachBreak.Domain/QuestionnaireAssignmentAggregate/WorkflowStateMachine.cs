@@ -1,3 +1,4 @@
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
@@ -225,10 +226,10 @@ public class WorkflowStateMachine
     public static WorkflowState DetermineSubmissionState(
         bool isEmployeeSubmitted,
         bool isManagerSubmitted,
-        bool requiresManagerReview)
+        QuestionnaireProcessType processType)
     {
         // Simple workflow: Auto-finalize immediately if manager review not required
-        if (isEmployeeSubmitted && !requiresManagerReview)
+        if (isEmployeeSubmitted && !processType.RequiresManagerReview())
             return WorkflowState.Finalized;
 
         // Complex workflow: Both must submit before review

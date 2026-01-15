@@ -203,7 +203,7 @@ public class QuestionnaireTemplateQueryHandler :
             DescriptionGerman = readModel.DescriptionGerman,
             DescriptionEnglish = readModel.DescriptionEnglish,
             CategoryId = readModel.CategoryId,
-            RequiresManagerReview = readModel.RequiresManagerReview,
+            ProcessType = readModel.ProcessType,
             IsCustomizable = readModel.IsCustomizable,
             CreatedDate = readModel.CreatedDate,
             Status = readModel.Status,

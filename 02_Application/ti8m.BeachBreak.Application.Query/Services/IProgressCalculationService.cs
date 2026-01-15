@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
 namespace ti8m.BeachBreak.Application.Query.Services;
@@ -18,5 +19,5 @@ public interface IProgressCalculationService
     /// <returns>Progress calculation including employee, manager, and overall percentages</returns>
     ProgressCalculation Calculate(
         QuestionnaireTemplate template,
-        Dictionary<Guid, Dictionary<Domain.QuestionnaireTemplateAggregate.CompletionRole, QuestionResponseValue>> sectionResponses);
+        Dictionary<Guid, Dictionary<CompletionRole, QuestionResponseValue>> sectionResponses);
 }

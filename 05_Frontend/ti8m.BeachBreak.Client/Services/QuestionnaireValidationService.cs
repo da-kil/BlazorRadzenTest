@@ -35,10 +35,10 @@ public class QuestionnaireValidationService
             validationErrors.Add("Category is required");
         }
 
-        // Validate workflow configuration
-        if (!template.RequiresManagerReview)
+        // Validate workflow configuration based on process type
+        if (!template.ProcessType.RequiresManagerReview())
         {
-            // When manager review is not required, all sections must be employee-only
+            // When manager review is not required (Survey), all sections must be employee-only
             var nonEmployeeSections = template.Sections
                 .Where(s => s.CompletionRole != CompletionRole.Employee)
                 .ToList();
@@ -50,13 +50,25 @@ public class QuestionnaireValidationService
                     var sectionName = string.IsNullOrWhiteSpace(section.TitleEnglish)
                         ? $"Section {section.Order + 1}"
                         : section.TitleEnglish;
-                    validationErrors.Add($"'{sectionName}' must be completed by Employee only when manager review is not required");
+                    validationErrors.Add($"'{sectionName}' must be completed by Employee only for {template.ProcessType.GetDisplayName()} process type");
+                }
+            }
+
+            // Validate question types for surveys
+            foreach (var section in template.Sections)
+            {
+                if (!template.ProcessType.IsQuestionTypeAllowed(section.Type))
+                {
+                    var sectionName = string.IsNullOrWhiteSpace(section.TitleEnglish)
+                        ? $"Section {section.Order + 1}"
+                        : section.TitleEnglish;
+                    validationErrors.Add($"'{sectionName}': {template.ProcessType.GetQuestionTypeRestrictionMessage(section.Type)}");
                 }
             }
         }
         else
         {
-            // When manager review is required, at least one section must involve the manager
+            // When manager review is required (Performance Review), at least one section must involve the manager
             var managerSections = template.Sections
                 .Where(s => s.CompletionRole == CompletionRole.Manager || s.CompletionRole == CompletionRole.Both)
                 .ToList();

@@ -1,4 +1,5 @@
-﻿using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+﻿using ti8m.BeachBreak.Core.Domain;
+using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
@@ -6,7 +7,7 @@ public class QuestionnaireAssignment
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid TemplateId { get; set; }
-    public bool RequiresManagerReview { get; set; } = true;
+    public QuestionnaireProcessType ProcessType { get; set; } = QuestionnaireProcessType.PerformanceReview;
     public Guid EmployeeId { get; set; }
     public string EmployeeName { get; set; } = string.Empty;
     public string EmployeeEmail { get; set; } = string.Empty;

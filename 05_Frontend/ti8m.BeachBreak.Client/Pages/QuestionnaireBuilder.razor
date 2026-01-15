@@ -152,6 +152,9 @@
 
 @code {
     [Parameter] public Guid? TemplateId { get; set; }
+    [Parameter][SupplyParameterFromQuery] public string? Name { get; set; }
+    [Parameter][SupplyParameterFromQuery] public Guid? CategoryId { get; set; }
+    [Parameter][SupplyParameterFromQuery] public QuestionnaireProcessType? ProcessType { get; set; }
 
     private bool IsEditMode => TemplateId.HasValue;
     private bool isSaving = false;
@@ -219,15 +222,16 @@
                 // Load categories and initialize template
                 await LoadCategories();
 
-                // Initialize empty template with default values
+                // Initialize empty template with default values or values from dialog
                 State.Template = new QuestionnaireTemplate
                 {
                     Id = Guid.NewGuid(), // Generate ID upfront for efficient refetch after create
-                    NameEnglish = "",
+                    NameEnglish = Name ?? "",
                     NameGerman = "",
                     DescriptionEnglish = "",
                     DescriptionGerman = "",
-                    CategoryId = Guid.Empty
+                    CategoryId = CategoryId ?? Guid.Empty,
+                    ProcessType = ProcessType ?? QuestionnaireProcessType.PerformanceReview
                 };
             }
         }, "InitializeQuestionnaireBuilder");

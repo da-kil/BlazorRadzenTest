@@ -371,11 +371,32 @@
         "createdDate":  "2025-12-04T00:00:00.0000000+00:00"
     },
     {
+        "english":  "Link Feedback",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "buttons.link-feedback",
+        "german":  "Feedback verknüpfen",
+        "category":  "buttons"
+    },
+    {
+        "english":  "Linking...",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "buttons.linking",
+        "german":  "VerknÃ¼pfen...",
+        "category":  "buttons"
+    },
+    {
         "key":  "buttons.link-predecessor",
         "german":  "Vorgänger verknüpfen",
         "english":  "Link Predecessor",
         "category":  "buttons",
         "createdDate":  "2025-12-31T23:09:52.0616018+01:00"
+    },
+    {
+        "english":  "Link Selected",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "buttons.link-selected",
+        "german":  "Ausgewählte verknüpfen",
+        "category":  "buttons"
     },
     {
         "key":  "buttons.loading",
@@ -567,13 +588,6 @@
         "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
-        "key":  "buttons.sign-off-review",
-        "german":  "Review bestätigen",
-        "english":  "Sign-Off Review",
-        "category":  "buttons",
-        "createdDate":  "2026-01-03T12:00:00.0000000+00:00"
-    },
-    {
         "key":  "buttons.start-new-replay",
         "german":  "Neue Wiederholung starten",
         "english":  "Start New Replay",
@@ -663,6 +677,13 @@
         "english":  "Assigned By",
         "category":  "columns",
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "english":  "Avg Rating",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "columns.avg-rating",
+        "german":  "Durchschn. Bewertung",
+        "category":  "columns"
     },
     {
         "key":  "columns.category",
@@ -1246,6 +1267,13 @@
         "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
     },
     {
+        "english":  "Link Employee Feedback",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "dialogs.link-employee-feedback-title",
+        "german":  "Mitarbeiter-Feedback verknüpfen",
+        "category":  "dialogs"
+    },
+    {
         "key":  "dialogs.publish-template-confirm",
         "german":  "\u0027{0}\u0027 veröffentlichen? Sie wird für Feedback-Erfassung verfügbar.",
         "english":  "Publish \u0027{0}\u0027? It will become available for use in feedback recording.",
@@ -1356,6 +1384,55 @@
         "english":  "You do not have permission for this page",
         "category":  "errors",
         "createdDate":  "2025-12-31T23:09:02.4670944+01:00"
+    },
+    {
+        "key":  "feedback.dynamic-management-title",
+        "german":  "Dynamisches Feedback-Management",
+        "english":  "Dynamic Feedback Management",
+        "category":  "feedback",
+        "createdDate":  "2026-01-15T10:00:00.0000000+00:00"
+    },
+    {
+        "key":  "feedback.workflow-step-instances",
+        "german":  "Feedback ist spezifisch für einzelne Fragebogen-Instanzen",
+        "english":  "Feedback is specific to individual questionnaire instances",
+        "category":  "feedback",
+        "createdDate":  "2026-01-15T10:00:00.0000000+00:00"
+    },
+    {
+        "key":  "feedback.workflow-step-templates",
+        "german":  "Feedback-Vorlagen werden während der Initialisierung verknüpft",
+        "english":  "Feedback templates are linked during initialization",
+        "category":  "feedback",
+        "createdDate":  "2026-01-15T10:00:00.0000000+00:00"
+    },
+    {
+        "english":  "Customer",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "feedback-source.customer",
+        "german":  "Kunde",
+        "category":  "feedback-source"
+    },
+    {
+        "english":  "Peer",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "feedback-source.peer",
+        "german":  "Kollege",
+        "category":  "feedback-source"
+    },
+    {
+        "english":  "Project Colleague",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "feedback-source.project-colleague",
+        "german":  "Projektkollege",
+        "category":  "feedback-source"
+    },
+    {
+        "english":  "Unknown",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "feedback-source.unknown",
+        "german":  "Unbekannt",
+        "category":  "feedback-source"
     },
     {
         "key":  "filters.all-categories",
@@ -1827,6 +1904,13 @@
         "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
     },
     {
+        "key":  "labels.employee-answer",
+        "german":  "Mitarbeiter-Antwort",
+        "english":  "Employee\u0027s Answer",
+        "category":  "labels",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
         "key":  "labels.employees",
         "german":  "Mitarbeiter",
         "english":  "Employees",
@@ -1946,6 +2030,13 @@
         "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
     },
     {
+        "english":  "items rated",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "labels.items-rated",
+        "german":  "Elemente bewertet",
+        "category":  "labels"
+    },
+    {
         "key":  "labels.last-saved",
         "german":  "Zuletzt gespeichert:",
         "english":  "Last saved:",
@@ -1958,6 +2049,13 @@
         "english":  "Last Updated",
         "category":  "labels",
         "createdDate":  "2025-12-31T23:09:52.0626007+01:00"
+    },
+    {
+        "english":  "linked",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "labels.linked",
+        "german":  "verknüpft",
+        "category":  "labels"
     },
     {
         "key":  "labels.loading",
@@ -1979,6 +2077,13 @@
         "english":  "Manager",
         "category":  "labels",
         "createdDate":  "2025-12-31T23:09:02.4660898+01:00"
+    },
+    {
+        "key":  "labels.manager-answer",
+        "german":  "Manager-Antwort",
+        "english":  "Manager\u0027s Answer",
+        "category":  "labels",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
     },
     {
         "key":  "labels.name",
@@ -2014,6 +2119,13 @@
         "english":  "No questionnaires available",
         "category":  "labels",
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "english":  "No Ratings",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "labels.no-ratings",
+        "german":  "Keine Bewertungen",
+        "category":  "labels"
     },
     {
         "key":  "labels.not-available",
@@ -2464,6 +2576,13 @@
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
     },
     {
+        "key":  "messages.awaiting-employee-signoff",
+        "german":  "Warten auf Mitarbeiter-Abzeichnung.",
+        "english":  "Awaiting employee sign-off.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
         "key":  "messages.cancel-assignment-confirmation",
         "german":  "Sind Sie sicher, dass Sie die Zuweisung stornieren mÜchten für",
         "english":  "Are you sure you want to cancel the assignment for",
@@ -2539,6 +2658,13 @@
         "english":  "The employee will receive a notification to review and confirm the assessment outcomes",
         "category":  "messages",
         "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.employee-signed-off-can-finalize",
+        "german":  "Der Mitarbeiter hat abgezeichnet. Sie können den Fragebogen jetzt finalisieren.",
+        "english":  "The employee has signed off. You can now finalize the questionnaire.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
     },
     {
         "key":  "messages.error",
@@ -2758,11 +2884,39 @@
         "createdDate":  "2025-12-17T12:00:00.0000000+00:00"
     },
     {
+        "english":  "Feedback is linked during assignment initialization",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "messages.feedback-linked-during-initialization",
+        "german":  "Feedback wird während der Zuweisungsinitialisierung verknüpft",
+        "category":  "messages"
+    },
+    {
+        "english":  "Link existing feedback records to this questionnaire for reference during review.",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "messages.feedback-linking-explanation",
+        "german":  "Verknüpfen Sie vorhandene Feedback-Datensätze mit diesem Fragebogen, um sie während der Überprüfung zu referenzieren.",
+        "category":  "messages"
+    },
+    {
         "key":  "messages.feedback-not-found",
         "german":  "Feedback nicht gefunden",
         "english":  "Feedback not found",
         "category":  "messages",
         "createdDate":  "2025-12-23T12:00:00.0000000+00:00"
+    },
+    {
+        "english":  "No template configuration is required for Feedback questions.",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "messages.feedback-question-no-config-required",
+        "german":  "Für Feedback-Fragen ist keine Vorlagenkonfiguration erforderlich.",
+        "category":  "messages"
+    },
+    {
+        "english":  "During the initialization phase, managers link existing employee feedback records. The feedback is displayed read-only during the workflow.",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "messages.feedback-question-workflow-explanation",
+        "german":  "Während der Initialisierungsphase verknüpfen Manager vorhandene Mitarbeiter-Feedback-Datensätze. Das Feedback wird während des Workflows schreibgeschützt angezeigt.",
+        "category":  "messages"
     },
     {
         "key":  "messages.finalization-explanation",
@@ -2784,6 +2938,13 @@
         "english":  "Items are the specific questions or sections to be completed within each section. Assessments contain competency questions, text questions have input fields, and goals are added during the questionnaire process.",
         "category":  "messages",
         "createdDate":  "2025-12-14T12:00:00.0000000+00:00"
+    },
+    {
+        "english":  "Loading available feedback...",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "messages.loading-available-feedback",
+        "german":  "Verfügbares Feedback wird geladen...",
+        "category":  "messages"
     },
     {
         "key":  "messages.loading-dashboard",
@@ -2870,11 +3031,39 @@
         "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
+        "english":  "No feedback available to link",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "messages.no-feedback-available",
+        "german":  "Kein Feedback zum Verknüpfen verfügbar",
+        "category":  "messages"
+    },
+    {
         "key":  "messages.no-feedback-found",
         "german":  "Kein Feedback gefunden",
         "english":  "No feedback found",
         "category":  "messages",
         "createdDate":  "2025-12-15T12:00:00.0000000+00:00"
+    },
+    {
+        "english":  "No feedback linked to this questionnaire",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "messages.no-feedback-linked",
+        "german":  "Kein Feedback mit diesem Fragebogen verknüpft",
+        "category":  "messages"
+    },
+    {
+        "key":  "messages.no-further-changes-allowed",
+        "german":  "Keine weiteren Änderungen sind möglich. Sie können die finalen Antworten unten einsehen.",
+        "english":  "No further changes can be made. You can review the final responses below.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key":  "messages.no-manager-input-required",
+        "german":  "Dieser Fragebogen erfordert keine Manager-Eingaben. Sie können die Antworten des Mitarbeiters zu Überwachungszwecken einsehen.",
+        "english":  "This questionnaire does not require manager input. You can view the employee\u0027s responses for monitoring purposes.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
     },
     {
         "key":  "messages.no-notes-yet",
@@ -3017,11 +3206,39 @@
         "createdDate":  "2025-12-16T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.questionnaire-finalized-locked",
+        "german":  "Dieser Fragebogen wurde finalisiert und ist jetzt gesperrt.",
+        "english":  "This questionnaire has been finalized and is now locked.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key":  "messages.questionnaire-in-review-readonly",
+        "german":  "Dieser Fragebogen wird derzeit überprüft. Antworten sind während der Überprüfungsphase vorübergehend schreibgeschützt.",
+        "english":  "This questionnaire is currently in review. Responses are temporarily read-only during the review phase.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key":  "messages.questionnaire-readonly",
+        "german":  "Dieser Fragebogen ist jetzt schreibgeschützt.",
+        "english":  "This questionnaire is now read-only.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
         "key":  "messages.questionnaires-assigned-to-team",
         "german":  "Ihrem Team zugewiesene Fragebögen erscheinen hier.",
         "english":  "Questionnaires assigned to your team will appear here.",
         "category":  "messages",
         "createdDate":  "2025-12-07T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.questionnaire-submitted",
+        "german":  "Fragebogen eingereicht.",
+        "english":  "Questionnaire submitted.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
     },
     {
         "key":  "messages.rating-scale-explanation",
@@ -3031,11 +3248,25 @@
         "createdDate":  "2025-12-16T14:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.ready-to-finalize",
+        "german":  "Bereit zur Finalisierung.",
+        "english":  "Ready to finalize.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
         "key":  "messages.report-exported-successfully",
         "german":  "Bericht erfolgreich exportiert",
         "english":  "Report exported successfully",
         "category":  "messages",
         "createdDate":  "2025-12-31T23:09:52.0626007+01:00"
+    },
+    {
+        "key":  "messages.responses-submitted-readonly",
+        "german":  "Ihre Antworten wurden eingereicht und sind jetzt schreibgeschützt. Warten auf die nächste Phase des Workflows.",
+        "english":  "Your responses have been submitted and are now read-only. Waiting for the next phase of the workflow.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
     },
     {
         "key":  "messages.restore-not-implemented",
@@ -3073,11 +3304,39 @@
         "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
+        "key":  "messages.review-meeting-completed",
+        "german":  "Überprüfungsgespräch abgeschlossen.",
+        "english":  "Review meeting completed.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key":  "messages.review-meeting-completed-waiting-signoff",
+        "german":  "Das Überprüfungsgespräch wurde abgeschlossen. Warten auf Abzeichnung des Mitarbeiters vor der Finalisierung.",
+        "english":  "The review meeting has been completed. Waiting for the employee to sign off before finalization.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key":  "messages.review-meeting-finished-please-signoff",
+        "german":  "Das Überprüfungsgespräch wurde beendet. Bitte zeichnen Sie das Überprüfungsergebnis ab, um fortzufahren.",
+        "english":  "The review meeting has been finished. Please sign off on the review outcome to proceed.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
         "key":  "messages.review-meeting-finished-successfully",
         "german":  "Bewertungsgespräch erfolgreich abgeschlossen",
         "english":  "Review meeting finished successfully",
         "category":  "messages",
         "createdDate":  "2025-12-29T12:30:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.review-meeting-in-progress",
+        "german":  "Überprüfungsgespräch läuft.",
+        "english":  "Review meeting in progress.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
     },
     {
         "key":  "messages.review-meeting-progress-description",
@@ -3092,6 +3351,20 @@
         "english":  "You don\u0027t have permission to complete this review or it\u0027s not in the correct state.",
         "category":  "messages",
         "createdDate":  "2025-12-30T12:30:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.review-responses-no-changes",
+        "german":  "Sie könen Ihre Antworten unten einsehen, aber keine Änderungen vornehmen.",
+        "english":  "You can review your responses below, but cannot make changes.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key":  "messages.review-signed-off",
+        "german":  "Überprüfung abgezeichnet.",
+        "english":  "Review signed off.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
     },
     {
         "key":  "messages.review-signed-off-successfully",
@@ -3281,6 +3554,20 @@
         "english":  "You understand the final outcome of the review",
         "category":  "messages",
         "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
+    },
+    {
+        "key":  "messages.viewing-employee-questionnaire-readonly",
+        "german":  "Mitarbeiter-Fragebogen im schreibgeschützten Modus anzeigen.",
+        "english":  "Viewing employee questionnaire in read-only mode.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
+        "key":  "messages.waiting-final-confirmation",
+        "german":  "Sie haben die Überprüfung abgezeichnet. Warten auf finale Bestätigung zum Abschluss des Fragebogens.",
+        "english":  "You have signed off on the review. Waiting for final confirmation to complete the questionnaire.",
+        "category":  "messages",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
     },
     {
         "key":  "messages.workflow-manager-review-explanation",
@@ -3659,6 +3946,34 @@
         "english":  "Failed to save translation",
         "category":  "notifications",
         "createdDate":  "2025-12-06T12:00:00.0000000+00:00"
+    },
+    {
+        "english":  "{0} feedback record(s) linked successfully",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "notifications.feedback-linked-detail",
+        "german":  "{0} Feedback-Datensätze erfolgreich verknüpft",
+        "category":  "notifications"
+    },
+    {
+        "english":  "Feedback Linked",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "notifications.feedback-linked-title",
+        "german":  "Feedback verknüpft",
+        "category":  "notifications"
+    },
+    {
+        "english":  "Failed to link {0} feedback record(s)",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "notifications.feedback-link-failed-detail",
+        "german":  "{0} Feedback-Datensätze konnten nicht verknüpft werden",
+        "category":  "notifications"
+    },
+    {
+        "english":  "Link Failed",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "notifications.feedback-link-failed-title",
+        "german":  "Verknüpfung fehlgeschlagen",
+        "category":  "notifications"
     },
     {
         "key":  "notifications.info",
@@ -4396,6 +4711,13 @@
         "createdDate":  "2025-12-05T12:00:00.0000000+00:00"
     },
     {
+        "english":  "Employee Feedback",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "question-types.employee-feedback",
+        "german":  "Mitarbeiter-Feedback",
+        "category":  "question-types"
+    },
+    {
         "key":  "question-types.goal-achievement",
         "german":  "Zielerreichung",
         "english":  "Goal Achievement",
@@ -4592,6 +4914,13 @@
         "createdDate":  "2026-01-01T12:00:00.0000000+00:00"
     },
     {
+        "english":  "Comments",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "sections.comments",
+        "german":  "Kommentare",
+        "category":  "sections"
+    },
+    {
         "key":  "sections.discussion-notes",
         "german":  "Diskussionsnotizen",
         "english":  "Discussion Notes",
@@ -4662,6 +4991,13 @@
         "createdDate":  "2025-12-24T12:00:00.0000000+00:00"
     },
     {
+        "english":  "Link Employee Feedback",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "sections.link-employee-feedback",
+        "german":  "Mitarbeiter-Feedback verknüpfen",
+        "category":  "sections"
+    },
+    {
         "key":  "sections.managers-review-summary",
         "german":  "Manager-Überprüfungszusammenfassung",
         "english":  "Manager\u0027s Review Summary",
@@ -4681,6 +5017,13 @@
         "english":  "Provider Information",
         "category":  "sections",
         "createdDate":  "2025-12-18T12:00:00.0000000+00:00"
+    },
+    {
+        "english":  "Ratings",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "sections.ratings",
+        "german":  "Bewertungen",
+        "category":  "sections"
     },
     {
         "key":  "sections.response",
@@ -4704,11 +5047,25 @@
         "createdDate":  "2025-12-29T12:00:00.0000000+00:00"
     },
     {
+        "key":  "sections.section-counter",
+        "german":  "Abschnitt",
+        "english":  "Section",
+        "category":  "sections",
+        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+    },
+    {
         "key":  "sections.select-employees",
         "german":  "Mitarbeiter auswühlen",
         "english":  "Select Employees",
         "category":  "sections",
         "createdDate":  "2025-12-04T12:00:00.0000000+00:00"
+    },
+    {
+        "english":  "Select feedback records to link:",
+        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
+        "key":  "sections.select-feedback-to-link",
+        "german":  "Wählen Sie Feedback-Datensätze zum Verknüpfen aus:",
+        "category":  "sections"
     },
     {
         "key":  "sections.select-questionnaire",
@@ -5677,346 +6034,38 @@
         "createdDate":  "2025-12-31T23:09:02.4666031+01:00"
     },
     {
-        "key":  "messages.viewing-employee-questionnaire-readonly",
-        "german":  "Mitarbeiter-Fragebogen im schreibgeschützten Modus anzeigen.",
-        "english":  "Viewing employee questionnaire in read-only mode.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+        "key":  "process-types.performance-review",
+        "german":  "Leistungsbeurteilung",
+        "english":  "Performance Review",
+        "category":  "process-types",
+        "createdDate":  "2026-01-15T12:00:00.0000000+01:00"
     },
     {
-        "key":  "messages.no-manager-input-required",
-        "german":  "Dieser Fragebogen erfordert keine Manager-Eingaben. Sie können die Antworten des Mitarbeiters zu Überwachungszwecken einsehen.",
-        "english":  "This questionnaire does not require manager input. You can view the employee\u0027s responses for monitoring purposes.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+        "key":  "process-types.performance-review-description",
+        "german":  "Leistungsbeurteilung mit Managerbeteiligung und Zielverfolgung",
+        "english":  "Performance review with manager participation and goal tracking",
+        "category":  "process-types",
+        "createdDate":  "2026-01-15T12:00:00.0000000+01:00"
     },
     {
-        "key":  "messages.questionnaire-finalized-locked",
-        "german":  "Dieser Fragebogen wurde finalisiert und ist jetzt gesperrt.",
-        "english":  "This questionnaire has been finalized and is now locked.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+        "key":  "process-types.survey",
+        "german":  "Umfrage",
+        "english":  "Survey",
+        "category":  "process-types",
+        "createdDate":  "2026-01-15T12:00:00.0000000+01:00"
     },
     {
-        "key":  "messages.no-further-changes-allowed",
-        "german":  "Keine weiteren Änderungen sind möglich. Sie können die finalen Antworten unten einsehen.",
-        "english":  "No further changes can be made. You can review the final responses below.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
+        "key":  "process-types.survey-description",
+        "german":  "Einfache Umfrage ohne Managerbeteiligung",
+        "english":  "Simple survey without manager involvement",
+        "category":  "process-types",
+        "createdDate":  "2026-01-15T12:00:00.0000000+01:00"
     },
     {
-        "key":  "messages.awaiting-employee-signoff",
-        "german":  "Warten auf Mitarbeiter-Abzeichnung.",
-        "english":  "Awaiting employee sign-off.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.review-meeting-completed-waiting-signoff",
-        "german":  "Das Überprüfungsgespräch wurde abgeschlossen. Warten auf Abzeichnung des Mitarbeiters vor der Finalisierung.",
-        "english":  "The review meeting has been completed. Waiting for the employee to sign off before finalization.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.review-meeting-completed",
-        "german":  "Überprüfungsgespräch abgeschlossen.",
-        "english":  "Review meeting completed.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.review-meeting-finished-please-signoff",
-        "german":  "Das Überprüfungsgespräch wurde beendet. Bitte zeichnen Sie das Überprüfungsergebnis ab, um fortzufahren.",
-        "english":  "The review meeting has been finished. Please sign off on the review outcome to proceed.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.ready-to-finalize",
-        "german":  "Bereit zur Finalisierung.",
-        "english":  "Ready to finalize.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.employee-signed-off-can-finalize",
-        "german":  "Der Mitarbeiter hat abgezeichnet. Sie können den Fragebogen jetzt finalisieren.",
-        "english":  "The employee has signed off. You can now finalize the questionnaire.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.review-signed-off",
-        "german":  "Überprüfung abgezeichnet.",
-        "english":  "Review signed off.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.waiting-final-confirmation",
-        "german":  "Sie haben die Überprüfung abgezeichnet. Warten auf finale Bestätigung zum Abschluss des Fragebogens.",
-        "english":  "You have signed off on the review. Waiting for final confirmation to complete the questionnaire.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.review-meeting-in-progress",
-        "german":  "Überprüfungsgespräch läuft.",
-        "english":  "Review meeting in progress.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.questionnaire-in-review-readonly",
-        "german":  "Dieser Fragebogen wird derzeit überprüft. Antworten sind während der Überprüfungsphase vorübergehend schreibgeschützt.",
-        "english":  "This questionnaire is currently in review. Responses are temporarily read-only during the review phase.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.questionnaire-submitted",
-        "german":  "Fragebogen eingereicht.",
-        "english":  "Questionnaire submitted.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.responses-submitted-readonly",
-        "german":  "Ihre Antworten wurden eingereicht und sind jetzt schreibgeschützt. Warten auf die nächste Phase des Workflows.",
-        "english":  "Your responses have been submitted and are now read-only. Waiting for the next phase of the workflow.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.questionnaire-readonly",
-        "german":  "Dieser Fragebogen ist jetzt schreibgeschützt.",
-        "english":  "This questionnaire is now read-only.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "messages.review-responses-no-changes",
-        "german":  "Sie könen Ihre Antworten unten einsehen, aber keine Änderungen vornehmen.",
-        "english":  "You can review your responses below, but cannot make changes.",
-        "category":  "messages",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "labels.employee-answer",
-        "german":  "Mitarbeiter-Antwort",
-        "english":  "Employee\u0027s Answer",
+        "key":  "labels.process-type",
+        "german":  "Prozesstyp",
+        "english":  "Process Type",
         "category":  "labels",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "labels.manager-answer",
-        "german":  "Manager-Antwort",
-        "english":  "Manager\u0027s Answer",
-        "category":  "labels",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "key":  "sections.section-counter",
-        "german":  "Abschnitt",
-        "english":  "Section",
-        "category":  "sections",
-        "createdDate":  "2026-01-04T14:00:00.0000000+01:00"
-    },
-    {
-        "english":  "Employee Feedback",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "question-types.employee-feedback",
-        "german":  "Mitarbeiter-Feedback",
-        "category":  "question-types"
-    },
-    {
-        "english":  "No template configuration is required for Feedback questions.",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "messages.feedback-question-no-config-required",
-        "german":  "FÃ¼r Feedback-Fragen ist keine Vorlagenkonfiguration erforderlich.",
-        "category":  "messages"
-    },
-    {
-        "english":  "During the initialization phase, managers link existing employee feedback records. The feedback is displayed read-only during the workflow.",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "messages.feedback-question-workflow-explanation",
-        "german":  "WÃ¤hrend der Initialisierungsphase verknÃ¼pfen Manager vorhandene Mitarbeiter-Feedback-DatensÃ¤tze. Das Feedback wird wÃ¤hrend des Workflows schreibgeschÃ¼tzt angezeigt.",
-        "category":  "messages"
-    },
-    {
-        "english":  "Feedback is linked during assignment initialization",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "messages.feedback-linked-during-initialization",
-        "german":  "Feedback wird wÃ¤hrend der Zuweisungsinitialisierung verknÃ¼pft",
-        "category":  "messages"
-    },
-    {
-        "english":  "Link Employee Feedback",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "sections.link-employee-feedback",
-        "german":  "Mitarbeiter-Feedback verknÃ¼pfen",
-        "category":  "sections"
-    },
-    {
-        "english":  "Link existing feedback records to this questionnaire for reference during review.",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "messages.feedback-linking-explanation",
-        "german":  "VerknÃ¼pfen Sie vorhandene Feedback-DatensÃ¤tze mit diesem Fragebogen, um sie wÃ¤hrend der ÃœberprÃ¼fung zu referenzieren.",
-        "category":  "messages"
-    },
-    {
-        "english":  "Link Feedback",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "buttons.link-feedback",
-        "german":  "Feedback verknÃ¼pfen",
-        "category":  "buttons"
-    },
-    {
-        "english":  "Link Employee Feedback",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "dialogs.link-employee-feedback-title",
-        "german":  "Mitarbeiter-Feedback verknÃ¼pfen",
-        "category":  "dialogs"
-    },
-    {
-        "english":  "Loading available feedback...",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "messages.loading-available-feedback",
-        "german":  "VerfÃ¼gbares Feedback wird geladen...",
-        "category":  "messages"
-    },
-    {
-        "english":  "No feedback available to link",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "messages.no-feedback-available",
-        "german":  "Kein Feedback zum VerknÃ¼pfen verfÃ¼gbar",
-        "category":  "messages"
-    },
-    {
-        "english":  "Select feedback records to link:",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "sections.select-feedback-to-link",
-        "german":  "WÃ¤hlen Sie Feedback-DatensÃ¤tze zum VerknÃ¼pfen aus:",
-        "category":  "sections"
-    },
-    {
-        "english":  "Avg Rating",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "columns.avg-rating",
-        "german":  "Durchschn. Bewertung",
-        "category":  "columns"
-    },
-    {
-        "english":  "No Ratings",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "labels.no-ratings",
-        "german":  "Keine Bewertungen",
-        "category":  "labels"
-    },
-    {
-        "english":  "Link Selected",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "buttons.link-selected",
-        "german":  "AusgewÃ¤hlte verknÃ¼pfen",
-        "category":  "buttons"
-    },
-    {
-        "english":  "Linking...",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "buttons.linking",
-        "german":  "VerknÃ¼pfen...",
-        "category":  "buttons"
-    },
-    {
-        "english":  "Feedback Linked",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "notifications.feedback-linked-title",
-        "german":  "Feedback verknÃ¼pft",
-        "category":  "notifications"
-    },
-    {
-        "english":  "{0} feedback record(s) linked successfully",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "notifications.feedback-linked-detail",
-        "german":  "{0} Feedback-DatensÃ¤tze erfolgreich verknÃ¼pft",
-        "category":  "notifications"
-    },
-    {
-        "english":  "Link Failed",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "notifications.feedback-link-failed-title",
-        "german":  "VerknÃ¼pfung fehlgeschlagen",
-        "category":  "notifications"
-    },
-    {
-        "english":  "Failed to link {0} feedback record(s)",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "notifications.feedback-link-failed-detail",
-        "german":  "{0} Feedback-DatensÃ¤tze konnten nicht verknÃ¼pft werden",
-        "category":  "notifications"
-    },
-    {
-        "english":  "No feedback linked to this questionnaire",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "messages.no-feedback-linked",
-        "german":  "Kein Feedback mit diesem Fragebogen verknÃ¼pft",
-        "category":  "messages"
-    },
-    {
-        "english":  "Customer",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "feedback-source.customer",
-        "german":  "Kunde",
-        "category":  "feedback-source"
-    },
-    {
-        "english":  "Peer",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "feedback-source.peer",
-        "german":  "Kollege",
-        "category":  "feedback-source"
-    },
-    {
-        "english":  "Project Colleague",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "feedback-source.project-colleague",
-        "german":  "Projektkollege",
-        "category":  "feedback-source"
-    },
-    {
-        "english":  "Unknown",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "feedback-source.unknown",
-        "german":  "Unbekannt",
-        "category":  "feedback-source"
-    },
-    {
-        "english":  "linked",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "labels.linked",
-        "german":  "verknÃ¼pft",
-        "category":  "labels"
-    },
-    {
-        "english":  "items rated",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "labels.items-rated",
-        "german":  "Elemente bewertet",
-        "category":  "labels"
-    },
-    {
-        "english":  "Ratings",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "sections.ratings",
-        "german":  "Bewertungen",
-        "category":  "sections"
-    },
-    {
-        "english":  "Comments",
-        "createdDate":  "2026-01-14T00:00:00.0000000+00:00",
-        "key":  "sections.comments",
-        "german":  "Kommentare",
-        "category":  "sections"
+        "createdDate":  "2026-01-15T12:00:00.0000000+01:00"
     }
 ]

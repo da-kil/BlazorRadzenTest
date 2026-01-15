@@ -3,15 +3,15 @@ https://www.nngroup.com/ -> UX priciples from
 replay testen
 
 
-- Kundenfeedback erfassen
 - In Review -> Differenzen farblich markieren
 - Assignment -> Personen freischalten
 
 
 - evtl Fragen für Manager optional machen?
-- UI Translation
-- Multilingual
+
 - Mailversand
 
 
-check -> QuestionnairePageConfigurationFactory
+
+-> Controller refactern. nicht alles nötig wie Empl. Namensauflösung etc.
+-> CommandDispatcher code generation instead of reflection

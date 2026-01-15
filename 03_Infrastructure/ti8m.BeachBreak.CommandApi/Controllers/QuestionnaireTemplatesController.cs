@@ -47,7 +47,7 @@ public class QuestionnaireTemplatesController : BaseController
                 DescriptionEnglish = questionnaireTemplate.DescriptionEnglish,
                 NameGerman = questionnaireTemplate.NameGerman,
                 NameEnglish = questionnaireTemplate.NameEnglish,
-                RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
+                ProcessType = MapProcessType(questionnaireTemplate.ProcessType),
                 IsCustomizable = questionnaireTemplate.IsCustomizable,
                 AutoInitialize = questionnaireTemplate.AutoInitialize,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
@@ -92,7 +92,7 @@ public class QuestionnaireTemplatesController : BaseController
                 DescriptionEnglish = questionnaireTemplate.DescriptionEnglish,
                 NameGerman = questionnaireTemplate.NameGerman,
                 NameEnglish = questionnaireTemplate.NameEnglish,
-                RequiresManagerReview = questionnaireTemplate.RequiresManagerReview,
+                ProcessType = MapProcessType(questionnaireTemplate.ProcessType),
                 IsCustomizable = questionnaireTemplate.IsCustomizable,
                 AutoInitialize = questionnaireTemplate.AutoInitialize,
                 Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
@@ -266,5 +266,12 @@ public class QuestionnaireTemplatesController : BaseController
         QuestionType.Assessment => QuestionTypeDto.Assessment,
         QuestionType.Goal => QuestionTypeDto.Goal,
         _ => throw new ArgumentOutOfRangeException(nameof(questionType), questionType, "Unknown question type")
+    };
+
+    private static Core.Domain.QuestionnaireProcessType MapProcessType(QuestionnaireProcessType dtoProcessType) => dtoProcessType switch
+    {
+        QuestionnaireProcessType.PerformanceReview => Core.Domain.QuestionnaireProcessType.PerformanceReview,
+        QuestionnaireProcessType.Survey => Core.Domain.QuestionnaireProcessType.Survey,
+        _ => throw new ArgumentOutOfRangeException(nameof(dtoProcessType), dtoProcessType, "Unknown process type")
     };
 }

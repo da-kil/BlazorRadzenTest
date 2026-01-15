@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Mappers;
 using ti8m.BeachBreak.Application.Command.Repositories;
 using ti8m.BeachBreak.Application.Command.Models;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 

@@ -1,4 +1,5 @@
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
+using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 
 namespace ti8m.BeachBreak.Application.Query.Projections;
@@ -11,7 +12,7 @@ public class QuestionnaireTemplateReadModel
     public string DescriptionGerman { get; set; } = string.Empty;
     public string DescriptionEnglish { get; set; } = string.Empty;
     public Guid CategoryId { get; set; }
-    public bool RequiresManagerReview { get; set; } = true;
+    public QuestionnaireProcessType ProcessType { get; set; } = QuestionnaireProcessType.PerformanceReview;
     public bool IsCustomizable { get; set; } = false;
     public bool AutoInitialize { get; set; } = false;
     public TemplateStatus Status { get; set; } = TemplateStatus.Draft;
@@ -34,7 +35,7 @@ public class QuestionnaireTemplateReadModel
         DescriptionGerman = @event.Description.German;
         DescriptionEnglish = @event.Description.English;
         CategoryId = @event.CategoryId;
-        RequiresManagerReview = @event.RequiresManagerReview;
+        ProcessType = @event.ProcessType;
         IsCustomizable = @event.IsCustomizable;
         AutoInitialize = @event.AutoInitialize;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
@@ -60,9 +61,9 @@ public class QuestionnaireTemplateReadModel
         CategoryId = @event.CategoryId;
     }
 
-    public void Apply(QuestionnaireTemplateReviewRequirementChanged @event)
+    public void Apply(QuestionnaireTemplateProcessTypeChanged @event)
     {
-        RequiresManagerReview = @event.RequiresManagerReview;
+        ProcessType = @event.ProcessType;
     }
 
     public void Apply(QuestionnaireTemplateCustomizabilityChanged @event)
@@ -119,7 +120,7 @@ public class QuestionnaireTemplateReadModel
         DescriptionGerman = @event.Description.German;
         DescriptionEnglish = @event.Description.English;
         CategoryId = @event.CategoryId;
-        RequiresManagerReview = @event.RequiresManagerReview;
+        ProcessType = @event.ProcessType;
         IsCustomizable = @event.IsCustomizable;
         AutoInitialize = @event.AutoInitialize;
         Sections = MapDomainSectionsToQuerySections(@event.Sections);
