@@ -6,6 +6,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Aspire.Npgsql" Version="9.4.2" />
     <PackageReference Include="Marten" Version="8.11.0" />
@@ -16,5 +20,8 @@
     <ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Command\ti8m.BeachBreak.Application.Command.csproj" />
     <ProjectReference Include="..\..\02_Application\ti8m.BeachBreak.Application.Query\ti8m.BeachBreak.Application.Query.csproj" />
     <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Infrastructure\ti8m.BeachBreak.Core.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.SourceGenerators\ti8m.BeachBreak.Core.SourceGenerators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
   </ItemGroup>
 </Project>

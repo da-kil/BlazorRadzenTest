@@ -5,7 +5,9 @@
   "DescriptionEnglish": "",
   "DescriptionGerman": "",
   "CategoryId": "4BA94BB8-5437-4A5B-8450-86411191D53C",
-  "RequiresManagerReview": false,
+  "ProcessType": 1,
+  "IsCustomizable": false,
+  "AutoInitialize": false,
   "Status": 0,
   "PublishedDate": null,
   "LastPublishedDate": null,
@@ -18,7 +20,6 @@
       "DescriptionEnglish": "",
       "DescriptionGerman": "",
       "Order": 0,
-      "IsRequired": true,
       "CompletionRole": 0,
       "Questions": [
         {
@@ -68,7 +69,6 @@
       "DescriptionEnglish": "",
       "DescriptionGerman": "",
       "Order": 1,
-      "IsRequired": true,
       "CompletionRole": 0,
       "Questions": [
         {
