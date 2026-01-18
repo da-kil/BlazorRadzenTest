@@ -1,10 +1,13 @@
 using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate.ValueObjects;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
 
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
 /// <summary>
 /// DTO for feedback provider information including project context.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class FeedbackProviderInfoDto
 {
     /// <summary>

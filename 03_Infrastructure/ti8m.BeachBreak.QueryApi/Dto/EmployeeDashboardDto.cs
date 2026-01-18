@@ -1,5 +1,9 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
+
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class EmployeeDashboardDto
 {
     public Guid EmployeeId { get; set; }
@@ -17,6 +21,7 @@ public class EmployeeDashboardDto
     public DateTime LastUpdated { get; set; }
 }
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class UrgentAssignmentDto
 {
     public Guid AssignmentId { get; set; }

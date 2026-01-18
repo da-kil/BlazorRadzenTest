@@ -1,3 +1,6 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
+
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
 /// <summary>
@@ -5,6 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 /// This is the intermediate step after manager finishes review meeting
 /// but before final employee confirmation.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class SignOffReviewDto
 {
     /// <summary>

@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
 
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
@@ -6,6 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 /// DTO for finishing a review meeting.
 /// Manager uses this to complete the review meeting phase.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class FinishReviewMeetingDto
 {
     /// <summary>

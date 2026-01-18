@@ -1,5 +1,9 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
+
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class ManagerDashboardDto
 {
     public Guid ManagerId { get; set; }
@@ -21,6 +25,7 @@ public class ManagerDashboardDto
     public DateTime LastUpdated { get; set; }
 }
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class TeamMemberMetricsDto
 {
     public Guid EmployeeId { get; set; }
@@ -33,6 +38,7 @@ public class TeamMemberMetricsDto
     public bool HasOverdueItems { get; set; } = false;
 }
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class TeamUrgentAssignmentDto
 {
     public Guid AssignmentId { get; set; }

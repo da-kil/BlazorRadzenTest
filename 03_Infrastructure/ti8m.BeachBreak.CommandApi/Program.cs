@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 using ti8m.BeachBreak.CommandApi.Authorization;
+using ti8m.BeachBreak.CommandApi.MinimalApi;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Infrastructure.Marten;
@@ -64,8 +65,6 @@ namespace ti8m.BeachBreak.CommandApi
 
             // Register authorization cache invalidation service
             builder.Services.AddScoped<IAuthorizationCacheInvalidationService, AuthorizationCacheInvalidationService>();
-
-            builder.Services.AddControllers();
 
             // Configure CORS for frontend connection
             builder.Services.AddCors(options =>
@@ -146,11 +145,15 @@ namespace ti8m.BeachBreak.CommandApi
             builder.Services.AddScoped<Application.Command.Services.IEmployeeRoleService, Services.EmployeeRoleService>();
 
             // Configure JSON serialization to use PascalCase (C# naming conventions)
+            // Also configure AOT-compatible JSON context for minimal APIs
             builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
             {
                 options.SerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
                 options.SerializerOptions.AllowTrailingCommas = true; // More lenient parsing
                 options.SerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
+
+                // Register AOT-compatible JSON serialization context
+                options.SerializerOptions.TypeInfoResolverChain.Insert(0, ti8m.BeachBreak.CommandApi.Serialization.CommandApiJsonSerializerContext.Default);
             });
 
             builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
@@ -158,11 +161,27 @@ namespace ti8m.BeachBreak.CommandApi
                 options.JsonSerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
                 options.JsonSerializerOptions.AllowTrailingCommas = true; // More lenient parsing
                 options.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Skip;
+
+                // Register AOT-compatible JSON serialization context
+                options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, ti8m.BeachBreak.CommandApi.Serialization.CommandApiJsonSerializerContext.Default);
             });
 
             var app = builder.Build();
 
             app.MapDefaultEndpoints();
+
+            // Map AOT-compatible minimal API endpoints
+            app.MapHealthEndpoints();
+            app.MapAuthorizationCacheEndpoints();
+            app.MapReplayEndpoints();
+            app.MapTranslationEndpoints();
+            app.MapCategoryEndpoints();
+            app.MapOrganizationEndpoints();
+            app.MapQuestionnaireTemplateEndpoints();
+            app.MapEmployeeFeedbackEndpoints();
+            app.MapEmployeeEndpoints();
+            app.MapResponseEndpoints();
+            app.MapAssignmentEndpoints(); // Note: Partial implementation - 47 endpoints total
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -179,12 +198,7 @@ namespace ti8m.BeachBreak.CommandApi
             app.UseRouting()
                     .UseAuthentication()
                     .UseAuthorization()
-                    .UseDefaultContextMiddlewares()
-                    .UseEndpoints(endpoints =>
-                    {
-                        endpoints
-                            .MapControllers();
-                    });
+                    .UseDefaultContextMiddlewares();
 
             app.Run();
         }

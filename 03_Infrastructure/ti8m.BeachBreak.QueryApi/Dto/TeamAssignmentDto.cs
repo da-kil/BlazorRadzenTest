@@ -1,5 +1,7 @@
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
@@ -7,6 +9,7 @@ namespace ti8m.BeachBreak.QueryApi.Dto;
 /// DTO for team assignments with enriched template metadata.
 /// Used by managers to view their team's questionnaire assignments.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class TeamAssignmentDto
 {
     public Guid Id { get; set; }

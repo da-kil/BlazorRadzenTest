@@ -1,5 +1,7 @@
 using System.Text.Json.Serialization;
 using ti8m.BeachBreak.Application.Query.Models;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
@@ -10,6 +12,7 @@ namespace ti8m.BeachBreak.QueryApi.Dto;
 [JsonDerivedType(typeof(AssessmentResponseDataDto), typeDiscriminator: 0)]
 [JsonDerivedType(typeof(TextResponseDataDto), typeDiscriminator: 1)]
 [JsonDerivedType(typeof(GoalResponseDataDto), typeDiscriminator: 2)]
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public abstract class QuestionResponseDataDto
 {
 }
@@ -17,6 +20,7 @@ public abstract class QuestionResponseDataDto
 /// <summary>
 /// Response data for text-based questions.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class TextResponseDataDto : QuestionResponseDataDto
 {
     public List<string> TextSections { get; set; } = new();
@@ -25,6 +29,7 @@ public class TextResponseDataDto : QuestionResponseDataDto
 /// <summary>
 /// Response data for assessment questions with evaluation ratings.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class AssessmentResponseDataDto : QuestionResponseDataDto
 {
     public Dictionary<string, EvaluationRatingDto> Evaluations { get; set; } = new();
@@ -33,6 +38,7 @@ public class AssessmentResponseDataDto : QuestionResponseDataDto
 /// <summary>
 /// Response data for goal questions.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class GoalResponseDataDto : QuestionResponseDataDto
 {
     public List<GoalDataDto> Goals { get; set; } = new();
@@ -43,6 +49,7 @@ public class GoalResponseDataDto : QuestionResponseDataDto
 /// <summary>
 /// Evaluation rating data for assessments.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class EvaluationRatingDto
 {
     public int Rating { get; set; }
@@ -53,6 +60,7 @@ public class EvaluationRatingDto
 /// Goal data for goal responses.
 /// Must match frontend GoalDataDto structure exactly for compatibility.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class GoalDataDto
 {
     public Guid GoalId { get; set; }
@@ -67,6 +75,7 @@ public class GoalDataDto
 /// <summary>
 /// Predecessor rating data for goal responses.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class PredecessorRatingDto
 {
     public Guid SourceGoalId { get; set; }

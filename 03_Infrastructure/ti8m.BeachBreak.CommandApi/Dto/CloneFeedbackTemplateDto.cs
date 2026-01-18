@@ -1,4 +1,6 @@
 using ti8m.BeachBreak.Application.Command.Commands.EmployeeFeedbackCommands;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
 
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
@@ -6,6 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 /// DTO for cloning an existing feedback template.
 /// Creates a new template as a copy with optional name prefix.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class CloneFeedbackTemplateDto
 {
     /// <summary>

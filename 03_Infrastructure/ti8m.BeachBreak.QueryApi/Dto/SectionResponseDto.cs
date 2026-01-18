@@ -1,9 +1,13 @@
-﻿namespace ti8m.BeachBreak.QueryApi.Dto;
+﻿using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
+
+namespace ti8m.BeachBreak.QueryApi.Dto;
 
 /// <summary>
 /// Represents responses for a single questionnaire section.
 /// Uses ResponseRole enum for type-safe dictionary keys.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class SectionResponseDto
 {
     public Guid SectionId { get; set; }

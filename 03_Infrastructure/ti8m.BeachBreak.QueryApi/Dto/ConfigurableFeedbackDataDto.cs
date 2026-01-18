@@ -1,8 +1,12 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
+
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
 /// <summary>
 /// DTO for configurable feedback data with ratings and comments.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class ConfigurableFeedbackDataDto
 {
     /// <summary>
@@ -21,6 +25,7 @@ public class ConfigurableFeedbackDataDto
 /// <summary>
 /// DTO for individual feedback rating with optional comment.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class FeedbackRatingDto
 {
     /// <summary>

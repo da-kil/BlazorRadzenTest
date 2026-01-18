@@ -1,8 +1,11 @@
 ﻿using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class QuestionSectionDto
 {
     public Guid Id { get; set; } = Guid.NewGuid();

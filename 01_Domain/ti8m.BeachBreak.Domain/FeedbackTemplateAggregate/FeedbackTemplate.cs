@@ -7,7 +7,7 @@ using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Domain.FeedbackTemplateAggregate;
 
-public class FeedbackTemplate : AggregateRoot
+public partial class FeedbackTemplate : AggregateRoot
 {
     public Translation Name { get; private set; } = new("", "");
     public Translation Description { get; private set; } = new("", "");

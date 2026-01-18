@@ -1,8 +1,12 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
+
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
 /// <summary>
 /// Request DTO for cloning a questionnaire template.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class CloneTemplateRequestDto
 {
     /// <summary>

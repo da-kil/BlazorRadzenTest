@@ -1,8 +1,12 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
+
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
 /// <summary>
 /// DTO for updating existing employee feedback.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class UpdateEmployeeFeedbackDto
 {
     /// <summary>

@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
 
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
@@ -6,6 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 /// DTO for employee to confirm the review outcome.
 /// Employee cannot reject but can add comments about the review.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class ConfirmReviewOutcomeDto
 {
     /// <summary>

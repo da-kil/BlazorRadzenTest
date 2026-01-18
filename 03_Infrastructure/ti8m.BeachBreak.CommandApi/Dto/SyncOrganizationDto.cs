@@ -1,5 +1,9 @@
-﻿namespace ti8m.BeachBreak.CommandApi.Dto;
+﻿using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
 
+namespace ti8m.BeachBreak.CommandApi.Dto;
+
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class SyncOrganizationDto
 {
     public required string Number { get; set; }

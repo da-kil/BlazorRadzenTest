@@ -2,6 +2,8 @@ using ti8m.BeachBreak.Application.Command.Commands.EmployeeFeedbackCommands;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain;
 using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
 
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
@@ -9,6 +11,7 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 /// DTO for updating an existing feedback template.
 /// Only draft templates can be updated.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class UpdateFeedbackTemplateDto
 {
     /// <summary>

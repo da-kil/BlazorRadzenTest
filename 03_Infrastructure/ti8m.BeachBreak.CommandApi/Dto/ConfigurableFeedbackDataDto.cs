@@ -1,10 +1,13 @@
 using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate.ValueObjects;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
 
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
 /// <summary>
 /// DTO for configurable feedback data with ratings and comments.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class ConfigurableFeedbackDataDto
 {
     /// <summary>
@@ -51,6 +54,7 @@ public class ConfigurableFeedbackDataDto
 /// <summary>
 /// DTO for individual feedback rating with optional comment.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class FeedbackRatingDto
 {
     /// <summary>

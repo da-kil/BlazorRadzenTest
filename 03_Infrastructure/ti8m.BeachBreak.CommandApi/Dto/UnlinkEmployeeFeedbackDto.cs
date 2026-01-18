@@ -1,5 +1,9 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
+
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public record UnlinkEmployeeFeedbackDto
 {
     public Guid QuestionId { get; init; }

@@ -5,7 +5,7 @@ using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Services;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
-public class QuestionnaireTemplate : AggregateRoot
+public partial class QuestionnaireTemplate : AggregateRoot
 {
     public Translation Name { get; private set; } = new("", "");
     public Translation Description { get; private set; } = new("", "");

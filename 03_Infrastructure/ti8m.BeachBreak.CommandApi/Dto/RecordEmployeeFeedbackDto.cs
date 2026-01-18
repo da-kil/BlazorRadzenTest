@@ -1,4 +1,6 @@
 using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.CommandApi.Serialization;
 
 namespace ti8m.BeachBreak.CommandApi.Dto;
 
@@ -6,6 +8,7 @@ namespace ti8m.BeachBreak.CommandApi.Dto;
 /// DTO for recording new employee feedback from external sources.
 /// Supports Customer, Peer, and Project Colleague feedback with configurable criteria.
 /// </summary>
+[RegisterJsonSerialization(typeof(CommandApiJsonSerializerContext))]
 public class RecordEmployeeFeedbackDto
 {
     /// <summary>

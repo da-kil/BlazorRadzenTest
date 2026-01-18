@@ -8,7 +8,7 @@ using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate.Events;
 
 namespace ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 
-public class QuestionnaireAssignment : AggregateRoot
+public partial class QuestionnaireAssignment : AggregateRoot
 {
     public Guid TemplateId { get; private set; }
     public QuestionnaireProcessType ProcessType { get; private set; } = QuestionnaireProcessType.PerformanceReview;

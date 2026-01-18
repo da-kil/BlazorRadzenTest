@@ -4,7 +4,9 @@ using System.Security.Claims;
 using ti8m.BeachBreak.Application.Command.Models;
 using ti8m.BeachBreak.Application.Command.Services;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
+using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.CommandApi.Mappers;
+using ti8m.BeachBreak.CommandApi.Serialization;
 using ti8m.BeachBreak.Core.Infrastructure;
 using DomainApplicationRole = ti8m.BeachBreak.Domain.EmployeeAggregate.ApplicationRole;
 
@@ -57,7 +59,9 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
         {
             logger.LogAuthorizationFailedNoUserId();
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new { error = "User ID not found in claims" });
+            await context.Response.WriteAsJsonAsync(
+                new ErrorResponse("User ID not found in claims"),
+                CommandApiJsonSerializerContext.Default.ErrorResponse);
             return;
         }
 
@@ -70,7 +74,9 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
         {
             logger.LogAuthorizationFailedEmployeeNotFound(userId.Value);
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new { error = "Employee not found or access denied" });
+            await context.Response.WriteAsJsonAsync(
+                new ErrorResponse("Employee not found or access denied"),
+                CommandApiJsonSerializerContext.Default.ErrorResponse);
             return;
         }
 
@@ -148,12 +154,12 @@ public class RoleBasedAuthorizationMiddlewareResultHandler : IAuthorizationMiddl
                 context.Request.Path);
 
             context.Response.StatusCode = StatusCodes.Status403Forbidden;
-            await context.Response.WriteAsJsonAsync(new
-            {
-                error = "Insufficient permissions",
-                requiredPolicies = requiredPolicyNames,
-                requiredRoles = requiredRoleNames
-            });
+            await context.Response.WriteAsJsonAsync(
+                new InsufficientPermissionsResponse(
+                    "Insufficient permissions",
+                    requiredPolicyNames.ToArray(),
+                    requiredRoleNames.ToArray()),
+                CommandApiJsonSerializerContext.Default.InsufficientPermissionsResponse);
             return;
         }
 

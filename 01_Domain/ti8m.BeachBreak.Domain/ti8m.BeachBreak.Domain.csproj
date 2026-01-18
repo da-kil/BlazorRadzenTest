@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Domain\ti8m.BeachBreak.Core.Domain.csproj" />
+    <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.SourceGenerators\ti8m.BeachBreak.Core.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>

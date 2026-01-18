@@ -965,6 +965,10 @@ public class AssignmentsController : BaseController
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            // Manual validation for AOT compatibility (replaces MinLength attribute)
+            if (!reopenDto.IsReopenReasonValid)
+                return BadRequest("Reopen reason must be at least 10 characters");
+
             // Get user ID from authenticated user context
             if (!Guid.TryParse(userContext.Id, out var userId))
             {

@@ -1,8 +1,12 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
+
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
 /// <summary>
 /// Query parameters for filtering employee feedback.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class FeedbackQueryParams
 {
     /// <summary>

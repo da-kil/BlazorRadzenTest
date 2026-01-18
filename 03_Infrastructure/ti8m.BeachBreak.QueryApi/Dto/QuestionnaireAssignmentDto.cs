@@ -1,8 +1,11 @@
 ﻿using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class QuestionnaireAssignmentDto
 {
     public Guid Id { get; set; } = Guid.NewGuid();

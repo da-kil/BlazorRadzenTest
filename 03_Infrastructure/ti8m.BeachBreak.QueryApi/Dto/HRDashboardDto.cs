@@ -1,5 +1,9 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
+
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class HRDashboardDto
 {
     // Organization-wide Metrics
@@ -31,6 +35,7 @@ public class HRDashboardDto
     public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
 }
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class OrganizationMetricsDto
 {
     public int OrganizationNumber { get; set; }
@@ -44,6 +49,7 @@ public class OrganizationMetricsDto
     public double CompletionRate { get; set; } = 0.0;
 }
 
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class ManagerOverviewDto
 {
     public Guid ManagerId { get; set; }

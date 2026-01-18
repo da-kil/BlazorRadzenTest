@@ -8,6 +8,8 @@ using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Infrastructure.Marten;
 using ti8m.BeachBreak.QueryApi.Authorization;
+using ti8m.BeachBreak.QueryApi.MinimalApi;
+using ti8m.BeachBreak.QueryApi.Serialization;
 
 namespace ti8m.BeachBreak.QueryApi;
 
@@ -56,8 +58,6 @@ public class Program
         // Register employee role service for cache-through role retrieval
         builder.Services.AddScoped<Application.Query.Services.IEmployeeRoleService, Services.EmployeeRoleService>();
 
-        builder.Services.AddControllers();
-
         builder.Services.AddSwaggerGen(option =>
         {
             option.SwaggerDoc("v1", new OpenApiInfo { Title = "Azure Entra Editor", Version = "v1" });
@@ -101,12 +101,18 @@ public class Program
         {
             options.SerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
             options.SerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase enforcement
+
+            // Register AOT-compatible JSON serialization context
+            options.SerializerOptions.TypeInfoResolverChain.Insert(0, QueryApiJsonSerializerContext.Default);
         });
 
         builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
         {
             options.JsonSerializerOptions.PropertyNamingPolicy = null; // null means PascalCase
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = false; // Strict PascalCase enforcement
+
+            // Register AOT-compatible JSON serialization context
+            options.JsonSerializerOptions.TypeInfoResolverChain.Insert(0, QueryApiJsonSerializerContext.Default);
         });
 
         var app = builder.Build();
@@ -123,15 +129,29 @@ public class Program
 
         app.UseHttpsRedirection();
 
-        app.UseRouting()
-                .UseAuthentication()
-                .UseAuthorization()
-                .UseDefaultContextMiddlewares()
-                .UseEndpoints(endpoints =>
-                {
-                    endpoints
-                        .MapControllers();
-                });
+        app.UseRouting();
+        app.UseAuthentication();
+        app.UseAuthorization();
+        app.UseDefaultContextMiddlewares();
+
+        // Phase 1: Low Complexity Minimal APIs (8 endpoints)
+        app.MapCategoryEndpoints();
+        app.MapAnalyticsEndpoints();
+        app.MapOrganizationEndpoints();
+        app.MapReplayEndpoints();
+
+        // Phase 2: Medium Complexity Minimal APIs (19 endpoints)
+        app.MapAuthEndpoints();
+        app.MapHREndpoints();
+        app.MapTranslationEndpoints();
+        app.MapEmployeeFeedbackEndpoints();
+        app.MapQuestionnaireTemplateEndpoints();
+
+        // Phase 3: High Complexity Minimal APIs (32 endpoints)
+        app.MapManagersEndpoints();
+        app.MapAssignmentsEndpoints();
+        app.MapEmployeesEndpoints();
+        app.MapResponsesEndpoints();
 
         app.Run();
     }

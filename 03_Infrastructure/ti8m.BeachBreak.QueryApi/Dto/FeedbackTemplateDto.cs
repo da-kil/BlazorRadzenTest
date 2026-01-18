@@ -1,6 +1,8 @@
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
@@ -8,6 +10,7 @@ namespace ti8m.BeachBreak.QueryApi.Dto;
 /// DTO for feedback template query responses.
 /// Maps from FeedbackTemplateReadModel.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class FeedbackTemplateDto
 {
     public Guid Id { get; set; }

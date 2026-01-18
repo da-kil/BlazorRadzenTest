@@ -1,5 +1,9 @@
-﻿namespace ti8m.BeachBreak.QueryApi.Dto;
+﻿using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
 
+namespace ti8m.BeachBreak.QueryApi.Dto;
+
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class QuestionnaireResponseDto
 {
     public Guid Id { get; set; } = Guid.NewGuid();

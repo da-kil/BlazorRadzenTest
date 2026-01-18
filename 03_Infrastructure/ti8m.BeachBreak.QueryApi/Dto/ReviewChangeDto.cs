@@ -1,9 +1,13 @@
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
+
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
 /// <summary>
 /// DTO representing a change made during a review meeting.
 /// Shows what was edited, who edited it, and when.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class ReviewChangeDto
 {
     public Guid Id { get; set; }

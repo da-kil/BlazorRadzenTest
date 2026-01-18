@@ -14,6 +14,7 @@
 		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
 		<PackageReference Include="Microsoft.Identity.Web" Version="3.14.1" />
 		<PackageReference Include="Microsoft.Identity.Web.DownstreamApi" Version="3.14.1" />
+		<PackageReference Include="ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes" Version="1.0.1.48" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
 	</ItemGroup>
 
@@ -23,5 +24,12 @@
     <ProjectReference Include="..\..\Aspire\ti8m.BeachBreak.ServiceDefaults\ti8m.BeachBreak.ServiceDefaults.csproj" />
     <ProjectReference Include="..\ti8m.BeachBreak.Infrastructure.Marten\ti8m.BeachBreak.Infrastructure.Marten.csproj" />
   </ItemGroup>
+
+  <!-- Auto-generate JSON serializer registrations before build -->
+  <Target Name="GenerateJsonSerializerRegistrations" BeforeTargets="BeforeCompile">
+    <Message Text="Generating JSON serializer registrations for QueryApi..." Importance="normal" />
+    <Exec Command="json-serializer-context-registrations-code-generator -s &quot;$(MSBuildProjectDirectory)&quot; -o &quot;$(MSBuildProjectDirectory)\Serialization&quot;"
+          ContinueOnError="false" />
+  </Target>
 
 </Project>

@@ -3,7 +3,7 @@ using ti8m.BeachBreak.Domain.EmployeeAggregate.Events;
 
 namespace ti8m.BeachBreak.Domain.EmployeeAggregate;
 
-public class Employee : AggregateRoot
+public partial class Employee : AggregateRoot
 {
     public string EmployeeId { get; private set; }
     public string FirstName { get; private set; }

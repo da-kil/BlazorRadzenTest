@@ -1,6 +1,8 @@
 using System.Text.Json;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate.ValueObjects;
+using ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes;
+using ti8m.BeachBreak.QueryApi.Serialization;
 
 namespace ti8m.BeachBreak.QueryApi.Dto;
 
@@ -8,6 +10,7 @@ namespace ti8m.BeachBreak.QueryApi.Dto;
 /// DTO for employee feedback summary display.
 /// Contains key information for listing and review purposes.
 /// </summary>
+[RegisterJsonSerialization(typeof(QueryApiJsonSerializerContext))]
 public class EmployeeFeedbackSummaryDto
 {
     /// <summary>
