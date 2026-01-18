@@ -316,7 +316,7 @@ The AOT implementation has been **successfully tested and validated** with nativ
 
 ### Test Environment
 - **Platform**: Windows 11 with Visual Studio Insiders (v18)
-- **Target Framework**: .NET 9.0
+- **Target Framework**: .NET 10.0
 - **AOT Compiler**: Microsoft.DotNet.ILCompiler 9.0.12
 - **C++ Build Tools**: MSVC (Visual Studio Build Tools)
 
@@ -655,7 +655,7 @@ AOT compilation requires platform linkers to create native executables:
 
 Generated files are located in:
 ```
-obj/Debug/net9.0/generated/
+obj/Debug/net10.0/generated/
   ti8m.BeachBreak.Core.SourceGenerators/
     AggregateEventDispatcherGenerator/
       QuestionnaireTemplate.EventDispatcher.g.cs

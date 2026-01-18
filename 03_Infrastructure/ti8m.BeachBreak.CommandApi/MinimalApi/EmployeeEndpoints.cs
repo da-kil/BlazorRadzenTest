@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
@@ -10,6 +11,7 @@ using ti8m.BeachBreak.CommandApi.Mappers;
 using ti8m.BeachBreak.CommandApi.Services;
 using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Core.Infrastructure;
 using CommandResult = ti8m.BeachBreak.Application.Command.Commands.Result;
 
 namespace ti8m.BeachBreak.CommandApi.MinimalApi;
@@ -181,7 +183,7 @@ public static class EmployeeEndpoints
             ICommandDispatcher commandDispatcher,
             IQueryDispatcher queryDispatcher,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
@@ -203,12 +205,12 @@ public static class EmployeeEndpoints
                     }
                     else
                     {
-                        logger.LogInformation("User {UserId} not found in employee database, treating as Admin (likely service principal)", userId);
+                        logger.LogUserNotFoundTreatedAsAdmin(userId);
                     }
                 }
                 else
                 {
-                    logger.LogInformation("No user ID in context, treating as Admin (likely service principal)");
+                    logger.LogNoUserIdTreatedAsAdmin();
                 }
 
                 var domainRequesterRole = ApplicationRoleMapper.MapToDomain(commandRequesterRole);
@@ -259,7 +261,7 @@ public static class EmployeeEndpoints
             UserContext userContext,
             QuestionResponseMappingService mappingService,
             SectionMappingService sectionMappingService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -267,19 +269,18 @@ public static class EmployeeEndpoints
                 // Get employee ID from authenticated user context
                 if (!Guid.TryParse(userContext.Id, out var employeeId))
                 {
-                    logger.LogWarning("SaveMyResponse failed: Unable to parse user ID from context");
+                    logger.LogSaveResponseFailedNoUserId();
                     return Results.Problem(
                         title: "User identification failed",
                         detail: "User ID not found in authentication context",
                         statusCode: 401);
                 }
 
-                logger.LogInformation("Received SaveMyResponse request for authenticated EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
-                    employeeId, assignmentId);
+                logger.LogSaveResponseReceived(employeeId, assignmentId);
 
                 if (request?.Responses == null)
                 {
-                    logger.LogWarning("SaveMyResponse failed: Responses are null");
+                    logger.LogSaveResponseFailedNullResponses();
                     return Results.BadRequest("Responses are required");
                 }
 
@@ -299,14 +300,12 @@ public static class EmployeeEndpoints
 
                 if (result.Succeeded)
                 {
-                    logger.LogInformation("SaveMyResponse completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}, ResponseId: {ResponseId}",
-                        employeeId, assignmentId, result.Payload);
+                    logger.LogSaveResponseCompleted(employeeId, assignmentId, result.Payload);
                     return Results.Ok(result.Payload);
                 }
                 else
                 {
-                    logger.LogWarning("SaveMyResponse failed for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}, Error: {ErrorMessage}",
-                        employeeId, assignmentId, result.Message);
+                    logger.LogSaveResponseFailed(employeeId, assignmentId, result.Message);
                     return Results.Problem(
                         title: "Save response failed",
                         detail: result.Message,
@@ -335,7 +334,7 @@ public static class EmployeeEndpoints
             Guid assignmentId,
             ICommandDispatcher commandDispatcher,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -343,15 +342,14 @@ public static class EmployeeEndpoints
                 // Get employee ID from authenticated user context
                 if (!Guid.TryParse(userContext.Id, out var employeeId))
                 {
-                    logger.LogWarning("SubmitMyResponse failed: Unable to parse user ID from context");
+                    logger.LogSubmitResponseFailedNoUserId();
                     return Results.Problem(
                         title: "User identification failed",
                         detail: "User ID not found in authentication context",
                         statusCode: 401);
                 }
 
-                logger.LogInformation("Received SubmitMyResponse request for authenticated EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
-                    employeeId, assignmentId);
+                logger.LogSubmitResponseReceived(employeeId, assignmentId);
 
                 var command = new SubmitEmployeeResponseCommand(
                     employeeId: employeeId,
@@ -362,14 +360,12 @@ public static class EmployeeEndpoints
 
                 if (result.Succeeded)
                 {
-                    logger.LogInformation("SubmitMyResponse completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
-                        employeeId, assignmentId);
+                    logger.LogSubmitResponseCompleted(employeeId, assignmentId);
                     return Results.Ok("Response submitted successfully");
                 }
                 else
                 {
-                    logger.LogWarning("SubmitMyResponse failed for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}, Error: {ErrorMessage}",
-                        employeeId, assignmentId, result.Message);
+                    logger.LogSubmitResponseFailed(employeeId, assignmentId, result.Message);
                     return Results.Problem(
                         title: "Submit response failed",
                         detail: result.Message,
@@ -399,18 +395,17 @@ public static class EmployeeEndpoints
             ChangeEmployeeLanguageRequest request,
             ICommandDispatcher commandDispatcher,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
             {
-                logger.LogInformation("Received ChangeEmployeeLanguage request for EmployeeId: {EmployeeId}, Language: {Language}",
-                    id, request.Language);
+                logger.LogChangeLanguageReceived(id, request.Language.ToString());
 
                 // Get current user ID for authorization
                 if (!Guid.TryParse(userContext.Id, out var userId))
                 {
-                    logger.LogWarning("ChangeEmployeeLanguage failed: Unable to parse user ID from context");
+                    logger.LogChangeLanguageFailedNoUserId();
                     return Results.Problem(
                         title: "User identification failed",
                         detail: "User ID not found in authentication context",
@@ -421,8 +416,7 @@ public static class EmployeeEndpoints
                 // TODO: Add elevated role authorization for HR/Admin to change other employees' languages
                 if (userId != id)
                 {
-                    logger.LogWarning("User {UserId} attempted to change language for employee {EmployeeId} without authorization",
-                        userId, id);
+                    logger.LogChangeLanguageUnauthorized(userId, id);
                     return Results.Problem(
                         title: "Authorization failed",
                         detail: "You can only change your own language preference",
@@ -445,8 +439,7 @@ public static class EmployeeEndpoints
 
                 var result = await commandDispatcher.SendAsync(command, cancellationToken);
 
-                logger.LogInformation("ChangeEmployeeLanguage command result for EmployeeId {EmployeeId}: Success={Success}",
-                    id, result.Succeeded);
+                logger.LogChangeLanguageResult(id, result.Succeeded);
 
                 if (result.Succeeded)
                 {
@@ -462,7 +455,7 @@ public static class EmployeeEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error changing language for employee {EmployeeId}", id);
+                logger.LogChangeLanguageError(id, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while changing the employee language",

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
@@ -11,21 +11,19 @@
   </PropertyGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Aspire.Npgsql" Version="9.4.2" />
-	  <PackageReference Include="Marten" Version="8.11.0" />
-	  <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.2.0" />
-	  <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.0" />
-	  <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.9" />
-	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.9" />
-	  <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+	  <PackageReference Include="Aspire.Npgsql" Version="13.1.0" />
+	  <PackageReference Include="Marten" Version="8.17.0" />
+	  <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.3.9" />
+	  <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.3.9" />
+	  <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.2" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+	  <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.2" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\01_Domain\ti8m.BeachBreak.Domain\ti8m.BeachBreak.Domain.csproj" />
     <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.Infrastructure\ti8m.BeachBreak.Core.Infrastructure.csproj" />
-    <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.SourceGenerators\ti8m.BeachBreak.Core.SourceGenerators.csproj"
-                      OutputItemType="Analyzer"
-                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\04_Core\ti8m.BeachBreak.Core.SourceGenerators\ti8m.BeachBreak.Core.SourceGenerators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
 </Project>

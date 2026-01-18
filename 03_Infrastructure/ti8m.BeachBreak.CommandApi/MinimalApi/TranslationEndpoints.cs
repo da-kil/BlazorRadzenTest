@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Services;
+using ti8m.BeachBreak.Core.Infrastructure;
 
 namespace ti8m.BeachBreak.CommandApi.MinimalApi;
 
@@ -20,7 +22,7 @@ public static class TranslationEndpoints
         translationGroup.MapPost("/", async (
             UpsertTranslationRequest request,
             IUITranslationService translationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -33,7 +35,7 @@ public static class TranslationEndpoints
                         statusCode: 400);
                 }
 
-                logger.LogInformation("Upserting translation for key: {Key}", request.Key);
+                logger.LogUpsertTranslationRequest(request.Key);
 
                 var translation = await translationService.UpsertTranslationAsync(
                     request.Key,
@@ -42,13 +44,13 @@ public static class TranslationEndpoints
                     request.Category,
                     cancellationToken);
 
-                logger.LogInformation("Successfully upserted translation for key: {Key}", request.Key);
+                logger.LogUpsertTranslationSuccess(request.Key);
 
                 return Results.Ok($"Translation '{request.Key}' upserted successfully");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error upserting translation for key: {Key}", request.Key);
+                logger.LogUpsertTranslationError(ex, request.Key);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "Failed to upsert translation",
@@ -66,7 +68,7 @@ public static class TranslationEndpoints
         translationGroup.MapDelete("/{key}", async (
             string key,
             IUITranslationService translationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -79,24 +81,24 @@ public static class TranslationEndpoints
                         statusCode: 400);
                 }
 
-                logger.LogInformation("Deleting translation for key: {Key}", key);
+                logger.LogDeleteTranslationRequest(key);
 
                 var success = await translationService.DeleteTranslationAsync(key, cancellationToken);
 
                 if (success)
                 {
-                    logger.LogInformation("Successfully deleted translation for key: {Key}", key);
+                    logger.LogDeleteTranslationSuccess(key);
                     return Results.Ok("Translation deleted successfully");
                 }
                 else
                 {
-                    logger.LogWarning("Translation not found for deletion: {Key}", key);
+                    logger.LogDeleteTranslationNotFound(key);
                     return Results.NotFound("Translation not found");
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error deleting translation for key: {Key}", key);
+                logger.LogDeleteTranslationError(ex, key);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "Failed to delete translation",
@@ -115,7 +117,7 @@ public static class TranslationEndpoints
         translationGroup.MapPost("/bulk-import", async (
             List<UpsertTranslationRequest> translations,
             IUITranslationService translationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -128,7 +130,7 @@ public static class TranslationEndpoints
                         statusCode: 400);
                 }
 
-                logger.LogInformation("Bulk importing {Count} translations requested by admin", translations.Count);
+                logger.LogBulkImportTranslationsRequest(translations.Count);
 
                 // Convert requests to UITranslation objects
                 var uiTranslations = translations.Select(t => new Application.Query.Models.UITranslation
@@ -142,13 +144,13 @@ public static class TranslationEndpoints
 
                 var importCount = await translationService.BulkImportTranslationsAsync(uiTranslations, cancellationToken);
 
-                logger.LogInformation("Successfully bulk imported {Count} translations", importCount);
+                logger.LogBulkImportTranslationsSuccess(importCount);
 
                 return Results.Ok(importCount);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error bulk importing translations");
+                logger.LogBulkImportTranslationsError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "Failed to bulk import translations",
@@ -165,20 +167,20 @@ public static class TranslationEndpoints
         // Invalidate cache
         translationGroup.MapPost("/invalidate-cache", (
             IUITranslationService translationService,
-            ILogger logger) =>
+            [FromServices] ILogger logger) =>
         {
             try
             {
-                logger.LogInformation("Translation cache invalidation requested by admin");
+                logger.LogInvalidateCacheRequest();
                 translationService.InvalidateCache();
 
-                logger.LogInformation("Successfully invalidated translation cache");
+                logger.LogInvalidateCacheSuccess();
 
                 return Results.Ok("Translation cache invalidated successfully");
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error invalidating translation cache");
+                logger.LogInvalidateCacheError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "Failed to invalidate translation cache",

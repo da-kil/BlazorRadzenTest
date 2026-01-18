@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.OrganizationQueries;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.QueryApi.MinimalApi;
@@ -22,15 +23,14 @@ public static class OrganizationEndpoints
         // Get all organizations
         organizationGroup.MapGet("/", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             bool includeDeleted = false,
             bool includeIgnored = false,
             Guid? parentId = null,
             string? managerId = null,
             CancellationToken cancellationToken = default) =>
         {
-            logger.LogInformation("Received GetAllOrganizations request - IncludeDeleted: {IncludeDeleted}, IncludeIgnored: {IncludeIgnored}, ParentId: {ParentId}, ManagerId: {ManagerId}",
-                includeDeleted, includeIgnored, parentId, managerId);
+            logger.LogGetAllOrganizationsRequest(includeDeleted, includeIgnored, parentId, managerId);
 
             try
             {
@@ -47,16 +47,16 @@ public static class OrganizationEndpoints
                 if (result.Succeeded)
                 {
                     var organizationDtos = result.Payload!.Select(MapToDto);
-                    logger.LogInformation("Successfully returned {Count} organizations", organizationDtos.Count());
+                    logger.LogGetAllOrganizationsSuccess(organizationDtos.Count());
                     return Results.Ok(organizationDtos);
                 }
 
-                logger.LogWarning("Failed to retrieve organizations: {ErrorMessage}", result.Message);
+                logger.LogGetAllOrganizationsFailed(result.Message ?? "Unknown error");
                 return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unexpected error occurred while processing GetAllOrganizations request");
+                logger.LogGetAllOrganizationsError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An unexpected error occurred",
@@ -73,10 +73,10 @@ public static class OrganizationEndpoints
         organizationGroup.MapGet("/{id:guid}", async (
             Guid id,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
-            logger.LogInformation("Received GetOrganizationById request for Id: {Id}", id);
+            logger.LogGetOrganizationByIdRequest(id);
 
             try
             {
@@ -87,21 +87,21 @@ public static class OrganizationEndpoints
                 {
                     if (result.Payload == null)
                     {
-                        logger.LogInformation("Organization with Id {Id} not found", id);
+                        logger.LogOrganizationByIdNotFound(id);
                         return Results.NotFound();
                     }
 
                     var organizationDto = MapToDto(result.Payload);
-                    logger.LogInformation("Successfully returned organization with Id: {Id}", id);
+                    logger.LogGetOrganizationByIdSuccess(id);
                     return Results.Ok(organizationDto);
                 }
 
-                logger.LogWarning("Failed to retrieve organization with Id {Id}: {ErrorMessage}", id, result.Message);
+                logger.LogGetOrganizationByIdFailed(id, result.Message ?? "Unknown error");
                 return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unexpected error occurred while processing GetOrganizationById request for Id: {Id}", id);
+                logger.LogGetOrganizationByIdError(ex, id);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An unexpected error occurred",
@@ -119,10 +119,10 @@ public static class OrganizationEndpoints
         organizationGroup.MapGet("/by-number/{number}", async (
             string number,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
-            logger.LogInformation("Received GetOrganizationByNumber request for Number: {Number}", number);
+            logger.LogGetOrganizationByNumberRequest(number);
 
             try
             {
@@ -133,21 +133,21 @@ public static class OrganizationEndpoints
                 {
                     if (result.Payload == null)
                     {
-                        logger.LogInformation("Organization with Number {Number} not found", number);
+                        logger.LogOrganizationByNumberNotFound(number);
                         return Results.NotFound();
                     }
 
                     var organizationDto = MapToDto(result.Payload);
-                    logger.LogInformation("Successfully returned organization with Number: {Number}", number);
+                    logger.LogGetOrganizationByNumberSuccess(number);
                     return Results.Ok(organizationDto);
                 }
 
-                logger.LogWarning("Failed to retrieve organization with Number {Number}: {ErrorMessage}", number, result.Message);
+                logger.LogGetOrganizationByNumberFailed(number, result.Message ?? "Unknown error");
                 return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Unexpected error occurred while processing GetOrganizationByNumber request for Number: {Number}", number);
+                logger.LogGetOrganizationByNumberError(ex, number);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An unexpected error occurred",

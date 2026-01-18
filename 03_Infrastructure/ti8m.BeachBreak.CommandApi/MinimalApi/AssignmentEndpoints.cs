@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 using ti8m.BeachBreak.Application.Command.Services;
@@ -6,6 +7,7 @@ using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi.MinimalApi;
@@ -30,7 +32,7 @@ public static class AssignmentEndpoints
             ICommandDispatcher commandDispatcher,
             IQueryDispatcher queryDispatcher,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -58,7 +60,7 @@ public static class AssignmentEndpoints
                     if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
                     {
                         assignedBy = $"{employeeResult.Payload.FirstName} {employeeResult.Payload.LastName}";
-                        logger.LogInformation("Set AssignedBy to {AssignedBy} from user context {UserId}", assignedBy, userId);
+                        logger.LogSetAssignedByFromUserContext(assignedBy, userId);
                     }
                 }
 
@@ -94,7 +96,7 @@ public static class AssignmentEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating bulk assignments");
+                logger.LogBulkAssignmentsCreationError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while creating bulk assignments",
@@ -116,7 +118,7 @@ public static class AssignmentEndpoints
             ICommandDispatcher commandDispatcher,
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -141,12 +143,11 @@ public static class AssignmentEndpoints
                 try
                 {
                     managerId = await authorizationService.GetCurrentManagerIdAsync();
-                    logger.LogInformation("Manager {ManagerId} attempting to create {Count} assignments",
-                        managerId, bulkAssignmentDto.EmployeeAssignments.Count);
+                    logger.LogManagerBulkAssignmentsAttempt(managerId, bulkAssignmentDto.EmployeeAssignments.Count);
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    logger.LogWarning("CreateManagerBulkAssignments failed: {Message}", ex.Message);
+                    logger.LogManagerBulkAssignmentsFailed(ex.Message);
                     return Results.Problem(
                         title: "Authorization failed",
                         detail: ex.Message,
@@ -159,7 +160,7 @@ public static class AssignmentEndpoints
 
                 if (!areAllDirectReports)
                 {
-                    logger.LogWarning("Manager {ManagerId} attempted to assign to employees who are not direct reports", managerId);
+                    logger.LogManagerAssignNonDirectReports(managerId);
                     return Results.Forbid();
                 }
 
@@ -169,7 +170,7 @@ public static class AssignmentEndpoints
                 if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
                 {
                     assignedBy = $"{employeeResult.Payload.FirstName} {employeeResult.Payload.LastName}";
-                    logger.LogInformation("Set AssignedBy to {AssignedBy} for manager {ManagerId}", assignedBy, managerId);
+                    logger.LogSetAssignedByForManagerName(assignedBy, managerId);
                 }
 
                 var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
@@ -192,8 +193,7 @@ public static class AssignmentEndpoints
 
                 if (result.Succeeded)
                 {
-                    logger.LogInformation("Manager {ManagerId} successfully created {Count} assignments",
-                        managerId, bulkAssignmentDto.EmployeeAssignments.Count);
+                    logger.LogManagerCreateAssignmentsSuccess(managerId, bulkAssignmentDto.EmployeeAssignments.Count);
                     return Results.Ok("Manager bulk assignments created successfully");
                 }
                 else
@@ -206,7 +206,7 @@ public static class AssignmentEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating manager bulk assignments");
+                logger.LogCreateManagerBulkAssignmentsError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while creating bulk assignments",
@@ -226,7 +226,7 @@ public static class AssignmentEndpoints
         assignmentGroup.MapPost("/{assignmentId:guid}/start", async (
             Guid assignmentId,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -248,7 +248,7 @@ public static class AssignmentEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error starting assignment work");
+                logger.LogStartAssignmentWorkError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while starting assignment work",
@@ -268,7 +268,7 @@ public static class AssignmentEndpoints
         assignmentGroup.MapPost("/{assignmentId:guid}/complete", async (
             Guid assignmentId,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -290,7 +290,7 @@ public static class AssignmentEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error completing assignment work");
+                logger.LogCompleteAssignmentWorkError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while completing assignment work",

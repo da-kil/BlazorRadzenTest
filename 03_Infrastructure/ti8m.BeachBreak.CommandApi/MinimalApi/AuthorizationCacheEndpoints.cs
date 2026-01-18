@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
@@ -22,7 +23,7 @@ public static class AuthorizationCacheEndpoints
         cacheGroup.MapDelete("/{employeeId:guid}", async (
             Guid employeeId,
             IAuthorizationCacheService cacheService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             HttpContext httpContext,
             CancellationToken cancellationToken) =>
         {
@@ -37,7 +38,7 @@ public static class AuthorizationCacheEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error invalidating authorization cache for employee {EmployeeId}", employeeId);
+                logger.LogInvalidateAuthorizationCacheError(ex, employeeId);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while invalidating the authorization cache.",

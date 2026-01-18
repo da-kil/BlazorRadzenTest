@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.Core.Domain;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.QueryApi.MinimalApi;
@@ -23,7 +24,7 @@ public static class QuestionnaireTemplateEndpoints
         // Get all templates (HR only)
         templateGroup.MapGet("/", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -42,7 +43,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving questionnaire templates");
+                logger.LogRetrieveTemplatesError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving templates",
@@ -60,7 +61,7 @@ public static class QuestionnaireTemplateEndpoints
         templateGroup.MapGet("/{id:guid}", async (
             Guid id,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -83,7 +84,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving template {TemplateId}", id);
+                logger.LogRetrieveTemplateError(ex, id);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the template",
@@ -100,7 +101,7 @@ public static class QuestionnaireTemplateEndpoints
         // Get published templates (HR only)
         templateGroup.MapGet("/published", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -119,7 +120,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving published questionnaire templates");
+                logger.LogRetrievePublishedTemplatesError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving published templates",
@@ -136,7 +137,7 @@ public static class QuestionnaireTemplateEndpoints
         // Get draft templates (HR only)
         templateGroup.MapGet("/drafts", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -155,7 +156,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving draft questionnaire templates");
+                logger.LogRetrieveDraftTemplatesError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving draft templates",
@@ -172,7 +173,7 @@ public static class QuestionnaireTemplateEndpoints
         // Get archived templates (HR only)
         templateGroup.MapGet("/archived", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -191,7 +192,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving archived questionnaire templates");
+                logger.LogRetrieveArchivedTemplatesError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving archived templates",
@@ -208,7 +209,7 @@ public static class QuestionnaireTemplateEndpoints
         // Get assignable templates (HR only)
         templateGroup.MapGet("/assignable", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -227,7 +228,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving assignable questionnaire templates");
+                logger.LogRetrieveAssignableTemplatesError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving assignable templates",

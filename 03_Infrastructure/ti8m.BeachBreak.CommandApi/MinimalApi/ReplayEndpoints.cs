@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.ProjectionReplayCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi.MinimalApi;
@@ -25,7 +27,7 @@ public static class ReplayEndpoints
             StartProjectionReplayRequestDto request,
             ICommandDispatcher commandDispatcher,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -43,7 +45,7 @@ public static class ReplayEndpoints
 
                 if (!Guid.TryParse(userContext.Id, out var initiatedBy))
                 {
-                    logger.LogWarning("StartReplay failed: Unable to parse user ID from context");
+                    logger.LogStartReplayInvalidUserId();
                     return Results.Problem(
                         title: "User identification failed",
                         detail: "Unable to parse user ID from context",
@@ -95,14 +97,14 @@ public static class ReplayEndpoints
             Guid replayId,
             ICommandDispatcher commandDispatcher,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
             {
                 if (!Guid.TryParse(userContext.Id, out var cancelledBy))
                 {
-                    logger.LogWarning("CancelReplay failed: Unable to parse user ID from context");
+                    logger.LogCancelReplayInvalidUserId();
                     return Results.Problem(
                         title: "User identification failed",
                         detail: "Unable to parse user ID from context",

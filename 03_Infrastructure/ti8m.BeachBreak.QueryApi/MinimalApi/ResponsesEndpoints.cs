@@ -1,4 +1,5 @@
 using Marten;
+using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries;
@@ -9,6 +10,7 @@ using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.Application.Query.Queries.ResponseQueries;
 using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Domain;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
@@ -34,7 +36,7 @@ public static class ResponsesEndpoints
         // Get all responses
         responsesGroup.MapGet("/", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -46,7 +48,7 @@ public static class ResponsesEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving responses");
+                logger.LogResponsesRetrievalError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving responses",
@@ -63,7 +65,7 @@ public static class ResponsesEndpoints
         responsesGroup.MapGet("/{id:guid}", async (
             Guid id,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -78,7 +80,7 @@ public static class ResponsesEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving response {ResponseId}", id);
+                logger.LogResponseRetrievalError(id, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the response",
@@ -97,7 +99,7 @@ public static class ResponsesEndpoints
             Guid assignmentId,
             IQueryDispatcher queryDispatcher,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -111,7 +113,7 @@ public static class ResponsesEndpoints
                 // Get current user's role for filtering
                 if (!Guid.TryParse(userContext.Id, out var userId))
                 {
-                    logger.LogWarning("GetResponseByAssignment: Unable to parse user ID from context");
+                    logger.LogResponseByAssignmentUserIdParsingFailed();
                     return Results.Unauthorized();
                 }
 
@@ -120,7 +122,7 @@ public static class ResponsesEndpoints
 
                 if (userRoleResult == null)
                 {
-                    logger.LogWarning("GetResponseByAssignment: User role not found for user {UserId}", userId);
+                    logger.LogResponseByAssignmentUserRoleNotFound(userId);
                     return Results.Forbid();
                 }
 
@@ -139,7 +141,7 @@ public static class ResponsesEndpoints
 
                 if (templateResult?.Succeeded != true || templateResult.Payload == null)
                 {
-                    logger.LogWarning("GetResponseByAssignment: Template not found for assignment {AssignmentId}", assignmentId);
+                    logger.LogResponseByAssignmentTemplateNotFound(assignmentId);
                     return Results.NotFound("Template not found");
                 }
 
@@ -155,7 +157,7 @@ public static class ResponsesEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving response for assignment {AssignmentId}", assignmentId);
+                logger.LogResponseByAssignmentRetrievalError(assignmentId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the response",
@@ -173,10 +175,10 @@ public static class ResponsesEndpoints
         responsesGroup.MapGet("/employee/{employeeId:guid}/assignments", async (
             Guid employeeId,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
-            logger.LogInformation("Received GetEmployeeAssignments request for EmployeeId: {EmployeeId}", employeeId);
+            logger.LogEmployeeAssignmentsRequest(employeeId);
 
             try
             {
@@ -184,8 +186,7 @@ public static class ResponsesEndpoints
 
                 if (result.Succeeded && result.Payload != null)
                 {
-                    logger.LogInformation("GetEmployeeAssignments completed successfully for EmployeeId: {EmployeeId}, returned {Count} assignments",
-                        employeeId, result.Payload.Count());
+                    logger.LogEmployeeAssignmentsCompleted(employeeId, result.Payload.Count());
 
                     var assignments = result.Payload.Select(assignment => new QuestionnaireAssignmentDto
                     {
@@ -218,8 +219,7 @@ public static class ResponsesEndpoints
                 }
                 else if (!result.Succeeded)
                 {
-                    logger.LogWarning("GetEmployeeAssignments failed for EmployeeId: {EmployeeId}, Error: {ErrorMessage}",
-                        employeeId, result.Message);
+                    logger.LogEmployeeAssignmentsError(employeeId, result.Message);
                     return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
                 }
 
@@ -227,7 +227,7 @@ public static class ResponsesEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving assignments for employee {EmployeeId}", employeeId);
+                logger.LogEmployeeAssignmentsRetrievalError(employeeId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving employee assignments",
@@ -247,11 +247,10 @@ public static class ResponsesEndpoints
             IQueryDispatcher queryDispatcher,
             IProgressCalculationService progressCalculationService,
             IDocumentStore documentStore,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
-            logger.LogInformation("Received GetEmployeeResponse request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
-                employeeId, assignmentId);
+            logger.LogEmployeeResponseRequest(employeeId, assignmentId);
 
             try
             {
@@ -261,16 +260,14 @@ public static class ResponsesEndpoints
 
                 if (response == null)
                 {
-                    logger.LogInformation("Response not found for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
-                        employeeId, assignmentId);
+                    logger.LogEmployeeResponseNotFound(employeeId, assignmentId);
                     return Results.NotFound($"Response not found for assignment {assignmentId} and employee {employeeId}");
                 }
 
                 // Validate this response belongs to the requesting employee (authorization check)
                 if (response.EmployeeId != employeeId)
                 {
-                    logger.LogWarning("Employee {EmployeeId} attempted to access response for Assignment {AssignmentId} belonging to {ActualEmployeeId}",
-                        employeeId, assignmentId, response.EmployeeId);
+                    logger.LogEmployeeResponseAccessViolation(employeeId, assignmentId, response.EmployeeId);
                     return Results.Forbid();
                 }
 
@@ -300,7 +297,7 @@ public static class ResponsesEndpoints
                 }
                 catch (Exception ex)
                 {
-                    logger.LogWarning(ex, "Failed to calculate progress for assignment {AssignmentId}, defaulting to 0", assignmentId);
+                    logger.LogProgressCalculationFailed(ex, assignmentId);
                 }
 
                 // Map to DTO with employee-specific section responses
@@ -319,8 +316,7 @@ public static class ResponsesEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving response for assignment {AssignmentId} and employee {EmployeeId}",
-                    assignmentId, employeeId);
+                logger.LogEmployeeResponseRetrievalError(assignmentId, employeeId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the employee response",
@@ -339,10 +335,10 @@ public static class ResponsesEndpoints
         responsesGroup.MapGet("/employee/{employeeId:guid}/progress", async (
             Guid employeeId,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
-            logger.LogInformation("Received GetEmployeeAssignmentProgress request for EmployeeId: {EmployeeId}", employeeId);
+            logger.LogEmployeeAssignmentProgressRequest(employeeId);
 
             try
             {
@@ -370,7 +366,7 @@ public static class ResponsesEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving assignment progress for employee {EmployeeId}", employeeId);
+                logger.LogEmployeeAssignmentProgressRetrievalError(employeeId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving employee assignment progress",

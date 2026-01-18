@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.CategoryCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.Core.Infrastructure;
 
 namespace ti8m.BeachBreak.CommandApi.MinimalApi;
 
@@ -22,7 +24,7 @@ public static class CategoryEndpoints
         categoryGroup.MapPost("/", async (
             CategoryDto categoryDto,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -65,7 +67,7 @@ public static class CategoryEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating category");
+                logger.LogCategoryCreationError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while creating the category",
@@ -84,7 +86,7 @@ public static class CategoryEndpoints
             Guid id,
             CategoryDto categoryDto,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -127,7 +129,7 @@ public static class CategoryEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error updating category {CategoryId}", id);
+                logger.LogCategoryUpdateError(id, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while updating the category",
@@ -145,7 +147,7 @@ public static class CategoryEndpoints
         categoryGroup.MapDelete("/{id:guid}", async (
             Guid id,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -166,7 +168,7 @@ public static class CategoryEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error deactivating category {CategoryId}", id);
+                logger.LogCategoryDeactivationError(id, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while deactivating the category",

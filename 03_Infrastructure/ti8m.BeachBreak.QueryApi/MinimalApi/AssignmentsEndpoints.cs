@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
 using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Dto;
 
@@ -27,7 +29,7 @@ public static class AssignmentsEndpoints
         // Get all assignments - HR only
         assignmentsGroup.MapGet("/", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -46,7 +48,7 @@ public static class AssignmentsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving assignments");
+                logger.LogAssignmentsRetrievalError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving assignments",
@@ -66,7 +68,7 @@ public static class AssignmentsEndpoints
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
             IEmployeeRoleService employeeRoleService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -86,7 +88,7 @@ public static class AssignmentsEndpoints
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    logger.LogWarning("GetAssignment authorization failed: {Message}", ex.Message);
+                    logger.LogAssignmentAuthorizationFailed(ex.Message);
                     return Results.Unauthorized();
                 }
 
@@ -98,8 +100,7 @@ public static class AssignmentsEndpoints
                     var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, id);
                     if (!canAccess)
                     {
-                        logger.LogWarning("Manager {UserId} attempted to access assignment {AssignmentId} for non-direct report",
-                            userId, id);
+                        logger.LogAssignmentAccessViolation(userId, id);
                         return Results.Forbid();
                     }
                 }
@@ -108,7 +109,7 @@ public static class AssignmentsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving assignment {AssignmentId}", id);
+                logger.LogAssignmentRetrievalError(id, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the assignment",
@@ -130,7 +131,7 @@ public static class AssignmentsEndpoints
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
             IEmployeeRoleService employeeRoleService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -143,7 +144,7 @@ public static class AssignmentsEndpoints
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    logger.LogWarning("GetAssignmentsByEmployee authorization failed: {Message}", ex.Message);
+                    logger.LogAssignmentsByEmployeeAuthorizationFailed(ex.Message);
                     return Results.Unauthorized();
                 }
 
@@ -154,8 +155,7 @@ public static class AssignmentsEndpoints
 
                     if (!isDirectReport)
                     {
-                        logger.LogWarning("Manager {UserId} attempted to access assignments for non-direct report employee {EmployeeId}",
-                            userId, employeeId);
+                        logger.LogAssignmentsByEmployeeAccessViolation(userId, employeeId);
                         return Results.Forbid();
                     }
                 }
@@ -174,7 +174,7 @@ public static class AssignmentsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving assignments for employee {EmployeeId}", employeeId);
+                logger.LogAssignmentsByEmployeeRetrievalError(employeeId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving assignments",
@@ -195,7 +195,7 @@ public static class AssignmentsEndpoints
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
             IEmployeeRoleService employeeRoleService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -208,7 +208,7 @@ public static class AssignmentsEndpoints
                 }
                 catch (UnauthorizedAccessException ex)
                 {
-                    logger.LogWarning("GetReviewChanges authorization failed: {Message}", ex.Message);
+                    logger.LogReviewChangesAuthorizationFailed(ex.Message);
                     return Results.Unauthorized();
                 }
 
@@ -219,8 +219,7 @@ public static class AssignmentsEndpoints
 
                     if (!canAccess)
                     {
-                        logger.LogWarning("Manager {UserId} attempted to access review changes for assignment {AssignmentId} for non-direct report",
-                            userId, id);
+                        logger.LogReviewChangesAccessViolation(userId, id);
                         return Results.Forbid();
                     }
                 }
@@ -264,7 +263,7 @@ public static class AssignmentsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving review changes for assignment {AssignmentId}", id);
+                logger.LogReviewChangesRetrievalError(id, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving review changes",
@@ -287,7 +286,7 @@ public static class AssignmentsEndpoints
             IManagerAuthorizationService authorizationService,
             IEmployeeRoleService employeeRoleService,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -295,7 +294,7 @@ public static class AssignmentsEndpoints
                 // Get authenticated user ID
                 if (!Guid.TryParse(userContext.Id, out var userId))
                 {
-                    logger.LogWarning("Failed to parse user ID from context");
+                    logger.LogUserIdParsingFailed();
                     return Results.Unauthorized();
                 }
 
@@ -307,8 +306,7 @@ public static class AssignmentsEndpoints
                     var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, assignmentId);
                     if (!canAccess)
                     {
-                        logger.LogWarning("Manager {UserId} attempted to access custom sections for assignment {AssignmentId} for non-direct report",
-                            userId, assignmentId);
+                        logger.LogCustomSectionsAccessViolation(userId, assignmentId);
                         return Results.Forbid();
                     }
                 }
@@ -328,7 +326,7 @@ public static class AssignmentsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving custom sections for assignment {AssignmentId}", assignmentId);
+                logger.LogCustomSectionsRetrievalError(assignmentId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving custom sections",
@@ -351,7 +349,7 @@ public static class AssignmentsEndpoints
             IManagerAuthorizationService authorizationService,
             IEmployeeRoleService employeeRoleService,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -359,7 +357,7 @@ public static class AssignmentsEndpoints
                 // Get authenticated user ID
                 if (!Guid.TryParse(userContext.Id, out var userId))
                 {
-                    logger.LogWarning("Failed to parse user ID from context");
+                    logger.LogUserIdParsingFailed();
                     return Results.Unauthorized();
                 }
 
@@ -367,7 +365,7 @@ public static class AssignmentsEndpoints
                 var assignmentResult = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentQuery(assignmentId), cancellationToken);
                 if (assignmentResult == null || !assignmentResult.Succeeded || assignmentResult.Payload == null)
                 {
-                    logger.LogWarning("Assignment {AssignmentId} not found", assignmentId);
+                    logger.LogAssignmentNotFound(assignmentId);
                     return Results.NotFound($"Assignment with ID {assignmentId} not found");
                 }
 
@@ -382,8 +380,7 @@ public static class AssignmentsEndpoints
                     var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, assignmentId);
                     if (!canAccess)
                     {
-                        logger.LogWarning("Manager {UserId} attempted to access predecessors for assignment {AssignmentId} for non-direct report",
-                            userId, assignmentId);
+                        logger.LogPredecessorsAccessViolation(userId, assignmentId);
                         return Results.Forbid();
                     }
                 }
@@ -396,7 +393,7 @@ public static class AssignmentsEndpoints
 
                 if (result == null)
                 {
-                    logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
+                    logger.LogAssignmentQueryReturnedNull(assignmentId);
                     return Results.NotFound();
                 }
 
@@ -409,7 +406,7 @@ public static class AssignmentsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error getting available predecessors for assignment {AssignmentId}", assignmentId);
+                logger.LogPredecessorsRetrievalError(assignmentId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving available predecessors",
@@ -432,7 +429,7 @@ public static class AssignmentsEndpoints
             IQueryDispatcher queryDispatcher,
             IEmployeeRoleService employeeRoleService,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -440,7 +437,7 @@ public static class AssignmentsEndpoints
                 // Get current user ID
                 if (!Guid.TryParse(userContext.Id, out var userId))
                 {
-                    logger.LogWarning("Failed to parse user ID from context");
+                    logger.LogUserIdParsingFailed();
                     return Results.Unauthorized();
                 }
 
@@ -448,7 +445,7 @@ public static class AssignmentsEndpoints
                 var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, cancellationToken);
                 if (employeeRole == null)
                 {
-                    logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+                    logger.LogEmployeeRoleRetrievalFailed(userId);
                     return Results.Unauthorized();
                 }
 
@@ -461,8 +458,7 @@ public static class AssignmentsEndpoints
 
                 if (result == null)
                 {
-                    logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
-                        assignmentId, questionId);
+                    logger.LogAssignmentQuestionQueryReturnedNull(assignmentId, questionId);
                     return Results.NotFound();
                 }
 
@@ -475,8 +471,7 @@ public static class AssignmentsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error getting goal data for assignment {AssignmentId}, question {QuestionId}",
-                    assignmentId, questionId);
+                logger.LogGoalDataRetrievalError(assignmentId, questionId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving goal data",
@@ -496,7 +491,7 @@ public static class AssignmentsEndpoints
         assignmentsGroup.MapGet("/{assignmentId}/feedback/available", async (
             Guid assignmentId,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -506,7 +501,7 @@ public static class AssignmentsEndpoints
 
                 if (result == null)
                 {
-                    logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
+                    logger.LogAssignmentQueryReturnedNull(assignmentId);
                     return Results.NotFound();
                 }
 
@@ -521,7 +516,7 @@ public static class AssignmentsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error getting available feedback for assignment {AssignmentId}", assignmentId);
+                logger.LogFeedbackRetrievalError(assignmentId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving available feedback",
@@ -540,7 +535,7 @@ public static class AssignmentsEndpoints
             Guid assignmentId,
             Guid questionId,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -551,8 +546,7 @@ public static class AssignmentsEndpoints
 
                 if (result == null)
                 {
-                    logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
-                        assignmentId, questionId);
+                    logger.LogAssignmentQuestionQueryReturnedNull(assignmentId, questionId);
                     return Results.NotFound();
                 }
 
@@ -567,8 +561,7 @@ public static class AssignmentsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error getting feedback data for assignment {AssignmentId}, question {QuestionId}",
-                    assignmentId, questionId);
+                logger.LogFeedbackDataRetrievalError(assignmentId, questionId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving feedback data",
@@ -592,7 +585,7 @@ public static class AssignmentsEndpoints
         var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, cancellationToken);
         if (employeeRole == null)
         {
-            logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+            logger.LogEmployeeRoleRetrievalFailed(userId);
             return false;
         }
 

@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
 namespace ti8m.BeachBreak.CommandApi.MinimalApi;
@@ -23,7 +25,7 @@ public static class QuestionnaireTemplateEndpoints
         templateGroup.MapPost("/", async (
             QuestionnaireTemplateDto questionnaireTemplate,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -75,7 +77,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error creating questionnaire template");
+                logger.LogCreateTemplateError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while creating the template",
@@ -95,7 +97,7 @@ public static class QuestionnaireTemplateEndpoints
             Guid id,
             QuestionnaireTemplateDto questionnaireTemplate,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -141,7 +143,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error updating template {TemplateId}", id);
+                logger.LogUpdateTemplateError(ex, id);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while updating the template",
@@ -160,7 +162,7 @@ public static class QuestionnaireTemplateEndpoints
         templateGroup.MapDelete("/{id:guid}", async (
             Guid id,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -181,7 +183,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error deleting template {TemplateId}", id);
+                logger.LogDeleteTemplateError(ex, id);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while deleting the template",
@@ -200,7 +202,7 @@ public static class QuestionnaireTemplateEndpoints
             Guid id,
             ICommandDispatcher commandDispatcher,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -208,7 +210,7 @@ public static class QuestionnaireTemplateEndpoints
                 // Extract publisher employee ID from authenticated user context
                 if (!Guid.TryParse(userContext.Id, out var publishedByEmployeeId))
                 {
-                    logger.LogWarning("Cannot publish template {TemplateId}: unable to parse user ID from context", id);
+                    logger.LogPublishTemplateInvalidUserId(id);
                     return Results.Problem(
                         title: "User identification failed",
                         detail: "User identity could not be determined",
@@ -232,7 +234,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error publishing template {TemplateId}", id);
+                logger.LogPublishTemplateError(ex, id);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while publishing the template",
@@ -250,7 +252,7 @@ public static class QuestionnaireTemplateEndpoints
         templateGroup.MapPost("/{id:guid}/unpublish", async (
             Guid id,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -271,7 +273,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error unpublishing template {TemplateId}", id);
+                logger.LogUnpublishTemplateError(ex, id);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while unpublishing the template",
@@ -288,7 +290,7 @@ public static class QuestionnaireTemplateEndpoints
         templateGroup.MapPost("/{id:guid}/archive", async (
             Guid id,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -309,7 +311,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error archiving template {TemplateId}", id);
+                logger.LogArchiveTemplateError(ex, id);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while archiving the template",
@@ -326,7 +328,7 @@ public static class QuestionnaireTemplateEndpoints
         templateGroup.MapPost("/{id:guid}/restore", async (
             Guid id,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -347,7 +349,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error restoring template {TemplateId}", id);
+                logger.LogRestoreTemplateError(ex, id);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while restoring the template",
@@ -365,7 +367,7 @@ public static class QuestionnaireTemplateEndpoints
             Guid id,
             CloneTemplateRequestDto? request,
             ICommandDispatcher commandDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -390,7 +392,7 @@ public static class QuestionnaireTemplateEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error cloning template {TemplateId}", id);
+                logger.LogCloneTemplateError(ex, id);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while cloning the template",

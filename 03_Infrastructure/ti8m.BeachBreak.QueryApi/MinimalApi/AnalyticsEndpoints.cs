@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.AnalyticsQueries;
+using ti8m.BeachBreak.Core.Infrastructure;
 
 namespace ti8m.BeachBreak.QueryApi.MinimalApi;
 
@@ -21,7 +22,7 @@ public static class AnalyticsEndpoints
         // Get overall analytics
         analyticsGroup.MapGet("/overview", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -39,7 +40,7 @@ public static class AnalyticsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving overall analytics");
+                logger.LogRetrieveOverallAnalyticsError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving analytics",
@@ -56,7 +57,7 @@ public static class AnalyticsEndpoints
         analyticsGroup.MapGet("/template/{templateId:guid}", async (
             Guid templateId,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -74,7 +75,7 @@ public static class AnalyticsEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving analytics for template {TemplateId}", templateId);
+                logger.LogRetrieveTemplateAnalyticsError(ex, templateId);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving template analytics",

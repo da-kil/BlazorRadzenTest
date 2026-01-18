@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
 using ti8m.BeachBreak.CommandApi.Authorization;
@@ -5,6 +6,7 @@ using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.CommandApi.Services;
 using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
+using ti8m.BeachBreak.Core.Infrastructure;
 
 namespace ti8m.BeachBreak.CommandApi.MinimalApi;
 
@@ -29,7 +31,7 @@ public static class ResponseEndpoints
             UserContext userContext,
             QuestionResponseMappingService mappingService,
             SectionMappingService sectionMappingService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -37,19 +39,18 @@ public static class ResponseEndpoints
                 // Get employee ID from authenticated user context
                 if (!Guid.TryParse(userContext.Id, out var employeeId))
                 {
-                    logger.LogWarning("SaveResponse failed: Unable to parse user ID from context");
+                    logger.LogSaveResponseFailedNoUserId();
                     return Results.Problem(
                         title: "User identification failed",
                         detail: "User ID not found in authentication context",
                         statusCode: 401);
                 }
 
-                logger.LogInformation("Received SaveResponse request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
-                    employeeId, assignmentId);
+                logger.LogSaveResponseReceived(employeeId, assignmentId);
 
                 if (request?.Responses == null)
                 {
-                    logger.LogWarning("SaveResponse failed: Responses are null");
+                    logger.LogSaveResponseFailedNullResponses();
                     return Results.BadRequest("Responses are required");
                 }
 
@@ -69,14 +70,12 @@ public static class ResponseEndpoints
 
                 if (result.Succeeded)
                 {
-                    logger.LogInformation("SaveResponse completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}, ResponseId: {ResponseId}",
-                        employeeId, assignmentId, result.Payload);
+                    logger.LogSaveResponseCompleted(employeeId, assignmentId, result.Payload);
                     return Results.Ok(result.Payload);
                 }
                 else
                 {
-                    logger.LogWarning("SaveResponse failed for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}, Error: {ErrorMessage}",
-                        employeeId, assignmentId, result.Message);
+                    logger.LogSaveResponseFailed(employeeId, assignmentId, result.Message ?? "Unknown error");
                     return Results.Problem(
                         title: "Save response failed",
                         detail: result.Message,
@@ -109,7 +108,7 @@ public static class ResponseEndpoints
             IManagerAuthorizationService managerAuthorizationService,
             QuestionResponseMappingService mappingService,
             SectionMappingService sectionMappingService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -117,22 +116,20 @@ public static class ResponseEndpoints
                 // Get manager ID from authenticated user context
                 if (!Guid.TryParse(userContext.Id, out var managerId))
                 {
-                    logger.LogWarning("SaveManagerResponse failed: Unable to parse user ID from context");
+                    logger.LogSaveManagerResponseFailedNoUserId();
                     return Results.Problem(
                         title: "User identification failed",
                         detail: "User ID not found in authentication context",
                         statusCode: 401);
                 }
 
-                logger.LogInformation("Received SaveManagerResponse request for ManagerId: {ManagerId}, AssignmentId: {AssignmentId}",
-                    managerId, assignmentId);
+                logger.LogSaveManagerResponseReceived(managerId, assignmentId);
 
                 // Authorization check: Verify manager has access to this assignment
                 var canAccess = await managerAuthorizationService.CanAccessAssignmentAsync(managerId, assignmentId);
                 if (!canAccess)
                 {
-                    logger.LogWarning("Manager {ManagerId} attempted to save response for assignment {AssignmentId} without authorization",
-                        managerId, assignmentId);
+                    logger.LogSaveManagerResponseUnauthorized(managerId, assignmentId);
                     return Results.Problem(
                         title: "Access denied",
                         detail: "You are not authorized to save responses for this assignment",
@@ -141,7 +138,7 @@ public static class ResponseEndpoints
 
                 if (request?.Responses == null)
                 {
-                    logger.LogWarning("SaveManagerResponse failed: Responses are null");
+                    logger.LogSaveManagerResponseFailedNullResponses();
                     return Results.BadRequest("Responses are required");
                 }
 
@@ -161,14 +158,12 @@ public static class ResponseEndpoints
 
                 if (result.Succeeded)
                 {
-                    logger.LogInformation("SaveManagerResponse completed successfully for ManagerId: {ManagerId}, AssignmentId: {AssignmentId}, ResponseId: {ResponseId}",
-                        managerId, assignmentId, result.Payload);
+                    logger.LogSaveManagerResponseCompleted(managerId, assignmentId, result.Payload);
                     return Results.Ok(result.Payload);
                 }
                 else
                 {
-                    logger.LogWarning("SaveManagerResponse failed for ManagerId: {ManagerId}, AssignmentId: {AssignmentId}, Error: {ErrorMessage}",
-                        managerId, assignmentId, result.Message);
+                    logger.LogSaveManagerResponseFailed(managerId, assignmentId, result.Message ?? "Unknown error");
                     return Results.Problem(
                         title: "Save manager response failed",
                         detail: result.Message,
@@ -198,7 +193,7 @@ public static class ResponseEndpoints
             Guid assignmentId,
             ICommandDispatcher commandDispatcher,
             UserContext userContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken) =>
         {
             try
@@ -206,15 +201,14 @@ public static class ResponseEndpoints
                 // Get employee ID from authenticated user context
                 if (!Guid.TryParse(userContext.Id, out var employeeId))
                 {
-                    logger.LogWarning("SubmitResponse failed: Unable to parse user ID from context");
+                    logger.LogSubmitResponseFailedNoUserId();
                     return Results.Problem(
                         title: "User identification failed",
                         detail: "User ID not found in authentication context",
                         statusCode: 401);
                 }
 
-                logger.LogInformation("Received SubmitResponse request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
-                    employeeId, assignmentId);
+                logger.LogSubmitResponseReceived(employeeId, assignmentId);
 
                 var command = new SubmitEmployeeResponseCommand(
                     employeeId: employeeId,
@@ -225,14 +219,12 @@ public static class ResponseEndpoints
 
                 if (result.Succeeded)
                 {
-                    logger.LogInformation("SubmitResponse completed successfully for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
-                        employeeId, assignmentId);
+                    logger.LogSubmitResponseCompleted(employeeId, assignmentId);
                     return Results.Ok("Response submitted successfully");
                 }
                 else
                 {
-                    logger.LogWarning("SubmitResponse failed for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}, Error: {ErrorMessage}",
-                        employeeId, assignmentId, result.Message);
+                    logger.LogSubmitResponseFailed(employeeId, assignmentId, result.Message ?? "Unknown error");
                     return Results.Problem(
                         title: "Submit response failed",
                         detail: result.Message,

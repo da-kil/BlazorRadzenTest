@@ -1,7 +1,8 @@
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.QueryApi.Mappers;
 
@@ -24,14 +25,14 @@ public static class AuthEndpoints
         // Get current user's role
         authGroup.MapGet("/me/role", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             ClaimsPrincipal user,
             CancellationToken cancellationToken = default) =>
         {
             var userId = GetUserId(user);
             if (userId == null)
             {
-                logger.LogWarning("User ID not found in claims");
+                logger.LogUserIdNotFoundInClaims();
                 return Results.Problem(
                     detail: "User ID not found in claims",
                     statusCode: StatusCodes.Status401Unauthorized);
@@ -45,7 +46,7 @@ public static class AuthEndpoints
 
                 if (result == null)
                 {
-                    logger.LogWarning("Employee not found for user ID: {UserId}", userId);
+                    logger.LogEmployeeNotFoundForUserId(userId.Value);
                     return Results.Problem(
                         detail: "Employee not found",
                         statusCode: StatusCodes.Status404NotFound);
@@ -59,7 +60,7 @@ public static class AuthEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error getting application role for user {UserId}", userId);
+                logger.LogGetApplicationRoleError(ex, userId.Value);
                 return Results.Problem(
                     detail: "Failed to retrieve user role",
                     statusCode: StatusCodes.Status500InternalServerError);

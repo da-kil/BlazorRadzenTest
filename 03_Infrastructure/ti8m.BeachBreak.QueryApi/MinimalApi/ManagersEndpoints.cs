@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.ManagerQueries;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
 using ti8m.BeachBreak.QueryApi.Authorization;
 using ti8m.BeachBreak.QueryApi.Dto;
@@ -25,18 +27,18 @@ public static class ManagersEndpoints
         managersGroup.MapGet("/me/dashboard", async (
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             Guid managerId;
             try
             {
                 managerId = await authorizationService.GetCurrentManagerIdAsync();
-                logger.LogInformation("Received GetMyDashboard request for authenticated ManagerId: {ManagerId}", managerId);
+                logger.LogManagerDashboardRequest(managerId);
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.LogWarning("GetMyDashboard failed: {Message}", ex.Message);
+                logger.LogManagerDashboardFailed(ex.Message);
                 return Results.Unauthorized();
             }
 
@@ -46,7 +48,7 @@ public static class ManagersEndpoints
 
                 if (result?.Payload == null)
                 {
-                    logger.LogInformation("Dashboard not found for ManagerId: {ManagerId} - this is expected for new managers or managers with no team", managerId);
+                    logger.LogManagerDashboardNotFound(managerId);
 
                     // Return empty dashboard for managers with no team yet
                     return Results.Ok(new ManagerDashboardDto
@@ -66,7 +68,7 @@ public static class ManagersEndpoints
 
                 if (result.Succeeded)
                 {
-                    logger.LogInformation("GetMyDashboard completed successfully for ManagerId: {ManagerId}", managerId);
+                    logger.LogManagerDashboardCompleted(managerId);
 
                     var dashboard = new ManagerDashboardDto
                     {
@@ -106,13 +108,13 @@ public static class ManagersEndpoints
                 }
                 else
                 {
-                    logger.LogWarning("GetMyDashboard failed for ManagerId: {ManagerId}, Error: {ErrorMessage}", managerId, result.Message);
+                    logger.LogManagerDashboardError(managerId, result.Message);
                     return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving dashboard for manager {ManagerId}", managerId);
+                logger.LogManagerDashboardRetrievalError(managerId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving your dashboard",
@@ -131,18 +133,18 @@ public static class ManagersEndpoints
         managersGroup.MapGet("/me/team", async (
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             Guid managerId;
             try
             {
                 managerId = await authorizationService.GetCurrentManagerIdAsync();
-                logger.LogInformation("Received GetMyTeamMembers request for authenticated ManagerId: {ManagerId}", managerId);
+                logger.LogTeamMembersRequest(managerId);
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.LogWarning("GetMyTeamMembers failed: {Message}", ex.Message);
+                logger.LogTeamMembersFailed(ex.Message);
                 return Results.Unauthorized();
             }
 
@@ -154,8 +156,7 @@ public static class ManagersEndpoints
                 if (result.Succeeded)
                 {
                     var teamCount = result.Payload?.Count() ?? 0;
-                    logger.LogInformation("GetTeamMembers completed successfully for ManagerId: {ManagerId}, returned {TeamCount} members",
-                        managerId, teamCount);
+                    logger.LogTeamMembersCompleted(managerId, teamCount);
 
                     var employees = result.Payload.Select(employee => new EmployeeDto
                     {
@@ -181,14 +182,13 @@ public static class ManagersEndpoints
                 }
                 else
                 {
-                    logger.LogWarning("GetTeamMembers failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                        managerId, result.Message);
+                    logger.LogTeamMembersError(managerId, result.Message);
                     return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving team members for manager {ManagerId}", managerId);
+                logger.LogTeamMembersRetrievalError(managerId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving team members",
@@ -207,7 +207,7 @@ public static class ManagersEndpoints
         managersGroup.MapGet("/me/assignments", async (
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             string? workflowState = null,
             CancellationToken cancellationToken = default) =>
         {
@@ -215,12 +215,11 @@ public static class ManagersEndpoints
             try
             {
                 managerId = await authorizationService.GetCurrentManagerIdAsync();
-                logger.LogInformation("Received GetMyTeamAssignments request for authenticated ManagerId: {ManagerId}, WorkflowState: {WorkflowState}",
-                    managerId, workflowState);
+                logger.LogTeamAssignmentsRequest(managerId, workflowState);
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.LogWarning("GetMyTeamAssignments failed: {Message}", ex.Message);
+                logger.LogTeamAssignmentsFailed(ex.Message);
                 return Results.Unauthorized();
             }
 
@@ -238,8 +237,7 @@ public static class ManagersEndpoints
                 if (result.Succeeded)
                 {
                     var assignmentCount = result.Payload?.Count() ?? 0;
-                    logger.LogInformation("GetTeamAssignments completed successfully for ManagerId: {ManagerId}, returned {AssignmentCount} assignments",
-                        managerId, assignmentCount);
+                    logger.LogTeamAssignmentsCompleted(managerId, assignmentCount);
 
                     var assignments = result.Payload.Select(assignment => new TeamAssignmentDto
                     {
@@ -287,14 +285,13 @@ public static class ManagersEndpoints
                 }
                 else
                 {
-                    logger.LogWarning("GetTeamAssignments failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                        managerId, result.Message);
+                    logger.LogTeamAssignmentsError(managerId, result.Message);
                     return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving team assignments for manager {ManagerId}", managerId);
+                logger.LogTeamAssignmentsRetrievalError(managerId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving team assignments",
@@ -313,18 +310,18 @@ public static class ManagersEndpoints
         managersGroup.MapGet("/me/team/progress", async (
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             Guid managerId;
             try
             {
                 managerId = await authorizationService.GetCurrentManagerIdAsync();
-                logger.LogInformation("Received GetMyTeamProgress request for authenticated ManagerId: {ManagerId}", managerId);
+                logger.LogTeamProgressRequest(managerId);
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.LogWarning("GetMyTeamProgress failed: {Message}", ex.Message);
+                logger.LogTeamProgressFailed(ex.Message);
                 return Results.Unauthorized();
             }
 
@@ -336,8 +333,7 @@ public static class ManagersEndpoints
                 if (result.Succeeded)
                 {
                     var progressCount = result.Payload?.Count() ?? 0;
-                    logger.LogInformation("GetTeamProgress completed successfully for ManagerId: {ManagerId}, returned {ProgressCount} items",
-                        managerId, progressCount);
+                    logger.LogTeamProgressCompleted(managerId, progressCount);
 
                     var progressItems = result.Payload.Select(progress => new AssignmentProgressDto
                     {
@@ -354,14 +350,13 @@ public static class ManagersEndpoints
                 }
                 else
                 {
-                    logger.LogWarning("GetTeamProgress failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                        managerId, result.Message);
+                    logger.LogTeamProgressError(managerId, result.Message);
                     return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving team progress for manager {ManagerId}", managerId);
+                logger.LogTeamProgressRetrievalError(managerId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving team progress",
@@ -380,18 +375,18 @@ public static class ManagersEndpoints
         managersGroup.MapGet("/me/analytics", async (
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             Guid managerId;
             try
             {
                 managerId = await authorizationService.GetCurrentManagerIdAsync();
-                logger.LogInformation("Received GetMyTeamAnalytics request for authenticated ManagerId: {ManagerId}", managerId);
+                logger.LogTeamAnalyticsRequest(managerId);
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.LogWarning("GetMyTeamAnalytics failed: {Message}", ex.Message);
+                logger.LogTeamAnalyticsFailed(ex.Message);
                 return Results.Unauthorized();
             }
 
@@ -402,7 +397,7 @@ public static class ManagersEndpoints
 
                 if (result.Succeeded)
                 {
-                    logger.LogInformation("GetTeamAnalytics completed successfully for ManagerId: {ManagerId}", managerId);
+                    logger.LogTeamAnalyticsCompleted(managerId);
 
                     var analytics = new TeamAnalyticsDto
                     {
@@ -436,14 +431,13 @@ public static class ManagersEndpoints
                 }
                 else
                 {
-                    logger.LogWarning("GetTeamAnalytics failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                        managerId, result.Message);
+                    logger.LogTeamAnalyticsError(managerId, result.Message);
                     return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving team analytics for manager {ManagerId}", managerId);
+                logger.LogTeamAnalyticsRetrievalError(managerId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving team analytics",
@@ -463,7 +457,7 @@ public static class ManagersEndpoints
             Guid managerId,
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             Guid requestingUserId;
@@ -473,20 +467,18 @@ public static class ManagersEndpoints
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.LogWarning("GetManagerTeamMembers failed: {Message}", ex.Message);
+                logger.LogManagerTeamMembersFailed(ex.Message);
                 return Results.Unauthorized();
             }
 
             // Check authorization
             if (!await authorizationService.CanViewTeamAsync(requestingUserId, managerId))
             {
-                logger.LogWarning("User {RequestingUserId} not authorized to view manager {ManagerId} team",
-                    requestingUserId, managerId);
+                logger.LogManagerTeamMembersUnauthorized(requestingUserId, managerId);
                 return Results.Forbid();
             }
 
-            logger.LogInformation("User {RequestingUserId} viewing team for ManagerId: {ManagerId}",
-                requestingUserId, managerId);
+            logger.LogManagerTeamMembersViewing(requestingUserId, managerId);
 
             try
             {
@@ -496,8 +488,7 @@ public static class ManagersEndpoints
                 if (result.Succeeded)
                 {
                     var teamCount = result.Payload?.Count() ?? 0;
-                    logger.LogInformation("GetTeamMembers completed successfully for ManagerId: {ManagerId}, returned {TeamCount} members",
-                        managerId, teamCount);
+                    logger.LogTeamMembersCompleted(managerId, teamCount);
 
                     var employees = result.Payload.Select(employee => new EmployeeDto
                     {
@@ -523,14 +514,13 @@ public static class ManagersEndpoints
                 }
                 else
                 {
-                    logger.LogWarning("GetTeamMembers failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                        managerId, result.Message);
+                    logger.LogTeamMembersError(managerId, result.Message);
                     return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving team members for manager {ManagerId}", managerId);
+                logger.LogTeamMembersRetrievalError(managerId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving team members",
@@ -551,7 +541,7 @@ public static class ManagersEndpoints
             Guid managerId,
             IQueryDispatcher queryDispatcher,
             IManagerAuthorizationService authorizationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             string? workflowState = null,
             CancellationToken cancellationToken = default) =>
         {
@@ -562,20 +552,18 @@ public static class ManagersEndpoints
             }
             catch (UnauthorizedAccessException ex)
             {
-                logger.LogWarning("GetManagerTeamAssignments failed: {Message}", ex.Message);
+                logger.LogManagerTeamAssignmentsFailed(ex.Message);
                 return Results.Unauthorized();
             }
 
             // Check authorization
             if (!await authorizationService.CanViewTeamAsync(requestingUserId, managerId))
             {
-                logger.LogWarning("User {RequestingUserId} not authorized to view manager {ManagerId} team assignments",
-                    requestingUserId, managerId);
+                logger.LogManagerTeamAssignmentsUnauthorized(requestingUserId, managerId);
                 return Results.Forbid();
             }
 
-            logger.LogInformation("User {RequestingUserId} viewing team assignments for ManagerId: {ManagerId}, WorkflowState: {WorkflowState}",
-                requestingUserId, managerId, workflowState);
+            logger.LogManagerTeamAssignmentsViewing(requestingUserId, managerId, workflowState);
 
             try
             {
@@ -591,8 +579,7 @@ public static class ManagersEndpoints
                 if (result.Succeeded)
                 {
                     var assignmentCount = result.Payload?.Count() ?? 0;
-                    logger.LogInformation("GetTeamAssignments completed successfully for ManagerId: {ManagerId}, returned {AssignmentCount} assignments",
-                        managerId, assignmentCount);
+                    logger.LogTeamAssignmentsCompleted(managerId, assignmentCount);
 
                     var assignments = result.Payload.Select(assignment => new TeamAssignmentDto
                     {
@@ -640,14 +627,13 @@ public static class ManagersEndpoints
                 }
                 else
                 {
-                    logger.LogWarning("GetTeamAssignments failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                        managerId, result.Message);
+                    logger.LogTeamAssignmentsError(managerId, result.Message);
                     return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving team assignments for manager {ManagerId}", managerId);
+                logger.LogTeamAssignmentsRetrievalError(managerId, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving team assignments",

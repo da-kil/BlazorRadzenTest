@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.HRQueries;
+using ti8m.BeachBreak.Core.Infrastructure;
 using ti8m.BeachBreak.QueryApi.Dto;
 
 namespace ti8m.BeachBreak.QueryApi.MinimalApi;
@@ -22,10 +23,10 @@ public static class HREndpoints
         // Get HR dashboard
         hrGroup.MapGet("/dashboard", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
-            logger.LogInformation("Received GetHRDashboard request");
+            logger.LogGetHRDashboardRequest();
 
             try
             {
@@ -33,7 +34,7 @@ public static class HREndpoints
 
                 if (result?.Payload == null)
                 {
-                    logger.LogInformation("HR dashboard not found - this is expected for new systems");
+                    logger.LogHRDashboardNotFound();
 
                     // Return empty dashboard for systems with no data yet
                     return Results.Ok(new HRDashboardDto
@@ -58,7 +59,7 @@ public static class HREndpoints
 
                 if (result.Succeeded)
                 {
-                    logger.LogInformation("GetHRDashboard completed successfully");
+                    logger.LogGetHRDashboardSuccess();
 
                     var dashboardDto = new HRDashboardDto
                     {
@@ -116,13 +117,13 @@ public static class HREndpoints
                 }
                 else
                 {
-                    logger.LogWarning("GetHRDashboard failed, Error: {ErrorMessage}", result.Message);
+                    logger.LogGetHRDashboardFailed(result.Message);
                     return Results.Problem(detail: result.Message, statusCode: result.StatusCode);
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving HR dashboard");
+                logger.LogRetrieveHRDashboardError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the HR dashboard",

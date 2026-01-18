@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Mappers;
 using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Core.Infrastructure.Services;
+using ti8m.BeachBreak.Core.Infrastructure;
 
 namespace ti8m.BeachBreak.QueryApi.MinimalApi;
 
@@ -25,7 +27,7 @@ public static class TranslationEndpoints
             string key,
             IUITranslationService translationService,
             ILanguageContext languageContext,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -37,7 +39,7 @@ public static class TranslationEndpoints
             {
                 var userLanguageCode = await languageContext.GetCurrentLanguageCodeAsync();
                 var userLanguage = LanguageMapper.FromLanguageCode(userLanguageCode);
-                logger.LogDebug("Getting translation for key: {Key} (user language: {Language})", key, userLanguage);
+                logger.LogGetTranslationDebug(key, userLanguage.ToString());
 
                 // Get the text for current language
                 var text = await translationService.GetTextAsync(key, userLanguage, cancellationToken);
@@ -55,7 +57,7 @@ public static class TranslationEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving translation for key: {Key}", key);
+                logger.LogTranslationRetrievalError(key, ex);
 
                 // Return the key as fallback
                 var fallbackTranslation = new UITranslation
@@ -78,22 +80,21 @@ public static class TranslationEndpoints
         // Get all translations
         translationGroup.MapGet("/", async (
             IUITranslationService translationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
             {
-                logger.LogInformation("Getting all translations - API called");
+                logger.LogGetAllTranslationsInfo();
                 var translations = await translationService.GetAllTranslationsAsync(cancellationToken);
-                logger.LogInformation("Retrieved {Count} translations from service", translations?.Count ?? 0);
+                logger.LogRetrievedTranslationsCount(translations?.Count ?? 0);
 
                 // Log first few translations for debugging
                 if (translations != null && translations.Any())
                 {
                     foreach (var translation in translations.Take(3))
                     {
-                        logger.LogInformation("Sample translation: Key='{Key}', English='{English}', German='{German}'",
-                            translation.Key, translation.English, translation.German);
+                        logger.LogSampleTranslation(translation.Key, translation.English, translation.German);
                     }
                 }
 
@@ -101,7 +102,7 @@ public static class TranslationEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving all translations");
+                logger.LogAllTranslationsRetrievalError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "Failed to retrieve translations",
@@ -117,19 +118,19 @@ public static class TranslationEndpoints
         // Get all translation keys
         translationGroup.MapGet("/keys", async (
             IUITranslationService translationService,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
             {
-                logger.LogDebug("Getting all translation keys");
+                logger.LogGetTranslationKeysDebug();
                 var translations = await translationService.GetAllTranslationsAsync(cancellationToken);
                 var keys = translations.Select(t => t.Key).ToArray();
                 return Results.Ok(keys);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving translation keys");
+                logger.LogTranslationKeysRetrievalError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "Failed to retrieve translation keys",
@@ -151,13 +152,13 @@ public static class TranslationEndpoints
         {
             try
             {
-                logger.LogDebug("Getting translations for category: {Category}", category);
+                logger.LogGetTranslationsByCategoryDebug(category);
                 var translations = await translationService.GetTranslationsByCategoryAsync(category, cancellationToken);
                 return Results.Ok(translations);
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving translations for category: {Category}", category);
+                logger.LogTranslationsByCategoryRetrievalError(category, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: $"Failed to retrieve translations for category: {category}",

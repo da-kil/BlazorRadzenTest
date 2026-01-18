@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Projections;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.ProjectionReplayQueries;
+using ti8m.BeachBreak.Core.Infrastructure;
 
 namespace ti8m.BeachBreak.QueryApi.MinimalApi;
 
@@ -24,18 +26,18 @@ public static class ReplayEndpoints
         replayGroup.MapGet("/{replayId:guid}", async (
             Guid replayId,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
             {
-                logger.LogInformation("Retrieving replay status for replay {ReplayId}", replayId);
+                logger.LogRetrieveReplayStatusRequest(replayId);
                 var query = new GetReplayStatusQuery(replayId);
                 var result = await queryDispatcher.QueryAsync(query, cancellationToken);
 
                 if (result != null)
                 {
-                    logger.LogInformation("Successfully retrieved replay status for replay {ReplayId}", replayId);
+                    logger.LogRetrieveReplayStatusSuccess(replayId);
                     if (result.Succeeded)
                     {
                         return Results.Ok(result.Payload);
@@ -47,13 +49,13 @@ public static class ReplayEndpoints
                 }
                 else
                 {
-                    logger.LogWarning("Replay {ReplayId} not found", replayId);
+                    logger.LogReplayNotFound(replayId);
                     return Results.NotFound($"Replay {replayId} not found");
                 }
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving replay status for replay {ReplayId}", replayId);
+                logger.LogRetrieveReplayStatusError(ex, replayId);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the replay status",
@@ -70,13 +72,13 @@ public static class ReplayEndpoints
         // Get replay history
         replayGroup.MapGet("/history", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             int limit = 50,
             CancellationToken cancellationToken = default) =>
         {
             try
             {
-                logger.LogInformation("Retrieving replay history with limit {Limit}", limit);
+                logger.LogRetrieveReplayHistoryRequest(limit);
                 var query = new GetReplayHistoryQuery(limit);
                 var result = await queryDispatcher.QueryAsync(query, cancellationToken);
 
@@ -85,7 +87,7 @@ public static class ReplayEndpoints
                     if (result.Payload != null)
                     {
                         var count = result.Payload.Count();
-                        logger.LogInformation("Successfully retrieved {Count} replay history entries", count);
+                        logger.LogRetrieveReplayHistorySuccess(count);
                         return Results.Ok(result.Payload);
                     }
                     else
@@ -100,7 +102,7 @@ public static class ReplayEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving replay history");
+                logger.LogRetrieveReplayHistoryError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the replay history",
@@ -116,13 +118,13 @@ public static class ReplayEndpoints
         // Get available projections
         replayGroup.MapGet("/projections", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             bool rebuildableOnly = true,
             CancellationToken cancellationToken = default) =>
         {
             try
             {
-                logger.LogInformation("Retrieving available projections (rebuildableOnly: {RebuildableOnly})", rebuildableOnly);
+                logger.LogRetrieveProjectionsRequest(rebuildableOnly);
                 var query = new GetAvailableProjectionsQuery(rebuildableOnly);
                 var result = await queryDispatcher.QueryAsync(query, cancellationToken);
 
@@ -131,7 +133,7 @@ public static class ReplayEndpoints
                     if (result.Payload != null)
                     {
                         var count = result.Payload.Count();
-                        logger.LogInformation("Successfully retrieved {Count} available projections", count);
+                        logger.LogRetrieveProjectionsSuccess(count);
                         return Results.Ok(result.Payload);
                     }
                     else
@@ -146,7 +148,7 @@ public static class ReplayEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving available projections");
+                logger.LogRetrieveProjectionsError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the available projections",

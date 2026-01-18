@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Query.Queries;
 using ti8m.BeachBreak.Application.Query.Queries.CategoryQueries;
 using ti8m.BeachBreak.QueryApi.Dto;
+using ti8m.BeachBreak.Core.Infrastructure;
 
 namespace ti8m.BeachBreak.QueryApi.MinimalApi;
 
@@ -22,7 +24,7 @@ public static class CategoryEndpoints
         // Get all categories
         categoryGroup.MapGet("/", async (
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             bool includeInactive = false,
             CancellationToken cancellationToken = default) =>
         {
@@ -53,7 +55,7 @@ public static class CategoryEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving categories");
+                logger.LogCategoriesRetrievalError(ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving categories",
@@ -70,7 +72,7 @@ public static class CategoryEndpoints
         categoryGroup.MapGet("/{id:guid}", async (
             Guid id,
             IQueryDispatcher queryDispatcher,
-            ILogger logger,
+            [FromServices] ILogger logger,
             CancellationToken cancellationToken = default) =>
         {
             try
@@ -104,7 +106,7 @@ public static class CategoryEndpoints
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error retrieving category {CategoryId}", id);
+                logger.LogCategoryRetrievalError(id, ex);
                 return Results.Problem(
                     title: "Internal Server Error",
                     detail: "An error occurred while retrieving the category",

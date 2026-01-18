@@ -1,21 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Asp.Versioning.Mvc" Version="8.1.0" />
-		<PackageReference Include="Aspire.Npgsql" Version="9.4.2" />
-		<PackageReference Include="Marten" Version="8.11.0" />
-		<PackageReference Include="Marten.AspNetCore" Version="8.11.0" />
-		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.9" />
-		<PackageReference Include="Microsoft.Identity.Web" Version="3.14.1" />
-		<PackageReference Include="Microsoft.Identity.Web.DownstreamApi" Version="3.14.1" />
+		<PackageReference Include="Asp.Versioning.Mvc" Version="8.1.1" />
+		<PackageReference Include="Aspire.Npgsql" Version="13.1.0" />
+		<PackageReference Include="Marten" Version="8.17.0" />
+		<PackageReference Include="Marten.AspNetCore" Version="8.17.0" />
+		<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Identity.Web" Version="4.3.0" />
+		<PackageReference Include="Microsoft.Identity.Web.DownstreamApi" Version="4.3.0" />
 		<PackageReference Include="ProgrammerAL.JsonSerializerRegistrationGenerator.Attributes" Version="1.0.1.48" />
-		<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.4" />
+		<PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.0" />
 	</ItemGroup>
 
   <ItemGroup>
@@ -28,8 +28,7 @@
   <!-- Auto-generate JSON serializer registrations before build -->
   <Target Name="GenerateJsonSerializerRegistrations" BeforeTargets="BeforeCompile">
     <Message Text="Generating JSON serializer registrations for QueryApi..." Importance="normal" />
-    <Exec Command="json-serializer-context-registrations-code-generator -s &quot;$(MSBuildProjectDirectory)&quot; -o &quot;$(MSBuildProjectDirectory)\Serialization&quot;"
-          ContinueOnError="false" />
+    <Exec Command="json-serializer-context-registrations-code-generator -s &quot;$(MSBuildProjectDirectory)&quot; -o &quot;$(MSBuildProjectDirectory)\Serialization&quot;" ContinueOnError="false" />
   </Target>
 
 </Project>
