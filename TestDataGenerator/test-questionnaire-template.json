@@ -5,7 +5,9 @@
   "DescriptionGerman": "Beach Break 2026 Description - DE",
   "DescriptionEnglish": "Beach Break 2026 Description - EN",
   "CategoryId": "2328167b-badc-4352-8934-ce233f2aff2b",
-  "RequiresManagerReview": true,
+  "ProcessType": 0,
+  "IsCustomizable": false,
+  "AutoInitialize": false,
   "Status": 0,
   "PublishedDate": null,
   "LastPublishedDate": null,
@@ -18,7 +20,6 @@
       "DescriptionEnglish": "This section reflects on professional competencies and skills in 2025.",
       "DescriptionGerman": "In diesem Abschnitt werden die beruflichen Kompetenzen und Fähigkeiten im Jahr 2025 reflektiert.",
       "Order": 0,
-      "IsRequired": true,
       "CompletionRole": 2,
       "Type": 0,
       "Configuration": {
@@ -118,7 +119,6 @@
       "DescriptionEnglish": "Dieser Abschnitt ermöglicht eine Beurteilung der Zusammenarbeit mit dem/r Vorgesetzten. Es geht darum, spezifische Aspekte und Erfahrungen des letzten Jahres zu reflektieren, sowie Wünsche für die zukünftige Zusammenarbeit anzubringen.",
       "DescriptionGerman": "Dieser Abschnitt ermöglicht eine Beurteilung der Zusammenarbeit mit dem/r Vorgesetzten. Es geht darum, spezifische Aspekte und Erfahrungen des letzten Jahres zu reflektieren, sowie Wünsche für die zukünftige Zusammenarbeit anzubringen.",
       "Order": 1,
-      "IsRequired": true,
       "CompletionRole": 0,
       "Type": 1,
       "Configuration": {
@@ -150,7 +150,6 @@
       "DescriptionEnglish": "In diesem Teil des Fragebogens werden gemeinsam die Ziele für das Jahr 2026 definiert. Bitte verwendet die folgende Tabelle, um klare und erreichbare Ziele festzulegen, deren Erfolg messbar ist, und um die notwendigen Schritte zur Zielerreichung zu planen.",
       "DescriptionGerman": "In diesem Teil des Fragebogens werden gemeinsam die Ziele für das Jahr 2026 definiert. Bitte verwendet die folgende Tabelle, um klare und erreichbare Ziele festzulegen, deren Erfolg messbar ist, und um die notwendigen Schritte zur Zielerreichung zu planen.",
       "Order": 2,
-      "IsRequired": true,
       "CompletionRole": 2,
       "Type": 2,
       "Configuration": {

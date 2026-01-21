@@ -154,7 +154,36 @@
     [Parameter] public Guid? TemplateId { get; set; }
     [Parameter][SupplyParameterFromQuery] public string? Name { get; set; }
     [Parameter][SupplyParameterFromQuery] public Guid? CategoryId { get; set; }
-    [Parameter][SupplyParameterFromQuery] public QuestionnaireProcessType? ProcessType { get; set; }
+    [Parameter][SupplyParameterFromQuery] public string? ProcessTypeParam { get; set; }
+
+    // Computed property to parse ProcessType from string parameter
+    private QuestionnaireProcessType? ProcessType
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ProcessTypeParam))
+                return null;
+
+            // Try to parse as enum name first (e.g., "PerformanceReview", "Survey")
+            if (Enum.TryParse<QuestionnaireProcessType>(ProcessTypeParam, ignoreCase: true, out var enumResult))
+            {
+                return enumResult;
+            }
+
+            // Try to parse as integer value (e.g., "0", "1")
+            if (int.TryParse(ProcessTypeParam, out var intValue))
+            {
+                if (Enum.IsDefined(typeof(QuestionnaireProcessType), intValue))
+                {
+                    return (QuestionnaireProcessType)intValue;
+                }
+            }
+
+            // If parsing fails, return null and log warning
+            Console.WriteLine($"Warning: Unable to parse ProcessType '{ProcessTypeParam}'. Valid values are: {string.Join(", ", Enum.GetNames<QuestionnaireProcessType>())} or their corresponding integer values (0, 1).");
+            return null;
+        }
+    }
 
     private bool IsEditMode => TemplateId.HasValue;
     private bool isSaving = false;
