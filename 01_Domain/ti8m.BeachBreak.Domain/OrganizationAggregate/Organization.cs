@@ -3,7 +3,7 @@ using ti8m.BeachBreak.Domain.OrganizationAggregate.Events;
 
 namespace ti8m.BeachBreak.Domain.OrganizationAggregate;
 
-public class Organization : AggregateRoot
+public partial class Organization : AggregateRoot
 {
     public string Number { get; private set; }
     public string? ManagerId { get; private set; }

@@ -4,7 +4,7 @@ using ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate.ValueObjects;
 
 namespace ti8m.BeachBreak.Domain.EmployeeFeedbackAggregate;
 
-public class EmployeeFeedback : AggregateRoot
+public partial class EmployeeFeedback : AggregateRoot
 {
     public Guid EmployeeId { get; private set; }
     public FeedbackSourceType SourceType { get; private set; }

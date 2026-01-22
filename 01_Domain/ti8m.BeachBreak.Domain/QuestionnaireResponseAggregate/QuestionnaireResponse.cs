@@ -14,7 +14,7 @@ namespace ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate;
 /// Stores role-separated answers for questionnaire sections.
 /// Workflow state is managed by QuestionnaireAssignment aggregate.
 /// </summary>
-public class QuestionnaireResponse : AggregateRoot
+public partial class QuestionnaireResponse : AggregateRoot
 {
     public Guid AssignmentId { get; private set; }
     public Guid TemplateId { get; private set; }
