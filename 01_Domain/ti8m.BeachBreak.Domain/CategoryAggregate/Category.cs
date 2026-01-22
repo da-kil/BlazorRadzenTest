@@ -3,7 +3,7 @@ using ti8m.BeachBreak.Domain.CategoryAggregate.Events;
 
 namespace ti8m.BeachBreak.Domain.CategoryAggregate;
 
-public class Category : AggregateRoot
+public partial class Category : AggregateRoot
 {
     public Translation Name { get; private set; }
     public Translation Description { get; private set; }

@@ -7,7 +7,7 @@ namespace ti8m.BeachBreak.Domain.ProjectionReplayAggregate;
 /// Aggregate tracking the lifecycle of a projection replay operation.
 /// Event sourced to provide full audit trail of replay operations.
 /// </summary>
-public class ProjectionReplay : AggregateRoot
+public partial class ProjectionReplay : AggregateRoot
 {
     public string ProjectionName { get; private set; } = null!;
     public ReplayStatus Status { get; private set; }

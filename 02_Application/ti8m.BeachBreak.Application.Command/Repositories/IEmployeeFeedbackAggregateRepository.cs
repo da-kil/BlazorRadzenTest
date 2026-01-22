@@ -6,7 +6,7 @@ namespace ti8m.BeachBreak.Application.Command.Repositories;
 /// Repository interface for EmployeeFeedback aggregate persistence.
 /// Follows existing repository patterns in the application.
 /// </summary>
-public interface IEmployeeFeedbackAggregateRepository : IRepository
+public interface IEmployeeFeedbackAggregateRepository : IAggregateRepository
 {
     /// <summary>
     /// Loads an EmployeeFeedback aggregate by its ID.
