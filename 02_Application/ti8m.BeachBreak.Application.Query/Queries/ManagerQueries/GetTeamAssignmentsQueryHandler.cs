@@ -140,7 +140,7 @@ public class GetTeamAssignmentsQueryHandler : IQueryHandler<GetTeamAssignmentsQu
             WithdrawnDate = readModel.WithdrawnDate,
             WithdrawnByEmployeeId = readModel.WithdrawnByEmployeeId,
             WithdrawalReason = readModel.WithdrawalReason,
-            AssignedBy = readModel.AssignedBy,
+            AssignedBy = readModel.AssignedByName,
             Notes = readModel.Notes,
             WorkflowState = readModel.WorkflowState,
             SectionProgress = readModel.SectionProgress?.Select(sp => new SectionProgressDto

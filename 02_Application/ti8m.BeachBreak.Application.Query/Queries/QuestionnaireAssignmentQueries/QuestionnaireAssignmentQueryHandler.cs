@@ -278,7 +278,7 @@ public class QuestionnaireAssignmentQueryHandler :
             WithdrawnDate = readModel.WithdrawnDate,
             WithdrawnByEmployeeId = readModel.WithdrawnByEmployeeId,
             WithdrawalReason = readModel.WithdrawalReason,
-            AssignedBy = readModel.AssignedBy,
+            AssignedBy = readModel.AssignedByName,
             Notes = readModel.Notes,
 
             // Workflow properties

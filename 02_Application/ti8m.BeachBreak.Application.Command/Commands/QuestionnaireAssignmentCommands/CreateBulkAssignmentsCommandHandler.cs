@@ -53,14 +53,14 @@ public class CreateBulkAssignmentsCommandHandler
                     employeeData.EmployeeEmail,
                     assignedDate,
                     command.DueDate,
-                    command.AssignedBy,
+                    command.AssignedByUserId,
                     command.Notes);
 
                 // Auto-initialize templates configured for auto-initialization
-                if (template.AutoInitialize && command.AssignedByEmployeeId.HasValue)
+                if (template.AutoInitialize)
                 {
                     assignment.StartInitialization(
-                        command.AssignedByEmployeeId.Value,
+                        command.AssignedByUserId,
                         "Auto-initialized per template configuration");
 
                     logger.LogInformation("Auto-initialized assignment {AssignmentId} per template configuration",

@@ -43,6 +43,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     // Assignment creation and management
     public async Task<List<QuestionnaireAssignment>> CreateAssignmentsAsync(
         Guid templateId,
+        QuestionnaireProcessType processType,
         List<EmployeeDto> employees,
         DateTime? dueDate,
         string? notes)
@@ -57,6 +58,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         var createRequest = new CreateBulkAssignmentsDto
         {
             TemplateId = templateId,
+            ProcessType = processType,
             EmployeeAssignments = employeeAssignments,
             DueDate = dueDate,
             Notes = notes
@@ -103,6 +105,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
     /// </summary>
     public async Task<List<QuestionnaireAssignment>> CreateManagerAssignmentsAsync(
         Guid templateId,
+        QuestionnaireProcessType processType,
         List<EmployeeDto> employees,
         DateTime? dueDate,
         string? notes)
@@ -117,6 +120,7 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         var createRequest = new CreateBulkAssignmentsDto
         {
             TemplateId = templateId,
+            ProcessType = processType,
             EmployeeAssignments = employeeAssignments,
             DueDate = dueDate,
             Notes = notes

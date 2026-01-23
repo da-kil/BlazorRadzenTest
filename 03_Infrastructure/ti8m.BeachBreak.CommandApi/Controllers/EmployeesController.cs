@@ -4,8 +4,7 @@ using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.EmployeeCommands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireResponseCommands;
 using ti8m.BeachBreak.Application.Command.Models;
-using ti8m.BeachBreak.Application.Query.Queries;
-using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
+using ti8m.BeachBreak.Application.Command.Services;
 using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.CommandApi.Mappers;
@@ -21,7 +20,7 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 public class EmployeesController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
-    private readonly IQueryDispatcher queryDispatcher;
+    private readonly IEmployeeRoleService employeeRoleService;
     private readonly UserContext userContext;
     private readonly QuestionResponseMappingService mappingService;
     private readonly SectionMappingService sectionMappingService;
@@ -29,14 +28,14 @@ public class EmployeesController : BaseController
 
     public EmployeesController(
         ICommandDispatcher commandDispatcher,
-        IQueryDispatcher queryDispatcher,
+        IEmployeeRoleService employeeRoleService,
         UserContext userContext,
         QuestionResponseMappingService mappingService,
         SectionMappingService sectionMappingService,
         ILogger<EmployeesController> logger)
     {
         this.commandDispatcher = commandDispatcher;
-        this.queryDispatcher = queryDispatcher;
+        this.employeeRoleService = employeeRoleService;
         this.userContext = userContext;
         this.mappingService = mappingService;
         this.sectionMappingService = sectionMappingService;
@@ -127,19 +126,17 @@ public class EmployeesController : BaseController
         Guid employeeId,
         [FromBody] ChangeApplicationRoleDto dto)
     {
-        // Infrastructure responsibility: Fetch requester's role from database using UserContext
+        // Infrastructure responsibility: Fetch requester's role using EmployeeRoleService
         // If user is not an employee (e.g., service principal), default to Admin role
         ApplicationRole commandRequesterRole = ApplicationRole.Admin;
 
         if (Guid.TryParse(userContext.Id, out var userId))
         {
-            var requesterRoleResult = await queryDispatcher.QueryAsync(
-                new GetEmployeeRoleByIdQuery(userId),
-                HttpContext.RequestAborted);
+            var requesterRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
 
-            if (requesterRoleResult != null)
+            if (requesterRole != null)
             {
-                commandRequesterRole = ApplicationRoleMapper.MapFromQuery(requesterRoleResult.ApplicationRole);
+                commandRequesterRole = (ApplicationRole)requesterRole.ApplicationRoleValue;
             }
             else
             {

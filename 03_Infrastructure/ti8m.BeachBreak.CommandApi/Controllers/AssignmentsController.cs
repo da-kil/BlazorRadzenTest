@@ -4,9 +4,6 @@ using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 using ti8m.BeachBreak.Application.Command.Models;
 using ti8m.BeachBreak.Application.Command.Services;
-using ti8m.BeachBreak.Application.Query.Queries;
-using ti8m.BeachBreak.Application.Query.Queries.EmployeeQueries;
-using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.CommandApi.Authorization;
 using ti8m.BeachBreak.CommandApi.Dto;
 using ti8m.BeachBreak.CommandApi.Mappers;
@@ -20,7 +17,6 @@ namespace ti8m.BeachBreak.CommandApi.Controllers;
 public class AssignmentsController : BaseController
 {
     private readonly ICommandDispatcher commandDispatcher;
-    private readonly IQueryDispatcher queryDispatcher;
     private readonly UserContext userContext;
     private readonly ILogger<AssignmentsController> logger;
     private readonly IManagerAuthorizationService authorizationService;
@@ -28,14 +24,12 @@ public class AssignmentsController : BaseController
 
     public AssignmentsController(
         ICommandDispatcher commandDispatcher,
-        IQueryDispatcher queryDispatcher,
         UserContext userContext,
         ILogger<AssignmentsController> logger,
         IManagerAuthorizationService authorizationService,
         IEmployeeRoleService employeeRoleService)
     {
         this.commandDispatcher = commandDispatcher;
-        this.queryDispatcher = queryDispatcher;
         this.userContext = userContext;
         this.logger = logger;
         this.authorizationService = authorizationService;
@@ -59,26 +53,10 @@ public class AssignmentsController : BaseController
             if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
                 return BadRequest("At least one employee assignment is required");
 
-            // Load template to get ProcessType
-            var templateResult = await queryDispatcher.QueryAsync(
-                new QuestionnaireTemplateQuery(bulkAssignmentDto.TemplateId),
-                HttpContext.RequestAborted);
-
-            if (templateResult?.Succeeded != true || templateResult.Payload == null)
+            // Get current user ID
+            if (!Guid.TryParse(userContext.Id, out var userId))
             {
-                return BadRequest($"Template {bulkAssignmentDto.TemplateId} not found");
-            }
-
-            // Get current user's name from UserContext
-            var assignedBy = "";
-            if (Guid.TryParse(userContext.Id, out var userId))
-            {
-                var employeeResult = await queryDispatcher.QueryAsync(new EmployeeQuery(userId), HttpContext.RequestAborted);
-                if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
-                {
-                    assignedBy = $"{employeeResult.Payload.FirstName} {employeeResult.Payload.LastName}";
-                    logger.LogInformation("Set AssignedBy to {AssignedBy} from user context {UserId}", assignedBy, userId);
-                }
+                return Unauthorized("User ID not found in authentication context");
             }
 
             var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
@@ -90,10 +68,9 @@ public class AssignmentsController : BaseController
 
             var command = new CreateBulkAssignmentsCommand(
                 bulkAssignmentDto.TemplateId,
-                templateResult.Payload.ProcessType,
+                ProcessTypeMapper.MapToDomain(bulkAssignmentDto.ProcessType),
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
-                assignedBy,
                 userId,
                 bulkAssignmentDto.Notes);
 
@@ -126,16 +103,6 @@ public class AssignmentsController : BaseController
             if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
                 return BadRequest("At least one employee assignment is required");
 
-            // Load template to get ProcessType
-            var templateResult = await queryDispatcher.QueryAsync(
-                new QuestionnaireTemplateQuery(bulkAssignmentDto.TemplateId),
-                HttpContext.RequestAborted);
-
-            if (templateResult?.Succeeded != true || templateResult.Payload == null)
-            {
-                return BadRequest($"Template {bulkAssignmentDto.TemplateId} not found");
-            }
-
             // Get authenticated manager ID using authorization service
             Guid managerId;
             try
@@ -160,15 +127,6 @@ public class AssignmentsController : BaseController
                 return Forbid();
             }
 
-            // Get current user's name from database
-            var assignedBy = "";
-            var employeeResult = await queryDispatcher.QueryAsync(new EmployeeQuery(managerId), HttpContext.RequestAborted);
-            if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
-            {
-                assignedBy = $"{employeeResult.Payload.FirstName} {employeeResult.Payload.LastName}";
-                logger.LogInformation("Set AssignedBy to {AssignedBy} for manager {ManagerId}", assignedBy, managerId);
-            }
-
             var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
                 .Select(e => new EmployeeAssignmentData(
                     e.EmployeeId,
@@ -178,10 +136,9 @@ public class AssignmentsController : BaseController
 
             var command = new CreateBulkAssignmentsCommand(
                 bulkAssignmentDto.TemplateId,
-                templateResult.Payload.ProcessType,
+                ProcessTypeMapper.MapToDomain(bulkAssignmentDto.ProcessType),
                 employeeAssignments,
                 bulkAssignmentDto.DueDate,
-                assignedBy,
                 managerId,
                 bulkAssignmentDto.Notes);
 

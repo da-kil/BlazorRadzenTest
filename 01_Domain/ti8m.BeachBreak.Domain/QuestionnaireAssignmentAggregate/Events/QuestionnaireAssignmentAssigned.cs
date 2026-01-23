@@ -12,5 +12,5 @@ public record QuestionnaireAssignmentAssigned(
     string EmployeeEmail,
     DateTime AssignedDate,
     DateTime? DueDate,
-    string? AssignedBy,
+    Guid AssignedByUserId,
     string? Notes) : IDomainEvent;

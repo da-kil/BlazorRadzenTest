@@ -17,7 +17,7 @@ public partial class QuestionnaireAssignment : AggregateRoot
     public string EmployeeEmail { get; private set; }
     public DateTime AssignedDate { get; private set; }
     public DateTime? DueDate { get; private set; }
-    public string? AssignedBy { get; private set; }
+    public Guid AssignedByUserId { get; private set; }
     public string? Notes { get; private set; }
     public DateTime? StartedDate { get; private set; }
     public DateTime? CompletedDate { get; private set; }
@@ -88,7 +88,7 @@ public partial class QuestionnaireAssignment : AggregateRoot
         string employeeEmail,
         DateTime assignedDate,
         DateTime? dueDate,
-        string? assignedBy,
+        Guid assignedByUserId,
         string? notes)
     {
         RaiseEvent(new QuestionnaireAssignmentAssigned(
@@ -100,7 +100,7 @@ public partial class QuestionnaireAssignment : AggregateRoot
             employeeEmail,
             assignedDate,
             dueDate,
-            assignedBy,
+            assignedByUserId,
             notes));
     }
 
@@ -767,7 +767,7 @@ public partial class QuestionnaireAssignment : AggregateRoot
         EmployeeEmail = @event.EmployeeEmail;
         AssignedDate = @event.AssignedDate;
         DueDate = @event.DueDate;
-        AssignedBy = @event.AssignedBy;
+        AssignedByUserId = @event.AssignedByUserId;
         Notes = @event.Notes;
         IsWithdrawn = false;
     }

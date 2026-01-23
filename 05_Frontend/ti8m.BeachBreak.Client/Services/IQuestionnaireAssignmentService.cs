@@ -15,8 +15,8 @@ public interface IQuestionnaireAssignmentService
     Task<bool> DeleteAssignmentAsync(Guid id);
 
     // Assignment creation and management
-    Task<List<QuestionnaireAssignment>> CreateAssignmentsAsync(Guid templateId, List<EmployeeDto> employees, DateTime? dueDate, string? notes);
-    Task<List<QuestionnaireAssignment>> CreateManagerAssignmentsAsync(Guid templateId, List<EmployeeDto> employees, DateTime? dueDate, string? notes);
+    Task<List<QuestionnaireAssignment>> CreateAssignmentsAsync(Guid templateId, QuestionnaireProcessType processType, List<EmployeeDto> employees, DateTime? dueDate, string? notes);
+    Task<List<QuestionnaireAssignment>> CreateManagerAssignmentsAsync(Guid templateId, QuestionnaireProcessType processType, List<EmployeeDto> employees, DateTime? dueDate, string? notes);
     Task<QuestionnaireAssignment?> UpdateAssignmentWorkflowStateAsync(Guid id, WorkflowState workflowState);
 
     // Assignment queries

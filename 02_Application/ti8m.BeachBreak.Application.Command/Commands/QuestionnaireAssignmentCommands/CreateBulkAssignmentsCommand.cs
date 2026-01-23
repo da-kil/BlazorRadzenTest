@@ -8,25 +8,22 @@ public class CreateBulkAssignmentsCommand : ICommand<Result>
     public QuestionnaireProcessType ProcessType { get; init; }
     public List<EmployeeAssignmentData> EmployeeAssignments { get; init; } = new();
     public DateTime? DueDate { get; init; }
-    public string? AssignedBy { get; init; }
-    public Guid? AssignedByEmployeeId { get; init; }
+    public Guid AssignedByUserId { get; init; }
     public string? Notes { get; init; }
 
     public CreateBulkAssignmentsCommand(
         Guid templateId,
         QuestionnaireProcessType processType,
         List<EmployeeAssignmentData> employeeAssignments,
-        DateTime? dueDate = null,
-        string? assignedBy = null,
-        Guid? assignedByEmployeeId = null,
+        DateTime? dueDate,
+        Guid assignedByUserId,
         string? notes = null)
     {
         TemplateId = templateId;
         ProcessType = processType;
         EmployeeAssignments = employeeAssignments;
         DueDate = dueDate;
-        AssignedBy = assignedBy;
-        AssignedByEmployeeId = assignedByEmployeeId;
+        AssignedByUserId = assignedByUserId;
         Notes = notes;
     }
 }

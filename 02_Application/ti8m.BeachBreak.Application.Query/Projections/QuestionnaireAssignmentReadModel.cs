@@ -17,7 +17,8 @@ public class QuestionnaireAssignmentReadModel
     public string EmployeeEmail { get; set; } = string.Empty;
     public DateTime AssignedDate { get; set; }
     public DateTime? DueDate { get; set; }
-    public string? AssignedBy { get; set; }
+    public Guid AssignedByUserId { get; set; }
+    public string? AssignedByName { get; set; }  // Derived from AssignedByUserId
     public string? Notes { get; set; }
     public DateTime? StartedDate { get; set; }
     public DateTime? CompletedDate { get; set; }
@@ -86,7 +87,8 @@ public class QuestionnaireAssignmentReadModel
         EmployeeEmail = @event.EmployeeEmail;
         AssignedDate = @event.AssignedDate;
         DueDate = @event.DueDate;
-        AssignedBy = @event.AssignedBy;
+        AssignedByUserId = @event.AssignedByUserId;
+        AssignedByName = null;  // Will be enriched by query service
         Notes = @event.Notes;
     }
 

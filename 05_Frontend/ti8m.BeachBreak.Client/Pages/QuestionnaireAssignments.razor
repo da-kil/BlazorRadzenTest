@@ -681,8 +681,19 @@
             // Get the selected employees with full data
             var selectedEmployees = allEmployees.Where(e => selectedEmployeeIds.Contains(e.Id)).ToList();
 
+            // Get the selected questionnaire to access its ProcessType
+            var selectedQuestionnaire = allQuestionnaires.FirstOrDefault(q => q.Id == selectedQuestionnaireId!.Value);
+            if (selectedQuestionnaire == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error,
+                    T("notifications.error"),
+                    T("notifications.questionnaire-not-found"));
+                return;
+            }
+
             var newAssignments = await AssignmentService.CreateAssignmentsAsync(
                 selectedQuestionnaireId!.Value,
+                selectedQuestionnaire.ProcessType,
                 selectedEmployees,
                 assignmentDueDate,
                 assignmentNotes
