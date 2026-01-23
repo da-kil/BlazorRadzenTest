@@ -23,19 +23,22 @@ public class AssignmentsController : BaseController
     private readonly IManagerAuthorizationService authorizationService;
     private readonly IEmployeeRoleService employeeRoleService;
     private readonly UserContext userContext;
+    private readonly IReviewChangeEnrichmentService reviewChangeEnrichmentService;
 
     public AssignmentsController(
         IQueryDispatcher queryDispatcher,
         ILogger<AssignmentsController> logger,
         IManagerAuthorizationService authorizationService,
         IEmployeeRoleService employeeRoleService,
-        UserContext userContext)
+        UserContext userContext,
+        IReviewChangeEnrichmentService reviewChangeEnrichmentService)
     {
         this.queryDispatcher = queryDispatcher;
         this.logger = logger;
         this.authorizationService = authorizationService;
         this.employeeRoleService = employeeRoleService;
         this.userContext = userContext;
+        this.reviewChangeEnrichmentService = reviewChangeEnrichmentService;
     }
 
     /// <summary>
@@ -218,56 +221,23 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetReviewChanges(Guid id)
     {
-        try
-        {
-            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
-            Guid userId;
-            try
+        return await ExecuteWithAuthorizationAsync(
+            authorizationService,
+            employeeRoleService,
+            logger,
+            async (managerId, hasElevatedRole) =>
             {
-                userId = await authorizationService.GetCurrentManagerIdAsync();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning("GetReviewChanges authorization failed: {Message}", ex.Message);
-                return Unauthorized(ex.Message);
-            }
+                var result = await queryDispatcher.QueryAsync(
+                    new Application.Query.Queries.ReviewQueries.GetReviewChangesQuery(id));
 
-            var hasElevatedRole = await HasElevatedRoleAsync(employeeRoleService, logger, userId);
-            if (!hasElevatedRole)
-            {
-                var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, id);
+                // Batch fetch employee names for all changes (efficient single query)
+                var employeeIds = result.Select(c => c.ChangedByEmployeeId).Distinct();
+                var employeeNames = await reviewChangeEnrichmentService.GetEmployeeNamesAsync(
+                    employeeIds,
+                    HttpContext.RequestAborted);
 
-                if (!canAccess)
-                {
-                    logger.LogWarning("Manager {UserId} attempted to access review changes for assignment {AssignmentId} for non-direct report",
-                        userId, id);
-                    return Forbid();
-                }
-            }
-
-            var result = await queryDispatcher.QueryAsync(new Application.Query.Queries.ReviewQueries.GetReviewChangesQuery(id));
-
-            // Batch fetch employee names for all changes
-            var employeeIds = result.Select(c => c.ChangedByEmployeeId).Distinct().ToList();
-            var employeeNames = new Dictionary<Guid, string>();
-
-            foreach (var employeeId in employeeIds)
-            {
-                var employeeResult = await queryDispatcher.QueryAsync(new EmployeeQuery(employeeId));
-                if (employeeResult?.Succeeded == true && employeeResult.Payload != null)
-                {
-                    var employee = employeeResult.Payload;
-                    employeeNames[employeeId] = $"{employee.FirstName} {employee.LastName}";
-                }
-                else
-                {
-                    employeeNames[employeeId] = "Unknown";
-                }
-            }
-
-            return CreateResponse(Result<List<Application.Query.Projections.ReviewChangeLogReadModel>>.Success(result), changes =>
-            {
-                return changes.Select(c => new ReviewChangeDto
+                // Map to DTOs with enriched employee names
+                var dtos = result.Select(c => new ReviewChangeDto
                 {
                     Id = c.Id,
                     AssignmentId = c.AssignmentId,
@@ -280,14 +250,12 @@ public class AssignmentsController : BaseController
                     NewValue = c.NewValue,
                     ChangedAt = c.ChangedAt,
                     ChangedBy = employeeNames.TryGetValue(c.ChangedByEmployeeId, out var name) ? name : "Unknown"
-                });
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving review changes for assignment {AssignmentId}", id);
-            return StatusCode(500, "An error occurred while retrieving review changes");
-        }
+                }).ToList();
+
+                return Result<IEnumerable<ReviewChangeDto>>.Success(dtos);
+            },
+            resourceId: id,
+            requiresResourceAccess: true);
     }
 
     /// <summary>

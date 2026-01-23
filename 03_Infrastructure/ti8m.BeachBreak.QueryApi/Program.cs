@@ -56,6 +56,9 @@ public class Program
         // Register employee role service for cache-through role retrieval
         builder.Services.AddScoped<Application.Query.Services.IEmployeeRoleService, Services.EmployeeRoleService>();
 
+        // Register review change enrichment service for batch employee name fetching
+        builder.Services.AddScoped<Application.Query.Services.IReviewChangeEnrichmentService, Application.Query.Services.ReviewChangeEnrichmentService>();
+
         builder.Services.AddControllers();
 
         builder.Services.AddSwaggerGen(option =>
