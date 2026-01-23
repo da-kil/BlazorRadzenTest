@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using ti8m.BeachBreak.Application.Command.Commands;
 using ti8m.BeachBreak.Application.Command.Commands.QuestionnaireTemplateCommands;
 using ti8m.BeachBreak.CommandApi.Dto;
+using ti8m.BeachBreak.CommandApi.Mappers;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 
@@ -16,15 +17,18 @@ public class QuestionnaireTemplatesController : BaseController
     private readonly ICommandDispatcher commandDispatcher;
     private readonly UserContext userContext;
     private readonly ILogger<QuestionnaireTemplatesController> logger;
+    private readonly IQuestionSectionMapper questionSectionMapper;
 
     public QuestionnaireTemplatesController(
         ICommandDispatcher commandDispatcher,
         UserContext userContext,
-        ILogger<QuestionnaireTemplatesController> logger)
+        ILogger<QuestionnaireTemplatesController> logger,
+        IQuestionSectionMapper questionSectionMapper)
     {
         this.commandDispatcher = commandDispatcher;
         this.userContext = userContext;
         this.logger = logger;
+        this.questionSectionMapper = questionSectionMapper;
     }
 
     [HttpPost]
@@ -50,18 +54,7 @@ public class QuestionnaireTemplatesController : BaseController
                 ProcessType = MapProcessType(questionnaireTemplate.ProcessType),
                 IsCustomizable = questionnaireTemplate.IsCustomizable,
                 AutoInitialize = questionnaireTemplate.AutoInitialize,
-                Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
-                {
-                    DescriptionGerman = section.DescriptionGerman,
-                    DescriptionEnglish = section.DescriptionEnglish,
-                    Id = section.Id,
-                    Order = section.Order,
-                    TitleGerman = section.TitleGerman,
-                    TitleEnglish = section.TitleEnglish,
-                    CompletionRole = section.CompletionRole,
-                    Type = section.Type,
-                    Configuration = section.Configuration
-                }).ToList()
+                Sections = questionSectionMapper.MapToCommandList(questionnaireTemplate.Sections)
             };
 
             Result result = await commandDispatcher.SendAsync(new CreateQuestionnaireTemplateCommand(commandTemplate));
@@ -95,18 +88,7 @@ public class QuestionnaireTemplatesController : BaseController
                 ProcessType = MapProcessType(questionnaireTemplate.ProcessType),
                 IsCustomizable = questionnaireTemplate.IsCustomizable,
                 AutoInitialize = questionnaireTemplate.AutoInitialize,
-                Sections = questionnaireTemplate.Sections.Select(section => new CommandQuestionSection
-                {
-                    DescriptionGerman = section.DescriptionGerman,
-                    DescriptionEnglish = section.DescriptionEnglish,
-                    Id = section.Id,
-                    Order = section.Order,
-                    TitleGerman = section.TitleGerman,
-                    TitleEnglish = section.TitleEnglish,
-                    CompletionRole = section.CompletionRole,
-                    Type = section.Type,
-                    Configuration = section.Configuration
-                }).ToList()
+                Sections = questionSectionMapper.MapToCommandList(questionnaireTemplate.Sections)
             };
 
             Result result = await commandDispatcher.SendAsync(new UpdateQuestionnaireTemplateCommand(id, commandTemplate));

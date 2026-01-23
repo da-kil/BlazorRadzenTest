@@ -74,48 +74,24 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAssignment(Guid id)
     {
-        try
-        {
-            // Get the assignment first
-            var result = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentQuery(id));
-            if (result == null || !result.Succeeded || result.Payload == null)
-                return NotFound($"Assignment with ID {id} not found");
-
-            var assignment = result.Payload;
-
-            // Get current user ID
-            Guid userId;
-            try
+        return await ExecuteWithAuthorizationAsync(
+            authorizationService,
+            employeeRoleService,
+            logger,
+            async (managerId, hasElevatedRole) =>
             {
-                userId = await authorizationService.GetCurrentManagerIdAsync();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning("GetAssignment authorization failed: {Message}", ex.Message);
-                return Unauthorized(ex.Message);
-            }
-
-            // Check if user has elevated role (HR/Admin) - they can access any assignment
-            var hasElevatedRole = await HasElevatedRoleAsync(userId);
-            if (!hasElevatedRole)
-            {
-                // Managers can only access assignments for their direct reports
-                var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, id);
-                if (!canAccess)
+                var result = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentQuery(id));
+                if (result == null || !result.Succeeded || result.Payload == null)
                 {
-                    logger.LogWarning("Manager {UserId} attempted to access assignment {AssignmentId} for non-direct report",
-                        userId, id);
-                    return Forbid();
+                    return Result<QuestionnaireAssignmentDto>.Fail(
+                        $"Assignment with ID {id} not found",
+                        StatusCodes.Status404NotFound);
                 }
-            }
 
-            return CreateResponse(result, template => MapToDto(template));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving assignment {AssignmentId}", id);
-            return StatusCode(500, "An error occurred while retrieving the assignment");
-        }
+                return Result<QuestionnaireAssignmentDto>.Success(MapToDto(result.Payload));
+            },
+            resourceId: id,
+            requiresResourceAccess: true);
     }
 
     /// <summary>
@@ -129,64 +105,24 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAssignmentsByEmployee(Guid employeeId)
     {
-        try
-        {
-            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
-            Guid userId;
-            try
+        return await ExecuteWithAuthorizationAsync(
+            authorizationService,
+            employeeRoleService,
+            logger,
+            async (managerId, hasElevatedRole) =>
             {
-                userId = await authorizationService.GetCurrentManagerIdAsync();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning("GetAssignmentsByEmployee authorization failed: {Message}", ex.Message);
-                return Unauthorized(ex.Message);
-            }
+                var result = await queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
+                if (!result.Succeeded)
+                    return Result<IEnumerable<QuestionnaireAssignmentDto>>.Fail(result.Message ?? "Failed to retrieve assignments", result.StatusCode);
 
-            var hasElevatedRole = await HasElevatedRoleAsync(userId);
-            if (!hasElevatedRole)
-            {
-                var isDirectReport = await authorizationService.IsManagerOfAsync(userId, employeeId);
-
-                if (!isDirectReport)
-                {
-                    logger.LogWarning("Manager {UserId} attempted to access assignments for non-direct report employee {EmployeeId}",
-                        userId, employeeId);
-                    return Forbid();
-                }
-            }
-
-            var result = await queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
-            return CreateResponse(result, templates =>
-            {
-                return templates.Select(template => MapToDto(template));
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving assignments for employee {EmployeeId}", employeeId);
-            return StatusCode(500, "An error occurred while retrieving assignments");
-        }
+                var dtos = result.Payload!.Select(template => MapToDto(template));
+                return Result<IEnumerable<QuestionnaireAssignmentDto>>.Success(dtos);
+            },
+            resourceId: employeeId,
+            requiresResourceAccess: true,
+            resourceAccessCheck: authorizationService.IsManagerOfAsync);
     }
 
-    /// <summary>
-    /// Checks if the current user has an elevated role (HR, HRLead, or Admin).
-    /// Returns true if elevated, false if user is only TeamLead/Employee.
-    /// </summary>
-    private async Task<bool> HasElevatedRoleAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, cancellationToken);
-        if (employeeRole == null)
-        {
-            logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
-            return false;
-        }
-
-        // EmployeeRoleResult.ApplicationRole is already Application.Query.ApplicationRole
-        return employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HR ||
-               employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.HRLead ||
-               employeeRole.ApplicationRole == Application.Query.Models.ApplicationRole.Admin;
-    }
 
     /// <summary>
     /// Maps a QuestionnaireAssignment query result to a QuestionnaireAssignmentDto.
@@ -296,7 +232,7 @@ public class AssignmentsController : BaseController
                 return Unauthorized(ex.Message);
             }
 
-            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+            var hasElevatedRole = await HasElevatedRoleAsync(employeeRoleService, logger, userId);
             if (!hasElevatedRole)
             {
                 var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, id);
@@ -377,7 +313,7 @@ public class AssignmentsController : BaseController
             }
 
             // Check if user has elevated role (HR/Admin)
-            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+            var hasElevatedRole = await HasElevatedRoleAsync(employeeRoleService, logger, userId);
             if (!hasElevatedRole)
             {
                 // Managers can only access assignments for their direct reports
@@ -438,7 +374,7 @@ public class AssignmentsController : BaseController
             var employeeId = assignment.EmployeeId;
 
             // Check if user has elevated role (HR/Admin) or is the employee themselves
-            var hasElevatedRole = await HasElevatedRoleAsync(userId);
+            var hasElevatedRole = await HasElevatedRoleAsync(employeeRoleService, logger, userId);
             if (!hasElevatedRole && userId != employeeId)
             {
                 // Managers can only access assignments for their direct reports

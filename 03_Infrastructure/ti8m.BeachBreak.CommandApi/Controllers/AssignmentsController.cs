@@ -22,6 +22,7 @@ public class AssignmentsController : BaseController
     private readonly ICommandAuthorizationService commandAuthorizationService;
     private readonly IManagerAuthorizationService authorizationService;
     private readonly IEmployeeRoleService employeeRoleService;
+    private readonly IQuestionSectionMapper questionSectionMapper;
 
     public AssignmentsController(
         ICommandDispatcher commandDispatcher,
@@ -29,7 +30,8 @@ public class AssignmentsController : BaseController
         ILogger<AssignmentsController> logger,
         ICommandAuthorizationService commandAuthorizationService,
         IManagerAuthorizationService authorizationService,
-        IEmployeeRoleService employeeRoleService)
+        IEmployeeRoleService employeeRoleService,
+        IQuestionSectionMapper questionSectionMapper)
     {
         this.commandDispatcher = commandDispatcher;
         this.userContext = userContext;
@@ -37,6 +39,7 @@ public class AssignmentsController : BaseController
         this.commandAuthorizationService = commandAuthorizationService;
         this.authorizationService = authorizationService;
         this.employeeRoleService = employeeRoleService;
+        this.questionSectionMapper = questionSectionMapper;
     }
 
     /// <summary>
@@ -307,19 +310,8 @@ public class AssignmentsController : BaseController
             commandAuthorizationService,
             async managerId =>
             {
-                // Map QuestionSectionDto to CommandQuestionSection
-                var commandSections = sectionsDto.Sections.Select(dto => new Application.Command.Commands.QuestionnaireTemplateCommands.CommandQuestionSection
-                {
-                    Id = dto.Id,
-                    TitleGerman = dto.TitleGerman,
-                    TitleEnglish = dto.TitleEnglish,
-                    DescriptionGerman = dto.DescriptionGerman,
-                    DescriptionEnglish = dto.DescriptionEnglish,
-                    Order = dto.Order,
-                    CompletionRole = dto.CompletionRole,
-                    Type = dto.Type,
-                    Configuration = dto.Configuration
-                }).ToList();
+                // Map QuestionSectionDto to CommandQuestionSection using mapper
+                var commandSections = questionSectionMapper.MapToCommandList(sectionsDto.Sections);
 
                 var command = new AddCustomSectionsCommand(
                     assignmentId,
