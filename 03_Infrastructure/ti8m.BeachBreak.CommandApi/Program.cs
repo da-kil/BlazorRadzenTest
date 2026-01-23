@@ -135,6 +135,9 @@ namespace ti8m.BeachBreak.CommandApi
             // Register employee role service for cache-through role retrieval
             builder.Services.AddScoped<Application.Command.Services.IEmployeeRoleService, Services.EmployeeRoleService>();
 
+            // Register command authorization service for Clean Architecture authorization
+            builder.Services.AddScoped<Application.Command.Services.ICommandAuthorizationService, Services.CommandAuthorizationService>();
+
             // Configure JSON serialization to use PascalCase (C# naming conventions)
             builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(options =>
             {

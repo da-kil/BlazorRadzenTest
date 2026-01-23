@@ -19,6 +19,7 @@ public class AssignmentsController : BaseController
     private readonly ICommandDispatcher commandDispatcher;
     private readonly UserContext userContext;
     private readonly ILogger<AssignmentsController> logger;
+    private readonly ICommandAuthorizationService commandAuthorizationService;
     private readonly IManagerAuthorizationService authorizationService;
     private readonly IEmployeeRoleService employeeRoleService;
 
@@ -26,12 +27,14 @@ public class AssignmentsController : BaseController
         ICommandDispatcher commandDispatcher,
         UserContext userContext,
         ILogger<AssignmentsController> logger,
+        ICommandAuthorizationService commandAuthorizationService,
         IManagerAuthorizationService authorizationService,
         IEmployeeRoleService employeeRoleService)
     {
         this.commandDispatcher = commandDispatcher;
         this.userContext = userContext;
         this.logger = logger;
+        this.commandAuthorizationService = commandAuthorizationService;
         this.authorizationService = authorizationService;
         this.employeeRoleService = employeeRoleService;
     }
@@ -54,9 +57,9 @@ public class AssignmentsController : BaseController
                 return BadRequest("At least one employee assignment is required");
 
             // Get current user ID
-            if (!Guid.TryParse(userContext.Id, out var userId))
+            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
             {
-                return Unauthorized("User ID not found in authentication context");
+                return Unauthorized(errorMessage);
             }
 
             var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
@@ -203,49 +206,22 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> ExtendAssignmentDueDate([FromBody] ExtendAssignmentDueDateDto extendDto)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
-            Guid managerId;
-            try
+        return await ExecuteWithAuthorizationAsync(
+            commandAuthorizationService,
+            async managerId =>
             {
-                managerId = await authorizationService.GetCurrentManagerIdAsync();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning("Authorization failed: {Message}", ex.Message);
-                return Unauthorized(ex.Message);
-            }
+                var command = new ExtendAssignmentDueDateCommand(
+                    extendDto.AssignmentId,
+                    extendDto.NewDueDate,
+                    extendDto.ExtensionReason);
 
-            var hasElevatedRole = await HasElevatedRoleAsync(managerId);
-            if (!hasElevatedRole)
-            {
-                var canAccess = await authorizationService.CanAccessAssignmentAsync(managerId, extendDto.AssignmentId);
-
-                if (!canAccess)
-                {
-                    logger.LogWarning("Manager {ManagerId} attempted to extend assignment {AssignmentId} for non-direct report",
-                        managerId, extendDto.AssignmentId);
-                    return Forbid();
-                }
-            }
-
-            var command = new ExtendAssignmentDueDateCommand(
-                extendDto.AssignmentId,
-                extendDto.NewDueDate,
-                extendDto.ExtensionReason);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error extending assignment due date");
-            return StatusCode(500, "An error occurred while extending due date");
-        }
+                return await commandDispatcher.SendAsync(command);
+            },
+            resourceId: extendDto.AssignmentId,
+            requiresResourceAccess: true);
     }
 
     /// <summary>
@@ -259,49 +235,22 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> WithdrawAssignment([FromBody] WithdrawAssignmentDto withdrawDto)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
-            Guid managerId;
-            try
+        return await ExecuteWithAuthorizationAsync(
+            commandAuthorizationService,
+            async managerId =>
             {
-                managerId = await authorizationService.GetCurrentManagerIdAsync();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning("Authorization failed: {Message}", ex.Message);
-                return Unauthorized(ex.Message);
-            }
+                var command = new WithdrawAssignmentCommand(
+                    withdrawDto.AssignmentId,
+                    managerId,
+                    withdrawDto.WithdrawalReason);
 
-            var hasElevatedRole = await HasElevatedRoleAsync(managerId);
-            if (!hasElevatedRole)
-            {
-                var canAccess = await authorizationService.CanAccessAssignmentAsync(managerId, withdrawDto.AssignmentId);
-
-                if (!canAccess)
-                {
-                    logger.LogWarning("Manager {ManagerId} attempted to withdraw assignment {AssignmentId} for non-direct report",
-                        managerId, withdrawDto.AssignmentId);
-                    return Forbid();
-                }
-            }
-
-            var command = new WithdrawAssignmentCommand(
-                withdrawDto.AssignmentId,
-                managerId,
-                withdrawDto.WithdrawalReason);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error withdrawing assignment");
-            return StatusCode(500, "An error occurred while withdrawing assignment");
-        }
+                return await commandDispatcher.SendAsync(command);
+            },
+            resourceId: withdrawDto.AssignmentId,
+            requiresResourceAccess: true);
     }
 
     /// <summary>
@@ -317,49 +266,22 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> InitializeAssignment(Guid assignmentId, [FromBody] InitializeAssignmentDto initializeDto)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
-            Guid managerId;
-            try
+        return await ExecuteWithAuthorizationAsync(
+            commandAuthorizationService,
+            async managerId =>
             {
-                managerId = await authorizationService.GetCurrentManagerIdAsync();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning("Authorization failed: {Message}", ex.Message);
-                return Unauthorized(ex.Message);
-            }
+                var command = new InitializeAssignmentCommand(
+                    assignmentId,
+                    managerId,
+                    initializeDto.InitializationNotes);
 
-            var hasElevatedRole = await HasElevatedRoleAsync(managerId);
-            if (!hasElevatedRole)
-            {
-                var canAccess = await authorizationService.CanAccessAssignmentAsync(managerId, assignmentId);
-
-                if (!canAccess)
-                {
-                    logger.LogWarning("Manager {ManagerId} attempted to initialize assignment {AssignmentId} for non-direct report",
-                        managerId, assignmentId);
-                    return Forbid();
-                }
-            }
-
-            var command = new InitializeAssignmentCommand(
-                assignmentId,
-                managerId,
-                initializeDto.InitializationNotes);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error initializing assignment");
-            return StatusCode(500, "An error occurred while initializing assignment");
-        }
+                return await commandDispatcher.SendAsync(command);
+            },
+            resourceId: assignmentId,
+            requiresResourceAccess: true);
     }
 
     /// <summary>
@@ -375,66 +297,39 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> AddCustomSections(Guid assignmentId, [FromBody] AddCustomSectionsDto sectionsDto)
     {
-        try
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-            if (sectionsDto.Sections == null || !sectionsDto.Sections.Any())
-                return BadRequest("At least one custom section is required");
+        if (sectionsDto.Sections == null || !sectionsDto.Sections.Any())
+            return BadRequest("At least one custom section is required");
 
-            // Check authorization - only apply manager restrictions if user doesn't have elevated HR/Admin roles
-            Guid managerId;
-            try
+        return await ExecuteWithAuthorizationAsync(
+            commandAuthorizationService,
+            async managerId =>
             {
-                managerId = await authorizationService.GetCurrentManagerIdAsync();
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning("Authorization failed: {Message}", ex.Message);
-                return Unauthorized(ex.Message);
-            }
-
-            var hasElevatedRole = await HasElevatedRoleAsync(managerId);
-            if (!hasElevatedRole)
-            {
-                var canAccess = await authorizationService.CanAccessAssignmentAsync(managerId, assignmentId);
-
-                if (!canAccess)
+                // Map QuestionSectionDto to CommandQuestionSection
+                var commandSections = sectionsDto.Sections.Select(dto => new Application.Command.Commands.QuestionnaireTemplateCommands.CommandQuestionSection
                 {
-                    logger.LogWarning("Manager {ManagerId} attempted to add custom sections to assignment {AssignmentId} for non-direct report",
-                        managerId, assignmentId);
-                    return Forbid();
-                }
-            }
+                    Id = dto.Id,
+                    TitleGerman = dto.TitleGerman,
+                    TitleEnglish = dto.TitleEnglish,
+                    DescriptionGerman = dto.DescriptionGerman,
+                    DescriptionEnglish = dto.DescriptionEnglish,
+                    Order = dto.Order,
+                    CompletionRole = dto.CompletionRole,
+                    Type = dto.Type,
+                    Configuration = dto.Configuration
+                }).ToList();
 
-            // Map QuestionSectionDto to CommandQuestionSection
-            var commandSections = sectionsDto.Sections.Select(dto => new Application.Command.Commands.QuestionnaireTemplateCommands.CommandQuestionSection
-            {
-                Id = dto.Id,
-                TitleGerman = dto.TitleGerman,
-                TitleEnglish = dto.TitleEnglish,
-                DescriptionGerman = dto.DescriptionGerman,
-                DescriptionEnglish = dto.DescriptionEnglish,
-                Order = dto.Order,
-                CompletionRole = dto.CompletionRole,
-                Type = dto.Type,
-                Configuration = dto.Configuration
-            }).ToList();
+                var command = new AddCustomSectionsCommand(
+                    assignmentId,
+                    commandSections,
+                    managerId);
 
-            var command = new AddCustomSectionsCommand(
-                assignmentId,
-                commandSections,
-                managerId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error adding custom sections to assignment");
-            return StatusCode(500, "An error occurred while adding custom sections");
-        }
+                return await commandDispatcher.SendAsync(command);
+            },
+            resourceId: assignmentId,
+            requiresResourceAccess: true);
     }
 
     // Workflow endpoints
@@ -516,10 +411,10 @@ public class AssignmentsController : BaseController
         try
         {
             // Get employee ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var employeeId))
+            if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
             {
-                logger.LogWarning("SubmitEmployeeQuestionnaire failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("SubmitEmployeeQuestionnaire failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             var command = new SubmitEmployeeQuestionnaireCommand(
@@ -543,10 +438,10 @@ public class AssignmentsController : BaseController
         try
         {
             // Get manager ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var managerId))
+            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
             {
-                logger.LogWarning("SubmitManagerQuestionnaire failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("SubmitManagerQuestionnaire failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             var command = new SubmitManagerQuestionnaireCommand(
@@ -570,10 +465,10 @@ public class AssignmentsController : BaseController
         try
         {
             // Get manager ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var managerId))
+            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
             {
-                logger.LogWarning("InitiateReview failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("InitiateReview failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             var command = new InitiateReviewCommand(assignmentId, managerId);
@@ -596,10 +491,10 @@ public class AssignmentsController : BaseController
                 return BadRequest("Invalid ApplicationRole value");
 
             // Get user ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var userId))
+            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
             {
-                logger.LogWarning("EditAnswerDuringReview failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("EditAnswerDuringReview failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
@@ -638,10 +533,10 @@ public class AssignmentsController : BaseController
                 return BadRequest(ModelState);
 
             // Get manager ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var managerId))
+            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
             {
-                logger.LogWarning("FinishReviewMeeting failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("FinishReviewMeeting failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             var command = new FinishReviewMeetingCommand(
@@ -676,10 +571,10 @@ public class AssignmentsController : BaseController
                 return BadRequest(ModelState);
 
             // Get employee ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var employeeId))
+            if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
             {
-                logger.LogWarning("SignOffReviewOutcome failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("SignOffReviewOutcome failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             var command = new SignOffReviewOutcomeAsEmployeeCommand(
@@ -713,10 +608,10 @@ public class AssignmentsController : BaseController
                 return BadRequest(ModelState);
 
             // Get employee ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var employeeId))
+            if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
             {
-                logger.LogWarning("ConfirmReviewOutcomeAsEmployee failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("ConfirmReviewOutcomeAsEmployee failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             var command = new ConfirmReviewOutcomeAsEmployeeCommand(
@@ -752,10 +647,10 @@ public class AssignmentsController : BaseController
                 return BadRequest(ModelState);
 
             // Get manager ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var managerId))
+            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
             {
-                logger.LogWarning("FinalizeQuestionnaireAsManager failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("FinalizeQuestionnaireAsManager failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             var command = new FinalizeQuestionnaireAsManagerCommand(
@@ -857,10 +752,10 @@ public class AssignmentsController : BaseController
                 return BadRequest(ModelState);
 
             // Get manager ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var managerId))
+            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
             {
-                logger.LogWarning("SendReminder failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("SendReminder failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             var command = new SendAssignmentReminderCommand(
@@ -882,21 +777,6 @@ public class AssignmentsController : BaseController
     /// Checks if the current user has an elevated role (HR, HRLead, or Admin).
     /// Returns true if elevated, false if user is only TeamLead/Employee.
     /// </summary>
-    private async Task<bool> HasElevatedRoleAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, cancellationToken);
-        if (employeeRole == null)
-        {
-            logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
-            return false;
-        }
-
-        var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
-        var commandRole = ApplicationRoleMapper.MapFromQuery(queryRole);
-        return commandRole == ApplicationRole.HR ||
-               commandRole == ApplicationRole.HRLead ||
-               commandRole == ApplicationRole.Admin;
-    }
 
     /// <summary>
     /// Reopens a questionnaire assignment for corrections.
@@ -923,10 +803,10 @@ public class AssignmentsController : BaseController
                 return BadRequest(ModelState);
 
             // Get user ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var userId))
+            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
             {
-                logger.LogWarning("ReopenQuestionnaire failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("ReopenQuestionnaire failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             // Get user role with cache-through pattern
@@ -972,10 +852,10 @@ public class AssignmentsController : BaseController
     {
         try
         {
-            if (!Guid.TryParse(userContext.Id, out var userId))
+            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
             {
-                logger.LogWarning("LinkPredecessorQuestionnaire failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("LinkPredecessorQuestionnaire failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             // Parse role from DTO
@@ -1022,10 +902,10 @@ public class AssignmentsController : BaseController
     {
         try
         {
-            if (!Guid.TryParse(userContext.Id, out var userId))
+            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
             {
-                logger.LogWarning("LinkEmployeeFeedback failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("LinkEmployeeFeedback failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             // Get user role from database
@@ -1071,10 +951,10 @@ public class AssignmentsController : BaseController
     {
         try
         {
-            if (!Guid.TryParse(userContext.Id, out var userId))
+            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
             {
-                logger.LogWarning("UnlinkEmployeeFeedback failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("UnlinkEmployeeFeedback failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             // Get user role from database

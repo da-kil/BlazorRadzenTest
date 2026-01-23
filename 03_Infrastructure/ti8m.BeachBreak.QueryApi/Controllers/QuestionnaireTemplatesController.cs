@@ -5,6 +5,7 @@ using ti8m.BeachBreak.Application.Query.Queries.QuestionnaireTemplateQueries;
 using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.QueryApi.Controllers;
 using ti8m.BeachBreak.QueryApi.Dto;
+using ti8m.BeachBreak.QueryApi.Mappers;
 
 namespace ti8m.BeachBreak.CommandApi.Controllers;
 
@@ -154,7 +155,7 @@ public class QuestionnaireTemplatesController : BaseController
             DescriptionGerman = template.DescriptionGerman,
             DescriptionEnglish = template.DescriptionEnglish,
             CategoryId = template.CategoryId,
-            ProcessType = MapProcessType(template.ProcessType),
+            ProcessType = EnumConverter.MapToProcessType(template.ProcessType),
             IsCustomizable = template.IsCustomizable,
             AutoInitialize = template.AutoInitialize,
             CreatedDate = template.CreatedDate,
@@ -171,8 +172,8 @@ public class QuestionnaireTemplatesController : BaseController
                 DescriptionGerman = section.DescriptionGerman,
                 DescriptionEnglish = section.DescriptionEnglish,
                 Order = section.Order,
-                CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
-                Type = MapQuestionTypeFromString(section.Type),
+                CompletionRole = EnumConverter.MapToCompletionRole(section.CompletionRole),
+                Type = EnumConverter.MapToQuestionType(section.Type),
                 Configuration = section.Configuration
             }).ToList()
         };
@@ -189,16 +190,6 @@ public class QuestionnaireTemplatesController : BaseController
         };
     }
 
-    private static CompletionRole MapToCompletionRoleEnum(string completionRole)
-    {
-        return completionRole?.ToLower() switch
-        {
-            "manager" => CompletionRole.Manager,
-            "both" => CompletionRole.Both,
-            _ => CompletionRole.Employee
-        };
-    }
-
     private static IReadOnlyDictionary<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType, QueryApi.Dto.QuestionType> MapQuestionTypeToDto =>
         new Dictionary<Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType, QueryApi.Dto.QuestionType>
         {
@@ -206,25 +197,4 @@ public class QuestionnaireTemplatesController : BaseController
             { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.Goal, QueryApi.Dto.QuestionType.Goal },
             { Application.Query.Queries.QuestionnaireTemplateQueries.QuestionType.Assessment, QueryApi.Dto.QuestionType.Assessment }
         };
-
-    private static QueryApi.Dto.QuestionType MapQuestionTypeFromString(string type)
-    {
-        return type switch
-        {
-            "Assessment" => QueryApi.Dto.QuestionType.Assessment,
-            "TextQuestion" => QueryApi.Dto.QuestionType.TextQuestion,
-            "Goal" => QueryApi.Dto.QuestionType.Goal,
-            _ => QueryApi.Dto.QuestionType.Assessment // Default fallback
-        };
-    }
-
-    private static QueryApi.Dto.QuestionnaireProcessType MapProcessType(Core.Domain.QuestionnaireProcessType domainProcessType)
-    {
-        return domainProcessType switch
-        {
-            Core.Domain.QuestionnaireProcessType.PerformanceReview => QueryApi.Dto.QuestionnaireProcessType.PerformanceReview,
-            Core.Domain.QuestionnaireProcessType.Survey => QueryApi.Dto.QuestionnaireProcessType.Survey,
-            _ => throw new ArgumentOutOfRangeException(nameof(domainProcessType), domainProcessType, "Unknown process type")
-        };
-    }
 }

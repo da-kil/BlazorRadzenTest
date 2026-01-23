@@ -177,10 +177,10 @@ public class EmployeesController : BaseController
         [FromBody] SaveQuestionnaireResponseDto request)
     {
         // Get employee ID from authenticated user context
-        if (!Guid.TryParse(userContext.Id, out var employeeId))
+        if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
         {
-            logger.LogWarning("SaveMyResponse failed: Unable to parse user ID from context");
-            return CreateResponse(Application.Command.Commands.Result<Guid>.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
+            logger.LogWarning("SaveMyResponse failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Application.Command.Commands.Result<Guid>.Fail(errorMessage, StatusCodes.Status401Unauthorized));
         }
 
         logger.LogInformation("Received SaveMyResponse request for authenticated EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
@@ -233,10 +233,10 @@ public class EmployeesController : BaseController
     public async Task<IActionResult> SubmitMyResponse(Guid assignmentId)
     {
         // Get employee ID from authenticated user context
-        if (!Guid.TryParse(userContext.Id, out var employeeId))
+        if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
         {
-            logger.LogWarning("SubmitMyResponse failed: Unable to parse user ID from context");
-            return CreateResponse(CommandResult.Fail("User ID not found in authentication context", StatusCodes.Status401Unauthorized));
+            logger.LogWarning("SubmitMyResponse failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(CommandResult.Fail(errorMessage, StatusCodes.Status401Unauthorized));
         }
 
         logger.LogInformation("Received SubmitMyResponse request for authenticated EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}",
@@ -281,10 +281,10 @@ public class EmployeesController : BaseController
         try
         {
             // Get current user ID for authorization
-            if (!Guid.TryParse(userContext.Id, out var userId))
+            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
             {
-                logger.LogWarning("ChangeEmployeeLanguage failed: Unable to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
+                logger.LogWarning("ChangeEmployeeLanguage failed: {ErrorMessage}", errorMessage);
+                return Unauthorized(errorMessage);
             }
 
             // For now, users can only change their own language

@@ -254,7 +254,7 @@ public class EmployeesController : BaseController
                     EmployeeName = assignment.EmployeeName,
                     EmployeeEmail = assignment.EmployeeEmail,
                     TemplateId = assignment.TemplateId,
-                    ProcessType = MapProcessType(assignment.ProcessType),
+                    ProcessType = EnumConverter.MapToProcessType(assignment.ProcessType),
                     TemplateName = assignment.TemplateName,
                     TemplateCategoryId = assignment.TemplateCategoryId,
                     WorkflowState = assignment.WorkflowState,
@@ -459,7 +459,7 @@ public class EmployeesController : BaseController
                 EmployeeName = assignment.EmployeeName,
                 EmployeeEmail = assignment.EmployeeEmail,
                 TemplateId = assignment.TemplateId,
-                ProcessType = MapProcessType(assignment.ProcessType),
+                ProcessType = EnumConverter.MapToProcessType(assignment.ProcessType),
                 TemplateName = assignment.TemplateName,
                 TemplateCategoryId = assignment.TemplateCategoryId,
                 WorkflowState = assignment.WorkflowState,
@@ -957,41 +957,11 @@ public class EmployeesController : BaseController
             DescriptionGerman = section.DescriptionGerman,
             DescriptionEnglish = section.DescriptionEnglish,
             Order = section.Order,
-            CompletionRole = MapToCompletionRoleEnum(section.CompletionRole),
-            Type = MapQuestionTypeFromString(section.Type),
+            CompletionRole = EnumConverter.MapToCompletionRole(section.CompletionRole),
+            Type = EnumConverter.MapToQuestionType(section.Type),
             Configuration = section.Configuration,
             IsInstanceSpecific = section.IsInstanceSpecific
         };
     }
 
-    private static CompletionRole MapToCompletionRoleEnum(string completionRole)
-    {
-        return completionRole?.ToLower() switch
-        {
-            "manager" => CompletionRole.Manager,
-            "both" => CompletionRole.Both,
-            _ => CompletionRole.Employee
-        };
-    }
-
-    private static QueryApi.Dto.QuestionType MapQuestionTypeFromString(string type)
-    {
-        return type?.ToLower() switch
-        {
-            "textquestion" => QueryApi.Dto.QuestionType.TextQuestion,
-            "goal" => QueryApi.Dto.QuestionType.Goal,
-            "assessment" => QueryApi.Dto.QuestionType.Assessment,
-            _ => QueryApi.Dto.QuestionType.Assessment
-        };
-    }
-
-    private static QueryApi.Dto.QuestionnaireProcessType MapProcessType(Core.Domain.QuestionnaireProcessType domainProcessType)
-    {
-        return domainProcessType switch
-        {
-            Core.Domain.QuestionnaireProcessType.PerformanceReview => QueryApi.Dto.QuestionnaireProcessType.PerformanceReview,
-            Core.Domain.QuestionnaireProcessType.Survey => QueryApi.Dto.QuestionnaireProcessType.Survey,
-            _ => throw new ArgumentOutOfRangeException(nameof(domainProcessType), domainProcessType, "Unknown process type")
-        };
-    }
 }
