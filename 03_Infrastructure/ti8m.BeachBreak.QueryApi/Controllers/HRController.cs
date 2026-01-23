@@ -34,100 +34,92 @@ public class HRController : BaseController
     {
         logger.LogInformation("Received GetHRDashboard request");
 
-        try
+        var result = await queryDispatcher.QueryAsync(new HRDashboardQuery());
+
+        if (result?.Payload == null)
         {
-            var result = await queryDispatcher.QueryAsync(new HRDashboardQuery());
+            logger.LogInformation("HR dashboard not found - this is expected for new systems");
 
-            if (result?.Payload == null)
+            // Return empty dashboard for systems with no data yet
+            return Ok(new HRDashboardDto
             {
-                logger.LogInformation("HR dashboard not found - this is expected for new systems");
-
-                // Return empty dashboard for systems with no data yet
-                return Ok(new HRDashboardDto
-                {
-                    TotalEmployees = 0,
-                    TotalManagers = 0,
-                    TotalAssignments = 0,
-                    TotalPendingAssignments = 0,
-                    TotalInProgressAssignments = 0,
-                    TotalCompletedAssignments = 0,
-                    TotalOverdueAssignments = 0,
-                    OverallCompletionRate = 0.0,
-                    AverageCompletionTimeInDays = 0.0,
-                    Organizations = new List<OrganizationMetricsDto>(),
-                    Managers = new List<ManagerOverviewDto>(),
-                    AssignmentsCreatedLast7Days = 0,
-                    AssignmentsCompletedLast7Days = 0,
-                    UrgentAssignments = new List<UrgentAssignmentDto>(),
-                    LastUpdated = DateTime.UtcNow
-                });
-            }
-
-            if (result.Succeeded)
-            {
-                logger.LogInformation("GetHRDashboard completed successfully");
-            }
-            else
-            {
-                logger.LogWarning("GetHRDashboard failed, Error: {ErrorMessage}", result.Message);
-            }
-
-            return CreateResponse(result, dashboard => new HRDashboardDto
-            {
-                TotalEmployees = dashboard.TotalEmployees,
-                TotalManagers = dashboard.TotalManagers,
-                TotalAssignments = dashboard.TotalAssignments,
-                TotalPendingAssignments = dashboard.TotalPendingAssignments,
-                TotalInProgressAssignments = dashboard.TotalInProgressAssignments,
-                TotalCompletedAssignments = dashboard.TotalCompletedAssignments,
-                TotalOverdueAssignments = dashboard.TotalOverdueAssignments,
-                OverallCompletionRate = dashboard.OverallCompletionRate,
-                AverageCompletionTimeInDays = dashboard.AverageCompletionTimeInDays,
-                Organizations = dashboard.Organizations.Select(o => new OrganizationMetricsDto
-                {
-                    OrganizationNumber = o.OrganizationNumber,
-                    OrganizationName = o.OrganizationName,
-                    EmployeeCount = o.EmployeeCount,
-                    TotalAssignments = o.TotalAssignments,
-                    PendingCount = o.PendingCount,
-                    InProgressCount = o.InProgressCount,
-                    CompletedCount = o.CompletedCount,
-                    OverdueCount = o.OverdueCount,
-                    CompletionRate = o.CompletionRate
-                }).ToList(),
-                Managers = dashboard.Managers.Select(m => new ManagerOverviewDto
-                {
-                    ManagerId = m.ManagerId,
-                    ManagerName = m.ManagerName,
-                    ManagerEmail = m.ManagerEmail,
-                    TeamSize = m.TeamSize,
-                    TotalAssignments = m.TotalAssignments,
-                    CompletedAssignments = m.CompletedAssignments,
-                    OverdueAssignments = m.OverdueAssignments,
-                    CompletionRate = m.CompletionRate
-                }).ToList(),
-                AssignmentsCreatedLast7Days = dashboard.AssignmentsCreatedLast7Days,
-                AssignmentsCompletedLast7Days = dashboard.AssignmentsCompletedLast7Days,
-                UrgentAssignments = dashboard.UrgentAssignments.Select(ua => new UrgentAssignmentDto
-                {
-                    AssignmentId = ua.AssignmentId,
-                    EmployeeId = ua.EmployeeId,
-                    EmployeeName = ua.EmployeeName,
-                    ManagerName = ua.ManagerName,
-                    QuestionnaireTemplateName = ua.QuestionnaireTemplateName,
-                    DueDate = ua.DueDate,
-                    WorkflowState = ua.WorkflowState,
-                    IsOverdue = ua.IsOverdue,
-                    DaysUntilDue = ua.DaysUntilDue,
-                    OrganizationName = ua.OrganizationName
-                }).ToList(),
-                LastUpdated = dashboard.LastUpdated
+                TotalEmployees = 0,
+                TotalManagers = 0,
+                TotalAssignments = 0,
+                TotalPendingAssignments = 0,
+                TotalInProgressAssignments = 0,
+                TotalCompletedAssignments = 0,
+                TotalOverdueAssignments = 0,
+                OverallCompletionRate = 0.0,
+                AverageCompletionTimeInDays = 0.0,
+                Organizations = new List<OrganizationMetricsDto>(),
+                Managers = new List<ManagerOverviewDto>(),
+                AssignmentsCreatedLast7Days = 0,
+                AssignmentsCompletedLast7Days = 0,
+                UrgentAssignments = new List<UrgentAssignmentDto>(),
+                LastUpdated = DateTime.UtcNow
             });
         }
-        catch (Exception ex)
+
+        if (result.Succeeded)
         {
-            logger.LogError(ex, "Error retrieving HR dashboard");
-            return StatusCode(500, "An error occurred while retrieving the HR dashboard");
+            logger.LogInformation("GetHRDashboard completed successfully");
         }
+        else
+        {
+            logger.LogWarning("GetHRDashboard failed, Error: {ErrorMessage}", result.Message);
+        }
+
+        return CreateResponse(result, dashboard => new HRDashboardDto
+        {
+            TotalEmployees = dashboard.TotalEmployees,
+            TotalManagers = dashboard.TotalManagers,
+            TotalAssignments = dashboard.TotalAssignments,
+            TotalPendingAssignments = dashboard.TotalPendingAssignments,
+            TotalInProgressAssignments = dashboard.TotalInProgressAssignments,
+            TotalCompletedAssignments = dashboard.TotalCompletedAssignments,
+            TotalOverdueAssignments = dashboard.TotalOverdueAssignments,
+            OverallCompletionRate = dashboard.OverallCompletionRate,
+            AverageCompletionTimeInDays = dashboard.AverageCompletionTimeInDays,
+            Organizations = dashboard.Organizations.Select(o => new OrganizationMetricsDto
+            {
+                OrganizationNumber = o.OrganizationNumber,
+                OrganizationName = o.OrganizationName,
+                EmployeeCount = o.EmployeeCount,
+                TotalAssignments = o.TotalAssignments,
+                PendingCount = o.PendingCount,
+                InProgressCount = o.InProgressCount,
+                CompletedCount = o.CompletedCount,
+                OverdueCount = o.OverdueCount,
+                CompletionRate = o.CompletionRate
+            }).ToList(),
+            Managers = dashboard.Managers.Select(m => new ManagerOverviewDto
+            {
+                ManagerId = m.ManagerId,
+                ManagerName = m.ManagerName,
+                ManagerEmail = m.ManagerEmail,
+                TeamSize = m.TeamSize,
+                TotalAssignments = m.TotalAssignments,
+                CompletedAssignments = m.CompletedAssignments,
+                OverdueAssignments = m.OverdueAssignments,
+                CompletionRate = m.CompletionRate
+            }).ToList(),
+            AssignmentsCreatedLast7Days = dashboard.AssignmentsCreatedLast7Days,
+            AssignmentsCompletedLast7Days = dashboard.AssignmentsCompletedLast7Days,
+            UrgentAssignments = dashboard.UrgentAssignments.Select(ua => new UrgentAssignmentDto
+            {
+                AssignmentId = ua.AssignmentId,
+                EmployeeId = ua.EmployeeId,
+                EmployeeName = ua.EmployeeName,
+                ManagerName = ua.ManagerName,
+                QuestionnaireTemplateName = ua.QuestionnaireTemplateName,
+                DueDate = ua.DueDate,
+                WorkflowState = ua.WorkflowState,
+                IsOverdue = ua.IsOverdue,
+                DaysUntilDue = ua.DaysUntilDue,
+                OrganizationName = ua.OrganizationName
+            }).ToList(),
+            LastUpdated = dashboard.LastUpdated
+        });
     }
 }

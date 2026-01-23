@@ -910,3 +910,185 @@ The investigation confirmed the current implementation is correct and should be 
 - JSON Converter: `QuestionConfigurationJsonConverter.cs` (Core.Domain and Client projects)
 - Domain Validation: `QuestionSection.ValidateConfigurationMatchesType()`
 - Pattern documentation: See Section 11 "Strongly-Typed Question Configuration Pattern"
+
+## 13. Controller Error Handling and Enrichment Services Pattern
+
+### Overview
+
+**CRITICAL**: QueryApi controllers follow a standardized error handling and data enrichment pattern to ensure clean, maintainable code.
+
+### Error Handling Pattern
+
+**NEVER** wrap controller actions in try-catch blocks unless there's a specific reason to handle the exception locally. The middleware and `CreateResponse` method already handle errors appropriately.
+
+**❌ WRONG**: Unnecessary try-catch blocks
+```csharp
+public async Task<IActionResult> GetSomething(Guid id)
+{
+    try
+    {
+        var result = await queryDispatcher.QueryAsync(new SomeQuery(id));
+        return CreateResponse(result);
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Error getting something");
+        return StatusCode(500, "An error occurred");
+    }
+}
+```
+
+**✅ CORRECT**: Let middleware handle exceptions
+```csharp
+public async Task<IActionResult> GetSomething(Guid id)
+{
+    var result = await queryDispatcher.QueryAsync(new SomeQuery(id));
+    return CreateResponse(result);
+}
+```
+
+**Rationale**:
+- `CreateResponse` already handles Result failures appropriately
+- Middleware handles unhandled exceptions with proper logging
+- Try-catch adds unnecessary code and can hide issues
+- Controllers should be thin HTTP orchestration layer
+
+### Authorization Pattern with ExecuteWithAuthorizationAsync
+
+**ALWAYS** use the `ExecuteWithAuthorizationAsync` helper method for manager-restricted endpoints:
+
+```csharp
+[HttpGet("{id:guid}")]
+[Authorize(Policy = "TeamLead")]
+public async Task<IActionResult> GetSomething(Guid id)
+{
+    return await ExecuteWithAuthorizationAsync(
+        authorizationService,
+        employeeRoleService,
+        logger,
+        async (managerId, hasElevatedRole) =>
+        {
+            // Execute query
+            var result = await queryDispatcher.QueryAsync(new SomeQuery(id));
+
+            if (!result.Succeeded)
+                return Result<SomeDto>.Fail(result.Message ?? "Failed", result.StatusCode);
+
+            // Map to DTO
+            var dto = MapToDto(result.Payload);
+            return Result<SomeDto>.Success(dto);
+        },
+        resourceId: id,
+        requiresResourceAccess: true);
+}
+```
+
+**Benefits**:
+- Consistent authorization logic across controllers
+- Automatic handling of elevated roles (HR/Admin)
+- Centralized logging with caller name tracking
+- Eliminates ~20-30 lines of duplicate authorization code per method
+
+### Data Enrichment Services Pattern
+
+**ALWAYS** use dedicated enrichment services for batch data fetching to avoid N+1 query problems.
+
+**Problem**: N+1 Query Anti-Pattern
+```csharp
+// ❌ BAD: Fetches employee name for each change individually
+var employeeIds = changes.Select(c => c.ChangedByEmployeeId).Distinct();
+var employeeNames = new Dictionary<Guid, string>();
+
+foreach (var employeeId in employeeIds)  // N+1 problem!
+{
+    var employee = await queryDispatcher.QueryAsync(new EmployeeQuery(employeeId));
+    employeeNames[employeeId] = $"{employee.FirstName} {employee.LastName}";
+}
+```
+
+**Solution**: Batch Enrichment Service
+```csharp
+// ✅ GOOD: Fetches all employee names in a single query
+var employeeIds = changes.Select(c => c.ChangedByEmployeeId).Distinct();
+var employeeNames = await enrichmentService.GetEmployeeNamesAsync(
+    employeeIds,
+    HttpContext.RequestAborted);
+```
+
+### Creating Enrichment Services
+
+**Pattern**:
+1. Create interface in `02_Application/ti8m.BeachBreak.Application.Query/Services/`
+2. Implement with efficient batch queries
+3. Register in DI container (QueryApi/Program.cs)
+4. Inject into controllers that need data enrichment
+
+**Example**: ReviewChangeEnrichmentService
+
+```csharp
+// Interface
+public interface IReviewChangeEnrichmentService
+{
+    Task<Dictionary<Guid, string>> GetEmployeeNamesAsync(
+        IEnumerable<Guid> employeeIds,
+        CancellationToken cancellationToken = default);
+}
+
+// Implementation
+public class ReviewChangeEnrichmentService : IReviewChangeEnrichmentService
+{
+    private readonly IEmployeeRepository employeeRepository;
+
+    public async Task<Dictionary<Guid, string>> GetEmployeeNamesAsync(
+        IEnumerable<Guid> employeeIds,
+        CancellationToken cancellationToken = default)
+    {
+        var distinctIds = employeeIds.Distinct().ToList();
+        if (!distinctIds.Any())
+            return new Dictionary<Guid, string>();
+
+        // Single batch query for all employees
+        var allEmployees = await employeeRepository.GetEmployeesAsync(
+            includeDeleted: false,
+            cancellationToken: cancellationToken);
+
+        return allEmployees
+            .Where(e => distinctIds.Contains(e.Id))
+            .ToDictionary(
+                e => e.Id,
+                e => $"{e.FirstName} {e.LastName}");
+    }
+}
+
+// Registration
+builder.Services.AddScoped<IReviewChangeEnrichmentService, ReviewChangeEnrichmentService>();
+```
+
+### Controller Responsibilities
+
+Controllers in QueryApi should **ONLY**:
+1. Validate HTTP input (ModelState)
+2. Dispatch queries to handlers
+3. Map results to DTOs
+4. Return HTTP responses via `CreateResponse`
+
+Controllers should **NEVER**:
+1. Contain business logic
+2. Perform data transformations beyond simple DTO mapping
+3. Execute loops or complex operations
+4. Have methods longer than ~40 lines
+5. Have try-catch blocks (except for specific local handling needs)
+
+### Historical Context
+
+**2026-01-23**: Controller Simplification
+- Phase 6 of controller refactoring removed ~100 lines of try-catch blocks from AssignmentsController
+- Introduced `ExecuteWithAuthorizationAsync` pattern for consistent authorization
+- Created `ReviewChangeEnrichmentService` to eliminate N+1 query problem
+- Established pattern for thin controllers with centralized error handling
+
+### References
+
+- Enrichment Service Example: `ReviewChangeEnrichmentService.cs` (Application.Query/Services)
+- Authorization Helper: `BaseController.ExecuteWithAuthorizationAsync` (QueryApi/Controllers)
+- Controller Simplification Plan: `Todo/SimplifyController.md`

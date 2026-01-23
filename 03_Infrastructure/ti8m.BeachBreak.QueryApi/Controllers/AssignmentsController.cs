@@ -49,19 +49,11 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireAssignmentDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllAssignments()
     {
-        try
+        var result = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentListQuery());
+        return CreateResponse(result, templates =>
         {
-            var result = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentListQuery());
-            return CreateResponse(result, templates =>
-            {
-                return templates.Select(template => MapToDto(template));
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving assignments");
-            return StatusCode(500, "An error occurred while retrieving assignments");
-        }
+            return templates.Select(template => MapToDto(template));
+        });
     }
 
     /// <summary>
@@ -271,40 +263,24 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetCustomSections(Guid assignmentId)
     {
-        try
-        {
-            // Get authenticated user ID
-            if (!Guid.TryParse(userContext.Id, out var userId))
+        return await ExecuteWithAuthorizationAsync(
+            authorizationService,
+            employeeRoleService,
+            logger,
+            async (managerId, hasElevatedRole) =>
             {
-                logger.LogWarning("Failed to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
+                var query = new GetAssignmentCustomSectionsQuery(assignmentId);
+                var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 
-            // Check if user has elevated role (HR/Admin)
-            var hasElevatedRole = await HasElevatedRoleAsync(employeeRoleService, logger, userId);
-            if (!hasElevatedRole)
-            {
-                // Managers can only access assignments for their direct reports
-                var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, assignmentId);
-                if (!canAccess)
-                {
-                    logger.LogWarning("Manager {UserId} attempted to access custom sections for assignment {AssignmentId} for non-direct report",
-                        userId, assignmentId);
-                    return Forbid();
-                }
-            }
+                if (!result.Succeeded)
+                    return Result<IEnumerable<QuestionSectionDto>>.Fail(result.Message ?? "Failed to retrieve custom sections", result.StatusCode);
 
-            var query = new GetAssignmentCustomSectionsQuery(assignmentId);
-            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
-
-            // Map query model (strings) to DTOs (enums) - same pattern as templates
-            return CreateResponse(result, sections => sections.Select(MapSectionToDto));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving custom sections for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while retrieving custom sections");
-        }
+                // Map query model (strings) to DTOs (enums) - same pattern as templates
+                var dtos = result.Payload!.Select(MapSectionToDto);
+                return Result<IEnumerable<QuestionSectionDto>>.Success(dtos);
+            },
+            resourceId: assignmentId,
+            requiresResourceAccess: true);
     }
 
     #region Goal Queries
@@ -321,64 +297,56 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAvailablePredecessors(Guid assignmentId)
     {
-        try
+        // Get authenticated user ID
+        if (!Guid.TryParse(userContext.Id, out var userId))
         {
-            // Get authenticated user ID
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("Failed to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            // Get the assignment first to determine the employee
-            var assignmentResult = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentQuery(assignmentId));
-            if (assignmentResult == null || !assignmentResult.Succeeded || assignmentResult.Payload == null)
-            {
-                logger.LogWarning("Assignment {AssignmentId} not found", assignmentId);
-                return NotFound($"Assignment with ID {assignmentId} not found");
-            }
-
-            var assignment = assignmentResult.Payload;
-            var employeeId = assignment.EmployeeId;
-
-            // Check if user has elevated role (HR/Admin) or is the employee themselves
-            var hasElevatedRole = await HasElevatedRoleAsync(employeeRoleService, logger, userId);
-            if (!hasElevatedRole && userId != employeeId)
-            {
-                // Managers can only access assignments for their direct reports
-                var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, assignmentId);
-                if (!canAccess)
-                {
-                    logger.LogWarning("Manager {UserId} attempted to access predecessors for assignment {AssignmentId} for non-direct report",
-                        userId, assignmentId);
-                    return Forbid();
-                }
-            }
-
-            // Query uses the employee ID (not the requesting user ID) to get predecessors for the employee
-            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetAvailablePredecessorsQuery(
-                assignmentId, employeeId);
-
-            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
-
-            if (result == null)
-            {
-                logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
-                return NotFound();
-            }
-
-            if (!result.Succeeded)
-            {
-                return CreateResponse(result);
-            }
-
-            return Ok(result.Payload);
+            logger.LogWarning("Failed to parse user ID from context");
+            return Unauthorized("User ID not found in authentication context");
         }
-        catch (Exception ex)
+
+        // Get the assignment first to determine the employee
+        var assignmentResult = await queryDispatcher.QueryAsync(new QuestionnaireAssignmentQuery(assignmentId));
+        if (assignmentResult == null || !assignmentResult.Succeeded || assignmentResult.Payload == null)
         {
-            logger.LogError(ex, "Error getting available predecessors for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while retrieving available predecessors");
+            logger.LogWarning("Assignment {AssignmentId} not found", assignmentId);
+            return NotFound($"Assignment with ID {assignmentId} not found");
         }
+
+        var assignment = assignmentResult.Payload;
+        var employeeId = assignment.EmployeeId;
+
+        // Check if user has elevated role (HR/Admin) or is the employee themselves
+        var hasElevatedRole = await HasElevatedRoleAsync(employeeRoleService, logger, userId);
+        if (!hasElevatedRole && userId != employeeId)
+        {
+            // Managers can only access assignments for their direct reports
+            var canAccess = await authorizationService.CanAccessAssignmentAsync(userId, assignmentId);
+            if (!canAccess)
+            {
+                logger.LogWarning("Manager {UserId} attempted to access predecessors for assignment {AssignmentId} for non-direct report",
+                    userId, assignmentId);
+                return Forbid();
+            }
+        }
+
+        // Query uses the employee ID (not the requesting user ID) to get predecessors for the employee
+        var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetAvailablePredecessorsQuery(
+            assignmentId, employeeId);
+
+        var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+        if (result == null)
+        {
+            logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
+            return NotFound();
+        }
+
+        if (!result.Succeeded)
+        {
+            return CreateResponse(result);
+        }
+
+        return Ok(result.Payload);
     }
 
     /// <summary>
@@ -393,50 +361,41 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetGoalQuestionData(Guid assignmentId, Guid questionId)
     {
-        try
+        // Get current user ID
+        if (!Guid.TryParse(userContext.Id, out var userId))
         {
-            // Get current user ID
-            if (!Guid.TryParse(userContext.Id, out var userId))
-            {
-                logger.LogWarning("Failed to parse user ID from context");
-                return Unauthorized("User ID not found in authentication context");
-            }
-
-            // Determine current user's role using the employee role service
-            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
-            if (employeeRole == null)
-            {
-                logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
-                return Unauthorized("Unable to determine user role");
-            }
-
-            // Use ApplicationRole directly (no premature mapping)
-            // The query handler will determine proper role-based filtering
-            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
-                assignmentId, questionId, employeeRole.ApplicationRole);
-
-            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
-
-            if (result == null)
-            {
-                logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
-                    assignmentId, questionId);
-                return NotFound();
-            }
-
-            if (!result.Succeeded)
-            {
-                return CreateResponse(result);
-            }
-
-            return Ok(result.Payload);
+            logger.LogWarning("Failed to parse user ID from context");
+            return Unauthorized("User ID not found in authentication context");
         }
-        catch (Exception ex)
+
+        // Determine current user's role using the employee role service
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
+        if (employeeRole == null)
         {
-            logger.LogError(ex, "Error getting goal data for assignment {AssignmentId}, question {QuestionId}",
+            logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+            return Unauthorized("Unable to determine user role");
+        }
+
+        // Use ApplicationRole directly (no premature mapping)
+        // The query handler will determine proper role-based filtering
+        var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetGoalQuestionDataQuery(
+            assignmentId, questionId, employeeRole.ApplicationRole);
+
+        var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+
+        if (result == null)
+        {
+            logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
                 assignmentId, questionId);
-            return StatusCode(500, "An error occurred while retrieving goal data");
+            return NotFound();
         }
+
+        if (!result.Succeeded)
+        {
+            return CreateResponse(result);
+        }
+
+        return Ok(result.Payload);
     }
 
     #endregion
@@ -479,24 +438,16 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetAvailableEmployeeFeedback(Guid assignmentId)
     {
-        try
-        {
-            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetAvailableEmployeeFeedbackQuery(assignmentId);
-            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+        var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetAvailableEmployeeFeedbackQuery(assignmentId);
+        var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 
-            if (result == null)
-            {
-                logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
-                return NotFound();
-            }
-
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
+        if (result == null)
         {
-            logger.LogError(ex, "Error getting available feedback for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while retrieving available feedback");
+            logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
+            return NotFound();
         }
+
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -509,27 +460,18 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetFeedbackQuestionData(Guid assignmentId, Guid questionId)
     {
-        try
-        {
-            var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetFeedbackQuestionDataQuery(
-                assignmentId, questionId);
-            var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
+        var query = new Application.Query.Queries.QuestionnaireAssignmentQueries.GetFeedbackQuestionDataQuery(
+            assignmentId, questionId);
+        var result = await queryDispatcher.QueryAsync(query, HttpContext.RequestAborted);
 
-            if (result == null)
-            {
-                logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
-                    assignmentId, questionId);
-                return NotFound();
-            }
-
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
+        if (result == null)
         {
-            logger.LogError(ex, "Error getting feedback data for assignment {AssignmentId}, question {QuestionId}",
+            logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
                 assignmentId, questionId);
-            return StatusCode(500, "An error occurred while retrieving feedback data");
+            return NotFound();
         }
+
+        return CreateResponse(result);
     }
 
     #endregion
