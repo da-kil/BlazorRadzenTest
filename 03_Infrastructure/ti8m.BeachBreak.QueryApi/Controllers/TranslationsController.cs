@@ -5,6 +5,7 @@ using ti8m.BeachBreak.Core.Infrastructure.Services;
 using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Services;
 using ti8m.BeachBreak.Application.Query.Mappers;
+using ti8m.BeachBreak.Application.Query.Queries;
 
 namespace ti8m.BeachBreak.QueryApi.Controllers;
 
@@ -12,7 +13,7 @@ namespace ti8m.BeachBreak.QueryApi.Controllers;
 [ApiController]
 [Route("q/api/v{version:apiVersion}/[controller]")]
 [Authorize]
-public class TranslationsController : ControllerBase
+public class TranslationsController : BaseController
 {
     private readonly IUITranslationService translationService;
     private readonly ILanguageContext languageContext;
@@ -35,11 +36,11 @@ public class TranslationsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Translation object with English and German text</returns>
     [HttpGet("{key}")]
-    public async Task<ActionResult<UITranslation>> GetTranslation(string key, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetTranslation(string key, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(key))
         {
-            return BadRequest("Translation key cannot be empty");
+            return CreateResponse(Result<UITranslation>.Fail("Translation key cannot be empty", 400));
         }
 
         try
@@ -60,13 +61,13 @@ public class TranslationsController : ControllerBase
                 Category = "dynamic"
             };
 
-            return Ok(translation);
+            return CreateResponse(Result<UITranslation>.Success(translation));
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving translation for key: {Key}", key);
 
-            // Return the key as fallback
+            // Return the key as fallback - legitimate local error handling for graceful degradation
             var fallbackTranslation = new UITranslation
             {
                 Key = key,
@@ -75,7 +76,7 @@ public class TranslationsController : ControllerBase
                 Category = "fallback"
             };
 
-            return Ok(fallbackTranslation);
+            return CreateResponse(Result<UITranslation>.Success(fallbackTranslation));
         }
     }
 
@@ -85,31 +86,23 @@ public class TranslationsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of all translations</returns>
     [HttpGet]
-    public async Task<ActionResult<IList<UITranslation>>> GetAllTranslations(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetAllTranslations(CancellationToken cancellationToken = default)
     {
-        try
-        {
-            logger.LogInformation("Getting all translations - API called");
-            var translations = await translationService.GetAllTranslationsAsync(cancellationToken);
-            logger.LogInformation("Retrieved {Count} translations from service", translations?.Count ?? 0);
+        logger.LogInformation("Getting all translations - API called");
+        var translations = await translationService.GetAllTranslationsAsync(cancellationToken);
+        logger.LogInformation("Retrieved {Count} translations from service", translations?.Count ?? 0);
 
-            // Log first few translations for debugging
-            if (translations != null && translations.Any())
+        // Log first few translations for debugging
+        if (translations != null && translations.Any())
+        {
+            foreach (var translation in translations.Take(3))
             {
-                foreach (var translation in translations.Take(3))
-                {
-                    logger.LogInformation("Sample translation: Key='{Key}', English='{English}', German='{German}'",
-                        translation.Key, translation.English, translation.German);
-                }
+                logger.LogInformation("Sample translation: Key='{Key}', English='{English}', German='{German}'",
+                    translation.Key, translation.English, translation.German);
             }
+        }
 
-            return Ok(translations);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving all translations");
-            return StatusCode(500, "Failed to retrieve translations");
-        }
+        return CreateResponse(Result<IList<UITranslation>>.Success(translations));
     }
 
     /// <summary>
@@ -118,20 +111,12 @@ public class TranslationsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Array of translation keys</returns>
     [HttpGet("keys")]
-    public async Task<ActionResult<string[]>> GetAllTranslationKeys(CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetAllTranslationKeys(CancellationToken cancellationToken = default)
     {
-        try
-        {
-            logger.LogDebug("Getting all translation keys");
-            var translations = await translationService.GetAllTranslationsAsync(cancellationToken);
-            var keys = translations.Select(t => t.Key).ToArray();
-            return Ok(keys);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving translation keys");
-            return StatusCode(500, "Failed to retrieve translation keys");
-        }
+        logger.LogDebug("Getting all translation keys");
+        var translations = await translationService.GetAllTranslationsAsync(cancellationToken);
+        var keys = translations.Select(t => t.Key).ToArray();
+        return CreateResponse(Result<string[]>.Success(keys));
     }
 
     /// <summary>
@@ -141,19 +126,11 @@ public class TranslationsController : ControllerBase
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Translations for the specified category</returns>
     [HttpGet("category/{category}")]
-    public async Task<ActionResult<IList<UITranslation>>> GetTranslationsByCategory(string category, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> GetTranslationsByCategory(string category, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            logger.LogDebug("Getting translations for category: {Category}", category);
-            var translations = await translationService.GetTranslationsByCategoryAsync(category, cancellationToken);
-            return Ok(translations);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving translations for category: {Category}", category);
-            return StatusCode(500, $"Failed to retrieve translations for category: {category}");
-        }
+        logger.LogDebug("Getting translations for category: {Category}", category);
+        var translations = await translationService.GetTranslationsByCategoryAsync(category, cancellationToken);
+        return CreateResponse(Result<IList<UITranslation>>.Success(translations));
     }
 
 }

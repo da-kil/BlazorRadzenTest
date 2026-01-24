@@ -36,13 +36,13 @@ public class ReplayController : BaseController
         try
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return CreateResponse(Result<Guid>.Fail("Invalid model state", 400));
 
             if (string.IsNullOrWhiteSpace(request.ProjectionName))
-                return BadRequest("Projection name is required");
+                return CreateResponse(Result<Guid>.Fail("Projection name is required", 400));
 
             if (string.IsNullOrWhiteSpace(request.Reason))
-                return BadRequest("Reason is required");
+                return CreateResponse(Result<Guid>.Fail("Reason is required", 400));
 
             if (!Guid.TryParse(userContext.Id, out var initiatedBy))
             {
@@ -73,7 +73,7 @@ public class ReplayController : BaseController
         catch (Exception ex)
         {
             logger.LogStartProjectionReplayFailed(request.ProjectionName, ex.Message, ex);
-            return StatusCode(500, "An error occurred while starting the projection replay");
+            return CreateResponse(Result<Guid>.Fail("An error occurred while starting the projection replay", 500));
         }
     }
 
@@ -107,7 +107,7 @@ public class ReplayController : BaseController
         catch (Exception ex)
         {
             logger.LogCancelProjectionReplayFailed(replayId, ex.Message, ex);
-            return StatusCode(500, "An error occurred while cancelling the projection replay");
+            return CreateResponse(Result.Fail("An error occurred while cancelling the projection replay", 500));
         }
     }
 }

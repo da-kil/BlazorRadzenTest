@@ -40,38 +40,26 @@ public class AuthController : BaseController
         if (userId == null)
         {
             logger.LogWarning("User ID not found in claims");
-            return Problem(
-                detail: "User ID not found in claims",
-                statusCode: StatusCodes.Status401Unauthorized);
+            return CreateResponse(Result<UserRoleDto>.Fail("User ID not found in claims", 401));
         }
 
-        try
+        var result = await queryDispatcher.QueryAsync(
+            new GetEmployeeRoleByIdQuery(userId.Value),
+            HttpContext.RequestAborted);
+
+        if (result == null)
         {
-            var result = await queryDispatcher.QueryAsync(
-                new GetEmployeeRoleByIdQuery(userId.Value),
-                HttpContext.RequestAborted);
-
-            if (result == null)
-            {
-                logger.LogWarning("Employee not found for user ID: {UserId}", userId);
-                return Problem(
-                    detail: "Employee not found",
-                    statusCode: StatusCodes.Status404NotFound);
-            }
-
-            return Ok(new UserRoleDto
-            {
-                EmployeeId = result.EmployeeId,
-                ApplicationRole = ApplicationRoleMapper.MapToDomain(result.ApplicationRole)
-            });
+            logger.LogWarning("Employee not found for user ID: {UserId}", userId);
+            return CreateResponse(Result<UserRoleDto>.Fail("Employee not found", 404));
         }
-        catch (Exception ex)
+
+        var dto = new UserRoleDto
         {
-            logger.LogError(ex, "Error getting application role for user {UserId}", userId);
-            return Problem(
-                detail: "Failed to retrieve user role",
-                statusCode: StatusCodes.Status500InternalServerError);
-        }
+            EmployeeId = result.EmployeeId,
+            ApplicationRole = ApplicationRoleMapper.MapToDomain(result.ApplicationRole)
+        };
+
+        return CreateResponse(Result<UserRoleDto>.Success(dto));
     }
 
     private Guid? GetUserId()

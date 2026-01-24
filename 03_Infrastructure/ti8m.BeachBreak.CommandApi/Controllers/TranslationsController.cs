@@ -32,29 +32,21 @@ public class TranslationsController : BaseController
     [HttpPost]
     public async Task<IActionResult> UpsertTranslation([FromBody] UpsertTranslationRequest request, CancellationToken cancellationToken = default)
     {
-        try
+        if (string.IsNullOrWhiteSpace(request.Key))
         {
-            if (string.IsNullOrWhiteSpace(request.Key))
-            {
-                return CreateResponse(CommandResult.Fail("Translation key cannot be empty", 400));
-            }
-
-            logger.LogInformation("Upserting translation for key: {Key}", request.Key);
-            var translation = await translationService.UpsertTranslationAsync(
-                request.Key,
-                request.German,
-                request.English,
-                request.Category,
-                cancellationToken);
-
-            logger.LogInformation("Successfully upserted translation for key: {Key}", request.Key);
-            return CreateResponse(CommandResult.Success($"Translation '{request.Key}' upserted successfully"));
+            return CreateResponse(CommandResult.Fail("Translation key cannot be empty", 400));
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error upserting translation for key: {Key}", request.Key);
-            return CreateResponse(CommandResult.Fail("Failed to upsert translation", 500));
-        }
+
+        logger.LogInformation("Upserting translation for key: {Key}", request.Key);
+        var translation = await translationService.UpsertTranslationAsync(
+            request.Key,
+            request.German,
+            request.English,
+            request.Category,
+            cancellationToken);
+
+        logger.LogInformation("Successfully upserted translation for key: {Key}", request.Key);
+        return CreateResponse(CommandResult.Success($"Translation '{request.Key}' upserted successfully"));
     }
 
     /// <summary>
@@ -66,31 +58,23 @@ public class TranslationsController : BaseController
     [HttpDelete("{key}")]
     public async Task<IActionResult> DeleteTranslation(string key, CancellationToken cancellationToken = default)
     {
-        try
+        if (string.IsNullOrWhiteSpace(key))
         {
-            if (string.IsNullOrWhiteSpace(key))
-            {
-                return CreateResponse(CommandResult.Fail("Translation key cannot be empty", 400));
-            }
-
-            logger.LogInformation("Deleting translation for key: {Key}", key);
-            var success = await translationService.DeleteTranslationAsync(key, cancellationToken);
-
-            if (success)
-            {
-                logger.LogInformation("Successfully deleted translation for key: {Key}", key);
-                return CreateResponse(CommandResult.Success());
-            }
-            else
-            {
-                logger.LogWarning("Translation not found for deletion: {Key}", key);
-                return CreateResponse(CommandResult.Fail("Translation not found", 404));
-            }
+            return CreateResponse(CommandResult.Fail("Translation key cannot be empty", 400));
         }
-        catch (Exception ex)
+
+        logger.LogInformation("Deleting translation for key: {Key}", key);
+        var success = await translationService.DeleteTranslationAsync(key, cancellationToken);
+
+        if (success)
         {
-            logger.LogError(ex, "Error deleting translation for key: {Key}", key);
-            return CreateResponse(CommandResult.Fail("Failed to delete translation", 500));
+            logger.LogInformation("Successfully deleted translation for key: {Key}", key);
+            return CreateResponse(CommandResult.Success());
+        }
+        else
+        {
+            logger.LogWarning("Translation not found for deletion: {Key}", key);
+            return CreateResponse(CommandResult.Fail("Translation not found", 404));
         }
     }
 
@@ -103,35 +87,27 @@ public class TranslationsController : BaseController
     [HttpPost("bulk-import")]
     public async Task<IActionResult> BulkImportTranslations([FromBody] List<UpsertTranslationRequest> translations, CancellationToken cancellationToken = default)
     {
-        try
+        if (translations == null || translations.Count == 0)
         {
-            if (translations == null || translations.Count == 0)
-            {
-                return CreateResponse(CommandResult.Fail("No translations provided", 400));
-            }
-
-            logger.LogInformation("Bulk importing {Count} translations requested by admin", translations.Count);
-
-            // Convert requests to UITranslation objects
-            var uiTranslations = translations.Select(t => new Application.Query.Models.UITranslation
-            {
-                Key = t.Key,
-                German = t.German,
-                English = t.English,
-                Category = t.Category ?? "general",
-                CreatedDate = DateTimeOffset.UtcNow
-            }).ToList();
-
-            var importCount = await translationService.BulkImportTranslationsAsync(uiTranslations, cancellationToken);
-
-            logger.LogInformation("Successfully bulk imported {Count} translations", importCount);
-            return CreateResponse(CommandResult.Success(importCount));
+            return CreateResponse(CommandResult.Fail("No translations provided", 400));
         }
-        catch (Exception ex)
+
+        logger.LogInformation("Bulk importing {Count} translations requested by admin", translations.Count);
+
+        // Convert requests to UITranslation objects
+        var uiTranslations = translations.Select(t => new Application.Query.Models.UITranslation
         {
-            logger.LogError(ex, "Error bulk importing translations");
-            return CreateResponse(CommandResult.Fail("Failed to bulk import translations", 500));
-        }
+            Key = t.Key,
+            German = t.German,
+            English = t.English,
+            Category = t.Category ?? "general",
+            CreatedDate = DateTimeOffset.UtcNow
+        }).ToList();
+
+        var importCount = await translationService.BulkImportTranslationsAsync(uiTranslations, cancellationToken);
+
+        logger.LogInformation("Successfully bulk imported {Count} translations", importCount);
+        return CreateResponse(CommandResult.Success(importCount));
     }
 
     /// <summary>
@@ -142,19 +118,11 @@ public class TranslationsController : BaseController
     [HttpPost("invalidate-cache")]
     public IActionResult InvalidateCache()
     {
-        try
-        {
-            logger.LogInformation("Translation cache invalidation requested by admin");
-            translationService.InvalidateCache();
+        logger.LogInformation("Translation cache invalidation requested by admin");
+        translationService.InvalidateCache();
 
-            logger.LogInformation("Successfully invalidated translation cache");
-            return CreateResponse(CommandResult.Success("Translation cache invalidated successfully"));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error invalidating translation cache");
-            return CreateResponse(CommandResult.Fail("Failed to invalidate translation cache", 500));
-        }
+        logger.LogInformation("Successfully invalidated translation cache");
+        return CreateResponse(CommandResult.Success("Translation cache invalidated successfully"));
     }
 
     public class UpsertTranslationRequest

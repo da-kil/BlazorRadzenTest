@@ -51,43 +51,35 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateBulkAssignments([FromBody] CreateBulkAssignmentsDto bulkAssignmentDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
+            return CreateResponse(Result.Fail("At least one employee assignment is required", 400));
+
+        // Get current user ID
+        if (!userContext.TryGetUserId(out var userId, out var errorMessage))
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
-                return BadRequest("At least one employee assignment is required");
-
-            // Get current user ID
-            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
-            {
-                return Unauthorized(errorMessage);
-            }
-
-            var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
-                .Select(e => new EmployeeAssignmentData(
-                    e.EmployeeId,
-                    e.EmployeeName,
-                    e.EmployeeEmail))
-                .ToList();
-
-            var command = new CreateBulkAssignmentsCommand(
-                bulkAssignmentDto.TemplateId,
-                ProcessTypeMapper.MapToDomain(bulkAssignmentDto.ProcessType),
-                employeeAssignments,
-                bulkAssignmentDto.DueDate,
-                userId,
-                bulkAssignmentDto.Notes);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error creating bulk assignments");
-            return StatusCode(500, "An error occurred while creating bulk assignments");
-        }
+
+        var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
+            .Select(e => new EmployeeAssignmentData(
+                e.EmployeeId,
+                e.EmployeeName,
+                e.EmployeeEmail))
+            .ToList();
+
+        var command = new CreateBulkAssignmentsCommand(
+            bulkAssignmentDto.TemplateId,
+            ProcessTypeMapper.MapToDomain(bulkAssignmentDto.ProcessType),
+            employeeAssignments,
+            bulkAssignmentDto.DueDate,
+            userId,
+            bulkAssignmentDto.Notes);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -101,101 +93,68 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateManagerBulkAssignments([FromBody] CreateBulkAssignmentsDto bulkAssignmentDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
+            return CreateResponse(Result.Fail("At least one employee assignment is required", 400));
+
+        // Get authenticated manager ID using authorization service
+        var managerId = await authorizationService.GetCurrentManagerIdAsync();
+        logger.LogInformation("Manager {ManagerId} attempting to create {Count} assignments",
+            managerId, bulkAssignmentDto.EmployeeAssignments.Count);
+
+        // Validate all employee IDs are direct reports using authorization service
+        var employeeIds = bulkAssignmentDto.EmployeeAssignments.Select(e => e.EmployeeId).ToList();
+        var areAllDirectReports = await authorizationService.AreAllDirectReportsAsync(managerId, employeeIds);
+
+        if (!areAllDirectReports)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            if (bulkAssignmentDto.EmployeeAssignments == null || !bulkAssignmentDto.EmployeeAssignments.Any())
-                return BadRequest("At least one employee assignment is required");
-
-            // Get authenticated manager ID using authorization service
-            Guid managerId;
-            try
-            {
-                managerId = await authorizationService.GetCurrentManagerIdAsync();
-                logger.LogInformation("Manager {ManagerId} attempting to create {Count} assignments",
-                    managerId, bulkAssignmentDto.EmployeeAssignments.Count);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                logger.LogWarning("CreateManagerBulkAssignments failed: {Message}", ex.Message);
-                return Unauthorized(ex.Message);
-            }
-
-            // Validate all employee IDs are direct reports using authorization service
-            var employeeIds = bulkAssignmentDto.EmployeeAssignments.Select(e => e.EmployeeId).ToList();
-            var areAllDirectReports = await authorizationService.AreAllDirectReportsAsync(managerId, employeeIds);
-
-            if (!areAllDirectReports)
-            {
-                logger.LogWarning("Manager {ManagerId} attempted to assign to employees who are not direct reports", managerId);
-                return Forbid();
-            }
-
-            var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
-                .Select(e => new EmployeeAssignmentData(
-                    e.EmployeeId,
-                    e.EmployeeName,
-                    e.EmployeeEmail))
-                .ToList();
-
-            var command = new CreateBulkAssignmentsCommand(
-                bulkAssignmentDto.TemplateId,
-                ProcessTypeMapper.MapToDomain(bulkAssignmentDto.ProcessType),
-                employeeAssignments,
-                bulkAssignmentDto.DueDate,
-                managerId,
-                bulkAssignmentDto.Notes);
-
-            var result = await commandDispatcher.SendAsync(command);
-
-            if (result.Succeeded)
-            {
-                logger.LogInformation("Manager {ManagerId} successfully created {Count} assignments",
-                    managerId, bulkAssignmentDto.EmployeeAssignments.Count);
-            }
-
-            return CreateResponse(result);
+            logger.LogWarning("Manager {ManagerId} attempted to assign to employees who are not direct reports", managerId);
+            return CreateResponse(Result.Fail("Cannot assign to employees who are not direct reports", 403));
         }
-        catch (Exception ex)
+
+        var employeeAssignments = bulkAssignmentDto.EmployeeAssignments
+            .Select(e => new EmployeeAssignmentData(
+                e.EmployeeId,
+                e.EmployeeName,
+                e.EmployeeEmail))
+            .ToList();
+
+        var command = new CreateBulkAssignmentsCommand(
+            bulkAssignmentDto.TemplateId,
+            ProcessTypeMapper.MapToDomain(bulkAssignmentDto.ProcessType),
+            employeeAssignments,
+            bulkAssignmentDto.DueDate,
+            managerId,
+            bulkAssignmentDto.Notes);
+
+        var result = await commandDispatcher.SendAsync(command);
+
+        if (result.Succeeded)
         {
-            logger.LogError(ex, "Error creating manager bulk assignments");
-            return StatusCode(500, "An error occurred while creating bulk assignments");
+            logger.LogInformation("Manager {ManagerId} successfully created {Count} assignments",
+                managerId, bulkAssignmentDto.EmployeeAssignments.Count);
         }
+
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/start")]
     [Authorize(Policy = "HR")]
     public async Task<IActionResult> StartAssignmentWork(Guid assignmentId)
     {
-        try
-        {
-            var command = new StartAssignmentWorkCommand(assignmentId);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error starting assignment work");
-            return StatusCode(500, "An error occurred while starting assignment work");
-        }
+        var command = new StartAssignmentWorkCommand(assignmentId);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/complete")]
     public async Task<IActionResult> CompleteAssignmentWork(Guid assignmentId)
     {
-        try
-        {
-            var command = new CompleteAssignmentWorkCommand(assignmentId);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error completing assignment work");
-            return StatusCode(500, "An error occurred while completing assignment work");
-        }
+        var command = new CompleteAssignmentWorkCommand(assignmentId);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -210,7 +169,7 @@ public class AssignmentsController : BaseController
     public async Task<IActionResult> ExtendAssignmentDueDate([FromBody] ExtendAssignmentDueDateDto extendDto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return CreateResponse(Result.Fail("Invalid model state", 400));
 
         return await ExecuteWithAuthorizationAsync(
             commandAuthorizationService,
@@ -239,7 +198,7 @@ public class AssignmentsController : BaseController
     public async Task<IActionResult> WithdrawAssignment([FromBody] WithdrawAssignmentDto withdrawDto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return CreateResponse(Result.Fail("Invalid model state", 400));
 
         return await ExecuteWithAuthorizationAsync(
             commandAuthorizationService,
@@ -270,7 +229,7 @@ public class AssignmentsController : BaseController
     public async Task<IActionResult> InitializeAssignment(Guid assignmentId, [FromBody] InitializeAssignmentDto initializeDto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return CreateResponse(Result.Fail("Invalid model state", 400));
 
         return await ExecuteWithAuthorizationAsync(
             commandAuthorizationService,
@@ -301,10 +260,10 @@ public class AssignmentsController : BaseController
     public async Task<IActionResult> AddCustomSections(Guid assignmentId, [FromBody] AddCustomSectionsDto sectionsDto)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ModelState);
+            return CreateResponse(Result.Fail("Invalid model state", 400));
 
         if (sectionsDto.Sections == null || !sectionsDto.Sections.Any())
-            return BadRequest("At least one custom section is required");
+            return CreateResponse(Result.Fail("At least one custom section is required", 400));
 
         return await ExecuteWithAuthorizationAsync(
             commandAuthorizationService,
@@ -328,184 +287,120 @@ public class AssignmentsController : BaseController
     [HttpPost("{assignmentId}/sections/{sectionId}/complete-employee")]
     public async Task<IActionResult> CompleteSectionAsEmployee(Guid assignmentId, Guid sectionId)
     {
-        try
-        {
-            var command = new CompleteSectionAsEmployeeCommand(assignmentId, sectionId);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error completing section as employee");
-            return StatusCode(500, "An error occurred while completing section");
-        }
+        var command = new CompleteSectionAsEmployeeCommand(assignmentId, sectionId);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/sections/bulk-complete-employee")]
     public async Task<IActionResult> CompleteBulkSectionsAsEmployee(Guid assignmentId, [FromBody] List<Guid> sectionIds)
     {
-        try
-        {
-            if (sectionIds == null || !sectionIds.Any())
-                return BadRequest("Section IDs list cannot be null or empty");
+        if (sectionIds == null || !sectionIds.Any())
+            return CreateResponse(Result.Fail("Section IDs list cannot be null or empty", 400));
 
-            var command = new CompleteBulkSectionsAsEmployeeCommand(assignmentId, sectionIds);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error completing sections as employee");
-            return StatusCode(500, "An error occurred while completing sections");
-        }
+        var command = new CompleteBulkSectionsAsEmployeeCommand(assignmentId, sectionIds);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/sections/{sectionId}/complete-manager")]
     [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> CompleteSectionAsManager(Guid assignmentId, Guid sectionId)
     {
-        try
-        {
-            var command = new CompleteSectionAsManagerCommand(assignmentId, sectionId);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error completing section as manager");
-            return StatusCode(500, "An error occurred while completing section");
-        }
+        var command = new CompleteSectionAsManagerCommand(assignmentId, sectionId);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/sections/bulk-complete-manager")]
     [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> CompleteBulkSectionsAsManager(Guid assignmentId, [FromBody] List<Guid> sectionIds)
     {
-        try
-        {
-            if (sectionIds == null || !sectionIds.Any())
-                return BadRequest("Section IDs list cannot be null or empty");
+        if (sectionIds == null || !sectionIds.Any())
+            return CreateResponse(Result.Fail("Section IDs list cannot be null or empty", 400));
 
-            var command = new CompleteBulkSectionsAsManagerCommand(assignmentId, sectionIds);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error completing sections as manager");
-            return StatusCode(500, "An error occurred while completing sections");
-        }
+        var command = new CompleteBulkSectionsAsManagerCommand(assignmentId, sectionIds);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/submit-employee")]
     public async Task<IActionResult> SubmitEmployeeQuestionnaire(Guid assignmentId, [FromBody] SubmitQuestionnaireDto submitDto)
     {
-        try
+        // Get employee ID from authenticated user context
+        if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
         {
-            // Get employee ID from authenticated user context
-            if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
-            {
-                logger.LogWarning("SubmitEmployeeQuestionnaire failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
+            logger.LogWarning("SubmitEmployeeQuestionnaire failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
+        }
 
-            var command = new SubmitEmployeeQuestionnaireCommand(
-                assignmentId,
-                employeeId,
-                submitDto.ExpectedVersion);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error submitting employee questionnaire");
-            return StatusCode(500, "An error occurred while submitting employee questionnaire");
-        }
+        var command = new SubmitEmployeeQuestionnaireCommand(
+            assignmentId,
+            employeeId,
+            submitDto.ExpectedVersion);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/submit-manager")]
     [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> SubmitManagerQuestionnaire(Guid assignmentId, [FromBody] SubmitQuestionnaireDto submitDto)
     {
-        try
+        // Get manager ID from authenticated user context
+        if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
         {
-            // Get manager ID from authenticated user context
-            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
-            {
-                logger.LogWarning("SubmitManagerQuestionnaire failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
+            logger.LogWarning("SubmitManagerQuestionnaire failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
+        }
 
-            var command = new SubmitManagerQuestionnaireCommand(
-                assignmentId,
-                managerId,
-                submitDto.ExpectedVersion);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error submitting manager questionnaire");
-            return StatusCode(500, "An error occurred while submitting manager questionnaire");
-        }
+        var command = new SubmitManagerQuestionnaireCommand(
+            assignmentId,
+            managerId,
+            submitDto.ExpectedVersion);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/initiate-review")]
     [Authorize(Policy = "TeamLead")]
     public async Task<IActionResult> InitiateReview(Guid assignmentId)
     {
-        try
+        // Get manager ID from authenticated user context
+        if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
         {
-            // Get manager ID from authenticated user context
-            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
-            {
-                logger.LogWarning("InitiateReview failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
+            logger.LogWarning("InitiateReview failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
+        }
 
-            var command = new InitiateReviewCommand(assignmentId, managerId);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error initiating review");
-            return StatusCode(500, "An error occurred while initiating review");
-        }
+        var command = new InitiateReviewCommand(assignmentId, managerId);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/edit-answer")]
     public async Task<IActionResult> EditAnswerDuringReview(Guid assignmentId, [FromBody] EditAnswerDto editDto)
     {
-        try
+        if (!Enum.TryParse<ApplicationRole>(editDto.OriginalCompletionRole, out var commandRole))
+            return CreateResponse(Result.Fail("Invalid ApplicationRole value", 400));
+
+        // Get user ID from authenticated user context
+        if (!userContext.TryGetUserId(out var userId, out var errorMessage))
         {
-            if (!Enum.TryParse<ApplicationRole>(editDto.OriginalCompletionRole, out var commandRole))
-                return BadRequest("Invalid ApplicationRole value");
-
-            // Get user ID from authenticated user context
-            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
-            {
-                logger.LogWarning("EditAnswerDuringReview failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
-
-            var command = new EditAnswerDuringReviewCommand(
-                assignmentId,
-                editDto.SectionId,
-                editDto.QuestionId,
-                ApplicationRoleMapper.MapFromDomain(domainRole),
-                editDto.Answer,
-                userId);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("EditAnswerDuringReview failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error editing answer during review");
-            return StatusCode(500, "An error occurred while editing answer");
-        }
+
+        var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
+
+        var command = new EditAnswerDuringReviewCommand(
+            assignmentId,
+            editDto.SectionId,
+            editDto.QuestionId,
+            ApplicationRoleMapper.MapFromDomain(domainRole),
+            editDto.Answer,
+            userId);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     // Refined review workflow endpoints
@@ -519,32 +414,24 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> FinishReviewMeeting(Guid assignmentId, [FromBody] FinishReviewMeetingDto finishDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        // Get manager ID from authenticated user context
+        if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Get manager ID from authenticated user context
-            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
-            {
-                logger.LogWarning("FinishReviewMeeting failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            var command = new FinishReviewMeetingCommand(
-                assignmentId,
-                managerId,
-                finishDto.ReviewSummary,
-                finishDto.ExpectedVersion);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("FinishReviewMeeting failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error finishing review meeting for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while finishing review meeting");
-        }
+
+        var command = new FinishReviewMeetingCommand(
+            assignmentId,
+            managerId,
+            finishDto.ReviewSummary,
+            finishDto.ExpectedVersion);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -557,32 +444,24 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> SignOffReviewOutcome(Guid assignmentId, [FromBody] SignOffReviewDto signOffDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        // Get employee ID from authenticated user context
+        if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Get employee ID from authenticated user context
-            if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
-            {
-                logger.LogWarning("SignOffReviewOutcome failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            var command = new SignOffReviewOutcomeAsEmployeeCommand(
-                assignmentId,
-                employeeId,
-                signOffDto.SignOffComments,
-                signOffDto.ExpectedVersion);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("SignOffReviewOutcome failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error signing-off review outcome for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while signing-off review outcome");
-        }
+
+        var command = new SignOffReviewOutcomeAsEmployeeCommand(
+            assignmentId,
+            employeeId,
+            signOffDto.SignOffComments,
+            signOffDto.ExpectedVersion);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -594,32 +473,24 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<IActionResult> ConfirmReviewOutcomeAsEmployee(Guid assignmentId, [FromBody] ConfirmReviewOutcomeDto confirmDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        // Get employee ID from authenticated user context
+        if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Get employee ID from authenticated user context
-            if (!userContext.TryGetUserId(out var employeeId, out var errorMessage))
-            {
-                logger.LogWarning("ConfirmReviewOutcomeAsEmployee failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            var command = new ConfirmReviewOutcomeAsEmployeeCommand(
-                assignmentId,
-                employeeId,
-                confirmDto.EmployeeComments,
-                confirmDto.ExpectedVersion);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("ConfirmReviewOutcomeAsEmployee failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error confirming review outcome for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while confirming review outcome");
-        }
+
+        var command = new ConfirmReviewOutcomeAsEmployeeCommand(
+            assignmentId,
+            employeeId,
+            confirmDto.EmployeeComments,
+            confirmDto.ExpectedVersion);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -633,32 +504,24 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> FinalizeQuestionnaireAsManager(Guid assignmentId, [FromBody] FinalizeAsManagerDto finalizeDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        // Get manager ID from authenticated user context
+        if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Get manager ID from authenticated user context
-            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
-            {
-                logger.LogWarning("FinalizeQuestionnaireAsManager failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            var command = new FinalizeQuestionnaireAsManagerCommand(
-                assignmentId,
-                managerId,
-                finalizeDto.ManagerFinalNotes,
-                finalizeDto.ExpectedVersion);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("FinalizeQuestionnaireAsManager failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error finalizing questionnaire as manager for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while finalizing questionnaire");
-        }
+
+        var command = new FinalizeQuestionnaireAsManagerCommand(
+            assignmentId,
+            managerId,
+            finalizeDto.ManagerFinalNotes,
+            finalizeDto.ExpectedVersion);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("{assignmentId}/notes")]
@@ -668,21 +531,13 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> AddInReviewNote(Guid assignmentId, [FromBody] AddInReviewNoteDto noteDto)
     {
-        try
-        {
-            var command = new AddInReviewNoteCommand(
-                assignmentId,
-                noteDto.Content,
-                noteDto.SectionId);
+        var command = new AddInReviewNoteCommand(
+            assignmentId,
+            noteDto.Content,
+            noteDto.SectionId);
 
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error adding InReview note for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while adding note");
-        }
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPut("{assignmentId}/notes/{noteId}")]
@@ -693,21 +548,13 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateInReviewNote(Guid assignmentId, Guid noteId, [FromBody] UpdateInReviewNoteDto noteDto)
     {
-        try
-        {
-            var command = new UpdateInReviewNoteCommand(
-                assignmentId,
-                noteId,
-                noteDto.Content);
+        var command = new UpdateInReviewNoteCommand(
+            assignmentId,
+            noteId,
+            noteDto.Content);
 
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error updating InReview note {NoteId} for assignment {AssignmentId}", noteId, assignmentId);
-            return StatusCode(500, "An error occurred while updating note");
-        }
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpDelete("{assignmentId}/notes/{noteId}")]
@@ -718,17 +565,9 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteInReviewNote(Guid assignmentId, Guid noteId)
     {
-        try
-        {
-            var command = new DeleteInReviewNoteCommand(assignmentId, noteId);
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error deleting InReview note {NoteId} for assignment {AssignmentId}", noteId, assignmentId);
-            return StatusCode(500, "An error occurred while deleting note");
-        }
+        var command = new DeleteInReviewNoteCommand(assignmentId, noteId);
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     [HttpPost("reminder")]
@@ -738,31 +577,23 @@ public class AssignmentsController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> SendReminder([FromBody] SendReminderDto reminderDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        // Get manager ID from authenticated user context
+        if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Get manager ID from authenticated user context
-            if (!userContext.TryGetUserId(out var managerId, out var errorMessage))
-            {
-                logger.LogWarning("SendReminder failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            var command = new SendAssignmentReminderCommand(
-                reminderDto.AssignmentId,
-                reminderDto.Message,
-                managerId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("SendReminder failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error sending reminder for assignment {AssignmentId}", reminderDto.AssignmentId);
-            return StatusCode(500, "An error occurred while sending reminder");
-        }
+
+        var command = new SendAssignmentReminderCommand(
+            reminderDto.AssignmentId,
+            reminderDto.Message,
+            managerId);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -789,46 +620,38 @@ public class AssignmentsController : BaseController
         Guid assignmentId,
         [FromBody] ReopenQuestionnaireDto reopenDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        // Get user ID from authenticated user context
+        if (!userContext.TryGetUserId(out var userId, out var errorMessage))
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            // Get user ID from authenticated user context
-            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
-            {
-                logger.LogWarning("ReopenQuestionnaire failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            // Get user role with cache-through pattern
-            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
-
-            if (employeeRole == null)
-            {
-                logger.LogWarning("ReopenQuestionnaire failed: Unable to retrieve employee role for user {UserId}", userId);
-                return Unauthorized("User role not found");
-            }
-
-            // Map ApplicationRole enum to string for command
-            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
-            var roleString = queryRole.ToString();
-
-            var command = new ReopenQuestionnaireCommand(
-                assignmentId,
-                reopenDto.TargetState,
-                reopenDto.ReopenReason,
-                userId,
-                roleString);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("ReopenQuestionnaire failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
+
+        // Get user role with cache-through pattern
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
+
+        if (employeeRole == null)
         {
-            logger.LogError(ex, "Error reopening assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while reopening questionnaire");
+            logger.LogWarning("ReopenQuestionnaire failed: Unable to retrieve employee role for user {UserId}", userId);
+            return CreateResponse(Result.Fail("User role not found", 401));
         }
+
+        // Map ApplicationRole enum to string for command
+        var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+        var roleString = queryRole.ToString();
+
+        var command = new ReopenQuestionnaireCommand(
+            assignmentId,
+            reopenDto.TargetState,
+            reopenDto.ReopenReason,
+            userId,
+            roleString);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     #region Goal Operations
@@ -842,37 +665,29 @@ public class AssignmentsController : BaseController
         Guid assignmentId,
         [FromBody] LinkPredecessorQuestionnaireDto dto)
     {
-        try
+        if (!userContext.TryGetUserId(out var userId, out var errorMessage))
         {
-            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
-            {
-                logger.LogWarning("LinkPredecessorQuestionnaire failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            // Parse role from DTO
-            if (!Enum.TryParse<ApplicationRole>(dto.LinkedByRole, out var commandRole))
-            {
-                return BadRequest($"Invalid role: {dto.LinkedByRole}");
-            }
-
-            var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
-
-            var command = new LinkPredecessorQuestionnaireCommand(
-                assignmentId,
-                dto.QuestionId,
-                dto.PredecessorAssignmentId,
-                ApplicationRoleMapper.MapFromDomain(domainRole),
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("LinkPredecessorQuestionnaire failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
+
+        // Parse role from DTO
+        if (!Enum.TryParse<ApplicationRole>(dto.LinkedByRole, out var commandRole))
         {
-            logger.LogError(ex, "Error linking predecessor questionnaire for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while linking predecessor questionnaire");
+            return CreateResponse(Result.Fail($"Invalid role: {dto.LinkedByRole}", 400));
         }
+
+        var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
+
+        var command = new LinkPredecessorQuestionnaireCommand(
+            assignmentId,
+            dto.QuestionId,
+            dto.PredecessorAssignmentId,
+            ApplicationRoleMapper.MapFromDomain(domainRole),
+            userId);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     #endregion
@@ -892,40 +707,32 @@ public class AssignmentsController : BaseController
         Guid assignmentId,
         [FromBody] LinkEmployeeFeedbackDto dto)
     {
-        try
+        if (!userContext.TryGetUserId(out var userId, out var errorMessage))
         {
-            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
-            {
-                logger.LogWarning("LinkEmployeeFeedback failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            // Get user role from database
-            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
-            if (employeeRole == null)
-            {
-                logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
-                return Unauthorized("User role not found");
-            }
-
-            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
-            var userRole = ApplicationRoleMapper.MapFromQuery(queryRole);
-
-            var command = new LinkEmployeeFeedbackCommand(
-                assignmentId,
-                dto.QuestionId,
-                dto.FeedbackId,
-                userRole,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("LinkEmployeeFeedback failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
+
+        // Get user role from database
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
+        if (employeeRole == null)
         {
-            logger.LogError(ex, "Error linking employee feedback for assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while linking employee feedback");
+            logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+            return CreateResponse(Result.Fail("User role not found", 401));
         }
+
+        var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+        var userRole = ApplicationRoleMapper.MapFromQuery(queryRole);
+
+        var command = new LinkEmployeeFeedbackCommand(
+            assignmentId,
+            dto.QuestionId,
+            dto.FeedbackId,
+            userRole,
+            userId);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -941,40 +748,32 @@ public class AssignmentsController : BaseController
         Guid assignmentId,
         [FromBody] UnlinkEmployeeFeedbackDto dto)
     {
-        try
+        if (!userContext.TryGetUserId(out var userId, out var errorMessage))
         {
-            if (!userContext.TryGetUserId(out var userId, out var errorMessage))
-            {
-                logger.LogWarning("UnlinkEmployeeFeedback failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
-            }
-
-            // Get user role from database
-            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
-            if (employeeRole == null)
-            {
-                logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
-                return Unauthorized("User role not found");
-            }
-
-            var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
-            var userRole = ApplicationRoleMapper.MapFromQuery(queryRole);
-
-            var command = new UnlinkEmployeeFeedbackCommand(
-                assignmentId,
-                dto.QuestionId,
-                dto.FeedbackId,
-                userRole,
-                userId);
-
-            var result = await commandDispatcher.SendAsync(command);
-            return CreateResponse(result);
+            logger.LogWarning("UnlinkEmployeeFeedback failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
         }
-        catch (Exception ex)
+
+        // Get user role from database
+        var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(userId, HttpContext.RequestAborted);
+        if (employeeRole == null)
         {
-            logger.LogError(ex, "Error unlinking employee feedback from assignment {AssignmentId}", assignmentId);
-            return StatusCode(500, "An error occurred while unlinking employee feedback");
+            logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
+            return CreateResponse(Result.Fail("User role not found", 401));
         }
+
+        var queryRole = (Application.Query.Models.ApplicationRole)employeeRole.ApplicationRoleValue;
+        var userRole = ApplicationRoleMapper.MapFromQuery(queryRole);
+
+        var command = new UnlinkEmployeeFeedbackCommand(
+            assignmentId,
+            dto.QuestionId,
+            dto.FeedbackId,
+            userRole,
+            userId);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
     }
 
     #endregion

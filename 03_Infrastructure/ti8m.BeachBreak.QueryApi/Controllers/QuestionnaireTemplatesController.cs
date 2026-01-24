@@ -30,35 +30,19 @@ public class QuestionnaireTemplatesController : BaseController
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllTemplates()
     {
-        try
-        {
-            var result = await queryDispatcher.QueryAsync(new QuestionnaireTemplateListQuery());
-            return CreateResponse(result, templates => templates.Select(MapToDto));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving questionnaire templates");
-            return StatusCode(500, "An error occurred while retrieving templates");
-        }
+        var result = await queryDispatcher.QueryAsync(new QuestionnaireTemplateListQuery());
+        return CreateResponse(result, templates => templates.Select(MapToDto));
     }
 
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(QuestionnaireTemplateDto), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTemplate(Guid id)
     {
-        try
-        {
-            var result = await queryDispatcher.QueryAsync(new QuestionnaireTemplateQuery(id));
-            if (result == null)
-                return NotFound($"Template with ID {id} not found");
+        var result = await queryDispatcher.QueryAsync(new QuestionnaireTemplateQuery(id));
+        if (result == null)
+            return CreateResponse(Result<QuestionnaireTemplateDto>.Fail($"Template with ID {id} not found", 404));
 
-            return CreateResponse(result, MapToDto);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while retrieving the template");
-        }
+        return CreateResponse(result, MapToDto);
     }
 
     //[HttpGet("category/{category}")]
@@ -81,16 +65,8 @@ public class QuestionnaireTemplatesController : BaseController
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetPublishedTemplates()
     {
-        try
-        {
-            var result = await queryDispatcher.QueryAsync(new PublishedQuestionnaireTemplatesQuery());
-            return CreateResponse(result, templates => templates.Select(MapToDto));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving published questionnaire templates");
-            return StatusCode(500, "An error occurred while retrieving published templates");
-        }
+        var result = await queryDispatcher.QueryAsync(new PublishedQuestionnaireTemplatesQuery());
+        return CreateResponse(result, templates => templates.Select(MapToDto));
     }
 
     [HttpGet("drafts")]
@@ -98,16 +74,8 @@ public class QuestionnaireTemplatesController : BaseController
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetDraftTemplates()
     {
-        try
-        {
-            var result = await queryDispatcher.QueryAsync(new DraftQuestionnaireTemplatesQuery());
-            return CreateResponse(result, templates => templates.Select(MapToDto));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving draft questionnaire templates");
-            return StatusCode(500, "An error occurred while retrieving draft templates");
-        }
+        var result = await queryDispatcher.QueryAsync(new DraftQuestionnaireTemplatesQuery());
+        return CreateResponse(result, templates => templates.Select(MapToDto));
     }
 
     [HttpGet("archived")]
@@ -115,16 +83,8 @@ public class QuestionnaireTemplatesController : BaseController
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetArchivedTemplates()
     {
-        try
-        {
-            var result = await queryDispatcher.QueryAsync(new ArchivedQuestionnaireTemplatesQuery());
-            return CreateResponse(result, templates => templates.Select(MapToDto));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving archived questionnaire templates");
-            return StatusCode(500, "An error occurred while retrieving archived templates");
-        }
+        var result = await queryDispatcher.QueryAsync(new ArchivedQuestionnaireTemplatesQuery());
+        return CreateResponse(result, templates => templates.Select(MapToDto));
     }
 
     [HttpGet("assignable")]
@@ -132,16 +92,8 @@ public class QuestionnaireTemplatesController : BaseController
     [ProducesResponseType(typeof(IEnumerable<QuestionnaireTemplateDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAssignableTemplates()
     {
-        try
-        {
-            var result = await queryDispatcher.QueryAsync(new AssignableQuestionnaireTemplatesQuery());
-            return CreateResponse(result, templates => templates.Select(MapToDto));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving assignable questionnaire templates");
-            return StatusCode(500, "An error occurred while retrieving assignable templates");
-        }
+        var result = await queryDispatcher.QueryAsync(new AssignableQuestionnaireTemplatesQuery());
+        return CreateResponse(result, templates => templates.Select(MapToDto));
     }
 
 

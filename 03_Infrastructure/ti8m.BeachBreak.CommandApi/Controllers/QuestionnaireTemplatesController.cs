@@ -35,167 +35,104 @@ public class QuestionnaireTemplatesController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateTemplate(QuestionnaireTemplateDto questionnaireTemplate)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        if (string.IsNullOrWhiteSpace(questionnaireTemplate.NameEnglish))
+            return CreateResponse(Result.Fail("Template name is required", 400));
+
+        var commandTemplate = new CommandQuestionnaireTemplate
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            Id = questionnaireTemplate.Id,
+            CategoryId = questionnaireTemplate.CategoryId,
+            DescriptionGerman = questionnaireTemplate.DescriptionGerman,
+            DescriptionEnglish = questionnaireTemplate.DescriptionEnglish,
+            NameGerman = questionnaireTemplate.NameGerman,
+            NameEnglish = questionnaireTemplate.NameEnglish,
+            ProcessType = MapProcessType(questionnaireTemplate.ProcessType),
+            IsCustomizable = questionnaireTemplate.IsCustomizable,
+            AutoInitialize = questionnaireTemplate.AutoInitialize,
+            Sections = questionSectionMapper.MapToCommandList(questionnaireTemplate.Sections)
+        };
 
-            if (string.IsNullOrWhiteSpace(questionnaireTemplate.NameEnglish))
-                return BadRequest("Template name is required");
+        Result result = await commandDispatcher.SendAsync(new CreateQuestionnaireTemplateCommand(commandTemplate));
 
-            var commandTemplate = new CommandQuestionnaireTemplate
-            {
-                Id = questionnaireTemplate.Id,
-                CategoryId = questionnaireTemplate.CategoryId,
-                DescriptionGerman = questionnaireTemplate.DescriptionGerman,
-                DescriptionEnglish = questionnaireTemplate.DescriptionEnglish,
-                NameGerman = questionnaireTemplate.NameGerman,
-                NameEnglish = questionnaireTemplate.NameEnglish,
-                ProcessType = MapProcessType(questionnaireTemplate.ProcessType),
-                IsCustomizable = questionnaireTemplate.IsCustomizable,
-                AutoInitialize = questionnaireTemplate.AutoInitialize,
-                Sections = questionSectionMapper.MapToCommandList(questionnaireTemplate.Sections)
-            };
-
-            Result result = await commandDispatcher.SendAsync(new CreateQuestionnaireTemplateCommand(commandTemplate));
-
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error creating questionnaire template");
-            return StatusCode(500, "An error occurred while creating the template");
-        }
+        return CreateResponse(result);
     }
 
     [HttpPut("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateTemplate(Guid id, QuestionnaireTemplateDto questionnaireTemplate)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        var commandTemplate = new CommandQuestionnaireTemplate
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            Id = id,
+            CategoryId = questionnaireTemplate.CategoryId,
+            DescriptionGerman = questionnaireTemplate.DescriptionGerman,
+            DescriptionEnglish = questionnaireTemplate.DescriptionEnglish,
+            NameGerman = questionnaireTemplate.NameGerman,
+            NameEnglish = questionnaireTemplate.NameEnglish,
+            ProcessType = MapProcessType(questionnaireTemplate.ProcessType),
+            IsCustomizable = questionnaireTemplate.IsCustomizable,
+            AutoInitialize = questionnaireTemplate.AutoInitialize,
+            Sections = questionSectionMapper.MapToCommandList(questionnaireTemplate.Sections)
+        };
 
-            var commandTemplate = new CommandQuestionnaireTemplate
-            {
-                Id = id,
-                CategoryId = questionnaireTemplate.CategoryId,
-                DescriptionGerman = questionnaireTemplate.DescriptionGerman,
-                DescriptionEnglish = questionnaireTemplate.DescriptionEnglish,
-                NameGerman = questionnaireTemplate.NameGerman,
-                NameEnglish = questionnaireTemplate.NameEnglish,
-                ProcessType = MapProcessType(questionnaireTemplate.ProcessType),
-                IsCustomizable = questionnaireTemplate.IsCustomizable,
-                AutoInitialize = questionnaireTemplate.AutoInitialize,
-                Sections = questionSectionMapper.MapToCommandList(questionnaireTemplate.Sections)
-            };
+        Result result = await commandDispatcher.SendAsync(new UpdateQuestionnaireTemplateCommand(id, commandTemplate));
 
-            Result result = await commandDispatcher.SendAsync(new UpdateQuestionnaireTemplateCommand(id, commandTemplate));
-
-            if (result.Succeeded)
-            {
-                return Ok();
-            }
-            else
-            {
-                return Problem(detail: result.Message, statusCode: result.StatusCode);
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error updating template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while updating the template");
-        }
+        return CreateResponse(result);
     }
 
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteTemplate(Guid id)
     {
-        try
-        {
-            Result result = await commandDispatcher.SendAsync(new DeleteQuestionnaireTemplateCommand(id));
+        Result result = await commandDispatcher.SendAsync(new DeleteQuestionnaireTemplateCommand(id));
 
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error deleting template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while deleting the template");
-        }
+        return CreateResponse(result);
     }
 
     [HttpPost("{id:guid}/publish")]
     public async Task<IActionResult> PublishTemplate(Guid id)
     {
-        try
+        // Extract publisher employee ID from authenticated user context
+        if (!Guid.TryParse(userContext.Id, out var publishedByEmployeeId))
         {
-            // Extract publisher employee ID from authenticated user context
-            if (!Guid.TryParse(userContext.Id, out var publishedByEmployeeId))
-            {
-                logger.LogWarning("Cannot publish template {TemplateId}: unable to parse user ID from context", id);
-                return Unauthorized("User identity could not be determined");
-            }
-
-            // Pass employee ID to command (userContext.Id is the Azure AD object ID, which matches employee ID)
-            Result result = await commandDispatcher.SendAsync(new PublishQuestionnaireTemplateCommand(id, publishedByEmployeeId));
-
-            return CreateResponse(result);
+            logger.LogWarning("Cannot publish template {TemplateId}: unable to parse user ID from context", id);
+            return CreateResponse(Result.Fail("User identity could not be determined", 401));
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error publishing template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while publishing the template");
-        }
+
+        // Pass employee ID to command (userContext.Id is the Azure AD object ID, which matches employee ID)
+        Result result = await commandDispatcher.SendAsync(new PublishQuestionnaireTemplateCommand(id, publishedByEmployeeId));
+
+        return CreateResponse(result);
     }
 
     [HttpPost("{id:guid}/unpublish")]
     public async Task<IActionResult> UnpublishTemplate(Guid id)
     {
-        try
-        {
-            Result result = await commandDispatcher.SendAsync(new UnpublishQuestionnaireTemplateCommand(id));
+        Result result = await commandDispatcher.SendAsync(new UnpublishQuestionnaireTemplateCommand(id));
 
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error unpublishing template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while unpublishing the template");
-        }
+        return CreateResponse(result);
     }
 
     [HttpPost("{id:guid}/archive")]
     public async Task<IActionResult> ArchiveTemplate(Guid id)
     {
-        try
-        {
-            Result result = await commandDispatcher.SendAsync(new ArchiveQuestionnaireTemplateCommand(id));
+        Result result = await commandDispatcher.SendAsync(new ArchiveQuestionnaireTemplateCommand(id));
 
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error archiving template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while archiving the template");
-        }
+        return CreateResponse(result);
     }
 
     [HttpPost("{id:guid}/restore")]
     public async Task<IActionResult> RestoreTemplate(Guid id)
     {
-        try
-        {
-            Result result = await commandDispatcher.SendAsync(new RestoreQuestionnaireTemplateCommand(id));
+        Result result = await commandDispatcher.SendAsync(new RestoreQuestionnaireTemplateCommand(id));
 
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error restoring template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while restoring the template");
-        }
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -212,26 +149,16 @@ public class QuestionnaireTemplatesController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> CloneTemplate(Guid id, [FromBody] CloneTemplateRequestDto? request = null)
     {
-        try
-        {
-            var command = new CloneQuestionnaireTemplateCommand(
-                id,
-                request?.NamePrefix);
+        var command = new CloneQuestionnaireTemplateCommand(
+            id,
+            request?.NamePrefix);
 
-            Result<Guid> result = await commandDispatcher.SendAsync(command);
+        Result<Guid> result = await commandDispatcher.SendAsync(command);
 
-            if (result.Succeeded)
-            {
-                return Ok(new CloneTemplateResponseDto { NewTemplateId = result.Payload });
-            }
+        if (!result.Succeeded)
+            return CreateResponse(result);
 
-            return CreateResponse(Result.Fail(result.Message, result.StatusCode));
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error cloning template {TemplateId}", id);
-            return StatusCode(500, "An error occurred while cloning the template");
-        }
+        return CreateResponse(Result<CloneTemplateResponseDto>.Success(new CloneTemplateResponseDto { NewTemplateId = result.Payload }));
     }
 
     private static QuestionType MapQuestionType(QuestionTypeDto dtoType) => dtoType switch

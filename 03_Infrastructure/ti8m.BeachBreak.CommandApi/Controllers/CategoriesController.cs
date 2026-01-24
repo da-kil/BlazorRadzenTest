@@ -28,13 +28,13 @@ public class CategoriesController : BaseController
         try
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return CreateResponse(Result.Fail("Invalid model state", 400));
 
             if (string.IsNullOrWhiteSpace(categoryDto.NameEn))
-                return BadRequest("Category English name is required");
+                return CreateResponse(Result.Fail("Category English name is required", 400));
 
             if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
-                return BadRequest("Category German name is required");
+                return CreateResponse(Result.Fail("Category German name is required", 400));
 
             var category = new CommandCategory
             {
@@ -54,7 +54,7 @@ public class CategoriesController : BaseController
         catch (Exception ex)
         {
             logger.LogError(ex, "Error creating category");
-            return StatusCode(500, "An error occurred while creating the category");
+            return CreateResponse(Result.Fail("An error occurred while creating the category", 500));
         }
     }
 
@@ -64,13 +64,13 @@ public class CategoriesController : BaseController
         try
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+                return CreateResponse(Result.Fail("Invalid model state", 400));
 
             if (string.IsNullOrWhiteSpace(categoryDto.NameEn))
-                return BadRequest("Category English name is required");
+                return CreateResponse(Result.Fail("Category English name is required", 400));
 
             if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
-                return BadRequest("Category German name is required");
+                return CreateResponse(Result.Fail("Category German name is required", 400));
 
             var category = new CommandCategory
             {
@@ -90,7 +90,7 @@ public class CategoriesController : BaseController
         catch (Exception ex)
         {
             logger.LogError(ex, "Error updating category {CategoryId}", id);
-            return StatusCode(500, "An error occurred while updating the category");
+            return CreateResponse(Result.Fail("An error occurred while updating the category", 500));
         }
     }
 
@@ -106,7 +106,7 @@ public class CategoriesController : BaseController
         catch (Exception ex)
         {
             logger.LogError(ex, "Error deactivating category {CategoryId}", id);
-            return StatusCode(500, "An error occurred while deactivating the category");
+            return CreateResponse(Result.Fail("An error occurred while deactivating the category", 500));
         }
     }
 }

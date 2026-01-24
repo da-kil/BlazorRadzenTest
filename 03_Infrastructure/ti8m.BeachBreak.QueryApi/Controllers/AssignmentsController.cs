@@ -301,7 +301,7 @@ public class AssignmentsController : BaseController
         if (!Guid.TryParse(userContext.Id, out var userId))
         {
             logger.LogWarning("Failed to parse user ID from context");
-            return Unauthorized("User ID not found in authentication context");
+            return CreateResponse(Result<List<Application.Query.Projections.Models.LinkedEmployeeFeedbackDto>>.Fail("User ID not found in authentication context", 401));
         }
 
         // Get the assignment first to determine the employee
@@ -309,7 +309,7 @@ public class AssignmentsController : BaseController
         if (assignmentResult == null || !assignmentResult.Succeeded || assignmentResult.Payload == null)
         {
             logger.LogWarning("Assignment {AssignmentId} not found", assignmentId);
-            return NotFound($"Assignment with ID {assignmentId} not found");
+            return CreateResponse(Result<List<Application.Query.Projections.Models.LinkedEmployeeFeedbackDto>>.Fail($"Assignment with ID {assignmentId} not found", 404));
         }
 
         var assignment = assignmentResult.Payload;
@@ -325,7 +325,7 @@ public class AssignmentsController : BaseController
             {
                 logger.LogWarning("Manager {UserId} attempted to access predecessors for assignment {AssignmentId} for non-direct report",
                     userId, assignmentId);
-                return Forbid();
+                return CreateResponse(Result<List<AvailablePredecessorDto>>.Fail("You do not have permission to access this assignment", 403));
             }
         }
 
@@ -338,7 +338,7 @@ public class AssignmentsController : BaseController
         if (result == null)
         {
             logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
-            return NotFound();
+            return CreateResponse(Result<List<AvailablePredecessorDto>>.Fail($"Assignment {assignmentId} not found", 404));
         }
 
         if (!result.Succeeded)
@@ -346,7 +346,7 @@ public class AssignmentsController : BaseController
             return CreateResponse(result);
         }
 
-        return Ok(result.Payload);
+        return CreateResponse(result);
     }
 
     /// <summary>
@@ -365,7 +365,7 @@ public class AssignmentsController : BaseController
         if (!Guid.TryParse(userContext.Id, out var userId))
         {
             logger.LogWarning("Failed to parse user ID from context");
-            return Unauthorized("User ID not found in authentication context");
+            return CreateResponse(Result<GoalQuestionDataDto>.Fail("User ID not found in authentication context", 401));
         }
 
         // Determine current user's role using the employee role service
@@ -373,7 +373,7 @@ public class AssignmentsController : BaseController
         if (employeeRole == null)
         {
             logger.LogWarning("Unable to retrieve employee role for user {UserId}", userId);
-            return Unauthorized("Unable to determine user role");
+            return CreateResponse(Result<GoalQuestionDataDto>.Fail("Unable to determine user role", 401));
         }
 
         // Use ApplicationRole directly (no premature mapping)
@@ -387,7 +387,7 @@ public class AssignmentsController : BaseController
         {
             logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
                 assignmentId, questionId);
-            return NotFound();
+            return CreateResponse(Result<GoalQuestionDataDto>.Fail($"Goal data not found for assignment {assignmentId}, question {questionId}", 404));
         }
 
         if (!result.Succeeded)
@@ -395,7 +395,7 @@ public class AssignmentsController : BaseController
             return CreateResponse(result);
         }
 
-        return Ok(result.Payload);
+        return CreateResponse(result);
     }
 
     #endregion
@@ -444,7 +444,7 @@ public class AssignmentsController : BaseController
         if (result == null)
         {
             logger.LogWarning("Query returned null for assignment {AssignmentId}", assignmentId);
-            return NotFound();
+            return CreateResponse(Result<List<Application.Query.Projections.Models.LinkedEmployeeFeedbackDto>>.Fail($"Assignment {assignmentId} not found", 404));
         }
 
         return CreateResponse(result);
@@ -468,7 +468,7 @@ public class AssignmentsController : BaseController
         {
             logger.LogWarning("Query returned null for assignment {AssignmentId}, question {QuestionId}",
                 assignmentId, questionId);
-            return NotFound();
+            return CreateResponse(Result<Application.Query.Projections.Models.FeedbackQuestionDataDto>.Fail($"Feedback data not found for assignment {assignmentId}, question {questionId}", 404));
         }
 
         return CreateResponse(result);

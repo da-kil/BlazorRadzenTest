@@ -49,18 +49,10 @@ public class ResponsesController : BaseController
     [ProducesResponseType(typeof(List<QuestionnaireResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllResponses()
     {
-        try
-        {
-            var query = new GetAllResponsesQuery();
-            var responses = await _queryDispatcher.QueryAsync(query);
-            var responseDtos = responses.Select(MapToDto).ToList();
-            return CreateResponse(Result<List<QuestionnaireResponseDto>>.Success(responseDtos));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving responses");
-            return CreateResponse(Result<List<QuestionnaireResponseDto>>.Fail("An error occurred while retrieving responses", 500));
-        }
+        var query = new GetAllResponsesQuery();
+        var responses = await _queryDispatcher.QueryAsync(query);
+        var responseDtos = responses.Select(MapToDto).ToList();
+        return CreateResponse(Result<List<QuestionnaireResponseDto>>.Success(responseDtos));
     }
 
     [HttpGet("{id:guid}")]
@@ -68,21 +60,13 @@ public class ResponsesController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetResponse(Guid id)
     {
-        try
-        {
-            var query = new GetResponseByIdQuery(id);
-            var response = await _queryDispatcher.QueryAsync(query);
+        var query = new GetResponseByIdQuery(id);
+        var response = await _queryDispatcher.QueryAsync(query);
 
-            if (response == null)
-                return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response with ID {id} not found", 404));
+        if (response == null)
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response with ID {id} not found", 404));
 
-            return CreateResponse(Result<QuestionnaireResponseDto>.Success(MapToDto(response)));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving response {ResponseId}", id);
-            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("An error occurred while retrieving the response", 500));
-        }
+        return CreateResponse(Result<QuestionnaireResponseDto>.Success(MapToDto(response)));
     }
 
     [HttpGet("assignment/{assignmentId:guid}")]
@@ -90,65 +74,57 @@ public class ResponsesController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetResponseByAssignment(Guid assignmentId)
     {
-        try
+        var query = new GetResponseByAssignmentIdQuery(assignmentId);
+        var response = await _queryDispatcher.QueryAsync(query);
+
+        if (response == null)
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response for assignment {assignmentId} not found", 404));
+
+        // Get current user's role for filtering
+        if (!Guid.TryParse(_userContext.Id, out var userId))
         {
-            var query = new GetResponseByAssignmentIdQuery(assignmentId);
-            var response = await _queryDispatcher.QueryAsync(query);
-
-            if (response == null)
-                return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response for assignment {assignmentId} not found", 404));
-
-            // Get current user's role for filtering
-            if (!Guid.TryParse(_userContext.Id, out var userId))
-            {
-                _logger.LogWarning("GetResponseByAssignment: Unable to parse user ID from context");
-                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("User identification failed", 401));
-            }
-
-            var userRoleResult = await _queryDispatcher.QueryAsync(
-                new GetEmployeeRoleByIdQuery(userId),
-                HttpContext.RequestAborted);
-
-            if (userRoleResult == null)
-            {
-                _logger.LogWarning("GetResponseByAssignment: User role not found for user {UserId}", userId);
-                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("User role not found", 403));
-            }
-
-            // Get assignment to check workflow state
-            var assignmentQuery = new QuestionnaireAssignmentQuery(assignmentId);
-            var assignmentResult = await _queryDispatcher.QueryAsync(assignmentQuery);
-
-            if (assignmentResult?.Succeeded != true || assignmentResult.Payload == null)
-            {
-                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("Assignment not found", 404));
-            }
-
-            // Get template to check section CompletionRoles
-            var templateQuery = new QuestionnaireTemplateQuery(assignmentResult.Payload.TemplateId);
-            var templateResult = await _queryDispatcher.QueryAsync(templateQuery);
-
-            if (templateResult?.Succeeded != true || templateResult.Payload == null)
-            {
-                _logger.LogWarning("GetResponseByAssignment: Template not found for assignment {AssignmentId}", assignmentId);
-                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("Template not found", 404));
-            }
-
-            // Apply section and response filtering based on user role and workflow state
-            var dto = MapToDto(response);
-            dto = FilterSectionsByUserRoleAndWorkflowState(
-                dto,
-                assignmentResult.Payload,
-                templateResult.Payload,
-                userRoleResult.ApplicationRole);
-
-            return CreateResponse(Result<QuestionnaireResponseDto>.Success(dto));
+            _logger.LogWarning("GetResponseByAssignment: Unable to parse user ID from context");
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("User identification failed", 401));
         }
-        catch (Exception ex)
+
+        var userRoleResult = await _queryDispatcher.QueryAsync(
+            new GetEmployeeRoleByIdQuery(userId),
+            HttpContext.RequestAborted);
+
+        if (userRoleResult == null)
         {
-            _logger.LogError(ex, "Error retrieving response for assignment {AssignmentId}", assignmentId);
-            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("An error occurred while retrieving the response", 500));
+            _logger.LogWarning("GetResponseByAssignment: User role not found for user {UserId}", userId);
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("User role not found", 403));
         }
+
+        // Get assignment to check workflow state
+        var assignmentQuery = new QuestionnaireAssignmentQuery(assignmentId);
+        var assignmentResult = await _queryDispatcher.QueryAsync(assignmentQuery);
+
+        if (assignmentResult?.Succeeded != true || assignmentResult.Payload == null)
+        {
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("Assignment not found", 404));
+        }
+
+        // Get template to check section CompletionRoles
+        var templateQuery = new QuestionnaireTemplateQuery(assignmentResult.Payload.TemplateId);
+        var templateResult = await _queryDispatcher.QueryAsync(templateQuery);
+
+        if (templateResult?.Succeeded != true || templateResult.Payload == null)
+        {
+            _logger.LogWarning("GetResponseByAssignment: Template not found for assignment {AssignmentId}", assignmentId);
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("Template not found", 404));
+        }
+
+        // Apply section and response filtering based on user role and workflow state
+        var dto = MapToDto(response);
+        dto = FilterSectionsByUserRoleAndWorkflowState(
+            dto,
+            assignmentResult.Payload,
+            templateResult.Payload,
+            userRoleResult.ApplicationRole);
+
+        return CreateResponse(Result<QuestionnaireResponseDto>.Success(dto));
     }
 
     // Employee-specific questionnaire response endpoints
@@ -158,54 +134,46 @@ public class ResponsesController : BaseController
     {
         _logger.LogInformation("Received GetEmployeeAssignments request for EmployeeId: {EmployeeId}", employeeId);
 
-        try
+        var result = await _queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
+
+        if (result.Succeeded && result.Payload != null)
         {
-            var result = await _queryDispatcher.QueryAsync(new QuestionnaireEmployeeAssignmentListQuery(employeeId));
+            _logger.LogInformation("GetEmployeeAssignments completed successfully for EmployeeId: {EmployeeId}, returned {Count} assignments", employeeId, result.Payload.Count());
+        }
+        else if (!result.Succeeded)
+        {
+            _logger.LogWarning("GetEmployeeAssignments failed for EmployeeId: {EmployeeId}, Error: {ErrorMessage}", employeeId, result.Message);
+        }
 
-            if (result.Succeeded && result.Payload != null)
+        return CreateResponse(result, assignments =>
+        {
+            return assignments.Select(assignment => new QuestionnaireAssignmentDto
             {
-                _logger.LogInformation("GetEmployeeAssignments completed successfully for EmployeeId: {EmployeeId}, returned {Count} assignments", employeeId, result.Payload.Count());
-            }
-            else if (!result.Succeeded)
-            {
-                _logger.LogWarning("GetEmployeeAssignments failed for EmployeeId: {EmployeeId}, Error: {ErrorMessage}", employeeId, result.Message);
-            }
+                Id = assignment.Id,
+                TemplateId = assignment.TemplateId,
+                EmployeeId = assignment.EmployeeId.ToString(),
+                EmployeeName = assignment.EmployeeName,
+                EmployeeEmail = assignment.EmployeeEmail,
+                WorkflowState = assignment.WorkflowState,
+                AssignedDate = assignment.AssignedDate,
+                DueDate = assignment.DueDate,
+                CompletedDate = assignment.CompletedDate,
+                AssignedBy = assignment.AssignedBy,
+                Notes = assignment.Notes,
 
-            return CreateResponse(result, assignments =>
-            {
-                return assignments.Select(assignment => new QuestionnaireAssignmentDto
+                // InReview notes system
+                InReviewNotes = assignment.InReviewNotes.Select(note => new ti8m.BeachBreak.QueryApi.Dto.InReviewNoteDto
                 {
-                    Id = assignment.Id,
-                    TemplateId = assignment.TemplateId,
-                    EmployeeId = assignment.EmployeeId.ToString(),
-                    EmployeeName = assignment.EmployeeName,
-                    EmployeeEmail = assignment.EmployeeEmail,
-                    WorkflowState = assignment.WorkflowState,
-                    AssignedDate = assignment.AssignedDate,
-                    DueDate = assignment.DueDate,
-                    CompletedDate = assignment.CompletedDate,
-                    AssignedBy = assignment.AssignedBy,
-                    Notes = assignment.Notes,
-
-                    // InReview notes system
-                    InReviewNotes = assignment.InReviewNotes.Select(note => new ti8m.BeachBreak.QueryApi.Dto.InReviewNoteDto
-                    {
-                        Id = note.Id,
-                        Content = note.Content,
-                        Timestamp = note.Timestamp,
-                        SectionId = note.SectionId,
-                        SectionTitle = note.SectionTitle,
-                        AuthorEmployeeId = note.AuthorEmployeeId,
-                        AuthorName = note.AuthorName
-                    }).ToList()
-                });
+                    Id = note.Id,
+                    Content = note.Content,
+                    Timestamp = note.Timestamp,
+                    SectionId = note.SectionId,
+                    SectionTitle = note.SectionTitle,
+                    AuthorEmployeeId = note.AuthorEmployeeId,
+                    AuthorName = note.AuthorName
+                }).ToList()
             });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving assignments for employee {EmployeeId}", employeeId);
-            return CreateResponse(Result<IEnumerable<QuestionnaireAssignmentDto>>.Fail("An error occurred while retrieving employee assignments", 500));
-        }
+        });
     }
 
     [HttpGet("employee/{employeeId:guid}/assignment/{assignmentId:guid}")]
@@ -216,74 +184,66 @@ public class ResponsesController : BaseController
     {
         _logger.LogInformation("Received GetEmployeeResponse request for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", employeeId, assignmentId);
 
+        // Use standard query handler with Marten read models
+        var query = new GetResponseByAssignmentIdQuery(assignmentId);
+        var response = await _queryDispatcher.QueryAsync(query);
+
+        if (response == null)
+        {
+            _logger.LogInformation("Response not found for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", employeeId, assignmentId);
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response not found for assignment {assignmentId} and employee {employeeId}", 404));
+        }
+
+        // Validate this response belongs to the requesting employee (authorization check)
+        if (response.EmployeeId != employeeId)
+        {
+            _logger.LogWarning("Employee {EmployeeId} attempted to access response for Assignment {AssignmentId} belonging to {ActualEmployeeId}",
+                employeeId, assignmentId, response.EmployeeId);
+            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("You do not have permission to access this response", 403));
+        }
+
+        // Calculate progress percentage using ReadModel (has full typed structure)
+        var progressPercentage = 0;
         try
         {
-            // Use standard query handler with Marten read models
-            var query = new GetResponseByAssignmentIdQuery(assignmentId);
-            var response = await _queryDispatcher.QueryAsync(query);
+            // Load ReadModel to get typed SectionResponses for progress calculation
+            using var session = _documentStore.LightweightSession();
+            var readModel = await session.Query<QuestionnaireResponseReadModel>()
+                .Where(r => r.AssignmentId == assignmentId)
+                .FirstOrDefaultAsync();
 
-            if (response == null)
+            if (readModel != null)
             {
-                _logger.LogInformation("Response not found for EmployeeId: {EmployeeId}, AssignmentId: {AssignmentId}", employeeId, assignmentId);
-                return CreateResponse(Result<QuestionnaireResponseDto>.Fail($"Response not found for assignment {assignmentId} and employee {employeeId}", 404));
-            }
+                // Get template for progress calculation
+                var templateQuery = new QuestionnaireTemplateQuery(response.TemplateId);
+                var templateResult = await _queryDispatcher.QueryAsync(templateQuery);
+                var template = templateResult?.Payload;
 
-            // Validate this response belongs to the requesting employee (authorization check)
-            if (response.EmployeeId != employeeId)
-            {
-                _logger.LogWarning("Employee {EmployeeId} attempted to access response for Assignment {AssignmentId} belonging to {ActualEmployeeId}",
-                    employeeId, assignmentId, response.EmployeeId);
-                return CreateResponse(Result<QuestionnaireResponseDto>.Fail("You do not have permission to access this response", 403));
-            }
-
-            // Calculate progress percentage using ReadModel (has full typed structure)
-            var progressPercentage = 0;
-            try
-            {
-                // Load ReadModel to get typed SectionResponses for progress calculation
-                using var session = _documentStore.LightweightSession();
-                var readModel = await session.Query<QuestionnaireResponseReadModel>()
-                    .Where(r => r.AssignmentId == assignmentId)
-                    .FirstOrDefaultAsync();
-
-                if (readModel != null)
+                if (template != null)
                 {
-                    // Get template for progress calculation
-                    var templateQuery = new QuestionnaireTemplateQuery(response.TemplateId);
-                    var templateResult = await _queryDispatcher.QueryAsync(templateQuery);
-                    var template = templateResult?.Payload;
-
-                    if (template != null)
-                    {
-                        var progress = _progressCalculationService.Calculate(template, readModel.SectionResponses);
-                        progressPercentage = (int)Math.Round(progress.EmployeeProgress);
-                    }
+                    var progress = _progressCalculationService.Calculate(template, readModel.SectionResponses);
+                    progressPercentage = (int)Math.Round(progress.EmployeeProgress);
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to calculate progress for assignment {AssignmentId}, defaulting to 0", assignmentId);
-            }
-
-            // Map to DTO with employee-specific section responses
-            var dto = new QuestionnaireResponseDto
-            {
-                Id = response.Id,
-                TemplateId = response.TemplateId,
-                AssignmentId = response.AssignmentId,
-                EmployeeId = response.EmployeeId.ToString(),
-                StartedDate = response.StartedDate,
-                SectionResponses = MapStronglyTypedEmployeeSectionResponsesToDto(response.SectionResponses),
-                ProgressPercentage = progressPercentage
-            };
-
-            return CreateResponse(Result<QuestionnaireResponseDto>.Success(dto));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving response for assignment {AssignmentId} and employee {EmployeeId}", assignmentId, employeeId);
-            return CreateResponse(Result<QuestionnaireResponseDto>.Fail("An error occurred while retrieving the employee response", 500));
+            _logger.LogWarning(ex, "Failed to calculate progress for assignment {AssignmentId}, defaulting to 0", assignmentId);
         }
+
+        // Map to DTO with employee-specific section responses
+        var dto = new QuestionnaireResponseDto
+        {
+            Id = response.Id,
+            TemplateId = response.TemplateId,
+            AssignmentId = response.AssignmentId,
+            EmployeeId = response.EmployeeId.ToString(),
+            StartedDate = response.StartedDate,
+            SectionResponses = MapStronglyTypedEmployeeSectionResponsesToDto(response.SectionResponses),
+            ProgressPercentage = progressPercentage
+        };
+
+        return CreateResponse(Result<QuestionnaireResponseDto>.Success(dto));
     }
 
     [HttpGet("employee/{employeeId:guid}/progress")]
@@ -292,29 +252,21 @@ public class ResponsesController : BaseController
     {
         _logger.LogInformation("Received GetEmployeeAssignmentProgress request for EmployeeId: {EmployeeId}", employeeId);
 
-        try
-        {
-            var result = await _queryDispatcher.QueryAsync(new EmployeeProgressQuery(employeeId));
+        var result = await _queryDispatcher.QueryAsync(new EmployeeProgressQuery(employeeId));
 
-            return CreateResponse(result, progressList =>
-            {
-                return progressList.Select(progress => new AssignmentProgressDto
-                {
-                    AssignmentId = progress.AssignmentId,
-                    ProgressPercentage = progress.ProgressPercentage,
-                    TotalQuestions = progress.TotalQuestions,
-                    AnsweredQuestions = progress.AnsweredQuestions,
-                    LastModified = progress.LastModified,
-                    IsCompleted = progress.IsCompleted,
-                    TimeSpent = progress.TimeSpent
-                });
-            });
-        }
-        catch (Exception ex)
+        return CreateResponse(result, progressList =>
         {
-            _logger.LogError(ex, "Error retrieving assignment progress for employee {EmployeeId}", employeeId);
-            return CreateResponse(Result<IEnumerable<AssignmentProgressDto>>.Fail("An error occurred while retrieving employee assignment progress", 500));
-        }
+            return progressList.Select(progress => new AssignmentProgressDto
+            {
+                AssignmentId = progress.AssignmentId,
+                ProgressPercentage = progress.ProgressPercentage,
+                TotalQuestions = progress.TotalQuestions,
+                AnsweredQuestions = progress.AnsweredQuestions,
+                LastModified = progress.LastModified,
+                IsCompleted = progress.IsCompleted,
+                TimeSpent = progress.TimeSpent
+            });
+        });
     }
 
     private QuestionnaireResponseDto MapToDto(QuestionnaireResponse response)

@@ -284,7 +284,7 @@ public class EmployeesController : BaseController
             if (!userContext.TryGetUserId(out var userId, out var errorMessage))
             {
                 logger.LogWarning("ChangeEmployeeLanguage failed: {ErrorMessage}", errorMessage);
-                return Unauthorized(errorMessage);
+                return CreateResponse(CommandResult.Fail(errorMessage, StatusCodes.Status401Unauthorized));
             }
 
             // For now, users can only change their own language
@@ -293,13 +293,13 @@ public class EmployeesController : BaseController
             {
                 logger.LogWarning("User {UserId} attempted to change language for employee {EmployeeId} without authorization",
                     userId, id);
-                return Forbid("You can only change your own language preference");
+                return CreateResponse(CommandResult.Fail("You can only change your own language preference", StatusCodes.Status403Forbidden));
             }
 
             // Validate language parameter (DTO enum validation is handled by model binding)
             if (!Enum.IsDefined(typeof(LanguageDto), request.Language))
             {
-                return BadRequest($"Invalid language value: {request.Language}. Valid values are: {string.Join(", ", Enum.GetValues<LanguageDto>())}");
+                return CreateResponse(CommandResult.Fail($"Invalid language value: {request.Language}. Valid values are: {string.Join(", ", Enum.GetValues<LanguageDto>())}", 400));
             }
 
             // Map from API DTO to Application layer enum
@@ -320,7 +320,7 @@ public class EmployeesController : BaseController
         catch (Exception ex)
         {
             logger.LogError(ex, "Error changing language for employee {EmployeeId}", id);
-            return StatusCode(500, "An error occurred while changing the employee language");
+            return CreateResponse(CommandResult.Fail("An error occurred while changing the employee language", 500));
         }
     }
 }

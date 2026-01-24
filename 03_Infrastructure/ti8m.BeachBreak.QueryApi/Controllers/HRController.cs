@@ -41,7 +41,7 @@ public class HRController : BaseController
             logger.LogInformation("HR dashboard not found - this is expected for new systems");
 
             // Return empty dashboard for systems with no data yet
-            return Ok(new HRDashboardDto
+            return CreateResponse(Result<HRDashboardDto>.Success(new HRDashboardDto
             {
                 TotalEmployees = 0,
                 TotalManagers = 0,
@@ -58,7 +58,7 @@ public class HRController : BaseController
                 AssignmentsCompletedLast7Days = 0,
                 UrgentAssignments = new List<UrgentAssignmentDto>(),
                 LastUpdated = DateTime.UtcNow
-            });
+            }));
         }
 
         if (result.Succeeded)

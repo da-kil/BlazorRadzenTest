@@ -47,7 +47,7 @@ public class CategoriesController : BaseController
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving categories");
-            return StatusCode(500, "An error occurred while retrieving categories");
+            return CreateResponse(Result<IEnumerable<CategoryDto>>.Fail("An error occurred while retrieving categories", 500));
         }
     }
 
@@ -60,7 +60,7 @@ public class CategoriesController : BaseController
         {
             var result = await queryDispatcher.QueryAsync(new CategoryQuery(id));
             if (result == null)
-                return NotFound($"Category with ID {id} not found");
+                return CreateResponse(Result<CategoryDto>.Fail($"Category with ID {id} not found", 404));
 
             return CreateResponse(result, category => new CategoryDto
             {
@@ -77,7 +77,7 @@ public class CategoriesController : BaseController
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving category {CategoryId}", id);
-            return StatusCode(500, "An error occurred while retrieving the category");
+            return CreateResponse(Result<CategoryDto>.Fail("An error occurred while retrieving the category", 500));
         }
     }
 }

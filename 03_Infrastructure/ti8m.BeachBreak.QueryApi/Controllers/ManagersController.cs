@@ -38,90 +38,73 @@ public class ManagersController : BaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetMyDashboard()
     {
-        Guid managerId;
-        try
+        var managerId = await authorizationService.GetCurrentManagerIdAsync();
+        logger.LogInformation("Received GetMyDashboard request for authenticated ManagerId: {ManagerId}", managerId);
+
+        var result = await queryDispatcher.QueryAsync(new ManagerDashboardQuery(managerId));
+
+        if (result?.Payload == null)
         {
-            managerId = await authorizationService.GetCurrentManagerIdAsync();
-            logger.LogInformation("Received GetMyDashboard request for authenticated ManagerId: {ManagerId}", managerId);
+            logger.LogInformation("Dashboard not found for ManagerId: {ManagerId} - this is expected for new managers or managers with no team", managerId);
+
+            // Return empty dashboard for managers with no team yet
+            return CreateResponse(Result<ManagerDashboardDto>.Success(new ManagerDashboardDto
+            {
+                ManagerId = managerId,
+                ManagerFullName = string.Empty,
+                ManagerEmail = string.Empty,
+                TeamMemberCount = 0,
+                TeamPendingCount = 0,
+                TeamInProgressCount = 0,
+                TeamCompletedCount = 0,
+                TeamMembers = new List<TeamMemberMetricsDto>(),
+                UrgentAssignments = new List<TeamUrgentAssignmentDto>(),
+                LastUpdated = DateTime.UtcNow
+            }));
         }
-        catch (UnauthorizedAccessException ex)
+
+        if (result.Succeeded)
         {
-            logger.LogWarning("GetMyDashboard failed: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
+            logger.LogInformation("GetMyDashboard completed successfully for ManagerId: {ManagerId}", managerId);
         }
-
-        try
+        else
         {
-            var result = await queryDispatcher.QueryAsync(new ManagerDashboardQuery(managerId));
-
-            if (result?.Payload == null)
-            {
-                logger.LogInformation("Dashboard not found for ManagerId: {ManagerId} - this is expected for new managers or managers with no team", managerId);
-
-                // Return empty dashboard for managers with no team yet
-                return Ok(new ManagerDashboardDto
-                {
-                    ManagerId = managerId,
-                    ManagerFullName = string.Empty,
-                    ManagerEmail = string.Empty,
-                    TeamMemberCount = 0,
-                    TeamPendingCount = 0,
-                    TeamInProgressCount = 0,
-                    TeamCompletedCount = 0,
-                    TeamMembers = new List<TeamMemberMetricsDto>(),
-                    UrgentAssignments = new List<TeamUrgentAssignmentDto>(),
-                    LastUpdated = DateTime.UtcNow
-                });
-            }
-
-            if (result.Succeeded)
-            {
-                logger.LogInformation("GetMyDashboard completed successfully for ManagerId: {ManagerId}", managerId);
-            }
-            else
-            {
-                logger.LogWarning("GetMyDashboard failed for ManagerId: {ManagerId}, Error: {ErrorMessage}", managerId, result.Message);
-            }
-
-            return CreateResponse(result, dashboard => new ManagerDashboardDto
-            {
-                ManagerId = dashboard.ManagerId,
-                ManagerFullName = dashboard.ManagerFullName,
-                ManagerEmail = dashboard.ManagerEmail,
-                TeamPendingCount = dashboard.TeamPendingCount,
-                TeamInProgressCount = dashboard.TeamInProgressCount,
-                TeamCompletedCount = dashboard.TeamCompletedCount,
-                TeamMemberCount = dashboard.TeamMemberCount,
-                TeamMembers = dashboard.TeamMembers.Select(tm => new TeamMemberMetricsDto
-                {
-                    EmployeeId = tm.EmployeeId,
-                    EmployeeName = tm.EmployeeName,
-                    EmployeeEmail = tm.EmployeeEmail,
-                    PendingCount = tm.PendingCount,
-                    InProgressCount = tm.InProgressCount,
-                    CompletedCount = tm.CompletedCount,
-                    UrgentCount = tm.UrgentCount,
-                    HasOverdueItems = tm.HasOverdueItems
-                }).ToList(),
-                UrgentAssignments = dashboard.UrgentAssignments.Select(ua => new TeamUrgentAssignmentDto
-                {
-                    AssignmentId = ua.AssignmentId,
-                    EmployeeId = ua.EmployeeId,
-                    EmployeeName = ua.EmployeeName,
-                    QuestionnaireTemplateName = ua.QuestionnaireTemplateName,
-                    DueDate = ua.DueDate,
-                    WorkflowState = ua.WorkflowState,
-                    IsOverdue = ua.IsOverdue,
-                    DaysUntilDue = ua.DaysUntilDue
-                }).ToList(),
-                LastUpdated = dashboard.LastUpdated
-            });
+            logger.LogWarning("GetMyDashboard failed for ManagerId: {ManagerId}, Error: {ErrorMessage}", managerId, result.Message);
         }
-        catch (Exception ex)
+
+        return CreateResponse(result, dashboard => new ManagerDashboardDto
         {
-            logger.LogError(ex, "Error retrieving dashboard for manager {ManagerId}", managerId);
-            return StatusCode(500, "An error occurred while retrieving your dashboard");
-        }
+            ManagerId = dashboard.ManagerId,
+            ManagerFullName = dashboard.ManagerFullName,
+            ManagerEmail = dashboard.ManagerEmail,
+            TeamPendingCount = dashboard.TeamPendingCount,
+            TeamInProgressCount = dashboard.TeamInProgressCount,
+            TeamCompletedCount = dashboard.TeamCompletedCount,
+            TeamMemberCount = dashboard.TeamMemberCount,
+            TeamMembers = dashboard.TeamMembers.Select(tm => new TeamMemberMetricsDto
+            {
+                EmployeeId = tm.EmployeeId,
+                EmployeeName = tm.EmployeeName,
+                EmployeeEmail = tm.EmployeeEmail,
+                PendingCount = tm.PendingCount,
+                InProgressCount = tm.InProgressCount,
+                CompletedCount = tm.CompletedCount,
+                UrgentCount = tm.UrgentCount,
+                HasOverdueItems = tm.HasOverdueItems
+            }).ToList(),
+            UrgentAssignments = dashboard.UrgentAssignments.Select(ua => new TeamUrgentAssignmentDto
+            {
+                AssignmentId = ua.AssignmentId,
+                EmployeeId = ua.EmployeeId,
+                EmployeeName = ua.EmployeeName,
+                QuestionnaireTemplateName = ua.QuestionnaireTemplateName,
+                DueDate = ua.DueDate,
+                WorkflowState = ua.WorkflowState,
+                IsOverdue = ua.IsOverdue,
+                DaysUntilDue = ua.DaysUntilDue
+            }).ToList(),
+            LastUpdated = dashboard.LastUpdated
+        });
     }
 
     /// <summary>
@@ -134,63 +117,46 @@ public class ManagersController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetMyTeamMembers()
     {
-        Guid managerId;
-        try
+        var managerId = await authorizationService.GetCurrentManagerIdAsync();
+        logger.LogInformation("Received GetMyTeamMembers request for authenticated ManagerId: {ManagerId}", managerId);
+
+        var query = new GetTeamMembersQuery(managerId);
+        var result = await queryDispatcher.QueryAsync(query);
+
+        if (result.Succeeded)
         {
-            managerId = await authorizationService.GetCurrentManagerIdAsync();
-            logger.LogInformation("Received GetMyTeamMembers request for authenticated ManagerId: {ManagerId}", managerId);
+            var teamCount = result.Payload?.Count() ?? 0;
+            logger.LogInformation("GetTeamMembers completed successfully for ManagerId: {ManagerId}, returned {TeamCount} members",
+                managerId, teamCount);
         }
-        catch (UnauthorizedAccessException ex)
+        else
         {
-            logger.LogWarning("GetMyTeamMembers failed: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
+            logger.LogWarning("GetTeamMembers failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
+                managerId, result.Message);
         }
 
-        try
+        return CreateResponse(result, employees =>
         {
-            var query = new GetTeamMembersQuery(managerId);
-            var result = await queryDispatcher.QueryAsync(query);
-
-            if (result.Succeeded)
+            return employees.Select(employee => new EmployeeDto
             {
-                var teamCount = result.Payload?.Count() ?? 0;
-                logger.LogInformation("GetTeamMembers completed successfully for ManagerId: {ManagerId}, returned {TeamCount} members",
-                    managerId, teamCount);
-            }
-            else
-            {
-                logger.LogWarning("GetTeamMembers failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                    managerId, result.Message);
-            }
-
-            return CreateResponse(result, employees =>
-            {
-                return employees.Select(employee => new EmployeeDto
-                {
-                    Id = employee.Id,
-                    FirstName = employee.FirstName,
-                    LastName = employee.LastName,
-                    Role = employee.Role,
-                    EMail = employee.EMail,
-                    StartDate = employee.StartDate,
-                    EndDate = employee.EndDate,
-                    LastStartDate = employee.LastStartDate,
-                    ManagerId = employee.ManagerId,
-                    Manager = employee.Manager,
-                    LoginName = employee.LoginName,
-                    EmployeeNumber = employee.EmployeeNumber,
-                    OrganizationNumber = employee.OrganizationNumber,
-                    Organization = employee.Organization,
-                    IsDeleted = employee.IsDeleted,
-                    ApplicationRole = employee.ApplicationRole
-                });
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                Role = employee.Role,
+                EMail = employee.EMail,
+                StartDate = employee.StartDate,
+                EndDate = employee.EndDate,
+                LastStartDate = employee.LastStartDate,
+                ManagerId = employee.ManagerId,
+                Manager = employee.Manager,
+                LoginName = employee.LoginName,
+                EmployeeNumber = employee.EmployeeNumber,
+                OrganizationNumber = employee.OrganizationNumber,
+                Organization = employee.Organization,
+                IsDeleted = employee.IsDeleted,
+                ApplicationRole = employee.ApplicationRole
             });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving team members for manager {ManagerId}", managerId);
-            return StatusCode(500, "An error occurred while retrieving team members");
-        }
+        });
     }
 
     /// <summary>
@@ -204,92 +170,75 @@ public class ManagersController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetMyTeamAssignments([FromQuery] string? workflowState = null)
     {
-        Guid managerId;
-        try
+        var managerId = await authorizationService.GetCurrentManagerIdAsync();
+        logger.LogInformation("Received GetMyTeamAssignments request for authenticated ManagerId: {ManagerId}, WorkflowState: {WorkflowState}",
+            managerId, workflowState);
+
+        WorkflowState? filterWorkflowState = null;
+        if (!string.IsNullOrWhiteSpace(workflowState) && Enum.TryParse<WorkflowState>(workflowState, true, out var parsedState))
         {
-            managerId = await authorizationService.GetCurrentManagerIdAsync();
-            logger.LogInformation("Received GetMyTeamAssignments request for authenticated ManagerId: {ManagerId}, WorkflowState: {WorkflowState}",
-                managerId, workflowState);
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning("GetMyTeamAssignments failed: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
+            filterWorkflowState = parsedState;
         }
 
-        try
+        var query = new GetTeamAssignmentsQuery(managerId, filterWorkflowState);
+        var result = await queryDispatcher.QueryAsync(query);
+
+        if (result.Succeeded)
         {
-            WorkflowState? filterWorkflowState = null;
-            if (!string.IsNullOrWhiteSpace(workflowState) && Enum.TryParse<WorkflowState>(workflowState, true, out var parsedState))
+            var assignmentCount = result.Payload?.Count() ?? 0;
+            logger.LogInformation("GetTeamAssignments completed successfully for ManagerId: {ManagerId}, returned {AssignmentCount} assignments",
+                managerId, assignmentCount);
+        }
+        else
+        {
+            logger.LogWarning("GetTeamAssignments failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
+                managerId, result.Message);
+        }
+
+        return CreateResponse(result, assignments =>
+        {
+            return assignments.Select(assignment => new TeamAssignmentDto
             {
-                filterWorkflowState = parsedState;
-            }
+                Id = assignment.Id,
+                EmployeeId = assignment.EmployeeId.ToString(),
+                EmployeeName = assignment.EmployeeName,
+                EmployeeEmail = assignment.EmployeeEmail,
+                TemplateId = assignment.TemplateId,
+                TemplateName = assignment.TemplateName,
+                TemplateCategoryId = assignment.TemplateCategoryId,
+                AssignedDate = assignment.AssignedDate,
+                DueDate = assignment.DueDate,
+                CompletedDate = assignment.CompletedDate,
+                AssignedBy = assignment.AssignedBy,
+                Notes = assignment.Notes,
 
-            var query = new GetTeamAssignmentsQuery(managerId, filterWorkflowState);
-            var result = await queryDispatcher.QueryAsync(query);
+                // Workflow properties
+                WorkflowState = assignment.WorkflowState,
+                SectionProgress = assignment.SectionProgress,
 
-            if (result.Succeeded)
-            {
-                var assignmentCount = result.Payload?.Count() ?? 0;
-                logger.LogInformation("GetTeamAssignments completed successfully for ManagerId: {ManagerId}, returned {AssignmentCount} assignments",
-                    managerId, assignmentCount);
-            }
-            else
-            {
-                logger.LogWarning("GetTeamAssignments failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                    managerId, result.Message);
-            }
+                // Submission phase
+                EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
+                EmployeeSubmittedBy = assignment.EmployeeSubmittedByEmployeeName,
+                ManagerSubmittedDate = assignment.ManagerSubmittedDate,
+                ManagerSubmittedBy = assignment.ManagerSubmittedByEmployeeName,
 
-            return CreateResponse(result, assignments =>
-            {
-                return assignments.Select(assignment => new TeamAssignmentDto
-                {
-                    Id = assignment.Id,
-                    EmployeeId = assignment.EmployeeId.ToString(),
-                    EmployeeName = assignment.EmployeeName,
-                    EmployeeEmail = assignment.EmployeeEmail,
-                    TemplateId = assignment.TemplateId,
-                    TemplateName = assignment.TemplateName,
-                    TemplateCategoryId = assignment.TemplateCategoryId,
-                    AssignedDate = assignment.AssignedDate,
-                    DueDate = assignment.DueDate,
-                    CompletedDate = assignment.CompletedDate,
-                    AssignedBy = assignment.AssignedBy,
-                    Notes = assignment.Notes,
+                // Review phase
+                ReviewInitiatedDate = assignment.ReviewInitiatedDate,
+                ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
+                ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
+                ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
+                ManagerReviewSummary = assignment.ManagerReviewSummary,
+                EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
+                EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
+                EmployeeReviewComments = assignment.EmployeeReviewComments,
 
-                    // Workflow properties
-                    WorkflowState = assignment.WorkflowState,
-                    SectionProgress = assignment.SectionProgress,
-
-                    // Submission phase
-                    EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
-                    EmployeeSubmittedBy = assignment.EmployeeSubmittedByEmployeeName,
-                    ManagerSubmittedDate = assignment.ManagerSubmittedDate,
-                    ManagerSubmittedBy = assignment.ManagerSubmittedByEmployeeName,
-
-                    // Review phase
-                    ReviewInitiatedDate = assignment.ReviewInitiatedDate,
-                    ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
-                    ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
-                    ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
-                    ManagerReviewSummary = assignment.ManagerReviewSummary,
-                    EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
-                    EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
-                    EmployeeReviewComments = assignment.EmployeeReviewComments,
-
-                    // Final state
-                    FinalizedDate = assignment.FinalizedDate,
-                    FinalizedBy = assignment.FinalizedByEmployeeName,
-                    ManagerFinalNotes = assignment.ManagerFinalNotes,
-                    IsLocked = assignment.IsLocked
-                });
+                // Final state
+                FinalizedDate = assignment.FinalizedDate,
+                FinalizedBy = assignment.FinalizedByEmployeeName,
+                ManagerFinalNotes = assignment.ManagerFinalNotes,
+                IsLocked = assignment.IsLocked
             });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving team assignments for manager {ManagerId}", managerId);
-            return StatusCode(500, "An error occurred while retrieving team assignments");
-        }
+        });
     }
 
     /// <summary>
@@ -302,54 +251,37 @@ public class ManagersController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetMyTeamProgress()
     {
-        Guid managerId;
-        try
+        var managerId = await authorizationService.GetCurrentManagerIdAsync();
+        logger.LogInformation("Received GetMyTeamProgress request for authenticated ManagerId: {ManagerId}", managerId);
+
+        var query = new GetTeamProgressQuery(managerId);
+        var result = await queryDispatcher.QueryAsync(query);
+
+        if (result.Succeeded)
         {
-            managerId = await authorizationService.GetCurrentManagerIdAsync();
-            logger.LogInformation("Received GetMyTeamProgress request for authenticated ManagerId: {ManagerId}", managerId);
+            var progressCount = result.Payload?.Count() ?? 0;
+            logger.LogInformation("GetTeamProgress completed successfully for ManagerId: {ManagerId}, returned {ProgressCount} items",
+                managerId, progressCount);
         }
-        catch (UnauthorizedAccessException ex)
+        else
         {
-            logger.LogWarning("GetMyTeamProgress failed: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
+            logger.LogWarning("GetTeamProgress failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
+                managerId, result.Message);
         }
 
-        try
+        return CreateResponse(result, progressItems =>
         {
-            var query = new GetTeamProgressQuery(managerId);
-            var result = await queryDispatcher.QueryAsync(query);
-
-            if (result.Succeeded)
+            return progressItems.Select(progress => new AssignmentProgressDto
             {
-                var progressCount = result.Payload?.Count() ?? 0;
-                logger.LogInformation("GetTeamProgress completed successfully for ManagerId: {ManagerId}, returned {ProgressCount} items",
-                    managerId, progressCount);
-            }
-            else
-            {
-                logger.LogWarning("GetTeamProgress failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                    managerId, result.Message);
-            }
-
-            return CreateResponse(result, progressItems =>
-            {
-                return progressItems.Select(progress => new AssignmentProgressDto
-                {
-                    AssignmentId = progress.AssignmentId,
-                    ProgressPercentage = progress.ProgressPercentage,
-                    TotalQuestions = progress.TotalQuestions,
-                    AnsweredQuestions = progress.AnsweredQuestions,
-                    LastModified = progress.LastModified,
-                    IsCompleted = progress.IsCompleted,
-                    TimeSpent = progress.TimeSpent
-                });
+                AssignmentId = progress.AssignmentId,
+                ProgressPercentage = progress.ProgressPercentage,
+                TotalQuestions = progress.TotalQuestions,
+                AnsweredQuestions = progress.AnsweredQuestions,
+                LastModified = progress.LastModified,
+                IsCompleted = progress.IsCompleted,
+                TimeSpent = progress.TimeSpent
             });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving team progress for manager {ManagerId}", managerId);
-            return StatusCode(500, "An error occurred while retrieving team progress");
-        }
+        });
     }
 
     /// <summary>
@@ -362,66 +294,49 @@ public class ManagersController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetMyTeamAnalytics()
     {
-        Guid managerId;
-        try
+        var managerId = await authorizationService.GetCurrentManagerIdAsync();
+        logger.LogInformation("Received GetMyTeamAnalytics request for authenticated ManagerId: {ManagerId}", managerId);
+
+        var query = new GetTeamAnalyticsQuery(managerId);
+        var result = await queryDispatcher.QueryAsync(query);
+
+        if (result.Succeeded)
         {
-            managerId = await authorizationService.GetCurrentManagerIdAsync();
-            logger.LogInformation("Received GetMyTeamAnalytics request for authenticated ManagerId: {ManagerId}", managerId);
+            logger.LogInformation("GetTeamAnalytics completed successfully for ManagerId: {ManagerId}", managerId);
         }
-        catch (UnauthorizedAccessException ex)
+        else
         {
-            logger.LogWarning("GetMyTeamAnalytics failed: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
+            logger.LogWarning("GetTeamAnalytics failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
+                managerId, result.Message);
         }
 
-        try
+        return CreateResponse(result, analytics => new TeamAnalyticsDto
         {
-            var query = new GetTeamAnalyticsQuery(managerId);
-            var result = await queryDispatcher.QueryAsync(query);
-
-            if (result.Succeeded)
+            TotalTeamMembers = analytics.TotalTeamMembers,
+            TotalAssignments = analytics.TotalAssignments,
+            CompletedAssignments = analytics.CompletedAssignments,
+            OverdueAssignments = analytics.OverdueAssignments,
+            AverageCompletionTime = analytics.AverageCompletionTime,
+            OnTimeCompletionRate = analytics.OnTimeCompletionRate,
+            CategoryPerformance = analytics.CategoryPerformance.Select(cp => new CategoryPerformanceDto
             {
-                logger.LogInformation("GetTeamAnalytics completed successfully for ManagerId: {ManagerId}", managerId);
-            }
-            else
+                Category = cp.Category,
+                TotalAssignments = cp.TotalAssignments,
+                CompletedAssignments = cp.CompletedAssignments,
+                CompletionRate = cp.CompletionRate,
+                AverageCompletionTime = cp.AverageCompletionTime
+            }).ToList(),
+            EmployeePerformance = analytics.EmployeePerformance.Select(ep => new EmployeePerformanceDto
             {
-                logger.LogWarning("GetTeamAnalytics failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                    managerId, result.Message);
-            }
-
-            return CreateResponse(result, analytics => new TeamAnalyticsDto
-            {
-                TotalTeamMembers = analytics.TotalTeamMembers,
-                TotalAssignments = analytics.TotalAssignments,
-                CompletedAssignments = analytics.CompletedAssignments,
-                OverdueAssignments = analytics.OverdueAssignments,
-                AverageCompletionTime = analytics.AverageCompletionTime,
-                OnTimeCompletionRate = analytics.OnTimeCompletionRate,
-                CategoryPerformance = analytics.CategoryPerformance.Select(cp => new CategoryPerformanceDto
-                {
-                    Category = cp.Category,
-                    TotalAssignments = cp.TotalAssignments,
-                    CompletedAssignments = cp.CompletedAssignments,
-                    CompletionRate = cp.CompletionRate,
-                    AverageCompletionTime = cp.AverageCompletionTime
-                }).ToList(),
-                EmployeePerformance = analytics.EmployeePerformance.Select(ep => new EmployeePerformanceDto
-                {
-                    EmployeeId = ep.EmployeeId,
-                    EmployeeName = ep.EmployeeName,
-                    TotalAssignments = ep.TotalAssignments,
-                    CompletedAssignments = ep.CompletedAssignments,
-                    OverdueAssignments = ep.OverdueAssignments,
-                    CompletionRate = ep.CompletionRate,
-                    AverageCompletionTime = ep.AverageCompletionTime
-                }).ToList()
-            });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving team analytics for manager {ManagerId}", managerId);
-            return StatusCode(500, "An error occurred while retrieving team analytics");
-        }
+                EmployeeId = ep.EmployeeId,
+                EmployeeName = ep.EmployeeName,
+                TotalAssignments = ep.TotalAssignments,
+                CompletedAssignments = ep.CompletedAssignments,
+                OverdueAssignments = ep.OverdueAssignments,
+                CompletionRate = ep.CompletionRate,
+                AverageCompletionTime = ep.AverageCompletionTime
+            }).ToList()
+        });
     }
 
     /// <summary>
@@ -434,73 +349,56 @@ public class ManagersController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetManagerTeamMembers(Guid managerId)
     {
-        Guid requestingUserId;
-        try
-        {
-            requestingUserId = await authorizationService.GetCurrentManagerIdAsync();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning("GetManagerTeamMembers failed: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
-        }
+        var requestingUserId = await authorizationService.GetCurrentManagerIdAsync();
 
         // Check authorization
         if (!await authorizationService.CanViewTeamAsync(requestingUserId, managerId))
         {
             logger.LogWarning("User {RequestingUserId} not authorized to view manager {ManagerId} team",
                 requestingUserId, managerId);
-            return Forbid();
+            return CreateResponse(Result<IEnumerable<EmployeeDto>>.Fail("You do not have permission to view this manager's team", 403));
         }
 
         logger.LogInformation("User {RequestingUserId} viewing team for ManagerId: {ManagerId}",
             requestingUserId, managerId);
 
-        try
+        var query = new GetTeamMembersQuery(managerId);
+        var result = await queryDispatcher.QueryAsync(query);
+
+        if (result.Succeeded)
         {
-            var query = new GetTeamMembersQuery(managerId);
-            var result = await queryDispatcher.QueryAsync(query);
+            var teamCount = result.Payload?.Count() ?? 0;
+            logger.LogInformation("GetTeamMembers completed successfully for ManagerId: {ManagerId}, returned {TeamCount} members",
+                managerId, teamCount);
+        }
+        else
+        {
+            logger.LogWarning("GetTeamMembers failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
+                managerId, result.Message);
+        }
 
-            if (result.Succeeded)
+        return CreateResponse(result, employees =>
+        {
+            return employees.Select(employee => new EmployeeDto
             {
-                var teamCount = result.Payload?.Count() ?? 0;
-                logger.LogInformation("GetTeamMembers completed successfully for ManagerId: {ManagerId}, returned {TeamCount} members",
-                    managerId, teamCount);
-            }
-            else
-            {
-                logger.LogWarning("GetTeamMembers failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                    managerId, result.Message);
-            }
-
-            return CreateResponse(result, employees =>
-            {
-                return employees.Select(employee => new EmployeeDto
-                {
-                    Id = employee.Id,
-                    FirstName = employee.FirstName,
-                    LastName = employee.LastName,
-                    Role = employee.Role,
-                    EMail = employee.EMail,
-                    StartDate = employee.StartDate,
-                    EndDate = employee.EndDate,
-                    LastStartDate = employee.LastStartDate,
-                    ManagerId = employee.ManagerId,
-                    Manager = employee.Manager,
-                    LoginName = employee.LoginName,
-                    EmployeeNumber = employee.EmployeeNumber,
-                    OrganizationNumber = employee.OrganizationNumber,
-                    Organization = employee.Organization,
-                    IsDeleted = employee.IsDeleted,
-                    ApplicationRole = employee.ApplicationRole
-                });
+                Id = employee.Id,
+                FirstName = employee.FirstName,
+                LastName = employee.LastName,
+                Role = employee.Role,
+                EMail = employee.EMail,
+                StartDate = employee.StartDate,
+                EndDate = employee.EndDate,
+                LastStartDate = employee.LastStartDate,
+                ManagerId = employee.ManagerId,
+                Manager = employee.Manager,
+                LoginName = employee.LoginName,
+                EmployeeNumber = employee.EmployeeNumber,
+                OrganizationNumber = employee.OrganizationNumber,
+                Organization = employee.Organization,
+                IsDeleted = employee.IsDeleted,
+                ApplicationRole = employee.ApplicationRole
             });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving team members for manager {ManagerId}", managerId);
-            return StatusCode(500, "An error occurred while retrieving team members");
-        }
+        });
     }
 
     /// <summary>
@@ -514,101 +412,84 @@ public class ManagersController : BaseController
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetManagerTeamAssignments(Guid managerId, [FromQuery] string? workflowState = null)
     {
-        Guid requestingUserId;
-        try
-        {
-            requestingUserId = await authorizationService.GetCurrentManagerIdAsync();
-        }
-        catch (UnauthorizedAccessException ex)
-        {
-            logger.LogWarning("GetManagerTeamAssignments failed: {Message}", ex.Message);
-            return Unauthorized(ex.Message);
-        }
+        var requestingUserId = await authorizationService.GetCurrentManagerIdAsync();
 
         // Check authorization
         if (!await authorizationService.CanViewTeamAsync(requestingUserId, managerId))
         {
             logger.LogWarning("User {RequestingUserId} not authorized to view manager {ManagerId} team assignments",
                 requestingUserId, managerId);
-            return Forbid();
+            return CreateResponse(Result<IEnumerable<TeamAssignmentDto>>.Fail("You do not have permission to view this manager's team assignments", 403));
         }
 
         logger.LogInformation("User {RequestingUserId} viewing team assignments for ManagerId: {ManagerId}, WorkflowState: {WorkflowState}",
             requestingUserId, managerId, workflowState);
 
-        try
+        WorkflowState? filterWorkflowState = null;
+        if (!string.IsNullOrWhiteSpace(workflowState) && Enum.TryParse<WorkflowState>(workflowState, true, out var parsedState))
         {
-            WorkflowState? filterWorkflowState = null;
-            if (!string.IsNullOrWhiteSpace(workflowState) && Enum.TryParse<WorkflowState>(workflowState, true, out var parsedState))
+            filterWorkflowState = parsedState;
+        }
+
+        var query = new GetTeamAssignmentsQuery(managerId, filterWorkflowState);
+        var result = await queryDispatcher.QueryAsync(query);
+
+        if (result.Succeeded)
+        {
+            var assignmentCount = result.Payload?.Count() ?? 0;
+            logger.LogInformation("GetTeamAssignments completed successfully for ManagerId: {ManagerId}, returned {AssignmentCount} assignments",
+                managerId, assignmentCount);
+        }
+        else
+        {
+            logger.LogWarning("GetTeamAssignments failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
+                managerId, result.Message);
+        }
+
+        return CreateResponse(result, assignments =>
+        {
+            return assignments.Select(assignment => new TeamAssignmentDto
             {
-                filterWorkflowState = parsedState;
-            }
+                Id = assignment.Id,
+                EmployeeId = assignment.EmployeeId.ToString(),
+                EmployeeName = assignment.EmployeeName,
+                EmployeeEmail = assignment.EmployeeEmail,
+                TemplateId = assignment.TemplateId,
+                TemplateName = assignment.TemplateName,
+                TemplateCategoryId = assignment.TemplateCategoryId,
+                AssignedDate = assignment.AssignedDate,
+                DueDate = assignment.DueDate,
+                CompletedDate = assignment.CompletedDate,
+                AssignedBy = assignment.AssignedBy,
+                Notes = assignment.Notes,
 
-            var query = new GetTeamAssignmentsQuery(managerId, filterWorkflowState);
-            var result = await queryDispatcher.QueryAsync(query);
+                // Workflow properties
+                WorkflowState = assignment.WorkflowState,
+                SectionProgress = assignment.SectionProgress,
 
-            if (result.Succeeded)
-            {
-                var assignmentCount = result.Payload?.Count() ?? 0;
-                logger.LogInformation("GetTeamAssignments completed successfully for ManagerId: {ManagerId}, returned {AssignmentCount} assignments",
-                    managerId, assignmentCount);
-            }
-            else
-            {
-                logger.LogWarning("GetTeamAssignments failed for ManagerId: {ManagerId}, Error: {ErrorMessage}",
-                    managerId, result.Message);
-            }
+                // Submission phase
+                EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
+                EmployeeSubmittedBy = assignment.EmployeeSubmittedByEmployeeName,
+                ManagerSubmittedDate = assignment.ManagerSubmittedDate,
+                ManagerSubmittedBy = assignment.ManagerSubmittedByEmployeeName,
 
-            return CreateResponse(result, assignments =>
-            {
-                return assignments.Select(assignment => new TeamAssignmentDto
-                {
-                    Id = assignment.Id,
-                    EmployeeId = assignment.EmployeeId.ToString(),
-                    EmployeeName = assignment.EmployeeName,
-                    EmployeeEmail = assignment.EmployeeEmail,
-                    TemplateId = assignment.TemplateId,
-                    TemplateName = assignment.TemplateName,
-                    TemplateCategoryId = assignment.TemplateCategoryId,
-                    AssignedDate = assignment.AssignedDate,
-                    DueDate = assignment.DueDate,
-                    CompletedDate = assignment.CompletedDate,
-                    AssignedBy = assignment.AssignedBy,
-                    Notes = assignment.Notes,
+                // Review phase
+                ReviewInitiatedDate = assignment.ReviewInitiatedDate,
+                ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
+                ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
+                ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
+                ManagerReviewSummary = assignment.ManagerReviewSummary,
+                EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
+                EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
+                EmployeeReviewComments = assignment.EmployeeReviewComments,
 
-                    // Workflow properties
-                    WorkflowState = assignment.WorkflowState,
-                    SectionProgress = assignment.SectionProgress,
-
-                    // Submission phase
-                    EmployeeSubmittedDate = assignment.EmployeeSubmittedDate,
-                    EmployeeSubmittedBy = assignment.EmployeeSubmittedByEmployeeName,
-                    ManagerSubmittedDate = assignment.ManagerSubmittedDate,
-                    ManagerSubmittedBy = assignment.ManagerSubmittedByEmployeeName,
-
-                    // Review phase
-                    ReviewInitiatedDate = assignment.ReviewInitiatedDate,
-                    ReviewInitiatedBy = assignment.ReviewInitiatedByEmployeeName,
-                    ManagerReviewFinishedDate = assignment.ManagerReviewFinishedDate,
-                    ManagerReviewFinishedBy = assignment.ManagerReviewFinishedByEmployeeName,
-                    ManagerReviewSummary = assignment.ManagerReviewSummary,
-                    EmployeeReviewConfirmedDate = assignment.EmployeeReviewConfirmedDate,
-                    EmployeeReviewConfirmedBy = assignment.EmployeeReviewConfirmedByEmployeeName,
-                    EmployeeReviewComments = assignment.EmployeeReviewComments,
-
-                    // Final state
-                    FinalizedDate = assignment.FinalizedDate,
-                    FinalizedBy = assignment.FinalizedByEmployeeName,
-                    ManagerFinalNotes = assignment.ManagerFinalNotes,
-                    IsLocked = assignment.IsLocked
-                });
+                // Final state
+                FinalizedDate = assignment.FinalizedDate,
+                FinalizedBy = assignment.FinalizedByEmployeeName,
+                ManagerFinalNotes = assignment.ManagerFinalNotes,
+                IsLocked = assignment.IsLocked
             });
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error retrieving team assignments for manager {ManagerId}", managerId);
-            return StatusCode(500, "An error occurred while retrieving team assignments");
-        }
+        });
     }
 
 }

@@ -31,33 +31,18 @@ public class OrganizationsController : BaseController
         logger.LogInformation("Received GetAllOrganizations request - IncludeDeleted: {IncludeDeleted}, IncludeIgnored: {IncludeIgnored}, ParentId: {ParentId}, ManagerId: {ManagerId}",
             includeDeleted, includeIgnored, parentId, managerId);
 
-        try
+        var query = new OrganizationListQuery
         {
-            var query = new OrganizationListQuery
-            {
-                IncludeDeleted = includeDeleted,
-                IncludeIgnored = includeIgnored,
-                ParentId = parentId,
-                ManagerId = managerId
-            };
+            IncludeDeleted = includeDeleted,
+            IncludeIgnored = includeIgnored,
+            ParentId = parentId,
+            ManagerId = managerId
+        };
 
-            var result = await queryDispatcher.QueryAsync(query);
+        var result = await queryDispatcher.QueryAsync(query);
 
-            if (result.Succeeded)
-            {
-                var organizationDtos = result.Payload!.Select(MapToDto);
-                logger.LogInformation("Successfully returned {Count} organizations", organizationDtos.Count());
-                return Ok(organizationDtos);
-            }
-
-            logger.LogWarning("Failed to retrieve organizations: {ErrorMessage}", result.Message);
-            return BadRequest(result.Message);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Unexpected error occurred while processing GetAllOrganizations request");
-            return StatusCode(500, "An unexpected error occurred");
-        }
+        logger.LogInformation("Successfully returned {Count} organizations", result.Payload?.Count() ?? 0);
+        return CreateResponse(result, organizations => organizations.Select(MapToDto));
     }
 
     [HttpGet("{id:guid}")]
@@ -67,32 +52,15 @@ public class OrganizationsController : BaseController
     {
         logger.LogInformation("Received GetOrganizationById request for Id: {Id}", id);
 
-        try
+        var query = new OrganizationQuery(id);
+        var result = await queryDispatcher.QueryAsync(query);
+
+        if (result.Succeeded && result.Payload != null)
         {
-            var query = new OrganizationQuery(id);
-            var result = await queryDispatcher.QueryAsync(query);
-
-            if (result.Succeeded)
-            {
-                if (result.Payload == null)
-                {
-                    logger.LogInformation("Organization with Id {Id} not found", id);
-                    return NotFound();
-                }
-
-                var organizationDto = MapToDto(result.Payload);
-                logger.LogInformation("Successfully returned organization with Id: {Id}", id);
-                return Ok(organizationDto);
-            }
-
-            logger.LogWarning("Failed to retrieve organization with Id {Id}: {ErrorMessage}", id, result.Message);
-            return BadRequest(result.Message);
+            logger.LogInformation("Successfully returned organization with Id: {Id}", id);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Unexpected error occurred while processing GetOrganizationById request for Id: {Id}", id);
-            return StatusCode(500, "An unexpected error occurred");
-        }
+
+        return CreateResponse(result, MapToDto);
     }
 
     [HttpGet("by-number/{number}")]
@@ -102,32 +70,15 @@ public class OrganizationsController : BaseController
     {
         logger.LogInformation("Received GetOrganizationByNumber request for Number: {Number}", number);
 
-        try
+        var query = new OrganizationByNumberQuery(number);
+        var result = await queryDispatcher.QueryAsync(query);
+
+        if (result.Succeeded && result.Payload != null)
         {
-            var query = new OrganizationByNumberQuery(number);
-            var result = await queryDispatcher.QueryAsync(query);
-
-            if (result.Succeeded)
-            {
-                if (result.Payload == null)
-                {
-                    logger.LogInformation("Organization with Number {Number} not found", number);
-                    return NotFound();
-                }
-
-                var organizationDto = MapToDto(result.Payload);
-                logger.LogInformation("Successfully returned organization with Number: {Number}", number);
-                return Ok(organizationDto);
-            }
-
-            logger.LogWarning("Failed to retrieve organization with Number {Number}: {ErrorMessage}", number, result.Message);
-            return BadRequest(result.Message);
+            logger.LogInformation("Successfully returned organization with Number: {Number}", number);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Unexpected error occurred while processing GetOrganizationByNumber request for Number: {Number}", number);
-            return StatusCode(500, "An unexpected error occurred");
-        }
+
+        return CreateResponse(result, MapToDto);
     }
 
     private static OrganizationDto MapToDto(Organization organization)
