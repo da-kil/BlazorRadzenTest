@@ -6067,5 +6067,320 @@
         "english":  "Process Type",
         "category":  "labels",
         "createdDate":  "2026-01-15T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pages.initialize-assignment",
+        "german": "Zuweisung initialisieren",
+        "english": "Initialize Assignment",
+        "category": "pages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pages.initialize-assignment-description",
+        "german": "Bereiten Sie die Zuweisung für {0} vor",
+        "english": "Prepare the assignment for {0}",
+        "category": "pages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.loading",
+        "german": "Wird geladen...",
+        "english": "Loading...",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.unable-to-load-data",
+        "german": "Daten konnten nicht geladen werden.",
+        "english": "Unable to load data.",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.initialization-not-allowed",
+        "german": "Diese Zuweisung kann nicht initialisiert werden.",
+        "english": "This assignment cannot be initialized.",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "navigation.back-to-dashboard",
+        "german": "Zurück zum Dashboard",
+        "english": "Back to Dashboard",
+        "category": "navigation",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.assignment-details",
+        "german": "Zuweisungsdetails",
+        "english": "Assignment Details",
+        "category": "sections",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.initialization-tasks",
+        "german": "Initialisierungsaufgaben",
+        "english": "Initialization Tasks",
+        "category": "sections",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.initialization-tasks-description",
+        "german": "Alle Aufgaben sind optional. Sie können die Initialisierung sofort abschliessen oder benutzerdefinierte Anpassungen vornehmen.",
+        "english": "All tasks are optional. You can complete initialization immediately or make custom adjustments.",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.link-predecessor-questionnaire",
+        "german": "Vorgänger-Fragebogen verknüpfen",
+        "english": "Link Predecessor Questionnaire",
+        "category": "labels",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.optional",
+        "german": "Optional",
+        "english": "Optional",
+        "category": "labels",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.link-predecessor-description",
+        "german": "Verknüpfen Sie einen vorherigen Fragebogen zur Zielverfolgung.",
+        "english": "Link a previous questionnaire for goal tracking.",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.predecessor-linked",
+        "german": "Vorgäger-Fragebogen wurde erfolgreich verknüpft",
+        "english": "Predecessor questionnaire linked successfully",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.link-predecessor",
+        "german": "Vorgänger verknüpfen",
+        "english": "Link Predecessor",
+        "category": "buttons",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.add-custom-questions",
+        "german": "Benutzerdefinierte Fragen hinzufügen",
+        "english": "Add Custom Questions",
+        "category": "labels",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.add-custom-questions-description",
+        "german": "Fügen Sie spezifische Fragen für diese Zuweisung hinzu.",
+        "english": "Add specific questions for this assignment.",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.add-assessment-question",
+        "german": "Bewertungsfrage hinzufügen",
+        "english": "Add Assessment Question",
+        "category": "labels",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.click-to-add-assessment",
+        "german": "Klicken Sie hier, um eine Bewertungsfrage hinzuzufügen",
+        "english": "Click to add an assessment question",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.add-text-question",
+        "german": "Textfrage hinzufügen",
+        "english": "Add Text Question",
+        "category": "labels",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.click-to-add-text-question",
+        "german": "Klicken Sie hier, um eine Textfrage hinzuzufügen",
+        "english": "Click to add a text question",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.configured-custom-questions",
+        "german": "Konfigurierte benutzerdefinierte Fragen",
+        "english": "Configured Custom Questions",
+        "category": "labels",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.not-available",
+        "german": "Nicht verfügbar",
+        "english": "Not Available",
+        "category": "labels",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "assignments.no-customization-support",
+        "german": "Diese Vorlage unterstützt keine benutzerdefinierten Fragen.",
+        "english": "This template does not support custom questions.",
+        "category": "assignments",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.initialization-notes",
+        "german": "Initialisierungsnotizen",
+        "english": "Initialization Notes",
+        "category": "labels",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.initialization-notes-description",
+        "german": "Fügen Sie optionale Notizen für den Mitarbeiter hinzu (max. 5000 Zeichen).",
+        "english": "Add optional notes for the employee (max. 5000 characters).",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "placeholders.initialization-notes",
+        "german": "Geben Sie hier Notizen für den Mitarbeiter ein...",
+        "english": "Enter notes for the employee here...",
+        "category": "placeholders",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.characters",
+        "german": "Zeichen",
+        "english": "characters",
+        "category": "labels",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.complete-initialization",
+        "german": "Initialisierung abschliessen",
+        "english": "Complete Initialization",
+        "category": "buttons",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "roles.team-lead",
+        "german": "Teamleitung",
+        "english": "Team Lead",
+        "category": "roles",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.failed-to-get-user-role",
+        "german": "Benutzerrolle konnte nicht abgerufen werden",
+        "english": "Failed to get user role",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.assignment-not-found",
+        "german": "Zuweisung nicht gefunden",
+        "english": "Assignment not found",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.template-not-found",
+        "german": "Vorlage nicht gefunden",
+        "english": "Template not found",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.failed-to-load-data",
+        "german": "Daten konnten nicht geladen werden",
+        "english": "Failed to load data",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "dialogs.link-predecessor-title",
+        "german": "Vorgünger-Fragebogen verknüpfen",
+        "english": "Link Predecessor Questionnaire",
+        "category": "dialogs",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.predecessor-linked-successfully",
+        "german": "Vorgänger-Fragebogen erfolgreich verknüpft",
+        "english": "Predecessor questionnaire linked successfully",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.custom-section-removed",
+        "german": "Benutzerdefinierter Abschnitt entfernt",
+        "english": "Custom section removed",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.failed-to-add-custom-sections",
+        "german": "Benutzerdefinierte Abschnitte konnten nicht hinzugefügt werden",
+        "english": "Failed to add custom sections",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.initialization-completed",
+        "german": "Initialisierung erfolgreich abgeschlossen",
+        "english": "Initialization completed successfully",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.initialization-failed",
+        "german": "Initialisierung fehlgeschlagen",
+        "english": "Initialization failed",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.custom-question-added",
+        "german": "Benutzerdefinierte Frage hinzugefügt",
+        "english": "Custom question added",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.custom-question-updated",
+        "german": "Benutzerdefinierte Frage aktualisiert",
+        "english": "Custom question updated",
+        "category": "messages",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "completion-roles.employee",
+        "german": "Mitarbeiter",
+        "english": "Employee",
+        "category": "completion-roles",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "completion-roles.manager",
+        "german": "Manager",
+        "english": "Manager",
+        "category": "completion-roles",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "completion-roles.both",
+        "german": "Beide",
+        "english": "Both",
+        "category": "completion-roles",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "completion-roles.unknown",
+        "german": "Unbekannt",
+        "english": "Unknown",
+        "category": "completion-roles",
+        "createdDate": "2026-01-25T12:00:00.0000000+01:00"
     }
 ]
