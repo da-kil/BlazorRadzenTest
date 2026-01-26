@@ -7,9 +7,10 @@ namespace ti8m.BeachBreak.Client.Models.DTOs.Api;
 public class ApiSectionResponseDto
 {
     public Guid SectionId { get; set; }
+    public bool IsCompleted { get; set; }
 
     /// <summary>
-    /// Role-based response structure: ResponseRole (Employee/Manager) -> SectionId -> QuestionResponse
+    /// Role-based response structure: ResponseRole (Employee/Manager) -> QuestionId -> QuestionResponse
     /// </summary>
-    public Dictionary<ResponseRole, Dictionary<string, QuestionResponseDto>> RoleResponses { get; set; } = new();
+    public Dictionary<ResponseRole, Dictionary<Guid, QuestionResponseDto>> RoleResponses { get; set; } = new();
 }

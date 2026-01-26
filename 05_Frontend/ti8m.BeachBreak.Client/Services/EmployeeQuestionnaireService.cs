@@ -1,6 +1,7 @@
 using Microsoft.JSInterop;
 using System.Net.Http.Json;
 using ti8m.BeachBreak.Client.Models;
+using ti8m.BeachBreak.Client.Models.DTOs.Api;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -42,7 +43,64 @@ public class EmployeeQuestionnaireService : BaseApiService, IEmployeeQuestionnai
         // Use "me" endpoint - backend resolves employee ID from UserContext
         try
         {
-            return await HttpQueryClient.GetFromJsonAsync<QuestionnaireResponse>($"{EmployeeQueryEndpoint}/me/responses/assignment/{assignmentId}");
+            // First deserialize to API DTO structure using JsonOptions with custom converter
+            var httpResponse = await HttpQueryClient.GetAsync($"{EmployeeQueryEndpoint}/me/responses/assignment/{assignmentId}");
+            httpResponse.EnsureSuccessStatusCode();
+            var apiResponseDto = await httpResponse.Content.ReadFromJsonAsync<ApiQuestionnaireResponseDto>(JsonOptions);
+
+            if (apiResponseDto == null)
+                return null;
+
+            // Map API DTO to frontend model using the same logic as QuestionnaireResponseService
+            var response = new QuestionnaireResponse
+            {
+                Id = apiResponseDto.Id,
+                TemplateId = apiResponseDto.TemplateId,
+                AssignmentId = apiResponseDto.AssignmentId,
+                EmployeeId = apiResponseDto.EmployeeId,
+                StartedDate = apiResponseDto.StartedDate,
+                ProgressPercentage = apiResponseDto.ProgressPercentage,
+                SectionResponses = new Dictionary<Guid, SectionResponse>()
+            };
+
+            // Map each section response (same logic as QuestionnaireResponseService)
+            foreach (var apiSectionKvp in apiResponseDto.SectionResponses)
+            {
+                var sectionId = apiSectionKvp.Key;
+                var apiSection = apiSectionKvp.Value;
+
+                var sectionResponse = new SectionResponse
+                {
+                    SectionId = apiSection.SectionId,
+                    IsCompleted = apiSection.IsCompleted,
+                    RoleResponses = new Dictionary<ResponseRole, QuestionResponse>()
+                };
+
+                // Map each role's response (handle nested structure: role -> questionId -> question)
+                foreach (var roleKvp in apiSection.RoleResponses)
+                {
+                    var role = roleKvp.Key;
+                    var roleSectionResponses = roleKvp.Value;
+
+                    // Get the question response for this section ID (now using correct Guid key)
+                    if (roleSectionResponses.TryGetValue(apiSection.SectionId, out var apiQuestion))
+                    {
+                        var questionResponse = new QuestionResponse
+                        {
+                            QuestionId = apiQuestion.QuestionId,
+                            QuestionType = apiQuestion.QuestionType,
+                            LastModified = apiQuestion.LastModified,
+                            ResponseData = apiQuestion.ResponseData
+                        };
+
+                        sectionResponse.RoleResponses[role] = questionResponse;
+                    }
+                }
+
+                response.SectionResponses[sectionId] = sectionResponse;
+            }
+
+            return response;
         }
         catch (Exception ex)
         {

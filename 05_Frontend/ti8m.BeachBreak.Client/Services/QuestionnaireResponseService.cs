@@ -60,15 +60,14 @@ public class QuestionnaireResponseService : BaseApiService, IQuestionnaireRespon
                     RoleResponses = new Dictionary<ResponseRole, QuestionResponse>()
                 };
 
-                // Map each role's response (handle nested structure: role -> sectionId -> question)
+                // Map each role's response (handle nested structure: role -> questionId -> question)
                 foreach (var roleKvp in apiSection.RoleResponses)
                 {
                     var role = roleKvp.Key;
                     var roleSectionResponses = roleKvp.Value;
 
-                    // Get the question response for this section ID
-                    var sectionIdStr = apiSection.SectionId.ToString();
-                    if (roleSectionResponses.TryGetValue(sectionIdStr, out var apiQuestion))
+                    // Get the question response for this section ID (now using correct Guid key)
+                    if (roleSectionResponses.TryGetValue(apiSection.SectionId, out var apiQuestion))
                     {
                         var questionResponse = new QuestionResponse
                         {
