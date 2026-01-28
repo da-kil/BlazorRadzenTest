@@ -22,21 +22,35 @@ else
 {
     @foreach (var evaluation in evaluations)
     {
+        var employeeRating = AssessmentConfigurationHelper.GetEvaluationRatingDto(EmployeeResponse, evaluation.Key);
+        var managerRating = AssessmentConfigurationHelper.GetEvaluationRatingDto(ManagerResponse, evaluation.Key);
+        var hasDifference = employeeRating.Rating != managerRating.Rating;
+
         <!-- Each evaluation gets its own comparison card -->
-        <div class="evaluation-comparison-card">
+        <div class="evaluation-comparison-card @(hasDifference ? "has-rating-difference" : "")">
+            @if (hasDifference)
+            {
+                <div class="difference-indicator">
+                    <RadzenIcon Icon="compare_arrows" Class="me-1" />
+                    <span class="difference-text">Rating Difference: @employeeRating.Rating vs @managerRating.Rating stars</span>
+                </div>
+            }
             <div class="side-by-side-view">
                 <!-- Employee Rating -->
-                <div class="answer-column employee">
+                <div class="answer-column employee @(hasDifference ? "has-difference" : "")">
                     <div class="answer-header">
                         <span class="answer-label">
                             <RadzenIcon Icon="person" Style="font-size: 1rem;" />
                             Employee's Answer
+                            @if (hasDifference)
+                            {
+                                <RadzenBadge Text="@($"{employeeRating.Rating} ★")"
+                                           Class="rating-badge employee-rating"
+                                           BadgeStyle="BadgeStyle.Light" />
+                            }
                         </span>
                     </div>
                     <div class="answer-content">
-                        @{
-                            var employeeRating = AssessmentConfigurationHelper.GetEvaluationRatingDto(EmployeeResponse, evaluation.Key);
-                        }
                         <EvaluationRatingItem
                             Evaluation="@evaluation"
                             Rating="@employeeRating"
@@ -62,17 +76,20 @@ else
                 </div>
 
                 <!-- Manager Rating -->
-                <div class="answer-column manager">
+                <div class="answer-column manager @(hasDifference ? "has-difference" : "")">
                     <div class="answer-header">
                         <span class="answer-label">
                             <RadzenIcon Icon="supervisor_account" Style="font-size: 1rem;" />
                             Manager's Answer
+                            @if (hasDifference)
+                            {
+                                <RadzenBadge Text="@($"{managerRating.Rating} ★")"
+                                           Class="rating-badge manager-rating"
+                                           BadgeStyle="BadgeStyle.Light" />
+                            }
                         </span>
                     </div>
                     <div class="answer-content">
-                        @{
-                            var managerRating = AssessmentConfigurationHelper.GetEvaluationRatingDto(ManagerResponse, evaluation.Key);
-                        }
                         <EvaluationRatingItem
                             Evaluation="@evaluation"
                             Rating="@managerRating"

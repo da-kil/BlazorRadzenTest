@@ -1015,6 +1015,66 @@
     margin-bottom: 0;
 }
 
+/* Difference visualization styles */
+.evaluation-comparison-card.has-rating-difference {
+    border-left: 4px solid var(--rz-warning);
+    padding-left: 1rem;
+    background: rgba(var(--rz-warning-rgb), 0.05);
+}
+
+.difference-indicator {
+    background: var(--rz-warning);
+    color: white;
+    padding: 0.5rem 0.75rem;
+    margin: -0.5rem -1rem 1rem -1rem;
+    border-radius: 6px 6px 0 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+}
+
+.difference-indicator .rz-icon {
+    color: white !important;
+    font-size: 1.1rem;
+}
+
+.difference-text {
+    font-weight: 500;
+}
+
+.answer-column.has-difference {
+    position: relative;
+}
+
+.answer-column.has-difference::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -0.25rem;
+    right: -0.25rem;
+    bottom: 0;
+    border: 2px solid var(--rz-warning);
+    border-radius: 8px;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.rating-badge {
+    margin-left: 0.5rem;
+    font-weight: 600;
+}
+
+.rating-badge.employee-rating {
+    background: var(--rz-primary) !important;
+    color: white !important;
+}
+
+.rating-badge.manager-rating {
+    background: var(--rz-secondary) !important;
+    color: white !important;
+}
+
 /* Side-by-Side View (Both sections) */
 .side-by-side-view {
     display: grid;
