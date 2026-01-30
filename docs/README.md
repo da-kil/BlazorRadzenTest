@@ -15,6 +15,7 @@ This directory contains comprehensive documentation for the ti8m BeachBreak ques
 
 ### Implementation Guides
 - **[Translation System](implementation/translation-system.md)** - Complete translation implementation guide
+- **[Authorization Patterns](implementation/authorization-patterns.md)** - Page-level security and role-based access control
 - **[Question Configuration](implementation/question-configuration.md)** - Strongly-typed question configuration patterns
 - **[Configuration Serialization](implementation/configuration-serialization.md)** - JSON serialization with $type discriminator
 - **[API Controller Patterns](implementation/api-controller-patterns.md)** - Controller error handling and enrichment services
