@@ -46,183 +46,15 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - **Debugging Auth Issues**: Check database records, NOT JWT token claims
 - **Common Mistake**: Assuming roles are in JWT - they're dynamically looked up per request
 
-## Questionnaire Workflow States
+## Workflow States and Process Types
 
-### Initialized Workflow State (Added 2026-01-06)
+For detailed information about questionnaire workflow states, process types, and state transitions, see: [docs/domain/questionnaire-workflows.md](docs/domain/questionnaire-workflows.md)
 
-**Purpose**: The `Initialized` state represents a manager-only initialization phase between assignment creation and employee access. This allows managers to prepare the assignment with optional customizations before employees begin work.
-
-**Workflow Sequence**:
-1. **Assigned** (value=0) - Assignment created, manager-only access
-2. **Initialized** (value=1) - Manager completed initialization, both can access
-3. **EmployeeInProgress** / **ManagerInProgress** / **BothInProgress** (values=2-4)
-4. Continue through existing workflow states (5-11)
-
-**Key Features**:
-- **Manager Initialization Tasks** (all optional):
-  - Link predecessor questionnaire for goal tracking
-  - Add custom Assessment or TextQuestion sections (`IsInstanceSpecific = true`)
-  - Add initialization notes for employee (max 5000 characters)
-- **Access Control**:
-  - Employees CANNOT see assignments in `Assigned` state
-  - Employees CAN see and work on assignments in `Initialized+` states
-  - Only managers (TeamLead/HR/HRLead/Admin) can initialize
-
-**Custom Sections**:
-- Marked with `IsInstanceSpecific = true`
-- Created during manager initialization (Assigned state only)
-- Appear seamlessly with template sections in UI
-- **Excluded from aggregate reports** (instance-specific, not comparable across assignments)
-- Cannot add Goal-type custom sections (created dynamically during workflow)
-
-**Commands**:
-- `InitializeAssignmentCommand` - Transitions Assigned → Initialized
-- `AddCustomSectionsCommand` - Adds custom questions (must be in Assigned state)
-- `GetCustomSectionsQuery` - Retrieves custom sections for an assignment
-
-**Events**:
-- `AssignmentInitializedEvent` - Marks completion of manager initialization
-- `CustomSectionsAddedEvent` - Tracks addition of custom questions
-
-**Frontend Routes**:
-- `/assignments/{id}/initialize` - Manager-only initialization page (AuthorizeView: TeamLead policy)
-- Page includes: predecessor linking, custom question dialog, initialization notes
-
-**Translation Keys** (46 total, EN/DE):
-- `workflow-states.initialized`
-- `actions.employee.waiting-manager-initialization`
-- `actions.manager.initialize-assignment`
-- See `TestDataGenerator/test-translations.json` for complete list
-
-**Validation Rules**:
-- Can only initialize from `Assigned` state
-- Cannot go backwards from `Initialized` to `Assigned`
-- Custom sections can only be added in `Assigned` state (before initialization)
-- Assigned → EmployeeInProgress is **invalid** (must initialize first)
-
-**Auto-Initialization (Added 2026-01-13)**:
-- **AutoInitialize Flag**: Questionnaire templates have an `AutoInitialize` boolean property (default: `false`)
-- **Purpose**: Controls whether assignments from this template skip the initialization phase
-- **Separation of Concerns**: Independent from `IsCustomizable` flag
-  - `IsCustomizable`: Can managers add custom sections to this template?
-  - `AutoInitialize`: Should assignments skip the initialization phase?
-- **Valid Combinations**:
-  - `IsCustomizable=false, AutoInitialize=false` - No custom sections, requires initialization (for linking predecessors/notes)
-  - `IsCustomizable=false, AutoInitialize=true` - No custom sections, skip initialization (simple surveys)
-  - `IsCustomizable=true, AutoInitialize=false` - Allow custom sections, requires initialization (most flexible)
-  - `IsCustomizable=true, AutoInitialize=true` - Allow custom sections, skip initialization (uncommon)
-- **Behavior**:
-  - When `AutoInitialize=true`: Bulk assignment creation automatically calls `StartInitialization()` during creation
-  - When `AutoInitialize=false`: Assignments remain in `Assigned` state until manager explicitly initializes
-- **UI Control**: Checkbox in Questionnaire Builder > Basic Info Tab (disabled when template is Published/Archived)
-- **Business Logic**: `CreateBulkAssignmentsCommandHandler` checks `template.AutoInitialize` instead of `!template.IsCustomizable`
-- **Translation Keys**: `templates.auto-initialize`, `templates.auto-initialize-tooltip`, `assignments.auto-initialized`
-
-**Implementation Locations**:
-- Domain: `01_Domain/QuestionnaireAssignmentAggregate/WorkflowState.cs` (enum value=1)
-- Commands: `02_Application/Application.Command/Commands/QuestionnaireAssignmentCommands/`
-- Handlers: `02_Application/Application.Command/Commands/QuestionnaireAssignmentCommands/`
-- Frontend: `05_Frontend/ti8m.BeachBreak.Client/Pages/InitializeAssignment.razor`
-- Component: `05_Frontend/ti8m.BeachBreak.Client/Components/Dialogs/AddCustomQuestionDialog.razor`
-- Helper: `05_Frontend/ti8m.BeachBreak.Client/Models/WorkflowStateHelper.cs`
-
-**Testing**:
-- Unit tests: `Tests/ti8m.BeachBreak.Domain.Tests/WorkflowStateMachineTests.cs`
-- Manual E2E checklist: `Tests/README.md`
-
-**Design Decisions**:
-- Enum value 1 explicitly set (all workflow states have explicit values per CLAUDE.md Section 8)
-- IsInstanceSpecific flag prevents custom sections from appearing in cross-instance reports
-- Initialization is optional (manager can complete it immediately with no customizations)
-- Maintains event sourcing pattern with explicit domain events
-
-### Process Types (Added 2026-01-15)
-
-**Purpose**: The `QuestionnaireProcessType` enum defines different types of questionnaire processes, each with specific business rules that control three tightly coupled features: manager review requirements, allowed question types, and allowed completion roles.
-
-**Available Process Types**:
-1. **PerformanceReview** (value=0) - Traditional performance review with manager involvement
-2. **Survey** (value=1) - Employee-only survey without manager review
-
-**Business Rules by Process Type**:
-
-| Feature | PerformanceReview | Survey |
-|---------|------------------|--------|
-| **Requires Manager Review** | Yes | No |
-| **Allowed Question Types** | Assessment, TextQuestion, Goal, EmployeeFeedback | Assessment, TextQuestion only |
-| **Allowed Completion Roles** | Employee, Manager, Both | Employee only |
-
-**Key Characteristics**:
-- **Type Safety**: Separate enum types in each layer (Domain, CommandApi, QueryApi, Frontend) to prevent coupling
-- **Extension Methods**: Business logic encapsulated in `QuestionnaireProcessTypeExtensions`:
-  - `RequiresManagerReview()` - Returns whether manager review is required
-  - `IsQuestionTypeAllowed(QuestionType)` - Validates if a question type is allowed
-  - `IsCompletionRoleAllowed(CompletionRole)` - Validates if a completion role is allowed
-  - `GetAllowedQuestionTypes()` - Returns list of allowed question types
-  - `GetAllowedCompletionRoles()` - Returns list of allowed completion roles
-
-**Domain Events**:
-- `QuestionnaireTemplateProcessTypeChanged` - Raised when template process type is changed
-- Replaces previous `QuestionnaireTemplateReviewRequirementChanged` event
-
-**Validation**:
-- **Template Level**: `QuestionnaireTemplate` validates all sections on save:
-  - `ValidateSectionQuestionTypes()` - Ensures all question types are allowed for the process type
-  - `ValidateSectionCompletionRoles()` - Ensures all completion roles are allowed for the process type
-- **Frontend Level**: `QuestionnaireValidationService` performs real-time validation with translated error messages
-
-**UI Integration**:
-- **Template Builder**: ProcessType dropdown in BasicInfoTab with icons and descriptions
-- **Icons**: `assessment` (PerformanceReview), `poll` (Survey)
-- **Badge Classes**: `badge-performance-review`, `badge-survey`
-- **Helper**: `QuestionnaireProcessTypeHelper` provides UI-specific methods:
-  - `GetDisplayName()` - Translated display name
-  - `GetDescription()` - Translated description
-  - `GetIcon()` - Material icon name
-  - `GetBadgeClass()` - CSS class for badges
-  - `GetQuestionTypeRestrictionMessage()` - Validation error message for disallowed question types
-  - `GetCompletionRoleRestrictionMessage()` - Validation error message for disallowed completion roles
-
-**Translation Keys** (9 total, EN/DE):
-- See `TestDataGenerator/test-translations.json` for complete list
-
-**Implementation Locations**:
-- **Core Domain**: `04_Core/ti8m.BeachBreak.Core.Domain/QuestionnaireProcessType/`
-  - `QuestionnaireProcessType.cs` - Core enum definition
-  - `QuestionnaireProcessTypeExtensions.cs` - Business logic extension methods
-- **Domain Aggregates**:
-  - `01_Domain/QuestionnaireTemplateAggregate/QuestionnaireTemplate.cs` - ProcessType property and validation
-  - `01_Domain/QuestionnaireAssignmentAggregate/QuestionnaireAssignment.cs` - ProcessType property
-- **Application Layer**:
-  - Command/Query DTOs: `CommandQuestionnaireTemplate.cs`, `QuestionnaireTemplateReadModel.cs`
-  - Handlers: Updated to use ProcessType instead of RequiresManagerReview
-- **API Layer**:
-  - `03_Infrastructure/ti8m.BeachBreak.CommandApi/Dto/QuestionnaireProcessType.cs`
-  - `03_Infrastructure/ti8m.BeachBreak.QueryApi/Dto/QuestionnaireProcessType.cs`
-  - Controllers updated to map ProcessType across layers
-- **Frontend**:
-  - `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionnaireProcessType.cs`
-  - `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionnaireProcessTypeHelper.cs`
-  - `05_Frontend/ti8m.BeachBreak.Client/Services/QuestionnaireValidationService.cs`
-  - UI Components: BasicInfoTab, SectionCard, ReviewTab, DynamicQuestionnaire, etc.
-
-**Testing**:
-- Unit tests: `Tests/ti8m.BeachBreak.Core.Domain.Tests/QuestionnaireProcessTypeExtensionsTests.cs`
-- 25 comprehensive tests covering all extension methods and business rules
-- Test project added to solution: `ti8m.BeachBreak.Core.Domain.Tests.csproj`
-
-**Design Decisions**:
-- **Explicit Enum Values**: All enum values explicitly set (PerformanceReview=0, Survey=1) per CLAUDE.md Section 8
-- **Extension Method Pattern**: Prefer extension methods over switch statements for maintainability
-- **Separate Enums per Layer**: Independent enum types in each layer prevent coupling in CQRS architecture
-- **Coupled Features**: ProcessType controls three related features (manager review, question types, completion roles) that always change together
-- **Backward Compatibility**: Replaced `RequiresManagerReview` boolean with ProcessType enum while maintaining same behavior
-
-**Migration Notes**:
-- Previous `RequiresManagerReview` boolean property was replaced with `ProcessType` enum
-- `RequiresManagerReview=true` → `ProcessType=PerformanceReview`
-- `RequiresManagerReview=false` → `ProcessType=Survey`
-- Extension method `ProcessType.RequiresManagerReview()` provides backward-compatible behavior
+**Quick Reference**:
+- **Workflow States**: 12 states from Assigned → Finalized with explicit enum values
+- **Process Types**: PerformanceReview vs Survey with different business rules
+- **Auto-Initialization**: Templates can skip manual initialization phase
+- **State Machine**: Validates all transitions with role-based authorization
 
 ## Domain Events Guidelines
 
@@ -238,7 +70,7 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - "Customer Loyalty Status Upgraded"
 - "Product Inventory Critically Low"
 - "Payment Failed Due to Insufficient Funds"
- 
+
 **AVOID Anemic/CRUD Events:**
 - "Record Created"
 - "Data Updated"
@@ -338,7 +170,7 @@ dotnet run
 - **ALWAYS** create proper DTOs that match between client and server
 - **FRONTEND DTOs**: Create matching DTOs in `05_Frontend/ti8m.BeachBreak.Client/Models/Dto/`
 - **API DTOs**: Located in `03_Infrastructure/ti8m.BeachBreak.CommandApi/Dto/`
-- **ENDPOINT MATCHING**: Ensure client calls correct endpoints:
+- **ENDPOINT MATCHING**: Ensure client calls correct endpoints
 - **TYPE SAFETY**: Replace all `object`, `var`, and anonymous types with proper strongly-typed DTOs
 
 ### 5. NEVER Use `dynamic` Keyword
@@ -353,88 +185,19 @@ dotnet run
 - **USER ID TYPE**: UserContext.Id is a string representation of a GUID - always parse it to Guid when needed for commands
 - **SECURITY**: UserContext is populated by middleware and provides authenticated user information consistently
 
-**COMMAND PATTERN**: Commands that track user actions should use `Guid` for user identifiers (InitiatedBy, CancelledBy, CreatedBy, etc.), not strings:
+**COMMAND PATTERN**: Commands that track user actions should use `Guid` for user identifiers (InitiatedBy, CancelledBy, CreatedBy, etc.), not strings
 
 ### 7. Frontend Component Architecture - Questionnaire Rendering
 
-**CRITICAL**: This pattern must be followed for ALL question rendering to prevent code duplication and data inconsistencies.
+**CRITICAL**: **NEVER** write inline question rendering logic. **ALWAYS** use OptimizedQuestionRenderer for all question rendering.
 
-#### Always Use Optimized Components
-
-**NEVER** write inline question rendering logic. **ALWAYS** use the centralized Optimized components:
-
-#### Component Locations
-
-- **OptimizedQuestionRenderer.razor**: Master dispatcher for all question types
-  Location: `05_Frontend/ti8m.BeachBreak.Client/Components/Questions/`
-- **OptimizedAssessmentQuestion.razor**: Assessment questions with competency ratings
-- **OptimizedTextQuestion.razor**: Text questions with single or multiple sections
-- **OptimizedGoalQuestion.razor**: Goal achievement questions
-
-#### Configuration Parsing
-
-**NEVER** duplicate configuration parsing logic. If you need to parse question configuration:
-
-1. **For rendering**: Use the Optimized components (they handle parsing internally)
-2. **For validation**: Use the same key format as the Optimized components
-3. **Existing duplications**: If you see `GetCompetenciesFromConfiguration()`, `GetRatingScaleFromQuestion()`, `GetTextSectionsFromQuestion()` duplicated across files, consolidate them into a shared service
-
-#### Component Lifecycle Rules
-
-**ALWAYS** initialize data in `OnInitialized()` in addition to `OnParametersSet()`:
-
-#### Validation Pattern
-
-When validating question responses, **ALWAYS** match the data keys used by the Optimized components:
-
-#### Code Review Checklist for Question Rendering
-
-Before submitting any code that touches question rendering, verify:
-
-- [ ] Uses OptimizedQuestionRenderer (not inline rendering)
-- [ ] Uses correct data key format (`"section_"` not `"text_"`)
-- [ ] No duplicate configuration parsing (GetCompetencies, GetRatingScale, etc.)
-- [ ] Validation matches the data keys used by Optimized components
-- [ ] Component lifecycle properly initializes data in OnInitialized()
-- [ ] Progress/validation updates when responses change (calls UpdateProgress())
-
-#### Known Problem Areas (As of 2025-10-22)
-
-If working with these components, **check for and fix duplications**:
-
-- **QuestionnaireReviewMode.razor**: Has ~350 lines duplicate rendering logic, needs refactoring to use OptimizedQuestionRenderer
-- **EditAnswerDialog.razor**: Has ~50 lines duplicate text question rendering, uses old "text_" key format
-- **PreviewTab.razor**: Has ~100 lines duplicate configuration parsing, acceptable for preview purposes
-- **DynamicQuestionnaire.razor**: Was refactored to use OptimizedQuestionRenderer, may still have some duplicate validation helpers
-
-#### Historical Context: Why These Rules Exist
-
-These rules were established after discovering critical bugs caused by code duplication:
-
-1. **Submit Button Bug**: Button stayed enabled when required fields were cleared (validation not updating)
-2. **Data Key Mismatch Bug**: Review mode couldn't read saved answers due to "text_" vs "section_" key mismatch (data loss)
-3. **Edit Dialog Bug**: Edit dialog overwrote data with wrong keys "text_" instead of "section_" (data corruption)
-4. **Code Duplication**: ~500+ lines of duplicate code across 5+ components made bugs hard to fix
-
-**These were not theoretical concerns - they were real production bugs discovered through architectural review.**
-
-#### When to Break These Rules
-
-**NEVER**. If you think you need to break these rules:
-1. Ask the user first
-2. Document the architectural decision in an ADR
-3. Provide justification for why existing components can't be used
-4. Add comprehensive tests to prevent regressions
-
-The refactoring effort to create the Optimized components was significant. Don't waste it by reintroducing duplication.
+For detailed component architecture guidance, see: [docs/frontend/component-architecture.md](docs/frontend/component-architecture.md)
 
 ### 8. Enum Explicit Values Pattern
 - **ALWAYS** set integer values explicitly for ALL enum members
 - **NEVER** rely on implicit enum numbering
 - **REASON**: Prevents serialization bugs when enum definitions differ across layers (CQRS/Event Sourcing architecture)
 - **CRITICAL**: This codebase uses separate assemblies for Domain, Application, CommandApi, QueryApi, and Frontend - implicit enum values can lead to ordering mismatches
-
-**Historical Bug**: QuestionType enum had different implicit ordering in CommandApi (Assessment, Goal, TextQuestion) vs other layers (Assessment, TextQuestion, Goal), causing Goal questions (saved as Type=1) to be deserialized as TextQuestion (Type=1) in other layers, rendering them incorrectly.
 
 **Rule**: Set explicit integer values for ALL enums in this codebase, even if they seem to have a natural sequential order.
 
@@ -444,651 +207,85 @@ The refactoring effort to create the Optimized components was significant. Don't
 - **ALWAYS** extract the expected structure from template configuration, then verify ALL required elements are present in the response
 - **PRINCIPLE**: Follows DDD's Information Expert pattern - the aggregate owns the data and knows how to validate itself using the template as a specification
 
-**Configuration Parsing Pattern**:
 
-**Where This Pattern Applies**:
-- `QuestionnaireResponse.GetCompletedSections()` - Domain aggregate validation (01_Domain)
-- Frontend validation in question components - Must match domain validation logic
-- Command handlers that validate before submission - Use domain aggregate methods
-
-**Key Locations**:
-- `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireResponseAggregate/QuestionnaireResponse.cs` - Canonical validation logic
-- See pattern #7 (Frontend Component Architecture) for matching validation in the UI layer
-
-**Historical Bug** (Fixed 2025-11-10): Assessment validation only checked if ANY competency was rated (`Any(c => c.Rating > 0)`), rather than validating that ALL competencies defined in the template configuration were rated. This allowed incomplete assessments to be marked as complete.
 
 ### 10. Authorization Pattern - Consistent Page-Level Security
 
 **CRITICAL**: All admin pages use `<AuthorizeView Policy="...">` pattern for consistent user experience and clear access control.
 
-#### Standard Authorization Pattern for Admin Pages
+**Rules**:
+- **ALWAYS** use `<AuthorizeView Policy="...">` for admin pages
+- **NEVER** use `@attribute [Authorize]` for admin pages (causes blank pages for unauthorized users)
 
-**ALWAYS** use the AuthorizeView component for admin pages instead of `@attribute [Authorize]`:
-
-```razor
-@page "/admin/some-page"
-@using Microsoft.AspNetCore.Components.Authorization
-
-<AuthorizeView Policy="PolicyName">
-    <Authorized>
-        <StandardPageLayout Title="Page Title" Description="Page description">
-            <!-- Page content here -->
-        </StandardPageLayout>
-    </Authorized>
-    <NotAuthorized>
-        <AccessDeniedComponent RequiredRole="RequiredRole" PageName="Descriptive Page Name" />
-    </NotAuthorized>
-</AuthorizeView>
-```
-
-#### Authorization Policies Available
-
-1. **Employee** - All authenticated users (Employee+)
-2. **TeamLead** - Team leads and above (TeamLead, HR, HRLead, Admin)
-3. **HR** - HR staff and above (HR, HRLead, Admin)
-4. **HRLead** - HR leads and above (HRLead, Admin)
-5. **Admin** - Administrator only
-
-#### Pages Using AuthorizeView Pattern
-
-**Admin Pages (HR Policy)**:
-- HRDashboard.razor
-- QuestionnaireManagement.razor
-- QuestionnaireBuilder.razor
-- QuestionnaireAssignments.razor
-- CategoryAdmin.razor
-- RoleManagement.razor
-- OrganizationQuestionnaires.razor
-
-**Manager Pages (TeamLead Policy)**:
-- ManagerDashboard.razor
-- TeamQuestionnaires.razor
-
-**System Admin (Admin Policy)**:
-- ProjectionReplayAdmin.razor
-
-**Employee Pages (Generic @attribute [Authorize])**:
-- Dashboard.razor
-- MyQuestionnaires.razor
-- DynamicQuestionnaire.razor
-- Home.razor
-
-#### Key Benefits of AuthorizeView Pattern
-
-1. **Consistent UX**: Users get clear "Access Denied" messages instead of blank pages
-2. **Professional Error Handling**: Custom error UI with icons and explanations
-3. **Maintainable**: Centralized AccessDeniedComponent for consistent styling
-4. **User-Friendly**: Clear messaging about required permissions
-
-#### AccessDeniedComponent Usage
-
-The reusable component accepts two parameters:
-- `RequiredRole`: Display name of required role (e.g., "HR", "Admin", "TeamLead")
-- `PageName`: Descriptive name of the page (e.g., "Questionnaire Builder", "Role Management")
-
-#### Historical Context
-
-This pattern was standardized (2025-11-21) to replace inconsistent authorization approaches. Previously, most admin pages used `@attribute [Authorize(Policy = "...")]` which resulted in blank pages for unauthorized users, while only RoleManagement.razor provided proper error messages.
-
-#### When to Use Each Pattern
-
-- **Use AuthorizeView**: For admin pages where users need clear feedback about access restrictions
-- **Use @attribute [Authorize]**: For employee-accessible pages where generic authentication is sufficient
+For detailed authorization implementation guidance, see: [docs/implementation/authorization-patterns.md](docs/implementation/authorization-patterns.md)
 
 ## Translation System Guidelines
 
-### Overview
+For detailed translation implementation guidance, see: [docs/implementation/translation-system.md](docs/implementation/translation-system.md)
 
-The application uses a multilingual translation system with support for English and German. Translations are stored in `TestDataGenerator/test-translations.json` and loaded at runtime.
-
-### Adding New Translations
-
-**CRITICAL**: When adding new UI text that uses `@T("translation.key")`, you MUST add the translation to test-translations.json IMMEDIATELY.
-
-#### Step-by-Step Process
-
-1. **Add translation key to your Razor component:**
-   ```razor
-   <RadzenText>@T("sections.my-new-section")</RadzenText>
-   ```
-
-2. **Add entry to test-translations.json:**
-   ```json
-   {
-     "key": "sections.my-new-section",
-     "german": "Mein neuer Abschnitt",
-     "english": "My New Section",
-     "category": "sections",
-     "createdDate": "2025-12-04T12:00:00.0000000+00:00"
-   }
-   ```
-
-3. **Validate translations:**
-   ```bash
-   powershell -ExecutionPolicy Bypass -File TestDataGenerator\validate-translations.ps1
-   ```
-
-### Translation Key Naming Conventions
-
-- **Format**: Lowercase with hyphens: `my-translation-key`
-- **Semantic prefixes**: Use category-based prefixes
-  - `pages.*` - Page titles and descriptions
-  - `sections.*` - Section headings
-  - `tabs.*` - Tab labels
-  - `buttons.*` - Button text
-  - `labels.*` - Form labels and UI labels
-  - `columns.*` - Data grid column headers
-  - `placeholders.*` - Input placeholders
-  - `filters.*` - Filter labels
-  - `messages.*` - User messages
-  - `dialogs.*` - Dialog titles and content
-  - `tooltips.*` - Tooltip text
-  - `notifications.*` - Toast/notification messages
-  - `status.*` - Status labels
-  - `workflow-states.*` - Workflow state labels
-
-### German Translation Guidelines
-
-**Domain-Specific Terminology** (maintain consistency):
-- "Questionnaire" → "Fragebogen"
-- "Assignment" → "Zuweisung"
-- "Employee" → "Mitarbeiter"
-- "Template" → "Vorlage"
-- "Category" → "Kategorie"
-- "Status" → "Status"
-- "Manager" → "Manager"
-- "Review" → "Überprüfung"
-
-**Unicode Encoding for German Umlauts** (in JSON):
-- ä → `\u00E4`
-- ö → `\u00F6`
-- ü → `\u00FC`
-- Ä → `\u00C4`
-- Ö → `\u00D6`
-- Ü → `\u00DC`
-- ß → `\u00DF`
-
-**Formality**: Use professional business German (Sie-Form)
-
-### Validation Tools
-
-**Validate all translations:**
-```bash
-powershell -ExecutionPolicy Bypass -File TestDataGenerator\validate-translations.ps1
-```
-
-This script:
-- Scans all .razor files for `@T("...")` calls
-- Compares against test-translations.json
-- Reports missing translations with detailed breakdown by category
-- Returns exit code 1 if translations are missing
-
-**Verify specific pages:**
-```bash
-powershell -ExecutionPolicy Bypass -File TestDataGenerator\verify-target-pages.ps1
-```
-
-### Historical Context
-
-**2025-12-04**: Translation Recovery
-- During initial multilingual migration (commit c79f22a), 187 translation keys were used in code but missing from test-translations.json
-- Recovered 54 missing translations for QuestionnaireAssignments, ProjectionReplayAdmin, and CategoryAdmin pages
-- Original English text extracted from git commit 4a3f807 (pre-migration)
-- German translations generated using AI-assisted translation with domain terminology
-- Created validate-translations.ps1 to prevent future gaps
-
-**Lesson Learned**: Always add translations atomically with UI changes. Running the validation script before committing prevents missing translations from reaching production.
-
-### Code Review Checklist
-
-When reviewing PRs that add or modify UI text:
-
-- [ ] All new `@T("...")` calls have entries in test-translations.json
-- [ ] German translations are accurate and use professional business terminology
-- [ ] Translation keys follow naming conventions (lowercase-with-hyphens)
-- [ ] Proper category prefix used (pages.*, sections.*, etc.)
-- [ ] German umlauts properly Unicode-escaped in JSON
-- [ ] Validation script passes: `validate-translations.ps1`
-- [ ] Tested language switching (English ↔ German)
-- [ ] No hardcoded UI text visible (all text uses @T())
-
-### Common Mistakes to Avoid
-
-1. **❌ Using hardcoded text without translations:**
-   ```razor
-   <RadzenText>Select Employees</RadzenText>  <!-- BAD -->
-   ```
-   **✅ Always use translation keys:**
-   ```razor
-   <RadzenText>@T("sections.select-employees")</RadzenText>  <!-- GOOD -->
-   ```
-
-2. **❌ Adding @T() calls without adding to test-translations.json:**
-   - This causes translation keys to appear in the UI instead of actual text
-   - Always add both simultaneously
-
-3. **❌ Using wrong Unicode encoding:**
-   ```json
-   "german": "Mitarbeiter auswählen"  <!-- BAD - will break JSON -->
-   ```
-   **✅ Use proper Unicode escaping:**
-   ```json
-   "german": "Mitarbeiter ausw\u00E4hlen"  <!-- GOOD -->
-   ```
-
-4. **❌ Inconsistent domain terminology:**
-   - Using "Angestellte" instead of "Mitarbeiter" for "Employee"
-   - Check existing translations for consistency
-
-### Quick Reference: Merge Translations
-
-If you've created new translations in a separate file:
-
-```bash
-cd TestDataGenerator
-powershell -ExecutionPolicy Bypass -File merge-translations.ps1
-```
-
-This will merge, deduplicate, and sort all translations alphabetically by key.
+**Core Rules**:
+- **CRITICAL**: When adding new UI text that uses `@T("translation.key")`, you MUST add the translation to test-translations.json IMMEDIATELY
+- Always validate translations before committing: `powershell -ExecutionPolicy Bypass -File TestDataGenerator\validate-translations.ps1`
+- Use semantic translation keys with category prefixes (pages.*, sections.*, buttons.*, etc.)
+- Use Unicode escape sequences for German umlauts in JSON: ä → `\u00E4`
 
 ## Typography System Guidelines
 
-### Font Weight Architecture
+**CRITICAL**: **NEVER** hardcode font-weight values. **ALWAYS** use semantic CSS variables (e.g., `--font-weight-heading`, `--font-weight-body`).
 
-**CRITICAL**: This application uses a consolidated typography system with semantic CSS variables. Never hardcode font-weight values.
-
-#### Base Font System
-- **Font Family**: Roboto only (`font-family: 'Roboto', sans-serif`)
-- **Default Body Weight**: 300 (Roboto Light)
-- **Default Heading Weight**: 500 (Roboto Medium)
-
-#### Font Weight Variables (Use These)
-
-**Base Weights**:
-- `--font-weight-light: 300` - Roboto Light
-- `--font-weight-regular: 400` - Roboto Regular
-- `--font-weight-medium: 500` - Roboto Medium
-- `--font-weight-semibold: 600` - Roboto Semibold
-
-**Semantic Aliases (Preferred)**:
-- `--font-weight-body: 300` - Body text default
-- `--font-weight-heading: 500` - All headings (h1-h6)
-- `--font-weight-emphasis: 500` - Emphasized text
-- `--font-weight-strong: 600` - Strong emphasis
-
-**Component-Specific Variables**:
-- `--font-weight-card-title: 500` - Card headers
-- `--font-weight-section-title: 500` - Section headings
-- `--font-weight-form-label: 500` - Form labels
-- `--font-weight-badge: 500` - Badge text
-- `--font-weight-button: 500` - Button text
-- `--font-weight-nav-item: 500` - Navigation items
-
+For detailed typography system guidance, see: [docs/frontend/typography-system.md](docs/frontend/typography-system.md)
 
 ## 11. Strongly-Typed Question Configuration Pattern
 
-### Overview
+**CRITICAL**: **NEVER** use `Dictionary<string, object>` for question configurations. **ALWAYS** use strongly-typed configuration classes.
 
-**CRITICAL**: This codebase uses strongly-typed configuration classes instead of `Dictionary<string, object>` for question configurations. This provides compile-time type safety and eliminates ~700 lines of JSON parsing logic that was previously duplicated across the codebase.
+**Pattern**: Use pattern matching with the `is` operator to access configuration properties.
 
-### IQuestionConfiguration Hierarchy
-
-All question configurations implement the `IQuestionConfiguration` interface:
-
-**Available Configuration Types:**
-
-1. **AssessmentConfiguration** - For competency/skill assessments
-2. **TextQuestionConfiguration** - For text-based questions
-3. **GoalConfiguration** - For goal management questions
-
-### Pattern: Accessing Typed Configuration
-
-**ALWAYS** use pattern matching with the `is` operator to access configuration properties:
-
-
-### Services Using Typed Configuration
-
-The following services have been updated to use typed configuration:
-
-1. **QuestionConfigurationService** - Helper methods for configuration access
-2. **AssessmentConfigurationHelper** - Static helpers for assessment questions
-3. **QuestionHandlers** - Initialize and manage question configurations
-   - AssessmentQuestionHandler
-   - TextQuestionHandler
-   - GoalQuestionHandler
-
-### Benefits of Typed Configuration
-
-1. **Compile-Time Safety**: Typos and type errors caught by compiler
-2. **IntelliSense Support**: IDE autocomplete for all properties
-3. **Simplified Code**: ~700 lines of parsing logic eliminated
-4. **Maintainability**: Single source of truth for configuration structure
-5. **Refactoring Support**: Rename refactoring works across entire codebase
-
-### Adding New Question Types
-
-If you need to add a new question type:
-
-1. Create a new configuration class implementing `IQuestionConfiguration`
-2. Add the new `QuestionType` enum value
-3. Create a handler class implementing `IQuestionTypeHandler`
-4. Update rendering components to handle the new type
-5. Update validation logic if needed
-
-### References
-
-- Configuration classes: `05_Frontend/ti8m.BeachBreak.Client/Models/`
-- Handler classes: `05_Frontend/ti8m.BeachBreak.Client/Services/QuestionHandlers/`
-- Usage examples: See QuestionCard.razor, SectionCard.razor, DynamicQuestionnaire.razor
+For detailed question configuration implementation guidance, see: [docs/implementation/question-configuration.md](docs/implementation/question-configuration.md)
 
 ## 12. Configuration Serialization Pattern
 
-### Overview
+**CRITICAL**: **NEVER** remove the `$type` discriminator from question configurations - it's defensive validation, not redundancy.
 
-The questionnaire configuration uses polymorphic JSON serialization with a `$type` discriminator. This section explains why the JSON contains both a section-level `Type` field and a configuration-level `$type` discriminator, and why this apparent redundancy is intentional defensive design.
+For detailed configuration serialization guidance, see: [docs/implementation/configuration-serialization.md](docs/implementation/configuration-serialization.md)
 
-### JSON Structure
+## 13. Controller Pattern
 
-```json
-{
-  "Type": 0,  // Section-level question type (QuestionType enum)
-  "Configuration": {
-    "$type": 0,  // Configuration-level discriminator (same value)
-    "Evaluations": [...],
-    "RatingScale": 4,
-    "ScaleLowLabel": "Poor",
-    "ScaleHighLabel": "Excellent"
-  }
-}
-```
+**CRITICAL**:
+- **NEVER** wrap controller actions in try-catch blocks (let middleware handle exceptions)
+- **ALWAYS** use `CreateResponse(result)` for API responses
+- **ALWAYS** use `ExecuteWithAuthorizationAsync` for manager-restricted endpoints
+- **ALWAYS** use dedicated enrichment services to avoid N+1 query problems
 
-### Why Both Type and $type Exist
+For detailed API controller implementation guidance, see: [docs/implementation/api-controller-patterns.md](docs/implementation/api-controller-patterns.md)
 
-**1. Section.Type**: Semantic field indicating what type of question this section represents
-   - Used by domain logic for validation and business rules
-   - Part of the `QuestionSection` domain model
-   - Accessed directly in code: `section.Type`
+---
 
-**2. Configuration.$type**: JSON discriminator enabling polymorphic deserialization of `IQuestionConfiguration`
-   - Required by the JSON deserializer to determine concrete type
-   - Maps to the appropriate configuration class:
-     - `$type: 0` → `AssessmentConfiguration`
-     - `$type: 1` → `TextQuestionConfiguration`
-     - `$type: 2` → `GoalConfiguration`
-   - Handled by `QuestionConfigurationJsonConverter`
+## Documentation Structure
 
-### The Pattern is Intentional Defensive Design
+### Architectural Guidance (This File)
+- **CLAUDE.md**: Universal patterns and core development rules
+- Must be followed for all development work
+- Focused on architectural consistency and quality
 
-The apparent redundancy is **intentional and necessary**:
+### Feature-Specific Documentation
+- **[docs/domain/questionnaire-workflows.md](docs/domain/questionnaire-workflows.md)**: Workflow states, process types, state transitions
+- **[docs/implementation/translation-system.md](docs/implementation/translation-system.md)**: Translation system implementation details
+- **[docs/frontend/component-architecture.md](docs/frontend/component-architecture.md)**: Component patterns and OptimizedQuestionRenderer system
 
-1. **Validation Safety**: The two values must always match, validated by `ValidateConfigurationMatchesType()`:
+### Implementation Guides
+- **docs/implementation/**: Detailed implementation guides for specific features
+- **docs/planning/**: Planning documents and session summaries
+- **docs/domain/**: Domain-specific documentation and business rules
 
-   This catches bugs where frontend and backend disagree on types.
+### Quick Reference
 
-2. **Separation of Concerns**: `IQuestionConfiguration` is used independently in many contexts without access to the parent section:
-   - Domain events (`QuestionSectionData`)
-   - Command DTOs (`CommandQuestionSection`)
-   - Query DTOs (`QuestionSectionDto`)
-   - Frontend models (`QuestionSection`)
+**For new developers**: Start with CLAUDE.md for core patterns, then explore feature-specific docs
+**For specific features**: Check docs/domain/ and docs/implementation/ for detailed guidance
+**For component work**: See docs/frontend/component-architecture.md for comprehensive patterns
+**For translations**: Use docs/implementation/translation-system.md for complete workflow
 
-   In these contexts, the Configuration object needs its own type information.
+---
 
-3. **Standard .NET Pattern**: Using a discriminator for polymorphic JSON follows .NET best practices:
-   - Supported by System.Text.Json
-   - Well-understood industry pattern
-   - Tool support (Swagger, API testing)
-   - Fast and unambiguous deserialization
-
-4. **Similar to Other Safety Mechanisms**:
-   - Database foreign key constraints
-   - Email confirmation fields in forms
-   - Checksums in data transmission
-
-   The redundancy **prevents bugs** rather than creating them.
-
-### QuestionConfigurationJsonConverter
-
-**Location**:
-- `04_Core/ti8m.BeachBreak.Core.Domain/QuestionConfiguration/QuestionConfigurationJsonConverter.cs`
-- `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionConfigurationJsonConverter.cs`
-
-**Read Method** (Deserialization):
-- Looks for `"$type"` property in JSON
-- If found: uses it to determine the concrete type
-- If NOT found: falls back to property inference (backward compatibility)
-
-**Write Method** (Serialization):
-- Always writes `"$type": (int)value.QuestionType` at the beginning
-- Then writes type-specific properties
-
-### Common Misconceptions
-
-**❌ WRONG**: "The $type discriminator is redundant because we have Section.Type"
-
-**✅ CORRECT**: The $type discriminator serves a different purpose than Section.Type:
-- Section.Type is a domain field for business logic
-- Configuration.$type is a JSON serialization mechanism
-- Both are necessary and must match
-
-**❌ WRONG**: "We can remove $type and just use Section.Type for deserialization"
-
-**✅ CORRECT**: This would require:
-- Custom converter logic coupling Section and Configuration
-- Breaking isolated Configuration usage (events, DTOs)
-- Loss of backward compatibility
-- More complex deserialization code
-- Going against .NET best practices
-
-### Design Decision (2025-12-12)
-
-This pattern was explicitly reviewed and the decision was made to **keep the current design**:
-
-**Rationale**:
-- Follows .NET best practices for polymorphic JSON
-- Provides defensive validation safety
-- Enables Configuration to be used independently
-- Low cost (~10 bytes per section) vs high complexity of alternatives
-- Backward compatible with property inference fallback
-
-**Do not remove the $type discriminator** - it's not redundant, it's defensive validation.
-
-### Historical Context
-
-**Investigation Date**: 2025-12-12
-
-During a review of the questionnaire template JSON structure, the apparent redundancy between `Type` and `$type` was questioned. A comprehensive investigation revealed:
-
-1. The $type discriminator is necessary for polymorphic deserialization
-2. The apparent redundancy is intentional defensive design
-3. This pattern follows .NET best practices
-4. Works correctly in CQRS/Event Sourcing architecture
-
-The investigation confirmed the current implementation is correct and should be preserved.
-
-### References
-
-- JSON Converter: `QuestionConfigurationJsonConverter.cs` (Core.Domain and Client projects)
-- Domain Validation: `QuestionSection.ValidateConfigurationMatchesType()`
-- Pattern documentation: See Section 11 "Strongly-Typed Question Configuration Pattern"
-
-## 13. Controller Error Handling and Enrichment Services Pattern
-
-### Overview
-
-**CRITICAL**: QueryApi controllers follow a standardized error handling and data enrichment pattern to ensure clean, maintainable code.
-
-### Error Handling Pattern
-
-**NEVER** wrap controller actions in try-catch blocks unless there's a specific reason to handle the exception locally. The middleware and `CreateResponse` method already handle errors appropriately.
-
-**❌ WRONG**: Unnecessary try-catch blocks
-```csharp
-public async Task<IActionResult> GetSomething(Guid id)
-{
-    try
-    {
-        var result = await queryDispatcher.QueryAsync(new SomeQuery(id));
-        return CreateResponse(result);
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "Error getting something");
-        return StatusCode(500, "An error occurred");
-    }
-}
-```
-
-**✅ CORRECT**: Let middleware handle exceptions
-```csharp
-public async Task<IActionResult> GetSomething(Guid id)
-{
-    var result = await queryDispatcher.QueryAsync(new SomeQuery(id));
-    return CreateResponse(result);
-}
-```
-
-**Rationale**:
-- `CreateResponse` already handles Result failures appropriately
-- Middleware handles unhandled exceptions with proper logging
-- Try-catch adds unnecessary code and can hide issues
-- Controllers should be thin HTTP orchestration layer
-
-### Authorization Pattern with ExecuteWithAuthorizationAsync
-
-**ALWAYS** use the `ExecuteWithAuthorizationAsync` helper method for manager-restricted endpoints:
-
-```csharp
-[HttpGet("{id:guid}")]
-[Authorize(Policy = "TeamLead")]
-public async Task<IActionResult> GetSomething(Guid id)
-{
-    return await ExecuteWithAuthorizationAsync(
-        authorizationService,
-        employeeRoleService,
-        logger,
-        async (managerId, hasElevatedRole) =>
-        {
-            // Execute query
-            var result = await queryDispatcher.QueryAsync(new SomeQuery(id));
-
-            if (!result.Succeeded)
-                return Result<SomeDto>.Fail(result.Message ?? "Failed", result.StatusCode);
-
-            // Map to DTO
-            var dto = MapToDto(result.Payload);
-            return Result<SomeDto>.Success(dto);
-        },
-        resourceId: id,
-        requiresResourceAccess: true);
-}
-```
-
-**Benefits**:
-- Consistent authorization logic across controllers
-- Automatic handling of elevated roles (HR/Admin)
-- Centralized logging with caller name tracking
-- Eliminates ~20-30 lines of duplicate authorization code per method
-
-### Data Enrichment Services Pattern
-
-**ALWAYS** use dedicated enrichment services for batch data fetching to avoid N+1 query problems.
-
-**Problem**: N+1 Query Anti-Pattern
-```csharp
-// ❌ BAD: Fetches employee name for each change individually
-var employeeIds = changes.Select(c => c.ChangedByEmployeeId).Distinct();
-var employeeNames = new Dictionary<Guid, string>();
-
-foreach (var employeeId in employeeIds)  // N+1 problem!
-{
-    var employee = await queryDispatcher.QueryAsync(new EmployeeQuery(employeeId));
-    employeeNames[employeeId] = $"{employee.FirstName} {employee.LastName}";
-}
-```
-
-**Solution**: Batch Enrichment Service
-```csharp
-// ✅ GOOD: Fetches all employee names in a single query
-var employeeIds = changes.Select(c => c.ChangedByEmployeeId).Distinct();
-var employeeNames = await enrichmentService.GetEmployeeNamesAsync(
-    employeeIds,
-    HttpContext.RequestAborted);
-```
-
-### Creating Enrichment Services
-
-**Pattern**:
-1. Create interface in `02_Application/ti8m.BeachBreak.Application.Query/Services/`
-2. Implement with efficient batch queries
-3. Register in DI container (QueryApi/Program.cs)
-4. Inject into controllers that need data enrichment
-
-**Example**: ReviewChangeEnrichmentService
-
-```csharp
-// Interface
-public interface IReviewChangeEnrichmentService
-{
-    Task<Dictionary<Guid, string>> GetEmployeeNamesAsync(
-        IEnumerable<Guid> employeeIds,
-        CancellationToken cancellationToken = default);
-}
-
-// Implementation
-public class ReviewChangeEnrichmentService : IReviewChangeEnrichmentService
-{
-    private readonly IEmployeeRepository employeeRepository;
-
-    public async Task<Dictionary<Guid, string>> GetEmployeeNamesAsync(
-        IEnumerable<Guid> employeeIds,
-        CancellationToken cancellationToken = default)
-    {
-        var distinctIds = employeeIds.Distinct().ToList();
-        if (!distinctIds.Any())
-            return new Dictionary<Guid, string>();
-
-        // Single batch query for all employees
-        var allEmployees = await employeeRepository.GetEmployeesAsync(
-            includeDeleted: false,
-            cancellationToken: cancellationToken);
-
-        return allEmployees
-            .Where(e => distinctIds.Contains(e.Id))
-            .ToDictionary(
-                e => e.Id,
-                e => $"{e.FirstName} {e.LastName}");
-    }
-}
-
-// Registration
-builder.Services.AddScoped<IReviewChangeEnrichmentService, ReviewChangeEnrichmentService>();
-```
-
-### Controller Responsibilities
-
-Controllers in QueryApi should **ONLY**:
-1. Validate HTTP input (ModelState)
-2. Dispatch queries to handlers
-3. Map results to DTOs
-4. Return HTTP responses via `CreateResponse`
-
-Controllers should **NEVER**:
-1. Contain business logic
-2. Perform data transformations beyond simple DTO mapping
-3. Execute loops or complex operations
-4. Have methods longer than ~40 lines
-5. Have try-catch blocks (except for specific local handling needs)
-
-### Historical Context
-
-**2026-01-23**: Controller Simplification
-- Phase 6 of controller refactoring removed ~100 lines of try-catch blocks from AssignmentsController
-- Introduced `ExecuteWithAuthorizationAsync` pattern for consistent authorization
-- Created `ReviewChangeEnrichmentService` to eliminate N+1 query problem
-- Established pattern for thin controllers with centralized error handling
-
-### References
-
-- Enrichment Service Example: `ReviewChangeEnrichmentService.cs` (Application.Query/Services)
-- Authorization Helper: `BaseController.ExecuteWithAuthorizationAsync` (QueryApi/Controllers)
-- Controller Simplification Plan: `Todo/SimplifyController.md`
+*Last Updated: 2026-01-30*
+*Core Patterns Version: 2.0*

@@ -1,14 +1,16 @@
-# Questionnaire Assignment Workflow States and Transitions
+# Questionnaire Workflow Management
 
 ## Table of Contents
 1. [Overview](#overview)
 2. [Workflow States](#workflow-states)
-3. [State Transition Rules](#state-transition-rules)
-4. [Authorization Model](#authorization-model)
-5. [Auto-Initialization Feature](#auto-initialization-feature)
-6. [Workflow Phases](#workflow-phases)
-7. [State Transition Diagrams](#state-transition-diagrams)
-8. [Implementation Details](#implementation-details)
+3. [Process Types](#process-types)
+4. [State Transition Rules](#state-transition-rules)
+5. [Authorization Model](#authorization-model)
+6. [Auto-Initialization Feature](#auto-initialization-feature)
+7. [Workflow Phases](#workflow-phases)
+8. [State Transition Diagrams](#state-transition-diagrams)
+9. [Implementation Details](#implementation-details)
+10. [Best Practices](#best-practices)
 
 ---
 
@@ -22,9 +24,34 @@ The BeachBreak questionnaire system uses a sophisticated state machine to manage
 - **Role-Based**: Different roles have different permissions at each state
 - **Unidirectional Flow**: Generally moves forward, with limited backward transitions for corrections
 
----
-
 ## Workflow States
+
+### Initialized Workflow State (Added 2026-01-06)
+
+**Purpose**: The `Initialized` state represents a manager-only initialization phase between assignment creation and employee access. This allows managers to prepare the assignment with optional customizations before employees begin work.
+
+**Workflow Sequence**:
+1. **Assigned** (value=0) - Assignment created, manager-only access
+2. **Initialized** (value=1) - Manager completed initialization, both can access
+3. **EmployeeInProgress** / **ManagerInProgress** / **BothInProgress** (values=2-4)
+4. Continue through existing workflow states (5-11)
+
+**Key Features**:
+- **Manager Initialization Tasks** (all optional):
+  - Link predecessor questionnaire for goal tracking
+  - Add custom Assessment or TextQuestion sections (`IsInstanceSpecific = true`)
+  - Add initialization notes for employee (max 5000 characters)
+- **Access Control**:
+  - Employees CANNOT see assignments in `Assigned` state
+  - Employees CAN see and work on assignments in `Initialized+` states
+  - Only managers (TeamLead/HR/HRLead/Admin) can initialize
+
+**Custom Sections**:
+- Marked with `IsInstanceSpecific = true`
+- Created during manager initialization (Assigned state only)
+- Appear seamlessly with template sections in UI
+- **Excluded from aggregate reports** (instance-specific, not comparable across assignments)
+- Cannot add Goal-type custom sections (created dynamically during workflow)
 
 ### State Enum Definition
 
@@ -54,7 +81,7 @@ public enum WorkflowState
 }
 ```
 
-### State Descriptions
+### Detailed State Descriptions
 
 #### 1. **Assigned** (Value: 0)
 - **Purpose**: Manager-only preparation phase
@@ -66,7 +93,6 @@ public enum WorkflowState
 - **Employee Visibility**: ❌ **NOT visible to employees**
 - **Can Edit**: ✅ Manager only
 - **Next States**: `Initialized`
-- **Added**: 2026-01-06 (Initialized Workflow State feature)
 
 #### 2. **Initialized** (Value: 1)
 - **Purpose**: Manager completed initialization, both parties can begin work
@@ -76,7 +102,6 @@ public enum WorkflowState
 - **Employee Visibility**: ✅ **Visible to employees**
 - **Can Edit**: ✅ Both employee and manager
 - **Next States**: `EmployeeInProgress`, `ManagerInProgress`, `BothInProgress`
-- **Key Feature**: This is the first state where employees can see and access the assignment
 
 #### 3. **EmployeeInProgress** (Value: 2)
 - **Purpose**: Employee actively filling questionnaire, manager not started
@@ -120,7 +145,6 @@ public enum WorkflowState
 - **Employee Actions**: None (read-only)
 - **Can Edit**: ❌ Both questionnaires locked
 - **Next States**: `InReview`
-- **Validation**: Both questionnaires must be 100% complete
 
 #### 9. **InReview** (Value: 8)
 - **Purpose**: Manager-led review meeting in progress
@@ -134,7 +158,6 @@ public enum WorkflowState
   - Can add/edit/delete discussion notes
 - **Can Edit**: ✅ Manager can edit answers, ✅ Both can manage notes
 - **Next States**: `ReviewFinished`
-- **Special Feature**: Only state where submitted answers can be modified
 
 #### 10. **ReviewFinished** (Value: 9)
 - **Purpose**: Manager completed review, awaiting employee confirmation
@@ -156,7 +179,43 @@ public enum WorkflowState
 - **Employee Actions**: None (read-only)
 - **Can Edit**: ❌ Completely locked (archived)
 - **Next States**: None (terminal state)
-- **Special Feature**: **CANNOT be reopened** - must create new assignment for changes
+
+---
+
+## Process Types
+
+### Overview (Added 2026-01-15)
+
+**Purpose**: The `QuestionnaireProcessType` enum defines different types of questionnaire processes, each with specific business rules that control three tightly coupled features: manager review requirements, allowed question types, and allowed completion roles.
+
+**Available Process Types**:
+1. **PerformanceReview** (value=0) - Traditional performance review with manager involvement
+2. **Survey** (value=1) - Employee-only survey without manager review
+
+### Business Rules by Process Type
+
+| Feature | PerformanceReview | Survey |
+|---------|------------------|--------|
+| **Requires Manager Review** | Yes | No |
+| **Allowed Question Types** | Assessment, TextQuestion, Goal, EmployeeFeedback | Assessment, TextQuestion only |
+| **Allowed Completion Roles** | Employee, Manager, Both | Employee only |
+
+### Key Characteristics
+
+- **Type Safety**: Separate enum types in each layer (Domain, CommandApi, QueryApi, Frontend) to prevent coupling
+- **Extension Methods**: Business logic encapsulated in `QuestionnaireProcessTypeExtensions`:
+  - `RequiresManagerReview()` - Returns whether manager review is required
+  - `IsQuestionTypeAllowed(QuestionType)` - Validates if a question type is allowed
+  - `IsCompletionRoleAllowed(CompletionRole)` - Validates if a completion role is allowed
+  - `GetAllowedQuestionTypes()` - Returns list of allowed question types
+  - `GetAllowedCompletionRoles()` - Returns list of allowed completion roles
+
+### UI Integration
+
+- **Template Builder**: ProcessType dropdown in BasicInfoTab with icons and descriptions
+- **Icons**: `assessment` (PerformanceReview), `poll` (Survey)
+- **Badge Classes**: `badge-performance-review`, `badge-survey`
+- **Helper**: `QuestionnaireProcessTypeHelper` provides UI-specific methods
 
 ---
 
@@ -332,23 +391,12 @@ Added: **2026-01-13**
 
 The `AutoInitialize` flag on questionnaire templates controls whether assignments skip the manual initialization phase.
 
-### Template Configuration
-
-**AutoInitialize Flag:**
-- **Type**: Boolean
-- **Default**: `false` (requires manual initialization)
-- **Location**: QuestionnaireTemplate aggregate
-- **UI Control**: Checkbox in Questionnaire Builder > Basic Info Tab
-- **Can Change**: Only when template is in Draft status AND no active assignments exist
-
-### Separation of Concerns
-
-The system now has two independent flags:
-
-| Flag | Purpose | Default |
-|------|---------|---------|
-| `IsCustomizable` | Can managers add custom sections to this template? | `false` |
-| `AutoInitialize` | Should assignments skip the initialization phase? | `false` |
+**Auto-Initialization (Added 2026-01-13)**:
+- **AutoInitialize Flag**: Questionnaire templates have an `AutoInitialize` boolean property (default: `false`)
+- **Purpose**: Controls whether assignments from this template skip the initialization phase
+- **Separation of Concerns**: Independent from `IsCustomizable` flag
+  - `IsCustomizable`: Can managers add custom sections to this template?
+  - `AutoInitialize`: Should assignments skip the initialization phase?
 
 ### Valid Combinations
 
@@ -378,11 +426,6 @@ The system now has two independent flags:
    Created → [Auto-Initialize] → Initialized → (ready for work)
    ```
 
-3. **Result**:
-   - Assignment immediately enters `Initialized` state
-   - Employees can see and access assignment immediately
-   - No manager initialization step required
-
 **When `AutoInitialize = false`:**
 
 1. **State Flow**:
@@ -394,25 +437,12 @@ The system now has two independent flags:
    - Navigate to `/assignments/{id}/initialize`
    - Optionally link predecessor questionnaire
    - Optionally add custom sections (if `IsCustomizable=true`)
-   - Optionally add initialization notes
    - Complete initialization
 
-3. **Result**:
-   - Assignment remains in `Assigned` state until manager acts
-   - Employees **cannot see** assignment until initialized
-   - Manager must explicitly call `InitializeAssignmentCommand`
-
-### Historical Context
-
-**Before 2026-01-13:**
-- Auto-initialization was coupled with `IsCustomizable`
-- Logic: `if (!template.IsCustomizable)` → auto-initialize
-- Problem: Non-customizable templates couldn't require initialization
-
-**After 2026-01-13:**
-- Auto-initialization is explicit via `AutoInitialize` flag
-- Logic: `if (template.AutoInitialize)` → auto-initialize
-- Solution: Non-customizable templates can require initialization for other purposes
+### Business Logic
+- **UI Control**: Checkbox in Questionnaire Builder > Basic Info Tab (disabled when template is Published/Archived)
+- **Business Logic**: `CreateBulkAssignmentsCommandHandler` checks `template.AutoInitialize` instead of `!template.IsCustomizable`
+- **Translation Keys**: `templates.auto-initialize`, `templates.auto-initialize-tooltip`, `assignments.auto-initialized`
 
 ---
 
@@ -491,119 +521,97 @@ The system now has two independent flags:
 
 ### Simple Workflow (RequiresManagerReview = false)
 
-```
-┌──────────┐
-│ Assigned │ (Manager-only)
-└────┬─────┘
-     │ Manager initializes (or auto-init)
-     ▼
-┌─────────────┐
-│ Initialized │
-└──────┬──────┘
-       │ Employee starts
-       ▼
-┌────────────────────┐
-│ EmployeeInProgress │
-└─────────┬──────────┘
-          │ Employee submits
-          ▼
-┌───────────────────┐
-│ EmployeeSubmitted │
-└─────────┬─────────┘
-          │ Auto-finalize
-          ▼
-┌───────────┐
-│ Finalized │ (Terminal)
-└───────────┘
+```mermaid
+stateDiagram-v2
+    [*] --> Assigned: Assignment Created
+
+    Assigned --> Initialized: Manager initializes (or auto-init)
+
+    Initialized --> EmployeeInProgress: Employee starts
+
+    EmployeeInProgress --> EmployeeSubmitted: Employee submits
+
+    EmployeeSubmitted --> Finalized: Auto-finalize (simple workflow)
+
+    Finalized --> [*]
+
+    classDef readOnly fill:#ffcccc,stroke:#cc0000,stroke-width:2px
+    classDef editable fill:#ccffcc,stroke:#00cc00,stroke-width:2px
+
+    class EmployeeSubmitted,Finalized readOnly
+    class Assigned,Initialized,EmployeeInProgress editable
 ```
 
 ### Complex Workflow (RequiresManagerReview = true)
 
-```
-┌──────────┐
-│ Assigned │ (Manager-only, employees can't see)
-└────┬─────┘
-     │ Manager initializes (or auto-init)
-     ▼
-┌─────────────┐
-│ Initialized │ (First state visible to employees)
-└──────┬──────┘
-       │
-       ├──────────────┬──────────────┐
-       │              │              │
-       ▼              ▼              ▼
-┌────────────────┐ ┌─────────────┐ ┌───────────────┐
-│ Employee       │ │ Manager     │ │ Both          │
-│ InProgress     │ │ InProgress  │ │ InProgress    │
-└────────┬───────┘ └──────┬──────┘ └───────┬───────┘
-         │                │                 │
-         │ Both can transition to BothInProgress
-         │                │                 │
-         └────────────────┴─────────────────┘
-                          │
-         ┌────────────────┼────────────────┐
-         │                │                │
-         ▼                ▼                ▼
-┌────────────────┐ ┌─────────────┐ ┌──────────────┐
-│ Employee       │ │ Manager     │ │ Both         │
-│ Submitted      │ │ Submitted   │ │ Submitted    │
-└────────┬───────┘ └──────┬──────┘ └──────┬───────┘
-         │                │                │
-         └────────────────┴────────────────┘
-                          │
-                          ▼
-                  ┌───────────────┐
-                  │ BothSubmitted │
-                  └───────┬───────┘
-                          │ Manager initiates review
-                          ▼
-                  ┌────────────┐
-                  │  InReview  │
-                  └──────┬─────┘
-                         │ Manager finishes review
-                         ▼
-                  ┌──────────────────┐
-                  │ ReviewFinished   │
-                  └────────┬─────────┘
-                           │ Employee confirms
-                           ▼
-                  ┌────────────────────────┐
-                  │ EmployeeReviewConfirmed│
-                  └──────────┬─────────────┘
-                             │ Manager finalizes
-                             ▼
-                       ┌───────────┐
-                       │ Finalized │ (Terminal)
-                       └───────────┘
-```
+```mermaid
+stateDiagram-v2
+    [*] --> Assigned: Assignment Created
 
-### Reopen Flow (Backward Transitions)
+    Assigned --> Initialized: Manager initializes (or auto-init)
 
-```
-                    Admin/HR/TeamLead can reopen:
+    Initialized --> EmployeeInProgress: Employee starts work
+    Initialized --> ManagerInProgress: Manager starts work
 
-Initialized ←────────────────────── Assigned
-    (Reset initialization)
+    EmployeeInProgress --> BothInProgress: Manager starts work
+    ManagerInProgress --> BothInProgress: Employee starts work
 
-EmployeeSubmitted ←────────────────── EmployeeInProgress
-    (Employee corrections)
+    EmployeeInProgress --> EmployeeSubmitted: Employee submits
+    ManagerInProgress --> ManagerSubmitted: Manager submits
+    BothInProgress --> EmployeeSubmitted: Employee submits
+    BothInProgress --> ManagerSubmitted: Manager submits
 
-ManagerSubmitted ←────────────────── ManagerInProgress
-    (Manager corrections)
+    EmployeeSubmitted --> BothSubmitted: Manager submits
+    ManagerSubmitted --> BothSubmitted: Employee submits
 
-BothSubmitted ←────────────────── BothInProgress
-    (Both corrections)
+    note right of BothSubmitted
+        PHASE 1 READ-ONLY
+        Both questionnaires submitted
+        Waiting for review meeting
+    end note
 
-ReviewFinished ←────────────────── InReview
-    (Review revisions)
+    BothSubmitted --> InReview: Manager initiates review
 
-EmployeeReviewConfirmed ←────────────────── ReviewFinished
-                        └────────────────── InReview
-    (Return for re-confirmation or review reopening)
+    note right of InReview
+        MANAGER: Can edit ALL sections
+        EMPLOYEE: Read-only view
+        In-person/video meeting
+        Changes tracked in ReviewChangeLog
+    end note
 
-┌───────────┐
-│ Finalized │ ← CANNOT BE REOPENED (create new assignment)
-└───────────┘
+    InReview --> ReviewFinished: Manager finishes review meeting
+
+    note right of ReviewFinished
+        Employee sign-off required
+        Employee can edit comments before signing off
+        Cannot reject, only confirm with optional comments
+    end note
+
+    ReviewFinished --> EmployeeReviewConfirmed: Employee signs off
+
+    note right of EmployeeReviewConfirmed
+        Manager finalization required
+        Manager sees employee comments
+        Final sign-off before archiving
+    end note
+
+    EmployeeReviewConfirmed --> Finalized: Manager finalizes
+
+    note right of Finalized
+        PHASE 2 READ-ONLY
+        Permanently locked
+        No further changes allowed
+    end note
+
+    Finalized --> [*]
+
+    classDef readOnly fill:#ffcccc,stroke:#cc0000,stroke-width:2px
+    classDef editable fill:#ccffcc,stroke:#00cc00,stroke-width:2px
+    classDef review fill:#cce5ff,stroke:#0066cc,stroke-width:2px
+
+    class BothSubmitted,EmployeeSubmitted,ManagerSubmitted,Finalized readOnly
+    class Assigned,Initialized,EmployeeInProgress,ManagerInProgress,BothInProgress,InReview editable
+    class EmployeeReviewConfirmed,ReviewFinished review
 ```
 
 ---
@@ -613,24 +621,6 @@ EmployeeReviewConfirmed ←─────────────────�
 ### Domain Layer
 
 **File**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/WorkflowState.cs`
-
-```csharp
-public enum WorkflowState
-{
-    Assigned = 0,
-    Initialized = 1,
-    EmployeeInProgress = 2,
-    ManagerInProgress = 3,
-    BothInProgress = 4,
-    EmployeeSubmitted = 5,
-    ManagerSubmitted = 6,
-    BothSubmitted = 7,
-    InReview = 8,
-    ReviewFinished = 9,
-    EmployeeReviewConfirmed = 10,
-    Finalized = 11
-}
-```
 
 **Explicit Values**: All enum members have explicit integer values to prevent serialization bugs across CQRS layers.
 
@@ -645,28 +635,24 @@ public enum WorkflowState
 - `DetermineProgressStateFromStartedWork()` - Auto-transition logic when work begins
 - `DetermineSubmissionState()` - Auto-transition logic on submission
 
-### Transition Configuration
+### Commands and Events
 
-**File**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/WorkflowTransitions.cs`
+**Commands**:
+- `InitializeAssignmentCommand` - Transitions Assigned → Initialized
+- `AddCustomSectionsCommand` - Adds custom questions (must be in Assigned state)
+- `GetCustomSectionsQuery` - Retrieves custom sections for an assignment
 
-**Two dictionaries**:
-1. `ForwardTransitions` - Normal workflow progression
-2. `BackwardTransitions` - Reopening for corrections (with role authorization)
+**Events**:
+- `AssignmentInitializedEvent` - Marks completion of manager initialization
+- `CustomSectionsAddedEvent` - Tracks addition of custom questions
 
-### State Machine Tests
+### Frontend Integration
 
-**File**: `Tests/ti8m.BeachBreak.Domain.Tests/WorkflowStateMachineTests.cs`
+**Frontend Routes**:
+- `/assignments/{id}/initialize` - Manager-only initialization page (AuthorizeView: TeamLead policy)
+- Page includes: predecessor linking, custom question dialog, initialization notes
 
-**Test Coverage**:
-- Valid transition tests (forward)
-- Invalid transition tests (backward without permission)
-- Reopen permission tests
-- State count validation
-- Auto-transition logic tests
-
-### Frontend State Helper
-
-**File**: `05_Frontend/ti8m.BeachBreak.Client/Models/WorkflowStateHelper.cs`
+**Helper**: `05_Frontend/ti8m.BeachBreak.Client/Models/WorkflowStateHelper.cs`
 
 **Provides**:
 - `GetStateDisplayName()` - Localized state names
@@ -677,22 +663,54 @@ public enum WorkflowState
 - `GetNextActionForEmployee()` - Action button text for employee
 - `GetNextActionForManager()` - Action button text for manager
 
-### Domain Events
+### Process Type Implementation
 
-**Location**: `01_Domain/ti8m.BeachBreak.Domain/QuestionnaireAssignmentAggregate/Events/`
+**Implementation Locations**:
+- **Core Domain**: `04_Core/ti8m.BeachBreak.Core.Domain/QuestionnaireProcessType/`
+  - `QuestionnaireProcessType.cs` - Core enum definition
+  - `QuestionnaireProcessTypeExtensions.cs` - Business logic extension methods
+- **Domain Aggregates**:
+  - `01_Domain/QuestionnaireTemplateAggregate/QuestionnaireTemplate.cs` - ProcessType property and validation
+  - `01_Domain/QuestionnaireAssignmentAggregate/QuestionnaireAssignment.cs` - ProcessType property
+- **Frontend**:
+  - `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionnaireProcessType.cs`
+  - `05_Frontend/ti8m.BeachBreak.Client/Models/QuestionnaireProcessTypeHelper.cs`
 
-**State Transition Events**:
-- `AssignmentInitialized` - Assigned → Initialized
-- `AssignmentWorkStarted` - Tracks first save (auto-transitions to InProgress states)
-- `EmployeeQuestionnaireSubmitted` - → EmployeeSubmitted
-- `ManagerQuestionnaireSubmitted` - → ManagerSubmitted
-- `ReviewInitiated` - BothSubmitted → InReview
-- `ManagerReviewMeetingFinished` - InReview → ReviewFinished
-- `EmployeeSignedOffReviewOutcome` - ReviewFinished → EmployeeReviewConfirmed
-- `ManagerFinalizedQuestionnaire` - EmployeeReviewConfirmed → Finalized
-- `QuestionnaireAutoFinalized` - EmployeeSubmitted → Finalized (simple workflow)
-- `WorkflowReopened` - Backward transitions with reason
-- `WorkflowStateTransitioned` - Generic state change tracking
+### Testing
+
+- Unit tests: `Tests/ti8m.BeachBreak.Domain.Tests/WorkflowStateMachineTests.cs`
+- Process Types: `Tests/ti8m.BeachBreak.Core.Domain.Tests/QuestionnaireProcessTypeExtensionsTests.cs`
+- Manual E2E checklist: `Tests/README.md`
+
+---
+
+## Validation Rules
+
+### State-Level Validation
+
+**Assigned State**:
+- Can only transition to `Initialized`
+- Only managers can initialize
+- Custom sections can only be added in this state (before initialization)
+
+**Initialization Requirement**:
+- `Assigned → EmployeeInProgress` is **INVALID**
+- Must go through `Initialized` state first
+
+**Submission Validation**:
+- Employee questionnaire must be 100% complete before submission
+- Manager questionnaire must be 100% complete before submission
+- All required sections must be filled
+
+**Review Phase Validation**:
+- Can only enter review if both questionnaires 100% complete
+- Manager must provide review summary to finish review
+- Employee must confirm before manager can finalize
+
+**Finalization Rules**:
+- Simple workflow: Auto-finalize when employee submits (if `RequiresManagerReview=false`)
+- Complex workflow: Requires full review cycle completion
+- **Cannot reopen once finalized** - terminal state
 
 ---
 
@@ -715,75 +733,8 @@ public enum WorkflowState
 | `workflow-states.employee-review-confirmed` | Mitarbeiter bestätigt | Employee Review Confirmed |
 | `workflow-states.finalized` | Abgeschlossen | Finalized |
 
-### Action Keys
-
-Located in: `TestDataGenerator/test-translations.json`
-
-**Employee Actions**:
-- `actions.employee.start-completing-sections`
-- `actions.employee.continue-completing-sections`
-- `actions.employee.submit-questionnaire`
-- `actions.employee.waiting-manager-submission`
-- `actions.employee.waiting-review-initiation`
-- `actions.employee.waiting-review-meeting`
-- `actions.employee.confirm-review-outcome`
-- `actions.employee.waiting-manager-finalization`
-- `actions.employee.waiting-manager-initialization`
-
-**Manager Actions**:
-- `actions.manager.initialize-assignment`
-- `actions.manager.start-completing-sections`
-- `actions.manager.continue-completing-sections`
-- `actions.manager.submit-questionnaire`
-- `actions.manager.waiting-employee-submission`
-- `actions.manager.initiate-review`
-- `actions.manager.conduct-review-meeting`
-- `actions.manager.waiting-employee-confirmation`
-- `actions.manager.finalize-questionnaire`
-
----
-
-## Validation Rules
-
-### State-Level Validation
-
-1. **Assigned State**:
-   - Can only transition to `Initialized`
-   - Only managers can initialize
-   - Custom sections can only be added in this state (before initialization)
-
-2. **Initialization Requirement**:
-   - `Assigned → EmployeeInProgress` is **INVALID**
-   - Must go through `Initialized` state first
-   - This ensures manager has opportunity to prepare assignment
-
-3. **Submission Validation**:
-   - Employee questionnaire must be 100% complete before submission
-   - Manager questionnaire must be 100% complete before submission
-   - All required sections must be filled
-   - All assessment competencies must be rated
-
-4. **Review Phase Validation**:
-   - Can only enter review if both questionnaires 100% complete
-   - Manager must provide review summary to finish review
-   - Employee must confirm before manager can finalize
-
-5. **Finalization Rules**:
-   - Simple workflow: Auto-finalize when employee submits (if `RequiresManagerReview=false`)
-   - Complex workflow: Requires full review cycle completion
-   - **Cannot reopen once finalized** - terminal state
-
-### Cross-State Validation
-
-**During InProgress States**:
-- Cannot submit while any required section is incomplete
-- Cannot transition to `BothSubmitted` unless both parties submitted
-- Withdrawn assignments cannot transition (except reopen by admin)
-
-**During Review Phase**:
-- Employee questionnaire is read-only during InReview
-- Manager can edit answers during InReview (with audit trail)
-- Both can manage discussion notes during InReview
+**Translation Keys** (46 total for Initialized feature, 9 total for Process Types):
+- See `TestDataGenerator/test-translations.json` for complete list
 
 ---
 
@@ -817,7 +768,51 @@ Located in: `TestDataGenerator/test-translations.json`
 
 ---
 
+## Design Decisions
+
+### Initialization State Design Decisions
+
+- **Enum value 1 explicitly set** (all workflow states have explicit values per CLAUDE.md Section 8)
+- **IsInstanceSpecific flag** prevents custom sections from appearing in cross-instance reports
+- **Initialization is optional** (manager can complete it immediately with no customizations)
+- **Maintains event sourcing pattern** with explicit domain events
+
+### Process Type Design Decisions
+
+- **Explicit Enum Values**: All enum values explicitly set (PerformanceReview=0, Survey=1) per CLAUDE.md Section 8
+- **Extension Method Pattern**: Prefer extension methods over switch statements for maintainability
+- **Separate Enums per Layer**: Independent enum types in each layer prevent coupling in CQRS architecture
+- **Coupled Features**: ProcessType controls three related features (manager review, question types, completion roles) that always change together
+- **Backward Compatibility**: Replaced `RequiresManagerReview` boolean with ProcessType enum while maintaining same behavior
+
+### Migration Notes
+
+- Previous `RequiresManagerReview` boolean property was replaced with `ProcessType` enum
+- `RequiresManagerReview=true` → `ProcessType=PerformanceReview`
+- `RequiresManagerReview=false` → `ProcessType=Survey`
+- Extension method `ProcessType.RequiresManagerReview()` provides backward-compatible behavior
+
+---
+
+## Key Workflow Features
+
+1. **Parallel Completion**: Employee and manager can work independently on their sections
+2. **Manager-Led Review**: During `InReview`, manager can edit ALL sections while employee has read-only access
+3. **Review Changes Tracking**: All edits during review are logged in dedicated ReviewChangeLog projection
+4. **Employee Sign-Off**: After review meeting, employee must sign off on outcome (can edit comments, cannot reject)
+5. **Manager Finalization**: Manager has final sign-off after seeing employee comments
+6. **"Both" Sections**: Displayed side-by-side with copy buttons for quick alignment
+7. **Two-Phase Read-Only**: Temporary read-only before review, permanent read-only after finalization
+
+---
+
 ## Change Log
+
+### 2026-01-15: Process Types Feature
+- Added `QuestionnaireProcessType` enum with PerformanceReview/Survey types
+- Replaced `RequiresManagerReview` boolean with ProcessType for richer business rules
+- Added validation for allowed question types and completion roles per process type
+- Updated UI with process type selector and validation
 
 ### 2026-01-13: Auto-Initialize Feature
 - Added `AutoInitialize` boolean flag to QuestionnaireTemplate
@@ -831,23 +826,17 @@ Located in: `TestDataGenerator/test-translations.json`
 - Employees cannot see assignments until `Initialized` state
 - Breaking change: `Assigned → EmployeeInProgress` is now invalid
 
-### Previous Versions
-- Original workflow: 11 states (without Assigned/Initialized separation)
-- Auto-finalize for simple questionnaires (no manager review)
-- Review phase with note discussions
-
 ---
 
 ## References
 
 - **CLAUDE.md**: Project-level documentation and patterns
 - **IMPLEMENTATION_INITIALIZED_STATE.md**: Detailed implementation guide for Initialized state
-- **Todo/InitStep.md**: Implementation plan for AutoInitialize feature
 - **WorkflowStateMachine.cs**: Core state transition logic
 - **WorkflowTransitions.cs**: Transition configuration
 - **WorkflowStateMachineTests.cs**: Comprehensive test suite
 
 ---
 
-*Last Updated: 2026-01-13*
-*Document Version: 1.0*
+*Last Updated: 2026-01-30*
+*Document Version: 2.0*
