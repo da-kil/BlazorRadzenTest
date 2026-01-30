@@ -23,6 +23,7 @@ public class AssignmentsController : BaseController
     private readonly IManagerAuthorizationService authorizationService;
     private readonly IEmployeeRoleService employeeRoleService;
     private readonly IQuestionSectionMapper questionSectionMapper;
+    private readonly Services.QuestionResponseMappingService questionResponseMappingService;
 
     public AssignmentsController(
         ICommandDispatcher commandDispatcher,
@@ -31,7 +32,8 @@ public class AssignmentsController : BaseController
         ICommandAuthorizationService commandAuthorizationService,
         IManagerAuthorizationService authorizationService,
         IEmployeeRoleService employeeRoleService,
-        IQuestionSectionMapper questionSectionMapper)
+        IQuestionSectionMapper questionSectionMapper,
+        Services.QuestionResponseMappingService questionResponseMappingService)
     {
         this.commandDispatcher = commandDispatcher;
         this.userContext = userContext;
@@ -40,6 +42,7 @@ public class AssignmentsController : BaseController
         this.authorizationService = authorizationService;
         this.employeeRoleService = employeeRoleService;
         this.questionSectionMapper = questionSectionMapper;
+        this.questionResponseMappingService = questionResponseMappingService;
     }
 
     /// <summary>
@@ -381,7 +384,9 @@ public class AssignmentsController : BaseController
     public async Task<IActionResult> EditAnswerDuringReview(Guid assignmentId, [FromBody] EditAnswerDto editDto)
     {
         if (!Enum.TryParse<ApplicationRole>(editDto.OriginalCompletionRole, out var commandRole))
-            return CreateResponse(Result.Fail("Invalid ApplicationRole value", 400));
+        {
+            return CreateResponse(Result.Fail($"Invalid ApplicationRole value: '{editDto.OriginalCompletionRole}'", 400));
+        }
 
         // Get user ID from authenticated user context
         if (!userContext.TryGetUserId(out var userId, out var errorMessage))
@@ -392,12 +397,16 @@ public class AssignmentsController : BaseController
 
         var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
 
+        // Parse JSON answer to domain object (Infrastructure responsibility)
+        var answerValue = questionResponseMappingService.ConvertSingleAnswerFromJson(editDto.Answer);
+
         var command = new EditAnswerDuringReviewCommand(
             assignmentId,
             editDto.SectionId,
             editDto.QuestionId,
             ApplicationRoleMapper.MapFromDomain(domainRole),
-            editDto.Answer,
+            editDto.Answer, // Raw JSON for audit
+            answerValue,    // Parsed domain object for storage
             userId);
         var result = await commandDispatcher.SendAsync(command);
         return CreateResponse(result);

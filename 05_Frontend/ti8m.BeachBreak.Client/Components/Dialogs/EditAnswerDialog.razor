@@ -223,8 +223,12 @@
 
     private async Task HandleResponseChanged(QuestionResponse response)
     {
-        // Update is already handled by the component
-        // This is just to track changes
+        if (response.ResponseData != null)
+        {
+            editResponse.ResponseData = response.ResponseData;
+            editResponse.LastModified = DateTime.Now;
+        }
+
         await Task.CompletedTask;
     }
 

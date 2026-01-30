@@ -1,7 +1,7 @@
+using System.Text.Json;
 using ti8m.BeachBreak.CommandApi.DTOs;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 using DomainApplicationRole = ti8m.BeachBreak.Domain.EmployeeAggregate.ApplicationRole;
 
 namespace ti8m.BeachBreak.CommandApi.Services;
@@ -55,6 +55,74 @@ public class QuestionResponseMappingService
         }
 
         return questionResponses;
+    }
+
+    /// <summary>
+    /// Converts a single JSON answer from frontend to domain value object.
+    /// Used for edit-answer operations during review.
+    /// </summary>
+    public QuestionResponseValue ConvertSingleAnswerFromJson(string answerJson)
+    {
+        if (string.IsNullOrWhiteSpace(answerJson) || !answerJson.TrimStart().StartsWith("{"))
+        {
+            // Fallback to text response for non-JSON answers
+            return new QuestionResponseValue.TextResponse(new[] { answerJson ?? "" });
+        }
+
+        try
+        {
+            using var document = JsonDocument.Parse(answerJson);
+            var root = document.RootElement;
+
+            if (root.TryGetProperty("TextSections", out _))
+            {
+                var dto = JsonSerializer.Deserialize<TextResponseDto>(answerJson);
+                return new QuestionResponseValue.TextResponse(dto?.TextSections ?? new List<string>());
+            }
+            else if (root.TryGetProperty("Evaluations", out _))
+            {
+                var dto = JsonSerializer.Deserialize<AssessmentResponseDto>(answerJson);
+                var evaluations = dto?.Evaluations?.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => new EvaluationRating(kvp.Value.Rating, kvp.Value.Comment ?? string.Empty)
+                ) ?? new Dictionary<string, EvaluationRating>();
+                return new QuestionResponseValue.AssessmentResponse(evaluations);
+            }
+            else if (root.TryGetProperty("Goals", out _))
+            {
+                var dto = JsonSerializer.Deserialize<GoalResponseDto>(answerJson);
+                var goals = dto?.Goals?.Select(g => new GoalData(
+                    g.GoalId,
+                    g.ObjectiveDescription,
+                    g.TimeframeFrom,
+                    g.TimeframeTo,
+                    g.MeasurementMetric,
+                    g.WeightingPercentage,
+                    (DomainApplicationRole)(int)g.AddedByRole
+                )).ToList() ?? new List<GoalData>();
+
+                var predecessorRatings = dto?.PredecessorRatings?.Select(pr => new PredecessorRating(
+                    pr.SourceGoalId,
+                    pr.DegreeOfAchievement,
+                    pr.Justification ?? string.Empty,
+                    (DomainApplicationRole)(int)pr.RatedByRole,
+                    pr.OriginalObjective,
+                    (DomainApplicationRole)(int)pr.OriginalAddedByRole
+                )).ToList() ?? new List<PredecessorRating>();
+
+                return new QuestionResponseValue.GoalResponse(goals, predecessorRatings, dto?.PredecessorAssignmentId);
+            }
+            else
+            {
+                // Fallback for unrecognized JSON structure
+                return new QuestionResponseValue.TextResponse(new[] { answerJson });
+            }
+        }
+        catch (JsonException)
+        {
+            // Fallback for invalid JSON
+            return new QuestionResponseValue.TextResponse(new[] { answerJson });
+        }
     }
 
     private List<GoalData> MapGoalsToDomain(IEnumerable<GoalDataDto> dtos)

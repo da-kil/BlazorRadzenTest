@@ -1,10 +1,8 @@
 using Microsoft.Extensions.Logging;
 using ti8m.BeachBreak.Application.Command.Mappers;
-using ti8m.BeachBreak.Application.Command.Repositories;
 using ti8m.BeachBreak.Application.Command.Models;
+using ti8m.BeachBreak.Application.Command.Repositories;
 using ti8m.BeachBreak.Core.Domain;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
-using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 
 namespace ti8m.BeachBreak.Application.Command.Commands.QuestionnaireAssignmentCommands;
 
@@ -43,7 +41,7 @@ public class EditAnswerDuringReviewCommandHandler
                 command.SectionId,
                 command.QuestionId,
                 ApplicationRoleMapper.MapToDomain(command.OriginalCompletionRole),
-                command.Answer,
+                command.AnswerJson,
                 command.EditedByEmployeeId);
             await repository.StoreAsync(assignment, cancellationToken);
 
@@ -58,52 +56,8 @@ public class EditAnswerDuringReviewCommandHandler
             // Map ApplicationRole to CompletionRole for compatibility with Response aggregate
             var completionRole = command.OriginalCompletionRole == ApplicationRole.Employee ? CompletionRole.Employee : CompletionRole.Manager;
 
-            // Parse the answer - frontend sends QuestionResponseValue as JSON
-            QuestionResponseValue? convertedResponse = null;
-
-            // Deserialize QuestionResponseValue directly from JSON
-            if (command.Answer is string answerString && answerString.TrimStart().StartsWith("{"))
-            {
-                try
-                {
-                    // Directly deserialize the type-safe QuestionResponseValue from JSON
-                    convertedResponse = System.Text.Json.JsonSerializer.Deserialize<QuestionResponseValue>(answerString);
-
-                    // TODO: Add audit metadata for edit tracking if needed
-                    // This could be handled by adding metadata to the domain event instead
-                }
-                catch (System.Text.Json.JsonException jsonEx)
-                {
-                    logger.LogWarning(jsonEx,
-                        "Failed to deserialize QuestionResponseValue JSON for assignment {AssignmentId}, question {QuestionId}. Attempting text fallback.",
-                        command.AssignmentId, command.QuestionId);
-
-                    // Fallback - create a simple TextResponse from the string
-                    convertedResponse = new QuestionResponseValue.TextResponse(new[] { answerString });
-                }
-            }
-            else if (command.Answer is string textAnswer)
-            {
-                // Handle simple text answers
-                convertedResponse = new QuestionResponseValue.TextResponse(new[] { textAnswer });
-            }
-            else
-            {
-                logger.LogWarning("Unsupported answer format for assignment {AssignmentId}, question {QuestionId}. Answer type: {Type}",
-                    command.AssignmentId, command.QuestionId, command.Answer?.GetType()?.Name ?? "null");
-                return Result.Fail("Unsupported answer format", 400);
-            }
-
-            // Update or add the section answer if conversion was successful
-            if (convertedResponse == null)
-            {
-                logger.LogWarning("Failed to convert answer for assignment {AssignmentId}, section {SectionId}. Answer will be skipped.",
-                    command.AssignmentId, command.SectionId);
-                return Result.Fail("Unable to convert answer to the required format", 400);
-            }
-
-            // Record the updated section response
-            response.RecordSectionResponse(command.SectionId, completionRole, convertedResponse);
+            // Record the updated section response (Answer is already a domain object)
+            response.RecordSectionResponse(command.SectionId, completionRole, command.Answer);
             await responseRepository.StoreAsync(response, cancellationToken);
 
             logger.LogInformation("Successfully edited answer during review for assignment {AssignmentId}", command.AssignmentId);

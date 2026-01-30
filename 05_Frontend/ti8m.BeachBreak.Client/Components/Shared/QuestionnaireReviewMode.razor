@@ -442,7 +442,7 @@ else
 
         var parameters = new Dictionary<string, object>
         {
-            { "Section", section },
+            { "Question", section },
             { "CurrentAnswer", currentAnswer },
             { "CompletionRole", originalRole },
             { "SectionTitle", section.GetLocalizedTitleWithFallback(CurrentLanguage) },
@@ -474,8 +474,22 @@ else
         try
         {
             // NOTE: questionResponse.QuestionId IS the sectionId (Section IS the question)
-            // Serialize the complete QuestionResponse to JSON
-            string answerJson = System.Text.Json.JsonSerializer.Serialize(questionResponse);
+            // Validate ResponseData before serialization
+            if (questionResponse.ResponseData == null)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "No response data to save");
+                return;
+            }
+
+            // Serialize only the ResponseData (QuestionResponseDataDto) to JSON
+            var jsonOptions = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = null, // PascalCase
+                PropertyNameCaseInsensitive = false,
+                Converters = { new ti8m.BeachBreak.Client.Converters.QuestionResponseDataDtoJsonConverter() }
+            };
+
+            string answerJson = System.Text.Json.JsonSerializer.Serialize(questionResponse.ResponseData, jsonOptions);
 
             var success = await AssignmentService.EditAnswerDuringReviewAsync(
                 Assignment.Id,
@@ -535,7 +549,7 @@ else
                 ResponseData = sourceAnswer as QuestionResponseDataDto
             };
 
-            await SaveEditedAnswer(section.Id, toRole, questionResponse);
+            await SaveEditedAnswer(section.Id, fromRole, questionResponse);
         }
     }
 
