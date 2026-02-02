@@ -1,6 +1,7 @@
 using ti8m.BeachBreak.Core.Domain;
 using ti8m.BeachBreak.Core.Domain.BuildingBlocks;
 using ti8m.BeachBreak.Core.Domain.QuestionConfiguration;
+using ti8m.BeachBreak.Domain.EmployeeAggregate;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.Events;
 using ti8m.BeachBreak.Domain.QuestionnaireResponseAggregate.ValueObjects;
 using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
@@ -62,6 +63,86 @@ public partial class QuestionnaireResponse : AggregateRoot
             role,
             sectionResponse,
             DateTime.UtcNow));
+    }
+
+    /// <summary>
+    /// Edits a specific goal while preserving other goals and predecessor ratings.
+    /// Follows DDD principle - the aggregate that owns the data handles the complexity.
+    /// </summary>
+    public void EditGoal(
+        Guid sectionId,
+        Guid goalId,
+        string objectiveDescription,
+        string measurementMetric,
+        DateTime timeframeFrom,
+        DateTime timeframeTo,
+        decimal weightingPercentage,
+        ApplicationRole originalCompletionRole,
+        Guid editedByEmployeeId)
+    {
+        // Map ApplicationRole to CompletionRole
+        var completionRole = originalCompletionRole == ApplicationRole.Employee
+            ? CompletionRole.Employee : CompletionRole.Manager;
+
+        // Create the updated goal data
+        var updatedGoal = new GoalData(
+            goalId,
+            objectiveDescription,
+            timeframeFrom,
+            timeframeTo,
+            measurementMetric,
+            weightingPercentage,
+            originalCompletionRole);
+
+        // Get existing response for this section and role
+        QuestionResponseValue? existingResponse = null;
+        if (SectionResponses.TryGetValue(sectionId, out var sectionResponses) &&
+            sectionResponses.TryGetValue(completionRole, out var roleResponse))
+        {
+            existingResponse = roleResponse;
+        }
+
+        if (existingResponse is QuestionResponseValue.GoalResponse existingGoalResponse)
+        {
+            // Preserve existing data and update/add the specific goal
+            var updatedGoals = existingGoalResponse.Goals
+                .Where(g => g.GoalId != goalId)  // Remove old version
+                .Append(updatedGoal)             // Add updated version
+                .ToList();
+
+            var updatedResponse = new QuestionResponseValue.GoalResponse(
+                Goals: updatedGoals,
+                PredecessorRatings: existingGoalResponse.PredecessorRatings, // Preserve!
+                PredecessorAssignmentId: existingGoalResponse.PredecessorAssignmentId
+            );
+
+            RecordSectionResponse(sectionId, completionRole, updatedResponse);
+        }
+        else
+        {
+            // No existing goal response, create new one
+            var newResponse = new QuestionResponseValue.GoalResponse(
+                Goals: new[] { updatedGoal },
+                PredecessorRatings: Array.Empty<PredecessorRating>()
+            );
+
+            RecordSectionResponse(sectionId, completionRole, newResponse);
+        }
+
+        // Raise goal-specific domain event for audit trail with complete data
+        RaiseEvent(new GoalEdited(
+            Id,
+            goalId,
+            sectionId,
+            originalCompletionRole,
+            // Include all the new goal data for event sourcing
+            objectiveDescription,
+            measurementMetric,
+            timeframeFrom,
+            timeframeTo,
+            weightingPercentage,
+            DateTime.UtcNow,
+            editedByEmployeeId));
     }
 
     /// <summary>
@@ -260,5 +341,12 @@ public partial class QuestionnaireResponse : AggregateRoot
         // Store response under the specific
         SectionResponses[@event.SectionId][@event.CompletionRole] = @event.SectionResponse;
         LastModified = @event.RecordedDate;
+    }
+
+    public void Apply(GoalEdited @event)
+    {
+        // Goal editing updates are handled through SectionResponseRecorded events
+        // This event is purely for audit trail and doesn't modify aggregate state
+        // LastModified is already updated by SectionResponseRecorded event
     }
 }

@@ -13,9 +13,8 @@ public static class GoalFormValidator
     /// <param name="measurementMetric">How the goal will be measured</param>
     /// <param name="timeframeFrom">Start date of the goal</param>
     /// <param name="timeframeTo">End date of the goal</param>
-    /// <param name="isInReviewMode">Whether the form is in review mode (requires weighting and reason)</param>
+    /// <param name="isInReviewMode">Whether the form is in review mode (requires weighting)</param>
     /// <param name="weightingPercentage">Optional weighting percentage (required in review mode)</param>
-    /// <param name="changeReason">Optional change reason (required in review mode)</param>
     /// <returns>List of validation error messages (empty if valid)</returns>
     public static List<string> ValidateGoalDetails(
         string objectiveDescription,
@@ -23,8 +22,7 @@ public static class GoalFormValidator
         DateTime? timeframeFrom,
         DateTime? timeframeTo,
         bool isInReviewMode = false,
-        decimal? weightingPercentage = null,
-        string? changeReason = null)
+        decimal? weightingPercentage = null)
     {
         var errors = new List<string>();
 
@@ -64,7 +62,7 @@ public static class GoalFormValidator
             errors.Add("End date must be after start date");
         }
 
-        // InReview mode validation (weighting and change reason)
+        // InReview mode validation (weighting)
         if (isInReviewMode)
         {
             if (!weightingPercentage.HasValue || weightingPercentage.Value <= 0)
@@ -75,15 +73,6 @@ public static class GoalFormValidator
             if (weightingPercentage.HasValue && weightingPercentage.Value > 100)
             {
                 errors.Add("Weighting percentage cannot exceed 100%");
-            }
-
-            if (string.IsNullOrWhiteSpace(changeReason))
-            {
-                errors.Add("Reason for change is required");
-            }
-            else if (changeReason.Length < 5)
-            {
-                errors.Add("Reason for change must be at least 10 characters");
             }
         }
 

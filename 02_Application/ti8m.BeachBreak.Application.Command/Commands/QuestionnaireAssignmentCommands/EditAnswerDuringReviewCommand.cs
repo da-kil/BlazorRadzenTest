@@ -10,4 +10,5 @@ public record EditAnswerDuringReviewCommand(
     ApplicationRole OriginalCompletionRole,
     string AnswerJson,
     QuestionResponseValue Answer,
-    Guid EditedByEmployeeId) : ICommand<Result>;
+    Guid EditedByEmployeeId
+) : ICommand<Result>;

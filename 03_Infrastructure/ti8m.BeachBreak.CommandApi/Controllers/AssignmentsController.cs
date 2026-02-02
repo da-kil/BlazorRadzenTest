@@ -412,6 +412,56 @@ public class AssignmentsController : BaseController
         return CreateResponse(result);
     }
 
+
+    /// <summary>
+    /// Edit individual goal during review using RESTful approach.
+    /// Updates only the specific goal identified by goalId using dedicated goal command.
+    /// </summary>
+    [HttpPut("{assignmentId}/goals/{goalId}")]
+    [Authorize(Policy = "TeamLead")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EditGoal(Guid assignmentId, Guid goalId, [FromBody] EditGoalDto editDto)
+    {
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+
+        if (!Enum.TryParse<ApplicationRole>(editDto.OriginalCompletionRole, out var commandRole))
+        {
+            return CreateResponse(Result.Fail($"Invalid ApplicationRole value: '{editDto.OriginalCompletionRole}'", 400));
+        }
+
+        // Get user ID from authenticated user context
+        if (!userContext.TryGetUserId(out var userId, out var errorMessage))
+        {
+            logger.LogWarning("EditGoal failed for assignment {AssignmentId}, goal {GoalId}: {ErrorMessage}",
+                assignmentId, goalId, errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
+        }
+
+        // Use dedicated goal editing command
+        var command = new EditGoalDuringReviewCommand(
+            assignmentId,
+            goalId,
+            editDto.SectionId,
+            editDto.QuestionId,
+            commandRole,
+            editDto.ObjectiveDescription,
+            editDto.MeasurementMetric,
+            editDto.TimeframeFrom,
+            editDto.TimeframeTo,
+            editDto.WeightingPercentage,
+            userId
+        );
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
+    }
+
+
     // Refined review workflow endpoints
     /// <summary>
     /// Manager finishes the review meeting.

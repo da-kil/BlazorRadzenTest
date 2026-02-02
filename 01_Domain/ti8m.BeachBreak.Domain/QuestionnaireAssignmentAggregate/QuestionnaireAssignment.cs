@@ -432,6 +432,35 @@ public partial class QuestionnaireAssignment : AggregateRoot
         ));
     }
 
+    /// <summary>
+    /// Edits a specific goal during the review process.
+    /// Dedicated method for goal editing separate from generic answer editing.
+    /// </summary>
+    public void EditGoalAsManagerDuringReview(
+        Guid sectionId,
+        Guid questionId,
+        ApplicationRole originalCompletionRole,
+        Guid goalId,
+        Guid editedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot edit goal - questionnaire is finalized");
+
+        if (WorkflowState != WorkflowState.InReview)
+            throw new InvalidOperationException("Goals can only be edited during review meeting");
+
+        RaiseEvent(new Events.ManagerEditedGoalDuringReview(
+            Id,
+            goalId,
+            sectionId,
+            questionId,
+            originalCompletionRole,
+            DateTime.UtcNow,
+            editedByEmployeeId
+        ));
+    }
+
+
     public void FinishReviewMeeting(Guid finishedByEmployeeId, string? reviewSummary)
     {
         if (IsLocked)

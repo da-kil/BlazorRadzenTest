@@ -43,23 +43,6 @@
                 </ChildContent>
             </RadzenFieldset>
 
-            <RadzenFieldset>
-                <HeaderTemplate>
-                    <RadzenIcon Icon="edit_note" Class="me-2" />
-                    <span class="fw-bold">@T("forms.reason-for-change-required")</span>
-                </HeaderTemplate>
-                <ChildContent>
-                    <RadzenTextArea @bind-Value="@changeReason"
-                                  Name="changeReason"
-                                  Placeholder="@T("forms.explain-goal-modification")"
-                                  Rows="2"
-                                  Class="w-100"
-                                  MaxLength="500" />
-                    <RadzenText TextStyle="TextStyle.Caption" Class="text-muted">
-                        @changeReason.Length / 500 @T("forms.characters")
-                    </RadzenText>
-                </ChildContent>
-            </RadzenFieldset>
         }
 
         <div class="d-flex justify-content-end gap-2 mt-3">
@@ -98,7 +81,6 @@
     private DateTime? timeframeFrom = DateTime.Today;
     private DateTime? timeframeTo = DateTime.Today.AddMonths(6);
     private decimal weightingPercentage = 0;
-    private string changeReason = "";
 
     private List<string> validationErrors = new();
     private bool isSubmitting = false;
@@ -121,8 +103,7 @@
             timeframeFrom,
             timeframeTo,
             IsInReviewMode,
-            weightingPercentage,
-            changeReason);
+            weightingPercentage);
 
         return !validationErrors.Any();
     }
@@ -143,9 +124,8 @@
             MeasurementMetric = measurementMetric.Trim(),
             TimeframeFrom = timeframeFrom!.Value,
             TimeframeTo = timeframeTo!.Value,
-            // Only include weighting and change reason when in review mode
-            WeightingPercentage = IsInReviewMode ? weightingPercentage : null,
-            ChangeReason = IsInReviewMode ? changeReason.Trim() : null
+            // Only include weighting when in review mode
+            WeightingPercentage = IsInReviewMode ? weightingPercentage : null
         };
 
         // Return tuple (GoalId, DTO)

@@ -10,8 +10,8 @@
 @inject GoalService GoalService
 @inject IGoalApiService GoalApiService
 @inject DialogService DialogService
-@inject NotificationService NotificationService
 @inject IAuthService AuthService
+@inject IQuestionnaireAssignmentService AssignmentService
 @inherits OptimizedTranslatableComponentBase
 
 <div class="new-goals-section">
@@ -474,6 +474,9 @@
             var goalIndex = allCurrentGoals.IndexOf(goal);
             if (goalIndex >= 0)
             {
+                // Keep existing modifications (if any)
+                var updatedModifications = new List<GoalModificationDto>(goal.Modifications);
+
                 // Create an updated copy to ensure UI recognizes changes
                 var updatedGoal = new GoalWithState
                 {
@@ -487,7 +490,7 @@
                     WeightingPercentage = modifyDto.WeightingPercentage ?? goal.WeightingPercentage,
                     AddedAt = goal.AddedAt,
                     AddedByEmployeeId = goal.AddedByEmployeeId,
-                    Modifications = goal.Modifications,
+                    Modifications = updatedModifications,
 
                     // Preserve pending state
                     IsPendingAdd = goal.IsPendingAdd,
@@ -497,9 +500,17 @@
 
                 // Replace with updated copy
                 allCurrentGoals[goalIndex] = updatedGoal;
+
+                // In review mode, save immediately to backend
+                if (AssignmentWorkflowState == WorkflowState.InReview)
+                {
+                    SaveGoalsToResponse(); // Update local data first
+                    await SaveSingleGoalEdit(updatedGoal, modifyDto);
+                    return; // Skip the batched save notifications
+                }
             }
 
-            // Save changes back to Response
+            // Save changes back to Response (for non-review modes)
             SaveGoalsToResponse();
             _goalCountChanged = true;
             await NotifyResponseChanged();
@@ -826,5 +837,132 @@
             // In-progress phases: Always Employee (since it's the employee's goals)
             _ => ApplicationRole.Employee
         };
+    }
+
+    /// <summary>
+    /// Saves single goal edit to backend using RESTful approach.
+    /// Edits only the specific goal that was changed.
+    /// </summary>
+    private async Task SaveSingleGoalEdit(GoalWithState updatedGoal, ModifyGoalDto modifyDto)
+    {
+        try
+        {
+            // Convert CompletionRole to ApplicationRole for backend API
+            string applicationRole = CompletionRole.Employee switch
+            {
+                CompletionRole.Employee => "Employee",
+                CompletionRole.Manager => "TeamLead",
+                _ => "Employee"
+            };
+
+            var editDto = new EditGoalDto
+            {
+                SectionId = Section.Id,
+                QuestionId = updatedGoal.QuestionId,
+                OriginalCompletionRole = applicationRole,
+                ObjectiveDescription = updatedGoal.ObjectiveDescription,
+                MeasurementMetric = updatedGoal.MeasurementMetric,
+                TimeframeFrom = updatedGoal.TimeframeFrom,
+                TimeframeTo = updatedGoal.TimeframeTo,
+                WeightingPercentage = updatedGoal.WeightingPercentage
+            };
+
+            // Call new RESTful endpoint - edits only this specific goal
+            var success = await AssignmentService.EditGoalAsync(AssignmentId, updatedGoal.Id, editDto);
+
+            if (success)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Saved", "Goal updated successfully");
+                // Don't call NotifyResponseChanged() here to avoid triggering reloads that could cause duplication
+                // The local state is already updated and the backend is already saved
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to save goal changes");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error saving goal: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Saves goal edit to backend immediately during review mode.
+    /// Uses the same EditAnswerDuringReview API as other review edits.
+    /// DEPRECATED: Use SaveSingleGoalEdit for RESTful approach
+    /// </summary>
+    private async Task SaveGoalEditToBackend(Guid questionId)
+    {
+        try
+        {
+            // Get the current goal data from Response
+            if (Response.ResponseData is not GoalResponseDataDto goalData)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "No goal data to save");
+                return;
+            }
+
+            // Create enhanced goal data with modifications for review edits
+            var reviewGoalData = new
+            {
+                Goals = allCurrentGoals.Select(goal => new
+                {
+                    GoalId = goal.Id,
+                    ObjectiveDescription = goal.ObjectiveDescription,
+                    TimeframeFrom = goal.TimeframeFrom,
+                    TimeframeTo = goal.TimeframeTo,
+                    MeasurementMetric = goal.MeasurementMetric,
+                    WeightingPercentage = goal.WeightingPercentage,
+                    AddedByRole = goal.AddedByRole,
+                    Modifications = goal.Modifications // Include the modifications with "Reason for Change"
+                }).ToList(),
+                PredecessorRatings = goalData.PredecessorRatings,
+                PredecessorAssignmentId = goalData.PredecessorAssignmentId
+            };
+
+            // Serialize enhanced goal data to JSON
+            var jsonOptions = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNamingPolicy = null, // PascalCase
+                PropertyNameCaseInsensitive = false
+            };
+
+            string goalJson = System.Text.Json.JsonSerializer.Serialize(reviewGoalData, jsonOptions);
+
+            // Determine original completion role - goals are typically added by Employee initially
+            var originalRole = CompletionRole.Employee; // Goals start as employee responses
+
+            // Call the same API used for other review edits
+            var success = await AuthService.GetMyRoleAsync().ContinueWith(async userTask =>
+            {
+                var userRole = await userTask;
+                var currentUserName = userRole?.EmployeeId.ToString() ?? "Unknown";
+
+                return await AssignmentService.EditGoalDuringReviewAsync(
+                    AssignmentId,
+                    Section.Id, // sectionId
+                    questionId,
+                    originalRole,
+                    goalJson,
+                    currentUserName
+                );
+            }).Unwrap();
+
+            if (success)
+            {
+                NotificationService.Notify(NotificationSeverity.Success, "Saved", "Goal updated successfully");
+                // Don't call NotifyResponseChanged() here to avoid triggering reloads that could cause duplication
+                // The local state is already updated and the backend is already saved
+            }
+            else
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Error", "Failed to save goal changes");
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Error", $"Error saving goal: {ex.Message}");
+        }
     }
 }

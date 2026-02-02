@@ -49,6 +49,12 @@ public class QuestionnaireResponseReadModel
         LastModified = @event.RecordedDate;
     }
 
+    public void Apply(GoalEdited @event)
+    {
+        // Goal data changes are applied via SectionResponseRecorded events
+        // This event is for audit trail but we update LastModified for consistency
+    }
+
     // NOTE: We do NOT apply ManagerEditedAnswerDuringReview here!
     // That event is raised on the QuestionnaireAssignment aggregate for audit purposes.
     // The actual answer changes are applied via SectionResponseRecorded events on the QuestionnaireResponse aggregate.

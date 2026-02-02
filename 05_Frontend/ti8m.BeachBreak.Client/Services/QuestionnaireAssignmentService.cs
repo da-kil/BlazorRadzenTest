@@ -377,6 +377,62 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
         }
     }
 
+    public async Task<bool> EditGoalDuringReviewAsync(Guid assignmentId, Guid sectionId, Guid questionId, CompletionRole originalCompletionRole, string goalJson, string editedBy)
+    {
+        try
+        {
+            // Convert CompletionRole to ApplicationRole for backend API
+            string applicationRole = originalCompletionRole switch
+            {
+                CompletionRole.Employee => "Employee",
+                CompletionRole.Manager => "TeamLead", // Map Manager to a valid ApplicationRole
+                _ => "Employee"
+            };
+
+            var dto = new EditAnswerDto
+            {
+                SectionId = sectionId,
+                QuestionId = questionId,
+                OriginalCompletionRole = applicationRole,
+                Answer = goalJson // Goal JSON with modifications
+            };
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/edit-goal", dto);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error editing goal during review for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Edit individual goal during review using RESTful approach.
+    /// Updates only the specific goal identified by goalId.
+    /// </summary>
+    public async Task<bool> EditGoalAsync(Guid assignmentId, Guid goalId, EditGoalDto editDto)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PutAsJsonAsync(
+                $"{AssignmentCommandEndpoint}/{assignmentId}/goals/{goalId}",
+                editDto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"EditGoal failed for assignment {assignmentId}, goal {goalId}: {response.StatusCode} - {errorContent}", null);
+            }
+
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error editing goal {goalId} for assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
     public async Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy, string? comments)
     {
         try

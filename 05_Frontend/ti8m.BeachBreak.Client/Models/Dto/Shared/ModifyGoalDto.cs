@@ -11,5 +11,4 @@ public class ModifyGoalDto
     public DateTime? TimeframeFrom { get; set; }
     public DateTime? TimeframeTo { get; set; }
     public decimal? WeightingPercentage { get; set; }
-    public string? ChangeReason { get; set; }
 }

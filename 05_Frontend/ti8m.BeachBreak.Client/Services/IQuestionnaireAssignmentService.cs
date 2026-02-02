@@ -40,6 +40,8 @@ public interface IQuestionnaireAssignmentService
     Task<bool> InitiateReviewAsync(Guid assignmentId, string initiatedBy);
     Task<bool> FinishReviewMeetingAsync(Guid assignmentId, string finishedBy, string? reviewSummary);
     Task<bool> EditAnswerDuringReviewAsync(Guid assignmentId, Guid sectionId, Guid questionId, CompletionRole originalCompletionRole, string answer, string editedBy);
+    Task<bool> EditGoalDuringReviewAsync(Guid assignmentId, Guid sectionId, Guid questionId, CompletionRole originalCompletionRole, string goalJson, string editedBy);
+    Task<bool> EditGoalAsync(Guid assignmentId, Guid goalId, EditGoalDto editDto);
     Task<bool> ConfirmEmployeeReviewAsync(Guid assignmentId, string confirmedBy, string? comments);
     Task<bool> FinalizeQuestionnaireAsync(Guid assignmentId, string finalizedBy, string? finalNotes);
 
