@@ -1,0 +1,246 @@
+# =========================================
+# BeachBreak - Production Environment
+# =========================================
+
+global:
+  imageRegistry: "your-registry.azurecr.io"
+  imageRepository: "beachbreak"
+  imageTag: "latest"  # Will be overridden by deployment script
+  imagePullPolicy: IfNotPresent
+
+  # Azure AD Configuration (Production)
+  azureAd:
+    instance: "https://login.microsoftonline.com/"
+    domain: "your-prod-domain.onmicrosoft.com"
+    tenantId: "your-prod-tenant-id"
+    clientId: "your-prod-client-id"
+    clientSecret: "your-prod-client-secret"  # Should be injected via external secret
+    audience: "api://your-prod-client-id"
+    scope: "api://your-prod-client-id/.default"
+
+  # Database Configuration (Production - External managed database)
+  database:
+    host: "beachbreak-postgres.postgres.database.azure.com"
+    port: 5432
+    name: "beachbreakdb"
+    username: "beachbreak@beachbreak-postgres"
+    password: "production-secure-password"  # Should be injected via external secret
+
+# PostgreSQL (Disabled in production - use managed service)
+postgresql:
+  enabled: false
+
+# Command API (Production settings)
+commandapi:
+  enabled: true
+  replicaCount: 3  # High availability
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  healthChecks:
+    enabled: true
+    livenessProbe:
+      initialDelaySeconds: 60
+      periodSeconds: 30
+    readinessProbe:
+      initialDelaySeconds: 30
+      periodSeconds: 10
+
+# Query API (Production settings)
+queryapi:
+  enabled: true
+  replicaCount: 5  # More replicas for read-heavy workload
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 30
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 70
+
+# Frontend (Production settings)
+frontend:
+  enabled: true
+  replicaCount: 3
+
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 70
+
+  sessionAffinity:
+    enabled: true
+    type: ClientIP
+    timeoutSeconds: 10800  # 3 hours
+
+# Ingress (Production with SSL)
+ingress:
+  enabled: true
+  className: "nginx"
+
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/rate-limit: "1000"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+
+  hosts:
+    - host: beachbreak.yourdomain.com
+      paths:
+        - path: /()(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-frontend
+            port: 80
+        - path: /(c)(/|$)(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-commandapi
+            port: 80
+        - path: /(q)(/|$)(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-queryapi
+            port: 80
+
+  tls:
+    - secretName: beachbreak-tls
+      hosts:
+        - beachbreak.yourdomain.com
+
+# RBAC (Enabled in production)
+rbac:
+  create: true
+
+# Security
+podSecurityPolicy:
+  enabled: true
+
+# Monitoring (Full monitoring in production)
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  interval: 30s
+
+prometheusRule:
+  enabled: true
+  namespace: monitoring
+  rules:
+    - alert: BeachBreakHighErrorRate
+      expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "BeachBreak high error rate"
+        description: "BeachBreak is experiencing high error rate"
+
+    - alert: BeachBreakHighLatency
+      expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+      for: 10m
+      labels:
+        severity: warning
+      annotations:
+        summary: "BeachBreak high latency"
+        description: "BeachBreak 95th percentile latency is above 2s"
+
+    - alert: BeachBreakDatabaseConnections
+      expr: pg_stat_activity_count{datname="beachbreakdb"} > 90
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "BeachBreak high database connections"
+        description: "BeachBreak database connection count is high"
+
+grafanaDashboard:
+  enabled: true
+  namespace: monitoring
+
+# Network Policy (Strict in production)
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080
+
+  egress:
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 53    # DNS
+        - protocol: UDP
+          port: 53    # DNS
+        - protocol: TCP
+          port: 443   # HTTPS (Azure AD, etc.)
+
+# Pod Disruption Budget (Critical in production)
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Node affinity (Spread across availability zones)
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values: ["beachbreak"]
+          topologyKey: topology.kubernetes.io/zone
+
+# Resource quotas
+resourceQuota:
+  enabled: true
+  hard:
+    requests.cpu: "10"
+    requests.memory: "20Gi"
+    limits.cpu: "20"
+    limits.memory: "40Gi"

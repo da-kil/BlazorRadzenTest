@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "beachbreak-frontend.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "beachbreak-frontend.labels" . | nindent 4 }}
+  {{- if .Values.metrics.enabled }}
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.service.port }}"
+    prometheus.io/path: "{{ .Values.metrics.path }}"
+  {{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  {{- if .Values.sessionAffinity.enabled }}
+  sessionAffinity: {{ .Values.sessionAffinity.type }}
+  {{- if eq .Values.sessionAffinity.type "ClientIP" }}
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: {{ .Values.sessionAffinity.timeoutSeconds }}
+  {{- end }}
+  {{- end }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.name }}
+      protocol: TCP
+      name: {{ .Values.service.name }}
+  selector:
+    {{- include "beachbreak-frontend.selectorLabels" . | nindent 4 }}

@@ -1,0 +1,152 @@
+# =========================================
+# BeachBreak - Development Environment
+# =========================================
+
+global:
+  imageRegistry: "your-registry.azurecr.io"
+  imageRepository: "beachbreak"
+  imageTag: "dev"
+  imagePullPolicy: Always
+
+  # Azure AD Configuration (Development)
+  azureAd:
+    instance: "https://login.microsoftonline.com/"
+    domain: "your-dev-domain.onmicrosoft.com"
+    tenantId: "your-dev-tenant-id"
+    clientId: "your-dev-client-id"
+    clientSecret: "your-dev-client-secret"
+    audience: "api://your-dev-client-id"
+    scope: "api://your-dev-client-id/.default"
+
+  # Database Configuration (Development)
+  database:
+    host: "beachbreak-postgresql"
+    port: 5432
+    name: "beachbreakdb"
+    username: "beachbreak"
+    password: "dev-password-123"
+
+# PostgreSQL (Embedded for development)
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "postgres-dev-123"
+    username: "beachbreak"
+    password: "dev-password-123"
+    database: "beachbreakdb"
+
+  primary:
+    persistence:
+      enabled: true
+      size: 10Gi
+
+  metrics:
+    enabled: false  # Disable metrics in dev
+
+# Command API (Development settings)
+commandapi:
+  enabled: true
+  replicaCount: 1  # Single replica for development
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+  autoscaling:
+    enabled: false  # Disable autoscaling in dev
+
+  healthChecks:
+    livenessProbe:
+      initialDelaySeconds: 30
+    readinessProbe:
+      initialDelaySeconds: 15
+
+# Query API (Development settings)
+queryapi:
+  enabled: true
+  replicaCount: 1  # Single replica for development
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+  autoscaling:
+    enabled: false  # Disable autoscaling in dev
+
+# Frontend (Development settings)
+frontend:
+  enabled: true
+  replicaCount: 1  # Single replica for development
+
+  resources:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "250m"
+
+  autoscaling:
+    enabled: false  # Disable autoscaling in dev
+
+  sessionAffinity:
+    enabled: false  # Not needed with single replica
+
+# Ingress (Development)
+ingress:
+  enabled: true
+  className: "nginx"
+
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # No SSL for development
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+
+  hosts:
+    - host: beachbreak-dev.local
+      paths:
+        - path: /()(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-frontend
+            port: 80
+        - path: /(c)(/|$)(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-commandapi
+            port: 80
+        - path: /(q)(/|$)(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-queryapi
+            port: 80
+
+  # No TLS for development
+  tls: []
+
+# Monitoring (Disabled in development)
+serviceMonitor:
+  enabled: false
+
+prometheusRule:
+  enabled: false
+
+grafanaDashboard:
+  enabled: false
+
+# Network Policy (Relaxed for development)
+networkPolicy:
+  enabled: false
+
+# Pod Disruption Budget (Disabled in development)
+podDisruptionBudget:
+  enabled: false

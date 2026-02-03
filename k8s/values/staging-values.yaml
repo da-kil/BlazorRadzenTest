@@ -1,0 +1,151 @@
+# =========================================
+# BeachBreak - Staging Environment
+# =========================================
+
+global:
+  imageRegistry: "your-registry.azurecr.io"
+  imageRepository: "beachbreak"
+  imageTag: "staging"
+  imagePullPolicy: Always
+
+  # Azure AD Configuration (Staging)
+  azureAd:
+    instance: "https://login.microsoftonline.com/"
+    domain: "your-staging-domain.onmicrosoft.com"
+    tenantId: "your-staging-tenant-id"
+    clientId: "your-staging-client-id"
+    clientSecret: "your-staging-client-secret"
+    audience: "api://your-staging-client-id"
+    scope: "api://your-staging-client-id/.default"
+
+  # Database Configuration (Staging - managed service)
+  database:
+    host: "beachbreak-staging-postgres.postgres.database.azure.com"
+    port: 5432
+    name: "beachbreakdb"
+    username: "beachbreak@beachbreak-staging-postgres"
+    password: "staging-secure-password"
+
+# PostgreSQL (Disabled in staging - use managed service)
+postgresql:
+  enabled: false
+
+# Command API (Staging settings - production-like but smaller)
+commandapi:
+  enabled: true
+  replicaCount: 2
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# Query API (Staging settings)
+queryapi:
+  enabled: true
+  replicaCount: 2
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+# Frontend (Staging settings)
+frontend:
+  enabled: true
+  replicaCount: 2
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+
+  sessionAffinity:
+    enabled: true
+    type: ClientIP
+    timeoutSeconds: 7200  # 2 hours
+
+# Ingress (Staging with SSL)
+ingress:
+  enabled: true
+  className: "nginx"
+
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+
+  hosts:
+    - host: beachbreak-staging.yourdomain.com
+      paths:
+        - path: /()(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-frontend
+            port: 80
+        - path: /(c)(/|$)(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-commandapi
+            port: 80
+        - path: /(q)(/|$)(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-queryapi
+            port: 80
+
+  tls:
+    - secretName: beachbreak-staging-tls
+      hosts:
+        - beachbreak-staging.yourdomain.com
+
+# Monitoring (Enabled in staging)
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+
+prometheusRule:
+  enabled: true
+  namespace: monitoring
+
+grafanaDashboard:
+  enabled: true
+  namespace: monitoring
+
+# Security (Enabled but less restrictive than production)
+rbac:
+  create: true
+
+networkPolicy:
+  enabled: true
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

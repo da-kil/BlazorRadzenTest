@@ -1,0 +1,61 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "beachbreak.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "beachbreak.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "beachbreak.selectorLabels" . | nindent 6 }}
+
+  policyTypes:
+    - Ingress
+    - Egress
+
+  ingress:
+    # Allow traffic from ingress controller
+    {{- range .Values.networkPolicy.ingress }}
+    - {{- toYaml . | nindent 6 }}
+    {{- end }}
+
+    # Allow inter-service communication within namespace
+    - from:
+      - namespaceSelector:
+          matchLabels:
+            name: {{ .Release.Namespace }}
+      ports:
+      - protocol: TCP
+        port: 8080
+
+  egress:
+    # Allow DNS resolution
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 53
+      - protocol: UDP
+        port: 53
+
+    # Allow outbound connections defined in values
+    {{- range .Values.networkPolicy.egress }}
+    - {{- toYaml . | nindent 6 }}
+    {{- end }}
+
+    # Allow connection to database
+    - to:
+      - podSelector:
+          matchLabels:
+            app.kubernetes.io/name: postgresql
+      ports:
+      - protocol: TCP
+        port: 5432
+
+    # Allow HTTPS for external services (Azure AD, etc.)
+    - to: []
+      ports:
+      - protocol: TCP
+        port: 443
+{{- end }}

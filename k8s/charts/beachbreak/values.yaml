@@ -1,0 +1,375 @@
+# =========================================
+# ti8m BeachBreak - Main Configuration
+# =========================================
+
+global:
+  # Container registry configuration
+  imageRegistry: ""
+  imageRepository: beachbreak
+  imageTag: "latest"
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets: []
+
+  # Azure Active Directory Configuration
+  azureAd:
+    instance: "https://login.microsoftonline.com/"
+    domain: "your-domain.onmicrosoft.com"
+    tenantId: "your-tenant-id"
+    clientId: "your-client-id"
+    clientSecret: "your-client-secret"
+    audience: "api://your-client-id"
+    scope: "api://your-client-id/.default"
+
+  # Database Configuration
+  database:
+    host: "beachbreak-postgresql"
+    port: 5432
+    name: "beachbreakdb"
+    username: "beachbreak"
+    password: "your-secure-password"
+
+  # Service Discovery (replaces Aspire in K8s)
+  serviceDiscovery:
+    commandApiService: "beachbreak-commandapi"
+    queryApiService: "beachbreak-queryapi"
+    commandApiPort: 80
+    queryApiPort: 80
+
+  # Security Configuration
+  security:
+    nonRootUser: 10001
+    fsGroup: 10001
+    runAsNonRoot: true
+
+  # Monitoring
+  monitoring:
+    enabled: true
+    namespace: monitoring
+
+# =========================================
+# PostgreSQL Database Configuration
+# =========================================
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "admin-password-change-me"
+    username: "beachbreak"
+    password: "your-secure-password"
+    database: "beachbreakdb"
+
+  architecture: standalone
+
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi
+      storageClass: ""
+
+    resources:
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+
+    # Initialize schemas for event sourcing
+    initdb:
+      scripts:
+        01-init-schemas.sql: |
+          CREATE SCHEMA IF NOT EXISTS events;
+          CREATE SCHEMA IF NOT EXISTS readmodels;
+          GRANT ALL PRIVILEGES ON SCHEMA events TO beachbreak;
+          GRANT ALL PRIVILEGES ON SCHEMA readmodels TO beachbreak;
+
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# =========================================
+# Command API Configuration
+# =========================================
+
+commandapi:
+  enabled: true
+
+  image:
+    repository: beachbreak/commandapi
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+
+  ingress:
+    enabled: false  # Controlled by main ingress
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  healthChecks:
+    enabled: true
+    livenessProbe:
+      httpGet:
+        path: /alive
+        port: 8080
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+# =========================================
+# Query API Configuration
+# =========================================
+
+queryapi:
+  enabled: true
+
+  image:
+    repository: beachbreak/queryapi
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+
+  ingress:
+    enabled: false  # Controlled by main ingress
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+  healthChecks:
+    enabled: true
+    livenessProbe:
+      httpGet:
+        path: /alive
+        port: 8080
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+# =========================================
+# Frontend Configuration
+# =========================================
+
+frontend:
+  enabled: true
+
+  image:
+    repository: beachbreak/frontend
+    tag: "latest"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 2
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+
+  ingress:
+    enabled: false  # Controlled by main ingress
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+  healthChecks:
+    enabled: true
+    livenessProbe:
+      httpGet:
+        path: /alive
+        port: 8080
+      initialDelaySeconds: 60
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
+    readinessProbe:
+      httpGet:
+        path: /health
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+# =========================================
+# Ingress Configuration (Main Entry Point)
+# =========================================
+
+ingress:
+  enabled: true
+  className: "nginx"
+
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+
+  hosts:
+    - host: beachbreak.yourdomain.com
+      paths:
+        - path: /()(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-frontend
+            port: 80
+        - path: /(c)(/|$)(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-commandapi
+            port: 80
+        - path: /(q)(/|$)(.*)
+          pathType: Prefix
+          backend:
+            service: beachbreak-queryapi
+            port: 80
+
+  tls:
+    - secretName: beachbreak-tls
+      hosts:
+        - beachbreak.yourdomain.com
+
+# =========================================
+# Security & RBAC Configuration
+# =========================================
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+rbac:
+  create: true
+  rules: []
+
+podSecurityPolicy:
+  enabled: false
+
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+  egress:
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 53    # DNS
+        - protocol: UDP
+          port: 53    # DNS
+
+# =========================================
+# Monitoring & Observability
+# =========================================
+
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  interval: 30s
+  path: /metrics
+  labels:
+    app: beachbreak
+
+prometheusRule:
+  enabled: true
+  namespace: monitoring
+  rules:
+    - alert: BeachBreakHighErrorRate
+      expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High error rate detected"
+
+grafanaDashboard:
+  enabled: true
+  namespace: monitoring
+
+# =========================================
+# Additional Configuration
+# =========================================
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Node affinity (optional)
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Extra environment variables
+extraEnvVars: []
+extraEnvVarsCM: ""
+extraEnvVarsSecret: ""

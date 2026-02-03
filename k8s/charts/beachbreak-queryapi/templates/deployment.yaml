@@ -1,0 +1,181 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "beachbreak-queryapi.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "beachbreak-queryapi.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "beachbreak-queryapi.selectorLabels" . | nindent 6 }}
+  strategy:
+    {{- toYaml .Values.strategy | nindent 4 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "beachbreak-queryapi.labels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.global.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "beachbreak-queryapi.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+
+      {{- if .Values.initContainers }}
+      initContainers:
+        {{- toYaml .Values.initContainers | nindent 8 }}
+      {{- end }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "beachbreak-queryapi.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Values.service.name }}
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+
+          env:
+            # Basic ASP.NET Core configuration
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:{{ .Values.service.targetPort }}"
+
+            # Azure Active Directory Configuration
+            - name: AzureAd__Instance
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-beachbreak-config
+                  key: azure-ad-instance
+            - name: AzureAd__Domain
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Release.Name }}-beachbreak-config
+                  key: azure-ad-domain
+            - name: AzureAd__TenantId
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-beachbreak-secrets
+                  key: azure-ad-tenant-id
+            - name: AzureAd__ClientId
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-beachbreak-secrets
+                  key: azure-ad-client-id
+            - name: AzureAd__ClientSecret
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-beachbreak-secrets
+                  key: azure-ad-client-secret
+            - name: AzureAd__Audience
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-beachbreak-secrets
+                  key: azure-ad-audience
+            - name: AzureAd__Scope
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-beachbreak-secrets
+                  key: azure-ad-scope
+
+            # Database Connection
+            - name: ConnectionStrings__beachbreakdb
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Release.Name }}-beachbreak-secrets
+                  key: database-connection-string
+
+            # Additional environment variables
+            {{- range .Values.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+
+          {{- if .Values.envFromConfigMap }}
+          envFrom:
+            {{- range .Values.envFromConfigMap }}
+            - configMapRef:
+                name: {{ . }}
+            {{- end }}
+          {{- end }}
+
+          {{- if .Values.envFromSecret }}
+            {{- range .Values.envFromSecret }}
+            - secretRef:
+                name: {{ . }}
+            {{- end }}
+          {{- end }}
+
+          {{- if .Values.healthChecks.enabled }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe.httpGet | nindent 12 }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+          {{- end }}
+
+          livenessProbe:
+            {{- toYaml .Values.healthChecks.livenessProbe.httpGet | nindent 12 }}
+            initialDelaySeconds: {{ .Values.healthChecks.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.healthChecks.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.healthChecks.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.healthChecks.livenessProbe.failureThreshold }}
+
+          readinessProbe:
+            {{- toYaml .Values.healthChecks.readinessProbe.httpGet | nindent 12 }}
+            initialDelaySeconds: {{ .Values.healthChecks.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.healthChecks.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.healthChecks.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.healthChecks.readinessProbe.failureThreshold }}
+          {{- end }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          {{- if .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml .Values.volumeMounts | nindent 12 }}
+          {{- end }}
+
+        {{- if .Values.sidecars }}
+        {{- toYaml .Values.sidecars | nindent 8 }}
+        {{- end }}
+
+      {{- if .Values.volumes }}
+      volumes:
+        {{- toYaml .Values.volumes | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

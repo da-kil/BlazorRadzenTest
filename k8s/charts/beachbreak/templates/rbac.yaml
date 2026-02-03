@@ -1,0 +1,46 @@
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "beachbreak.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "beachbreak.labels" . | nindent 4 }}
+rules:
+  # Allow reading ConfigMaps and Secrets
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list"]
+
+  # Allow reading Services for service discovery
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list"]
+
+  # Allow reading Endpoints for service discovery
+  - apiGroups: [""]
+    resources: ["endpoints"]
+    verbs: ["get", "list"]
+
+  # Additional rules from values
+  {{- if .Values.rbac.rules }}
+  {{- toYaml .Values.rbac.rules | nindent 2 }}
+  {{- end }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "beachbreak.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "beachbreak.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "beachbreak.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "beachbreak.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}

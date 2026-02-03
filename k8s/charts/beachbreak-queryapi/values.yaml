@@ -1,0 +1,152 @@
+# =========================================
+# BeachBreak Query API Configuration
+# =========================================
+
+# Image configuration
+image:
+  repository: beachbreak/queryapi
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Deployment configuration
+replicaCount: 2
+nameOverride: ""
+fullnameOverride: ""
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+  name: http
+
+# Resource limits (Query API typically needs less resources)
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "250m"
+
+# Autoscaling (more aggressive scaling for read-heavy workloads)
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 15
+  targetCPUUtilizationPercentage: 60
+  targetMemoryUtilizationPercentage: 70
+
+# Health checks
+healthChecks:
+  enabled: true
+  livenessProbe:
+    httpGet:
+      path: /alive
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Security configuration
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  fsGroup: 10001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  fsGroup: 10001
+
+# Service account
+serviceAccount:
+  create: false
+  name: ""
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+# Pod labels
+podLabels:
+  app.kubernetes.io/component: query-api
+  app.kubernetes.io/part-of: beachbreak
+
+# Node selection
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Environment variables
+env: []
+
+# ConfigMap references
+envFromConfigMap: []
+
+# Secret references
+envFromSecret: []
+
+# Volume mounts
+volumeMounts: []
+
+# Volumes
+volumes: []
+
+# Init containers
+initContainers: []
+
+# Sidecar containers
+sidecars: []
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Ingress (disabled - controlled by main chart)
+ingress:
+  enabled: false
+
+# Metrics
+metrics:
+  enabled: true
+  port: 8080
+  path: /metrics
+
+# Probes startup configuration
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /alive
+    port: 8080
+  initialDelaySeconds: 20
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 20
+
+# Rolling update strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 50%  # More aggressive for read replicas
+
+# Termination grace period
+terminationGracePeriodSeconds: 30

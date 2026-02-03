@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "beachbreak.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "beachbreak.labels" . | nindent 4 }}
+data:
+  # Azure Active Directory Configuration (non-sensitive)
+  azure-ad-instance: {{ .Values.global.azureAd.instance | quote }}
+  azure-ad-domain: {{ .Values.global.azureAd.domain | quote }}
+
+  # Service Discovery Configuration
+  command-api-service: {{ .Values.global.serviceDiscovery.commandApiService | quote }}
+  query-api-service: {{ .Values.global.serviceDiscovery.queryApiService | quote }}
+  command-api-port: {{ .Values.global.serviceDiscovery.commandApiPort | quote }}
+  query-api-port: {{ .Values.global.serviceDiscovery.queryApiPort | quote }}
+
+  # Database Configuration (non-sensitive)
+  database-host: {{ .Values.global.database.host | quote }}
+  database-port: {{ .Values.global.database.port | quote }}
+  database-name: {{ .Values.global.database.name | quote }}
+  database-username: {{ .Values.global.database.username | quote }}
+
+  # Application Configuration
+  aspnetcore-environment: "Production"
+  aspnetcore-urls: "http://+:8080"
+
+  # CORS Configuration
+  cors-allowed-origins: "*"
+
+  # Logging Configuration
+  logging-level: "Information"
+  logging-console: "true"
+
+  # Health Check Configuration
+  health-check-path: "/health"
+  alive-check-path: "/alive"
+
+  # API Versioning
+  api-version: "v1"
+
+  # OpenTelemetry Configuration
+  otel-service-name: "beachbreak"
+  otel-service-version: {{ .Chart.AppVersion | quote }}

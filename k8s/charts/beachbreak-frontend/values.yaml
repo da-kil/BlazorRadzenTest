@@ -1,0 +1,175 @@
+# =========================================
+# BeachBreak Frontend Configuration
+# =========================================
+
+# Image configuration
+image:
+  repository: beachbreak/frontend
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+# Deployment configuration
+replicaCount: 2
+nameOverride: ""
+fullnameOverride: ""
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+  name: http
+
+# Resource limits
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# Autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Health checks
+healthChecks:
+  enabled: true
+  livenessProbe:
+    httpGet:
+      path: /alive
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 10
+    failureThreshold: 3
+
+# Security configuration
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  fsGroup: 10001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: false
+  capabilities:
+    drop:
+      - ALL
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  fsGroup: 10001
+
+# Service account
+serviceAccount:
+  create: false
+  name: ""
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+# Pod labels
+podLabels:
+  app.kubernetes.io/component: frontend
+  app.kubernetes.io/part-of: beachbreak
+
+# Node selection
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Frontend-specific environment variables
+env:
+  - name: ASPNETCORE_FORWARDEDHEADERS_ENABLED
+    value: "true"
+
+# ConfigMap references
+envFromConfigMap: []
+
+# Secret references
+envFromSecret: []
+
+# Volume mounts
+volumeMounts: []
+
+# Volumes
+volumes: []
+
+# Init containers
+initContainers: []
+
+# Sidecar containers
+sidecars: []
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# Ingress (disabled - controlled by main chart)
+ingress:
+  enabled: false
+
+# Metrics
+metrics:
+  enabled: true
+  port: 8080
+  path: /metrics
+
+# Probes startup configuration
+startupProbe:
+  enabled: true
+  httpGet:
+    path: /alive
+    port: 8080
+  initialDelaySeconds: 45
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 30
+
+# Rolling update strategy
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 25%
+    maxSurge: 25%
+
+# Termination grace period
+terminationGracePeriodSeconds: 30
+
+# Session affinity (important for Blazor Server)
+sessionAffinity:
+  enabled: true
+  type: ClientIP
+  timeoutSeconds: 10800  # 3 hours
+
+# OIDC Configuration (specific to frontend)
+oidc:
+  clientId: ""  # Will be set from global values
+  authority: ""  # Will be constructed from Azure AD config
+  scopes:
+    - "openid"
+    - "profile"
+    - "email"
+    - "api://your-client-id/.default"
+
+# API Discovery Configuration
+apiDiscovery:
+  commandApiUrl: ""  # Will be set from service discovery
+  queryApiUrl: ""    # Will be set from service discovery

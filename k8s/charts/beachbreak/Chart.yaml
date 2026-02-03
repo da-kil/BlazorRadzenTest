@@ -1,0 +1,50 @@
+apiVersion: v2
+name: beachbreak
+description: ti8m BeachBreak - CQRS Event Sourcing Questionnaire Management Application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+home: https://github.com/your-org/beachbreak
+maintainers:
+  - name: ti8m Development Team
+    email: dev@ti8m.ch
+
+dependencies:
+  - name: postgresql
+    version: "15.5.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+    tags:
+      - database
+
+  - name: beachbreak-commandapi
+    version: "1.0.0"
+    condition: commandapi.enabled
+    tags:
+      - api
+      - backend
+
+  - name: beachbreak-queryapi
+    version: "1.0.0"
+    condition: queryapi.enabled
+    tags:
+      - api
+      - backend
+
+  - name: beachbreak-frontend
+    version: "1.0.0"
+    condition: frontend.enabled
+    tags:
+      - frontend
+
+keywords:
+  - dotnet
+  - cqrs
+  - event-sourcing
+  - questionnaire
+  - blazor
+  - aspnetcore
+
+annotations:
+  category: Business Applications
+  licenses: Proprietary
