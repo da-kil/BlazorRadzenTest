@@ -170,13 +170,14 @@ public partial class QuestionnaireAssignment : AggregateRoot
     // Workflow state query methods (business rules)
     /// <summary>
     /// Determines if an employee can edit the questionnaire based on current workflow state.
-    /// Employee can edit when: EmployeeInProgress, ManagerInProgress, BothInProgress, ManagerSubmitted.
-    /// Employee is BLOCKED during: Assigned, Initialized (manager-only initialization phase), InReview (manager-led review meeting).
+    /// Employee can edit when: Initialized, EmployeeInProgress, ManagerInProgress, BothInProgress, ManagerSubmitted.
+    /// Employee is BLOCKED during: Assigned (manager preparation phase), InReview (manager-led review meeting).
     /// Employee is blocked after submission: EmployeeSubmitted, BothSubmitted, and all review/final states.
     /// </summary>
     public bool CanEmployeeEdit()
     {
         return WorkflowState is
+            WorkflowState.Initialized or
             WorkflowState.EmployeeInProgress or
             WorkflowState.ManagerInProgress or
             WorkflowState.BothInProgress or

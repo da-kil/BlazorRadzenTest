@@ -847,11 +847,14 @@
     {
         try
         {
-            // Convert CompletionRole to ApplicationRole for backend API
-            string applicationRole = CompletionRole.Employee switch
+            // Use the original role of who added this goal
+            string applicationRole = updatedGoal.AddedByRole switch
             {
-                CompletionRole.Employee => "Employee",
-                CompletionRole.Manager => "TeamLead",
+                ApplicationRole.Employee => "Employee",
+                ApplicationRole.TeamLead => "TeamLead",
+                ApplicationRole.HR => "HR",
+                ApplicationRole.HRLead => "HRLead",
+                ApplicationRole.Admin => "Admin",
                 _ => "Employee"
             };
 
@@ -873,6 +876,18 @@
             if (success)
             {
                 NotificationService.Notify(NotificationSeverity.Success, "Saved", "Goal updated successfully");
+
+                // Clear pending flags since goal is now saved to backend
+                var goalIndex = allCurrentGoals.FindIndex(g => g.Id == updatedGoal.Id);
+                if (goalIndex >= 0)
+                {
+                    allCurrentGoals[goalIndex].IsPendingModify = false;
+                    allCurrentGoals[goalIndex].IsPendingAdd = false;
+                }
+
+                // Force UI update to reflect cleared flags
+                await InvokeAsync(StateHasChanged);
+
                 // Don't call NotifyResponseChanged() here to avoid triggering reloads that could cause duplication
                 // The local state is already updated and the backend is already saved
             }
