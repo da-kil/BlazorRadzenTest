@@ -1,0 +1,62 @@
+/*
+ * Scoped styles for ConfigurableFeedbackSection component
+ * Automatically scoped by Blazor to prevent global conflicts
+ */
+
+.feedback-subsection {
+    padding-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--rz-border-color, #e0e0e0);
+}
+
+.feedback-subsection:last-child {
+    border-bottom: none;
+}
+
+.criteria-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.criterion-item {
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.criterion-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.star-rating-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.star-rating {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.star-btn {
+    color: #ccc !important;
+    transition: color 0.2s ease;
+}
+
+.star-btn.selected {
+    color: #ffc107 !important;
+    background-color: rgba(255, 193, 7, 0.1);
+    border-radius: 4px;
+}
+
+.star-btn:hover {
+    color: #ffb300 !important;
+}
+
+.rating-display {
+    font-size: var(--font-size-sm);
+    color: var(--rz-text-secondary-color, #666);
+}

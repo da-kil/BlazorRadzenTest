@@ -10,38 +10,6 @@
                 Style="min-width: 120px;"
                 Class="language-switcher" />
 
-<style>
-    .language-switcher {
-        border-radius: 6px;
-        font-size: 14px;
-        height: 38px;
-    }
-
-    .language-switcher .rz-dropdown {
-        background: var(--rz-surface-color);
-        border: 1px solid var(--rz-border-color);
-    }
-
-    .language-switcher .rz-dropdown:hover {
-        background: var(--rz-surface-hover-color);
-    }
-
-    .flag {
-        display: inline-block;
-        width: 16px;
-        height: 12px;
-        margin-right: 8px;
-        border-radius: 2px;
-    }
-
-    .flag.en {
-        background: linear-gradient(to bottom, #012169 0%, #012169 33%, white 33%, white 66%, #C8102E 66%);
-    }
-
-    .flag.de {
-        background: linear-gradient(to bottom, black 0%, black 33%, #DD0000 33%, #DD0000 66%, #FFCE00 66%);
-    }
-</style>
 
 @code {
     private Language selectedLanguage = Language.English;

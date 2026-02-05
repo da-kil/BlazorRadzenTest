@@ -59,11 +59,11 @@
                                     <RadzenColumn Size="1">
                                         @if (selectedPredecessorId == predecessor.AssignmentId)
                                         {
-                                            <RadzenIcon Icon="check_circle" Style="color: var(--primary-color, #2563eb); font-size: 1.5rem;" />
+                                            <RadzenIcon Icon="check_circle" Style="color: var(--rz-primary); font-size: 1.5rem;" />
                                         }
                                         else
                                         {
-                                            <RadzenIcon Icon="radio_button_unchecked" Style="color: #ccc; font-size: 1.5rem;" />
+                                            <RadzenIcon Icon="radio_button_unchecked" Style="color: var(--rz-base-300); font-size: 1.5rem;" />
                                         }
                                     </RadzenColumn>
                                     <RadzenColumn Size="11">
@@ -87,7 +87,7 @@
             </RadzenFieldset>
         }
 
-        <div class="d-flex justify-content-end gap-2 mt-3">
+        <div class="dialog-actions-inline">
             <RadzenButton Text="@T("buttons.cancel")"
                         ButtonStyle="ButtonStyle.Light"
                         Click="@Cancel"
@@ -235,34 +235,3 @@
     }
 }
 
-<style>
-.link-predecessor-dialog {
-    padding: 1rem;
-    max-width: 700px;
-}
-
-.link-predecessor-dialog ul {
-    margin-bottom: 0;
-    padding-left: 1.5rem;
-}
-
-.link-predecessor-dialog ul li {
-    margin-bottom: 0.25rem;
-}
-
-.predecessor-card {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-color: var(--border-light, #e2e8f0) !important;
-}
-
-.predecessor-card:hover {
-    border-color: var(--primary-color, #2563eb) !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.predecessor-card.selected {
-    border-color: var(--primary-color, #2563eb) !important;
-    background-color: rgba(37, 99, 235, 0.05);
-}
-</style>

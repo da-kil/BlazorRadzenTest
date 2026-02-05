@@ -1,0 +1,20 @@
+/*
+ * Scoped styles for StartReplayDialog component
+ * Automatically scoped by Blazor to prevent global conflicts
+ */
+
+.replay-dialog-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    margin: calc(-1 * var(--spacing-xl)) calc(-1 * var(--spacing-xl)) var(--spacing-xl) calc(-1 * var(--spacing-xl));
+    padding: var(--spacing-xl);
+    color: white;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.projection-card {
+    border: 2px solid var(--rz-base-200);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-sm);
+    background: rgba(102, 126, 234, 0.05);
+}

@@ -138,24 +138,7 @@
     display: grid;
 }
 
-/* Multilingual Input Grid Layout */
-.multilang-input-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    align-items: start;
-}
-
-@media (max-width: 768px) {
-    .multilang-input-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.multilang-input-grid .input-field {
-    display: flex;
-    flex-direction: column;
-}
+/* Multilingual Input Grid Layout now available globally in components.css */
 
 .title-input-modern {
     width: 100% !important;

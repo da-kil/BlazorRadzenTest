@@ -1,0 +1,50 @@
+/*
+ * Scoped styles for EditAnswerDialog component
+ * Automatically scoped by Blazor to prevent global conflicts
+ */
+
+.answer-editor {
+    padding: 0 0.5rem;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* Ensure evaluation cards fit well in dialog */
+.answer-editor .rz-card {
+    margin-bottom: 0 !important;
+    max-width: 100%;
+    overflow: visible !important;
+}
+
+.answer-editor .evaluation-card {
+    margin-bottom: 1rem !important;
+    max-width: 100%;
+    overflow: visible !important;
+}
+
+/* Prevent nested scrolling in child components */
+.answer-editor .evaluations-container {
+    overflow: visible !important;
+    max-height: none !important;
+}
+
+/* Ensure all radzen components inside don't create their own scrollbars */
+.answer-editor .rz-panel,
+.answer-editor .rz-panel-content,
+.answer-editor .rz-card-content {
+    overflow: visible !important;
+}
+
+/* Common Question Item Styles - Reused from Review Mode */
+.question-item-title {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: #212529;
+}
+
+.question-item-description {
+    color: #6c757d;
+    font-size: var(--font-size-sm);
+    margin-bottom: 0.75rem;
+}

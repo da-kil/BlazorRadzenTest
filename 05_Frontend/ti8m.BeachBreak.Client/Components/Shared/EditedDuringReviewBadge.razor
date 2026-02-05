@@ -6,16 +6,10 @@
 {
     <RadzenBadge BadgeStyle="BadgeStyle.Warning"
                  Text="@T("status.edited-during-review")"
-                 Class="ms-2 edited-during-review-badge"
+                 Class="ms-2 badge-small"
                  title="@GetTooltipText()" />
 }
 
-<style>
-    .edited-during-review-badge {
-        font-size: 0.75rem;
-        vertical-align: middle;
-    }
-</style>
 
 @code {
     [Parameter]

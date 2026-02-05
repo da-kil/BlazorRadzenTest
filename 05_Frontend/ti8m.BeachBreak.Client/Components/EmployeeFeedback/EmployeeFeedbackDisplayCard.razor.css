@@ -1,0 +1,54 @@
+/*
+ * Scoped styles for EmployeeFeedbackDisplayCard component
+ * Automatically scoped by Blazor to prevent global conflicts
+ */
+
+.feedback-display-card {
+    --feedback-accent-color: var(--rz-primary);
+    transition: box-shadow 0.2s ease;
+}
+
+.feedback-display-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.rating-display {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.rating-value {
+    margin: 0;
+    font-weight: 600;
+}
+
+.rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.star-filled {
+    color: var(--rz-warning);
+    font-size: 14px;
+}
+
+.star-empty {
+    color: var(--rz-base-300);
+    font-size: 14px;
+}
+
+.badge-customer {
+    background-color: var(--rz-primary-lighter);
+    color: var(--rz-primary-darker);
+}
+
+.badge-peer {
+    background-color: var(--rz-success-lighter);
+    color: var(--rz-success-darker);
+}
+
+.badge-project {
+    background-color: var(--rz-warning-lighter);
+    color: var(--rz-warning-darker);
+}

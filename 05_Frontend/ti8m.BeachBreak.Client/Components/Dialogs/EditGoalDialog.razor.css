@@ -1,0 +1,9 @@
+/*
+ * Scoped styles for EditGoalDialog component
+ * Automatically scoped by Blazor to prevent global conflicts
+ */
+
+.edit-goal-dialog {
+    padding: var(--spacing-lg);
+    max-width: 700px;
+}

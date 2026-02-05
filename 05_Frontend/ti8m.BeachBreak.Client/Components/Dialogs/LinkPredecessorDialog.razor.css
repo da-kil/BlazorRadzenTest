@@ -1,0 +1,34 @@
+/*
+ * Scoped styles for LinkPredecessorDialog component
+ * Automatically scoped by Blazor to prevent global conflicts
+ */
+
+.link-predecessor-dialog {
+    padding: var(--spacing-lg);
+    max-width: 700px;
+}
+
+.link-predecessor-dialog ul {
+    margin-bottom: 0;
+    padding-left: var(--spacing-xl);
+}
+
+.link-predecessor-dialog ul li {
+    margin-bottom: var(--spacing-xs);
+}
+
+.predecessor-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-color: var(--rz-base-200) !important;
+}
+
+.predecessor-card:hover {
+    border-color: var(--rz-primary) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.predecessor-card.selected {
+    border-color: var(--rz-primary) !important;
+    background-color: rgba(37, 99, 235, 0.05);
+}

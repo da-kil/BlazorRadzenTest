@@ -1,0 +1,197 @@
+/*
+ * Scoped styles for AssignmentDetailsDialog component
+ * Automatically scoped by Blazor to prevent global conflicts
+ */
+
+.assignment-details-container {
+    max-width: 1000px;
+    width: 95vw;
+    max-height: 95vh;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.detail-hero {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    padding: var(--spacing-xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.detail-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: translate(50%, -50%);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.content-body {
+    padding: var(--spacing-lg);
+    background: var(--background-light);
+}
+
+.info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+.info-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-light);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--background-light);
+}
+
+.card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.card-icon.employee {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.card-icon.timeline {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+}
+
+.card-icon.questionnaire {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.card-icon.notes {
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--spacing-md);
+    padding: 0.75rem;
+    background: var(--background-light);
+    border-radius: var(--radius-lg);
+}
+
+.info-item:last-child {
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: var(--font-size-sm);
+    opacity: 0.8;
+}
+
+.info-value {
+    font-weight: 500;
+    color: #212529;
+    text-align: right;
+    flex: 1;
+    margin-left: var(--spacing-md);
+}
+
+.questionnaire-preview {
+    background: linear-gradient(135deg, rgba(79, 172, 254, 0.1), rgba(0, 242, 254, 0.1));
+    border: 2px solid rgba(79, 172, 254, 0.2);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    margin-top: 1rem;
+}
+
+.questionnaire-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(79, 172, 254, 0.2);
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #4facfe;
+    display: block;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(79, 172, 254, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.notes-content {
+    background: #fff;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #6c757d;
+    line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .info-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .questionnaire-stats {
+        grid-template-columns: 1fr;
+    }
+}

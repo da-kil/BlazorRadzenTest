@@ -19,7 +19,7 @@
                 @T("sections.structured-feedback")
             </RadzenText>
 
-            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3" Style="font-size: 0.875rem;">
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3" Style="font-size: var(--font-size-sm);">
                 @($"{T("help.rating-scale-description")} (1-{RatingScale})")
             </RadzenText>
 
@@ -88,7 +88,7 @@
                 @T("sections.unstructured-feedback")
             </RadzenText>
 
-            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3" Style="font-size: 0.875rem;">
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-3" Style="font-size: var(--font-size-sm);">
                 @T("help.unstructured-feedback-description")
             </RadzenText>
 
@@ -243,62 +243,3 @@
     }
 }
 
-<style>
-    .feedback-subsection {
-        padding-bottom: 1.5rem;
-        margin-bottom: 1.5rem;
-        border-bottom: 1px solid var(--rz-border-color, #e0e0e0);
-    }
-
-    .feedback-subsection:last-child {
-        border-bottom: none;
-    }
-
-    .criteria-list {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .criterion-item {
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    }
-
-    .criterion-item:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-
-    .star-rating-container {
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-        flex-wrap: wrap;
-    }
-
-    .star-rating {
-        display: flex;
-        gap: 0.25rem;
-    }
-
-    .star-btn {
-        color: #ccc !important;
-        transition: color 0.2s ease;
-    }
-
-    .star-btn.selected {
-        color: #ffc107 !important;
-        background-color: rgba(255, 193, 7, 0.1);
-        border-radius: 4px;
-    }
-
-    .star-btn:hover {
-        color: #ffb300 !important;
-    }
-
-    .rating-display {
-        font-size: 0.875rem;
-        color: var(--rz-text-secondary-color, #666);
-    }
-</style>

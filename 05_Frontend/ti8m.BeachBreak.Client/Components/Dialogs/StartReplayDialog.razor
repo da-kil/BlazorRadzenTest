@@ -6,23 +6,6 @@
 @inject DialogService DialogService
 @inherits OptimizedTranslatableComponentBase
 
-<style>
-    .replay-dialog-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        margin: -1.5rem -1.5rem 1.5rem -1.5rem;
-        padding: 1.5rem;
-        color: white;
-        border-radius: 8px 8px 0 0;
-    }
-
-    .projection-card {
-        border: 2px solid #e9ecef;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-top: 0.5rem;
-        background: rgba(102, 126, 234, 0.05);
-    }
-</style>
 
 <div class="replay-dialog-header">
     <RadzenText TextStyle="TextStyle.H5" Class="mb-1" Style="color: white; font-weight: 600;">
@@ -92,7 +75,7 @@
     </RadzenText>
 </RadzenAlert>
 
-<div class="d-flex justify-content-end gap-2 mt-4">
+<div class="dialog-actions-inline">
     <RadzenButton Text="Cancel"
                  Click="@Cancel"
                  Variant="Variant.Flat"
