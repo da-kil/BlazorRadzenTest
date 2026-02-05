@@ -1,0 +1,183 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@inherits OptimizedTranslatableComponentBase
+
+<div class="manager-finalize-form">
+    <RadzenStack Gap="1rem">
+        <!-- Header -->
+        <div class="form-header">
+            <RadzenText TextStyle="TextStyle.H6" Class="mb-0">
+                @T("sections.questionnaire-finalization")
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mt-2">
+                @T("messages.finalize-questionnaire-process")
+            </RadzenText>
+        </div>
+
+        <!-- Finalization Confirmation -->
+        <div class="finalization-confirmation">
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                @T("sections.by-finalizing-you-confirm")
+            </RadzenText>
+            <div class="confirmation-list">
+                <ul class="finalization-checklist">
+                    <li>
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2">@T("messages.all-review-discussions-complete")</RadzenText>
+                    </li>
+                    <li>
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2">@T("messages.employee-confirmed-review-outcome")</RadzenText>
+                    </li>
+                    <li>
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2">@T("messages.all-feedback-documented")</RadzenText>
+                    </li>
+                    <li>
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" Class="me-2" />
+                        <RadzenText TextStyle="TextStyle.Body2">@T("messages.questionnaire-ready-for-archival")</RadzenText>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Final Notes Section -->
+        <div class="final-notes">
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+                @T("labels.final-notes-optional")
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+                @T("messages.add-final-notes-instruction")
+            </RadzenText>
+
+            @if (!string.IsNullOrWhiteSpace(ExistingFinalNotes))
+            {
+                <div class="existing-notes-notice mb-2">
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" ShowIcon="true">
+                        <RadzenText TextStyle="TextStyle.Caption">
+                            <strong>@T("messages.existing-notes-loaded"):</strong>
+                            <span> @T("messages.can-edit-previous-final-notes")</span>
+                        </RadzenText>
+                    </RadzenAlert>
+                </div>
+            }
+
+            <RadzenTextArea @bind-Value="@finalNotes"
+                           Placeholder="@T("placeholders.enter-final-notes-optional")"
+                           Rows="6"
+                           MaxLength="5000"
+                           ShowCharacterCount="true"
+                           Class="w-100"
+                           Disabled="@IsSubmitting" />
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="form-actions">
+            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.75rem">
+                <RadzenButton Text="@T("buttons.cancel")"
+                              ButtonStyle="ButtonStyle.Light"
+                              Icon="cancel"
+                              Size="ButtonSize.Medium"
+                              Click="@HandleCancel"
+                              Disabled="@IsSubmitting" />
+
+                <AsyncButton Text="@T("buttons.finalize-questionnaire")"
+                            ProcessingText="@T("buttons.finalizing")"
+                            ButtonStyle="ButtonStyle.Warning"
+                            Icon="lock"
+                            Size="ButtonSize.Medium"
+                            Click="@HandleSubmit"
+                            IsProcessing="@IsSubmitting" />
+            </RadzenStack>
+        </div>
+
+    </RadzenStack>
+</div>
+
+<style>
+.manager-finalize-form {
+    margin-bottom: 1rem;
+}
+
+.form-actions {
+    border-top: 1px solid var(--border-color);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.finalization-checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.finalization-checklist li {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.finalization-confirmation {
+    background-color: var(--rz-panel-background-color);
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-border-color);
+    padding: 1rem;
+}
+
+.confirmation-list {
+    margin-top: 0.5rem;
+}
+
+.final-notes {
+    background-color: var(--rz-panel-background-color);
+    border-radius: var(--rz-border-radius);
+    border: 1px solid var(--rz-border-color);
+    padding: 1rem;
+}
+
+.existing-notes-notice {
+    margin-bottom: 0.75rem;
+}
+</style>
+
+@code {
+    [Parameter] public string? ExistingFinalNotes { get; set; }
+    [Parameter] public bool IsSubmitting { get; set; }
+    [Parameter] public EventCallback<string?> OnSubmit { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+
+    private string? finalNotes;
+
+    protected override void OnInitialized()
+    {
+        // Initialize with existing notes if reopening
+        finalNotes = ExistingFinalNotes;
+        base.OnInitialized();
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Update finalNotes when parameters are set
+        finalNotes = ExistingFinalNotes;
+        base.OnParametersSet();
+        StateHasChanged();
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (OnSubmit.HasDelegate)
+        {
+            await OnSubmit.InvokeAsync(finalNotes);
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        if (OnCancel.HasDelegate)
+        {
+            await OnCancel.InvokeAsync();
+        }
+    }
+}

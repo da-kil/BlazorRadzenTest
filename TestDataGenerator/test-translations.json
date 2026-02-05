@@ -6382,5 +6382,229 @@
         "english": "Unknown",
         "category": "completion-roles",
         "createdDate": "2026-01-25T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.sign-off-on-review",
+        "german": "Review abzeichnen",
+        "english": "Sign Off on Review",
+        "category": "buttons",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.initiate-review-meeting",
+        "german": "Überprüfung starten",
+        "english": "Initiate Review Meeting",
+        "category": "buttons",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.initialize-assignment",
+        "german": "Zuweisung initialisieren",
+        "english": "Initialize Assignment",
+        "category": "buttons",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.initiating",
+        "german": "Initialisierung läuft...",
+        "english": "Initiating...",
+        "category": "buttons",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.finalizing",
+        "german": "Finalisierung läuft...",
+        "english": "Finalizing...",
+        "category": "buttons",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.workflow-status",
+        "german": "Workflow-Status",
+        "english": "Workflow Status",
+        "category": "labels",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.manager-review-required",
+        "german": "Manager-Review erforderlich",
+        "english": "Manager Review Required",
+        "category": "labels",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "templates.allows-customization",
+        "german": "Erlaubt Anpassung",
+        "english": "Allows Customization",
+        "category": "templates",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "templates.auto-initialize",
+        "german": "Automatisch initialisieren",
+        "english": "Auto Initialize",
+        "category": "templates",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "goals.measurement-metric",
+        "german": "Messgrösse",
+        "english": "Measurement Metric",
+        "category": "goals",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "goals.summary-title",
+        "german": "Ziele-Zusammenfassung",
+        "english": "Goals Summary",
+        "category": "goals",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "goals.by-role",
+        "german": "Nach Rolle",
+        "english": "By Role",
+        "category": "goals",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.review-finished-description",
+        "german": "Überprüfung abgeschlossen - warten auf finale Schritte",
+        "english": "Review finished - waiting for final steps",
+        "category": "workflow-states",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pages.manager-finalize-title",
+        "german": "Fragebogen finalisieren",
+        "english": "Finalize Questionnaire",
+        "category": "pages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "pages.finalize-questionnaire-description",
+        "german": "Schließen Sie den Überprüfungsprozess für '{0}' ab",
+        "english": "Complete the review process for '{0}'",
+        "category": "pages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.loading-finalize-page",
+        "german": "Finalisierungsseite wird geladen...",
+        "english": "Loading finalization page...",
+        "category": "messages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.finalize-not-allowed",
+        "german": "Sie haben keine Berechtigung, diesen Fragebogen zu finalisieren.",
+        "english": "You do not have permission to finalize this questionnaire.",
+        "category": "messages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.finalize-permission-denied",
+        "german": "Berechtigung zur Finalisierung verweigert",
+        "english": "Finalization permission denied",
+        "category": "messages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.error-finalizing-questionnaire",
+        "german": "Fehler beim Finalisieren des Fragebogens",
+        "english": "Error finalizing questionnaire",
+        "category": "messages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.finalization-summary",
+        "german": "Finalisierungs-Zusammenfassung",
+        "english": "Finalization Summary",
+        "category": "sections",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.employee-confirmed-date",
+        "german": "Mitarbeiter bestätigt am",
+        "english": "Employee confirmed on",
+        "category": "labels",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.employee-review-comments",
+        "german": "Mitarbeiter-Bewertungskommentare",
+        "english": "Employee Review Comments",
+        "category": "sections",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.employee-review-confirmed",
+        "german": "Mitarbeiterbewertung bestätigt",
+        "english": "Employee review confirmed",
+        "category": "labels",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.employee-has-signed-off-review",
+        "german": "Der Mitarbeiter hat die Bewertung abgezeichnet",
+        "english": "The employee has signed off on the review",
+        "category": "messages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.questionnaire-finalization",
+        "german": "Fragebogen-Finalisierung",
+        "english": "Questionnaire Finalization",
+        "category": "sections",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.finalize-questionnaire-process",
+        "german": "Schließen Sie den Fragebogen-Überprüfungsprozess ab",
+        "english": "Complete the questionnaire review process",
+        "category": "messages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.by-finalizing-you-confirm",
+        "german": "Durch die Finalisierung bestätigen Sie",
+        "english": "By finalizing, you confirm",
+        "category": "sections",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.failed-to-finalize-questionnaire",
+        "german": "Fehler beim Finalisieren des Fragebogens",
+        "english": "Failed to finalize questionnaire",
+        "category": "messages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.cannot-finalize-questionnaire",
+        "german": "Fragebogen kann nicht finalisiert werden",
+        "english": "Cannot finalize questionnaire",
+        "category": "notifications",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.can-edit-previous-final-notes",
+        "german": "Sie können Ihre vorherigen finalen Notizen bearbeiten",
+        "english": "You can edit your previous final notes",
+        "category": "messages",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "placeholders.enter-final-notes-optional",
+        "german": "Optionale finale Notizen eingeben...",
+        "english": "Enter optional final notes...",
+        "category": "placeholders",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "workflow-states.finalized-description",
+        "german": "Fragebogen ist abgeschlossen und archiviert",
+        "english": "Questionnaire is finalized and archived",
+        "category": "workflow-states",
+        "createdDate": "2026-02-05T12:00:00.0000000+01:00"
     }
 ]
