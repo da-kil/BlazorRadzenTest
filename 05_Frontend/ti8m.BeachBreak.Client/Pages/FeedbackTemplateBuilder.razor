@@ -17,11 +17,11 @@
 @inherits OptimizedTranslatableComponentBase
 @implements IDisposable
 
-<PageTitle>@(State.IsEditMode ? T("pages.feedback-template-editor") : T("pages.feedback-template-builder"))</PageTitle>
+<PageTitle>@GetPageTitle()</PageTitle>
 
 <AuthorizeView Policy="TeamLead">
     <Authorized>
-        <PageLayout Title="@(State.IsEditMode ? T("pages.feedback-template-editor") : T("pages.feedback-template-builder"))"
+        <PageLayout Title="@GetPageTitle()"
                    Description="@GetStatusDescription()">
             <HeaderActions>
                 @{
@@ -52,18 +52,21 @@
                 @switch (currentStatus)
                 {
                     case TemplateStatus.Draft:
-                        <RadzenButton Text="@(isSaving ? T("messages.saving") : T("buttons.save-draft"))"
-                                     ButtonStyle="ButtonStyle.Light"
-                                     Icon="save"
-                                     Click="@SaveTemplate"
-                                     Disabled="@isSaving"
-                                     Size="ButtonSize.Medium" />
-                        <RadzenButton Text="@T("buttons.publish")"
-                                     ButtonStyle="ButtonStyle.Primary"
-                                     Icon="publish"
-                                     Click="@PublishTemplate"
-                                     Disabled="@isSaving"
-                                     Size="ButtonSize.Medium" />
+                        @if (!State.IsReadOnlyMode)
+                        {
+                            <RadzenButton Text="@(isSaving ? T("messages.saving") : T("buttons.save-draft"))"
+                                         ButtonStyle="ButtonStyle.Light"
+                                         Icon="save"
+                                         Click="@SaveTemplate"
+                                         Disabled="@isSaving"
+                                         Size="ButtonSize.Medium" />
+                            <RadzenButton Text="@T("buttons.publish")"
+                                         ButtonStyle="ButtonStyle.Primary"
+                                         Icon="publish"
+                                         Click="@PublishTemplate"
+                                         Disabled="@isSaving"
+                                         Size="ButtonSize.Medium" />
+                        }
                         break;
                     case TemplateStatus.Published:
                         <RadzenButton Text="@T("buttons.clone")"
@@ -90,6 +93,14 @@
 
                 <ProgressSteps CurrentStep="@State.CurrentStep"
                                OnStepClick="@SetCurrentStep" />
+
+                @if (State.IsReadOnlyMode)
+                {
+                    <div class="alert alert-info mb-4">
+                        <RadzenIcon Icon="info" Class="me-2" />
+                        @T("messages.template-read-only-mode")
+                    </div>
+                }
 
                 @if (State.CurrentStep == 1)
                 {
@@ -183,13 +194,7 @@
             var template = await TemplateService.GetTemplateByIdAsync(TemplateId.Value);
             if (template != null)
             {
-                // Check if user can edit this template
-                if (!template.CanBeEdited(State.CurrentUserId, State.CurrentUserRole))
-                {
-                    ShowError(T("messages.template-not-editable"));
-                    NavigationManager.NavigateTo("/feedback-template-management");
-                    return;
-                }
+                // Templates will now load in read-only mode if not editable
 
                 State.LoadExistingTemplate(template);
             }
@@ -397,11 +402,30 @@
         }
     }
 
+    private string GetPageTitle()
+    {
+        if (State.IsReadOnlyMode)
+        {
+            return T("pages.feedback-template-viewer");
+        }
+        return State.IsEditMode ? T("pages.feedback-template-editor") : T("pages.feedback-template-builder");
+    }
+
     private string GetStatusDescription()
     {
         if (!State.IsEditMode)
         {
             return T("steps.create-new-template");
+        }
+
+        if (State.IsReadOnlyMode)
+        {
+            return State.Template.Status switch
+            {
+                TemplateStatus.Published => T("messages.viewing-published-template"),
+                TemplateStatus.Archived => T("messages.viewing-archived-template"),
+                _ => T("messages.template-read-only")
+            };
         }
 
         return State.Template.Status switch

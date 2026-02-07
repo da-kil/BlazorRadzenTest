@@ -219,19 +219,36 @@
 
     private string GetValidationTitle()
     {
-        return IsTemplateValid()
-            ? T("messages.template-ready-to-publish")
-            : T("messages.template-has-validation-issues");
+        if (!IsTemplateValid())
+        {
+            return T("messages.template-has-validation-issues");
+        }
+
+        // Template is valid - show status-appropriate message
+        return Template.Status switch
+        {
+            TemplateStatus.Published => T("messages.template-validation-success"), // Template is already published
+            TemplateStatus.Archived => T("messages.template-validation-success"), // Template is archived
+            TemplateStatus.Draft => T("messages.template-ready-to-publish"), // Only draft templates are ready to publish
+            _ => T("messages.template-validation-success")
+        };
     }
 
     private string GetValidationMessage()
     {
-        if (IsTemplateValid())
+        if (!IsTemplateValid())
         {
-            return T("messages.template-validation-success");
+            var errorCount = GetValidationErrors().Count;
+            return T("messages.template-has-issues-count").Replace("{0}", errorCount.ToString());
         }
 
-        var errorCount = GetValidationErrors().Count;
-        return T("messages.template-has-issues-count").Replace("{0}", errorCount.ToString());
+        // Template is valid - show status-appropriate message
+        return Template.Status switch
+        {
+            TemplateStatus.Published => T("messages.template-published-status"),
+            TemplateStatus.Archived => T("messages.template-archived-status"),
+            TemplateStatus.Draft => T("messages.template-validation-success"), // Ready to publish
+            _ => T("messages.template-validation-success")
+        };
     }
 }

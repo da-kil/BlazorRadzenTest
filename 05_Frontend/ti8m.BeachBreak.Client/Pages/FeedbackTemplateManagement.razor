@@ -128,6 +128,10 @@
                                         {
                                             <AsyncButton ButtonStyle="ButtonStyle.Light" Icon="edit" Size="ButtonSize.Small" Title="@T("buttons.edit")" Click="@(() => EditTemplate(template))" />
                                         }
+                                        else if (template.Status != TemplateStatus.Draft)
+                                        {
+                                            <AsyncButton ButtonStyle="ButtonStyle.Light" Icon="visibility" Size="ButtonSize.Small" Title="@T("buttons.view")" Click="@(() => EditTemplate(template))" />
+                                        }
                                         <AsyncButton ButtonStyle="ButtonStyle.Light" ProcessingText="@T("notifications.cloning")" Icon="content_copy" Size="ButtonSize.Small" Title="@T("buttons.clone")" Click="@(() => CloneTemplate(template))" />
                                         @if (template.Status == TemplateStatus.Draft && CanEditTemplate(template))
                                         {

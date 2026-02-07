@@ -12,7 +12,7 @@ public class FeedbackTemplateBuilderState
     private FeedbackTemplate _template = new();
     private int _currentStep = 1;
     private bool _isDirty = false;
-    private bool _isEditMode = false;
+    private bool isEditMode = false;
 
     /// <summary>
     /// Event raised when state changes
@@ -80,7 +80,12 @@ public class FeedbackTemplateBuilderState
     /// <summary>
     /// Whether in edit mode (existing template) vs create mode (new template)
     /// </summary>
-    public bool IsEditMode => _isEditMode;
+    public bool IsEditMode => isEditMode;
+
+    /// <summary>
+    /// Whether the template is in read-only mode (Published or Archived)
+    /// </summary>
+    public bool IsReadOnlyMode => isEditMode && !_template.IsAvailableForEditing;
 
     /// <summary>
     /// Resets all state to defaults for creating a new template
@@ -97,7 +102,7 @@ public class FeedbackTemplateBuilderState
         };
         _currentStep = 1;
         _isDirty = false;
-        _isEditMode = false; // New template, not editing existing
+        isEditMode = false; // New template, not editing existing
         NotifyStateChanged();
     }
 
@@ -109,7 +114,7 @@ public class FeedbackTemplateBuilderState
         _template = template;
         _currentStep = 1;
         _isDirty = false;
-        _isEditMode = true; // Editing existing template
+        isEditMode = true; // Editing existing template
         NotifyStateChanged();
     }
 
