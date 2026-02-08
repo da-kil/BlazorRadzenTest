@@ -375,6 +375,12 @@ public class Program
 
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.ILanguageContext, ti8m.BeachBreak.Client.Services.ClientLanguageContext>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.IUITranslationService, ti8m.BeachBreak.Client.Services.ClientUITranslationService>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.ITranslationCategoryService, ti8m.BeachBreak.Client.Services.TranslationCategoryService>();
+
+        // Register composition-based component services (architecture simplification)
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.Composition.IComponentPerformanceService, ti8m.BeachBreak.Client.Services.Composition.ComponentPerformanceService>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.Composition.IComponentStateService, ti8m.BeachBreak.Client.Services.Composition.ComponentStateService>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.Composition.IComponentErrorService, ti8m.BeachBreak.Client.Services.Composition.ComponentErrorService>();
 
         // Register state management
         builder.Services.AddScoped<QuestionnaireBuilderState>();

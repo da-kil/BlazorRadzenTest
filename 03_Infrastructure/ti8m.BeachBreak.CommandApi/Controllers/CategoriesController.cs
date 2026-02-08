@@ -25,88 +25,64 @@ public class CategoriesController : BaseController
     [HttpPost]
     public async Task<IActionResult> CreateCategory(CategoryDto categoryDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        if (string.IsNullOrWhiteSpace(categoryDto.NameEn))
+            return CreateResponse(Result.Fail("Category English name is required", 400));
+
+        if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
+            return CreateResponse(Result.Fail("Category German name is required", 400));
+
+        var category = new CommandCategory
         {
-            if (!ModelState.IsValid)
-                return CreateResponse(Result.Fail("Invalid model state", 400));
+            Id = categoryDto.Id,
+            NameEn = categoryDto.NameEn.Trim(),
+            NameDe = categoryDto.NameDe.Trim(),
+            DescriptionEn = categoryDto.DescriptionEn?.Trim() ?? string.Empty,
+            DescriptionDe = categoryDto.DescriptionDe?.Trim() ?? string.Empty,
+            IsActive = categoryDto.IsActive,
+            SortOrder = categoryDto.SortOrder
+        };
 
-            if (string.IsNullOrWhiteSpace(categoryDto.NameEn))
-                return CreateResponse(Result.Fail("Category English name is required", 400));
+        Result result = await commandDispatcher.SendAsync(new CreateCategoryCommand(category));
 
-            if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
-                return CreateResponse(Result.Fail("Category German name is required", 400));
-
-            var category = new CommandCategory
-            {
-                Id = categoryDto.Id,
-                NameEn = categoryDto.NameEn.Trim(),
-                NameDe = categoryDto.NameDe.Trim(),
-                DescriptionEn = categoryDto.DescriptionEn?.Trim() ?? string.Empty,
-                DescriptionDe = categoryDto.DescriptionDe?.Trim() ?? string.Empty,
-                IsActive = categoryDto.IsActive,
-                SortOrder = categoryDto.SortOrder
-            };
-
-            Result result = await commandDispatcher.SendAsync(new CreateCategoryCommand(category));
-
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error creating category");
-            return CreateResponse(Result.Fail("An error occurred while creating the category", 500));
-        }
+        return CreateResponse(result);
     }
 
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> UpdateCategory(Guid id, CategoryDto categoryDto)
     {
-        try
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        if (string.IsNullOrWhiteSpace(categoryDto.NameEn))
+            return CreateResponse(Result.Fail("Category English name is required", 400));
+
+        if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
+            return CreateResponse(Result.Fail("Category German name is required", 400));
+
+        var category = new CommandCategory
         {
-            if (!ModelState.IsValid)
-                return CreateResponse(Result.Fail("Invalid model state", 400));
+            Id = id,
+            NameEn = categoryDto.NameEn.Trim(),
+            NameDe = categoryDto.NameDe.Trim(),
+            DescriptionEn = categoryDto.DescriptionEn?.Trim() ?? string.Empty,
+            DescriptionDe = categoryDto.DescriptionDe?.Trim() ?? string.Empty,
+            IsActive = categoryDto.IsActive,
+            SortOrder = categoryDto.SortOrder
+        };
 
-            if (string.IsNullOrWhiteSpace(categoryDto.NameEn))
-                return CreateResponse(Result.Fail("Category English name is required", 400));
+        Result result = await commandDispatcher.SendAsync(new UpdateCategoryCommand(category));
 
-            if (string.IsNullOrWhiteSpace(categoryDto.NameDe))
-                return CreateResponse(Result.Fail("Category German name is required", 400));
-
-            var category = new CommandCategory
-            {
-                Id = id,
-                NameEn = categoryDto.NameEn.Trim(),
-                NameDe = categoryDto.NameDe.Trim(),
-                DescriptionEn = categoryDto.DescriptionEn?.Trim() ?? string.Empty,
-                DescriptionDe = categoryDto.DescriptionDe?.Trim() ?? string.Empty,
-                IsActive = categoryDto.IsActive,
-                SortOrder = categoryDto.SortOrder
-            };
-
-            Result result = await commandDispatcher.SendAsync(new UpdateCategoryCommand(category));
-
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error updating category {CategoryId}", id);
-            return CreateResponse(Result.Fail("An error occurred while updating the category", 500));
-        }
+        return CreateResponse(result);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> DeactivateCategory(Guid id)
     {
-        try
-        {
-            Result result = await commandDispatcher.SendAsync(new DeactivateCategoryCommand(id));
+        Result result = await commandDispatcher.SendAsync(new DeactivateCategoryCommand(id));
 
-            return CreateResponse(result);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error deactivating category {CategoryId}", id);
-            return CreateResponse(Result.Fail("An error occurred while deactivating the category", 500));
-        }
+        return CreateResponse(result);
     }
 }

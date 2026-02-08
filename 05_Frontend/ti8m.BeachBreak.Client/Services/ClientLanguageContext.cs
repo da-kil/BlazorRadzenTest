@@ -1,7 +1,5 @@
 using System.Text.Json;
-using Microsoft.Extensions.DependencyInjection;
 using ti8m.BeachBreak.Client.Models;
-using ti8m.BeachBreak.Client.Services;
 
 namespace ti8m.BeachBreak.Client.Services;
 
@@ -15,11 +13,22 @@ public class ClientLanguageContext : ILanguageContext
     private readonly HttpClient httpClient;
     private readonly IHttpClientFactory httpClientFactory;
     private readonly IAuthService authService;
-    private Language? _cachedLanguage;
     private readonly TimeSpan cacheExpiry = TimeSpan.FromMinutes(10);
-    private DateTime _lastCacheUpdate = DateTime.MinValue;
-    private readonly SemaphoreSlim _languageLock = new(1, 1);
-    private readonly object _syncLock = new object();
+    private volatile TaskCompletionSource<Language>? refreshTaskSource;
+
+    private class CacheData
+    {
+        public Language? CachedLanguage { get; set; }
+        public DateTime LastCacheUpdate { get; set; }
+
+        public CacheData(Language? language, DateTime lastUpdate)
+        {
+            CachedLanguage = language;
+            LastCacheUpdate = lastUpdate;
+        }
+    }
+
+    private volatile CacheData cache = new CacheData(null, DateTime.MinValue);
 
     public ClientLanguageContext(IHttpClientFactory httpClientFactory, IAuthService authService)
     {
@@ -31,41 +40,67 @@ public class ClientLanguageContext : ILanguageContext
 
     public async Task<Language> GetCurrentLanguageAsync()
     {
-        // Fast path - check without lock
-        if (_cachedLanguage.HasValue && DateTime.UtcNow - _lastCacheUpdate < cacheExpiry)
+        var currentCache = cache; // Volatile read
+
+        // Fast path - check cache validity
+        if (currentCache.CachedLanguage.HasValue && DateTime.UtcNow - currentCache.LastCacheUpdate < cacheExpiry)
         {
-            return _cachedLanguage.Value;
+            return currentCache.CachedLanguage.Value;
         }
 
-        // Slow path - use semaphore for thread safety
-        await _languageLock.WaitAsync();
-        try
+        // Try to start a refresh operation atomically
+        var tcs = new TaskCompletionSource<Language>();
+        var existingTcs = Interlocked.CompareExchange(ref refreshTaskSource, tcs, null);
+
+        if (existingTcs == null)
         {
-            // Double-check pattern - cache might have been updated by another thread
-            if (_cachedLanguage.HasValue && DateTime.UtcNow - _lastCacheUpdate < cacheExpiry)
+            // We won the race, do the refresh
+            try
             {
-                return _cachedLanguage.Value;
-            }
+                // Double-check - cache might have been updated by another thread
+                currentCache = cache;
+                if (currentCache.CachedLanguage.HasValue && DateTime.UtcNow - currentCache.LastCacheUpdate < cacheExpiry)
+                {
+                    var result = currentCache.CachedLanguage.Value;
+                    tcs.SetResult(result);
+                    return result;
+                }
 
-            var userRole = await authService.GetMyRoleAsync();
-            if (userRole?.EmployeeId == null)
+                var userRole = await authService.GetMyRoleAsync();
+                if (userRole?.EmployeeId == null)
+                {
+                    var result = Language.English;
+                    tcs.SetResult(result);
+                    return result;
+                }
+
+                var language = await GetUserPreferredLanguageAsync(userRole.EmployeeId);
+                cache = new CacheData(language, DateTime.UtcNow);
+                tcs.SetResult(language);
+                return language;
+            }
+            catch (Exception ex)
             {
-                return Language.English; // Default for non-authenticated users
+                tcs.SetException(ex);
+                return Language.English; // Fallback
             }
-
-            var language = await GetUserPreferredLanguageAsync(userRole.EmployeeId);
-            _cachedLanguage = language;
-            _lastCacheUpdate = DateTime.UtcNow;
-            return language;
+            finally
+            {
+                // Clear the refresh task atomically
+                Interlocked.CompareExchange(ref refreshTaskSource, null, tcs);
+            }
         }
-        catch
+        else
         {
-            // Fallback to English if any error occurs
-            return Language.English;
-        }
-        finally
-        {
-            _languageLock.Release();
+            // Another thread is refreshing, wait for their result
+            try
+            {
+                return await existingTcs.Task;
+            }
+            catch
+            {
+                return Language.English; // Fallback if refresh failed
+            }
         }
     }
 
@@ -112,8 +147,7 @@ public class ClientLanguageContext : ILanguageContext
             if (response.IsSuccessStatusCode)
             {
                 // Update cache immediately for responsive UI
-                _cachedLanguage = language;
-                _lastCacheUpdate = DateTime.UtcNow;
+                cache = new CacheData(language, DateTime.UtcNow);
 
                 Console.WriteLine($"[ClientLanguageContext] Successfully saved language {language} for user {userId}");
             }
@@ -135,7 +169,7 @@ public class ClientLanguageContext : ILanguageContext
     /// Gets the current language synchronously from cache, or English as fallback.
     /// For performance-optimized components that need immediate access to language.
     /// </summary>
-    public Language CurrentLanguage => _cachedLanguage ?? Language.English;
+    public Language CurrentLanguage => cache.CachedLanguage ?? Language.English;
 
     /// <summary>
     /// Sets the current language in cache immediately for performance optimization.
@@ -144,12 +178,7 @@ public class ClientLanguageContext : ILanguageContext
     /// </summary>
     public void SetCurrentLanguage(Language language)
     {
-        // For browser compatibility, use a simple lock approach
-        lock (_syncLock)
-        {
-            _cachedLanguage = language;
-            _lastCacheUpdate = DateTime.UtcNow;
-        }
+        cache = new CacheData(language, DateTime.UtcNow); // Atomic reference update
     }
 
     /// <summary>
@@ -159,12 +188,7 @@ public class ClientLanguageContext : ILanguageContext
     /// </summary>
     public void ClearCache()
     {
-        // For browser compatibility, use a simple lock approach
-        lock (_syncLock)
-        {
-            _cachedLanguage = null;
-            _lastCacheUpdate = DateTime.MinValue;
-        }
+        cache = new CacheData(null, DateTime.MinValue); // Atomic reference update
     }
 }
 

@@ -8,6 +8,7 @@ using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Infrastructure.Marten;
 using ti8m.BeachBreak.QueryApi.Authorization;
+using ti8m.BeachBreak.QueryApi.Middleware;
 
 namespace ti8m.BeachBreak.QueryApi;
 
@@ -18,6 +19,16 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
         builder.AddServiceDefaults();
         builder.AddDefaultContexts();
+
+        builder.Services.AddProblemDetails(options =>
+        {
+            options.CustomizeProblemDetails = (context) =>
+            {
+                context.ProblemDetails.Instance = $"{context.HttpContext.Request.Method} {context.HttpContext.Request.Path}";
+                context.ProblemDetails.Extensions.TryAdd("requestId", context.HttpContext.TraceIdentifier);
+                context.ProblemDetails.Extensions.TryAdd("correlationId", context.HttpContext.Request.Headers["X-Correlation-Id"]);
+            };
+        });
 
         builder.Services.AddCors(
             options => options.AddDefaultPolicy(
@@ -50,6 +61,10 @@ public class Program
         // Add distributed cache (using in-memory for now, can be replaced with Redis)
         builder.Services.AddDistributedMemoryCache();
 
+        // Register authorization cache configuration
+        builder.Services.Configure<AuthorizationCacheSettings>(
+            builder.Configuration.GetSection(AuthorizationCacheSettings.SectionName));
+
         // Register authorization cache service
         builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
 
@@ -79,8 +94,6 @@ public class Program
             });
         });
 
-        builder.AddNpgsqlDataSource(connectionName: "beachbreakdb");
-
         builder.AddMartenInfrastructure();
 
         builder.Services.AddScoped<UserContext>();
@@ -105,6 +118,9 @@ public class Program
         var app = builder.Build();
 
         app.MapDefaultEndpoints();
+
+        // Global exception handling middleware (must be early in pipeline)
+        app.UseGlobalExceptionHandling();
 
         if (app.Environment.IsDevelopment())
         {

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
+using System.Collections.Concurrent;
 
 namespace ti8m.BeachBreak.Client.Services.Enhanced;
 
@@ -14,28 +15,32 @@ public static class PerformanceOptimizer
     /// </summary>
     public static class Debouncer
     {
-        private static readonly Dictionary<string, CancellationTokenSource> _tokens = new();
-        private static readonly object _lock = new object();
+        private static readonly ConcurrentDictionary<string, CancellationTokenSource> tokens = new();
 
         /// <summary>
         /// Debounces an async operation with a specified delay
         /// </summary>
         public static async Task DebounceAsync(string key, Func<Task> operation, int delayMs = 500)
         {
-            CancellationTokenSource newTokenSource;
+            var newTokenSource = new CancellationTokenSource();
+            CancellationTokenSource? canceledToken = null;
 
-            lock (_lock)
-            {
-                // Cancel any existing operation for this key
-                if (_tokens.TryGetValue(key, out var existingToken))
+            // Atomic swap with cleanup of old token
+            tokens.AddOrUpdate(
+                key,
+                newTokenSource, // Add if not exists
+                (k, existingToken) => // Update if exists
                 {
-                    existingToken.Cancel();
-                    existingToken.Dispose();
+                    canceledToken = existingToken; // Capture for cleanup
+                    return newTokenSource;
                 }
+            );
 
-                // Create new token source
-                newTokenSource = new CancellationTokenSource();
-                _tokens[key] = newTokenSource;
+            // Cleanup old token if it existed
+            if (canceledToken != null)
+            {
+                canceledToken.Cancel();
+                canceledToken.Dispose();
             }
 
             try
@@ -55,13 +60,8 @@ public static class PerformanceOptimizer
             }
             finally
             {
-                lock (_lock)
-                {
-                    if (_tokens.TryGetValue(key, out var tokenSource) && tokenSource == newTokenSource)
-                    {
-                        _tokens.Remove(key);
-                    }
-                }
+                // Remove our token if it's still the current one (atomic conditional removal)
+                tokens.TryRemove(new KeyValuePair<string, CancellationTokenSource>(key, newTokenSource));
                 newTokenSource.Dispose();
             }
         }
@@ -85,8 +85,7 @@ public static class PerformanceOptimizer
     /// </summary>
     public static class Throttler
     {
-        private static readonly Dictionary<string, DateTime> _lastExecutions = new();
-        private static readonly object _lock = new object();
+        private static readonly ConcurrentDictionary<string, DateTime> lastExecutions = new();
 
         /// <summary>
         /// Throttles an async operation to execute at most once per interval
@@ -94,24 +93,21 @@ public static class PerformanceOptimizer
         public static async Task<bool> TryThrottleAsync(string key, Func<Task> operation, int intervalMs = 100)
         {
             DateTime now = DateTime.UtcNow;
-            bool shouldExecute;
+            bool shouldExecute = false;
 
-            lock (_lock)
-            {
-                if (_lastExecutions.TryGetValue(key, out var lastExecution))
-                {
-                    shouldExecute = (now - lastExecution).TotalMilliseconds >= intervalMs;
-                }
-                else
+            lastExecutions.AddOrUpdate(
+                key,
+                addValueFactory: (k) =>
                 {
                     shouldExecute = true;
-                }
-
-                if (shouldExecute)
+                    return now;
+                },
+                updateValueFactory: (k, lastExecution) =>
                 {
-                    _lastExecutions[key] = now;
+                    shouldExecute = (now - lastExecution).TotalMilliseconds >= intervalMs;
+                    return shouldExecute ? now : lastExecution;
                 }
-            }
+            );
 
             if (shouldExecute)
             {
@@ -210,8 +206,7 @@ public static class PerformanceOptimizer
     /// </summary>
     public static class PerformanceMonitor
     {
-        private static readonly Dictionary<string, PerformanceMetrics> _metrics = new();
-        private static readonly object _lock = new object();
+        private static readonly ConcurrentDictionary<string, PerformanceMetrics> metrics = new();
 
         /// <summary>
         /// Starts performance monitoring for a component operation
@@ -226,10 +221,7 @@ public static class PerformanceOptimizer
         /// </summary>
         public static PerformanceMetrics? GetMetrics(string operationName)
         {
-            lock (_lock)
-            {
-                return _metrics.TryGetValue(operationName, out var metrics) ? metrics : null;
-            }
+            return metrics.TryGetValue(operationName, out var foundMetrics) ? foundMetrics : null;
         }
 
         /// <summary>
@@ -237,47 +229,48 @@ public static class PerformanceOptimizer
         /// </summary>
         public static Dictionary<string, PerformanceMetrics> GetAllMetrics()
         {
-            lock (_lock)
-            {
-                return new Dictionary<string, PerformanceMetrics>(_metrics);
-            }
+            return new Dictionary<string, PerformanceMetrics>(metrics);
         }
 
         private class PerformanceTracker : IDisposable
         {
-            private readonly string _operationName;
-            private readonly string? _componentName;
-            private readonly DateTime _startTime;
-            private bool _disposed;
+            private readonly string operationName;
+            private readonly string? componentName;
+            private readonly DateTime startTime;
+            private bool disposed;
 
             public PerformanceTracker(string operationName, string? componentName)
             {
-                _operationName = operationName;
-                _componentName = componentName;
-                _startTime = DateTime.UtcNow;
+                this.operationName = operationName;
+                this.componentName = componentName;
+                startTime = DateTime.UtcNow;
             }
 
             public void Dispose()
             {
-                if (_disposed) return;
+                if (disposed) return;
 
-                var duration = DateTime.UtcNow - _startTime;
-                RecordMetrics(_operationName, duration, _componentName);
-                _disposed = true;
+                var duration = DateTime.UtcNow - startTime;
+                RecordMetrics(operationName, duration, componentName);
+                disposed = true;
             }
 
             private static void RecordMetrics(string operationName, TimeSpan duration, string? componentName)
             {
-                lock (_lock)
-                {
-                    if (!_metrics.TryGetValue(operationName, out var metrics))
+                metrics.AddOrUpdate(
+                    operationName,
+                    addValueFactory: (key) =>
                     {
-                        metrics = new PerformanceMetrics(operationName, componentName);
-                        _metrics[operationName] = metrics;
+                        var metrics = new PerformanceMetrics(operationName, componentName);
+                        metrics.RecordExecution(duration);
+                        return metrics;
+                    },
+                    updateValueFactory: (key, existingMetrics) =>
+                    {
+                        existingMetrics.RecordExecution(duration);
+                        return existingMetrics;
                     }
-
-                    metrics.RecordExecution(duration);
-                }
+                );
             }
         }
     }
@@ -319,34 +312,66 @@ public static class PerformanceOptimizer
     /// </summary>
     public class PerformanceMetrics
     {
+        private int executionCount;
+        private long totalDurationTicks;
+        private long _minDurationTicks = TimeSpan.MaxValue.Ticks;
+        private long _maxDurationTicks = TimeSpan.MinValue.Ticks;
+        private DateTime lastExecution;
+
         public string OperationName { get; }
         public string? ComponentName { get; }
-        public int ExecutionCount { get; private set; }
-        public TimeSpan TotalDuration { get; private set; }
-        public TimeSpan AverageDuration => ExecutionCount > 0 ? TimeSpan.FromTicks(TotalDuration.Ticks / ExecutionCount) : TimeSpan.Zero;
-        public TimeSpan MinDuration { get; private set; } = TimeSpan.MaxValue;
-        public TimeSpan MaxDuration { get; private set; } = TimeSpan.MinValue;
+        public int ExecutionCount => executionCount;
+        public TimeSpan TotalDuration => TimeSpan.FromTicks(totalDurationTicks);
+        public TimeSpan AverageDuration => ExecutionCount > 0 ? TimeSpan.FromTicks(totalDurationTicks / ExecutionCount) : TimeSpan.Zero;
+        public TimeSpan MinDuration => TimeSpan.FromTicks(_minDurationTicks);
+        public TimeSpan MaxDuration => TimeSpan.FromTicks(_maxDurationTicks);
         public DateTime FirstExecution { get; private set; }
-        public DateTime LastExecution { get; private set; }
+        public DateTime LastExecution => lastExecution;
 
         public PerformanceMetrics(string operationName, string? componentName)
         {
             OperationName = operationName;
             ComponentName = componentName;
             FirstExecution = DateTime.UtcNow;
+            lastExecution = DateTime.UtcNow;
         }
 
         public void RecordExecution(TimeSpan duration)
         {
-            ExecutionCount++;
-            TotalDuration = TotalDuration.Add(duration);
-            LastExecution = DateTime.UtcNow;
+            // Atomic increment
+            Interlocked.Increment(ref executionCount);
 
-            if (duration < MinDuration)
-                MinDuration = duration;
+            // Atomic add for total duration
+            Interlocked.Add(ref totalDurationTicks, duration.Ticks);
 
-            if (duration > MaxDuration)
-                MaxDuration = duration;
+            // Atomic update of last execution
+            lastExecution = DateTime.UtcNow;
+
+            // Atomic min/max updates using compare-exchange loops
+            UpdateMinDuration(duration.Ticks);
+            UpdateMaxDuration(duration.Ticks);
+        }
+
+        private void UpdateMinDuration(long durationTicks)
+        {
+            long currentMin, newMin;
+            do
+            {
+                currentMin = _minDurationTicks;
+                newMin = Math.Min(currentMin, durationTicks);
+                if (newMin == currentMin) break; // No update needed
+            } while (Interlocked.CompareExchange(ref _minDurationTicks, newMin, currentMin) != currentMin);
+        }
+
+        private void UpdateMaxDuration(long durationTicks)
+        {
+            long currentMax, newMax;
+            do
+            {
+                currentMax = _maxDurationTicks;
+                newMax = Math.Max(currentMax, durationTicks);
+                if (newMax == currentMax) break; // No update needed
+            } while (Interlocked.CompareExchange(ref _maxDurationTicks, newMax, currentMax) != currentMax);
         }
     }
 

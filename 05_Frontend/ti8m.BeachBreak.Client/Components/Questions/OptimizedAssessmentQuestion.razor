@@ -3,7 +3,7 @@
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Components.Questions
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 @if (!HideHeader)
 {
@@ -129,7 +129,7 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        if (HasParameterChanged(nameof(Section), Section))
+        if (StateService.HasParameterChanged(nameof(Section), Section))
         {
             LoadConfigurationAsync();
         }
@@ -164,8 +164,8 @@ else
     {
         // Check if response data has changed - compare by reference since ResponseData is strongly typed
         var responseDataHash = Response.ResponseData?.GetHashCode() ?? 0;
-        return HasParameterChanged(nameof(Response.ResponseData), responseDataHash) ||
-               HasParameterChanged(nameof(evaluations), evaluations.Count);
+        return StateService.HasParameterChanged(nameof(Response.ResponseData), responseDataHash) ||
+               StateService.HasParameterChanged(nameof(evaluations), evaluations.Count);
     }
 
     private int GetEvaluationRating(string evaluationKey)

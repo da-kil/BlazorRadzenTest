@@ -12,7 +12,7 @@
 @inject DialogService DialogService
 @inject IAuthService AuthService
 @inject IQuestionnaireAssignmentService AssignmentService
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 <div class="new-goals-section">
     <header class="section-header">
@@ -117,7 +117,7 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        if (HasParameterChanged(nameof(Response), Response))
+        if (StateService.HasParameterChanged(nameof(Response), Response))
         {
             await ReloadGoalData();
         }
@@ -131,7 +131,6 @@
         // NEW: Load goals as strongly-typed objects
         allCurrentGoals = LoadGoalsFromResponse();
 
-        // Track state change for OptimizedComponentBase
         _lastGoalCount = allCurrentGoals.Count;
         _goalCountChanged = _lastGoalCount != previousCount;
     }
@@ -318,7 +317,6 @@
         };
     }
 
-    // State tracking for OptimizedComponentBase
     private int _lastGoalCount = 0;
     private bool _goalCountChanged = false;
 

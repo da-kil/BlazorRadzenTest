@@ -9,7 +9,7 @@
 @inject IGoalApiService GoalApiService
 @inject NotificationService NotificationService
 @inject IAuthService AuthService
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 @if (!HideHeader)
 {
@@ -106,8 +106,8 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        if (HasParameterChanged(nameof(Section), Section) ||
-            HasParameterChanged(nameof(Response), Response) ||
+        if (StateService.HasParameterChanged(nameof(Section), Section) ||
+            StateService.HasParameterChanged(nameof(Response), Response) ||
             GoalRefreshToken != lastGoalRefreshToken)
         {
             lastGoalRefreshToken = GoalRefreshToken;
@@ -126,8 +126,8 @@ else
     protected override bool HasStateChanged()
     {
         var responseDataHash = Response.ResponseData?.GetHashCode() ?? 0;
-        return HasParameterChanged(nameof(Response.ResponseData), responseDataHash) ||
-               HasParameterChanged(nameof(hasPredecessor), hasPredecessor);
+        return StateService.HasParameterChanged(nameof(Response.ResponseData), responseDataHash) ||
+               StateService.HasParameterChanged(nameof(hasPredecessor), hasPredecessor);
     }
 
 

@@ -10,6 +10,7 @@
 @inject IEmployeeQuestionnaireService EmployeeQuestionnaireService
 @inject IQuestionnaireTemplateService TemplateService
 @inject IQuestionnaireResponseService ResponseService
+@inject IUITranslationService TranslationService
 
 <PageTitle>@T("nav.my-questionnaires")</PageTitle>
 
@@ -122,8 +123,8 @@
 
 	protected override bool HasAdditionalStateChanged()
 	{
-		return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
-			   HasParameterChanged(nameof(questionnaireResponses), questionnaireResponses.Count);
+		return StateService.HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
+			   StateService.HasParameterChanged(nameof(questionnaireResponses), questionnaireResponses.Count);
 	}
 
 	private async Task CategorizeQuestionnaires()

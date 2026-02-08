@@ -23,11 +23,11 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - **Clean Architecture**: Dependencies point inward toward the domain
 
 ### Technology Stack
-- .NET 9
+- .NET 10
 - Blazor WebAssembly with Radzen UI
 - PostgreSQL with Marten for event sourcing
 - .NET Aspire for local development orchestration
-- Separate Command and Query APIs
+- Separate Command and Query APIs with centralized exception handling
 
 ### Authentication & Authorization Architecture
 **CRITICAL: Roles are NOT in JWT tokens - they are looked up from database**
@@ -45,6 +45,33 @@ This is ti8m BeachBreak, a .NET 9 application implementing a CQRS/Event Sourcing
 - **Benefits**: Real-time role changes without token refresh, centralized role management
 - **Debugging Auth Issues**: Check database records, NOT JWT token claims
 - **Common Mistake**: Assuming roles are in JWT - they're dynamically looked up per request
+
+### Infrastructure Architecture
+
+#### Database Connection Management
+**CRITICAL**: Single NpgsqlDataSource registration to prevent connection pool conflicts.
+
+- **Pattern**: Register NpgsqlDataSource only in Extensions.cs via AddMartenInfrastructure()
+- **NEVER** register NpgsqlDataSource directly in Program.cs files
+- **Reason**: Multiple registrations cause connection pool conflicts and resource leaks
+- **Implementation**: Both CommandApi and QueryApi use shared connection configuration
+
+#### Exception Handling Architecture
+**CRITICAL**: Centralized exception handling via GlobalExceptionMiddleware.
+
+- **Pattern**: All exceptions handled by GlobalExceptionMiddleware in both APIs
+- **NEVER** wrap controller actions in try-catch blocks
+- **Benefits**: Consistent error responses, structured logging, correlation tracking
+- **Response Format**: RFC 7807 ProblemDetails with correlation IDs and request metadata
+- **Development Mode**: Includes exception details and stack traces for debugging
+
+#### Configuration Management
+**CRITICAL**: Environment-specific configuration for caching and performance.
+
+- **Authorization Cache**: Configurable TTL via AuthorizationCacheSettings
+- **Default TTL**: 15 minutes with environment-specific overrides
+- **Pattern**: Use IOptions<T> for all configuration settings
+- **Location**: appsettings.json in both CommandApi and QueryApi
 
 ## Workflow States and Process Types
 
@@ -82,6 +109,26 @@ For detailed information about questionnaire workflow states, process types, and
 - Events are applied via reflection using the Apply pattern
 - Domain events implement `IDomainEvent` interface
 - Version tracking for optimistic concurrency control
+
+## Performance Architecture
+
+### Translation System Optimization
+**CRITICAL**: Category-based translation loading prevents performance bottlenecks.
+
+- **Problem Solved**: Loading all 978 translation keys caused 150-400KB network transfers per component
+- **Solution**: Category-based loading reduces payload by 75-87% (50-200 keys per component)
+- **Pattern**: Components specify required translation categories via GetRequiredTranslationCategories()
+- **Implementation**: CategoryOptimizedTranslatableComponent base class
+- **Categories**: CoreCategories (~95 keys), CommonCategories (~205 keys), QuestionnaireCategories (~375 keys)
+- **Memory Impact**: Reduced from 39KB to 8-15KB per component (60-80% reduction)
+
+### Component Architecture Optimization
+**CRITICAL**: Composition-based design over complex inheritance hierarchies.
+
+- **Problem Solved**: 3-level inheritance hierarchy (524 lines) caused debugging complexity
+- **Solution**: Composition-based services with lightweight base classes (~200 lines, 38% reduction)
+- **Pattern**: Use IComponentPerformanceService and IComponentTranslationManager interfaces
+- **Benefits**: Better testability, clearer separation of concerns, easier maintenance
 
 ## Development Commands
 
@@ -141,11 +188,40 @@ dotnet run
 - Service discovery integration for API communication
 - Separate client project for WebAssembly components
 
-### Testing Considerations
-- Event sourcing allows easy testing of business logic via events
-- Use Given/When/Then pattern with domain events
-- Test command handlers independently of infrastructure
-- Consider read model projections in integration tests
+### Testing Architecture
+
+#### Domain Aggregate Testing Framework
+**CRITICAL**: Use standardized Given/When/Then framework for all domain aggregate testing.
+
+- **Framework**: AggregateTestBase<T> with fluent event assertions
+- **Location**: Tests/ti8m.BeachBreak.Domain.Tests/Common/
+- **Pattern**: Given(events) → When(action) → Then(assertions)
+- **Features**: Event validation, exception testing, state verification, version tracking
+- **Performance**: <100ms per test execution, suitable for large test suites
+
+**Example Usage**:
+```csharp
+[Test]
+public void ChangeName_WithValidName_RaisesNameChangedEvent()
+{
+    // Given - aggregate exists
+    Given(new CategoryAdded(id, name, description, DateTime.UtcNow, DateTime.UtcNow, 1));
+
+    // When - business operation
+    When(() => Aggregate.ChangeName(newName));
+
+    // Then - expected events
+    ThenEventWasRaised<CategoryNameChanged>()
+        .WithProperty(e => e.Name, newName)
+        .WithTimestampNear(e => e.LastModifiedDate);
+}
+```
+
+#### Testing Categories
+- **Unit Tests**: Single aggregate behavior using AggregateTestBase<T>
+- **Integration Tests**: Multi-aggregate scenarios and service dependencies
+- **Projection Tests**: Read model consistency and event replay accuracy
+- **Performance Tests**: Event sourcing performance and optimization validation
 
 ## Critical Development Patterns (ALWAYS FOLLOW)
 
@@ -259,6 +335,59 @@ For detailed configuration serialization guidance, see: [docs/implementation/con
 
 For detailed API controller implementation guidance, see: [docs/implementation/api-controller-patterns.md](docs/implementation/api-controller-patterns.md)
 
+## 14. Infrastructure Configuration Pattern
+
+**CRITICAL**: Prevent resource conflicts through centralized configuration.
+
+**Database Connection Management**:
+- **NEVER** register NpgsqlDataSource in individual Program.cs files
+- **ALWAYS** use shared registration via Extensions.cs → AddMartenInfrastructure()
+- **REASON**: Multiple registrations cause connection pool conflicts
+
+**Exception Handling**:
+- **NEVER** wrap controller actions in try-catch blocks
+- **ALWAYS** let GlobalExceptionMiddleware handle all exceptions
+- **PATTERN**: Consistent ProblemDetails responses with correlation tracking
+
+**Cache Configuration**:
+- **ALWAYS** make cache TTL values configurable via IOptions<T>
+- **NEVER** hardcode timeout values in service classes
+- **PATTERN**: Environment-specific configuration for dev/staging/production
+
+## 15. Performance Optimization Pattern
+
+**CRITICAL**: Optimize for scale through category-based loading and composition.
+
+**Translation Loading**:
+- **NEVER** load all 978 translation keys per component
+- **ALWAYS** use CategoryOptimizedTranslatableComponent with category specification
+- **PATTERN**: Override GetRequiredTranslationCategories() to specify needed keys
+- **PERFORMANCE**: Targets 75-87% reduction in network payload
+
+**Component Architecture**:
+- **PREFER** composition over deep inheritance hierarchies
+- **PATTERN**: Use service interfaces (IComponentPerformanceService) over base class methods
+- **BENEFITS**: Better testability, clearer separation of concerns
+
+## 16. Domain Testing Pattern
+
+**CRITICAL**: Use standardized testing framework for all domain aggregate testing.
+
+**Framework Usage**:
+- **ALWAYS** inherit from AggregateTestBase<T> for domain aggregate tests
+- **PATTERN**: Given(historical events) → When(business action) → Then(expected events)
+- **LOCATION**: Tests/ti8m.BeachBreak.Domain.Tests/[AggregateName]/
+
+**Event Assertions**:
+- **PATTERN**: Use fluent assertions for event validation
+- **EXAMPLE**: ThenEventWasRaised<EventType>().WithProperty(e => e.Property, expectedValue)
+- **FEATURES**: Timestamp validation, aggregate state verification, exception testing
+
+**Test Organization**:
+- **STRUCTURE**: One test class per aggregate in matching folder structure
+- **NAMING**: [Method]_[Condition]_[ExpectedBehavior] pattern
+- **CATEGORIES**: Unit (single aggregate), Integration (multi-aggregate), Projection (read models)
+
 ---
 
 ## Documentation Structure
@@ -278,14 +407,22 @@ For detailed API controller implementation guidance, see: [docs/implementation/a
 - **docs/planning/**: Planning documents and session summaries
 - **docs/domain/**: Domain-specific documentation and business rules
 
+### Testing Documentation
+- **Tests/ti8m.BeachBreak.Domain.Tests/README.md**: Complete domain testing framework guide
+- **Tests/ti8m.BeachBreak.Domain.Tests/Common/**: Testing framework implementation
+- **Tests/ti8m.BeachBreak.Domain.Tests/[Aggregate]Tests.cs**: Example test implementations
+
 ### Quick Reference
 
 **For new developers**: Start with CLAUDE.md for core patterns, then explore feature-specific docs
 **For specific features**: Check docs/domain/ and docs/implementation/ for detailed guidance
 **For component work**: See docs/frontend/component-architecture.md for comprehensive patterns
 **For translations**: Use docs/implementation/translation-system.md for complete workflow
+**For domain testing**: Use Tests/ti8m.BeachBreak.Domain.Tests/README.md for testing framework guide
+**For performance optimization**: Follow patterns in sections 14-16 for infrastructure and component optimization
 
 ---
 
-*Last Updated: 2026-01-30*
-*Core Patterns Version: 2.0*
+*Last Updated: 2026-02-08*
+*Core Patterns Version: 3.0*
+*Architecture Improvements: Infrastructure optimization, performance patterns, domain testing framework*

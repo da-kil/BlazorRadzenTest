@@ -24,7 +24,7 @@
 @inject GoalService GoalService
 @inject IJSRuntime JSRuntime
 @inject IAuthService AuthService
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 
 <PageTitle>@(template?.GetLocalizedNameWithFallback(CurrentLanguage) ?? "Questionnaire")</PageTitle>
@@ -398,11 +398,11 @@ else
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(currentSectionIndex), currentSectionIndex) ||
-               HasParameterChanged(nameof(response.ProgressPercentage), response.ProgressPercentage) ||
-               HasParameterChanged(nameof(template), template) ||
-               HasParameterChanged(nameof(isSaving), isSaving) ||
-               HasParameterChanged(nameof(isSubmitting), isSubmitting);
+        return StateService.HasParameterChanged(nameof(currentSectionIndex), currentSectionIndex) ||
+               StateService.HasParameterChanged(nameof(response.ProgressPercentage), response.ProgressPercentage) ||
+               StateService.HasParameterChanged(nameof(template), template) ||
+               StateService.HasParameterChanged(nameof(isSaving), isSaving) ||
+               StateService.HasParameterChanged(nameof(isSubmitting), isSubmitting);
     }
 
     private async Task DetermineUserRole()
@@ -1071,7 +1071,7 @@ else
         // In read-only mode, allow free navigation between all sections
         if (IsQuestionnaireCompleted())
         {
-            if (HasParameterChanged(nameof(currentSectionIndex), newIndex))
+            if (StateService.HasParameterChanged(nameof(currentSectionIndex), newIndex))
             {
                 currentSectionIndex = newIndex;
                 NotifyStateChanged();
@@ -1082,7 +1082,7 @@ else
         // In edit mode, validate completion before allowing forward navigation
         if (newIndex < currentSectionIndex || CanProceedFromCurrentSection())
         {
-            if (HasParameterChanged(nameof(currentSectionIndex), newIndex))
+            if (StateService.HasParameterChanged(nameof(currentSectionIndex), newIndex))
             {
                 currentSectionIndex = newIndex;
                 NotifyStateChanged();

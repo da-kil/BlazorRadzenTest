@@ -6606,5 +6606,243 @@
         "english": "Questionnaire is finalized and archived",
         "category": "workflow-states",
         "createdDate": "2026-02-05T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "actions.hr.cancel-assignment",
+        "german": "Aufgabe abbrechen",
+        "english": "Cancel Assignment",
+        "category": "actions",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "actions.hr.edit-assignment",
+        "german": "Aufgabe bearbeiten",
+        "english": "Edit Assignment",
+        "category": "actions",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "actions.hr.send-reminder",
+        "german": "Erinnerung senden",
+        "english": "Send Reminder",
+        "category": "actions",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.cancel-assignment",
+        "german": "Aufgabe abbrechen",
+        "english": "Cancel Assignment",
+        "category": "buttons",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.confirm-cancellation",
+        "german": "Stornierung bestätigen",
+        "english": "Confirm Cancellation",
+        "category": "buttons",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.save-changes",
+        "german": "Änderungen speichern",
+        "english": "Save Changes",
+        "category": "buttons",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.send-reminder",
+        "german": "Erinnerung senden",
+        "english": "Send Reminder",
+        "category": "buttons",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.cancelling",
+        "german": "Abbrechen...",
+        "english": "Cancelling...",
+        "category": "buttons",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.saving",
+        "german": "Speichern...",
+        "english": "Saving...",
+        "category": "buttons",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "buttons.sending",
+        "german": "Senden...",
+        "english": "Sending...",
+        "category": "buttons",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.reason",
+        "german": "Grund",
+        "english": "Reason",
+        "category": "labels",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.message",
+        "german": "Nachricht",
+        "english": "Message",
+        "category": "labels",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.new-due-date",
+        "german": "Neues Fälligkeitsdatum",
+        "english": "New Due Date",
+        "category": "labels",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "placeholders.optional-reason",
+        "german": "Optionaler Grund für die Stornierung...",
+        "english": "Optional reason for cancellation...",
+        "category": "placeholders",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "placeholders.reminder-message",
+        "german": "Erinnerungsnachricht...",
+        "english": "Reminder message...",
+        "category": "placeholders",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.cancel-assignment",
+        "german": "Aufgabe abbrechen",
+        "english": "Cancel Assignment",
+        "category": "sections",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.edit-assignment",
+        "german": "Aufgabe bearbeiten",
+        "english": "Edit Assignment",
+        "category": "sections",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.send-reminder",
+        "german": "Erinnerung senden",
+        "english": "Send Reminder",
+        "category": "sections",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "sections.assignment-details",
+        "german": "Aufgabendetails",
+        "english": "Assignment Details",
+        "category": "sections",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.are-you-sure-cancel",
+        "german": "Sind Sie sicher, dass Sie diese Aufgabe abbrechen möchten?",
+        "english": "Are you sure you want to cancel this assignment?",
+        "category": "messages",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.cancellation-reason-explanation",
+        "german": "Ein Grund ist optional, wird aber empfohlen, um Klarheit zu schaffen.",
+        "english": "A reason is optional but recommended for clarity.",
+        "category": "messages",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.assignment-cancellation-warning",
+        "german": "Das Abbrechen einer Aufgabe kann nicht rückgängig gemacht werden. Folgende Aktionen werden durchgeführt:",
+        "english": "Canceling an assignment cannot be undone. The following actions will occur:",
+        "category": "messages",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.assignment-data-will-be-preserved",
+        "german": "Alle vorhandenen Antwortdaten bleiben erhalten",
+        "english": "All existing response data will be preserved",
+        "category": "messages",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.employee-will-be-notified",
+        "german": "Der Mitarbeiter wird über die Stornierung per E-Mail informiert",
+        "english": "The employee will be notified of the cancellation via email",
+        "category": "messages",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.cannot-be-undone",
+        "german": "Diese Aktion kann nicht rückgängig gemacht werden",
+        "english": "This action cannot be undone",
+        "category": "messages",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.cancellation-notification-will-be-sent-to",
+        "german": "Die Stornierungsbenachrichtigung wird gesendet an:",
+        "english": "The cancellation notification will be sent to:",
+        "category": "messages",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.assignment-updated",
+        "german": "Aufgabe aktualisiert",
+        "english": "Assignment Updated",
+        "category": "notifications",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.assignment-updated-successfully",
+        "german": "Die Aufgabe wurde erfolgreich aktualisiert",
+        "english": "The assignment has been updated successfully",
+        "category": "notifications",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.failed-update-assignment",
+        "german": "Fehler beim Aktualisieren der Aufgabe",
+        "english": "Failed to update assignment",
+        "category": "notifications",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.assignment-cancelled",
+        "german": "Aufgabe abgebrochen",
+        "english": "Assignment Cancelled",
+        "category": "notifications",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "notifications.assignment-cancelled-successfully",
+        "german": "Die Aufgabe wurde erfolgreich abgebrochen für",
+        "english": "The assignment has been successfully cancelled for",
+        "category": "notifications",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "validation.message-minimum-length",
+        "german": "Die Nachricht muss mindestens 10 Zeichen lang sein",
+        "english": "Message must be at least 10 characters long",
+        "category": "validation",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "forms.minimum-required",
+        "german": "mindestens erforderlich:",
+        "english": "minimum required:",
+        "category": "forms",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
+    },
+    {
+        "key": "labels.due",
+        "german": "fällig am",
+        "english": "due",
+        "category": "labels",
+        "createdDate": "2026-02-07T12:00:00.0000000+01:00"
     }
 ]

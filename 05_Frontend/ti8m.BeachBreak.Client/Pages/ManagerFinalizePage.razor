@@ -16,7 +16,7 @@
 @inject IQuestionnaireTemplateService TemplateService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IAuthService AuthService
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 <PageTitle>@(template?.GetLocalizedNameWithFallback(CurrentLanguage) ?? T("pages.manager-finalize-title"))</PageTitle>
 
