@@ -1,61 +1,30 @@
-# Build stage
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /src
+# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-# Copy solution file
-COPY ["ti8m.BeachBreak.sln", "./"]
-
-# Copy all project files for restore
-COPY ["05_Frontend/ti8m.BeachBreak/ti8m.BeachBreak.csproj", "05_Frontend/ti8m.BeachBreak/"]
-COPY ["05_Frontend/ti8m.BeachBreak.Client/ti8m.BeachBreak.Client.csproj", "05_Frontend/ti8m.BeachBreak.Client/"]
-COPY ["01_Domain/ti8m.BeachBreak.Domain/ti8m.BeachBreak.Domain.csproj", "01_Domain/ti8m.BeachBreak.Domain/"]
-COPY ["02_Application/ti8m.BeachBreak.Application.Query/ti8m.BeachBreak.Application.Query.csproj", "02_Application/ti8m.BeachBreak.Application.Query/"]
-COPY ["04_Core/ti8m.BeachBreak.Core/ti8m.BeachBreak.Core.csproj", "04_Core/ti8m.BeachBreak.Core/"]
-COPY ["04_Core/ti8m.BeachBreak.Core.Infrastructure/ti8m.BeachBreak.Core.Infrastructure.csproj", "04_Core/ti8m.BeachBreak.Core.Infrastructure/"]
-
-# Restore dependencies
-RUN dotnet restore "05_Frontend/ti8m.BeachBreak/ti8m.BeachBreak.csproj"
-
-# Copy all source code
-COPY . .
-
-# Build the application
-WORKDIR "/src/05_Frontend/ti8m.BeachBreak"
-RUN dotnet build "ti8m.BeachBreak.csproj" -c Release -o /app/build
-
-# Publish stage
-FROM build AS publish
-RUN dotnet publish "ti8m.BeachBreak.csproj" -c Release -o /app/publish /p:UseAppHost=false
-
-# Runtime stage
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+# This stage is used when running from VS in fast mode (Default for Debug configuration)
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+USER $APP_UID
 WORKDIR /app
-
-# Install curl for health checks
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
-
-# Copy published application
-COPY --from=publish /app/publish .
-
-# Change ownership to non-root user
-RUN chown -R appuser:appuser /app
-
-# Switch to non-root user
-USER appuser
-
-# Expose ports
 EXPOSE 8080
 EXPOSE 8081
 
-# Environment variables (will be overridden by Kubernetes)
-ENV ASPNETCORE_URLS=http://+:8080
-ENV ASPNETCORE_ENVIRONMENT=Production
+# This stage is used to build the service project
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
-  CMD curl --fail http://localhost:8080/health || exit 1
+COPY . .
+WORKDIR "/src/05_Frontend/ti8m.BeachBreak"
 
+RUN dotnet restore "./ti8m.BeachBreak.csproj"
+RUN dotnet build "ti8m.BeachBreak.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+# This stage is used to publish the service project to be copied to the final stage
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "./ti8m.BeachBreak.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+FROM base AS final
+WORKDIR /app
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "ti8m.BeachBreak.dll"]
