@@ -131,6 +131,34 @@ public abstract class BaseQuestionnaireListPage : CategoryOptimizedTranslatableC
 
     #endregion
 
+    #region Translation Categories
+
+    /// <summary>
+    /// Questionnaire list pages need access to pages and messages categories
+    /// in addition to core navigation and button translations.
+    /// </summary>
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        //return TranslationCategories.CommonCategories;
+        return new[]
+        {
+            TranslationCategories.Labels,           // For labels.employee, labels.feedback-source, etc.
+            TranslationCategories.Navigation,
+            TranslationCategories.Buttons,
+            TranslationCategories.Notifications,
+            TranslationCategories.Validation,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Forms,
+            TranslationCategories.Pages,
+            TranslationCategories.Messages,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Actions
+        };
+    }
+
+    #endregion
+
     #region Protected Utility Methods
 
     protected void SetLoading(bool loading)
