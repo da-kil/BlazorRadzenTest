@@ -166,6 +166,25 @@
     private UITranslation? translationBeingEdited;
     private HashSet<string> newTranslationKeys = new(); // Track keys of newly created translations
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Filters,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Tooltips,
+            TranslationCategories.Actions,
+            TranslationCategories.Validation
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();

@@ -26,38 +26,37 @@ public class Program
         AzureEntraSettings azureEntraSettings = new();
         builder.Configuration.Bind("AzureAd", azureEntraSettings);
 
-        //if (!builder.Environment.IsDevelopment())
-        //{
-        // Configure Data Protection with Azure Key Vault and monitoring
-        var dataProtectionStorageUri = builder.Configuration.GetValue<string>("Storage:DataProtection");
-        if (string.IsNullOrEmpty(dataProtectionStorageUri))
+        if (!builder.Environment.IsDevelopment())
         {
-            throw new InvalidOperationException("Storage:DataProtection configuration value is required");
+            // Configure Data Protection with Azure Key Vault and monitoring
+            var dataProtectionStorageUri = builder.Configuration.GetValue<string>("Storage:DataProtection");
+            if (string.IsNullOrEmpty(dataProtectionStorageUri))
+            {
+                throw new InvalidOperationException("Storage:DataProtection configuration value is required");
+            }
+
+            var dataProtectionBuilder = builder.Services.AddDataProtection()
+                .SetApplicationName("ti8m-beachbreak");
+
+            // Configure Azure Blob Storage for all environments
+            // Production benefits: No persistent volumes needed, automatic backup/replication, shared across pods
+            var blobUri = new Uri($"{dataProtectionStorageUri}/dataprotection/keys.xml");
+            dataProtectionBuilder.PersistKeysToAzureBlobStorage(blobUri, new DefaultAzureCredential());
+
+            // Configure key rotation and lifetime with monitoring
+            dataProtectionBuilder
+                .SetDefaultKeyLifetime(TimeSpan.FromDays(90)) // Keys expire after 90 days
+                .AddKeyManagementOptions(options =>
+                {
+                    options.AutoGenerateKeys = true; // Automatically generate new keys before expiration
+                    options.NewKeyLifetime = TimeSpan.FromDays(90);
+                })
+                .Services.AddSingleton<IKeyEscrowSink>(provider =>
+                {
+                    var logger = provider.GetRequiredService<ILogger<Program>>();
+                    return new DataProtectionKeyRotationLogger(logger);
+                });
         }
-
-        var dataProtectionBuilder = builder.Services.AddDataProtection()
-            .SetApplicationName("ti8m-beachbreak");
-
-        // Configure Azure Blob Storage for all environments
-        // Production benefits: No persistent volumes needed, automatic backup/replication, shared across pods
-        //var blobUri = new Uri($"https://{dataProtectionStorageName}.blob.core.windows.net/dataprotection/keys.xml");
-        var blobUri = new Uri($"{dataProtectionStorageUri}/dataprotection/keys.xml");
-        dataProtectionBuilder.PersistKeysToAzureBlobStorage(blobUri, new DefaultAzureCredential());
-
-        // Configure key rotation and lifetime with monitoring
-        dataProtectionBuilder
-            .SetDefaultKeyLifetime(TimeSpan.FromDays(90)) // Keys expire after 90 days
-            .AddKeyManagementOptions(options =>
-            {
-                options.AutoGenerateKeys = true; // Automatically generate new keys before expiration
-                options.NewKeyLifetime = TimeSpan.FromDays(90);
-            })
-            .Services.AddSingleton<IKeyEscrowSink>(provider =>
-            {
-                var logger = provider.GetRequiredService<ILogger<Program>>();
-                return new DataProtectionKeyRotationLogger(logger);
-            });
-        //}
 
         // Add services to the container.
         builder.Services.AddAuthentication(MS_OIDC_SCHEME)

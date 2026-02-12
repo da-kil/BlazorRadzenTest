@@ -480,6 +480,26 @@
 
     private List<StatusOption> statusOptions = new();
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Tabs,
+            TranslationCategories.Sections,
+            TranslationCategories.Filters,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.WorkflowStates,
+            TranslationCategories.Actions
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();

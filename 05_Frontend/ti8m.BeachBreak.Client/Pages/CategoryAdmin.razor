@@ -158,6 +158,25 @@
     private Category? categoryBeingEdited;
     private HashSet<Guid> newCategoryIds = new(); // Track IDs of newly created categories
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Filters,
+            TranslationCategories.Status,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Tooltips,
+            TranslationCategories.Actions
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();

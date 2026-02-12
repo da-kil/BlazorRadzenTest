@@ -152,6 +152,22 @@
         .Where(r => r.Status == "Completed" || r.Status == "Failed" || r.Status == "Cancelled")
         .ToList();
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Tabs,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Labels,
+            TranslationCategories.Actions
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();

@@ -223,6 +223,27 @@
 
     private SystemSettings settings = new();
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Nav,
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Tabs,
+            TranslationCategories.Titles,
+            TranslationCategories.Filters,
+            TranslationCategories.Labels,
+            TranslationCategories.Settings,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Actions,
+            TranslationCategories.Navigation
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();

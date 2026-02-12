@@ -160,6 +160,19 @@
     private string _lastSearchText = string.Empty;
     private ApplicationRole _lastCurrentUserRole = ApplicationRole.Employee;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Columns,
+            TranslationCategories.Filters,
+            TranslationCategories.Buttons,
+            TranslationCategories.Notifications,
+            TranslationCategories.Messages,
+            TranslationCategories.Labels
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();

@@ -191,6 +191,27 @@
         }, "InitializeFeedbackTemplateManagement");
     }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Nav,
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Filters,
+            TranslationCategories.Status,
+            TranslationCategories.SourceTypes,
+            TranslationCategories.Templates,
+            TranslationCategories.Messages,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Labels,
+            TranslationCategories.Notifications,
+            TranslationCategories.Actions,
+            TranslationCategories.Validation
+        };
+    }
+
     protected override bool HasStateChanged()
     {
         return StateService.HasParameterChanged(nameof(templates), templates.Count) ||

@@ -78,3 +78,17 @@
 		</AuthorizeView>
 	</RadzenPanelMenu>
 </div>
+
+@code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Nav,           // For nav.* keys
+            TranslationCategories.Navigation,    // For other navigation keys
+            TranslationCategories.Buttons,       // For any buttons
+            TranslationCategories.Notifications, // For notifications
+            TranslationCategories.Messages       // For general messages
+        };
+    }
+}
