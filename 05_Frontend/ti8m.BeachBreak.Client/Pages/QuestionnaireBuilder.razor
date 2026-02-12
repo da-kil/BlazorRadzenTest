@@ -18,7 +18,7 @@
 @inject QuestionnaireValidationService ValidationService
 @inject ti8m.BeachBreak.Client.Services.QuestionHandlers.QuestionHandlerFactory HandlerFactory
 @inject QuestionnaireBuilderState State
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 @implements IDisposable
 
 <PageTitle>@(State.IsEditMode? T("pages.questionnaire-editor") : T("pages.questionnaire-builder"))</PageTitle>
@@ -230,7 +230,7 @@
 
     private async Task LoadQuestionnaireData()
     {
-        await ExecuteSafelyAsync(async () =>
+        await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
         {
             // Initialize translations-dependent data
             InitializeQuestionTypeLabels();
@@ -279,10 +279,10 @@
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(State.Template), State.Template?.Id) ||
-               HasParameterChanged(nameof(State.CurrentStep), State.CurrentStep) ||
-               HasParameterChanged(nameof(State.ShowQuestionEditor), State.ShowQuestionEditor) ||
-               HasParameterChanged(nameof(State.ShowQuestionTypeSelection), State.ShowQuestionTypeSelection);
+        return StateService.HasParameterChanged(nameof(State.Template), State.Template?.Id) ||
+               StateService.HasParameterChanged(nameof(State.CurrentStep), State.CurrentStep) ||
+               StateService.HasParameterChanged(nameof(State.ShowQuestionEditor), State.ShowQuestionEditor) ||
+               StateService.HasParameterChanged(nameof(State.ShowQuestionTypeSelection), State.ShowQuestionTypeSelection);
     }
 
     private async Task LoadCategories()

@@ -9,7 +9,7 @@
 @using ti8m.BeachBreak.Client.Layout
 @inject ICategoryApiService CategoryService
 @inject DialogService DialogService
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 <PageTitle>@T("pages.questionnaire-type-administration")</PageTitle>
 
@@ -158,10 +158,29 @@
     private Category? categoryBeingEdited;
     private HashSet<Guid> newCategoryIds = new(); // Track IDs of newly created categories
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Filters,
+            TranslationCategories.Status,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Tooltips,
+            TranslationCategories.Actions
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        await ExecuteSafelyAsync(async () =>
+        await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
         {
             await LoadCategories();
         }, "InitializeCategoryAdmin");
@@ -169,9 +188,9 @@
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(categories), categories.Count) ||
-               HasParameterChanged(nameof(searchText), searchText) ||
-               HasParameterChanged(nameof(showInactiveCategories), showInactiveCategories);
+        return StateService.HasParameterChanged(nameof(categories), categories.Count) ||
+               StateService.HasParameterChanged(nameof(searchText), searchText) ||
+               StateService.HasParameterChanged(nameof(showInactiveCategories), showInactiveCategories);
     }
 
     private async Task LoadCategories()

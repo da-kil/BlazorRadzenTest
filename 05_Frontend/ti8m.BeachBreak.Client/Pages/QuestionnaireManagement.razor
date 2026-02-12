@@ -11,7 +11,7 @@
 @inject NavigationManager NavigationManager
 @inject ICategoryApiService CategoryService
 @inject IQuestionnaireTemplateService ApiService
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 <PageTitle>@T("nav.questionnaire-management")</PageTitle>
 
@@ -223,11 +223,32 @@
 
     private SystemSettings settings = new();
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Nav,
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Tabs,
+            TranslationCategories.Titles,
+            TranslationCategories.Filters,
+            TranslationCategories.Labels,
+            TranslationCategories.Settings,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Actions,
+            TranslationCategories.Navigation
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        await ExecuteSafelyAsync(async () =>
+        await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
         {
             // Load templates and categories in parallel
             var loadTemplatesTask = LoadTemplates();
@@ -243,9 +264,9 @@
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(templates), templates.Count) ||
-               HasParameterChanged(nameof(searchText), searchText) ||
-               HasParameterChanged(nameof(categoryFilter), categoryFilter);
+        return StateService.HasParameterChanged(nameof(templates), templates.Count) ||
+               StateService.HasParameterChanged(nameof(searchText), searchText) ||
+               StateService.HasParameterChanged(nameof(categoryFilter), categoryFilter);
     }
 
     private async Task LoadTemplates()

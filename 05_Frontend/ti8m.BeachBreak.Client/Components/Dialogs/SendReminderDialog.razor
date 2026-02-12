@@ -1,0 +1,149 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Models
+@inject DialogService DialogService
+@inherits CategoryOptimizedTranslatableComponent
+
+<div class="dialog-container">
+    <div class="dialog-review-info">
+        <div class="text-center">
+            <RadzenIcon Icon="notifications" Class="dialog-header-icon" />
+            <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
+                @T("dialogs.send-reminder")
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                @T("messages.send-reminder-description")
+            </RadzenText>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="icon-box">
+            <RadzenIcon Icon="assignment" Style="color: #2196F3;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                @T("labels.assignment-information")
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            <strong>@T("labels.employee"):</strong> @Assignment?.EmployeeName (@Assignment?.EmployeeEmail)
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            <strong>@T("labels.questionnaire"):</strong> @Assignment?.TemplateName
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            <strong>@T("labels.current-state"):</strong> @(Assignment?.WorkflowState != null ? T(WorkflowStateHelper.GetStateDisplayName(Assignment.WorkflowState)) : "Unknown")
+        </RadzenText>
+        @if (Assignment?.DueDate != null)
+        {
+            <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                <strong>@T("labels.due-date"):</strong> @Assignment.DueDate.Value.ToString("dd/MM/yyyy")
+            </RadzenText>
+        }
+    </div>
+
+    <div class="dialog-content-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+            @T("fields.reminder-message") <span style="color: red;">*</span>
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+            @T("placeholders.customize-reminder-message")
+        </RadzenText>
+        <RadzenTextArea @bind-Value="@reminderMessage"
+                       Placeholder="@T("placeholders.reminder-message-default")"
+                       Rows="6"
+                       Style="width: 100%;"
+                       MaxLength="1000"
+                       Class="@(showValidationError && !IsMessageValid() ? "has-error" : "")" />
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+            <RadzenText TextStyle="TextStyle.Caption" Class="@(IsMessageValid() ? "text-muted" : "text-danger")">
+                @(reminderMessage?.Length ?? 0) / 1000 @T("forms.characters") @(IsMessageValid() ? "" : $"({T("forms.minimum-required")} 10)")
+            </RadzenText>
+            @if (showValidationError && !IsMessageValid())
+            {
+                <RadzenText TextStyle="TextStyle.Caption" Class="text-danger">
+                    <RadzenIcon Icon="error" Style="font-size: 1rem; vertical-align: middle;" /> @T("validation.message-minimum-length") 10
+                </RadzenText>
+            }
+        </div>
+    </div>
+
+    <div class="info-section" style="background: rgba(33, 150, 243, 0.05); border-left: 4px solid #2196F3;">
+        <div class="icon-box">
+            <RadzenIcon Icon="mail" Style="color: #2196F3;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                @T("labels.email-notifications")
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            @T("messages.reminder-will-be-sent-to"):
+        </RadzenText>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+            <li>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    <strong>@Assignment?.EmployeeName</strong> (@Assignment?.EmployeeEmail)
+                </RadzenText>
+            </li>
+        </ul>
+    </div>
+
+    <div class="dialog-actions">
+        <AsyncButton Text="@T("buttons.cancel")"
+                    ButtonStyle="ButtonStyle.Light"
+                    Click="@Cancel"
+                    Size="ButtonSize.Medium" />
+        <AsyncButton Text="@T("buttons.send-reminder")"
+                    ProcessingText="@T("buttons.sending-reminder")"
+                    ButtonStyle="ButtonStyle.Primary"
+                    Icon="send"
+                    Click="@SendReminder"
+                    Size="ButtonSize.Medium"
+                    Disabled="@(!CanSend())" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionnaireAssignment? Assignment { get; set; }
+
+    private string reminderMessage = string.Empty;
+    private bool showValidationError = false;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Pre-populate with default message
+        var templateName = Assignment?.TemplateName ?? "questionnaire";
+        var dueDate = Assignment?.DueDate?.ToString("dd/MM/yyyy") ?? T("labels.soon");
+        reminderMessage = $"{T("placeholders.reminder-message-default")} {templateName} {T("labels.due")} {dueDate}.";
+    }
+
+    private void Cancel()
+    {
+        DialogService.Close();
+    }
+
+    private void SendReminder()
+    {
+        // Validate
+        if (!CanSend())
+        {
+            showValidationError = true;
+            StateHasChanged();
+            return;
+        }
+
+        // Return the reminder message
+        DialogService.Close(reminderMessage.Trim());
+    }
+
+    private bool CanSend()
+    {
+        return IsMessageValid();
+    }
+
+    private bool IsMessageValid()
+    {
+        return !string.IsNullOrWhiteSpace(reminderMessage) && reminderMessage.Trim().Length >= 10;
+    }
+}

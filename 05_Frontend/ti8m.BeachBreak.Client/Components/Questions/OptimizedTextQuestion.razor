@@ -2,7 +2,7 @@
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Shared
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 @if (!HideHeader)
 {
@@ -119,16 +119,22 @@ else
 
     private List<TextSection> textSections = new();
 
-    protected override void OnInitialized()
+    // Debounced notifier for text input changes
+    private Func<Task>? debouncedNotifier;
+
+    protected override async Task OnInitializedAsync()
     {
-        base.OnInitialized();
+        await base.OnInitializedAsync();
+
+        // Initialize debounced notifier for text input changes
+        debouncedNotifier = StateService.CreateDebouncedNotifier(ComponentName, StateHasChanged, 500);
         // Always populate textSections on first render
         textSections = GetTextSectionsFromConfiguration();
     }
 
     protected override void OnParametersSet()
     {
-        if (HasParameterChanged(nameof(Section), Section))
+        if (StateService.HasParameterChanged(nameof(Section), Section))
         {
             textSections = GetTextSectionsFromConfiguration();
         }
@@ -157,8 +163,8 @@ else
         }
 
         var responseDataHash = Response.ResponseData?.GetHashCode() ?? 0;
-        return HasParameterChanged("CurrentValue", currentValue) ||
-               HasParameterChanged(nameof(Response.ResponseData), responseDataHash);
+        return StateService.HasParameterChanged("CurrentValue", currentValue) ||
+               StateService.HasParameterChanged(nameof(Response.ResponseData), responseDataHash);
     }
 
     private List<TextSection> GetTextSectionsFromConfiguration()
@@ -257,7 +263,8 @@ else
         Response.LastModified = DateTime.Now;
 
         // Debounce text input changes to avoid excessive API calls
-        await NotifyStateChangedDebounced(500);
+        if (debouncedNotifier != null)
+            await debouncedNotifier();
         await NotifyResponseChanged();
     }
 

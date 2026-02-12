@@ -7,7 +7,7 @@
         <Authorized>
             <form action="authentication/logout" method="post">
                 <AntiforgeryToken />
-                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                <input type="hidden" name="returnUrl" value="@currentUrl" />
                 <button type="submit" class="logout-btn">
                     Logout @context.User.Identity?.Name
                 </button>

@@ -3,7 +3,7 @@
 @using ti8m.BeachBreak.Client.Models.DTOs
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Services.Enhanced
-@inherits OptimizedComponentBase
+@inherits CompositionComponentBase
 
 @* Optimized section renderer *@
 <div class="section-container" data-section-id="@Section.Id">
@@ -46,6 +46,9 @@
     // Reference to child OptimizedGoalQuestion (if this is a Goal question)
     private OptimizedGoalQuestion? goalQuestionRef;
 
+    // Debounced notifier for state changes
+    private Func<Task>? debouncedNotifier;
+
     /// <summary>
     /// Saves pending goal changes if this is a Goal section.
     /// Returns true if all operations succeed or if not a goal section.
@@ -57,6 +60,14 @@
             return await goalQuestionRef.SavePendingGoalChanges();
         }
         return true; // Not a goal section, nothing to save
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        // Initialize debounced notifier for state changes
+        debouncedNotifier = StateService.CreateDebouncedNotifier(ComponentName, StateHasChanged, 150);
     }
 
     protected override void OnParametersSet()
@@ -163,7 +174,8 @@
         Response = newResponse;
 
         // Debounce response changes to avoid excessive API calls
-        await NotifyStateChangedDebounced(150);
+        if (debouncedNotifier != null)
+            await debouncedNotifier();
 
         if (OnResponseChanged.HasDelegate)
         {

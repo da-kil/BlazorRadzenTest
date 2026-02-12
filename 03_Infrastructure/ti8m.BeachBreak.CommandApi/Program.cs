@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.OpenApi;
 using ti8m.BeachBreak.CommandApi.Authorization;
+using ti8m.BeachBreak.CommandApi.Middleware;
 using ti8m.BeachBreak.Core.Infrastructure.Authorization;
 using ti8m.BeachBreak.Core.Infrastructure.Contexts;
 using ti8m.BeachBreak.Infrastructure.Marten;
@@ -27,13 +28,6 @@ namespace ti8m.BeachBreak.CommandApi
                     context.ProblemDetails.Extensions.TryAdd("correlationId", context.HttpContext.Request.Headers["X-Correlation-Id"]);
                 };
             });
-
-            builder.Services.AddCors(
-                options => options.AddDefaultPolicy(
-                    policy => policy.WithOrigins([builder.Configuration["BackendUrl"] ?? "https://localhost:5001",
-                                builder.Configuration["FrontendUrl"] ?? "https://localhost:5002"])
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()));
 
             builder.Services.AddApiVersioning(options =>
             {
@@ -59,6 +53,10 @@ namespace ti8m.BeachBreak.CommandApi
             // Add distributed cache (using in-memory for now, can be replaced with Redis)
             builder.Services.AddDistributedMemoryCache();
 
+            // Register authorization cache configuration
+            builder.Services.Configure<AuthorizationCacheSettings>(
+                builder.Configuration.GetSection(AuthorizationCacheSettings.SectionName));
+
             // Register authorization cache service
             builder.Services.AddScoped<IAuthorizationCacheService, AuthorizationCacheService>();
 
@@ -72,7 +70,9 @@ namespace ti8m.BeachBreak.CommandApi
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("https://localhost:5001", "http://localhost:5001", "http://localhost:5000", "https://localhost:7000")
+                    policy.WithOrigins(
+                        builder.Configuration["BackendUrl"] ?? "https://localhost:5001",
+                        builder.Configuration["FrontendUrl"] ?? "https://localhost:5002")
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials();
@@ -104,8 +104,6 @@ namespace ti8m.BeachBreak.CommandApi
                 options.ValidateScopes = true;
                 options.ValidateOnBuild = true;
             });
-
-            builder.AddNpgsqlDataSource(connectionName: "beachbreakdb");
 
             builder.AddMartenInfrastructure();
 
@@ -159,6 +157,9 @@ namespace ti8m.BeachBreak.CommandApi
             app.MapDefaultEndpoints();
 
             // Configure the HTTP request pipeline.
+            // Global exception handling middleware (must be early in pipeline)
+            app.UseGlobalExceptionHandling();
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();

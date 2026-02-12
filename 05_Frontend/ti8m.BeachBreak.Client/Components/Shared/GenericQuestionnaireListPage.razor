@@ -10,7 +10,7 @@
 @inject DialogService DialogService
 @inject IQuestionnaireAssignmentService AssignmentService
 @inject IJSRuntime JSRuntime
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 <div class="page-container @(HideHeader ? "" : "mb-4")">
                 @if (!HideHeader)
@@ -160,14 +160,14 @@
             ? string.Join(",", expandedDepartments.OrderBy(x => x))
             : "";
 
-        return HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
-               HasParameterChanged(nameof(isLoading), isLoading) ||
-               HasParameterChanged(nameof(isLoadingMore), isLoadingMore) ||
-               HasParameterChanged(nameof(_selectedTabIndex), _selectedTabIndex) ||
-               HasParameterChanged(nameof(filteredTeamMembers), filteredMembersIdentity) ||
-               HasParameterChanged(nameof(teamMemberSortBy), teamMemberSortBy) ||
-               HasParameterChanged(nameof(memberAssignmentsCache), memberAssignmentsCache.Count) ||
-               HasParameterChanged(nameof(expandedDepartments), expandedDepartmentsState) ||
+        return StateService.HasParameterChanged(nameof(allAssignments), allAssignments.Count) ||
+               StateService.HasParameterChanged(nameof(isLoading), isLoading) ||
+               StateService.HasParameterChanged(nameof(isLoadingMore), isLoadingMore) ||
+               StateService.HasParameterChanged(nameof(_selectedTabIndex), _selectedTabIndex) ||
+               StateService.HasParameterChanged(nameof(filteredTeamMembers), filteredMembersIdentity) ||
+               StateService.HasParameterChanged(nameof(teamMemberSortBy), teamMemberSortBy) ||
+               StateService.HasParameterChanged(nameof(memberAssignmentsCache), memberAssignmentsCache.Count) ||
+               StateService.HasParameterChanged(nameof(expandedDepartments), expandedDepartmentsState) ||
                // Filter state is now managed by QuestionnaireFilterBar component
                CheckFilterStateChanged();
     }
@@ -196,7 +196,7 @@
 
         try
         {
-            await ExecuteSafelyAsync(async () =>
+            await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
             {
                 // Load ALL data in parallel for Manager/HR views
                 // These views need complete data to calculate department/team stats
@@ -1142,7 +1142,7 @@
 
         try
         {
-            await ExecuteSafelyAsync(async () =>
+            await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
             {
                 var pagedResult = await PerformanceOptimizer.LazyLoader.LoadPagedDataAsync(
                     async (page, size) => await GetAssignmentsPaginated(page, size),

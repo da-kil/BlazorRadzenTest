@@ -1,7 +1,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Services.Enhanced
-@inherits OptimizedComponentBase
+@inherits CompositionComponentBase
 
 <div class="virtualized-list-optimized" style="height: @ContainerHeight; overflow-y: auto;" @onscroll="HandleScroll">
     @if (isLoading)
@@ -44,6 +44,17 @@
     private bool isLoadingMore = false;
     private bool isLoading = false;
 
+    // Throttled notifier for scroll events
+    private Func<Task<bool>>? throttledNotifier;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        // Initialize throttled notifier for scroll events
+        throttledNotifier = StateService.CreateThrottledNotifier(ComponentName, StateHasChanged, 16); // ~60fps
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -55,18 +66,18 @@
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(AllAssignments), AllAssignments.Count) ||
-               HasParameterChanged(nameof(isLoading), isLoading) ||
-               HasParameterChanged(nameof(isLoadingMore), isLoadingMore);
+        return StateService.HasParameterChanged(nameof(AllAssignments), AllAssignments.Count) ||
+               StateService.HasParameterChanged(nameof(isLoading), isLoading) ||
+               StateService.HasParameterChanged(nameof(isLoadingMore), isLoadingMore);
     }
 
 
     private async Task HandleScroll(EventArgs e)
     {
-        await ExecuteSafelyAsync(async () =>
+        await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
         {
             // Throttle scroll events to avoid excessive re-renders
-            if (await TryNotifyStateChangedThrottled(16)) // ~60fps
+            if (throttledNotifier != null && await throttledNotifier())
             {
                 // Check if we need to load more data (simplified check)
                 // Load more when we're near the end of the current list
@@ -83,11 +94,11 @@
         if (isLoadingMore || !hasMoreData || DataLoader == null) return;
 
         isLoadingMore = true;
-        NotifyStateChanged();
+        StateHasChanged();
 
         try
         {
-            await ExecuteSafelyAsync(async () =>
+            await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
             {
                 var result = await PerformanceOptimizer.LazyLoader.LoadVirtualScrollDataAsync(
                     DataLoader,

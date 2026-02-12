@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Text;
 using System.Text.Json;
 
@@ -9,8 +10,8 @@ namespace ti8m.BeachBreak.Core.Infrastructure.Authorization;
 /// Service for managing authorization-related cache operations.
 ///
 /// Cache Invalidation Strategy:
-/// - Employee role cache has a 15-minute TTL (Time To Live)
-/// - When an employee's ApplicationRole changes, they will see the new permissions within 15 minutes
+/// - Employee role cache TTL is configurable via AuthorizationCacheSettings (default: 15 minutes)
+/// - When an employee's ApplicationRole changes, they will see the new permissions after cache expiry
 /// - For immediate invalidation, call InvalidateEmployeeRoleCacheAsync in command handlers that change roles
 /// - The cache is automatically populated on first authorization check after invalidation or expiration
 ///
@@ -22,18 +23,24 @@ public class AuthorizationCacheService : IAuthorizationCacheService
 {
     private readonly IDistributedCache cache;
     private readonly ILogger<AuthorizationCacheService> logger;
-
-    private static readonly DistributedCacheEntryOptions CacheOptions = new()
-    {
-        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(15)
-    };
+    private readonly AuthorizationCacheSettings cacheSettings;
 
     public AuthorizationCacheService(
         IDistributedCache cache,
-        ILogger<AuthorizationCacheService> logger)
+        ILogger<AuthorizationCacheService> logger,
+        IOptions<AuthorizationCacheSettings> cacheSettings)
     {
         this.cache = cache;
         this.logger = logger;
+        this.cacheSettings = cacheSettings.Value;
+    }
+
+    private DistributedCacheEntryOptions GetCacheOptions()
+    {
+        return new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = cacheSettings.CacheDuration
+        };
     }
 
     public async Task<T?> GetEmployeeRoleCacheAsync<T>(Guid userId, CancellationToken cancellationToken = default) where T : class
@@ -70,7 +77,7 @@ public class AuthorizationCacheService : IAuthorizationCacheService
         {
             var json = JsonSerializer.Serialize(data);
             var bytes = Encoding.UTF8.GetBytes(json);
-            await cache.SetAsync(cacheKey, bytes, CacheOptions, cancellationToken);
+            await cache.SetAsync(cacheKey, bytes, GetCacheOptions(), cancellationToken);
             logger.LogDebug("Employee role cached for user ID: {UserId}", userId);
         }
         catch (Exception ex)

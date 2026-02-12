@@ -1,0 +1,133 @@
+@using Radzen
+@using Radzen.Blazor
+@using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Models
+@inject DialogService DialogService
+@inherits CategoryOptimizedTranslatableComponent
+
+<div class="dialog-container">
+    <div class="dialog-review-info warning">
+        <div class="text-center">
+            <RadzenIcon Icon="cancel" Class="dialog-header-icon" Style="color: #f44336;" />
+            <RadzenText TextStyle="TextStyle.H5" Class="mb-2">
+                @T("dialogs.cancel-assignment")
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body2">
+                @T("messages.cancel-assignment-description")
+            </RadzenText>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <div class="icon-box">
+            <RadzenIcon Icon="assignment" Style="color: #2196F3;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                @T("labels.assignment-information")
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            <strong>@T("labels.employee"):</strong> @Assignment?.EmployeeName (@Assignment?.EmployeeEmail)
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            <strong>@T("labels.questionnaire"):</strong> @Assignment?.TemplateName
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            <strong>@T("labels.current-state"):</strong> @(Assignment?.WorkflowState != null ? T(WorkflowStateHelper.GetStateDisplayName(Assignment.WorkflowState)) : "Unknown")
+        </RadzenText>
+    </div>
+
+    <div class="dialog-content-section">
+        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
+            @T("fields.cancellation-reason")
+        </RadzenText>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted mb-2">
+            @T("messages.cancellation-reason-explanation")
+        </RadzenText>
+        <RadzenTextArea @bind-Value="@cancellationReason"
+                       Placeholder="@T("placeholders.cancellation-reason")"
+                       Rows="4"
+                       Style="width: 100%;"
+                       MaxLength="1000" />
+        <RadzenText TextStyle="TextStyle.Caption" Class="text-muted" Style="margin-top: 0.5rem;">
+            @(cancellationReason?.Length ?? 0) / 1000 @T("forms.characters")
+        </RadzenText>
+    </div>
+
+    <div class="info-section" style="background: rgba(244, 67, 54, 0.05); border-left: 4px solid #f44336;">
+        <div class="icon-box">
+            <RadzenIcon Icon="warning" Style="color: #f44336;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                @T("labels.warning")
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            @T("messages.assignment-cancellation-warning")
+        </RadzenText>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+            <li>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    @T("messages.assignment-data-will-be-preserved")
+                </RadzenText>
+            </li>
+            <li>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    @T("messages.employee-will-be-notified")
+                </RadzenText>
+            </li>
+            <li>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    @T("messages.cannot-be-undone")
+                </RadzenText>
+            </li>
+        </ul>
+    </div>
+
+    <div class="info-section" style="background: rgba(255, 193, 7, 0.05); border-left: 4px solid #FFC107;">
+        <div class="icon-box">
+            <RadzenIcon Icon="mail" Style="color: #FFC107;" />
+            <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-0">
+                @T("labels.email-notifications")
+            </RadzenText>
+        </div>
+        <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+            @T("messages.cancellation-notification-will-be-sent-to"):
+        </RadzenText>
+        <ul style="margin-top: 0.5rem; margin-bottom: 0;">
+            <li>
+                <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">
+                    <strong>@Assignment?.EmployeeName</strong> (@Assignment?.EmployeeEmail)
+                </RadzenText>
+            </li>
+        </ul>
+    </div>
+
+    <div class="dialog-actions">
+        <AsyncButton Text="@T("buttons.cancel-dialog")"
+                    ButtonStyle="ButtonStyle.Light"
+                    Click="@CancelDialog"
+                    Size="ButtonSize.Medium" />
+        <AsyncButton Text="@T("buttons.cancel-assignment")"
+                    ProcessingText="@T("buttons.canceling-assignment")"
+                    ButtonStyle="ButtonStyle.Danger"
+                    Icon="cancel"
+                    Click="@ConfirmCancellation"
+                    Size="ButtonSize.Medium" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public QuestionnaireAssignment? Assignment { get; set; }
+
+    private string? cancellationReason;
+
+    private void CancelDialog()
+    {
+        DialogService.Close();
+    }
+
+    private void ConfirmCancellation()
+    {
+        // Return the cancellation reason (can be null/empty)
+        DialogService.Close(cancellationReason?.Trim());
+    }
+}

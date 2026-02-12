@@ -10,7 +10,7 @@
 @inject IEmployeeApiService EmployeeService
 @inject DialogService DialogService
 @inject NavigationManager NavigationManager
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 <PageTitle>@T("pages.employee-feedback-management")</PageTitle>
 
@@ -311,6 +311,22 @@
         await base.OnInitializedAsync();
         await LoadInitialData();
         await LoadFeedback();
+    }
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Labels,           // For labels.employee, labels.feedback-source, etc.
+            TranslationCategories.Placeholders,     // For placeholders.select-employee, placeholders.all-sources, etc.
+            TranslationCategories.Buttons,          // For buttons.record-feedback, buttons.clear-filters, etc.
+            TranslationCategories.Messages,         // For messages.no-feedback-found, etc.
+            TranslationCategories.Columns,          // For columns.employee, columns.source-type, etc.
+            TranslationCategories.Pages,            // For pages.employee-feedback-management, etc.
+            TranslationCategories.Dialogs,          // For dialogs.edit-feedback-title, dialogs.confirm-delete, etc.
+            TranslationCategories.Notifications,    // For error/success notifications
+            TranslationCategories.Actions           // For action-related translations
+        };
     }
 
     private async Task LoadInitialData()

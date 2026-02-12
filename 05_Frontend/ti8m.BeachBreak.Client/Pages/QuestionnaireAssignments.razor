@@ -15,7 +15,7 @@
 @inject IQuestionnaireTemplateService TemplateService
 @inject DialogService DialogService
 @inject IOrganizationApiService OrganizationService
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 <PageTitle>@T("pages.questionnaire-assignments")</PageTitle>
 
@@ -479,6 +479,26 @@
     private List<Category> availableCategories = new();
 
     private List<StatusOption> statusOptions = new();
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Tabs,
+            TranslationCategories.Sections,
+            TranslationCategories.Filters,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.WorkflowStates,
+            TranslationCategories.Actions
+        };
+    }
 
     protected override async Task OnInitializedAsync()
     {

@@ -1,4 +1,8 @@
+using Azure.Identity;
+using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Radzen;
 using ti8m.BeachBreak.Authentication;
@@ -6,7 +10,7 @@ using ti8m.BeachBreak.Client.Configuration;
 using ti8m.BeachBreak.Client.Services;
 using ti8m.BeachBreak.Client.Services.Exports;
 using ti8m.BeachBreak.Components;
-using Blazored.LocalStorage;
+using ti8m.BeachBreak.Infrastructure;
 
 namespace ti8m.BeachBreak;
 
@@ -21,6 +25,38 @@ public class Program
 
         AzureEntraSettings azureEntraSettings = new();
         builder.Configuration.Bind("AzureAd", azureEntraSettings);
+
+        if (!builder.Environment.IsDevelopment())
+        {
+            // Configure Data Protection with Azure Key Vault and monitoring
+            var dataProtectionStorageUri = builder.Configuration.GetValue<string>("Storage:DataProtection");
+            if (string.IsNullOrEmpty(dataProtectionStorageUri))
+            {
+                throw new InvalidOperationException("Storage:DataProtection configuration value is required");
+            }
+
+            var dataProtectionBuilder = builder.Services.AddDataProtection()
+                .SetApplicationName("ti8m-beachbreak");
+
+            // Configure Azure Blob Storage for all environments
+            // Production benefits: No persistent volumes needed, automatic backup/replication, shared across pods
+            var blobUri = new Uri($"{dataProtectionStorageUri}/dataprotection/keys.xml");
+            dataProtectionBuilder.PersistKeysToAzureBlobStorage(blobUri, new DefaultAzureCredential());
+
+            // Configure key rotation and lifetime with monitoring
+            dataProtectionBuilder
+                .SetDefaultKeyLifetime(TimeSpan.FromDays(90)) // Keys expire after 90 days
+                .AddKeyManagementOptions(options =>
+                {
+                    options.AutoGenerateKeys = true; // Automatically generate new keys before expiration
+                    options.NewKeyLifetime = TimeSpan.FromDays(90);
+                })
+                .Services.AddSingleton<IKeyEscrowSink>(provider =>
+                {
+                    var logger = provider.GetRequiredService<ILogger<Program>>();
+                    return new DataProtectionKeyRotationLogger(logger);
+                });
+        }
 
         // Add services to the container.
         builder.Services.AddAuthentication(MS_OIDC_SCHEME)
@@ -139,6 +175,10 @@ public class Program
                 // expiration.
                 // ........................................................................
 
+                // CRITICAL: Ensure tokens are saved in authentication properties
+                oidcOptions.SaveTokens = true;
+                oidcOptions.Scope.Add("offline_access");
+
                 // Enrich claims with ApplicationRole from backend during authentication
                 oidcOptions.Events = new Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectEvents
                 {
@@ -180,8 +220,19 @@ public class Program
                             // Create a new HttpClient without the BearerTokenHandler since we're setting the token manually
                             // The BearerTokenHandler won't work here because the token hasn't been saved to the auth properties yet
                             var client = new HttpClient();
-                            var queryApiUri = builder.Configuration.GetValue<string>("services:QueryApi:https:0");
-                            client.BaseAddress = new Uri(queryApiUri!);
+
+                            // Use same fallback logic as HttpClient configuration
+                            var queryApiUri = builder.Configuration.GetValue<string>("services:QueryApi:https:0")
+                                            ?? builder.Configuration.GetValue<string>("QueryApi:Url")
+                                            ?? builder.Configuration.GetValue<string>("QUERYAPI_URL");
+
+                            if (queryApiUri is null)
+                            {
+                                logger.LogError("Query API URI not found during token validation. Checked keys: services:QueryApi:https:0, QueryApi:Url, QUERYAPI_URL");
+                                return;
+                            }
+
+                            client.BaseAddress = new Uri(queryApiUri);
                             client.DefaultRequestHeaders.Authorization =
                                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
@@ -248,7 +299,12 @@ public class Program
                     }
                 };
             })
-            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
+            .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, options =>
+            {
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS only in production
+                options.Cookie.SameSite = SameSiteMode.Lax;              // CSRF protection
+                options.Cookie.HttpOnly = true;                           // No JavaScript access
+            });
 
         // ConfigureCookieOidcRefresh attaches a cookie OnValidatePrincipal callback to get
         // a new access token when the current one expires, and reissue a cookie with the
@@ -314,31 +370,45 @@ public class Program
         // This is FLEXIBLE configuration, not hardcoding!
         // ============================================================================
 
-        // COMMAND API HTTP CLIENT - Uses Aspire Service Discovery
-        // Configuration key "services:CommandApi:https:0" is resolved to actual URL by Aspire
+        // COMMAND API HTTP CLIENT - Environment-aware configuration
         builder.Services.AddHttpClient("CommandClient", httpClient =>
         {
-            // This gets the ACTUAL URL injected by Aspire service discovery
-            // NOT a hardcoded URL - resolved dynamically at runtime
+            // Try Aspire service discovery first (local development)
             var uri = builder.Configuration.GetValue<string>("services:CommandApi:https:0");
+
+            // Fallback to direct configuration (AKS deployment)
             if (uri is null)
             {
-                throw new Exception("Command-API URI not found - check Aspire service registration");
+                uri = builder.Configuration.GetValue<string>("CommandApi:Url")
+                    ?? builder.Configuration.GetValue<string>("COMMANDAPI_URL");
             }
+
+            if (uri is null)
+            {
+                throw new Exception($"Command API URI not found. Checked keys: services:CommandApi:https:0, CommandApi:Url, COMMANDAPI_URL. Environment: {builder.Environment.EnvironmentName}");
+            }
+
             httpClient.BaseAddress = new Uri(uri);
         }).AddHttpMessageHandler<BearerTokenHandler>();
 
-        // QUERY API HTTP CLIENT - Uses Aspire Service Discovery
-        // Configuration key "services:QueryApi:https:0" is resolved to actual URL by Aspire
+        // QUERY API HTTP CLIENT - Environment-aware configuration
         builder.Services.AddHttpClient("QueryClient", httpClient =>
         {
-            // This gets the ACTUAL URL injected by Aspire service discovery
-            // NOT a hardcoded URL - resolved dynamically at runtime
+            // Try Aspire service discovery first (local development)
             var uri = builder.Configuration.GetValue<string>("services:QueryApi:https:0");
+
+            // Fallback to direct configuration (AKS deployment)
             if (uri is null)
             {
-                throw new Exception("Query-API URI not found - check Aspire service registration");
+                uri = builder.Configuration.GetValue<string>("QueryApi:Url")
+                    ?? builder.Configuration.GetValue<string>("QUERYAPI_URL");
             }
+
+            if (uri is null)
+            {
+                throw new Exception($"Query API URI not found. Checked keys: services:QueryApi:https:0, QueryApi:Url, QUERYAPI_URL. Environment: {builder.Environment.EnvironmentName}");
+            }
+
             httpClient.BaseAddress = new Uri(uri);
         }).AddHttpMessageHandler<BearerTokenHandler>();
 
@@ -375,6 +445,12 @@ public class Program
 
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.ILanguageContext, ti8m.BeachBreak.Client.Services.ClientLanguageContext>();
         builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.IUITranslationService, ti8m.BeachBreak.Client.Services.ClientUITranslationService>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.ITranslationCategoryService, ti8m.BeachBreak.Client.Services.TranslationCategoryService>();
+
+        // Register composition-based component services (architecture simplification)
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.Composition.IComponentPerformanceService, ti8m.BeachBreak.Client.Services.Composition.ComponentPerformanceService>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.Composition.IComponentStateService, ti8m.BeachBreak.Client.Services.Composition.ComponentStateService>();
+        builder.Services.AddScoped<ti8m.BeachBreak.Client.Services.Composition.IComponentErrorService, ti8m.BeachBreak.Client.Services.Composition.ComponentErrorService>();
 
         // Register state management
         builder.Services.AddScoped<QuestionnaireBuilderState>();

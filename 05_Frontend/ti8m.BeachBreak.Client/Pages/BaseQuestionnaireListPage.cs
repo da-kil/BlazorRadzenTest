@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using Radzen.Blazor;
 using System.Text;
 using ti8m.BeachBreak.Client.Components.Shared;
 using ti8m.BeachBreak.Client.Models;
@@ -13,9 +12,9 @@ namespace ti8m.BeachBreak.Client.Pages;
 /// Eliminates code duplication across Employee, Manager, and HR views.
 /// Follows Template Method pattern with role-specific customization points.
 /// </summary>
-public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponentBase
+public abstract class BaseQuestionnaireListPage : CategoryOptimizedTranslatableComponent
 {
-    [Inject] protected ICategoryApiService CategoryService { get; set; } = default!;
+    [Inject] protected ICategoryApiService CategoryApiService { get; set; } = default!;
     [Inject] protected NavigationManager NavigationManager { get; set; } = default!;
 
     protected QuestionnairePageConfiguration? configuration;
@@ -26,7 +25,7 @@ public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponent
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
-        await ExecuteSafelyAsync(async () =>
+        await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
         {
             await LoadInitialData();
         }, GetInitializationContext());
@@ -36,8 +35,8 @@ public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponent
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(configuration), configuration) ||
-               HasParameterChanged(nameof(isLoading), isLoading) ||
+        return StateService.HasParameterChanged(nameof(configuration), configuration) ||
+               StateService.HasParameterChanged(nameof(isLoading), isLoading) ||
                HasAdditionalStateChanged();
     }
 
@@ -52,7 +51,7 @@ public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponent
         try
         {
             // Load categories in parallel with role-specific data
-            var categoriesTask = CategoryService.GetAllCategoriesAsync();
+            var categoriesTask = CategoryApiService.GetAllCategoriesAsync();
             var roleDataTask = LoadRoleSpecificDataAsync();
 
             await Task.WhenAll(categoriesTask, roleDataTask);
@@ -128,6 +127,34 @@ public abstract class BaseQuestionnaireListPage : OptimizedTranslatableComponent
         await LoadInitialData();
         await SetupConfigurationAsync();
         NotifyStateChanged();
+    }
+
+    #endregion
+
+    #region Translation Categories
+
+    /// <summary>
+    /// Questionnaire list pages need access to pages and messages categories
+    /// in addition to core navigation and button translations.
+    /// </summary>
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        //return TranslationCategories.CommonCategories;
+        return new[]
+        {
+            TranslationCategories.Labels,           // For labels.employee, labels.feedback-source, etc.
+            TranslationCategories.Navigation,
+            TranslationCategories.Buttons,
+            TranslationCategories.Notifications,
+            TranslationCategories.Validation,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Forms,
+            TranslationCategories.Pages,
+            TranslationCategories.Messages,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Actions
+        };
     }
 
     #endregion

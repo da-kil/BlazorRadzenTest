@@ -1,7 +1,7 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Components.Shared
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 <input type="checkbox" title="@T("nav.menu-toggle")" class="navbar-toggler" />
 
@@ -78,3 +78,17 @@
 		</AuthorizeView>
 	</RadzenPanelMenu>
 </div>
+
+@code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Nav,           // For nav.* keys
+            TranslationCategories.Navigation,    // For other navigation keys
+            TranslationCategories.Buttons,       // For any buttons
+            TranslationCategories.Notifications, // For notifications
+            TranslationCategories.Messages       // For general messages
+        };
+    }
+}

@@ -7,7 +7,7 @@ param(
     [string]$ClientSecret = $null,
 
     [Parameter(Mandatory=$false)]
-    [string]$BaseUrl = "https://localhost:7062",
+    [string]$BaseUrl = "https://beachbreak.report.ti8m.ch",
 
     [Parameter(Mandatory=$false)]
     [string]$TenantId = "bf5cf359-8bee-4827-bb13-40606017dabc",
@@ -121,19 +121,64 @@ if (-not $SKIP_AUTH) {
 }
 
 Write-Host "`nBulk importing translations..." -ForegroundColor Cyan
+
+# First, let's check if the file exists and get its size
+if (Test-Path "test-translations.json") {
+    $fileSize = (Get-Item "test-translations.json").Length
+    Write-Host "File size: $($fileSize / 1KB) KB" -ForegroundColor Yellow
+} else {
+    Write-Host "ERROR: test-translations.json file not found!" -ForegroundColor Red
+    exit 1
+}
+
+# Test API health first
+Write-Host "Testing API health..." -ForegroundColor Yellow
+try {
+    $healthResponse = Invoke-RestMethod -Uri "$BASE_URL/health" -Method GET -TimeoutSec 30
+    Write-Host "API Health: OK" -ForegroundColor Green
+} catch {
+    Write-Host "API Health check failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "This might indicate the backend service is not running properly." -ForegroundColor Yellow
+}
+
+# Test basic API endpoint
+Write-Host "Testing basic API endpoint..." -ForegroundColor Yellow
+try {
+    $apiTest = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/translations" -Method GET -Headers $headers -TimeoutSec 30
+    Write-Host "Basic API endpoint: OK" -ForegroundColor Green
+} catch {
+    Write-Host "Basic API test failed: $($_.Exception.Message)" -ForegroundColor Red
+    if ($_.Exception.Response) {
+        Write-Host "Response status: $($_.Exception.Response.StatusCode)" -ForegroundColor Red
+    }
+}
+
 try {
     $translationResponse = Invoke-RestMethod -Uri "$BASE_URL/c/api/v$API_VERSION/translations/bulk-import" `
       -Method POST `
       -Headers $headers `
-      -InFile "test-translations.json"
+      -InFile "test-translations.json" `
+      -TimeoutSec 300
 
     Write-Host "Translations bulk imported successfully!" -ForegroundColor Green
 } catch {
     Write-Host "Error bulk importing translations: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "HTTP Status: $($_.Exception.Response.StatusCode)" -ForegroundColor Red
+    Write-Host "Status Description: $($_.Exception.Response.StatusDescription)" -ForegroundColor Red
+
     if ($_.Exception.Response) {
         $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
         $responseBody = $reader.ReadToEnd()
         Write-Host "Response: $responseBody" -ForegroundColor Red
+    }
+
+    # Additional diagnostic info
+    Write-Host "`nDiagnostic Information:" -ForegroundColor Cyan
+    Write-Host "Request URL: $BASE_URL/c/api/v$API_VERSION/translations/bulk-import" -ForegroundColor Yellow
+    Write-Host "File path: $(Get-Location)\test-translations.json" -ForegroundColor Yellow
+    Write-Host "File exists: $(Test-Path 'test-translations.json')" -ForegroundColor Yellow
+    if (Test-Path "test-translations.json") {
+        Write-Host "File size: $((Get-Item 'test-translations.json').Length) bytes" -ForegroundColor Yellow
     }
 }
 

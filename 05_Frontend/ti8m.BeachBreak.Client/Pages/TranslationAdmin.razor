@@ -8,9 +8,10 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @using ti8m.BeachBreak.Client.Layout
 @inject ITranslationApiService TranslationApiService
+@inject IUITranslationService TranslationService
 @inject DialogService DialogService
 @inject IJSRuntime JSRuntime
-@inherits OptimizedTranslatableComponentBase
+@inherits CategoryOptimizedTranslatableComponent
 
 <PageTitle>@T("pages.translation-management")</PageTitle>
 
@@ -165,11 +166,30 @@
     private UITranslation? translationBeingEdited;
     private HashSet<string> newTranslationKeys = new(); // Track keys of newly created translations
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Buttons,
+            TranslationCategories.Columns,
+            TranslationCategories.Filters,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Dialogs,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Tooltips,
+            TranslationCategories.Actions,
+            TranslationCategories.Validation
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
-        await ExecuteSafelyAsync(async () =>
+        await ErrorService.ExecuteSafelyAsync(ComponentName, async () =>
         {
             await LoadTranslations();
         }, "InitializeTranslationAdmin");
@@ -177,9 +197,9 @@
 
     protected override bool HasStateChanged()
     {
-        return HasParameterChanged(nameof(translations), translations.Count) ||
-               HasParameterChanged(nameof(searchText), searchText) ||
-               HasParameterChanged(nameof(selectedCategory), selectedCategory);
+        return StateService.HasParameterChanged(nameof(translations), translations.Count) ||
+               StateService.HasParameterChanged(nameof(searchText), searchText) ||
+               StateService.HasParameterChanged(nameof(selectedCategory), selectedCategory);
     }
 
     private async Task LoadTranslations()

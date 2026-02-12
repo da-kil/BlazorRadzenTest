@@ -7,7 +7,7 @@
 @using ti8m.BeachBreak.Client.Components.Shared
 @inject NotificationService NotificationService
 @inject GoalService GoalService
-@inherits OptimizedComponentBase
+@inherits CompositionComponentBase
 
 <div class="predecessor-goals-section">
     <header class="section-header">
@@ -76,7 +76,7 @@
 
     protected override void OnParametersSet()
     {
-        if (HasParameterChanged(nameof(Response), Response))
+        if (StateService.HasParameterChanged(nameof(Response), Response))
         {
             LoadPredecessorData();
         }
