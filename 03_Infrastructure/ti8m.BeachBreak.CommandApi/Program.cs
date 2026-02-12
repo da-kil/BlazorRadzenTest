@@ -29,13 +29,6 @@ namespace ti8m.BeachBreak.CommandApi
                 };
             });
 
-            builder.Services.AddCors(
-                options => options.AddDefaultPolicy(
-                    policy => policy.WithOrigins([builder.Configuration["BackendUrl"] ?? "https://localhost:5001",
-                                builder.Configuration["FrontendUrl"] ?? "https://localhost:5002"])
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()));
-
             builder.Services.AddApiVersioning(options =>
             {
                 options.ReportApiVersions = true;
@@ -77,7 +70,9 @@ namespace ti8m.BeachBreak.CommandApi
             {
                 options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("https://localhost:5001", "http://localhost:5001", "http://localhost:5000", "https://localhost:7000")
+                    policy.WithOrigins(
+                        builder.Configuration["BackendUrl"] ?? "https://localhost:5001",
+                        builder.Configuration["FrontendUrl"] ?? "https://localhost:5002")
                           .AllowAnyMethod()
                           .AllowAnyHeader()
                           .AllowCredentials();

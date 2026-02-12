@@ -35,7 +35,8 @@ public class Program
                 policy => policy.WithOrigins([builder.Configuration["BackendUrl"] ?? "https://localhost:5001",
                                     builder.Configuration["FrontendUrl"] ?? "https://localhost:5002"])
                     .AllowAnyMethod()
-                    .AllowAnyHeader()));
+                    .AllowAnyHeader()
+                    .AllowCredentials()));
 
         builder.Services.AddApiVersioning(options =>
         {
