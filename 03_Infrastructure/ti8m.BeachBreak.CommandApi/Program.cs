@@ -154,6 +154,8 @@ namespace ti8m.BeachBreak.CommandApi
 
             var app = builder.Build();
 
+            // Configure middleware and endpoints
+            app.UseServiceDefaults();
             app.MapDefaultEndpoints();
 
             // Configure the HTTP request pipeline.

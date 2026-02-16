@@ -118,6 +118,8 @@ public class Program
 
         var app = builder.Build();
 
+        // Configure middleware and endpoints
+        app.UseServiceDefaults();
         app.MapDefaultEndpoints();
 
         // Global exception handling middleware (must be early in pipeline)

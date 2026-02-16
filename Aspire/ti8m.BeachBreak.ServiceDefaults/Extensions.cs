@@ -32,6 +32,20 @@ public static class Extensions
             http.AddServiceDiscovery();
         });
 
+        // Add timeout and caching policies for health check endpoints in production
+        builder.Services.AddRequestTimeouts(options =>
+        {
+            options.AddPolicy("HealthChecks", TimeSpan.FromSeconds(5));
+        });
+
+        builder.Services.AddOutputCache(options =>
+        {
+            options.AddPolicy("HealthChecks", policy =>
+            {
+                policy.Expire(TimeSpan.FromSeconds(10));
+            });
+        });
+
         // Uncomment the following to restrict the allowed schemes for service discovery.
         // builder.Services.Configure<ServiceDiscoveryOptions>(options =>
         // {
@@ -98,20 +112,46 @@ public static class Extensions
         return builder;
     }
 
+    public static WebApplication UseServiceDefaults(this WebApplication app)
+    {
+        if (!app.Environment.IsDevelopment())
+        {
+            // Add middleware for timeout and caching policies in production
+            app.UseRequestTimeouts();
+            app.UseOutputCache();
+        }
+
+        return app;
+    }
+
     public static WebApplication MapDefaultEndpoints(this WebApplication app)
     {
-        // Adding health checks endpoints to applications in non-development environments has security implications.
-        // See https://aka.ms/dotnet/aspire/healthchecks for details before enabling these endpoints in non-development environments.
         if (app.Environment.IsDevelopment())
         {
-            // All health checks must pass for app to be considered ready to accept traffic after starting
+            // Development: Simple health check endpoints without restrictions
             app.MapHealthChecks("/health");
+            app.MapHealthChecks("/alive", new HealthCheckOptions
+            {
+                Predicate = r => r.Tags.Contains("live")
+            });
+        }
+        else
+        {
+            // Production: Health check endpoints with timeout and caching protection
+            // Based on https://aspire.dev/fundamentals/health-checks/ recommendations
+
+            // All health checks must pass for app to be considered ready to accept traffic after starting
+            app.MapHealthChecks("/health")
+                .WithRequestTimeout("HealthChecks")
+                .CacheOutput("HealthChecks");
 
             // Only health checks tagged with the "live" tag must pass for app to be considered alive
             app.MapHealthChecks("/alive", new HealthCheckOptions
             {
                 Predicate = r => r.Tags.Contains("live")
-            });
+            })
+            .WithRequestTimeout("HealthChecks")
+            .CacheOutput("HealthChecks");
         }
 
         return app;

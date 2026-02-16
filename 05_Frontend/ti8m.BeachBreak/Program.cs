@@ -628,6 +628,8 @@ public class Program
         app.MapStaticAssets();
         app.UseAntiforgery();
 
+        // Configure middleware and endpoints
+        app.UseServiceDefaults();
         app.MapDefaultEndpoints();
 
         app.MapRazorComponents<App>()
