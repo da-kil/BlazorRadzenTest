@@ -2,6 +2,8 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Services
+@inject ICategoryApiService CategoryService
 @inherits CategoryOptimizedTranslatableComponent
 
 
@@ -114,7 +116,7 @@
                                 <RadzenText TextStyle="TextStyle.H5" Class="fw-bold mb-1">@Questionnaire.GetLocalizedNameWithFallback(CurrentLanguage)</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body2" Class="text-muted">@Questionnaire.GetLocalizedDescriptionWithFallback(CurrentLanguage)</RadzenText>
                             </div>
-                            <RadzenBadge Text="Questionnaire.CategoryId" BadgeStyle="BadgeStyle.Info" />
+                            <RadzenBadge Text="@GetCategoryName()" BadgeStyle="BadgeStyle.Info" />
                         </div>
 
                         <div class="questionnaire-stats">
@@ -204,6 +206,34 @@
     [Parameter] public EventCallback OnCloseClick { get; set; }
     [Parameter] public EventCallback OnAssignToMoreClick { get; set; }
 
+    private List<Category> categories = new();
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages,
+            TranslationCategories.Buttons,
+            TranslationCategories.WorkflowStates
+        };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        try
+        {
+            categories = await CategoryService.GetAllCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading categories: {ex.Message}");
+        }
+    }
+
     private string GetStatusClass()
     {
         return Assignment.WorkflowState switch
@@ -245,5 +275,18 @@
     {
         var totalQuestions = GetTotalQuestions();
         return Math.Max(5, totalQuestions * 2);
+    }
+
+    private string GetCategoryName()
+    {
+        if (Questionnaire?.CategoryId == null) return T("labels.uncategorized");
+
+        var category = categories.FirstOrDefault(c => c.Id == Questionnaire.CategoryId);
+        if (category == null) return T("labels.unknown-category");
+
+        // Return localized category name based on current language
+        return CurrentLanguage == Language.German
+            ? (!string.IsNullOrWhiteSpace(category.NameDe) ? category.NameDe : category.NameEn)
+            : (!string.IsNullOrWhiteSpace(category.NameEn) ? category.NameEn : category.NameDe);
     }
 }

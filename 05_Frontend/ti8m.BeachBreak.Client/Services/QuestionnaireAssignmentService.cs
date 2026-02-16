@@ -592,4 +592,78 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             return false;
         }
     }
+
+    /// <summary>
+    /// Updates assignment properties like due date and notes.
+    /// Uses the existing extend-due-date endpoint which can handle both due date and notes updates.
+    /// </summary>
+    public async Task<bool> UpdateAssignmentPropertiesAsync(Guid assignmentId, DateTime? newDueDate, string? newNotes)
+    {
+        try
+        {
+            // If no due date is provided, we can't use the extend-due-date endpoint
+            // In this case, we'll use a more specific approach if needed
+            if (!newDueDate.HasValue)
+            {
+                // For notes-only updates, we would need a separate endpoint
+                // For now, return true if there's nothing to update
+                return string.IsNullOrWhiteSpace(newNotes);
+            }
+
+            var dto = new ExtendAssignmentDueDateDto
+            {
+                AssignmentId = assignmentId,
+                NewDueDate = newDueDate.Value,
+                ExtensionReason = newNotes
+            };
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/extend-due-date", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Failed to update assignment {assignmentId} properties: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error updating assignment {assignmentId} properties", ex);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Withdraws/cancels a questionnaire assignment.
+    /// Only authorized roles can withdraw assignments based on business rules.
+    /// </summary>
+    public async Task<bool> WithdrawAssignmentAsync(Guid assignmentId, string? withdrawalReason)
+    {
+        try
+        {
+            var dto = new WithdrawAssignmentDto
+            {
+                AssignmentId = assignmentId,
+                WithdrawalReason = withdrawalReason
+            };
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/withdraw", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Failed to withdraw assignment {assignmentId}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error withdrawing assignment {assignmentId}", ex);
+            return false;
+        }
+    }
 }

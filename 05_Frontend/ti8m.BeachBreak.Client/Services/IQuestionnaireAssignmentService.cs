@@ -55,4 +55,8 @@ public interface IQuestionnaireAssignmentService
 
     // Workflow reopening
     Task<bool> ReopenQuestionnaireAsync(Guid assignmentId, WorkflowState targetState, string reopenReason);
+
+    // Assignment property updates
+    Task<bool> UpdateAssignmentPropertiesAsync(Guid assignmentId, DateTime? newDueDate, string? newNotes);
+    Task<bool> WithdrawAssignmentAsync(Guid assignmentId, string? withdrawalReason);
 }
