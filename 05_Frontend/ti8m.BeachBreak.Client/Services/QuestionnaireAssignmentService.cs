@@ -666,4 +666,61 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             return false;
         }
     }
+
+    /// <summary>
+    /// Adds a viewer to a questionnaire assignment.
+    /// Only HR/Admin roles can add viewers.
+    /// </summary>
+    public async Task<bool> AddViewerAsync(Guid assignmentId, Guid viewerEmployeeId)
+    {
+        try
+        {
+            var dto = new
+            {
+                ViewerEmployeeId = viewerEmployeeId
+            };
+
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/viewers", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Failed to add viewer {viewerEmployeeId} to assignment {assignmentId}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error adding viewer {viewerEmployeeId} to assignment {assignmentId}", ex);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Removes a viewer from a questionnaire assignment.
+    /// Only HR/Admin roles can remove viewers.
+    /// </summary>
+    public async Task<bool> RemoveViewerAsync(Guid assignmentId, Guid viewerEmployeeId)
+    {
+        try
+        {
+            var response = await HttpCommandClient.DeleteAsync($"{AssignmentCommandEndpoint}/{assignmentId}/viewers/{viewerEmployeeId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Failed to remove viewer {viewerEmployeeId} from assignment {assignmentId}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                return false;
+            }
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error removing viewer {viewerEmployeeId} from assignment {assignmentId}", ex);
+            return false;
+        }
+    }
 }

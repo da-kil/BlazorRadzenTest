@@ -59,4 +59,8 @@ public interface IQuestionnaireAssignmentService
     // Assignment property updates
     Task<bool> UpdateAssignmentPropertiesAsync(Guid assignmentId, DateTime? newDueDate, string? newNotes);
     Task<bool> WithdrawAssignmentAsync(Guid assignmentId, string? withdrawalReason);
+
+    // Viewer management
+    Task<bool> AddViewerAsync(Guid assignmentId, Guid viewerEmployeeId);
+    Task<bool> RemoveViewerAsync(Guid assignmentId, Guid viewerEmployeeId);
 }

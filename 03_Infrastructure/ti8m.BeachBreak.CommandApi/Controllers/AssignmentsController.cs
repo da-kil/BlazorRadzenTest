@@ -837,4 +837,73 @@ public class AssignmentsController : BaseController
 
     #endregion
 
+    #region Viewer Management Operations
+
+    /// <summary>
+    /// Adds a viewer to a questionnaire assignment.
+    /// Viewers get read-only access to the assignment for collaboration, mentoring, or oversight.
+    /// Only HR/Admin roles can add viewers.
+    /// </summary>
+    [HttpPost("{assignmentId:guid}/viewers")]
+    [Authorize(Policy = "HR")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AddViewer(
+        Guid assignmentId,
+        [FromBody] AddViewerDto request)
+    {
+        if (!ModelState.IsValid)
+            return CreateResponse(Result.Fail("Invalid model state", 400));
+
+        // Get user ID from authenticated user context
+        if (!userContext.TryGetUserId(out var userId, out var errorMessage))
+        {
+            logger.LogWarning("AddViewer failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
+        }
+
+        var command = new AddViewerToAssignmentCommand(
+            assignmentId,
+            request.ViewerEmployeeId,
+            userId);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
+    }
+
+    /// <summary>
+    /// Removes a viewer from a questionnaire assignment.
+    /// This revokes the viewer's read-only access to the assignment.
+    /// Only HR/Admin roles can remove viewers.
+    /// </summary>
+    [HttpDelete("{assignmentId:guid}/viewers/{viewerEmployeeId:guid}")]
+    [Authorize(Policy = "HR")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RemoveViewer(
+        Guid assignmentId,
+        Guid viewerEmployeeId)
+    {
+        // Get user ID from authenticated user context
+        if (!userContext.TryGetUserId(out var userId, out var errorMessage))
+        {
+            logger.LogWarning("RemoveViewer failed: {ErrorMessage}", errorMessage);
+            return CreateResponse(Result.Fail(errorMessage, 401));
+        }
+
+        var command = new RemoveViewerFromAssignmentCommand(
+            assignmentId,
+            viewerEmployeeId,
+            userId);
+
+        var result = await commandDispatcher.SendAsync(command);
+        return CreateResponse(result);
+    }
+
+    #endregion
+
 }

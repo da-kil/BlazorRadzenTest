@@ -76,6 +76,9 @@ public class QuestionnaireAssignmentReadModel
     // Employee feedback linking data (projection) - multiple feedback records per question
     public Dictionary<Guid, List<Guid>> LinkedFeedbackByQuestion { get; set; } = new();
 
+    // Viewers (projection)
+    public List<Queries.QuestionnaireAssignmentQueries.AssignmentViewerDto> Viewers { get; set; } = new();
+
     // Apply methods for all QuestionnaireAssignment domain events
     public void Apply(QuestionnaireAssignmentAssigned @event)
     {
@@ -388,6 +391,29 @@ public class QuestionnaireAssignmentReadModel
         if (note != null)
         {
             InReviewNotes.Remove(note);
+        }
+    }
+
+    // Apply methods for viewer events
+    public void Apply(ViewerAddedToAssignment @event)
+    {
+        Viewers.Add(new Queries.QuestionnaireAssignmentQueries.AssignmentViewerDto
+        {
+            EmployeeId = @event.ViewerEmployeeId,
+            EmployeeName = @event.ViewerEmployeeName,
+            EmployeeEmail = @event.ViewerEmployeeEmail,
+            AddedDate = @event.AddedDate,
+            AddedByEmployeeId = @event.AddedByEmployeeId,
+            AddedByName = null  // Will be enriched by query service
+        });
+    }
+
+    public void Apply(ViewerRemovedFromAssignment @event)
+    {
+        var viewer = Viewers.FirstOrDefault(v => v.EmployeeId == @event.ViewerEmployeeId);
+        if (viewer != null)
+        {
+            Viewers.Remove(viewer);
         }
     }
 }

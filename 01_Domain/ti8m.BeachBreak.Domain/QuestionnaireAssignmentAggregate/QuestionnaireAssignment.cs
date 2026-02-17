@@ -77,6 +77,10 @@ public partial class QuestionnaireAssignment : AggregateRoot
     public IReadOnlyDictionary<Guid, IReadOnlySet<Guid>> LinkedFeedback =>
         _linkedFeedback.ToDictionary(kvp => kvp.Key, kvp => (IReadOnlySet<Guid>)kvp.Value);
 
+    // Viewer management
+    private readonly List<AssignmentViewer> _viewers = new();
+    public IReadOnlyList<AssignmentViewer> Viewers => _viewers.AsReadOnly();
+
     private QuestionnaireAssignment() { }
 
     public QuestionnaireAssignment(
@@ -779,6 +783,58 @@ public partial class QuestionnaireAssignment : AggregateRoot
             : new HashSet<Guid>();
     }
 
+    // Viewer management methods
+    /// <summary>
+    /// Adds a viewer to the assignment with read-only access.
+    /// Only HR/Admin roles can add viewers. Viewers cannot be added to locked or withdrawn assignments.
+    /// </summary>
+    public void AddViewer(Guid viewerEmployeeId, string viewerName, string viewerEmail, Guid addedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot add viewers to finalized assignment");
+
+        if (IsWithdrawn)
+            throw new InvalidOperationException("Cannot add viewers to withdrawn assignment");
+
+        if (_viewers.Any(v => v.EmployeeId == viewerEmployeeId))
+            throw new InvalidOperationException($"Employee {viewerEmployeeId} is already a viewer");
+
+        if (viewerEmployeeId == EmployeeId)
+            throw new InvalidOperationException("Assignment employee is automatically authorized - cannot add as viewer");
+
+        if (string.IsNullOrWhiteSpace(viewerName))
+            throw new ArgumentException("Viewer name is required", nameof(viewerName));
+
+        if (string.IsNullOrWhiteSpace(viewerEmail))
+            throw new ArgumentException("Viewer email is required", nameof(viewerEmail));
+
+        RaiseEvent(new ViewerAddedToAssignment(
+            viewerEmployeeId,
+            viewerName,
+            viewerEmail,
+            DateTime.UtcNow,
+            addedByEmployeeId));
+    }
+
+    /// <summary>
+    /// Removes a viewer from the assignment, revoking their read-only access.
+    /// Only HR/Admin roles can remove viewers. Cannot remove viewers from locked assignments.
+    /// </summary>
+    public void RemoveViewer(Guid viewerEmployeeId, Guid removedByEmployeeId)
+    {
+        if (IsLocked)
+            throw new InvalidOperationException("Cannot remove viewers from finalized assignment");
+
+        var viewer = _viewers.FirstOrDefault(v => v.EmployeeId == viewerEmployeeId);
+        if (viewer == null)
+            throw new InvalidOperationException($"Employee {viewerEmployeeId} is not a viewer");
+
+        RaiseEvent(new ViewerRemovedFromAssignment(
+            viewerEmployeeId,
+            DateTime.UtcNow,
+            removedByEmployeeId));
+    }
+
     private bool IsInProgressState()
     {
         return WorkflowState is
@@ -1186,6 +1242,24 @@ public partial class QuestionnaireAssignment : AggregateRoot
     public void Apply(PredecessorQuestionnaireLinked @event)
     {
         _predecessorLinks[@event.QuestionId] = @event.PredecessorAssignmentId;
+    }
+
+    // Apply methods for viewer events
+    public void Apply(ViewerAddedToAssignment @event)
+    {
+        _viewers.Add(new AssignmentViewer(
+            @event.ViewerEmployeeId,
+            @event.ViewerEmployeeName,
+            @event.ViewerEmployeeEmail,
+            @event.AddedDate,
+            @event.AddedByEmployeeId));
+    }
+
+    public void Apply(ViewerRemovedFromAssignment @event)
+    {
+        var viewer = _viewers.FirstOrDefault(v => v.EmployeeId == @event.ViewerEmployeeId);
+        if (viewer != null)
+            _viewers.Remove(viewer);
     }
 
     // Apply methods for employee feedback events

@@ -135,16 +135,34 @@ public class ManagerAuthorizationService : IManagerAuthorizationService
                 return false;
             }
 
-            // Check if the assignment belongs to one of the manager's direct reports
+            // Check if user is direct manager (existing logic)
             var isDirectReport = await IsManagerOfAsync(managerId, assignment.EmployeeId);
-
-            if (!isDirectReport)
+            if (isDirectReport)
             {
-                logger.LogWarning("Manager {ManagerId} cannot access assignment {AssignmentId} - not their direct report",
-                    managerId, assignmentId);
+                return true;
             }
 
-            return isDirectReport;
+            // NEW: Check if user is a designated viewer
+            var isViewer = assignment.Viewers?.Any(v => v.EmployeeId == managerId) ?? false;
+            if (isViewer)
+            {
+                logger.LogInformation("User {UserId} granted access to assignment {AssignmentId} as designated viewer",
+                    managerId, assignmentId);
+                return true;
+            }
+
+            // Check elevated role permissions (existing logic)
+            var employeeRole = await employeeRoleService.GetEmployeeRoleAsync(managerId);
+            if (employeeRole?.ApplicationRole >= Application.Query.Models.ApplicationRole.HR)
+            {
+                logger.LogInformation("User {UserId} granted access to assignment {AssignmentId} via elevated role {Role}",
+                    managerId, assignmentId, employeeRole.ApplicationRole);
+                return true;
+            }
+
+            logger.LogWarning("Manager {ManagerId} cannot access assignment {AssignmentId} - not their direct report, not a viewer, and insufficient role",
+                managerId, assignmentId);
+            return false;
         }
         catch (Exception ex)
         {
