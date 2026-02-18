@@ -716,17 +716,17 @@ public class AssignmentsController : BaseController
     #region Goal Operations
 
     /// <summary>
-    /// Links a predecessor questionnaire to the current assignment for rating previous goals.
+    /// Links an assignment-wide predecessor to provide goal access across the entire questionnaire.
     /// Employee or Manager can link (first wins).
     /// </summary>
-    [HttpPost("{assignmentId}/goals/link-predecessor")]
-    public async Task<IActionResult> LinkPredecessorQuestionnaire(
+    [HttpPost("{assignmentId}/link-assignment-predecessor")]
+    public async Task<IActionResult> LinkAssignmentPredecessor(
         Guid assignmentId,
-        [FromBody] LinkPredecessorQuestionnaireDto dto)
+        [FromBody] LinkAssignmentPredecessorDto dto)
     {
         if (!userContext.TryGetUserId(out var userId, out var errorMessage))
         {
-            logger.LogWarning("LinkPredecessorQuestionnaire failed: {ErrorMessage}", errorMessage);
+            logger.LogWarning("LinkAssignmentPredecessor failed: {ErrorMessage}", errorMessage);
             return CreateResponse(Result.Fail(errorMessage, 401));
         }
 
@@ -738,9 +738,8 @@ public class AssignmentsController : BaseController
 
         var domainRole = ApplicationRoleMapper.MapToDomain(commandRole);
 
-        var command = new LinkPredecessorQuestionnaireCommand(
+        var command = new LinkAssignmentPredecessorCommand(
             assignmentId,
-            dto.QuestionId,
             dto.PredecessorAssignmentId,
             ApplicationRoleMapper.MapFromDomain(domainRole),
             userId);

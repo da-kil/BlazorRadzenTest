@@ -55,11 +55,11 @@ public partial class QuestionnaireAssignment : AggregateRoot
     public string? ManagerFinalNotes { get; private set; }
     public bool IsLocked => WorkflowState == WorkflowState.Finalized;
 
-    // Predecessor linking (for predecessor functionality)
-    private readonly Dictionary<Guid, Guid> _predecessorLinks = new();
+    // Assignment-wide predecessor linking
+    private Guid? assignmentPredecessorId;
 
-    // Public readonly accessors for query purposes
-    public IReadOnlyDictionary<Guid, Guid> PredecessorLinks => _predecessorLinks;
+    // Public readonly accessor for query purposes
+    public Guid? AssignmentPredecessorId => assignmentPredecessorId;
 
     // Initialization phase properties
     public DateTime? InitializedDate { get; private set; }
@@ -687,38 +687,36 @@ public partial class QuestionnaireAssignment : AggregateRoot
     }
 
     // Goal management methods
-    public void LinkPredecessorQuestionnaire(
-        Guid questionId,
+    public void LinkAssignmentPredecessor(
         Guid predecessorAssignmentId,
         ApplicationRole linkedByRole,
         Guid linkedByEmployeeId)
     {
-        if (_predecessorLinks.ContainsKey(questionId))
-            throw new InvalidOperationException($"Question {questionId} already linked to a predecessor questionnaire");
+        if (assignmentPredecessorId.HasValue)
+            throw new InvalidOperationException($"Assignment already linked to a predecessor assignment: {assignmentPredecessorId.Value}");
 
         if (IsLocked)
-            throw new InvalidOperationException("Cannot link predecessor - questionnaire is finalized");
+            throw new InvalidOperationException("Cannot link assignment predecessor - questionnaire is finalized");
 
         if (IsWithdrawn)
-            throw new InvalidOperationException("Cannot link predecessor - assignment is withdrawn");
+            throw new InvalidOperationException("Cannot link assignment predecessor - assignment is withdrawn");
 
         // Validate edit permissions based on role
         if (linkedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
-            throw new InvalidOperationException($"Employee cannot link predecessor in state {WorkflowState}");
+            throw new InvalidOperationException($"Employee cannot link assignment predecessor in state {WorkflowState}");
 
         if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
-            throw new InvalidOperationException($"Manager cannot link predecessor in state {WorkflowState}");
+            throw new InvalidOperationException($"Manager cannot link assignment predecessor in state {WorkflowState}");
 
         // Validate role-specific workflow state restrictions
         if (linkedByRole == ApplicationRole.Employee && WorkflowState == WorkflowState.ManagerInProgress)
-            throw new InvalidOperationException("Employee cannot link during ManagerInProgress state");
+            throw new InvalidOperationException("Employee cannot link assignment predecessor during ManagerInProgress state");
 
         if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && WorkflowState == WorkflowState.EmployeeInProgress)
-            throw new InvalidOperationException("Manager cannot link during EmployeeInProgress state");
+            throw new InvalidOperationException("Manager cannot link assignment predecessor during EmployeeInProgress state");
 
-        RaiseEvent(new PredecessorQuestionnaireLinked(
+        RaiseEvent(new AssignmentPredecessorLinked(
             predecessorAssignmentId,
-            questionId,
             linkedByRole,
             DateTime.UtcNow,
             linkedByEmployeeId));
@@ -1239,9 +1237,9 @@ public partial class QuestionnaireAssignment : AggregateRoot
     }
 
     // Apply methods for predecessor events
-    public void Apply(PredecessorQuestionnaireLinked @event)
+    public void Apply(AssignmentPredecessorLinked @event)
     {
-        _predecessorLinks[@event.QuestionId] = @event.PredecessorAssignmentId;
+        assignmentPredecessorId = @event.PredecessorAssignmentId;
     }
 
     // Apply methods for viewer events

@@ -723,4 +723,57 @@ public class QuestionnaireAssignmentService : BaseApiService, IQuestionnaireAssi
             return false;
         }
     }
+
+    /// <summary>
+    /// Gets available predecessor assignments for assignment-wide linking.
+    /// Returns assignments that can be linked as predecessors to the entire assignment.
+    /// </summary>
+    public async Task<Result<List<AvailablePredecessorDto>>> GetAvailableAssignmentPredecessorsAsync(Guid assignmentId)
+    {
+        try
+        {
+            var response = await HttpQueryClient.GetAsync($"{AssignmentQueryEndpoint}/{assignmentId}/available-assignment-predecessors");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Failed to get available assignment predecessors for {assignmentId}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                return Result<List<AvailablePredecessorDto>>.Fail(errorContent, (int)response.StatusCode);
+            }
+
+            var predecessors = await response.Content.ReadFromJsonAsync<List<AvailablePredecessorDto>>();
+            return Result<List<AvailablePredecessorDto>>.Success(predecessors ?? new List<AvailablePredecessorDto>());
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error getting available assignment predecessors for {assignmentId}", ex);
+            return Result<List<AvailablePredecessorDto>>.Fail(ex.Message, 500);
+        }
+    }
+
+    /// <summary>
+    /// Links a predecessor assignment to the entire current assignment.
+    /// This establishes an assignment-wide predecessor relationship.
+    /// </summary>
+    public async Task<Result> LinkAssignmentPredecessorAsync(Guid assignmentId, LinkAssignmentPredecessorDto dto)
+    {
+        try
+        {
+            var response = await HttpCommandClient.PostAsJsonAsync($"{AssignmentCommandEndpoint}/{assignmentId}/link-assignment-predecessor", dto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                LogError($"Failed to link assignment predecessor for {assignmentId}: {response.StatusCode} - {errorContent}", new Exception(errorContent));
+                return Result.Fail(errorContent, (int)response.StatusCode);
+            }
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            LogError($"Error linking assignment predecessor for {assignmentId}", ex);
+            return Result.Fail(ex.Message, 500);
+        }
+    }
 }

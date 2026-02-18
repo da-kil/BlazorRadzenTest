@@ -62,8 +62,8 @@ public class QuestionnaireAssignmentReadModel
     public string? LastReopenedByRole { get; set; }
     public string? LastReopenReason { get; set; }
 
-    // Predecessor data (projection)
-    public Dictionary<Guid, Guid> PredecessorLinksByQuestion { get; set; } = new();
+    // Assignment-wide predecessor data (projection)
+    public Guid? AssignmentPredecessorId { get; set; }
 
     // Initialization phase properties
     public DateTime? InitializedDate { get; set; }
@@ -337,9 +337,9 @@ public class QuestionnaireAssignmentReadModel
     }
 
     // Apply methods for predecessor events
-    public void Apply(PredecessorQuestionnaireLinked @event)
+    public void Apply(AssignmentPredecessorLinked @event)
     {
-        PredecessorLinksByQuestion[@event.QuestionId] = @event.PredecessorAssignmentId;
+        AssignmentPredecessorId = @event.PredecessorAssignmentId;
     }
 
     // Apply methods for employee feedback events

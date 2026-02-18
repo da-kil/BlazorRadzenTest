@@ -109,7 +109,7 @@
                                     <RadzenButton Text="@T("buttons.link-predecessor")"
                                                 Icon="link"
                                                 ButtonStyle="ButtonStyle.Light"
-                                                Click="@OpenLinkPredecessorDialog" />
+                                                Click="@OpenLinkAssignmentPredecessorDialog" />
                                 }
                             </div>
                         }
@@ -366,6 +366,25 @@
     private QuestionnaireAssignment? assignment;
     private QuestionnaireTemplate? template;
     private bool isLoading = true;
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,            // For pages.initialize-assignment, etc.
+            TranslationCategories.Navigation,       // For navigation.back-to-dashboard, etc.
+            TranslationCategories.Sections,         // For sections.assignment-details, sections.initialization-tasks, etc.
+            TranslationCategories.Labels,           // For labels.employee, labels.template, labels.due-date, etc.
+            TranslationCategories.Buttons,          // For buttons.cancel, buttons.complete-initialization, etc.
+            TranslationCategories.Messages,         // For messages.loading, messages.initialization-completed, etc.
+            TranslationCategories.Assignments,      // For assignments.no-customization-support, etc.
+            TranslationCategories.Notifications,    // For notifications.success, notifications.error, etc.
+            TranslationCategories.Dialogs,          // For dialogs.link-predecessor-title, etc.
+            TranslationCategories.Placeholders,     // For placeholders.initialization-notes, etc.
+            TranslationCategories.Roles,            // For roles.team-lead, etc.
+            TranslationCategories.WorkflowStates    // For workflow state labels
+        };
+    }
     private bool isSubmitting = false;
     private bool predecessorLinked = false;
     private string? initializationNotes;
@@ -450,17 +469,15 @@
         }
     }
 
-    private async Task OpenLinkPredecessorDialog()
+    private async Task OpenLinkAssignmentPredecessorDialog()
     {
         if (assignment == null) return;
 
-        var result = await DialogService.OpenAsync<LinkPredecessorDialog>(
-            T("dialogs.link-predecessor-title"),
+        var result = await DialogService.OpenAsync<LinkAssignmentPredecessorDialog>(
+            T("dialogs.link-assignment-predecessor-title"),
             new Dictionary<string, object>
             {
-                { "AssignmentId", assignment.Id },
-                { "EmployeeId", assignment.EmployeeId },
-                { "TemplateId", assignment.TemplateId }
+                { "AssignmentId", assignment.Id }
             },
             new DialogOptions { Width = "700px", Resizable = true, Draggable = true });
 

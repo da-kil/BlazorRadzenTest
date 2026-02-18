@@ -1,7 +1,4 @@
-using ti8m.BeachBreak.Application.Query.Models;
 using ti8m.BeachBreak.Application.Query.Repositories;
-using ti8m.BeachBreak.Domain.QuestionnaireAssignmentAggregate;
-using ti8m.BeachBreak.Domain.QuestionnaireTemplateAggregate;
 
 namespace ti8m.BeachBreak.Application.Query.Queries.QuestionnaireAssignmentQueries;
 
@@ -35,10 +32,10 @@ public class GetGoalQuestionDataQueryHandler : IQueryHandler<GetGoalQuestionData
             WorkflowState = assignment.WorkflowState
         };
 
-        // Get predecessor link if exists
-        if (assignment.PredecessorLinksByQuestion.TryGetValue(query.QuestionId, out var predecessorId))
+        // Get assignment-wide predecessor link if exists
+        if (assignment.AssignmentPredecessorId.HasValue)
         {
-            dto.PredecessorAssignmentId = predecessorId;
+            dto.PredecessorAssignmentId = assignment.AssignmentPredecessorId.Value;
         }
 
         // Goals are now stored in QuestionnaireResponse.SectionResponses, not in QuestionnaireAssignment

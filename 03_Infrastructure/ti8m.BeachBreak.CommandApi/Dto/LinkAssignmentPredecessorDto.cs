@@ -1,8 +1,7 @@
-namespace ti8m.BeachBreak.Client.Models.Dto;
+namespace ti8m.BeachBreak.CommandApi.Dto;
 
-public class LinkPredecessorQuestionnaireDto
+public class LinkAssignmentPredecessorDto
 {
-    public Guid QuestionId { get; set; }
     public Guid PredecessorAssignmentId { get; set; }
     public string LinkedByRole { get; set; } = string.Empty; // "Employee" or "Manager"
 }

@@ -35,6 +35,10 @@ public interface IQuestionnaireAssignmentService
     Task<bool> AddCustomSectionsAsync(Guid assignmentId, AddCustomSectionsDto dto);
     Task<List<QuestionSection>> GetCustomSectionsAsync(Guid assignmentId);
     Task<List<QuestionSection>> GetMyCustomSectionsAsync(Guid assignmentId);
+
+    // Assignment-wide predecessor linking
+    Task<Result<List<AvailablePredecessorDto>>> GetAvailableAssignmentPredecessorsAsync(Guid assignmentId);
+    Task<Result> LinkAssignmentPredecessorAsync(Guid assignmentId, LinkAssignmentPredecessorDto dto);
     Task<bool> SubmitEmployeeQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> SubmitManagerQuestionnaireAsync(Guid assignmentId, string submittedBy);
     Task<bool> InitiateReviewAsync(Guid assignmentId, string initiatedBy);
