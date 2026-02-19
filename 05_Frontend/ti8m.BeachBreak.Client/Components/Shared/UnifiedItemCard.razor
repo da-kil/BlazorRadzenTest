@@ -71,6 +71,14 @@
     [Parameter] public bool Disabled { get; set; } = false;
     [Parameter] public string CheckboxId { get; set; } = "";
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Labels
+        };
+    }
+
     // Action parameters
     [Parameter] public EventCallback OnMoveUp { get; set; }
     [Parameter] public EventCallback OnMoveDown { get; set; }

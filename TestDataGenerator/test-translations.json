@@ -7014,10 +7014,24 @@
         "createdDate": "2026-02-18T14:00:00.0000000+01:00"
     },
     {
+        "key": "labels.no-date",
+        "german": "Kein Datum",
+        "english": "No Date",
+        "category": "labels",
+        "createdDate": "2026-02-19T12:00:00.0000000+01:00"
+    },
+    {
         "key": "messages.assignment-predecessor-linked-successfully",
         "german": "Die Vorgänger-Zuweisung wurde erfolgreich verknüpft. Sie können nun auf Ziele aus dem vorherigen Fragebogen zugreifen.",
         "english": "The predecessor assignment has been linked successfully. You can now access goals from the previous questionnaire.",
         "category": "messages",
         "createdDate": "2026-02-18T14:00:00.0000000+01:00"
+    },
+    {
+        "key": "messages.template-validation-success",
+        "german": "Vorlage erfolgreich validiert",
+        "english": "Template validation successful",
+        "category": "messages",
+        "createdDate": "2026-02-19T12:00:00.0000000+01:00"
     }
 ]

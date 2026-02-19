@@ -73,6 +73,17 @@
     [Parameter] public bool RequiresProjectContext { get; set; }
     [Parameter] public bool RequiresProviderRole { get; set; }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Help
+        };
+    }
+
     private ti8m.BeachBreak.Client.Models.Dto.FeedbackProviderInfoDto providerInfo = new();
 
     protected override void OnInitialized()

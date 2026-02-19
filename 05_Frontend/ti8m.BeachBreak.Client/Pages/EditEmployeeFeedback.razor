@@ -105,6 +105,18 @@
 </div>
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications
+        };
+    }
+
     [Parameter] public Guid FeedbackId { get; set; }
 
     private bool isLoading = true;

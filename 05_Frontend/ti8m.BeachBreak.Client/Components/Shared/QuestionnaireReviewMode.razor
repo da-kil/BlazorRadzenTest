@@ -311,6 +311,19 @@ else
     [Parameter, EditorRequired] public QuestionnaireResponse Response { get; set; } = null!;
     [Parameter, EditorRequired] public ApplicationRole UserRole { get; set; }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Buttons,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages,
+            TranslationCategories.Sections,
+            TranslationCategories.WorkflowStates,
+            TranslationCategories.Roles
+        };
+    }
+
     private QuestionnaireTemplate? template;
     private QuestionnaireResponse? response;
     private int currentSectionIndex = 0;

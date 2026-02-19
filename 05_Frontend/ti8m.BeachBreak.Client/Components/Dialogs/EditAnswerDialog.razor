@@ -85,6 +85,18 @@
     [Parameter] public WorkflowState AssignmentWorkflowState { get; set; } = WorkflowState.EmployeeInProgress;
     [Parameter] public string? EvaluationKey { get; set; } // When set, only edit this specific evaluation
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Labels,
+            TranslationCategories.Questions
+        };
+    }
+
     private QuestionResponse editResponse = new();
     private OptimizedGoalQuestion? goalQuestionRef;
     private QuestionSection displayQuestion = null!; // Filtered question for display

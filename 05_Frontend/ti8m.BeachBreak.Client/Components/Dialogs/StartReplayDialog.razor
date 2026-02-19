@@ -91,6 +91,18 @@
     [Parameter]
     public List<ProjectionInfo> Projections { get; set; } = new();
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dialogs,
+            TranslationCategories.Messages,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Buttons
+        };
+    }
+
     private string selectedProjectionName = string.Empty;
     private string reason = string.Empty;
 

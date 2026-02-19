@@ -152,6 +152,18 @@ else
 }
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Dashboard,
+            TranslationCategories.Status,
+            TranslationCategories.Labels,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages
+        };
+    }
+
     private EmployeeDashboardDto? dashboard;
     private bool isLoading = true;
 

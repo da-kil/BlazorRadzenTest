@@ -84,6 +84,14 @@
         base.OnParametersSet();
     }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Filters
+        };
+    }
+
     // Helper methods for filter visibility (following the working pattern from QuestionnaireFilterBar)
     private bool IsCategoryFilterVisible()
     {
@@ -127,6 +135,4 @@
         var filterConfig = Configuration?.Filters?.FirstOrDefault(f => f.Type == QuestionnaireFilterType.Status);
         return filterConfig?.Options ?? new List<string>();
     }
-
-    // AdvancedFilterState class removed - now using QuestionnaireFilterBar.FilterState directly
 }

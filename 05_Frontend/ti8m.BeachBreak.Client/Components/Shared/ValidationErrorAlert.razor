@@ -22,6 +22,14 @@
     /// </summary>
     [Parameter]
     public List<string> Errors { get; set; } = new();
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Validation
+        };
+    }
 }
 
 <style>

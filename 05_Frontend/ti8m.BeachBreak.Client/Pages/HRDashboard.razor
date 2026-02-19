@@ -283,6 +283,18 @@
 </AuthorizeView>
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Dashboard,
+            TranslationCategories.Status,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages
+        };
+    }
+
     private HRDashboardDto? dashboard;
     private bool isLoading = true;
 

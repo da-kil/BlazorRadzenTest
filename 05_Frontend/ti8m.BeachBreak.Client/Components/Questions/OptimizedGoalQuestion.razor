@@ -80,6 +80,17 @@ else
     [Parameter] public SectionResponse? SectionData { get; set; } // Access to all role responses for review mode
     [Parameter] public int GoalRefreshToken { get; set; } = 0;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Questions,
+            TranslationCategories.Goals,
+            TranslationCategories.Labels,
+            TranslationCategories.Messages
+        };
+    }
+
     // Component references for the two sections
     private NewGoalsCollaborativeSection? newGoalsSection;
     private PredecessorGoalsComparisonSection? predecessorSection;

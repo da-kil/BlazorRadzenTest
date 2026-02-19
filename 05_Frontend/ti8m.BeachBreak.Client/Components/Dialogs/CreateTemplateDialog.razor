@@ -2,6 +2,7 @@
 @using Radzen.Blazor
 @using ti8m.BeachBreak.Client.Models
 @using ti8m.BeachBreak.Client.Components.Shared
+@using ti8m.BeachBreak.Client.Services
 @inject DialogService DialogService
 @inherits CategoryOptimizedTranslatableComponent
 
@@ -170,6 +171,19 @@
     private Guid selectedCategoryId = Guid.Empty;
     private QuestionnaireProcessType selectedProcessType = QuestionnaireProcessType.PerformanceReview;
     private bool showValidation = false;
+
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.ProcessTypes,
+            TranslationCategories.Dialogs
+        };
+    }
 
     private void Cancel()
     {

@@ -253,6 +253,24 @@ else
 }
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Navigation,
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.Status,
+            TranslationCategories.WorkflowStates,
+            TranslationCategories.Roles,
+            TranslationCategories.Warnings
+        };
+    }
+
     [Parameter] public Guid? TemplateId { get; set; }
     [Parameter] public Guid? AssignmentId { get; set; }
 

@@ -80,6 +80,19 @@
 </div>
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Forms
+        };
+    }
+
     [Parameter, EditorRequired] public QuestionnaireAssignment Assignment { get; set; } = null!;
     [Parameter] public QuestionSection? CurrentSection { get; set; }
     [Parameter] public EventCallback OnNotesChanged { get; set; }

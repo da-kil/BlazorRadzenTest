@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @attribute [Microsoft.AspNetCore.Authorization.Authorize]
 @using ti8m.BeachBreak.Client.Components.Shared
 @inherits CategoryOptimizedTranslatableComponent
@@ -8,3 +8,13 @@
 <h1>@T("pages.welcome-message")</h1>
 
 @T("pages.welcome-to-app")
+
+@code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages
+        };
+    }
+}

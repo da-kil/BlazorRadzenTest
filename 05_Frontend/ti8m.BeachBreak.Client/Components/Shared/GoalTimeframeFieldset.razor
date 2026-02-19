@@ -48,6 +48,14 @@
     [Parameter]
     public EventCallback<DateTime?> TimeframeToChanged { get; set; }
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Forms
+        };
+    }
+
     private async Task OnTimeframeFromChanged(DateTime? value)
     {
         TimeframeFrom = value;

@@ -49,6 +49,14 @@
     [Parameter] public bool ShowReminderAction { get; set; } = true;
     [Parameter] public bool ShowCancelAction { get; set; } = true;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Tooltips
+        };
+    }
+
     private bool CanEdit()
     {
         return Assignment.WorkflowState != WorkflowState.Finalized;

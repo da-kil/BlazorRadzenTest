@@ -118,6 +118,18 @@
     [Parameter] public List<TextSection> TextSections { get; set; } = new();
     [Parameter] public int RatingScale { get; set; } = 10;
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Sections,
+            TranslationCategories.Buttons,
+            TranslationCategories.Help,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Rating
+        };
+    }
+
     private ti8m.BeachBreak.Client.Models.Dto.ConfigurableFeedbackDataDto feedbackData = new();
 
     protected override Task OnInitializedAsync()

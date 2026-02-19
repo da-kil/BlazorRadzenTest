@@ -43,6 +43,14 @@
     [Parameter] public bool ShowSelectionSummary { get; set; } = true;
     [Parameter] public string EmptyMessage { get; set; } = "";
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Labels
+        };
+    }
+
     private bool IsEmployeeSelected(EmployeeDto employee)
     {
         return SelectedEmployeeIds.Contains(employee.Id.ToString());

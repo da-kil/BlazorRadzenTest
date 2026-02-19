@@ -149,6 +149,23 @@
 </AuthorizeView>
 
 @code {
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Pages,
+            TranslationCategories.Sections,
+            TranslationCategories.Labels,
+            TranslationCategories.Placeholders,
+            TranslationCategories.Buttons,
+            TranslationCategories.Messages,
+            TranslationCategories.Notifications,
+            TranslationCategories.SourceTypes,
+            TranslationCategories.RatingScale,
+            TranslationCategories.Validation
+        };
+    }
+
     // Form data
     private string templateName = string.Empty;
     private string description = string.Empty;

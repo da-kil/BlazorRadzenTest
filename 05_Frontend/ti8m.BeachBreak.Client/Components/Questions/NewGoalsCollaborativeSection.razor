@@ -95,6 +95,18 @@
     [Parameter] public Guid AssignmentId { get; set; }
     [Parameter] public SectionResponse? SectionData { get; set; } // Access to all role responses for review mode
 
+    protected override string[] GetRequiredTranslationCategories()
+    {
+        return new[]
+        {
+            TranslationCategories.Goals,
+            TranslationCategories.Buttons,
+            TranslationCategories.Status,
+            TranslationCategories.Messages,
+            TranslationCategories.Labels
+        };
+    }
+
     // All current goals (strongly-typed with pending state tracking)
     private List<GoalWithState> allCurrentGoals = new();
 
