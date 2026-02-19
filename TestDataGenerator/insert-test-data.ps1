@@ -325,6 +325,16 @@ $roleUpdates = @(
         Id = "e91731e2-fb48-4a69-b740-075bf5d39eaf"
         NewRole = 4
         RoleName = "Admin"
+    },
+    @{
+        Id = "e6d29e10-651b-4ec4-b1eb-c056ed354bd9"
+        NewRole = 4
+        RoleName = "Admin"
+    },
+    @{
+        Id = "bb017a67-c181-4329-bf8a-b36f39272837"
+        NewRole = 1
+        RoleName = "TeamLead"
     }
 )
 
