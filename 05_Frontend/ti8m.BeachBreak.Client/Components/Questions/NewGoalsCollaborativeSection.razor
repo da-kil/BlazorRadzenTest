@@ -103,7 +103,8 @@
             TranslationCategories.Buttons,
             TranslationCategories.Status,
             TranslationCategories.Messages,
-            TranslationCategories.Labels
+            TranslationCategories.Labels,
+            TranslationCategories.Dialogs
         };
     }
 
@@ -454,7 +455,7 @@
     /// </summary>
     private async Task EditTypedGoal(GoalWithState goal)
     {
-        var result = await DialogService.OpenAsync<EditGoalDialog>("Edit Goal",
+        var result = await DialogService.OpenAsync<EditGoalDialog>(T("dialogs.edit-goal"),
             new Dictionary<string, object>
             {
                 { "AssignmentId", AssignmentId },
@@ -606,7 +607,7 @@
 
     private async Task ShowAddGoalDialog()
     {
-        var result = await DialogService.OpenAsync<AddGoalDialog>("Add New Goal",
+        var result = await DialogService.OpenAsync<AddGoalDialog>(T("dialogs.add-goal"),
             new Dictionary<string, object>
             {
                 { "AssignmentId", AssignmentId },

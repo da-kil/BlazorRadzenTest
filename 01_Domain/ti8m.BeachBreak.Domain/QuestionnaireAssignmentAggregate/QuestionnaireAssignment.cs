@@ -705,7 +705,16 @@ public partial class QuestionnaireAssignment : AggregateRoot
         if (linkedByRole == ApplicationRole.Employee && !CanEmployeeEdit())
             throw new InvalidOperationException($"Employee cannot link assignment predecessor in state {WorkflowState}");
 
-        if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !CanManagerEdit())
+        // Managers can link predecessors during initialization (Assigned, Initialized) or normal edit states
+        var validManagerStates = WorkflowState is
+            WorkflowState.Assigned or
+            WorkflowState.Initialized or
+            WorkflowState.EmployeeInProgress or
+            WorkflowState.ManagerInProgress or
+            WorkflowState.BothInProgress or
+            WorkflowState.EmployeeSubmitted;
+
+        if (linkedByRole is ApplicationRole.TeamLead or ApplicationRole.HR or ApplicationRole.HRLead or ApplicationRole.Admin && !validManagerStates)
             throw new InvalidOperationException($"Manager cannot link assignment predecessor in state {WorkflowState}");
 
         // Validate role-specific workflow state restrictions
