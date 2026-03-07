@@ -31,28 +31,6 @@
                 </div>
             }
 
-            @* Validation Summary *@
-            @if (validationErrors.Any())
-            {
-                <RadzenAlert AlertStyle="AlertStyle.Danger" Class="mt-3">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2">
-                        Required Actions:
-                    </RadzenText>
-                    <ul class="mb-0">
-                        @foreach (var error in validationErrors)
-                        {
-                            <li>@error</li>
-                        }
-                    </ul>
-                </RadzenAlert>
-            }
-            else
-            {
-                <RadzenAlert AlertStyle="AlertStyle.Success" Class="mt-3">
-                    <RadzenIcon Icon="check_circle" Class="me-2" />
-                    All predecessor goals have been assessed with justifications.
-                </RadzenAlert>
-            }
         }
     </div>
 </div>
@@ -63,29 +41,46 @@
     [Parameter] public EventCallback<QuestionResponse> OnResponseChanged { get; set; }
     [Parameter] public bool IsReadOnly { get; set; } = false;
     [Parameter] public ApplicationRole CurrentUserRole { get; set; } = ApplicationRole.Employee;
+    [Parameter] public SectionResponse? SectionData { get; set; }
+    [Parameter] public WorkflowState AssignmentWorkflowState { get; set; }
 
     // Groups predecessor ratings by SourceGoalId to show comparison
     private Dictionary<Guid, List<PredecessorRatingDto>> predecessorGoalGroups = new();
-    private List<string> validationErrors = new();
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         LoadPredecessorData();
-        base.OnInitialized();
+        await base.OnInitializedAsync();
     }
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
-        if (StateService.HasParameterChanged(nameof(Response), Response))
+        if (StateService.HasParameterChanged(nameof(Response), Response) ||
+            StateService.HasParameterChanged(nameof(SectionData), SectionData))
         {
             LoadPredecessorData();
         }
-        base.OnParametersSet();
+        await base.OnParametersSetAsync();
     }
+
 
     private void LoadPredecessorData()
     {
-        var allRatings = GoalService.GetPredecessorRatings(Response);
+        var allRatings = GoalService.GetPredecessorRatings(Response).ToList();
+
+        // In review/post-review states, merge ratings from all role responses for comparison view
+        if (IsReviewOrPostReviewState() && SectionData != null)
+        {
+            foreach (var roleResponseKvp in SectionData.RoleResponses)
+            {
+                var roleResponse = roleResponseKvp.Value;
+                if (roleResponse?.ResponseData is GoalResponseDataDto otherGoalData &&
+                    !ReferenceEquals(otherGoalData, Response.ResponseData))
+                {
+                    allRatings.AddRange(otherGoalData.PredecessorRatings);
+                }
+            }
+        }
 
         // Group ratings by SourceGoalId to compare Employee vs Manager assessments
         predecessorGoalGroups = allRatings
@@ -93,56 +88,13 @@
             .GroupBy(r => r.SourceGoalId)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        // Validate completion status
-        ValidateCompletion();
     }
 
-    private void ValidateCompletion()
-    {
-        validationErrors.Clear();
-
-        foreach (var kvp in predecessorGoalGroups)
-        {
-            var sourceGoalId = kvp.Key;
-            var ratings = kvp.Value;
-
-            // Get the original goal objective for display
-            var originalObjective = ratings.FirstOrDefault()?.OriginalObjective ?? "Unknown Goal";
-
-            // Check if we have ratings from both employee and manager perspectives
-            var employeeRating = ratings.FirstOrDefault(r => r.RatedByRole == ApplicationRole.Employee);
-
-            var managerRating = ratings.FirstOrDefault(r =>
-                r.RatedByRole == ApplicationRole.TeamLead ||
-                r.RatedByRole == ApplicationRole.HR ||
-                r.RatedByRole == ApplicationRole.HRLead ||
-                r.RatedByRole == ApplicationRole.Admin);
-
-            // Check for missing ratings
-            if (employeeRating == null)
-            {
-                validationErrors.Add($"Employee assessment required for: \"{originalObjective}\"");
-            }
-            else if (!HasValidJustification(employeeRating))
-            {
-                validationErrors.Add($"Employee justification required for: \"{originalObjective}\"");
-            }
-
-            if (managerRating == null)
-            {
-                validationErrors.Add($"Manager assessment required for: \"{originalObjective}\"");
-            }
-            else if (!HasValidJustification(managerRating))
-            {
-                validationErrors.Add($"Manager justification required for: \"{originalObjective}\"");
-            }
-        }
-    }
-
-    private bool HasValidJustification(PredecessorRatingDto rating)
-    {
-        return !string.IsNullOrWhiteSpace(rating.Justification);
-    }
+    private bool IsReviewOrPostReviewState() =>
+        AssignmentWorkflowState is WorkflowState.InReview or
+                                   WorkflowState.ReviewFinished or
+                                   WorkflowState.EmployeeReviewConfirmed or
+                                   WorkflowState.Finalized;
 
     private bool IsManagerRole(string role)
     {
@@ -161,9 +113,7 @@
         if (firstRating == null) return;
 
         var originalObjective = firstRating.OriginalObjective ?? "Unknown Goal";
-        var originalAddedByRole = "Employee"; // Default assumption - could be enhanced with additional data if needed
 
-        // Separate employee and manager ratings
         var employeeRating = ratings.FirstOrDefault(r => r.RatedByRole == ApplicationRole.Employee);
         var managerRating = ratings.FirstOrDefault(r =>
             r.RatedByRole == ApplicationRole.TeamLead ||
@@ -171,73 +121,82 @@
             r.RatedByRole == ApplicationRole.HRLead ||
             r.RatedByRole == ApplicationRole.Admin);
 
+        // Comparison (both columns) only from InReview onward; before that each user sees only their own column
+        var showBothColumns = IsReviewOrPostReviewState();
+        var isManagerUser = IsManagerRole(CurrentUserRole);
+
         <RadzenRow>
             <RadzenColumn Size="12" Class="mb-3">
                 <RadzenText TextStyle="TextStyle.Subtitle1" Class="fw-bold">
                     @originalObjective
                 </RadzenText>
-                <RadzenBadge Text="@GetDisplayRole(originalAddedByRole)" BadgeStyle="BadgeStyle.Info" Class="ms-2" />
             </RadzenColumn>
         </RadzenRow>
 
         <RadzenRow>
-            @* Employee Assessment *@
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenCard Class="h-100 employee-assessment">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2 text-primary">
-                        <RadzenIcon Icon="person" Class="me-1" />
-                        Employee Assessment
-                    </RadzenText>
+            @* Employee Assessment — shown when in review+ OR current user is an employee *@
+            @if (showBothColumns || !isManagerUser)
+            {
+                <RadzenColumn Size="12" SizeMD="@(showBothColumns ? 6 : 12)">
+                    <RadzenCard Class="h-100 employee-assessment">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2 text-primary">
+                            <RadzenIcon Icon="person" Class="me-1" />
+                            Employee Assessment
+                        </RadzenText>
 
-                    @if (employeeRating != null)
-                    {
-                        @RenderRatingContent(employeeRating, sourceGoalId, "Employee")
-                    }
-                    else
-                    {
-                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
-                            <RadzenText TextStyle="TextStyle.Caption">No employee assessment yet</RadzenText>
-                        </RadzenAlert>
-                        @if (!IsReadOnly && CurrentUserRole == ApplicationRole.Employee)
+                        @if (employeeRating != null)
                         {
-                            <RadzenButton Text="Provide Assessment"
-                                        Icon="add"
-                                        ButtonStyle="ButtonStyle.Primary"
-                                        Size="ButtonSize.Small"
-                                        Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Employee"))" />
+                            @RenderRatingContent(employeeRating, sourceGoalId, "Employee")
                         }
-                    }
-                </RadzenCard>
-            </RadzenColumn>
-
-            @* Manager Assessment *@
-            <RadzenColumn Size="12" SizeMD="6">
-                <RadzenCard Class="h-100 manager-assessment">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2 text-success">
-                        <RadzenIcon Icon="business_center" Class="me-1" />
-                        Manager Assessment
-                    </RadzenText>
-
-                    @if (managerRating != null)
-                    {
-                        @RenderRatingContent(managerRating, sourceGoalId, "Manager")
-                    }
-                    else
-                    {
-                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
-                            <RadzenText TextStyle="TextStyle.Caption">No manager assessment yet</RadzenText>
-                        </RadzenAlert>
-                        @if (!IsReadOnly && IsManagerRole(CurrentUserRole))
+                        else
                         {
-                            <RadzenButton Text="Provide Assessment"
-                                        Icon="add"
-                                        ButtonStyle="ButtonStyle.Secondary"
-                                        Size="ButtonSize.Small"
-                                        Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Manager"))" />
+                            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
+                                <RadzenText TextStyle="TextStyle.Caption">No employee assessment yet</RadzenText>
+                            </RadzenAlert>
+                            @if (!IsReadOnly && !isManagerUser)
+                            {
+                                <RadzenButton Text="Provide Assessment"
+                                            Icon="add"
+                                            ButtonStyle="ButtonStyle.Primary"
+                                            Size="ButtonSize.Small"
+                                            Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Employee"))" />
+                            }
                         }
-                    }
-                </RadzenCard>
-            </RadzenColumn>
+                    </RadzenCard>
+                </RadzenColumn>
+            }
+
+            @* Manager Assessment — shown when in review+ OR current user is a manager *@
+            @if (showBothColumns || isManagerUser)
+            {
+                <RadzenColumn Size="12" SizeMD="@(showBothColumns ? 6 : 12)">
+                    <RadzenCard Class="h-100 manager-assessment">
+                        <RadzenText TextStyle="TextStyle.Subtitle2" Class="fw-bold mb-2 text-success">
+                            <RadzenIcon Icon="business_center" Class="me-1" />
+                            Manager Assessment
+                        </RadzenText>
+
+                        @if (managerRating != null)
+                        {
+                            @RenderRatingContent(managerRating, sourceGoalId, "Manager")
+                        }
+                        else
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Size="AlertSize.Small">
+                                <RadzenText TextStyle="TextStyle.Caption">No manager assessment yet</RadzenText>
+                            </RadzenAlert>
+                            @if (!IsReadOnly && isManagerUser)
+                            {
+                                <RadzenButton Text="Provide Assessment"
+                                            Icon="add"
+                                            ButtonStyle="ButtonStyle.Secondary"
+                                            Size="ButtonSize.Small"
+                                            Click="@(() => AddNewRating(sourceGoalId, originalObjective, "Manager"))" />
+                            }
+                        }
+                    </RadzenCard>
+                </RadzenColumn>
+            }
         </RadzenRow>
     };
 
@@ -300,12 +259,6 @@
                         </div>
                     }
 
-                    @if (canEdit && !HasValidJustification(rating))
-                    {
-                        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Size="AlertSize.Small" Class="mt-2">
-                            <RadzenText TextStyle="TextStyle.Caption">Justification is required for all assessments</RadzenText>
-                        </RadzenAlert>
-                    }
                 </RadzenColumn>
             </RadzenRow>
         </div>
@@ -438,21 +391,9 @@
         };
     }
 
-    /// <summary>
-    /// Public method to check if all predecessor goals have complete assessments
-    /// </summary>
-    public bool IsComplete => !validationErrors.Any();
-
-    /// <summary>
-    /// Public method to get validation errors for parent components
-    /// </summary>
-    public IReadOnlyList<string> ValidationErrors => validationErrors.AsReadOnly();
 }
 
 <style>
-.predecessor-goals-section .employee-assessment {
-    border-left: 3px solid var(--rz-primary);
-}
 
 .predecessor-goals-section .manager-assessment {
     border-left: 3px solid var(--rz-success);

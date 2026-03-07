@@ -68,4 +68,7 @@ public class QuestionnaireAssignment
 
     // Viewers
     public List<Dto.AssignmentViewerDto> Viewers { get; set; } = new();
+
+    // Assignment-wide predecessor linking (for goal ratings)
+    public Guid? AssignmentPredecessorId { get; set; }
 }

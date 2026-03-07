@@ -320,6 +320,9 @@ public class QuestionnaireAssignmentQueryHandler :
             LastReopenedByRole = readModel.LastReopenedByRole,
             LastReopenReason = readModel.LastReopenReason,
 
+            // Assignment-wide predecessor linking
+            AssignmentPredecessorId = readModel.AssignmentPredecessorId,
+
             // InReview notes system
             InReviewNotes = readModel.InReviewNotes.Select(note => new InReviewNoteDto
             {

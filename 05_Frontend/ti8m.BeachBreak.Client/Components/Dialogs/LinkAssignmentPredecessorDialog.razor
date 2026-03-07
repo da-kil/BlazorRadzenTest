@@ -78,6 +78,11 @@
                                                 <span> | @T("labels.completed"): @predecessor.CompletedDate.Value.ToShortDateString()</span>
                                             }
                                         </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Class="mt-1">
+                                            <RadzenBadge Text="@predecessor.WorkflowState.ToString()"
+                                                       BadgeStyle="@(predecessor.WorkflowState == WorkflowState.Finalized ? BadgeStyle.Success : BadgeStyle.Warning)" />
+                                            <span class="text-muted ms-2">@predecessor.GoalCount goal(s)</span>
+                                        </RadzenText>
                                     </RadzenColumn>
                                 </RadzenRow>
                             </div>

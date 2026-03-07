@@ -26,9 +26,6 @@ public record PredecessorRating
         if (degreeOfAchievement < 0 || degreeOfAchievement > 100)
             throw new ArgumentOutOfRangeException(nameof(degreeOfAchievement), "Degree of achievement must be between 0 and 100");
 
-        if (string.IsNullOrWhiteSpace(justification))
-            throw new ArgumentException("Justification cannot be empty", nameof(justification));
-
         if (string.IsNullOrWhiteSpace(originalObjective))
             throw new ArgumentException("Original objective cannot be empty", nameof(originalObjective));
 
@@ -46,6 +43,5 @@ public record PredecessorRating
     public bool IsValid =>
         SourceGoalId != Guid.Empty &&
         DegreeOfAchievement >= 0 && DegreeOfAchievement <= 100 &&
-        !string.IsNullOrWhiteSpace(Justification) &&
         !string.IsNullOrWhiteSpace(OriginalObjective);
 }

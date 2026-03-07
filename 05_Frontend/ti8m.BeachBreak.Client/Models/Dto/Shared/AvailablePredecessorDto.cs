@@ -7,4 +7,5 @@ public class AvailablePredecessorDto
     public DateTime AssignedDate { get; set; }
     public DateTime? CompletedDate { get; set; }
     public int GoalCount { get; set; }
+    public WorkflowState WorkflowState { get; set; }
 }
